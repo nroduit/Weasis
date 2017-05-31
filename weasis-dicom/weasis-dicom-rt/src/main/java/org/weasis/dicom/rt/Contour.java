@@ -36,27 +36,45 @@ public class Contour {
 
     private String geometricType;
     private int contourPoints;
-    private final StructureLayer structure;
+    private final RtLayer layer;
     private double[] points;
+    private double[] coordinatesX;
+    private double[] coordinatesY;
+    private double area;
 
     private Double setContourSlabThickness;
 
     private double[] contourOffsetVector;
 
-    public Contour(StructureLayer structure) {
-        this.structure = Objects.requireNonNull(structure);
+    public Contour(RtLayer layer) {
+        this.layer = Objects.requireNonNull(layer);
+        this.area = -1.0;
     }
 
-    public StructureLayer getStructure() {
-        return structure;
+    public RtLayer getLayer() {
+        return this.layer;
     }
 
     public double[] getPoints() {
-        return points;
+        return this.points;
     }
 
     public void setPoints(double[] points) {
         this.points = points;
+    }
+
+    public double getCoordinateX() {
+        if (points != null && points.length >= 3) {
+            return points[0];
+        }
+        return 0;
+    }
+
+    public double getCoordinateY() {
+        if (points != null && points.length >= 3) {
+            return points[1];
+        }
+        return 0;
     }
 
     public double getCoordinateZ() {
@@ -82,6 +100,14 @@ public class Contour {
         this.contourPoints = value;
     }
 
+    public double getArea() {
+        if (this.area < 0) {
+            area = polygonArea(this.getCoordinatesX(), this.getCoordinatesY());
+        }
+
+        return area;
+    }
+
     public Double getSetContourSlabThickness() {
         return setContourSlabThickness;
     }
@@ -100,6 +126,38 @@ public class Contour {
 
     public void setContourOffsetVector(double[] contourOffsetVector) {
         this.contourOffsetVector = contourOffsetVector;
+    }
+
+    public double[] getCoordinatesX() {
+        if (this.coordinatesX == null) {
+            if (points != null && points.length % 3 == 0) {
+                this.coordinatesX = new double[points.length / 3];
+
+                int j = 0;
+                for (int i = 0; i < points.length; i = i + 3) {
+                    this.coordinatesX[j] = points[i];
+                    j++;
+                }
+            }
+        }
+        
+        return this.coordinatesX;
+    }
+
+    public double[] getCoordinatesY() {
+        if (this.coordinatesY == null) {
+            if (points != null && points.length % 3 == 0) {
+                this.coordinatesY = new double[points.length / 3];
+
+                int j = 0;
+                for (int i = 1; i < points.length; i = i + 3) {
+                    this.coordinatesY[j] = points[i];
+                    j++;
+                }
+            }
+        }
+
+        return this.coordinatesY;
     }
 
     public Graphic getGraphic(GeometryOfSlice geometry) {
@@ -150,4 +208,51 @@ public class Contour {
         return null;
     }
 
+    public boolean containsContour(Contour contour) {
+        // Assume if one point is inside, all will be inside
+        contour.getCoordinateX();
+        contour.getCoordinatesY();
+
+        // Contour bounding
+        double minX = Arrays.stream(this.getCoordinatesX()).min().getAsDouble();
+        double maxX = Arrays.stream(this.getCoordinatesX()).max().getAsDouble();
+        double minY = Arrays.stream(this.getCoordinatesY()).min().getAsDouble();
+        double maxY = Arrays.stream(this.getCoordinatesY()).max().getAsDouble();
+
+        // Outside of the contour bounding box
+        if (contour.getCoordinateX() < minX || contour.getCoordinateX() > maxX || contour.getCoordinateY() < minY || contour.getCoordinateY() > maxY) {
+            return false;
+        }
+
+        int j = this.getContourPoints() - 1;
+        boolean isInside = false;
+
+        for (int i = 0; i < this.getContourPoints(); i++) {
+            if (this.getCoordinatesY()[i] < contour.getCoordinateY() &&
+                this.getCoordinatesY()[j] >= contour.getCoordinateY() ||
+                this.getCoordinatesY()[j] < contour.getCoordinateY() &&
+                this.getCoordinatesY()[i] >= contour.getCoordinateY()) {
+                if (this.getCoordinatesX()[i] + (contour.getCoordinateY() - this.getCoordinatesY()[i]) / (this.getCoordinatesY()[j] - this.getCoordinatesY()[i]) * (this.getCoordinatesX()[j] - this.getCoordinatesX()[i]) < contour.getCoordinateX()) {
+                    isInside = !isInside;
+                }
+            }
+
+            j = i;
+        }
+
+        return isInside;
+    }
+
+    private static double polygonArea(double[] x, double[] y) {
+        // Initialise the area
+        double area = 0.0;
+
+        // Calculate value of shoelace formula
+        for (int i = 0; i < x.length; i++) {
+            int j = (i == (x.length - 1)) ? 0 : i + 1;
+            area += (x[i] * y[j]) - (x[j] * y[i]);
+        }
+
+        return Math.abs(area / 2.0);
+    }
 }

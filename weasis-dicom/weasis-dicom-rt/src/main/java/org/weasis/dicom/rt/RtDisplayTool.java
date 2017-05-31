@@ -14,17 +14,17 @@ package org.weasis.dicom.rt;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.MouseEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.Set;
 
 import javax.swing.ImageIcon;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
@@ -78,12 +78,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
     private TreePath rootPath;
-    private final JCheckBox applyAllViews = new JCheckBox("View All", true);
+    private final JComboBox<RtSpecialElement> comboRtElements = new JComboBox<>();
     private JPanel panel_foot;
-    private DefaultMutableTreeNode nodeStructure;
+    private final DefaultMutableTreeNode nodeStructures;
+    private final DefaultMutableTreeNode nodeIsodoses;
     private RtSet rtSet;
-    private RtSpecialElement selectedStructure;
     private DicomImageElement selectedDosePlane;
+    private final transient ItemListener structureChangeListener = e -> {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+            updateTree((RtSpecialElement) e.getItem());
+        }
+    };
 
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -93,6 +98,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         this.tree = new CheckboxTree();
         setLayout(new BorderLayout(0, 0));
+        nodeStructures = new DefaultMutableTreeNode("Structures", true);
+        nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
         this.initTree();
     }
 
@@ -101,8 +108,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
         tree.setModel(model);
-        nodeStructure = new DefaultMutableTreeNode("Structure", true);
-        rootNode.add(nodeStructure);
+
+        rootNode.add(nodeStructures);
+        rootNode.add(nodeIsodoses);
         rootPath = new TreePath(rootNode.getPath());
         tree.addCheckingPath(rootPath);
 
@@ -120,7 +128,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
         add(panel, BorderLayout.NORTH);
-        panel.add(applyAllViews);
+        panel.add(comboRtElements);
 
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
@@ -154,16 +162,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
             List<ViewCanvas<DicomImageElement>> views = null;
             if (container != null) {
-                if (applyAllViews.isSelected()) {
-                    views = container.getImagePanels();
-                } else {
-                    views = new ArrayList<>(1);
-                    Optional.ofNullable(container.getSelectedImagePane()).ifPresent(views::add);
-                }
+                views = container.getImagePanels();
             }
             if (views != null) {
                 RtSet rt = rtSet;
-                if (rt != null && (selObject == nodeStructure || parent == nodeStructure)) {
+                if (rt != null && (selObject == nodeStructures || parent == nodeStructures)) {
                     for (ViewCanvas<DicomImageElement> v : views) {
                         showGraphic(rt, getStructureSelection(), v);
                     }
@@ -174,7 +177,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     private List<StructureLayer> getStructureSelection() {
         ArrayList<StructureLayer> list = new ArrayList<>();
-        if (tree.getCheckingModel().isPathChecked(new TreePath(nodeStructure.getPath()))) {
+        if (tree.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()))) {
             TreePath[] paths = tree.getCheckingModel().getCheckingPaths();
             for (TreePath treePath : paths) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
@@ -225,18 +228,33 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
                     // Check which contours should be rendered
                     for (Contour c : contours) {
-                        StructureLayer structLayer = c.getStructure();
+                        StructureLayer structLayer = (StructureLayer) c.getLayer();
                         Structure struct = structLayer.getStructure();
                         if (containsStructure(list, struct)) {
-                            // Structure data
-                            // TODO: struct.getVolume()
 
-                            // Structure DVH data
-                            Dvh structureDvh = dose.get(struct.getRoiNumber());
-                            if (structureDvh != null) {
-                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMinimumDose(), plan.getRxDose());
-                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMaximumDose(), plan.getRxDose());
-                                RtSet.calculatePercentualDvhDose(structureDvh.getDvhMeanDose(), plan.getRxDose());
+                            // If dose is loaded
+                            if (dose != null) {
+
+                                // If DVH exists for the structure
+                                Dvh structureDvh = dose.get(struct.getRoiNumber());
+                                if (structureDvh != null) {
+
+                                    // Absolute volume is defined in DVH (in cm^3) so use it
+                                    if (structureDvh.getDvhVolumeUnit().equals("CM3")) {
+                                        struct.setVolume(structureDvh.getDvhData()[0]);
+                                    }
+                                    // Otherwise recalculate structure volume
+                                    else {
+                                        struct.recalculateVolume();
+                                    }
+
+                                    // If plan is loaded with prescribed treatment dose calculate DVH statistics
+                                    if (plan != null) {
+                                        RtSet.calculatePercentualDvhDose(structureDvh.getDvhMinimumDose(), plan.getRxDose());
+                                        RtSet.calculatePercentualDvhDose(structureDvh.getDvhMaximumDose(), plan.getRxDose());
+                                        RtSet.calculatePercentualDvhDose(structureDvh.getDvhMeanDose(), plan.getRxDose());
+                                    }
+                                }
                             }
 
                             // Structure graphics
@@ -246,16 +264,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                 graphic.setLineThickness((float) struct.getThickness());
                                 graphic.setPaint(struct.getColor());
                                 graphic.setLayerType(LayerType.DICOM_RT);
-
-                                // graphic.setLabelVisible(labelVisible);
-                                // graphic.setClassID(classID);
-                                // graphic.setFilled(filled);
-                                
                                 graphic.setLayer(structLayer.getLayer());
+
                                 for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
                                     graphic.addPropertyChangeListener(listener);
                                 }
-                                
+
                                 modelList.addGraphic(graphic);
                             }
                         }
@@ -266,43 +280,30 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
-    public void updateTree(ViewCanvas<?> viewCanvas) {
+    public void updateCanvas(ViewCanvas<?> viewCanvas) {
         RtSet rt = rtSet;
         if (rt == null) {
-            this.nodeStructure.removeAllChildren();
+            this.nodeStructures.removeAllChildren();
             DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
             tree.setModel(model);
             return;
         }
 
-        initPathSelection = true;
-        try {
-            // TODO show combo to select if more than one
-            RtSpecialElement oldStructure = selectedStructure;
-            selectedStructure = rt.getFirstStructure();
-            boolean update = !Objects.equals(oldStructure, selectedStructure);
-            if (update) {
-                this.nodeStructure.removeAllChildren();
+        comboRtElements.removeItemListener(structureChangeListener);
+        RtSpecialElement oldStructure = (RtSpecialElement) comboRtElements.getSelectedItem();
+        comboRtElements.removeAllItems();
+        Set<RtSpecialElement> rtElements = rt.getStructures().keySet();
+        rtElements.forEach(comboRtElements::addItem);
 
-                Map<Integer, StructureLayer> structures = rt.getStructureSet(selectedStructure);
-                // Prepare root node
-                for (StructureLayer struct : structures.values()) {
-                    DefaultMutableTreeNode node = new DefaultMutableTreeNode(struct, false);
-                    this.nodeStructure.add(node);
-                    initPathSelection(new TreePath(node.getPath()), true);
-                }
-                DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
-                tree.setModel(model);
-                initPathSelection(new TreePath(nodeStructure.getPath()), true);
-                for (Enumeration children = nodeStructure.children(); children.hasMoreElements();) {
-                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                    initPathSelection(new TreePath(dtm.getPath()), true);
-                }
-                expandTree(tree, rootNode);
-            }
-        } finally {
-            initPathSelection = false;
+        boolean update = !rtElements.contains(oldStructure);
+        if (update) {
+            RtSpecialElement selectedStructure = rt.getFirstStructure();
+            comboRtElements.setSelectedItem(selectedStructure);
+            updateTree(selectedStructure);
+        } else {
+            comboRtElements.setSelectedItem(oldStructure);
         }
+        comboRtElements.addItemListener(structureChangeListener);
 
         // Update selected dose plane
         ImageElement dicom = viewCanvas.getImage();
@@ -324,6 +325,45 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     }
 
+    public void updateTree(RtSpecialElement selectedStructure) {
+        RtSet rt = rtSet;
+        if (rt == null) {
+            this.nodeStructures.removeAllChildren();
+            DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
+            tree.setModel(model);
+            return;
+        }
+
+        initPathSelection = true;
+        try {
+
+            nodeStructures.removeAllChildren();
+            nodeIsodoses.removeAllChildren();
+
+            Map<Integer, StructureLayer> structures = rt.getStructureSet(selectedStructure);
+            // Prepare root node
+            if (structures != null) {
+                for (StructureLayer struct : structures.values()) {
+                    DefaultMutableTreeNode node = new DefaultMutableTreeNode(struct, false);
+                    this.nodeStructures.add(node);
+                    initPathSelection(new TreePath(node.getPath()), true);
+                }
+            }
+            DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
+            tree.setModel(model);
+            initPathSelection(new TreePath(nodeStructures.getPath()), true);
+            for (Enumeration<?> children = nodeStructures.children(); children.hasMoreElements();) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
+                initPathSelection(new TreePath(dtm.getPath()), true);
+            }
+            expandTree(tree, rootNode);
+
+        } finally {
+            initPathSelection = false;
+        }
+
+    }
+
     public void initTreeValues(ViewCanvas<?> viewCanvas) {
         if (viewCanvas != null) {
             MediaSeries<?> dcmSeries = viewCanvas.getSeries();
@@ -333,12 +373,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     MediaSeriesGroup patient = dicomModel.getParent(dcmSeries, DicomModel.patient);
                     if (patient != null) {
                         String frameOfReferenceUID = TagD.getTagValue(dcmSeries, Tag.FrameOfReferenceUID, String.class);
-                        List<MediaElement> list =
-                            getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
+                        List<MediaElement> list = getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
                         if (!list.isEmpty() && (rtSet == null || !rtSet.getRtElements().equals(list))) {
                             rtSet = new RtSet(list);
                         }
-                        updateTree(viewCanvas);
+                        updateCanvas(viewCanvas);
                     }
                 }
             }
@@ -364,9 +403,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         if (SeriesViewerEvent.EVENT.SELECT.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
             initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         }
-        
+
         // TODO: dose information for mouse pointing pixel
-        //selectedDosePlane.getImage().getData().getPixel(100, 100, (double[]) null)
+        // selectedDosePlane.getImage().getData().getPixel(100, 100, (double[]) null);
     }
     
     @Override

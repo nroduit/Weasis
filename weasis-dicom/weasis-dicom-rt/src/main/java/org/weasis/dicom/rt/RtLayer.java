@@ -12,23 +12,23 @@
 
 package org.weasis.dicom.rt;
 
-import java.util.Objects;
+import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 
-public class IsoDoseLayer extends RtLayer {
-    private final IsoDose isoDose;
+public class RtLayer {
 
-    public IsoDoseLayer(IsoDose isoDose) {
-        super();
-        this.isoDose = Objects.requireNonNull(isoDose);
-        this.layer.setName(isoDose.getLabel());
+    protected final DefaultLayer layer;
+
+    public RtLayer() {
+        this.layer = new DefaultLayer(LayerType.DICOM_RT);
     }
 
-    public IsoDose getIsoDose() {
-        return this.isoDose;
+    public boolean isSelected() {
+        return layer.getVisible();
     }
 
-    @Override
-    public String toString() {
-        return isoDose.toString();
+    public DefaultLayer getLayer() {
+        return layer;
     }
+    
 }

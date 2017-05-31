@@ -12,12 +12,13 @@
 
 package org.weasis.dicom.rt;
 
-import org.weasis.core.api.media.data.MediaElement;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.dicom.codec.DicomImageElement;
 
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = 1L;
@@ -36,7 +37,7 @@ public class Dose extends HashMap<Integer, Dvh> {
     private double doseSlicePositionThreshold;
 
     private List<MediaElement> images = new ArrayList<>();
-    private List<IsoDose> isoDoses = new ArrayList<>();
+    private HashMap<Integer, IsoDoseLayer> isoDoseSet = new HashMap<>();
 
     public Dose() {
         // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without interpolation
@@ -139,12 +140,12 @@ public class Dose extends HashMap<Integer, Dvh> {
         this.images = images;
     }
 
-    public List<IsoDose> getIsoDoses() {
-        return this.isoDoses;
+    public HashMap<Integer, IsoDoseLayer> getIsoDoseSet() {
+        return isoDoseSet;
     }
 
-    public void setIsoDoses(List<IsoDose> isoDoses) {
-        this.isoDoses = isoDoses;
+    public void setIsoDoseSet(HashMap<Integer, IsoDoseLayer> isoDoseSet) {
+        this.isoDoseSet = isoDoseSet;
     }
 
     public MediaElement getDosePlaneBySlice(double slicePosition) {
@@ -208,12 +209,82 @@ public class Dose extends HashMap<Integer, Dvh> {
         return dosePlane;
     }
 
-    public void getIsoDosePoints(double slicePosition, double isoDose) {
-        MediaElement dosePlane = this.getDosePlaneBySlice(slicePosition);
+    public int[] getIsoDosePoints(double slicePosition, double isoDoseThreshold) {
+        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
 
-        // Check which voxel values from dosePlane is >= isoDose
-        // collect their indices
+        int minX = dosePlane.getImage().getMinX();
+        int maxX = dosePlane.getImage().getMaxX();
+        int minY = dosePlane.getImage().getMinY();
+        int maxY = dosePlane.getImage().getMaxY();
 
+        List<Integer> listX = new ArrayList<>();
+        List<Integer> listY = new ArrayList<>();
+
+        // Go through dose plane
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+
+                // Dose voxel value
+                int[] rawDoseVoxelValue = dosePlane.getImage().getData().getPixel(x, y, (int[]) null);
+                if (rawDoseVoxelValue.length == 1) {
+
+                    double doseVoxelValue = rawDoseVoxelValue[0] * this.getDoseGridScaling();
+
+                    // Check which voxel values from dosePlane satisfy to iso dose threshold
+                    if (doseVoxelValue >= isoDoseThreshold) {
+                        listX.add(x);
+                        listY.add(y);
+                    }
+                }
+            }
+        }
+
+        // collect indices of iso points in array
+        int size = listX.size();
+        int[] isoPoints = new int[size * 2];
+        int j = 0;
+        for (int i = 0; i < size; i++) {
+            isoPoints[j] = listX.get(i);
+            isoPoints[j + 1] = listY.get(i);
+            j+=2;
+        }
+
+        return isoPoints;
+    }
+
+    public int[] getIsoDoseContourPoints(double slicePosition, double isoDoseThreshold) {
+        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
+
+        int minX = dosePlane.getImage().getMinX();
+        int maxX = dosePlane.getImage().getMaxX();
+        int minY = dosePlane.getImage().getMinY();
+        int maxY = dosePlane.getImage().getMaxY();
+
+        byte[] binaryArray = new byte[maxX * maxY];
+
+        // Calculate the distance between each iso dose point and threshold
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+
+                // Dose voxel value
+                int[] rawDoseVoxelValue = dosePlane.getImage().getData().getPixel(x, y, (int[]) null);
+                if (rawDoseVoxelValue.length == 1) {
+
+                    double doseVoxelValue = rawDoseVoxelValue[0] * this.getDoseGridScaling();
+
+                    if (doseVoxelValue >= isoDoseThreshold) {
+                        binaryArray[x*y] = 1;
+                    }
+                    else {
+                        binaryArray[x*y] = 0;
+                    }
+                }
+            }
+        }
+
+        // TODO: the minimal distance will be border points for contour
+        
+        return new int[0];
     }
 
     private MediaElement interpolateDosePlanes(int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {

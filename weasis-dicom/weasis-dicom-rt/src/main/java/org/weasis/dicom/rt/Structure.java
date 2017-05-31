@@ -27,7 +27,7 @@ public class Structure {
     private String rtRoiInterpretedType;
     private String roiObservationLabel;
     private double thickness;
-    private double volume;
+    private double volume; // unit cm^3
 
     private Color color;
     private Map<Double, ArrayList<Contour>> planes;
@@ -85,11 +85,11 @@ public class Structure {
     }
 
     public double getVolume() {
-        // If volume is not initialised -> calculate
-        if (this.volume < 0) {
-            //TODO: calcluate
-        }
         return this.volume;
+    }
+
+    public void setVolume(double value) {
+        this.volume = value;
     }
 
     public Color getColor() {
@@ -106,6 +106,60 @@ public class Structure {
 
     public void setPlanes(Map<Double, ArrayList<Contour>> contours) {
         this.planes = contours;
+    }
+
+    public void recalculateVolume() {
+        double structureVolume = 0.0;
+
+        // Iterate over structure planes (z)
+        int n = 0;
+        for (ArrayList<Contour> structurePlaneContours : this.planes.values()) {
+
+            double maxContourArea = 0.0;
+            int maxContourIndex = 0;
+
+            // Calculate the area for each contour in the current plane
+            for (int i = 0; i < structurePlaneContours.size(); i++) {
+                Contour polygon = structurePlaneContours.get(i);
+
+                // Find the largest polygon of contour
+                if (polygon.getArea() > maxContourArea) {
+                    maxContourArea = polygon.getArea();
+                    maxContourIndex = i;
+                }
+            }
+
+            // Sum the area of contours in the current plane
+            Contour largestPolygon = structurePlaneContours.get(maxContourIndex);
+            double area = largestPolygon.getArea();
+            for (int i = 0; i < structurePlaneContours.size(); i++) {
+                Contour polygon = structurePlaneContours.get(i);
+                if (i != maxContourIndex) {
+                    // If the contour is inside = ring -> subtract it from the total area
+                    if (largestPolygon.containsContour(polygon)) {
+                        area -= polygon.getArea();
+                    }
+                    // Otherwise it is outside, so add it to the total area
+                    else {
+                        area += polygon.getArea();
+                    }
+                }
+            }
+
+            // For first and last plane calculate with half of thickness
+            if ((n == 0) || (n == this.planes.size() -1)) {
+                structureVolume += area * this.thickness * 0.5;
+            }
+            // For rest use full slice thickness
+            else {
+                structureVolume += area * this.thickness;
+            }
+
+            n++;
+        }
+
+        // DICOM uses millimeters -> convert from mm^3 to cm^3
+        this.volume = structureVolume / 1000;
     }
 
     @Override

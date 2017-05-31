@@ -15,26 +15,17 @@ import java.util.Objects;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 
-public class StructureLayer {
+public class StructureLayer extends RtLayer {
     private final Structure structure;
-    private final DefaultLayer layer;
 
     public StructureLayer(Structure structure) {
+        super();
         this.structure = Objects.requireNonNull(structure);
-        this.layer = new DefaultLayer(LayerType.DICOM_RT);
         this.layer.setName(structure.getRoiName());
     }
 
     public Structure getStructure() {
         return structure;
-    }
-
-    public boolean isSelected() {
-        return layer.getVisible();
-    }
-
-    public DefaultLayer getLayer() {
-        return layer;
     }
 
     @Override
