@@ -63,7 +63,7 @@ public class DicomImageUtils {
                 Tag.SegmentedBluePaletteColorLookupTableData);
 
             // Replace the original image with the RGB image.
-            return ImageProcessor.applyLUT(ImageCV.toMat(source), new byte[][] { b, g, r });
+            return ImageProcessor.applyLUT(source.toMat(), new byte[][] { b, g, r });
         }
         return source;
     }

@@ -14,7 +14,6 @@ import java.util.Optional;
 
 import org.opencv.core.Core;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -61,9 +60,9 @@ public class RotationOp extends AbstractOp {
             }
             
             if (rotOp != null) {
-                result = ImageProcessor.getRotatedImage(ImageCV.toMat(source), rotOp);
+                result = ImageProcessor.getRotatedImage(source.toMat(), rotOp);
             } else {
-                result = ImageProcessor.getRotatedImage(ImageCV.toMat(source), rotationAngle, source.width() / 2.0,
+                result = ImageProcessor.getRotatedImage(source.toMat(), rotationAngle, source.width() / 2.0,
                     source.height() / 2.0);
             }
         }

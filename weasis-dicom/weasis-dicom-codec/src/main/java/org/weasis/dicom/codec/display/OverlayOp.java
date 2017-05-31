@@ -103,7 +103,7 @@ public class OverlayOp extends AbstractOp {
                     }
                 }
             }
-            result = imgOverlay == null ? source : ImageProcessor.overlay(ImageCV.toMat(source), imgOverlay, Color.WHITE);
+            result = imgOverlay == null ? source : ImageProcessor.overlay(source.toMat(), imgOverlay, Color.WHITE);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

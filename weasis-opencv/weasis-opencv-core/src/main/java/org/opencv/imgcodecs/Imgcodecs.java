@@ -4,9 +4,8 @@
 //
 package org.opencv.imgcodecs;
 
-import java.lang.String;
-import java.util.ArrayList;
 import java.util.List;
+
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfInt;
@@ -120,6 +119,9 @@ public class Imgcodecs {
         return retVal;
     }
 
+    public static  void loadNativeLibrary() {
+        System.loadLibrary("opencv_java");
+    }
 
     //
     // C++:  bool imencode(String ext, Mat img, vector_uchar& buf, vector_int params = std::vector<int>())

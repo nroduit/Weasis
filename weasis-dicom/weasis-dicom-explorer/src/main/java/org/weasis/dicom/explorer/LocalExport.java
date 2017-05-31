@@ -53,7 +53,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -273,29 +272,30 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            final ExplorerTask<Boolean, String> task = new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
+            final ExplorerTask<Boolean, String> task =
+                new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
-                @Override
-                protected Boolean doInBackground() throws Exception {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-                    if (EXPORT_FORMAT[0].equals(format)) {
-                        writeDicom(this, exportDir, model, false);
-                    } else if (EXPORT_FORMAT[1].equals(format)) {
-                        writeDicom(this, exportDir, model, true);
-                    } else {
-                        writeOther(this, exportDir, model, format);
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+                        if (EXPORT_FORMAT[0].equals(format)) {
+                            writeDicom(this, exportDir, model, false);
+                        } else if (EXPORT_FORMAT[1].equals(format)) {
+                            writeDicom(this, exportDir, model, true);
+                        } else {
+                            writeOther(this, exportDir, model, format);
+                        }
+                        return true;
                     }
-                    return true;
-                }
 
-                @Override
-                protected void done() {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-                }
+                    @Override
+                    protected void done() {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+                    }
 
-            };
+                };
             task.execute();
         }
     }
@@ -367,10 +367,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (image != null) {
                             File destinationFile = new File(destinationDir, instance + getExtension(format));
                             if (EXPORT_FORMAT[3].equals(format)) {
-                                ImageProcessor.writePNG(ImageCV.toMat(image) , destinationFile);
+                                ImageProcessor.writePNG(image.toMat(), destinationFile);
                             } else {
                                 MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, jpegQuality);
-                                ImageProcessor.writeImage(ImageCV.toMat(image), destinationFile, map);
+                                ImageProcessor.writeImage(image.toMat(), destinationFile, map);
                             }
                             if (seriesGph.contains(img.getTagValue(TagD.get(Tag.SeriesInstanceUID)))) {
                                 XmlSerializer.writePresentation(img, destinationFile);

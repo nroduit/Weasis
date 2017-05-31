@@ -13,7 +13,6 @@ package org.weasis.core.api.image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -49,7 +48,7 @@ public class FlipOp extends AbstractOp {
         Boolean flip = (Boolean) params.get(P_FLIP);
 
         if (flip != null && flip) {
-            result = ImageProcessor.flip(ImageCV.toMat(source), 1); // 1) means flipping around y-axis
+            result = ImageProcessor.flip(source.toMat(), 1); // 1) means flipping around y-axis
         }
 
         params.put(Param.OUTPUT_IMG, result);

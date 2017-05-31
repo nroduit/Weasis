@@ -14,7 +14,6 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.Area;
 
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -57,7 +56,7 @@ public class MaskOp extends AbstractOp {
             && !area.equals(new Area(new Rectangle(0, 0, source.width(), source.height())))) {
             Integer transparency = (Integer) params.get(P_GRAY_TRANSPARENCY);
             Color color = getMaskColor();
-            result = ImageProcessor.applyShutter(ImageCV.toMat(source), area, color);
+            result = ImageProcessor.applyShutter(source.toMat(), area, color);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

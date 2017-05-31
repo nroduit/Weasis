@@ -12,7 +12,6 @@ package org.weasis.core.api.image;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -57,7 +56,7 @@ public class MergeImgOp extends AbstractOp {
 
         if (source2 != null) {
             Integer transparency = (Integer) params.get(P_OPACITY);
-            result = ImageProcessor.combineTwoImages(ImageCV.toMat(source), ImageCV.toMat(source2), transparency == null ? 255 : transparency);
+            result = ImageProcessor.combineTwoImages(source.toMat(), source2.toMat(), transparency == null ? 255 : transparency);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

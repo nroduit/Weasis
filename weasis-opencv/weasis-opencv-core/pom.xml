@@ -32,17 +32,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<dependencies>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-api</artifactId>
-			<version>${project.parent.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<!-- <dependency> -->
-		<!-- <groupId>org.weasis.thirdparty.org.opencv</groupId> -->
-		<!-- <artifactId>opencv</artifactId> -->
-		<!-- <version>3.1.0-r1</version> -->
-		<!-- </dependency> -->
-	</dependencies>
 </project>

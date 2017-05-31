@@ -22,7 +22,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
-import org.opencv.core.Mat;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -32,7 +31,6 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -94,7 +92,7 @@ public final class Transform2Dicom {
             // }
 
             MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
-            if (!ImageProcessor.writeImage(ImageCV.toImageCV(transformedImage), imgFile, map)) {
+            if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
                 // out of memory ??
                 imgFile.delete();
                 LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName()); //$NON-NLS-1$

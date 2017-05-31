@@ -34,27 +34,33 @@
 	</build>
 	<dependencies>
 		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

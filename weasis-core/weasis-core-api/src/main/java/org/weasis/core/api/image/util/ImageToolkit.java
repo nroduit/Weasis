@@ -27,7 +27,6 @@ import java.awt.image.WritableRaster;
 import java.util.Hashtable;
 
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -724,7 +723,7 @@ public class ImageToolkit {
         double slope = 255.0 / range;
         double yInt = 255.0 - slope * high;
 
-        return ImageProcessor.rescaleToByte(ImageCV.toMat(source), slope, yInt);
+        return ImageProcessor.rescaleToByte(source.toMat(), slope, yInt);
 
     }
 

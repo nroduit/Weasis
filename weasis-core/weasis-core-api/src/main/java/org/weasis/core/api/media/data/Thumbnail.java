@@ -42,7 +42,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FileUtil;
@@ -258,7 +257,7 @@ public class Thumbnail extends JLabel {
                         try {
                             if (file != null) {
                                 MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
-                                if (ImageProcessor.writeImage(ImageCV.toMat(thumb), file, map)) {
+                                if (ImageProcessor.writeImage(thumb.toMat(), file, map)) {
                                     /*
                                      * Write the thumbnail in temp folder, better than getting the thumbnail directly
                                      * from t.getAsBufferedImage() (it is true if the image is big and cannot handle all

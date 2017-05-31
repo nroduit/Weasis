@@ -54,14 +54,6 @@ public class ImageCV extends Mat implements PlanarImage {
         }
     }
 
-    public static ImageCV toImageCV(PlanarImage source) {
-        if (source instanceof Mat) {
-            return toImageCV((Mat) source);
-        } else {
-            throw new IllegalAccessError("Not implemented yet");
-        }
-    }
-
     public static ImageCV toImageCV(Mat source) {
         if (source instanceof ImageCV) {
             return (ImageCV) source;

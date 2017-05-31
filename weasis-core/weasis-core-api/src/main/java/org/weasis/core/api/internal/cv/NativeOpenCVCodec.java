@@ -8,11 +8,12 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.opencv.internal;
+package org.weasis.core.api.internal.cv;
 
 import java.net.URI;
 import java.util.Hashtable;
 
+import org.opencv.imgcodecs.Imgcodecs;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
@@ -82,7 +83,7 @@ public class NativeOpenCVCodec implements Codec {
     @Activate
     protected void activate(ComponentContext context) {
         // Load the native OpenCV library
-        System.loadLibrary("opencv_java");
+        Imgcodecs.loadNativeLibrary();
     }
 
     @Deactivate

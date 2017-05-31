@@ -35,7 +35,6 @@ import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.cv.FileRawImage;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
@@ -316,7 +315,7 @@ public class ImageElementIO implements MediaReader {
             File outFile = imgCachePath.toFile();
             try {
                 new FileRawImage(outFile).write(img);
-                ImageProcessor.writeThumbnail(ImageCV.toMat(img), new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
+                ImageProcessor.writeThumbnail(img.toMat(), new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);
