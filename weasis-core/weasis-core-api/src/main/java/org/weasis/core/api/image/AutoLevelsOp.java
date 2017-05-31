@@ -10,11 +10,9 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -56,7 +54,7 @@ public class AutoLevelsOp extends AbstractOp {
             double max = imageElement.getMaxValue(null, true);
             double slope = 255.0 / (max -min);
             double yint = 255.0 - slope * max;
-            result = ImageProcessor.rescaleToByte(ImageCV.toImageCV(source), slope, yint);
+            result = ImageProcessor.rescaleToByte(source.toImageCV(), slope, yint);
         }
 
         params.put(Param.OUTPUT_IMG, result);

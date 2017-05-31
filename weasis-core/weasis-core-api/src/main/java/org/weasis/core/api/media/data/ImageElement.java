@@ -27,7 +27,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -93,7 +92,7 @@ public class ImageElement extends MediaElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(ImageCV.toMat(img));
+                double[] val = ImageProcessor.findMinMaxValues(img.toMat());
                 if (val != null && val.length == 2) {
                     this.minPixelValue = val[0];
                     this.maxPixelValue = val[1];

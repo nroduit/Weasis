@@ -17,7 +17,6 @@ import java.awt.image.BufferedImage;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -65,10 +64,10 @@ public class PseudoColorOp extends AbstractOp {
             byte[][] lut = invert ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
             if (lut == null) {
                 if (invert) {
-                    result = ImageProcessor.invertLUT(ImageCV.toImageCV(source));
+                    result = ImageProcessor.invertLUT(source.toImageCV());
                 }
             } else {
-                result = ImageProcessor.applyLUT(ImageCV.toMat(source), lut);
+                result = ImageProcessor.applyLUT(source.toMat(), lut);
               //  result = new LookupTableCV(lut).lookup(source);
             }
         }

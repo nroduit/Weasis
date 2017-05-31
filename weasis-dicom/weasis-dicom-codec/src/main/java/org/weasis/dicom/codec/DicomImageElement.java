@@ -567,7 +567,7 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(ImageCV.toMat(img));
+                double[] val = ImageProcessor.findMinMaxValues(img.toMat());
                 if (val != null && val.length == 2) {
                     // TODO padding values?
                     this.minPixelValue = val[0];
@@ -684,7 +684,7 @@ public class DicomImageElement extends ImageElement {
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             LookupTableCV modalityLookup = getModalityLookup(prTags, pixPadding, invLUT);
             ImageCV imageModalityTransformed =
-                modalityLookup == null ? ImageCV.toImageCV(imageSource) : modalityLookup.lookup(ImageCV.toMat(imageSource));
+                modalityLookup == null ? imageSource.toImageCV() : modalityLookup.lookup(imageSource.toMat());
 
             /*
              * C.11.2.1.2 Window center and window width

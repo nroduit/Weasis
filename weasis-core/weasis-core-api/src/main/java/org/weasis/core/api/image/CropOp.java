@@ -15,7 +15,6 @@ import java.awt.Rectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -61,7 +60,7 @@ public class CropOp extends AbstractOp {
             area = area
                 .intersection(new Rectangle(0, 0, source.width(), source.height()));
             if (area.width > 1 && area.height > 1) {
-                result = ImageProcessor.crop(ImageCV.toMat(source), area);
+                result = ImageProcessor.crop(source.toMat(), area);
             }
         }
         params.put(Param.OUTPUT_IMG, result);

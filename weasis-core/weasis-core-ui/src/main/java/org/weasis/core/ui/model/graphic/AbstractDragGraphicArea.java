@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -87,7 +86,7 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue")); //$NON-NLS-1$
                         Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit")); //$NON-NLS-1$
                         // TODO remove cast
-                        double[][] extrema = ImageProcessor.meanStdDev(ImageCV.toMat(image), roi ,paddingValue, paddingLimit);
+                        double[][] extrema = ImageProcessor.meanStdDev(image.toMat(), roi ,paddingValue, paddingLimit);
                         
                         
                         if (extrema == null || extrema.length < 1 || extrema[0].length < 1) {

@@ -17,6 +17,7 @@
 	</scm>
 	<modules>
 		<module>weasis-parent</module>
+		<module>weasis-opencv</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
 		<module>weasis-codec</module>
@@ -25,5 +26,4 @@
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>
 	</modules>
-
 </project>

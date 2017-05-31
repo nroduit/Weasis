@@ -47,7 +47,13 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>

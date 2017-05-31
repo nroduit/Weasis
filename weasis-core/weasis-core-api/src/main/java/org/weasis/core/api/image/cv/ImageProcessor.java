@@ -124,7 +124,7 @@ public class ImageProcessor {
     }
 
     public static BufferedImage toBufferedImage(PlanarImage matrix) {
-        return toBufferedImage(ImageCV.toMat(matrix));
+        return toBufferedImage(matrix.toMat());
     }
 
     public static int convertToDataType(int cvType) {
@@ -598,7 +598,7 @@ public class ImageProcessor {
 
         final double scale = Math.min(iconDim.getHeight() / source.height(), iconDim.getWidth() / source.width());
         if (scale >= 1.0) {
-            return ImageCV.toImageCV(source);
+            return source.toImageCV();
         }
         if (scale < 0.005) {
             return null; // Image is too large to be converted
@@ -607,7 +607,7 @@ public class ImageProcessor {
         Size dim = keepRatio ? new Size((int) (scale * source.width()), (int) (scale * source.height()))
             : new Size(iconDim.width, iconDim.height);
 
-        Mat srcImg = ImageCV.toMat(Objects.requireNonNull(source));
+        Mat srcImg = Objects.requireNonNull(source).toMat();
         ImageCV dstImg = new ImageCV();
         Imgproc.resize(srcImg, dstImg, dim, 0, 0, Imgproc.INTER_AREA);
         return dstImg;
@@ -852,7 +852,7 @@ public class ImageProcessor {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
             ImageCV dstImg = new ImageCV();
-            dstImg.copyTo(ImageCV.toMat(firstImg.getImage(null, false)));
+            dstImg.copyTo(firstImg.getImage(null, false).toMat());
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
@@ -871,7 +871,7 @@ public class ImageProcessor {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
             ImageCV dstImg = new ImageCV();
-            dstImg.copyTo(ImageCV.toMat(firstImg.getImage(null, false)));
+            dstImg.copyTo(firstImg.getImage(null, false).toMat());
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {

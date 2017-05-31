@@ -15,7 +15,6 @@ import java.awt.Dimension;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -78,7 +77,7 @@ public class ZoomOp extends AbstractOp {
             } else if (interpolation != null && interpolation == 3) {
                 interpolation = 4;
             }
-            result = ImageProcessor.scale(ImageCV.toMat(source), dim, interpolation);
+            result = ImageProcessor.scale(source.toMat(), dim, interpolation);
         }
 
         params.put(Param.OUTPUT_IMG, result);

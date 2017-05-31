@@ -510,7 +510,7 @@ public class SeriesBuilder {
                 if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
                     Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.width()),
                         (int) (Math.abs(dcm.getRescaleY()) * image.height()));
-                    image = ImageProcessor.scale(ImageCV.toImageCV(image), dim, Imgproc.INTER_LINEAR);
+                    image = ImageProcessor.scale(image.toImageCV(), dim, Imgproc.INTER_LINEAR);
                 }
                 writeRasterInRaw(image, newSeries, params, dstHeight);
             }
@@ -528,7 +528,7 @@ public class SeriesBuilder {
 
     private static void writeRasterInRaw(PlanarImage image, FileRawImage[] newSeries, ViewParameter params,
         int dstHeight) throws IOException {
-        ImageCV img = ImageProcessor.getRotatedImage(ImageCV.toMat(image), params.rotateCvType);
+        ImageCV img = ImageProcessor.getRotatedImage(image.toMat(), params.rotateCvType);
         if (newSeries != null && img != null && img.height() == newSeries.length) {
             if (newSeries[0] == null) {
                 File dir = new File(MPR_CACHE_DIR, params.seriesUID);

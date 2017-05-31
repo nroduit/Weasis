@@ -10,10 +10,8 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
 
@@ -47,7 +45,7 @@ public class BrightnessOp extends AbstractOp {
         Double brigtness = (Double) params.get(P_BRIGTNESS_VALUE);
 
         if (contrast != null && brigtness != null) {
-            result = ImageProcessor.rescaleToByte(ImageCV.toImageCV(source), contrast / 100.0, brigtness);
+            result = ImageProcessor.rescaleToByte(source.toImageCV(), contrast / 100.0, brigtness);
         }
 
         params.put(Param.OUTPUT_IMG, result);

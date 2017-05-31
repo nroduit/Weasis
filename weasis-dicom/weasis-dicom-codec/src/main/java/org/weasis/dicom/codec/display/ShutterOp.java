@@ -112,7 +112,7 @@ public class ShutterOp extends AbstractOp {
         Object pr = params.get(P_PR_ELEMENT);
 
         if (shutter && area != null) {
-            result = ImageProcessor.applyShutter(ImageCV.toMat(source), area, getShutterColor());
+            result = ImageProcessor.applyShutter(source.toMat(), area, getShutterColor());
         }
 
         // Potentially override the shutter in the original dicom
@@ -133,7 +133,7 @@ public class ShutterOp extends AbstractOp {
                     if (shuttOverlayGroup != null) {
                         RenderedImage overlayImg =
                             OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup);
-                        imgOverlay = ImageProcessor.applyShutter(ImageCV.toMat(result), overlayImg, getShutterColor());
+                        imgOverlay = ImageProcessor.applyShutter(result.toMat(), overlayImg, getShutterColor());
                     }
                 }
             }

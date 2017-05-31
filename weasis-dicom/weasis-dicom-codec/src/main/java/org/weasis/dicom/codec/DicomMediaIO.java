@@ -830,7 +830,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     }
                 }
                 // Set to 0 all bits outside bitStored
-                img = ImageProcessor.bitwiseAnd(ImageCV.toMat(img), overlayBitMask);
+                img = ImageProcessor.bitwiseAnd(img.toMat(), overlayBitMask);
             }
         }
         return img;
