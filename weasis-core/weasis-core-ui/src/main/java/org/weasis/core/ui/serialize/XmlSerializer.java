@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.ui.serialize;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 
@@ -86,6 +88,24 @@ public class XmlSerializer {
             return sw.toString();
         } catch (Exception e) {
             LOGGER.error("Cannot serialize xml: ", e); //$NON-NLS-1$
+        }
+        return null;
+    }
+    
+    public static GraphicModel buildPresentationModel(byte[] gzipData) {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager.gzipUncompressToByte(gzipData));
+            GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
+            int length = model.getModels().size();
+            model.getModels().removeIf(g -> g.getLayer() == null);
+            if (length > model.getModels().size()) {
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
+            }
+            return model;
+        } catch (Exception e) {
+            LOGGER.error("Cannot load xml graphic model: ", e); //$NON-NLS-1$
         }
         return null;
     }
