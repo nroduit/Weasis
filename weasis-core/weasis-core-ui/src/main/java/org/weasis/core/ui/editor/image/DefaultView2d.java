@@ -55,7 +55,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -217,11 +216,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         addFocusListener(this);
         ToolTipManager.sharedInstance().registerComponent(this);
         imageLayer.addLayerChangeListener(this);
-    }
-
-    @Override
-    public JComponent getJComponent() {
-        return this;
     }
 
     protected void buildPanner() {
