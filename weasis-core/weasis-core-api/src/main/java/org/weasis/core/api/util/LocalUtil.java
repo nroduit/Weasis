@@ -16,17 +16,14 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Locale;
 
-import org.weasis.core.api.service.BundleTools;
-
 public class LocalUtil {
-    private static final String FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
 
     private static final DateTimeFormatter defaultDateFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
     private static final DateTimeFormatter defaultTimeFormatter = DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM);
     private static final DateTimeFormatter defaultDateTimeFormatter =
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
 
-    private static Locale localeFormat = null;
+    private static volatile Locale localeFormat = null;
 
     private LocalUtil() {
     }
@@ -65,23 +62,12 @@ public class LocalUtil {
     public static Locale getLocaleFormat() {
         Locale l = LocalUtil.localeFormat;
         if (l == null) {
-            String code = BundleTools.SYSTEM_PREFERENCES.getProperty(FORMAT_CODE);
-            if (StringUtil.hasLength(code)) {
-                l = LocalUtil.textToLocale(code);
-            }
-        }
-        if (l == null) {
             l = Locale.getDefault();
         }
         return l;
     }
 
     public static void setLocaleFormat(Locale value) {
-        if (value == null) {
-            BundleTools.SYSTEM_PREFERENCES.remove(FORMAT_CODE);
-        } else {
-            BundleTools.SYSTEM_PREFERENCES.put(FORMAT_CODE, LocalUtil.localeToText(value));
-        }
         LocalUtil.localeFormat = value;
     }
 
@@ -96,7 +82,6 @@ public class LocalUtil {
     public static NumberFormat getPercentInstance() {
         return NumberFormat.getPercentInstance(getLocaleFormat());
     }
-
 
     public static DateFormat getDateInstance(int style) {
         return DateFormat.getDateInstance(style, getLocaleFormat());
