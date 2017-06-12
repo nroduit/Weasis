@@ -255,4 +255,5 @@ public class Contour {
 
         return Math.abs(area / 2.0);
     }
+    
 }

@@ -10,8 +10,9 @@
 	</parent>
 	<artifactId>weasis-dicom-rt</artifactId>
 	<packaging>bundle</packaging>
-	<name>Tool panel sample [${project.artifactId}]</name>
+	<name>Weasis DICOM-RT Tool panel [${project.artifactId}]</name>
 	<properties>
+		<bundle.namespace>org.weasis.dicom.rt</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 	<build>
@@ -64,7 +65,6 @@
 			<version>1.5.2</version>
 			<scope>provided</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>

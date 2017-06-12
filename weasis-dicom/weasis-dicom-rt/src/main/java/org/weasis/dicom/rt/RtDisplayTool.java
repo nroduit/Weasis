@@ -254,6 +254,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                         RtSet.calculatePercentualDvhDose(structureDvh.getDvhMaximumDose(), plan.getRxDose());
                                         RtSet.calculatePercentualDvhDose(structureDvh.getDvhMeanDose(), plan.getRxDose());
                                     }
+
+                                    // DVH refresh display
+//                                    rt.getDvhChart().removeSeries(struct.getRoiName());
+//                                    structureDvh.appendChart(struct.getRoiName(), rt.getDvhChart());
+//                                    try {
+//                                        BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH", BitmapEncoder.BitmapFormat.PNG);
+//                                    }
+//                                    catch (Exception err) {
+//
+//                                    }
                                 }
                             }
 
@@ -452,4 +462,5 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         }
         return specialElementList;
     }
+    
 }

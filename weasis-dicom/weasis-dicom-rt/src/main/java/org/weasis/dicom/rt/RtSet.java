@@ -31,6 +31,8 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
@@ -55,6 +57,14 @@ public class RtSet {
     private final List<Dose> doses = new ArrayList<>();
 
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
+
+    private final XYChart dvhChart = new XYChartBuilder()
+                                            .width(600)
+                                            .height(500)
+                                            .title("DVH")
+                                            .xAxisTitle("Dose (cGy)")
+                                            .yAxisTitle("Volume (%)")
+                                            .build();
 
     private final List<MediaElement> rtElements;
 
@@ -524,6 +534,10 @@ public class RtSet {
         }
 
         return null;
+    }
+
+    public XYChart getDvhChart() {
+        return this.dvhChart;
     }
 
     public List<MediaElement> getRtElements() {
