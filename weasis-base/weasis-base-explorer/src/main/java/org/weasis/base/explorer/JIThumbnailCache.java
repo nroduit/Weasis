@@ -11,7 +11,6 @@
 package org.weasis.base.explorer;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.Collections;
@@ -23,17 +22,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.SubsampleAverageDescriptor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.IThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.ThreadUtil;
 
 public final class JIThumbnailCache {
@@ -83,7 +80,8 @@ public final class JIThumbnailCache {
         }
     }
 
-    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList, final int index) {
+    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject, final IThumbnailList aThumbnailList,
+        final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getMediaURI());
@@ -157,30 +155,27 @@ public final class JIThumbnailCache {
 
         @Override
         public void run() {
-            RenderedImage img = null;
+            PlanarImage img = null;
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
-            if (file != null) {
-                img = ImageFiler.getThumbnailInTiff(file);
+            if (file != null && file.getName().endsWith(".wcv")) {
+                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
+                if (thumbFile.canRead()) {
+                    img = ImageProcessor.readImage(thumbFile);
+                }
             }
 
             if (img == null) {
                 img = diskObject.getRenderedImage(diskObject.getImage(null));
             }
-            
+
             if (img == null) {
                 return;
             }
 
-            final double scale = Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
-                ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
-
             final BufferedImage tIcon =
-                scale <= 1.0
-                    ? scale > 0.005 ? SubsampleAverageDescriptor
-                        .create(img, scale, scale, Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null
-                    : PlanarImage.wrapRenderedImage(img).getAsBufferedImage();
+                ImageProcessor.toBufferedImage((PlanarImage)ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
             // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
             diskObject.removeImageFromCache();

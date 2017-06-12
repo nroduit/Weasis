@@ -32,7 +32,7 @@ public final class InputStreamAdapter extends InputStream {
     }
 
     @Override
-    public void mark(int readlimit) {
+    public synchronized void mark(int readlimit) {
         stream.mark();
     }
 
@@ -52,7 +52,7 @@ public final class InputStreamAdapter extends InputStream {
     }
 
     @Override
-    public void reset() throws IOException {
+    public synchronized void reset() throws IOException {
         stream.reset();
     }
 

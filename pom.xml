@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.5.4-SNAPSHOT</version>
+		<version>3.0.0-SNAPSHOT</version>
 		<relativePath>weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -17,6 +17,7 @@
 	</scm>
 	<modules>
 		<module>weasis-parent</module>
+		<module>weasis-opencv</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
 		<module>weasis-codec</module>
@@ -25,5 +26,4 @@
 		<module>weasis-dicom</module>
 		<module>weasis-launcher</module>
 	</modules>
-
 </project>

@@ -15,7 +15,6 @@ import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,9 +40,11 @@ import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -163,10 +164,9 @@ public class PRManager {
             }
             Rectangle area = new Rectangle();
             area.setFrameFromDiagonal(tlhc[0], tlhc[1], brhc[0], brhc[1]);
-            RenderedImage source = view.getSourceImage();
+            PlanarImage source = view.getSourceImage();
             if (source != null) {
-                area = area.intersection(
-                    new Rectangle(source.getMinX(), source.getMinY(), source.getWidth(), source.getHeight()));
+                area = area.intersection(ImageProcessor.getBounds(source));
                 if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {
                     SimpleOpManager opManager =
                         Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))

@@ -88,9 +88,10 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
         brightnessPanel.removeChangeListener(this);
         contrastPanel.setSliderValue(next.getContrast());
         brightnessPanel.setSliderValue(next.getBrightness());
+        autoLevelBtn.setSelected(next.isAutoLevel());
+        autoLevelBtn.addActionListener(autoLevelListener);
         contrastPanel.addChangeListener(this);
         brightnessPanel.addChangeListener(this);
-        autoLevelBtn.setSelected(next.isAutoLevel());
         repaint();
 
         applyNextValues();

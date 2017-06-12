@@ -216,9 +216,10 @@ public class ByteLutCollection {
 
             String[] line = scan.nextLine().split("\\s+"); //$NON-NLS-1$
             if (line.length == 3) {
-                lut[0][lineIndex] = (byte) Integer.parseInt(line[0]);
+                // Convert rgb to bgr
+                lut[2][lineIndex] = (byte) Integer.parseInt(line[0]);
                 lut[1][lineIndex] = (byte) Integer.parseInt(line[1]);
-                lut[2][lineIndex] = (byte) Integer.parseInt(line[2]);
+                lut[0][lineIndex] = (byte) Integer.parseInt(line[2]);
             }
 
             lineIndex++;

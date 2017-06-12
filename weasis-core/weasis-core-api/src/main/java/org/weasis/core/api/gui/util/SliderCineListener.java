@@ -37,7 +37,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
         super(action, min, max, value);
         this.time = time;
-        speedModel = new SpinnerNumberModel(speed, 1, 60, 1);
+        speedModel = new SpinnerNumberModel(speed, 1, 200, 1);
         speedModel.addChangeListener(e -> setSpeed((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
     }
 

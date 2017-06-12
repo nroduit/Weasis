@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
 import java.util.List;
 
 import org.weasis.core.api.image.ImageOpNode.Param;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.Copyable;
 
 public interface OpManager extends OpEventListener, Copyable<OpManager> {
@@ -26,9 +26,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     
     List<ImageOpNode> getOperations();
 
-    void setFirstNode(RenderedImage imgSource);
+    void setFirstNode(PlanarImage imgSource);
 
-    RenderedImage getFirstNodeInputImage();
+    PlanarImage getFirstNodeInputImage();
 
     ImageOpNode getFirstNode();
 
@@ -36,9 +36,9 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
 
     ImageOpNode getLastNode();
 
-    RenderedImage getLastNodeOutputImage();
+    PlanarImage getLastNodeOutputImage();
 
-    RenderedImage process();
+    PlanarImage process();
 
     Object getParamValue(String opName, String param);
 

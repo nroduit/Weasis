@@ -12,13 +12,13 @@ package org.weasis.core.api.gui;
 
 import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
-import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public interface Image2DViewer<E extends ImageElement> {
 
@@ -38,7 +38,7 @@ public interface Image2DViewer<E extends ImageElement> {
 
     E getImage();
 
-    RenderedImage getSourceImage();
+    PlanarImage getSourceImage();
 
     Object getActionValue(String action);
 

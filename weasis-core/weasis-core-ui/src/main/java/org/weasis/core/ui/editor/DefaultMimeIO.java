@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import javax.media.jai.PlanarImage;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
@@ -28,6 +26,7 @@ import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
@@ -104,7 +103,7 @@ public class DefaultMimeIO implements MediaReader {
                 public void addMedia(MediaElement media) {
                     if (media != null) {
                         this.add(media);
-                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                        DataExplorerModel model = (DataExplorerModel) this.getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                                 new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));

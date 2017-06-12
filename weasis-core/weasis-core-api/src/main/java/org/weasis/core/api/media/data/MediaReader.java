@@ -14,8 +14,6 @@ import java.io.File;
 import java.net.URI;
 import java.util.Map;
 
-import javax.media.jai.PlanarImage;
-
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 
 public interface MediaReader extends Tagable {

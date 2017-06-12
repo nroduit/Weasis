@@ -14,9 +14,9 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -47,11 +47,11 @@ public class GraphicHelper {
      * @since 2.5.0
      */
     public static void newGridLayer(ViewCanvas<ImageElement> view) {
-        RenderedImage sourceImage = view.getSourceImage();
+        PlanarImage sourceImage = view.getSourceImage();
 
         // Retrieve image size
-        int width = sourceImage.getWidth();
-        int height = sourceImage.getHeight();
+        int width = sourceImage.width();
+        int height = sourceImage.height();
 
         double diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(width, 2));
 

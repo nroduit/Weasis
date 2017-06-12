@@ -28,7 +28,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -54,6 +53,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
@@ -248,16 +248,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         affineTransform.setToScale(viewScale, viewScale);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             affineTransform.rotate(rotationAngle * Math.PI / 180.0, modelArea.getWidth() / 2.0,
                 modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:
@@ -338,7 +338,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         zoom(zoomFactor);
     }
 
-    protected RenderedImage getSourceImage() {
+    protected PlanarImage getSourceImage() {
         SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type)) {
             return freezeOperations.getLastNodeOutputImage();
@@ -347,7 +347,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         // return the image before the zoom operation from the parent view
         ImageOpNode node = view2d.getImageLayer().getDisplayOpManager().getNode(ZoomOp.OP_NAME);
         if (node != null) {
-            return (RenderedImage) node.getParam(Param.INPUT_IMG);
+            return (PlanarImage) node.getParam(Param.INPUT_IMG);
         }
         return view2d.getImageLayer().getDisplayOpManager().getLastNodeOutputImage();
     }

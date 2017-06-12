@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.KernelData;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class FilterOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterOp.class);
@@ -47,14 +44,11 @@ public class FilterOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         KernelData kernel = (KernelData) params.get(P_KERNEL_DATA);
         if (kernel != null && !kernel.equals(KernelData.NONE)) {
-            ParameterBlock paramBlock = new ParameterBlock();
-            paramBlock.addSource(source);
-            paramBlock.add(kernel.getKernelJAI());
-            result = JAI.create("convolve", paramBlock, null); //$NON-NLS-1$
+            result = ImageProcessor.filter(source.toMat(), kernel);
         }
         params.put(Param.OUTPUT_IMG, result);
     }

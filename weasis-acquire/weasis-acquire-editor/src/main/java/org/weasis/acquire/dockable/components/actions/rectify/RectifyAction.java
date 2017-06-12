@@ -16,7 +16,6 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -32,6 +31,7 @@ import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -62,7 +62,7 @@ public class RectifyAction extends AbstractAcquireAction {
         AcquireImageInfo imageInfo = getImageInfo();
         ViewCanvas<ImageElement> view = getView();
 
-        RenderedImage img = view.getSourceImage();
+        PlanarImage img = view.getSourceImage();
         if (img != null) {
             Rectangle2D modelArea = view.getViewModel().getModelArea();
             Rectangle2D area =
@@ -126,17 +126,17 @@ public class RectifyAction extends AbstractAcquireAction {
 
     private static void buildAffineTransform(AffineTransform transform, OpManager dispOp, Rectangle2D modelArea,
         Point offset) {
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
         if (rotationAngle != null && rotationAngle != 0) {
             rotationAngle = (rotationAngle + 720) % 360;
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             transform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0, modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:

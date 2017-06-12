@@ -272,8 +272,8 @@ public class PrGraphicUtil {
 
     private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width,
         double height) {
-        float dx = points[p1] - points[p2];
-        float dy = points[p1 + 1] - points[p2 + 1];
+        double dx = points[p1] - points[p2];
+        double dy = points[p1 + 1] - points[p2 + 1];
         if (isDisp) {
             dx *= width;
             dy *= height;

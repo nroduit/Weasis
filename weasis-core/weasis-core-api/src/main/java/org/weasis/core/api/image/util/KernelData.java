@@ -12,8 +12,6 @@ package org.weasis.core.api.image.util;
 
 import java.io.Serializable;
 
-import javax.media.jai.KernelJAI;
-
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
 
@@ -191,16 +189,7 @@ public class KernelData implements Serializable {
     public void setDivisor(int divisor) {
         this.divisor = divisor;
     }
-
-    public KernelJAI getKernelJAI() {
-        if (data == null) {
-            return new KernelJAI(1, 1, 0, 0, new float[] { 1.0F });
-        } else {
-            return new KernelJAI(width, height, xOrigin, yOrigin, data);
-        }
-    }
     
-
     public static KernelData[] getAllFilters() {
         return new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE,
             OUTLINE, EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23, GAUSSIAN25, GAUSSIAN27 };

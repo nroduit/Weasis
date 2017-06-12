@@ -65,7 +65,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
     private static final long serialVersionUID = -5804430771962614157L;
 
-    private static final String patterViews = Messages.getString("ImageViewerPlugin.2"); //$NON-NLS-1$
+    private static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2"); //$NON-NLS-1$
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class<?> view2dClass = ViewCanvas.class;
@@ -73,10 +73,10 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName(), //$NON-NLS-1$ //$NON-NLS-2$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x1 = new GridBagLayoutModel("2x1", //$NON-NLS-1$
-        String.format(patterViews, "2x1"), 2, 1, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "2x1"), 2, 1, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2x1.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_1x2 = new GridBagLayoutModel("1x2", //$NON-NLS-1$
-        String.format(patterViews, "1x2"), 1, 2, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "1x2"), 1, 2, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2_f2 =
         new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), //$NON-NLS-1$
@@ -87,19 +87,19 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             "layout_c1x2", Messages.getString("ImageViewerPlugin.layout_c1x2"), //$NON-NLS-1$ //$NON-NLS-2$
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2_f1x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_2x2 = new GridBagLayoutModel("2x2", //$NON-NLS-1$
-        String.format(patterViews, "2x2"), 2, 2, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "2x2"), 2, 2, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout2x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_3x2 = new GridBagLayoutModel("3x2", //$NON-NLS-1$
-        String.format(patterViews, "3x2"), 3, 2, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "3x2"), 3, 2, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout3x2.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_3x3 = new GridBagLayoutModel("3x3", //$NON-NLS-1$
-        String.format(patterViews, "3x3"), 3, 3, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "3x3"), 3, 3, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout3x3.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_4x3 = new GridBagLayoutModel("4x3", //$NON-NLS-1$
-        String.format(patterViews, "4x3"), 4, 3, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "4x3"), 4, 3, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout4x3.png"))); //$NON-NLS-1$
     public static final GridBagLayoutModel VIEWS_4x4 = new GridBagLayoutModel("4x4", //$NON-NLS-1$
-        String.format(patterViews, "4x4"), 4, 4, view2dClass.getName(), //$NON-NLS-1$
+        String.format(F_VIEWS, "4x4"), 4, 4, view2dClass.getName(), //$NON-NLS-1$
         new ImageIcon(ImageViewerPlugin.class.getResource("/icon/22x22/layout4x4.png"))); //$NON-NLS-1$
 
     /**
@@ -188,7 +188,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
      *
      * @return the layoutModel
      */
-    public GridBagLayoutModel getLayoutModel() {
+    public synchronized GridBagLayoutModel getLayoutModel() {
         return layoutModel;
     }
 
@@ -384,7 +384,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     selectedImagePane = view2ds.get(0);
                 }
                 MouseActions mouseActions = eventManager.getMouseActions();
-                boolean tiledMode = SynchData.Mode.TILE.equals(synchView);
+                boolean tiledMode = SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
                 for (int i = 0; i < view2ds.size(); i++) {
                     ViewCanvas<E> v = view2ds.get(i);
                     // Close lens because update does not work
@@ -479,7 +479,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
             while (enumVal.hasNext()) {
                 Entry<LayoutConstraints, Component> entry = enumVal.next();
-                if (entry.getValue().equals(defaultView2d)) {
+                if (entry.getValue().equals(defaultView2d.getJComponent())) {
                     GridBagConstraints c = entry.getKey().copy();
                     c.weightx = 1.0;
                     c.weighty = 1.0;

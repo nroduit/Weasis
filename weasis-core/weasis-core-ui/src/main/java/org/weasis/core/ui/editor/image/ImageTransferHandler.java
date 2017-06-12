@@ -12,9 +12,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
-import java.awt.image.RenderedImage;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
@@ -23,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.media.data.PlanarImage;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
     private static final long serialVersionUID = 7716040872158831560L;
@@ -50,7 +50,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
         // anonymize and other default remove annotations
         if (comp instanceof Image2DViewer) {
             Image2DViewer<?> view2DPane = (Image2DViewer<?>) comp;
-            RenderedImage src = view2DPane.getSourceImage();
+            PlanarImage src = view2DPane.getSourceImage();
             if (src != null) {
                 SimpleOpManager opManager = view2DPane.getImageLayer().getDisplayOpManager().copy();
                 opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));
@@ -70,10 +70,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {
-            RenderedImage result = disOp.process();
-            if (result instanceof PlanarImage) {
-                return ((PlanarImage) result).getAsBufferedImage();
-            }
+            return ImageProcessor.toBufferedImage(disOp.process());
         }
         return null;
     }
