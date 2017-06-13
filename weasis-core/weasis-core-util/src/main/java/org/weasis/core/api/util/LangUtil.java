@@ -22,7 +22,8 @@ public class LangUtil {
         return true;
     }
 
-    public static <T, C extends Collection<T>> C convertCollectionType(Iterable<?> from, C newCollection, Class<T> listClass) {
+    public static <T, C extends Collection<T>> C convertCollectionType(Iterable<?> from, C newCollection,
+        Class<T> listClass) {
         for (Object item : from) {
             newCollection.add(listClass.cast(item));
         }
