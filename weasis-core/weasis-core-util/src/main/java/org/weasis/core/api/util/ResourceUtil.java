@@ -19,11 +19,12 @@ import javax.swing.ImageIcon;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.service.BundleTools;
 
 public class ResourceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceUtil.class);
 
+    private static volatile String path = StringUtil.EMPTY_STRING;
+    
     private ResourceUtil() {
     }
 
@@ -82,11 +83,13 @@ public class ResourceUtil {
         return null;
     }
 
-    private static String getResourcePath() {
-        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
+    public static void setResourcePath(String path ) {
         if (!StringUtil.hasText(path)) {
-            throw new IllegalArgumentException("Empty system property: weasis.resources.path"); //$NON-NLS-1$
+            throw new IllegalArgumentException("No value for property: weasis.resources.path"); //$NON-NLS-1$
         }
+        ResourceUtil.path = path;
+    }
+    private static String getResourcePath() {
         return path;
     }
 

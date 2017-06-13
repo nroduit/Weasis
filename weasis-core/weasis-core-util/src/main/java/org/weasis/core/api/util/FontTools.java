@@ -12,21 +12,15 @@ package org.weasis.core.api.util;
 
 import java.awt.Font;
 import java.awt.Graphics;
-import java.util.Enumeration;
-
-import javax.swing.JLabel;
-import javax.swing.JSlider;
 
 public class FontTools {
 
-    private static final String DEFAULT_FAMILY = "Dialog"; //$NON-NLS-1$
-
-    private static final Font font12 = new Font(DEFAULT_FAMILY, 0, 12);
-    private static final Font font12Bold = new Font(DEFAULT_FAMILY, Font.BOLD, 12);
-    private static final Font font11 = new Font(DEFAULT_FAMILY, 0, 11);
-    private static final Font font10 = new Font(DEFAULT_FAMILY, 0, 10);
-    private static final Font font9 = new Font(DEFAULT_FAMILY, 0, 9);
-    private static final Font font8 = new Font(DEFAULT_FAMILY, 0, 8);
+    private static final Font font12 = new Font(Font.SANS_SERIF, 0, 12);
+    private static final Font font12Bold = new Font(Font.SANS_SERIF, Font.BOLD, 12);
+    private static final Font font11 = new Font(Font.SANS_SERIF, 0, 11);
+    private static final Font font10 = new Font(Font.SANS_SERIF, 0, 10);
+    private static final Font font9 = new Font(Font.SANS_SERIF, 0, 9);
+    private static final Font font8 = new Font(Font.SANS_SERIF, 0, 8);
 
     private FontTools() {
     }
@@ -55,25 +49,6 @@ public class FontTools {
         return font8;
     }
 
-    public static void setFont10(JSlider jslider) {
-        Enumeration<?> enumVal = jslider.getLabelTable().elements();
-        while (enumVal.hasMoreElements()) {
-            Object el = enumVal.nextElement();
-            if (el instanceof JLabel) {
-                ((JLabel) el).setFont(font10);
-            }
-        }
-    }
-
-    public static void setFont8(JSlider jslider) {
-        Enumeration<?> enumVal = jslider.getLabelTable().elements();
-        while (enumVal.hasMoreElements()) {
-            Object el = enumVal.nextElement();
-            if (el instanceof JLabel) {
-                ((JLabel) el).setFont(font8);
-            }
-        }
-    }
 
     public static float getAccurateFontHeight(Graphics g) {
         return (float) g.getFontMetrics().getStringBounds("0", g).getHeight(); //$NON-NLS-1$

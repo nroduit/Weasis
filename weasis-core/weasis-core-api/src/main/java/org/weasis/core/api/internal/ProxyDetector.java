@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.core.api.util;
+package org.weasis.core.api.internal;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
