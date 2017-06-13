@@ -77,10 +77,18 @@ public class JMVUtils {
         super();
     }
 
+    /**
+     * @deprecated use LangUtil instead
+     */
+    @Deprecated
     public static boolean getNULLtoFalse(Object val) {
         return Boolean.TRUE.equals(val);
     }
 
+    /**
+     * @deprecated use LangUtil instead
+     */
+    @Deprecated
     public static boolean getNULLtoTrue(Object val) {
         if (val instanceof Boolean) {
             return ((Boolean) val).booleanValue();
@@ -302,7 +310,7 @@ public class JMVUtils {
             return new Dimension(30, 30);
         }
     }
-    
+
     public static HTMLEditorKit buildHTMLEditorKit(JComponent component) {
         Objects.requireNonNull(component);
         HTMLEditorKit kit = new HTMLEditorKit();
@@ -313,10 +321,10 @@ public class JMVUtils {
             + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
         return kit;
     }
-    
+
     public static void addStylesToHTML(StyledDocument doc) {
         // Initialize some styles.
-        Style regular = doc.getStyle("default"); //$NON-NLS-1$;
+        Style regular = doc.getStyle("default"); //$NON-NLS-1$
         Style s = doc.addStyle("title", regular); //$NON-NLS-1$
         StyleConstants.setFontSize(s, 16);
         StyleConstants.setBold(s, true);
