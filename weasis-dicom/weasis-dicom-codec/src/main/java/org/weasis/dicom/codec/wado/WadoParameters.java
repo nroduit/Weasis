@@ -32,6 +32,7 @@ public class WadoParameters {
     public static final String TAG_WADO_WEB_LOGIN = "webLogin"; //$NON-NLS-1$
     public static final String TAG_HTTP_TAG = "httpTag"; //$NON-NLS-1$
 
+    private final String archiveID;
     private final String wadoURL;
     private final boolean requireOnlySOPInstanceUID;
     private final String additionnalParameters;
@@ -40,11 +41,12 @@ public class WadoParameters {
     private final String webLogin;
     private final List<WadoParameters.HttpTag> httpTaglist;
 
-    public WadoParameters(String wadoURL, boolean requireOnlySOPInstanceUID, String additionnalParameters,
-        String overrideDicomTagsList, String webLogin) {
+    public WadoParameters(String archiveID, String wadoURL, boolean requireOnlySOPInstanceUID,
+        String additionnalParameters, String overrideDicomTagsList, String webLogin) {
         if (wadoURL == null) {
             throw new IllegalArgumentException("wadoURL cannot be null"); //$NON-NLS-1$
         }
+        this.archiveID = archiveID;
         this.wadoURL = wadoURL;
         this.httpTaglist = new ArrayList<>(3);
         // Add possible session tags
@@ -86,6 +88,10 @@ public class WadoParameters {
 
     public String getWebLogin() {
         return webLogin;
+    }
+
+    public String getArchiveID() {
+        return archiveID;
     }
 
     public String getWadoURL() {
