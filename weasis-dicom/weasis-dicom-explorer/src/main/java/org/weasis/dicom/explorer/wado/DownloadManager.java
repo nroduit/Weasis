@@ -376,6 +376,7 @@ public class DownloadManager {
 
     private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
         throws XMLStreamException {
+        String arcID = TagUtil.getTagAttribute(xmler, TAG_ARCHIVE_ID, null);
         String wadoURL = TagUtil.getTagAttribute(xmler, TAG_BASE_URL, null);
         boolean onlySopUID =
             Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
@@ -384,7 +385,7 @@ public class DownloadManager {
         String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
-            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+            new WadoParameters(arcID, wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
         readQuery(model, seriesList, xmler, wadoParameters, TAG_ARC_QUERY);
     }
 
@@ -398,7 +399,7 @@ public class DownloadManager {
         String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
-            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+            new WadoParameters("wadoID", wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
         readQuery(model, seriesList, xmler, wadoParameters, WadoParameters.TAG_DOCUMENT_ROOT);
     }
 

@@ -67,7 +67,7 @@ public class DicomDirLoader {
         this.dicomModel = (DicomModel) explorerModel;
         this.writeInCache = writeInCache;
         this.dcmDirFile = dcmDirFile;
-        wadoParameters = new WadoParameters("", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
+        wadoParameters = new WadoParameters("id", "", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
         seriesList = new ArrayList<>();
 
     }
