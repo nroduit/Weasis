@@ -37,7 +37,7 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -204,7 +204,7 @@ public class CheckTreeModel {
 
         public String getToolTipText() {
             TagReadable s = (TagReadable) getUserObject();
-            Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
+            Thumbnailable thumb = (Thumbnailable) s.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 try {
                     File path = thumb.getThumbnailPath();

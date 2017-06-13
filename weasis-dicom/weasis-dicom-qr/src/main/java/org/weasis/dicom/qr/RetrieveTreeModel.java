@@ -33,7 +33,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -160,7 +160,7 @@ public class RetrieveTreeModel {
 
         public String getToolTipText() {
             TagReadable s = (TagReadable) getUserObject();
-            Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
+            Thumbnailable thumb = (Thumbnailable) s.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 try {
                     File path = thumb.getThumbnailPath();

@@ -24,12 +24,19 @@
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<!-- Force exporting org.weasis.core.api.util -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-util</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.prefs</artifactId>
@@ -47,7 +54,7 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
-		
+
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
