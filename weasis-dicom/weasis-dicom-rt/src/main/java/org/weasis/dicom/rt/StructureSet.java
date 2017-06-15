@@ -8,6 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  ******************************************************************************/
+
 package org.weasis.dicom.rt;
 
 import java.util.Date;
@@ -27,15 +28,15 @@ public class StructureSet extends HashMap<Integer, StructureLayer> {
 
     @Override
     public String toString() {
-        return label;
+        return this.label;
     }
 
     public String getLabel() {
-        return label;
+        return this.label;
     }
 
     public Date getDate() {
-        return date;
+        return this.date;
     }
 
     @Override

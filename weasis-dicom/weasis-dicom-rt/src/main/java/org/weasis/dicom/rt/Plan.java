@@ -12,9 +12,13 @@
 
 package org.weasis.dicom.rt;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
-public class Plan {
+public class Plan implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String sopInstanceUid;
     private String label;
@@ -23,6 +27,7 @@ public class Plan {
     private String description;
     private String geometry;
     private Double rxDose;
+    private List<Dose> doses = new ArrayList<>();
 
     public String getSopInstanceUid() {
         return this.sopInstanceUid;
@@ -80,4 +85,60 @@ public class Plan {
         this.rxDose = rxDose;
     }
 
+    public List<Dose> getDoses() {
+        return this.doses;
+    }
+
+    public void setDoses(List<Dose> doses) {
+        this.doses = doses;
+    }
+
+    public boolean hasAssociatedDose() {
+        return !this.doses.isEmpty();
+    }
+
+    public Dose getFirstDose() {
+        if (!this.doses.isEmpty()) {
+            return this.doses.get(0);
+        }
+
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return this.label;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((date == null) ? 0 : date.hashCode());
+        result = prime * result + ((label == null) ? 0 : label.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Plan other = (Plan) obj;
+        if (date == null) {
+            if (other.date != null)
+                return false;
+        } else if (!date.equals(other.date))
+            return false;
+        if (label == null) {
+            if (other.label != null)
+                return false;
+        } else if (!label.equals(other.label))
+            return false;
+        return true;
+    }
+    
 }

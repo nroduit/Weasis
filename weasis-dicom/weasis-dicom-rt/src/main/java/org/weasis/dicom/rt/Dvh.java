@@ -12,7 +12,7 @@
 
 package org.weasis.dicom.rt;
 
-import org.knowm.xchart.XYChart;
+//import org.knowm.xchart.XYChart;
 
 public class Dvh {
 
@@ -137,21 +137,21 @@ public class Dvh {
         this.dvhData = dvhData;
     }
 
-    public XYChart appendChart(String structureName, XYChart dvhChart) {
-
-        // Each DVH element is 1 cGy and scaled value of each element is relative volume
-        double[] x =  new double[this.dvhData.length];
-        for (int i = 0; i < x.length; i++) {
-            x[i] = i;
-        }
-
-        dvhChart.addSeries(structureName, x, this.getScaledDvhData());
-
-        //axes.set_xlim(0, maxlen)
-        //axes.set_ylim(0, 100)
-
-        return dvhChart;
-    }
+//    public XYChart appendChart(String structureName, XYChart dvhChart) {
+//
+//        // Each DVH element is 1 cGy and scaled value of each element is relative volume
+//        double[] x =  new double[this.dvhData.length];
+//        for (int i = 0; i < x.length; i++) {
+//            x[i] = i;
+//        }
+//
+//        dvhChart.addSeries(structureName, x, this.getScaledDvhData());
+//
+//        //axes.set_xlim(0, maxlen)
+//        //axes.set_ylim(0, 100)
+//
+//        return dvhChart;
+//    }
 
     public double[] getScaledDvhData() {
         if (this.scaledDvhData == null) {

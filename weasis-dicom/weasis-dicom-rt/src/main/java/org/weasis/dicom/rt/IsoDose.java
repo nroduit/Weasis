@@ -21,6 +21,7 @@ public class IsoDose {
     private int level;
     private String name;
     private double absoluteDose;
+    private double thickness;
 
     private Color color;
     private Map<Double, ArrayList<Contour>> planes;
@@ -60,6 +61,14 @@ public class IsoDose {
         return this.absoluteDose;
     }
 
+    public double getThickness() {
+        return this.thickness;
+    }
+
+    public void setThickness(double value) {
+        this.thickness = value;
+    }
+
     public Map<Double, ArrayList<Contour>> getPlanes() {
         return this.planes;
     }
@@ -69,11 +78,16 @@ public class IsoDose {
     }
 
     public String getLabel() {
-        return this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy [" + this.name + "]";
+        String result = this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy";
+        if (this.name != null && !this.name.equals("")) {
+            result += " [" + this.name + "]";
+        }
+        return result;
     }
 
     @Override
     public String toString() {
         return getLabel();
     }
+    
 }
