@@ -208,6 +208,13 @@ public class StringUtil {
         return bytesToHex(md.digest(val));
     }
 
+    public static String getNonNullObject(Object object) {
+        if (object == null) {
+            return null; 
+        }
+        return object.toString();
+    }
+    
     public static String getEmpty2NullObject(Object object) {
         if (object == null) {
             return ""; //$NON-NLS-1$
