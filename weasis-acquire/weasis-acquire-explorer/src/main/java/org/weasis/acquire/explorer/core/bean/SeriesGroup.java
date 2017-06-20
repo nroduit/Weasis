@@ -26,7 +26,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
-public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGroup> {
+public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGroup> {
     public enum Type {
         NONE, DATE, NAME;
     }

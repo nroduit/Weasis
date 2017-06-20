@@ -153,7 +153,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[1].equals(seltected)) {
             // No option
         } else if (EXPORT_FORMAT[2].equals(seltected)) {
-            final JSlider slider = new JSlider(0, 100, StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80));
+            final JSlider slider = new JSlider(0, 100, StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 80));
 
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
@@ -330,7 +330,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private void writeOther(ExplorerTask task, File exportDir, CheckTreeModel model, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString()));
-        int jpegQuality = StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80);
+        int jpegQuality = StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.parseBoolean(pref.getProperty(HEIGHT_BITS, Boolean.FALSE.toString()));
 
         try {

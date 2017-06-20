@@ -96,14 +96,25 @@ public class StringUtil {
             String[] vl = val.split(delimiter);
             int[] res = new int[vl.length];
             for (int i = 0; i < res.length; i++) {
-                res[i] = getInteger(vl[i]);
+                res[i] = getInt(vl[i]);
             }
             return res;
         }
         return EMPTY_INT_ARRAY;
     }
 
-    public static int getInteger(String val) {
+    public static Integer getInteger(String val) {
+        if (StringUtil.hasText(val)) {
+            try {
+                return Integer.parseInt(val.trim());
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Cannot parse {} to Integer", val); //$NON-NLS-1$
+            }
+        }
+        return null;
+    }
+    
+    public static int getInt(String val) {
         if (StringUtil.hasText(val)) {
             try {
                 return Integer.parseInt(val.trim());
@@ -114,7 +125,7 @@ public class StringUtil {
         return 0;
     }
 
-    public static int getInteger(String value, int defaultValue) {
+    public static int getInt(String value, int defaultValue) {
         int result = defaultValue;
         if (value != null) {
             try {
