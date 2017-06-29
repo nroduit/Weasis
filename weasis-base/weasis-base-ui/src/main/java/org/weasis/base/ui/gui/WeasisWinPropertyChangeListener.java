@@ -22,10 +22,10 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -99,14 +99,14 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                     } else if (source instanceof ViewerPluginBuilder) {
                         ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
                         DataExplorerModel model = builder.getModel();
-                       List<MediaSeries<MediaElement>> series = builder.getSeries();
+                        List<MediaSeries<MediaElement>> series = builder.getSeries();
                         Map<String, Object> props = builder.getProperties();
                         if (series != null
-                            && JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
+                            && LangUtil.getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
                             boolean inSelView =
-                                JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
+                                LangUtil.getNULLtoFalse((Boolean) props.get(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW))
                                     && builder.getFactory().isViewerCreatedByThisFactory(selectedPlugin);
 
                             if (series.size() == 1) {
@@ -122,8 +122,7 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                                     weasisWin.getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
                                 for (Iterator<Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>>> iterator =
                                     map.entrySet().iterator(); iterator.hasNext();) {
-                                    Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>> entry =
-                                        iterator.next();
+                                    Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>> entry = iterator.next();
                                     MediaSeriesGroup group = entry.getKey();
 
                                     if (inSelView) {

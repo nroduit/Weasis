@@ -28,9 +28,9 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.MergeImgOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 
@@ -83,7 +83,7 @@ public class OverlayOp extends AbstractOp {
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
             if (image != null) {
-                boolean overlays = JMVUtils.getNULLtoFalse(image.getTagValue(TagW.HasOverlay));
+                boolean overlays = LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay));
 
                 if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
                     DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();

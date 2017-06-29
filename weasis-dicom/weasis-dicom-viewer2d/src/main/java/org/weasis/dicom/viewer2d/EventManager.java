@@ -52,7 +52,6 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -80,6 +79,7 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -311,8 +311,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset =
                         presetAction.isPresent() ? (PresetWindowLevel) presetAction.get().getSelectedItem() : null;
                     PresetWindowLevel newPreset = null;
-                    boolean pixelPadding = JMVUtils.getNULLtoTrue(
-                        view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+                    boolean pixelPadding = LangUtil.getNULLtoTrue(
+                        (Boolean) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
 
@@ -646,7 +646,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     (Boolean) (filterSelection ? selected : selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
                 ViewCanvas<DicomImageElement> viewPane = container.getSelectedImagePane();
                 int frameIndex =
-                    JMVUtils.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex() - viewPane.getTileOffset();
+                    LangUtil.getNULLtoFalse(enableFilter) ? 0 : viewPane.getFrameIndex() - viewPane.getTileOffset();
 
                 for (ViewCanvas<DicomImageElement> view : container.getImagePanels(true)) {
                     if (!(view.getSeries() instanceof DicomSeries) || !(view instanceof View2d)) {
@@ -966,7 +966,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Optional<ToggleButtonListener> koToggleAction =
                 getAction(ActionW.KO_TOOGLE_STATE, ToggleButtonListener.class);
             Optional<ToggleButtonListener> koFilterAction = getAction(ActionW.KO_FILTER, ToggleButtonListener.class);
-            if (JMVUtils.getNULLtoFalse(view2d.getActionValue("no.ko"))) { //$NON-NLS-1$
+            if (LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue("no.ko"))) { //$NON-NLS-1$
                 koToggleAction.ifPresent(a -> a.enableAction(false));
                 koFilterAction.ifPresent(a -> a.enableAction(false));
                 koSelectionAction.ifPresent(a -> a.enableAction(false));
@@ -995,11 +995,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (node != null) {
             int imageDataType = image.getImage().getSampleModel().getDataType();
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
-            boolean defaultPreset = JMVUtils.getNULLtoTrue(node.getParam(ActionW.DEFAULT_PRESET.cmd()));
+            boolean defaultPreset = LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.DEFAULT_PRESET.cmd()));
             Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
             Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
             LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
-            boolean pixelPadding = JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+            boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
             PresentationStateReader prReader =
                 (PresentationStateReader) view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
 
@@ -1198,12 +1198,15 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
                     } else if (Mode.TILE.equals(synch.getMode())) {
                         // Limit the scroll
-                        final int maxShift = series.size((Filter<DicomImageElement>) viewPane.getActionValue(ActionW.FILTERED_SERIES.cmd())) - panes.size();
-                        cineAction.ifPresent(a -> a.setSliderMinMaxValue(1, maxShift < 1 ? 1 : maxShift, viewPane.getFrameIndex() + 1, false));
-                        
+                        final int maxShift = series
+                            .size((Filter<DicomImageElement>) viewPane.getActionValue(ActionW.FILTERED_SERIES.cmd()))
+                            - panes.size();
+                        cineAction.ifPresent(a -> a.setSliderMinMaxValue(1, maxShift < 1 ? 1 : maxShift,
+                            viewPane.getFrameIndex() + 1, false));
+
                         Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
                         Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
-                        int frameIndex = JMVUtils.getNULLtoFalse(enableFilter) ? 0
+                        int frameIndex = LangUtil.getNULLtoFalse(enableFilter) ? 0
                             : viewPane.getFrameIndex() - viewPane.getTileOffset();
                         for (int i = 0; i < panes.size(); i++) {
                             ViewCanvas<DicomImageElement> pane = panes.get(i);
@@ -1221,7 +1224,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             // pane.updateSynchState();
                         }
 
-                        if (JMVUtils.getNULLtoFalse(enableFilter)) {
+                        if (LangUtil.getNULLtoFalse(enableFilter)) {
                             KOManager.updateKOFilter(viewPane, selectedKO, enableFilter, frameIndex);
                         }
                     }

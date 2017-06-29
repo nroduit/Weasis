@@ -16,7 +16,6 @@ import javax.media.jai.PlanarImage;
 
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -24,6 +23,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -169,7 +169,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             if (lut.getLutTable() == null) {
                 lut = ByteLut.grayLUT;
             }
-            byte[][] table = JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
+            byte[][] table = LangUtil.getNULLtoFalse((Boolean) pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
                 ? lut.getInvertedLutTable() : lut.getLutTable();
             float length = table[0].length;
 

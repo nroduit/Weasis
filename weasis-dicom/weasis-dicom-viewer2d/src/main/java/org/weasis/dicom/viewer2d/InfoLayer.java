@@ -28,7 +28,6 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
@@ -40,6 +39,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.editor.image.SynchData;
@@ -430,7 +430,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     }
                 }
 
-                if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                     vr.x = -vr.x;
                     vr.y = -vr.y;
                     vr.z = -vr.z;
@@ -444,7 +444,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
                 if (po != null && po.length == 2 && (rotationAngle == null || rotationAngle == 0)) {
                     // Do not display if there is a transformation
-                    if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                    if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                         colLeft = po[0];
                     } else {
                         StringBuilder buf = new StringBuilder();

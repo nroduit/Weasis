@@ -60,7 +60,7 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
         }
         String val = value == null ? null : value.toString(); 
         if(!StringUtil.hasText(val)) {
-            val = " ";
+            val = " "; //$NON-NLS-1$
         }
         setText(val);
         setToolTipText(val);

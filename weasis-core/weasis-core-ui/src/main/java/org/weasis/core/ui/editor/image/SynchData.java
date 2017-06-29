@@ -14,8 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.util.Copyable;
+import org.weasis.core.api.util.LangUtil;
 
 public class SynchData implements Copyable<SynchData> {
 
@@ -49,7 +49,7 @@ public class SynchData implements Copyable<SynchData> {
     }
 
     public boolean isActionEnable(String action) {
-        return JMVUtils.getNULLtoFalse(actions.get(action));
+        return LangUtil.getNULLtoFalse(actions.get(action));
     }
 
     public Mode getMode() {

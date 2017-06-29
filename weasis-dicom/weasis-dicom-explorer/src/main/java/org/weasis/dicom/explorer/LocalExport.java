@@ -62,6 +62,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.model.GraphicModel;
@@ -341,7 +342,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
                     if (node.getUserObject() instanceof Series) {
                         MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
-                        if (JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave))) {
+                        if (LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
                             Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
                             if (series != null) {
                                 seriesGph.add((String) series.getTagValue(TagD.get(Tag.SeriesInstanceUID)));
@@ -507,7 +508,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         }
                     } else if (node.getUserObject() instanceof Series) {
                         MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
-                        if (JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave))) {
+                        if (LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
                             Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
                             if (series != null) {
                                 String seriesInstanceUID = UIDUtils.createUID();

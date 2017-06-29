@@ -34,7 +34,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -57,6 +56,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -314,7 +314,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 if (defaultView2d != null) {
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
-                        boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
+                        boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) defaultView2d.getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
                         getAction(ActionW.WINDOW, SliderChangeListener.class)
                             .ifPresent(a -> a.setRealValue(img.getDefaultWindow(pixelPadding)));

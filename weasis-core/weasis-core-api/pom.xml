@@ -25,7 +25,7 @@
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<!-- Force exporting org.weasis.core.api.util -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*;-split-package:=merge-first</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>
