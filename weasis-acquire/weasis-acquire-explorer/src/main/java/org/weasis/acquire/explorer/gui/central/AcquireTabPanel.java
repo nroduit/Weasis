@@ -240,6 +240,10 @@ public class AcquireTabPanel extends JPanel {
         medias.forEach(m -> m.setSeries(seriesGroup));
         updateSerie(seriesGroup, AcquireManager.findbySeries(seriesGroup));
     }
+    
+    public void updateSeriesFromGlobaTags() {
+        btnMap.keySet().forEach(g -> g.updateDicomTags());
+    }
 
     public void moveElementsByDate(List<AcquireImageInfo> medias) {
         removeImages(selected.getSerie(), medias);

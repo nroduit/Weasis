@@ -42,7 +42,6 @@ public class DefaultTagable implements Tagable {
         if (value != null) {
             setTag(tag, value);
         }
-
     }
 
     @Override

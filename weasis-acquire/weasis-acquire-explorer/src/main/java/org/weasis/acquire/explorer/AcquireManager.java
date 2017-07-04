@@ -137,7 +137,7 @@ public class AcquireManager {
     }
 
     public static AcquireImageInfo findByImage(ImageElement image) {
-        return getInstance().getAcquireImageInfo(image);
+        return getAcquireImageInfo(image);
     }
 
     public static List<AcquireImageInfo> findbySeries(SeriesGroup seriesGroup) {
@@ -175,12 +175,12 @@ public class AcquireManager {
     }
 
     public void removeImages(Collection<AcquireImageInfo> imageCollection) {
-        imageCollection.stream().filter(Objects::nonNull).forEach(this::removeImageFromDataMapping);
+        imageCollection.stream().filter(Objects::nonNull).forEach(AcquireManager::removeImageFromDataMapping);
         notifyImagesRemoved(imageCollection);
     }
 
     public void removeImage(AcquireImageInfo imageElement) {
-        Optional.ofNullable(imageElement).ifPresent(this::removeImageFromDataMapping);
+        Optional.ofNullable(imageElement).ifPresent(AcquireManager::removeImageFromDataMapping);
         notifyImageRemoved(imageElement);
     }
 
@@ -191,13 +191,20 @@ public class AcquireManager {
 
     public static void importImages(Collection<AcquireImageInfo> toImport, SeriesGroup searchedSeries,
         int maxRangeInMinutes) {
-        Objects.requireNonNull(searchedSeries);
-        if (imagesInfoByURI.isEmpty()) {
+        if (imagesInfoByURI.isEmpty() || GLOBAL.isAllowFullEdition()) {
             AcquireManager.showWorklist();
         }
 
-        boolean isSearchSeriesByDate = SeriesGroup.Type.DATE.equals(searchedSeries.getType());
-        SeriesGroup commonSeries = isSearchSeriesByDate ? null : getSeries(searchedSeries);
+        boolean isSearchSeriesByDate = false;
+        SeriesGroup commonSeries = null;
+        if (searchedSeries != null) {
+            isSearchSeriesByDate = SeriesGroup.Type.DATE.equals(searchedSeries.getType());
+            commonSeries = isSearchSeriesByDate ? null : getSeries(searchedSeries);
+        }
+
+        if (commonSeries == null) {
+            commonSeries = getDefaultSeries();
+        }
 
         List<AcquireImageInfo> imageImportedList = new ArrayList<>(toImport.size());
 
@@ -205,11 +212,16 @@ public class AcquireManager {
             if (isImageInfoPresent(newImageInfo)) {
                 getInstance().getAcquireExplorer().getCentralPane().tabbedPane.removeImage(newImageInfo);
             } else {
-                getInstance().addImageToDataMapping(newImageInfo);
+                addImageToDataMapping(newImageInfo);
             }
 
-            newImageInfo.setSeries(
-                isSearchSeriesByDate ? findSeries(searchedSeries, newImageInfo, maxRangeInMinutes) : commonSeries);
+            SeriesGroup group =
+                isSearchSeriesByDate ? findSeries(searchedSeries, newImageInfo, maxRangeInMinutes) : commonSeries;
+            if (group.isNeedUpateFromGlobaTags()) {
+                group.setNeedUpateFromGlobaTags(false);
+                group.updateDicomTags();
+            }
+            newImageInfo.setSeries(group);
 
             if (isSearchSeriesByDate) {
                 List<AcquireImageInfo> imageInfoList = AcquireManager.findbySeries(newImageInfo.getSeries());
@@ -224,19 +236,22 @@ public class AcquireManager {
     }
 
     public static void importImage(AcquireImageInfo newImageInfo, SeriesGroup searchedSeries, int maxRangeInMinutes) {
-        Objects.requireNonNull(searchedSeries);
         Objects.requireNonNull(newImageInfo);
-        if (imagesInfoByURI.isEmpty()) {
+        if (imagesInfoByURI.isEmpty() || GLOBAL.isAllowFullEdition()) {
             AcquireManager.showWorklist();
         }
 
         if (isImageInfoPresent(newImageInfo)) {
             getInstance().getAcquireExplorer().getCentralPane().tabbedPane.removeImage(newImageInfo);
         } else {
-            getInstance().addImageToDataMapping(newImageInfo);
+            addImageToDataMapping(newImageInfo);
         }
-
-        newImageInfo.setSeries(searchedSeries);
+        SeriesGroup group = searchedSeries == null ? getDefaultSeries() : searchedSeries;
+        if (group.isNeedUpateFromGlobaTags()) {
+            group.setNeedUpateFromGlobaTags(false);
+            group.updateDicomTags();
+        }
+        newImageInfo.setSeries(group);
 
         getInstance().notifyImageAdded(newImageInfo);
     }
@@ -373,12 +388,16 @@ public class AcquireManager {
         String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.port"); //$NON-NLS-1$
         if (StringUtil.hasText(aet) && StringUtil.hasText(host) && StringUtil.hasText(port)) {
             DicomNode called = new DicomNode(aet, host, Integer.parseInt(port));
-            DicomNode calling =
-                new DicomNode(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "ADVT")); //$NON-NLS-1$ //$NON-NLS-2$
+            DicomNode calling = new DicomNode(
+                BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL")); //$NON-NLS-1$ //$NON-NLS-2$
 
-            WorklistDialog dialog =
-                new WorklistDialog(UIManager.getApplicationWindow(), "DICOM Worklist", calling, called);
-            JMVUtils.showCenterScreen(dialog);
+            try {
+                WorklistDialog dialog =
+                    new WorklistDialog(UIManager.getApplicationWindow(), "DICOM Worklist", calling, called);
+                JMVUtils.showCenterScreen(dialog);
+            } catch (Exception e) {
+                LOGGER.error("Cannot get items from worklist", e);
+            }
         }
     }
 
@@ -467,8 +486,9 @@ public class AcquireManager {
 
                 imagesInfoByURI.clear();
                 imagesInfoByUID.clear();
-
                 GLOBAL.init(tagable);
+                // Ensure to update all the existing SeriesGroup
+                AcquireManager.getInstance().getAcquireExplorer().getCentralPane().tabbedPane.updateSeriesFromGlobaTags();
                 notifyPatientContextChanged();
             }
         }
@@ -488,7 +508,7 @@ public class AcquireManager {
      *
      * @return
      */
-    private boolean isAcquireImagesAllPublished() {
+    private static boolean isAcquireImagesAllPublished() {
         return getAllAcquireImageInfo().stream().allMatch(i -> i.getStatus() == AcquireImageStatus.PUBLISHED);
     }
 
@@ -631,13 +651,13 @@ public class AcquireManager {
         return null;
     }
 
-    private void addImageToDataMapping(AcquireImageInfo imageInfo) {
+    private static void addImageToDataMapping(AcquireImageInfo imageInfo) {
         Objects.requireNonNull(imageInfo);
         imagesInfoByURI.put(imageInfo.getImage().getMediaURI(), imageInfo);
         imagesInfoByUID.put((String) imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)), imageInfo);
     }
 
-    private void removeImageFromDataMapping(AcquireImageInfo imageInfo) {
+    private static void removeImageFromDataMapping(AcquireImageInfo imageInfo) {
         imagesInfoByURI.remove(imageInfo.getImage().getMediaURI());
         imagesInfoByUID.remove(imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)));
     }
@@ -656,7 +676,7 @@ public class AcquireManager {
      */
 
     // TODO be carefull not to execute this method on the EDT
-    private AcquireImageInfo getAcquireImageInfo(ImageElement image) {
+    private static AcquireImageInfo getAcquireImageInfo(ImageElement image) {
         if (image == null || image.getImage() == null) {
             return null;
         }
