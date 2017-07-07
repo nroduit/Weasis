@@ -56,6 +56,7 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -568,10 +569,10 @@ public class TagD extends TagW {
                                 TagD t;
                                 if (VR.SQ.equals(vrVal)) {
                                     t = new TagSeq(tagID, keyword, disp, null, vrVal, vmMin, vmMax, defaultValue,
-                                        JMVUtils.getNULLtoFalse(retired));
+                                        LangUtil.getEmptytoFalse(retired));
                                 } else {
                                     t = new TagD(tagID, keyword, disp, null, vrVal, vmMin, vmMax, defaultValue,
-                                        JMVUtils.getNULLtoFalse(retired));
+                                        LangUtil.getEmptytoFalse(retired));
                                 }
                                 TagW.addTag(t);
                             } catch (Exception e) {

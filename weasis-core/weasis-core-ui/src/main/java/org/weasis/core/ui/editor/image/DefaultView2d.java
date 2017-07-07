@@ -77,7 +77,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -103,6 +102,7 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -858,7 +858,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) //$NON-NLS-1$
                     / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-        return new Font(Font.SANS_SERIF, 0, fontSize); //$NON-NLS-1$
+        return new Font(Font.SANS_SERIF, 0, fontSize); 
     }
 
     /** paint routine */
@@ -952,7 +952,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         int rHeight = (int) Math.ceil(modelArea.getHeight() / ry - 0.5);
 
         OpManager dispOp = getDisplayOpManager();
-        boolean flip = JMVUtils.getNULLtoFalse(actionsInView.get(ActionW.FLIP.cmd()));
+        boolean flip = LangUtil.getNULLtoFalse((Boolean) actionsInView.get(ActionW.FLIP.cmd()));
         Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
 
         if (rotationAngle != null && rotationAngle > 0) {
@@ -1101,7 +1101,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else if (value.getLocation() != null) {
                     Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                     if (cutlines != null && cutlines) {
-                        if (JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
+                        if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
                             // Compute cutlines from the location of selected image
                             computeCrosslines(value.getLocation().doubleValue());
                         }

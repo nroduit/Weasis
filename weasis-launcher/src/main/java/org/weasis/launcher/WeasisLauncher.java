@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
@@ -625,7 +626,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
@@ -1199,7 +1200,7 @@ public class WeasisLauncher {
             laf = UIManager.getSystemLookAndFeelClassName();
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); //$NON-NLS-1$
+        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); // $NON-NLS-1$
         return laf;
     }
 

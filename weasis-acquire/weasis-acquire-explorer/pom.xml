@@ -26,11 +26,6 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-					</instructions>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>

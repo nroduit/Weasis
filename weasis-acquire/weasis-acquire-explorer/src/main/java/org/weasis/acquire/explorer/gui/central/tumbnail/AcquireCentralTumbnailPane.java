@@ -72,10 +72,10 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             repaintList();
         }
     }
-    
+
     public void repaintList() {
         // Require to repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
-        if(thumbnailList.asComponent() instanceof JComponent){
+        if (thumbnailList.asComponent() instanceof JComponent) {
             ((JComponent) thumbnailList.asComponent()).updateUI();
         }
     }
@@ -108,7 +108,6 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             return false;
         }
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
         @Override
         public boolean importData(TransferSupport support) {
             if (!canImport(support)) {
@@ -155,21 +154,19 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             return true;
         }
 
-        @SuppressWarnings("rawtypes")
         private void addToSerie(MediaElement media) {
             if (media instanceof ImageElement) {
                 AcquireCentralThumnailList tumbList =
                     (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
                 if (info != null) {
-                    SeriesGroup seriesGroup = Optional.ofNullable(tumbList.getSelectedSerie()).map(b -> b.getSerie())
-                        .orElseGet(AcquireManager::getDefaultSeries);
+                    SeriesGroup seriesGroup =
+                        Optional.ofNullable(tumbList.getSelectedSerie()).map(b -> b.getSerie()).orElse(null);
                     AcquireManager.importImage(info, seriesGroup, 0);
                 }
             }
         }
 
-        @SuppressWarnings("rawtypes")
         private boolean dropDFiles(List<File> files) {
             if (files != null) {
                 for (File file : files) {
