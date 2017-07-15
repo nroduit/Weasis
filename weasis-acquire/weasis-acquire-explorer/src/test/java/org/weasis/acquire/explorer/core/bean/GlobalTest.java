@@ -15,24 +15,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.MapEntry;
 import org.dcm4che3.data.Tag;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.weasis.acquire.explorer.core.bean.helper.GlobalHelper;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
+import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.codec.TagD;
 
@@ -46,8 +48,10 @@ public class GlobalTest extends GlobalHelper {
     public void setUp() throws Exception {
         global = null;
 
-        xml = PowerMockito.mock(Document.class);
-        patient = PowerMockito.mock(Element.class);
+        tagable = PowerMockito.mock(Tagable.class);
+        Map<TagW, Object> map = new HashMap<>();
+        Iterator<Entry<TagW, Object>> entrySet = map.entrySet().iterator();
+        PowerMockito.when(tagable.getTagEntrySetIterator()).thenReturn(entrySet);
 
         PowerMockito.mockStatic(LocalUtil.class);
         PowerMockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
@@ -66,32 +70,33 @@ public class GlobalTest extends GlobalHelper {
     }
 
     @Test
-    public void testInitWithXmlEmpty() throws Exception {
+    public void testInitWithEmptyTagable() throws Exception {
         global = new Global();
-        PowerMockito.when(xml.getDocumentElement()).thenReturn(null);
 
         // Method to test
-        global.init(xml);
+        global.init(tagable);
 
         // Tests
         assertThat(global.containTagKey(TagD.get(Tag.StudyInstanceUID))).isTrue();
         assertThat(global.getTagValue(TagD.get(Tag.StudyInstanceUID))).isNotNull();
     }
 
-    @Ignore
     @Test
-    @SuppressWarnings("unchecked")
     public void testInit() throws Exception {
         global = new Global();
-        PowerMockito.when(xml.getDocumentElement()).thenReturn(patient);
-
         // Method to test
-        global.init(xml);
+        DefaultTagable tags = new DefaultTagable();
+        tags.setTag(GlobalTag.patientId.tagW, GlobalTag.patientId.value);
+        tags.setTag(GlobalTag.patientName.tagW, GlobalTag.patientName.value);
+        tags.setTag(GlobalTag.issuerOfPatientId.tagW, GlobalTag.issuerOfPatientId.value);
+        tags.setTag(GlobalTag.patientBirthDate.tagW, GlobalTag.patientBirthDate.value);
+        tags.setTag(GlobalTag.patientSex.tagW, GlobalTag.patientSex.value);
+        tags.setTag(GlobalTag.studyDate.tagW, GlobalTag.studyDate.value);
+        tags.setTag(GlobalTag.modality.tagW, GlobalTag.modality.value);
+        global.init(tags);
 
         // Tests
-        assertThat(global.getTagEntrySet()).containsExactlyInAnyOrder(entry(GlobalTag.patientId),
-            entry(GlobalTag.patientName), entry(GlobalTag.issuerOfPatientId), entry(GlobalTag.patientBirthDate),
-            entry(GlobalTag.patientSex), entry(GlobalTag.studyDate), entry(GlobalTag.modality));
+        assertThat(global.getTagEntrySet()).hasSize(8);
     }
 
     private MapEntry<TagW, Object> entry(GlobalTag tag) throws ParseException {

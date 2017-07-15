@@ -16,7 +16,7 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
 		<powermock.version>1.6.5</powermock.version>
-		<weasis-dicom-tools.version>1.0.4</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>1.1.0-SNAPSHOT</weasis-dicom-tools.version>
 	</properties>
 	<repositories>
 		<repository>
@@ -79,8 +79,8 @@
 			<version>${weasis-dicom-tools.version}</version>
 			<exclusions>
 				<exclusion>
-					<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
+					<groupId>org.weasis.core</groupId>
+					<artifactId>weasis-core-util</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
@@ -101,6 +101,10 @@
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
 					<artifactId>dcm4che-image</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>junit</groupId>
+					<artifactId>junit</artifactId>
 				</exclusion>
 			</exclusions>
 		</dependency>

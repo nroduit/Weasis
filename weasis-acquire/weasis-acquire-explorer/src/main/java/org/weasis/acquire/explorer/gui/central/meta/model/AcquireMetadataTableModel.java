@@ -26,8 +26,8 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.util.StringUtil;
 
 public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireGlobalMeta.class);

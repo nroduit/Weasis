@@ -80,6 +80,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.docking.UIManager;
@@ -310,12 +311,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     sortStack(getCurrentSortComparator());
                 } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
                     int frameIndex =
-                        tile ? JMVUtils.getNULLtoFalse(synch.getView().getActionValue(ActionW.KO_FILTER.cmd())) ? 0
+                        tile ? LangUtil.getNULLtoFalse((Boolean) synch.getView().getActionValue(ActionW.KO_FILTER.cmd())) ? 0
                             : synch.getView().getFrameIndex() - synch.getView().getTileOffset() : -1;
                     KOManager.updateKOFilter(this, val,
                         (Boolean) (tile ? synch.getView().getActionValue(ActionW.KO_FILTER.cmd()) : null), frameIndex);
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
-                    int frameIndex = tile ? JMVUtils.getNULLtoFalse(val) ? 0
+                    int frameIndex = tile ? LangUtil.getNULLtoFalse((Boolean) val) ? 0
                         : synch.getView().getFrameIndex() - synch.getView().getTileOffset() : -1;
                     KOManager.updateKOFilter(this,
                         tile ? synch.getView().getActionValue(ActionW.KO_SELECTION.cmd()) : null, (Boolean) val,
@@ -367,7 +368,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                     }
                                     if (v instanceof View2d
                                         && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-                                        && JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
+                                        && LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
                                         ((View2d) v).computeCrosshair(p3);
                                         v.getJComponent().repaint();
                                     }
@@ -434,7 +435,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         imageLayer.setEnableDispOperations(false);
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, m, null));
 
-        boolean changePixConfig = JMVUtils.getNULLtoFalse(actionsInView.get(PRManager.TAG_CHANGE_PIX_CONFIG));
+        boolean changePixConfig = LangUtil.getNULLtoFalse((Boolean) actionsInView.get(PRManager.TAG_CHANGE_PIX_CONFIG));
         if (m != null) {
             // Restore the original image pixel size
             if (changePixConfig) {
@@ -984,8 +985,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void fillPixelInfo(final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
         if (c != null && c.length >= 1) {
-            boolean pixelPadding = JMVUtils
-                .getNULLtoTrue(getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+            boolean pixelPadding = LangUtil
+                .getNULLtoTrue((Boolean) getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
             PresentationStateReader prReader =
                 (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);

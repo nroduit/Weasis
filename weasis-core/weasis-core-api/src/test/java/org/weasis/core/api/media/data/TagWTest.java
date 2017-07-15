@@ -58,7 +58,7 @@ public class TagWTest {
         }
 
         tag = new TagW(ID_1, KEYWORD_1, DISPLAY_NAME_1, TagType.STRING, VM_MIN_1, VM_MAX_1, null);
-        assertThat(tag).isNotNull().hashCode();
+        assertThat(tag).isNotNull();
         assertThat(tag.getId()).isEqualTo(ID_1);
         assertThat(tag.getKeyword()).isEqualTo(KEYWORD_1);
         assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo(DISPLAY_NAME_1);
@@ -67,7 +67,7 @@ public class TagWTest {
         assertThat(tag.vmMin).isEqualTo(VM_MIN_1);
 
         tag = new TagW(ID_1, KEYWORD_1, DISPLAY_NAME_1, null, VM_MIN_2, VM_MAX_2, null);
-        assertThat(tag).isNotNull().hashCode();
+        assertThat(tag).isNotNull();
         assertThat(tag.getId()).isEqualTo(ID_1);
         assertThat(tag.getKeyword()).isEqualTo(KEYWORD_1);
         assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo(DISPLAY_NAME_1);

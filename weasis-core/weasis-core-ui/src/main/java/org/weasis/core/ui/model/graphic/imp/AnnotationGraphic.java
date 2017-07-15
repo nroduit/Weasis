@@ -24,6 +24,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.swing.Icon;
@@ -309,15 +310,11 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         if (view2d == null || labels == null || labels.length == 0 || pos == null) {
             reset();
         } else {
-            Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
-            if (g2d == null) {
-                return;
-            }
             this.labels = labels;
-            Font defaultFont = g2d.getFont();
+            Font defaultFont = view2d.getFont();
+            Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
             FontRenderContext fontRenderContext =
-                ((Graphics2D) view2d.getJComponent().getGraphics()).getFontRenderContext();
-
+                g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds = new Rectangle.Double();
@@ -330,10 +327,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
-        Optional.ofNullable(defaultFont).orElseThrow(() -> new RuntimeException("Font should not be null")); //$NON-NLS-1$
-        Optional.ofNullable(fontRenderContext)
-            .orElseThrow(() -> new RuntimeException("FontRenderContext should not be null")); //$NON-NLS-1$
-
+        Objects.requireNonNull(defaultFont);
+        Objects.requireNonNull(fontRenderContext);
+        
         if (labels == null || labels.length == 0) {
             reset();
         } else {

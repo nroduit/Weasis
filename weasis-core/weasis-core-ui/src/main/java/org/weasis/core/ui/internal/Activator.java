@@ -83,7 +83,7 @@ public class Activator implements BundleActivator, ServiceListener {
         // Must be instantiate in EDT
         GuiExecutor.instance().execute(() -> {
             ServiceReference<?> service = event.getServiceReference();
-            BundleContext context = AppProperties.getBundleContext(Activator.this.getClass());
+            BundleContext context = service.getBundle().getBundleContext();
             SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(service);
             Objects.requireNonNull(viewerFactory);
 

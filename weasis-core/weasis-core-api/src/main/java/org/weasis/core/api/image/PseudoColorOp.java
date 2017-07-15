@@ -16,10 +16,13 @@ import java.awt.image.BufferedImage;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.cv.ImageProcessor;
+
 import org.weasis.core.api.image.op.ByteLut;
+
 import org.weasis.core.api.media.data.PlanarImage;
+
+import org.weasis.core.api.util.LangUtil;
 
 public class PseudoColorOp extends AbstractOp {
 
@@ -60,7 +63,7 @@ public class PseudoColorOp extends AbstractOp {
         ByteLut lutTable = (ByteLut) params.get(P_LUT);
 
         if (lutTable != null) {
-            boolean invert = JMVUtils.getNULLtoFalse(params.get(P_LUT_INVERSE));
+            boolean invert = LangUtil.getNULLtoFalse((Boolean) params.get(P_LUT_INVERSE));
             byte[][] lut = invert ? lutTable.getInvertedLutTable() : lutTable.getLutTable();
             if (lut == null) {
                 if (invert) {
@@ -68,7 +71,7 @@ public class PseudoColorOp extends AbstractOp {
                 }
             } else {
                 result = ImageProcessor.applyLUT(source.toMat(), lut);
-              //  result = new LookupTableCV(lut).lookup(source);
+                // result = new LookupTableCV(lut).lookup(source);
             }
         }
 

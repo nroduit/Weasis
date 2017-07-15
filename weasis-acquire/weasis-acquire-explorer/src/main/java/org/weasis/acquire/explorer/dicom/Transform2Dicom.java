@@ -75,7 +75,7 @@ public final class Transform2Dicom {
 
         // Transform to JPEG
         File imgFile = imageElement.getFileCache().getOriginalFile().get();
-        if (imgFile == null || !imageElement.getMimeType().contains("jpg") //$NON-NLS-1$
+        if (imgFile == null || !imageElement.getMimeType().contains("jpeg") //$NON-NLS-1$
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$

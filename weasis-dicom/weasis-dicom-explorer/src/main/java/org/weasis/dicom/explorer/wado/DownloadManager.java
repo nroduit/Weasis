@@ -74,20 +74,12 @@ import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.mf.ArcParameters;
 import org.xml.sax.SAXException;
 
 public class DownloadManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
-
-    public static final String SCHEMA =
-        "xmlns=\"http://manifest.service.weasis/v2.5\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""; //$NON-NLS-1$
-    public static final String TAG_XML_ROOT = "manifest"; //$NON-NLS-1$
-    public static final String TAG_ARC_QUERY = "arcQuery"; //$NON-NLS-1$
-    public static final String TAG_ARCHIVE_ID = "arcId"; //$NON-NLS-1$
-    public static final String TAG_BASE_URL = "baseUrl"; //$NON-NLS-1$
-    public static final String TAG_PR_ROOT = "presentations"; //$NON-NLS-1$
-    public static final String TAG_PR = "presentation"; //$NON-NLS-1$
 
     public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
     public static final List<LoadSeries> TASKS = new ArrayList<>();
@@ -307,16 +299,16 @@ public class DownloadManager {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
                         // xmlns="http://www.weasis.org/xsd/2.5"
-                        if (TAG_XML_ROOT.equals(key)) {
+                        if (ArcParameters.TAG_DOCUMENT_ROOT.equals(key)) {
                             boolean state = true;
                             while (xmler.hasNext() && state) {
                                 eventType = xmler.next();
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         key = xmler.getName().getLocalPart();
-                                        if (TAG_ARC_QUERY.equals(key)) {
+                                        if (ArcParameters.TAG_ARC_QUERY.equals(key)) {
                                             readArcQuery(model, seriesList, xmler);
-                                        } else if (TAG_PR_ROOT.equals(key)) {
+                                        } else if (ArcParameters.TAG_PR_ROOT.equals(key)) {
                                             // TODO implement reader of presentation
                                             // GraphicList list = XmlSerializer.readMeasurementGraphics(gpxFile);
                                             // if (list != null) {
@@ -325,7 +317,7 @@ public class DownloadManager {
                                         }
                                         break;
                                     case XMLStreamConstants.END_ELEMENT:
-                                        if (TAG_XML_ROOT.equals(xmler.getName().getLocalPart())) {
+                                        if (ArcParameters.TAG_DOCUMENT_ROOT.equals(xmler.getName().getLocalPart())) {
                                             state = false;
                                         }
                                         break;
@@ -376,7 +368,8 @@ public class DownloadManager {
 
     private static void readArcQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
         throws XMLStreamException {
-        String wadoURL = TagUtil.getTagAttribute(xmler, TAG_BASE_URL, null);
+        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, null);
+        String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID =
             Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
         String additionnalParameters =
@@ -384,8 +377,8 @@ public class DownloadManager {
         String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
-            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
-        readQuery(model, seriesList, xmler, wadoParameters, TAG_ARC_QUERY);
+            new WadoParameters(arcID, wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        readQuery(model, seriesList, xmler, wadoParameters, ArcParameters.TAG_ARC_QUERY);
     }
 
     private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
@@ -398,7 +391,7 @@ public class DownloadManager {
         String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
         final WadoParameters wadoParameters =
-            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+            new WadoParameters("wadoID", wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
         readQuery(model, seriesList, xmler, wadoParameters, WadoParameters.TAG_DOCUMENT_ROOT);
     }
 
@@ -503,7 +496,7 @@ public class DownloadManager {
             }
 
             model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding new patient: " + patient); //$NON-NLS-1$
+            LOGGER.info("Adding new patient: {}", patient); //$NON-NLS-1$
         }
 
         int eventType;
@@ -626,7 +619,7 @@ public class DownloadManager {
                         if (sopInstanceUID != null) {
                             DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                             if (dicomInstances.contains(dcmInstance)) {
-                                LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
+                                LOGGER.warn("DICOM instance {} already exists, do not add to the model.", sopInstanceUID); //$NON-NLS-1$
                             } else {
                                 dcmInstance.setInstanceNumber(TagUtil.getIntegerTagAttribute(xmler,
                                     TagD.getKeywordFromTag(Tag.InstanceNumber, null), -1));

@@ -19,9 +19,9 @@ import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 
 public class WindowAndPresetsOp extends WindowOp {
 
@@ -43,7 +43,7 @@ public class WindowAndPresetsOp extends WindowOp {
                     img.getImage();
                 }
 
-                boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 PresetWindowLevel preset = null;
                 if (img instanceof DicomImageElement) {
                     preset = ((DicomImageElement) img).getDefaultPreset(pixelPadding);
@@ -58,7 +58,7 @@ public class WindowAndPresetsOp extends WindowOp {
                     // Ensure to load image before calling the default preset that requires pixel min and max
                     img.getImage();
                 }
-                boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 HashMap<String, Object> p = event.getParams();
                 if (p != null) {
                     setParam(P_PR_ELEMENT, Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))

@@ -12,10 +12,11 @@ package org.weasis.core.api.image;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.core.api.util.LangUtil;
+
 
 public class WindowOp extends AbstractOp {
 
@@ -52,7 +53,7 @@ public class WindowOp extends AbstractOp {
                     img.getImage();
                 }
 
-                boolean pixelPadding = JMVUtils.getNULLtoTrue(getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
                 setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
                 setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
                 setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(null, pixelPadding));

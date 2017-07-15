@@ -460,7 +460,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), banded);
         }
 
-        ImageReader reader = ImageIO.getImageReadersByFormatName("RAW").next(); //$NON-NLS-1$
+        Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName("RAW");//$NON-NLS-1$
+        ImageReader reader = iter.hasNext() ? iter.next() : null;
         if (reader == null) {
             throw new IllegalStateException("Cannot get RAW image reader"); //$NON-NLS-1$
         }
@@ -755,7 +756,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 Path imgCachePath = null;
                 File file = cache.getTransformedFile();
                 if (file == null) {
-                    String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
+                    StringBuilder buf = new StringBuilder(media.getMediaURI().toString());
+                    if (frame > 0) {
+                        buf.append(frame);
+                    }
+                    String filename = StringUtil.bytesToMD5(buf.toString().getBytes());
                     imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
                     if (Files.isReadable(imgCachePath)) {
                         file = imgCachePath.toFile();
@@ -765,7 +770,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
 
                 if (file == null && imgCachePath != null) {
-                    PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);   
+                    PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);
                     try {
                         new FileRawImage(imgCachePath.toFile()).write(mat);
                     } catch (Exception e) {

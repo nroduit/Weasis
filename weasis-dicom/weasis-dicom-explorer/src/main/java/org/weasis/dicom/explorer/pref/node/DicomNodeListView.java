@@ -26,8 +26,8 @@ import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.util.StringUtil;
 
 @SuppressWarnings("serial")
 public class DicomNodeListView extends AbstractItemDialogPage {

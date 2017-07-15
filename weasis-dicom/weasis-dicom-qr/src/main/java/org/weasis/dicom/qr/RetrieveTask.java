@@ -167,7 +167,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     }
 
                     WadoParameters wadoParameters =
-                        new WadoParameters(wadoURLs.get(0).toString(), false, null, null, null);
+                        new WadoParameters("queryID", wadoURLs.get(0).toString(), false, null, null, null);
                     ManifestBuilder manifest = new ManifestBuilder();
                     manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);
