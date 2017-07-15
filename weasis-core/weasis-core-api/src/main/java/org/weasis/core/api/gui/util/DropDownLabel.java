@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
-import java.awt.Color;
 import java.awt.Component;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 
 import javax.swing.Icon;
+import javax.swing.JComponent;
 
 public class DropDownLabel implements Icon {
 
@@ -23,16 +24,13 @@ public class DropDownLabel implements Icon {
     private int iconWidth = 30;
     private int iconHeight = 25;
 
-    public DropDownLabel(String label) {
-        this.label = label;
+    public DropDownLabel(String label, JComponent parent) {
+        setLabel(label, parent);
     }
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setPaint(Color.black);
-        iconHeight = g2d.getFontMetrics().getHeight() + 1;
-        iconWidth = g2d.getFontMetrics().stringWidth(label) + 1;
         int baseText = g2d.getFontMetrics().getAscent();
         g2d.drawString(label, x, y + baseText);
         int shiftx = x + iconWidth + 1;
@@ -40,6 +38,14 @@ public class DropDownLabel implements Icon {
         int[] xPoints = { shiftx, shiftx + 8, shiftx + 4 };
         int[] yPoints = { shifty, shifty, shifty + 4 };
         g2d.fillPolygon(xPoints, yPoints, xPoints.length);
+    }
+
+    private void updateSize(JComponent parent) {
+        if (parent != null) {
+            FontMetrics fmetrics = parent.getFontMetrics(parent.getFont());
+            iconHeight = fmetrics.getHeight() + 1;
+            iconWidth = fmetrics.stringWidth(label) + 5;
+        }
     }
 
     @Override
@@ -56,8 +62,9 @@ public class DropDownLabel implements Icon {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(String label, JComponent parent) {
         this.label = label == null ? "" : label; //$NON-NLS-1$
+        updateSize(parent);
     }
 
 }

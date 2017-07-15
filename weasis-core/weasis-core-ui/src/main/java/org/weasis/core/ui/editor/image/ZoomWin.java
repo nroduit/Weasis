@@ -40,7 +40,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -54,6 +53,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
@@ -248,16 +248,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         affineTransform.setToScale(viewScale, viewScale);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = LangUtil.getNULLtoFalse((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             affineTransform.rotate(rotationAngle * Math.PI / 180.0, modelArea.getWidth() / 2.0,
                 modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:

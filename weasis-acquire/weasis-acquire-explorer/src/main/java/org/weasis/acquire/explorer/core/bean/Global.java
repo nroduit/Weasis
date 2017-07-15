@@ -10,46 +10,43 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.core.bean;
 
-import java.util.Optional;
+import java.util.Iterator;
+import java.util.Map.Entry;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Tagable;
 import org.weasis.dicom.codec.TagD;
 
-public class Global extends AbstractTagable {
+public class Global extends DefaultTagable {
 
-    private static final Integer PatientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
+    public static final Integer patientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
 
     protected boolean allowFullEdition = true;
 
     public Global() {
-        init(null);
+        init((Tagable) null);
     }
 
-    public void init(Document xml) {
+    public void init(Tagable tagable) {
         clear();
         tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
 
-        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(element -> {
-
-            NodeList nodeList = element.getChildNodes();
-            if (nodeList != null) {
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    Optional.ofNullable(nodeList.item(i)).ifPresent(this::setTag);
+        if (tagable != null) {
+            tagable.getTagEntrySetIterator().forEachRemaining(i -> {
+                TagW tag = i.getKey();
+                if (tag != null) {
+                    tags.put(tag, i.getValue());
                 }
+            });
+        }
 
-                if (getTagValue(TagD.get(Tag.PatientID)) != null && getTagValue(TagD.get(Tag.PatientName)) != null) {
-                    allowFullEdition = false;
-                }
-            }
-        });
+        allowFullEdition =
+            getTagValue(TagD.get(Tag.PatientID)) == null || getTagValue(TagD.get(Tag.PatientName)) == null;
+
     }
 
     /**
@@ -57,81 +54,35 @@ public class Global extends AbstractTagable {
      *
      * @param xml
      */
-    public void updateAllButPatient(Document xml) {
-
-        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(element -> {
-
-            NodeList nodeList = element.getChildNodes();
-            if (nodeList != null) {
-                for (int i = 0; i < nodeList.getLength(); i++) {
-
-                    Optional.ofNullable(nodeList.item(i))
-                        .ifPresent(node -> Optional.ofNullable(TagD.get(node.getNodeName())).ifPresent(tag -> {
-                            if (TagUtils.groupNumber(tag.getId()) != PatientDicomGroupNumber) {
-                                tag.readValue(node.getTextContent(), this);
-                            }
-                        }));
+    public void updateAllButPatient(Tagable tagable) {
+        if (tagable != null) {
+            tagable.getTagEntrySetIterator().forEachRemaining(i -> {
+                TagW tag = i.getKey();
+                if (tag != null && TagUtils.groupNumber(tag.getId()) != patientDicomGroupNumber) {
+                    tags.put(tag, i.getValue());
                 }
-            }
-        });
-    }
-
-    private void setTag(final Node node) {
-        Optional.ofNullable(node).ifPresent(
-            n -> Optional.ofNullable(TagD.get(n.getNodeName())).ifPresent(t -> t.readValue(n.getTextContent(), this)));
-    }
-
-    /**
-     * Check if all patient tag values in the given document XML are equals to the global DICOM Tags According to the
-     * TagD data Model <br>
-     * Patient Tag have the Dicom Group Number : 0x0010
-     *
-     * @param xmlDoc
-     * @return
-     */
-    public boolean containsSamePatientTagValues(Document xmlDoc) {
-        return containsSameTagValues(xmlDoc, PatientDicomGroupNumber);
-    }
-
-    /**
-     * Check if all tag values in the given document XML are equals to the global DICOM Tags According to the TagD data
-     * Model <br>
-     *
-     *
-     * @param xmlDoc
-     * @param dicomGroupNumber
-     *            is the restriction for the Tag values equality check.<br>
-     *            Null involves no filtering
-     * @return
-     */
-
-    public boolean containsSameTagValues(Document xmlDoc, final Integer dicomGroupNumber) {
-
-        Optional<NodeList> nodeList = Optional.of(xmlDoc).map(Document::getDocumentElement).map(Element::getChildNodes);
-
-        if (!nodeList.isPresent() || nodeList.get().getLength() == 0) {
-            return this.isEmpty();
+            });
         }
+    }
 
-        for (int nodeIndex = 0; nodeIndex < nodeList.get().getLength(); nodeIndex++) {
-            Node node = nodeList.get().item(nodeIndex);
-            TagW tag = TagD.get(Optional.ofNullable(node).map(Node::getNodeName).orElse(null));
-
-            if (tag != null && (dicomGroupNumber == null || TagUtils.groupNumber(tag.getId()) == dicomGroupNumber)) {
-                Object xmlTagVal = Optional.ofNullable(node).map(Node::getTextContent).map(tag::getValue).orElse(null);
-
-                if (this.containTagKey(tag)) {
-                    Object globalTagVal = this.getTagValue(tag);
-
-                    if (!TagUtil.isEquals(globalTagVal, xmlTagVal)) {
+    public boolean containsSameTagValues(Tagable tagable, Integer dicomGroupNumber) {
+        if (tagable != null) {
+            Iterator<Entry<TagW, Object>> iter = tagable.getTagEntrySetIterator();
+            while (iter.hasNext()) {
+                Entry<TagW, Object> entry = iter.next();
+                TagW tag = entry.getKey();
+                if (tag != null
+                    && (dicomGroupNumber == null || TagUtils.groupNumber(tag.getId()) == dicomGroupNumber)) {
+                    if (this.containTagKey(tag)) {
+                        if (!TagUtil.isEquals(this.getTagValue(tag), entry.getValue())) {
+                            return false;
+                        }
+                    } else if (entry.getValue() != null) {
                         return false;
                     }
-                } else if (xmlTagVal != null) {
-                    return false;
                 }
             }
         }
-
         return true;
     }
 

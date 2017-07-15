@@ -87,6 +87,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -360,10 +361,10 @@ public class WeasisWin {
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
-        boolean setInSelection = JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
+        boolean setInSelection = LangUtil.getNULLtoFalse((Boolean) props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
 
-        if (screenBound == null && factory != null && group != null) {
-            boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
+        if (screenBound == null && group != null) {
+            boolean bestDefaultLayout = LangUtil.getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
                     final ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);

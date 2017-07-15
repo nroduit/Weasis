@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.weasis.core.ui.util;
 
+import java.util.Objects;
+
 import javax.swing.table.AbstractTableModel;
 
 import org.weasis.core.ui.Messages;
@@ -18,7 +20,7 @@ public class SimpleTableModel extends AbstractTableModel {
 
     private String[] columnNames =
         { Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
-    private Object[][] data = {};
+    private final Object[][] data;
     private final boolean editable;
 
     public SimpleTableModel(String[] columnNames, Object[][] data) {
@@ -26,12 +28,8 @@ public class SimpleTableModel extends AbstractTableModel {
     }
 
     public SimpleTableModel(String[] columnNames, Object[][] data, boolean editable) {
-        if (columnNames != null) {
-            this.columnNames = columnNames;
-        }
-        if (data != null) {
-            this.data = data;
-        }
+        this.columnNames = Objects.requireNonNull(columnNames);
+        this.data = Objects.requireNonNull(data);
         this.editable = editable;
     }
 

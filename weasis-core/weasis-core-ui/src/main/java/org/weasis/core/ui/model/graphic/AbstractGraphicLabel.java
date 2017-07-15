@@ -10,12 +10,14 @@
  *******************************************************************************/
 package org.weasis.core.ui.model.graphic;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -30,6 +32,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -75,8 +78,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     public String[] getLabels() {
         return labels;
     }
-    
-    
+
     @XmlElement(name = "offsetX", required = false)
     @Override
     public Double getOffsetX() {
@@ -119,8 +121,8 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
         AffineTransform invTransform = new AffineTransform(); // Identity transformation.
         Point2D anchorPt = new Point2D.Double(labelBounds.getX(), labelBounds.getY());
 
-        Double scale = GeomUtil.extractScalingFactor(transform);
-        Double angleRad = GeomUtil.extractAngleRad(transform);
+        double scale = GeomUtil.extractScalingFactor(transform);
+        double angleRad = GeomUtil.extractAngleRad(transform);
 
         invTransform.translate(anchorPt.getX(), anchorPt.getY());
 
@@ -155,17 +157,14 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
 
     @Override
     public void setLabel(ViewCanvas<?> view2d, Double xPos, Double yPos, String... labels) {
-        if (view2d == null || labels == null || labels.length == 0) {
+        if (labels == null || labels.length == 0) {
             reset();
         } else {
-            Graphics2D g2d = (Graphics2D) view2d.getJComponent().getGraphics();
-            if (g2d == null) {
-                return;
-            }
             this.labels = labels;
-            Font defaultFont = g2d.getFont();
+            Font defaultFont = view2d == null ? FontTools.getFont12() : view2d.getFont();
+            Graphics2D g2d = view2d == null ? null : (Graphics2D) view2d.getJComponent().getGraphics();
             FontRenderContext fontRenderContext =
-                ((Graphics2D) view2d.getJComponent().getGraphics()).getFontRenderContext();
+                g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
             updateBoundsSize(defaultFont, fontRenderContext);
 
             labelBounds = new Rectangle.Double(xPos + GROWING_BOUND, yPos + GROWING_BOUND, labelWidth + GROWING_BOUND,
@@ -175,9 +174,8 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     }
 
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
-        Optional.ofNullable(defaultFont).orElseThrow(() -> new RuntimeException("Font should not be null")); //$NON-NLS-1$
-        Optional.ofNullable(fontRenderContext)
-            .orElseThrow(() -> new RuntimeException("FontRenderContext should not be null")); //$NON-NLS-1$
+        Objects.requireNonNull(defaultFont);
+        Objects.requireNonNull(fontRenderContext);
 
         if (labels == null || labels.length == 0) {
             reset();
@@ -270,9 +268,14 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
 
         if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
             TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
-            Rectangle2D b = layout.getBounds();
-            b.setRect(x + b.getX() - 0.75, y + b.getY() - 0.75, b.getWidth() + 1.5, b.getHeight() + 1.5);
-            g2.fill(b);
+            AffineTransform textAt = new AffineTransform();
+            textAt.translate(x, y);
+            Shape outline = layout.getOutline(textAt);
+            g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+            g2.draw(outline);
+            g2.setPaint(color);
+            g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+            g2.fill(outline);
         } else {
             g2.drawString(str, x - 1f, y - 1f);
             g2.drawString(str, x - 1f, y);
@@ -282,9 +285,9 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
             g2.drawString(str, x + 1f, y - 1f);
             g2.drawString(str, x + 1f, y);
             g2.drawString(str, x + 1f, y + 1f);
+            g2.setPaint(color);
+            g2.drawString(str, x, y);
         }
-        g2.setPaint(color);
-        g2.drawString(str, x, y);
     }
 
     public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {

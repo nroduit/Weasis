@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -32,6 +31,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -296,7 +296,7 @@ public final class KOManager {
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, view2d, null, validKOSelection));
                 }
 
-                boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+                boolean filter = LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
                 if (filter && (view2d.getEventManager().getSelectedViewPane() == view2d)) {
                     // When unchecking an image, force to call the filter action to resize the views
                     ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
@@ -387,7 +387,7 @@ public final class KOManager {
             }
 
             if (enableFilter == null) {
-                koFilter = JMVUtils.getNULLtoFalse(view2D.getActionValue(ActionW.KO_FILTER.cmd()));
+                koFilter = LangUtil.getNULLtoFalse((Boolean) view2D.getActionValue(ActionW.KO_FILTER.cmd()));
             } else {
                 koFilter = enableFilter;
             }

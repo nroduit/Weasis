@@ -324,7 +324,7 @@ public class SeriesThumbnail extends Thumbnail
                 String nb = "#" + splitNb; //$NON-NLS-1$
                 int w = g2d.getFontMetrics().stringWidth(nb);
                 g2d.setPaint(Color.BLACK);
-                int sx = width - 2 - w;
+                int sx = x + width - 2 - w;
                 g2d.fillRect(sx - 2, y, w + 4, fontHeight);
                 g2d.setPaint(Color.ORANGE);
                 g2d.drawString(nb, sx, y + fontHeight - 3);

@@ -229,12 +229,20 @@ public class AcquireTabPanel extends JPanel {
         imageList.refreshGUI();
         serieList.refreshGUI();
     }
+    
+    public void refreshInfoGUI() {
+        imageList.refreshInfoGUI();
+    }
 
     public void moveElements(SeriesGroup seriesGroup, List<AcquireImageInfo> medias) {
         removeImages(selected.getSerie(), medias);
 
         medias.forEach(m -> m.setSeries(seriesGroup));
         updateSerie(seriesGroup, AcquireManager.findbySeries(seriesGroup));
+    }
+    
+    public void updateSeriesFromGlobaTags() {
+        btnMap.keySet().forEach(g -> g.updateDicomTags());
     }
 
     public void moveElementsByDate(List<AcquireImageInfo> medias) {

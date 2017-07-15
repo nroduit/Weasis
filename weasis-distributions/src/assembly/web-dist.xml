@@ -11,7 +11,7 @@
 		<fileSet>
 			<!-- Copy jars -->
 			<directory>target/tmp</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 			<includes>
 				<include>/*.jar</include>
 				<include>/*.jar.pack.gz</include>
@@ -26,7 +26,7 @@
 		<fileSet>
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-web</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- copy resources.zip -->
@@ -34,12 +34,12 @@
 			<includes>
 				<include>/resources.zip</include>
 			</includes>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- copy OSGI framework config -->
 			<directory>etc/config</directory>
-			<outputDirectory>/conf</outputDirectory>
+			<outputDirectory>conf</outputDirectory>
 			<filtered>true</filtered>
 		</fileSet>
 	</fileSets>

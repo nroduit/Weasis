@@ -35,8 +35,6 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -101,7 +99,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private final Component horizontalStrut1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut2 = Box.createHorizontalStrut(10);
     private final JPanel panel1 = new JPanel();
-    private final JLabel lblStacktraceLimit = new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel lblStacktraceLimit =
+        new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON); //$NON-NLS-1$
     private final JComboBox<String> comboBoxStackLimit =
         new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
@@ -180,16 +179,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcTxtpnNote.fill = GridBagConstraints.HORIZONTAL;
         gbcTxtpnNote.gridx = 0;
         gbcTxtpnNote.gridy = 3;
-        txtpnNote.setEditable(false);
+        txtpnNote.setEditorKit(JMVUtils.buildHTMLEditorKit(txtpnNote));
         txtpnNote.setContentType("text/html"); //$NON-NLS-1$
-
-        HTMLEditorKit kit = new HTMLEditorKit();
-        StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((txtpnNote.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
-            + Integer.toHexString((txtpnNote.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
-        txtpnNote.setEditorKit(kit);
+        txtpnNote.setEditable(false);
         txtpnNote.setText(getText());
         add(txtpnNote, gbcTxtpnNote);
 
@@ -310,8 +302,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         panel1.add(lblStacktraceLimit);
 
         int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
-        if (limit > 0
-            && (limit != 1 || limit != 3 || limit != 5 || limit != 10 || limit != 20 || limit != 50 || limit != 100)) {
+        if (limit > 0 && limit != 1 && limit != 3 && limit != 5 && limit != 10 && limit != 20 && limit != 50
+            && limit != 100) {
             comboBoxStackLimit.addItem(Integer.toString(limit));
         }
         comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$ //$NON-NLS-1$
@@ -477,7 +469,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             LOGGER.error("Unable to set the Look&Feel", e); //$NON-NLS-1$
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$
+        setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); //$NON-NLS-1$
         return laf;
     }
 
@@ -493,7 +485,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             }
         }
         if (laf == null) {
-            if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$ 
+            if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
                 laf = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
             } else {
                 // Try to set Nimbus, concurrent thread issue

@@ -30,7 +30,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
-import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -38,12 +37,8 @@ import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Document;
 import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
 import javax.swing.text.StyledDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
@@ -105,10 +100,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         panel.add(new SearchPanel(jTextPaneLimited), BorderLayout.NORTH);
         panel.add(limitedPane, BorderLayout.CENTER);
         jTextPaneLimited.setBorder(new EmptyBorder(5, 5, 5, 5));
+        // Keep this order to avoid build a default editor
+        HTMLEditorKit kit = JMVUtils.buildHTMLEditorKit(jTextPaneLimited);
+        jTextPaneLimited.setEditorKit(kit);
         jTextPaneLimited.setContentType("text/html"); //$NON-NLS-1$
         jTextPaneLimited.setEditable(false);
-        StyledDocument doc = jTextPaneLimited.getStyledDocument();
-        addStylesToDocument(doc, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
+        JMVUtils.addStylesToHTML(jTextPaneLimited.getStyledDocument());
 
         JPanel dump = new JPanel();
         dump.setLayout(new BorderLayout());
@@ -117,41 +114,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         dump.add(new SearchPanel(jTextPaneAll), BorderLayout.NORTH);
         dump.add(allPane, BorderLayout.CENTER);
         jTextPaneAll.setBorder(new EmptyBorder(5, 5, 5, 5));
+        jTextPaneAll.setEditorKit(kit);
         jTextPaneAll.setContentType("text/html"); //$NON-NLS-1$
         jTextPaneAll.setEditable(false);
-        StyledDocument doc2 = jTextPaneAll.getStyledDocument();
-        addStylesToDocument(doc2, UIManager.getColor("TextPane.foreground")); //$NON-NLS-1$
+        JMVUtils.addStylesToHTML(jTextPaneAll.getStyledDocument());
 
         setPreferredSize(new Dimension(400, 300));
         setMinimumSize(new Dimension(150, 50));
 
         this.addChangeListener(changeEvent -> changeDicomInfo(currentSeries, currentMedia));
-    }
-
-    public static void addStylesToDocument(StyledDocument doc, Color textColor) {
-        // Initialize some styles.
-        final MutableAttributeSet def = new SimpleAttributeSet();
-        Style style = StyleContext.getDefaultStyleContext().getStyle(StyleContext.DEFAULT_STYLE);
-        Style regular = doc.addStyle("regular", style); //$NON-NLS-1$
-        StyleConstants.setFontFamily(def, "SansSerif"); //$NON-NLS-1$
-        StyleConstants.setFontSize(def, 12);
-        if (textColor == null) {
-            textColor = UIManager.getColor("text"); //$NON-NLS-1$
-        }
-        StyleConstants.setForeground(def, textColor);
-        Style s = doc.addStyle("title", regular); //$NON-NLS-1$
-        StyleConstants.setFontSize(s, 16);
-        StyleConstants.setBold(s, true);
-        s = doc.addStyle("bold", regular); //$NON-NLS-1$
-        StyleConstants.setBold(s, true);
-        StyleConstants.setFontSize(s, 12);
-        s = doc.addStyle("small", regular); //$NON-NLS-1$
-        StyleConstants.setFontSize(s, 10);
-        s = doc.addStyle("large", regular); //$NON-NLS-1$
-        StyleConstants.setFontSize(s, 14);
-        s = doc.addStyle("italic", regular); //$NON-NLS-1$
-        StyleConstants.setFontSize(s, 12);
-        StyleConstants.setItalic(s, true);
     }
 
     @Override
@@ -253,15 +224,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 printSequence(seq, doc, buf);
             } else {
                 buf.insert(0, "\n"); //$NON-NLS-1$
-                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+                printItem(doc, buf.toString(), null);
             }
         } else {
             buf.insert(0, "\n"); //$NON-NLS-1$
             if (vr.isInlineBinary()) {
                 buf.append("binary data"); //$NON-NLS-1$
-                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+                printItem(doc, buf.toString(), null);
             } else {
-                printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+                printItem(doc, buf.toString(), null);
                 buf = new StringBuilder();
                 String[] value = dcmObj.getStrings(privateCreator, tag);
                 if (value != null && value.length > 0) {
@@ -297,7 +268,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 buf.append(" items"); //$NON-NLS-1$
             }
             buf.insert(0, "\n"); //$NON-NLS-1$
-            printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+            printItem(doc, buf.toString(), null);
 
             for (int i = 0; i < seq.size(); i++) {
                 Attributes attributes = seq.get(i);
@@ -312,7 +283,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 buffer.append(" ITEM #"); //$NON-NLS-1$
                 buffer.append(i + 1);
                 buffer.insert(0, "\n"); //$NON-NLS-1$
-                printItem(doc, buffer.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+                printItem(doc, buffer.toString(), null);
                 int[] tags = attributes.tags();
                 for (int tag : tags) {
                     printElement(attributes, tag, doc);
@@ -320,7 +291,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
         } else {
             buf.insert(0, "\n"); //$NON-NLS-1$
-            printItem(doc, buf.toString(), doc.getStyle("regular")); //$NON-NLS-1$
+            printItem(doc, buf.toString(), null);
         }
     }
 
@@ -366,8 +337,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
 
     private void writeItems(DicomData dicomData, TagReadable group, StyledDocument doc) {
-        Style regular = doc.getStyle("regular"); //$NON-NLS-1$
-        Style bold = doc.getStyle("bold"); //$NON-NLS-1$
         int insertTitle = doc.getLength();
         boolean exist = false;
         for (TagView t : dicomData.getInfos()) {
@@ -377,9 +346,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         Object val = TagUtil.getTagValue(tag, group, currentMedia);
                         if (val != null) {
                             exist = true;
-                            doc.insertString(doc.getLength(), tag.getDisplayedName(), regular);
+                            doc.insertString(doc.getLength(), tag.getDisplayedName(), null);
                             doc.insertString(doc.getLength(),
-                                StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n", bold); //$NON-NLS-1$
+                                StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n", //$NON-NLS-1$
+                                doc.getStyle("bold")); //$NON-NLS-1$
                             break;
                         }
                     } catch (BadLocationException e) {

@@ -46,7 +46,6 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.DataFileBackingStoreImpl;
-import org.weasis.core.api.util.ProxyDetector;
 
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);

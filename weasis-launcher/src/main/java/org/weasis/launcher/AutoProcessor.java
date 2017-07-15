@@ -13,7 +13,6 @@
 package org.weasis.launcher;
 
 import java.io.File;
-import java.io.InputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.net.URI;
@@ -492,24 +491,19 @@ public class AutoProcessor {
         }
 
         if (pack) {
-
             final URL url = new URL(location + PACK200_COMPRESSION);
             final PipedInputStream in = new PipedInputStream();
             final PipedOutputStream out = new PipedOutputStream(in);
-            new Thread(() -> {
-                JarOutputStream jarStream = null;
-                try {
-                    InputStream is = FileUtil.getAdaptedConnection(url).getInputStream();
+            Thread t = new Thread(() -> {
+                try(JarOutputStream jarStream = new JarOutputStream(out); GZIPInputStream gzStream = new GZIPInputStream(FileUtil.getAdaptedConnection(url).getInputStream());) {
                     Unpacker unpacker = Pack200.newUnpacker();
-                    jarStream = new JarOutputStream(out);
-                    unpacker.unpack(new GZIPInputStream(is), jarStream);
+                    unpacker.unpack(gzStream, jarStream);
                 } catch (Exception e1) {
                     System.err.println("Cannot install pack bundle: " + url); //$NON-NLS-1$
                     e1.printStackTrace();
-                } finally {
-                    FileUtil.safeClose(jarStream);
                 }
-            }).start();
+            });
+            t.start();
 
             return context.installBundle(location, in);
 

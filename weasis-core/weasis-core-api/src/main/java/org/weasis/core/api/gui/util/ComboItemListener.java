@@ -201,14 +201,14 @@ public abstract class ComboItemListener<T> extends BasicActionState implements L
         return menu;
     }
 
-    public GroupRadioMenu<T> createGroupRadioMenu() {
+    public GroupPopup createGroupRadioMenu() {
         GroupRadioMenu<T> radioMenu = new GroupRadioMenu<>();
         radioMenu.setModel(model);
         registerActionState(radioMenu);
         return radioMenu;
     }
 
-    public GroupRadioMenu<T> createUnregisteredGroupRadioMenu() {
+    public GroupPopup createUnregisteredGroupRadioMenu() {
         GroupRadioMenu<T> radioMenu = new GroupRadioMenu<>();
         radioMenu.setModel(model);
         return radioMenu;

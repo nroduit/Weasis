@@ -35,7 +35,7 @@ import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -166,8 +166,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     if (cps > 0) {
                         Component cp = panelFoot.getComponent(0);
                         if (cp != panner) {
-                            if (cp instanceof Thumbnail) {
-                                ((Thumbnail) cp).removeMouseAndKeyListener();
+                            if (cp instanceof Thumbnailable) {
+                                ((Thumbnailable) cp).removeMouseAndKeyListener();
                             }
                             panner.registerListeners();
                             panelFoot.removeAll();
@@ -291,7 +291,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 }
             }
         }
-        return;
     }
 
 }

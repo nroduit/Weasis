@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
@@ -372,7 +372,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public boolean isSelected() {
-        return JMVUtils.getNULLtoFalse(getTagValue(TagW.SeriesSelected));
+        return LangUtil.getNULLtoFalse((Boolean) getTagValue(TagW.SeriesSelected));
     }
 
     @Override
@@ -388,7 +388,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public boolean isFocused() {
-        return JMVUtils.getNULLtoFalse(getTagValue(TagW.SeriesFocused));
+        return LangUtil.getNULLtoFalse((Boolean) getTagValue(TagW.SeriesFocused));
     }
 
     @Override

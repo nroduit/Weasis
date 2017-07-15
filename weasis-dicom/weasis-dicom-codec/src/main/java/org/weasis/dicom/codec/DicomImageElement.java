@@ -47,6 +47,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -718,8 +719,8 @@ public class DicomImageElement extends ImageElement {
 
         }
 
-        boolean pixPadding = JMVUtils.getNULLtoTrue(pixelPadding);
-        boolean invLUT = JMVUtils.getNULLtoFalse(inverseLUT);
+        boolean pixPadding = LangUtil.getNULLtoTrue(pixelPadding);
+        boolean invLUT = LangUtil.getNULLtoFalse(inverseLUT);
         double windowValue = (window == null) ? getDefaultWindow(pixPadding) : window;
         double levelValue = (level == null) ? getDefaultLevel(pixPadding) : level;
         LutShape lut = (lutShape == null) ? getDefaultShape(pixPadding) : lutShape;
@@ -748,7 +749,7 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if (!JMVUtils.getNULLtoFalse(wlOnColorImage) && !isPhotometricInterpretationMonochrome()) {
+            if (!LangUtil.getNULLtoFalse(wlOnColorImage) && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.
@@ -759,7 +760,7 @@ public class DicomImageElement extends ImageElement {
             LookupTableJAI voiLookup = null;
             if (prLutData == null || lut.getLookup() != null) {
                 voiLookup = getVOILookup(prTags, windowValue, levelValue, minLevel, maxLevel, lut,
-                    JMVUtils.getNULLtoFalse(fillLutOutside), pixPadding);
+                    LangUtil.getNULLtoFalse(fillLutOutside), pixPadding);
             }
 
             if (prLutData == null) {

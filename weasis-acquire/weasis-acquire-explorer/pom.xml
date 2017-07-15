@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.5.3-SNAPSHOT</version>
+		<version>2.5.4-SNAPSHOT</version>
 		<relativePath>../../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -26,11 +26,6 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-					</instructions>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -80,12 +75,12 @@
 		<dependency>
 			<groupId>com.drewnoakes</groupId>
 			<artifactId>metadata-extractor</artifactId>
-			<version>2.9.1</version>
+			<version>2.10.1</version>
 		</dependency>
 		<dependency>
 			<groupId>com.adobe.xmp</groupId>
 			<artifactId>xmpcore</artifactId>
-			<version>5.1.2</version>
+			<version>5.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>net.samuelcampos</groupId>

@@ -245,4 +245,6 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
     void setClassID(Integer classID);
 
     Integer getClassID();
+
+    void setLabel(GraphicLabel label);
 }

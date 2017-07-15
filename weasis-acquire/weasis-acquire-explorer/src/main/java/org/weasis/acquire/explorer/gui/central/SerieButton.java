@@ -17,7 +17,7 @@ import javax.swing.JToggleButton;
 
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
-public class SerieButton extends JToggleButton implements ActionListener, Comparable<SerieButton> {
+public class SerieButton extends JToggleButton implements ActionListener, SeriesDataListener, Comparable<SerieButton> {
     private static final long serialVersionUID = -2587964095510462601L;
 
     private final SeriesGroup seriesGroup;
@@ -26,6 +26,7 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
     public SerieButton(SeriesGroup seriesGroup, AcquireTabPanel panel) {
         super(seriesGroup.getDisplayName());
         this.seriesGroup = seriesGroup;
+        seriesGroup.addLayerChangeListener(this);
         this.panel = panel;
         addActionListener(this);
     }
@@ -46,8 +47,6 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
         super.setText(text);
         setToolTipText(text);
     }
-
-
 
     @Override
     public int hashCode() {
@@ -72,6 +71,11 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
     @Override
     public int compareTo(SerieButton o) {
         return getSerie().compareTo(o.getSerie());
+    }
+
+    @Override
+    public void handleSeriesChanged() {
+        setText(seriesGroup.getDisplayName());
     }
 
 }

@@ -99,7 +99,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID,
         new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime)));
     public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); //$NON-NLS-1$
-    
+
     private static final List<TreeModelNode> modelStructure = Arrays.asList(TreeModelNode.ROOT, patient, study, series);
 
     private final Tree<MediaSeriesGroup> model;
@@ -278,8 +278,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void removeAllPropertyChangeListener() {
-        for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
-            propertyChange.removePropertyChangeListener(listener);
+        if (propertyChange != null) {
+            for (PropertyChangeListener listener : propertyChange.getPropertyChangeListeners()) {
+                propertyChange.removePropertyChangeListener(listener);
+            }
         }
     }
 
@@ -322,7 +324,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 for (MediaSeries<? extends MediaElement> s : seriesList) {
                     if (s != base) {
                         base.addAll((Collection) s.getMedias(null, null));
-                        removeSeries(s);
+                        removeSeriesWithoutDisposingMedias(s);
                     }
                 }
                 // Force to sort the new merged media list
@@ -381,6 +383,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             if (specialElementList.isEmpty()) {
                 removeSeries(dicomSeries);
             }
+        }
+    }
+
+    public void removeSeriesWithoutDisposingMedias(MediaSeriesGroup dicomSeries) {
+        if (dicomSeries != null) {
+            // remove first series in UI (Dicom Explorer, Viewer using this series)
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, dicomSeries));
+            // remove in the data model
+            MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
+            removeHierarchyNode(studyGroup, dicomSeries);
+            LOGGER.info("Remove Series (no dispose): {}", dicomSeries); //$NON-NLS-1$
         }
     }
 
@@ -948,8 +962,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         // build WADO series list to download
         if (opt.isSet("wado")) { //$NON-NLS-1$
-            LOADING_EXECUTOR
-                .execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
+            LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
         }
 
         if (opt.isSet("iwado")) { //$NON-NLS-1$

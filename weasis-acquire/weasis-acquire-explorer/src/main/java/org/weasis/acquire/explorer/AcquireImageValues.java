@@ -14,8 +14,11 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.util.Optional;
 
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.Copyable;
+
+import com.privatejgoodies.common.base.Objects;
 
 /**
  * Store all modifiables values. Enable to compare two objects for dirty check.
@@ -199,7 +202,7 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
         if (brightness != other.brightness) {
             return false;
         }
-        if (Double.doubleToLongBits(calibrationRatio) != Double.doubleToLongBits(other.calibrationRatio)) {
+        if (MathUtil.isDifferent(calibrationRatio, other.calibrationRatio)) {
             return false;
         }
         if (calibrationUnit != other.calibrationUnit) {
@@ -231,10 +234,7 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
         if (rotation != other.rotation) {
             return false;
         }
-        if (ratio != other.ratio) {
-            return false;
-        }
-        return true;
+        return Objects.equals(ratio, other.ratio);
     }
 
     @Override

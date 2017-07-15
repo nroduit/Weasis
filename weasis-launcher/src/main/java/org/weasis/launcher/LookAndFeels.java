@@ -22,8 +22,8 @@ public final class LookAndFeels {
     private static final String[] NAMES = { "Substance Autumn", "Substance Business Black Steel", //$NON-NLS-1$ //$NON-NLS-2$
         "Substance Business Blue Steel", "Substance Business", "Substance Cerulean", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ 
         "Substance Creme Coffee", "Substance Creme", "Substance Dust Coffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance Gemini", "Substance Graphite Aqua (dark)", "Substance Graphite Chalk (dark)", "Substance Graphite Glass (dark)", "Substance Graphite Gold (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance Mariner", "Substance Mist Aqua", "Substance Mist Silver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance Gemini", "Substance Graphite Aqua (dark)", "Substance Graphite Chalk (dark)", "Substance Graphite Glass (dark)", "Substance Graphite Gold (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance Mariner", "Substance Mist Aqua", "Substance Mist Silver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
         "Substance Moderate", "Substance Nebula Bric kWall", "Substance Nebula", "Substance Office Blue 2007 (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance Office Silver 2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     private static final String[] CLASSES =

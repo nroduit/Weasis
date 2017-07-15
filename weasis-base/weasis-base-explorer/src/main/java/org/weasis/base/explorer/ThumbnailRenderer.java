@@ -29,11 +29,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 
 import org.weasis.base.explorer.list.IThumbnailList;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LangUtil;
 
 @SuppressWarnings("serial")
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements ListCellRenderer<E> {
@@ -81,7 +81,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
         ThumbnailIcon icon = null;
         if (value instanceof ImageElement) {
             icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) value, (IThumbnailList) list, index);
-            if (JMVUtils.getNULLtoFalse(value.getTagValue(TagW.Checked))) {
+            if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
                 iconCheckedLabel.setIcon(ICON_CHECKED);
             }
             else {

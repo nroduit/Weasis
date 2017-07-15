@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.CropOp;
@@ -45,6 +44,7 @@ import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.EscapeChars;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -89,7 +89,7 @@ public class PRManager {
         ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
             List<PresetWindowLevel> presetList =
-                img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
+                img.getPresetList(LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
             PresetWindowLevel auto = presets.remove(presets.size() - 1);
             if (!presetList.get(presetList.size() - 1).equals(auto)) {
                 // It happens when PR contains a new Modality LUT

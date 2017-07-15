@@ -89,9 +89,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
             File dir = new File(systemDrive.getID());
             Preferences prefs =
                 BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-            if (prefs != null) {
+            if (prefs != null && dir.canRead()) {
                 Preferences p = prefs.node(PREFERENCE_NODE);
-                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getAbsolutePath());
+                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getPath());
             }
         }
     }

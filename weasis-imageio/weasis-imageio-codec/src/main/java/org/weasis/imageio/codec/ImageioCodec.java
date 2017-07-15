@@ -175,7 +175,7 @@ public class ImageioCodec implements Codec {
                 Iterator<?> list = reg.getFactoryIterator(mode, d.getName());
                 while (list.hasNext()) {
                     Object obj = list.next();
-                    reg.unregisterFactory(mode, d.getName(), "com.sun.media.jai", obj);
+                    reg.unregisterFactory(mode, d.getName(), "com.sun.media.jai", obj); //$NON-NLS-1$
                 }
             }
             RegistryElementDescriptor dr = reg.getDescriptor(RenderedRegistryMode.MODE_NAME, d.getName());

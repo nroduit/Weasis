@@ -26,7 +26,7 @@ public class NetworkUtil {
             try {
                 int responseCode = httpURLConnection.getResponseCode();
                 if (responseCode < HttpURLConnection.HTTP_OK || responseCode >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    LOGGER.warn("http Status {} - {}", responseCode, httpURLConnection.getResponseMessage());// $NON-NLS-1$
+                    LOGGER.warn("http Status {} - {}", responseCode, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
 
                     // Following is only intended LOG more info about Http Server Error
                     if (LOGGER.isTraceEnabled()) {

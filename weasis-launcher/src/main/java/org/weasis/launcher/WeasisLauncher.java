@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
@@ -296,6 +297,9 @@ public class WeasisLauncher {
                 }
                 // Allow export feature for portable version
                 System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.export.dicom.send", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                System.setProperty("weasis.import.dicom.qr", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -445,7 +449,8 @@ public class WeasisLauncher {
         FileUtil.storeProperties(sourceIdProps, localSourceProp, null);
     }
 
-    private static void showMessage(final WeasisFrame mainFrame, Map<String, String> serverProp, final Properties l_prop) {
+    private static void showMessage(final WeasisFrame mainFrame, Map<String, String> serverProp,
+        final Properties l_prop) {
         String versionOld = serverProp.get("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
         String versionNew = serverProp.get(P_WEASIS_VERSION);
         // First time launch
@@ -513,6 +518,13 @@ public class WeasisLauncher {
 
                 EventQueue.invokeLater(() -> {
                     JTextPane jTextPane1 = new JTextPane();
+                    HTMLEditorKit kit = new HTMLEditorKit();
+                    StyleSheet ss = kit.getStyleSheet();
+                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";color:#" //$NON-NLS-1$
+                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
+                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     jTextPane1.setContentType("text/html"); //$NON-NLS-1$
                     jTextPane1.setEditable(false);
                     jTextPane1.addHyperlinkListener(new HyperlinkListener() {
@@ -547,12 +559,6 @@ public class WeasisLauncher {
                         }
                     });
 
-                    StyleSheet ss = ((HTMLEditorKit) jTextPane1.getEditorKit()).getStyleSheet();
-                    ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";color:#" //$NON-NLS-1$
-                        + Integer.toHexString((jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-                        + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
                     message.append("<BR>"); //$NON-NLS-1$
                     String rn = Messages.getString("WeasisLauncher.release"); //$NON-NLS-1$
                     message.append(String.format("<a href=\"%s", //$NON-NLS-1$
@@ -620,7 +626,7 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
 
         Object[] arguments = new Object[] { System.in, System.out, System.err };
 
@@ -714,7 +720,7 @@ public class WeasisLauncher {
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
-        
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
         Map<String, String> map = new HashMap<>();
@@ -1039,7 +1045,8 @@ public class WeasisLauncher {
                 // Set look and feels
                 boolean substance = look.startsWith("org.pushingpixels"); //$NON-NLS-1$
                 if (substance) {
-                    JFrame.setDefaultLookAndFeelDecorated(true);
+                    // Keep system window for the main frame
+                    // JFrame.setDefaultLookAndFeelDecorated(true);
                     JDialog.setDefaultLookAndFeelDecorated(true);
                 }
                 look = setLookAndFeel(look);
@@ -1193,7 +1200,7 @@ public class WeasisLauncher {
             laf = UIManager.getSystemLookAndFeelClassName();
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$
+        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); // $NON-NLS-1$
         return laf;
     }
 
