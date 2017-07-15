@@ -41,6 +41,8 @@ import javax.swing.SwingUtilities;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +70,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.param.DicomNode;
 import org.xml.sax.SAXException;
 
@@ -452,20 +455,41 @@ public class AcquireManager {
 
     private DefaultTagable convert(Document xml) {
         DefaultTagable def = new DefaultTagable();
-        Optional.ofNullable(xml).map(o -> o.getDocumentElement()).ifPresent(element -> {
+        Optional.ofNullable(xml).map(Document::getDocumentElement).ifPresent(element -> {
 
             NodeList nodeList = element.getChildNodes();
             if (nodeList != null) {
                 for (int i = 0; i < nodeList.getLength(); i++) {
                     Node node = nodeList.item(i);
                     if (node != null) {
-                        Optional.ofNullable(TagD.get(node.getNodeName()))
-                            .ifPresent(t -> t.readValue(node.getTextContent(), def));
+                        Optional.ofNullable(TagD.get(node.getNodeName())).ifPresent(t -> readXmlTag(t, node, def));
                     }
                 }
             }
         });
         return def;
+    }
+
+    private void readXmlTag(TagW tag, Node node, DefaultTagable def) {
+        // TODO implement DICOM XML : http://dicom.nema.org/medical/dicom/current/output/chtml/part19/chapter_A.html
+        if (tag instanceof TagSeq && node.hasChildNodes()) {
+            NodeList nodeList = node.getChildNodes();
+            Attributes attributes = new Attributes();
+            // FIXME handle only one sequence element
+            Attributes[] list = new Attributes[1];
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                Node n = nodeList.item(i);
+                if (n != null) {
+                    Optional.ofNullable(TagD.get(n.getNodeName())).ifPresent(t -> attributes.setValue(t.getId(), ElementDictionary.vrOf(t.getId(), null), n.getTextContent()));
+                }
+            }
+            list[0] = attributes.getParent() == null ? attributes : new Attributes(attributes);
+            def.setTagNoNull(tag, list);
+
+            
+        } else {
+            tag.readValue(node.getTextContent(), def);
+        }
     }
 
     public void applyToGlobal(Tagable tagable) {
@@ -488,7 +512,8 @@ public class AcquireManager {
                 imagesInfoByUID.clear();
                 GLOBAL.init(tagable);
                 // Ensure to update all the existing SeriesGroup
-                AcquireManager.getInstance().getAcquireExplorer().getCentralPane().tabbedPane.updateSeriesFromGlobaTags();
+                AcquireManager.getInstance().getAcquireExplorer().getCentralPane().tabbedPane
+                    .updateSeriesFromGlobaTags();
                 notifyPatientContextChanged();
             }
         }

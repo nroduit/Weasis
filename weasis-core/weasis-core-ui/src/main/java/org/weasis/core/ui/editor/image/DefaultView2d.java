@@ -228,7 +228,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void initActionWState() {
-        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
+        E img = getImage();
+        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img == null ? Unit.PIXEL : img.getPixelSpacingUnit());
         actionsInView.put(ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
@@ -858,7 +859,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) //$NON-NLS-1$
                     / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-        return new Font(Font.SANS_SERIF, 0, fontSize); 
+        return new Font(Font.SANS_SERIF, 0, fontSize);
     }
 
     /** paint routine */
@@ -1533,13 +1534,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (pane != null) {
             pane.resetMaximizedSelectedImagePane(this);
         }
-
+        Object oldUnit = actionsInView.get(ActionW.SPATIAL_UNIT.cmd());
         initActionWState();
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, getImage(), null));
         resetZoom();
         resetPan();
         imageLayer.setEnableDispOperations(true);
         eventManager.updateComponentsListener(this);
+        // When pixel unit is reset
+        if (!Objects.equals(oldUnit, actionsInView.get(ActionW.SPATIAL_UNIT.cmd()))) {
+            graphicManager.updateLabels(Boolean.TRUE, this);
+        }
     }
 
     @Override
