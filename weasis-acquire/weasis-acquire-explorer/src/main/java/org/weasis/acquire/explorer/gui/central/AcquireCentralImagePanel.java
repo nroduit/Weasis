@@ -25,20 +25,20 @@ import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.tumbnail.AcquireCentralTumbnailPane;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.dicom.codec.TagD;
 
-@SuppressWarnings("serial")
 public class AcquireCentralImagePanel extends JPanel implements ListSelectionListener {
 
     private final AcquireCentralTumbnailPane<ImageElement> imageListPane;
     private final AcquireCentralInfoPanel imageInfo;
 
-    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel) {
+    public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, JIThumbnailCache thumbCache) {
         setLayout(new BorderLayout());
         this.imageInfo = new AcquireCentralInfoPanel(null);
-        this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>());
+        this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>(), thumbCache);
 
         imageListPane.setAcquireTabPanel(Objects.requireNonNull(acquireTabPanel));
         imageListPane.addListSelectionListener(this);
@@ -57,7 +57,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         imageListPane.setList(list);
     }
 
-    private List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
+    private static List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
         return list.stream().map(e -> e.getImage())
             .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i)))
             .collect(Collectors.toList());
@@ -110,7 +110,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
         imageListPane.repaint();
         refreshInfoGUI();
     }
-    
+
     protected void refreshInfoGUI() {
         imageInfo.refreshGUI();
     }

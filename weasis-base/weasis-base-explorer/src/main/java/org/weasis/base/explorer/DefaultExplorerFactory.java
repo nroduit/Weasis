@@ -30,7 +30,8 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
             model = JIUtility.createTreeModel();
         }
         if (explorer == null) {
-            explorer = new DefaultExplorer(model);
+            JIThumbnailCache thumbCache = new JIThumbnailCache();
+            explorer = new DefaultExplorer(model, thumbCache);
             explorer.iniLastPath();
         }
         return explorer;
