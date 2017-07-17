@@ -11,48 +11,59 @@
 package org.weasis.base.ui.gui;
 
 import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Activate;
+import org.osgi.service.component.annotations.Deactivate;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.base.ui.internal.MainWindowListener;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 
-/**
- * User: boraldo Date: 05.02.14 Time: 17:37
- */
-public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
+@org.osgi.service.component.annotations.Component(service = MainWindowListener.class, immediate = true)
+public class WeasisWinListener implements MainWindowListener {
+    private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWinListener.class);
+    private volatile WeasisWin mainWindow;
 
-    private WeasisWinPropertyChangeListener() {
+    @Override
+    public void setMainWindow(WeasisWin mainWindow) {
+        this.mainWindow = mainWindow;
     }
-
-    private static WeasisWinPropertyChangeListener instance = new WeasisWinPropertyChangeListener();
-
-    public static WeasisWinPropertyChangeListener getInstance() {
-        return instance;
-    }
-
-    private WeasisWin weasisWin = WeasisWin.getInstance();
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
+        if (mainWindow == null) {
+            return;
+        }
 
-        ViewerPlugin selectedPlugin = weasisWin.getSelectedPlugin();
-
+        ViewerPlugin selectedPlugin = mainWindow.getSelectedPlugin();
         // Get only ObservableEvent
         if (evt instanceof ObservableEvent) {
             ObservableEvent event = (ObservableEvent) evt;
@@ -95,14 +106,15 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                     }
                 } else if (ObservableEvent.BasicAction.REGISTER.equals(action)) {
                     if (source instanceof ViewerPlugin) {
-                        weasisWin.registerPlugin((ViewerPlugin) source);
+                        mainWindow.registerPlugin((ViewerPlugin) source);
                     } else if (source instanceof ViewerPluginBuilder) {
                         ViewerPluginBuilder builder = (ViewerPluginBuilder) source;
                         DataExplorerModel model = builder.getModel();
                         List<MediaSeries<MediaElement>> series = builder.getSeries();
                         Map<String, Object> props = builder.getProperties();
                         if (series != null
-                            && LangUtil.getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
+                            && LangUtil
+                                .getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER))
                             && model.getTreeModelNodeForNewPlugin() != null && model instanceof TreeModel) {
                             TreeModel treeModel = (TreeModel) model;
                             boolean inSelView =
@@ -116,10 +128,10 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                                     // Change the group attribution. DO NOT use it with DICOM.
                                     group = selectedPlugin.getGroupID();
                                 }
-                                weasisWin.openSeriesInViewerPlugin(builder, group);
+                                mainWindow.openSeriesInViewerPlugin(builder, group);
                             } else if (series.size() > 1) {
-                                HashMap<MediaSeriesGroup, List<MediaSeries<?>>> map =
-                                    weasisWin.getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
+                                HashMap<MediaSeriesGroup, List<MediaSeries<?>>> map = mainWindow
+                                    .getSeriesByEntry(treeModel, series, model.getTreeModelNodeForNewPlugin());
                                 for (Iterator<Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>>> iterator =
                                     map.entrySet().iterator(); iterator.hasNext();) {
                                     Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>> entry = iterator.next();
@@ -134,12 +146,12 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                                             }
                                         }
                                     }
-                                    weasisWin.openSeriesInViewerPlugin(builder, group);
+                                    mainWindow.openSeriesInViewerPlugin(builder, group);
                                 }
                             }
 
                         } else {
-                            weasisWin.openSeriesInViewerPlugin(builder, null);
+                            mainWindow.openSeriesInViewerPlugin(builder, null);
                         }
                     }
                 } else if (ObservableEvent.BasicAction.UNREGISTER.equals(action)) {
@@ -162,11 +174,64 @@ public class WeasisWinPropertyChangeListener implements PropertyChangeListener {
                 ViewerPlugin plugin = (ViewerPlugin) event.getSource();
                 if (ObservableEvent.BasicAction.UPDTATE_TOOLBARS.equals(action)) {
                     List toolaBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
-                    weasisWin.updateToolbars(toolaBars, toolaBars, true);
+                    mainWindow.updateToolbars(toolaBars, toolaBars, true);
                 } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
-                    weasisWin.setSelectedPlugin(null);
+                    mainWindow.setSelectedPlugin(null);
                 }
             }
+        }
+    }
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+
+    @Activate
+    protected void activate(ComponentContext context) {
+        LOGGER.info("Activate the main window PropertyChangeListener"); //$NON-NLS-1$
+        // Register default model
+        ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(this);
+        mainWindow = BundlePreferences.getService(context.getBundleContext(), WeasisWin.class);
+    }
+
+    @Deactivate
+    protected void deactivate(ComponentContext context) {
+        // UnRegister default model
+        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(this);
+        LOGGER.info("Deactivate the main window PropertyChangeListener"); //$NON-NLS-1$
+    }
+
+    @Reference(service = DataExplorerViewFactory.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "removeDataExplorer")
+    void addDataExplorer(DataExplorerViewFactory factory) {
+
+        String className1 = BundleTools.SYSTEM_PREFERENCES.getProperty(factory.getClass().getName());
+        if (!StringUtil.hasText(className1) || Boolean.valueOf(className1)) {
+            GuiExecutor.instance().execute(() -> registerDataExplorer(factory.createDataExplorerView(null)));
+        }
+    }
+
+    void removeDataExplorer(DataExplorerViewFactory factory) {
+        GuiExecutor.instance().execute(() -> {
+            final DataExplorerView explorer = factory.createDataExplorerView(null);
+            if (UIManager.EXPLORER_PLUGINS.contains(explorer)) {
+                Optional.ofNullable(explorer.getDataExplorerModel())
+                    .ifPresent(e -> e.removePropertyChangeListener(this));
+                UIManager.EXPLORER_PLUGINS.remove(explorer);
+                explorer.dispose();
+                LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
+            }
+        });
+    }
+
+    void registerDataExplorer(DataExplorerView explorer) {
+        if (explorer != null && !UIManager.EXPLORER_PLUGINS.contains(explorer)) {
+            UIManager.EXPLORER_PLUGINS.add(explorer);
+            Optional.ofNullable(explorer.getDataExplorerModel()).ifPresent(e -> e.addPropertyChangeListener(this));
+            if (explorer instanceof DockableTool) {
+                final DockableTool dockable = (DockableTool) explorer;
+                dockable.showDockable();
+            }
+            LOGGER.info("Register data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
         }
     }
 

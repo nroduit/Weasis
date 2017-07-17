@@ -38,7 +38,7 @@ public class WPropertiesTest {
     @Before
     public void setUp() {
         PowerMockito.mockStatic(AppProperties.class);
-        PowerMockito.when(AppProperties.getBundleContext(null)).thenReturn(context);
+        PowerMockito.when(AppProperties.getBundleContext()).thenReturn(context);
     }
     
     @Test

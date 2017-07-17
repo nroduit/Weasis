@@ -13,7 +13,6 @@ package org.weasis.core.ui.internal;
 import java.io.File;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Objects;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.BundleActivator;
@@ -83,18 +82,18 @@ public class Activator implements BundleActivator, ServiceListener {
         // Must be instantiate in EDT
         GuiExecutor.instance().execute(() -> {
             ServiceReference<?> service = event.getServiceReference();
-            BundleContext context = service.getBundle().getBundleContext();
+            BundleContext context = AppProperties.getBundleContext(service);
             SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(service);
-            Objects.requireNonNull(viewerFactory);
-
-            if (event.getType() == ServiceEvent.REGISTERED) {
-                registerSeriesViewerFactory(viewerFactory);
-            } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                    LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription()); //$NON-NLS-1$
-                    UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
+            if (viewerFactory != null) {
+                if (event.getType() == ServiceEvent.REGISTERED) {
+                    registerSeriesViewerFactory(viewerFactory);
+                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                    if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
+                        LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription()); //$NON-NLS-1$
+                        UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
+                    }
+                    context.ungetService(service);
                 }
-                context.ungetService(service);
             }
         });
     }

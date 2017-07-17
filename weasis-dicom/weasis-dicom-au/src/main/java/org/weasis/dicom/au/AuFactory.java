@@ -117,9 +117,9 @@ public class AuFactory implements SeriesViewerFactory {
         return true;
     }
 
-    // *************************************************************** //
-    // ***************** OSGI service implementation ***************** //
-    // *************************************************************** //
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
