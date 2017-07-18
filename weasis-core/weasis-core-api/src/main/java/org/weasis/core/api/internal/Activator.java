@@ -105,8 +105,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
+        
         ServiceReference<?> sRef = event.getServiceReference();
-        BundleContext context = sRef.getBundle().getBundleContext();
+        BundleContext context = AppProperties.getBundleContext(sRef);
         Codec codec = null;
         try {
             codec = (Codec) context.getService(sRef);

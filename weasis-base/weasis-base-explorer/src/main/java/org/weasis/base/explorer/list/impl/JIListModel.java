@@ -17,6 +17,7 @@ import java.util.Optional;
 import javax.swing.JList;
 
 import org.weasis.base.explorer.DefaultExplorer;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.TreeNode;
 import org.weasis.base.explorer.list.AThumbnailModel;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -25,8 +26,8 @@ import org.weasis.core.api.media.data.MediaElement;
 @SuppressWarnings("serial")
 public class JIListModel<E extends MediaElement> extends AThumbnailModel<E> implements IThumbnailModel<E> {
 
-    public JIListModel(final JList<E> list) {
-        super(list);
+    public JIListModel(final JList<E> list, JIThumbnailCache thumbCache) {
+        super(list, thumbCache);
     }
 
     @Override

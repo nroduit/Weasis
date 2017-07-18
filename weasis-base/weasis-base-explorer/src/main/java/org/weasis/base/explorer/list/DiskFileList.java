@@ -12,9 +12,8 @@ package org.weasis.base.explorer.list;
 
 import java.nio.file.Path;
 
-public interface IDiskFileList extends JIObservable {
+public interface DiskFileList extends ListObservable {
 
-    @SuppressWarnings("rawtypes")
     IThumbnailModel getFileListModel();
 
     void loadDirectory(Path dir);
