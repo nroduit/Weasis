@@ -15,11 +15,14 @@
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
-		<powermock.version>1.6.5</powermock.version>
+		<powermock.version>1.7.0</powermock.version>
 		<weasis-dicom-tools.version>1.1.0-SNAPSHOT</weasis-dicom-tools.version>
 	</properties>
 	<repositories>
 		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 			<id>dcm4che</id>
 			<name>dcm4che Repository</name>
 			<url>http://www.dcm4che.org/maven2</url>
@@ -125,7 +128,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.5.2</version>
+			<version>3.8.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
