@@ -24,6 +24,7 @@ import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
@@ -108,7 +109,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static void registerCommands(BundleContext context) {
         Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
-        dict.put(CommandProcessor.COMMAND_FUNCTION, FileModel.functions);
+        dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions);
         context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
     }
 

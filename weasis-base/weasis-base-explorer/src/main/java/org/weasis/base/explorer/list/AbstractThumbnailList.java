@@ -76,14 +76,14 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
 
     public static final Dimension DEF_ICON_DIM = new Dimension(150, 150);
-    
+
     private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
     static {
         intGroupFormat.setGroupingUsed(true);
     }
 
     protected final JIThumbnailCache thumbCache;
-    
+
     private final int editingIndex = -1;
     private final DefaultListSelectionModel selectionModel;
 
@@ -117,8 +117,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
         setVerifyInputWhenFocusTarget(false);
     }
-    
-    
+
     public JIThumbnailCache getThumbCache() {
         return thumbCache;
     }

@@ -13,7 +13,7 @@ package org.weasis.core.api.media.data;
 public class SeriesEvent {
 
     public enum Action {
-         UPDATE, ADD_IMAGE, REMOVE_IMAGE, UPDATE_IMAGE, PRELOADING
+        UPDATE, ADD_IMAGE, REMOVE_IMAGE, UPDATE_IMAGE, PRELOADING
     }
 
     private final Action actionCommand;

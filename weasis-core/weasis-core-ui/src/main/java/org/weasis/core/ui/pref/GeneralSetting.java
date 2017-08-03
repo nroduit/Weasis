@@ -469,7 +469,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             LOGGER.error("Unable to set the Look&Feel", e); //$NON-NLS-1$
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); //$NON-NLS-1$
+        setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12));
         return laf;
     }
 

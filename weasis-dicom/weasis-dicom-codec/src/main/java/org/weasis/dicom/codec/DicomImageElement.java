@@ -34,7 +34,6 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.PseudoColorOp;
@@ -607,8 +606,8 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                RenderedOp dst = ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, paddingValueMin,
-                    paddingValueMax, null);
+                RenderedOp dst =
+                    ImageStatisticsDescriptor.create(img, (ROI) null, 1, 1, paddingValueMin, paddingValueMax, null);
                 // To ensure this image won't be stored in tile cache
                 ((OpImage) dst.getRendering()).setTileCache(null);
 

@@ -487,7 +487,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
 
     protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
-        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
+        return new ComboItemListener<Unit>(ActionW.SPATIAL_UNIT,
+            Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
 
             @Override
             public void itemStateChanged(Object object) {

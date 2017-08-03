@@ -49,10 +49,11 @@ public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailMod
             this.list.getSelectionModel().setValueIsAdjusting(false);
         }
     }
-    
+
     @Override
     public void loadContent(Path path) {
-        DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p) && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.MIMETYPE);
+        DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p)
+            && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.MIMETYPE);
         loadContent(path, filter);
     }
 

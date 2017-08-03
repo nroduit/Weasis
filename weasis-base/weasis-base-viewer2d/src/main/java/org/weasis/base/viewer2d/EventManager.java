@@ -244,7 +244,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             this.selectedView2dContainer.setMouseActions(null);
             getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
         }
-        
+
         ImageViewerPlugin<ImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {

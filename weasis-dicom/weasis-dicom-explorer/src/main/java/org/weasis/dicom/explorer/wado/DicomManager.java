@@ -28,7 +28,6 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.explorer.DicomFieldsView.DicomData;
 import org.weasis.dicom.explorer.Messages;
 
-
 public class DicomManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomManager.class);
 

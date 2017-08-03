@@ -268,7 +268,7 @@ public final class FileUtil {
 
     /**
      * Write URL content into a file
-     * 
+     *
      * @param urlConnection
      * @param outFile
      * @throws StreamIOException
@@ -292,7 +292,7 @@ public final class FileUtil {
 
     /**
      * Write inputStream content into a file
-     * 
+     *
      * @param inputStream
      * @param outFile
      * @throws StreamIOException

@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.assertj.core.data.Percentage;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -41,17 +41,23 @@ public class ImageInfoHelperTest {
         assertThat(ImageInfoHelper.calculateRatio(null, null)).isNull();
         assertThat(ImageInfoHelper.calculateRatio(imgInfo, null)).isNull();
 
-        PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(4000);
-        PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(2000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ULTRA_HD)).isCloseTo(0.96, Percentage.withPercentage(1));
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.FULL_HD)).isCloseTo(0.48, Percentage.withPercentage(1));
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HD_DVD)).isCloseTo(0.32, Percentage.withPercentage(1));
+        PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageWidth))).thenReturn(4000);
+        PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageHeight))).thenReturn(2000);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ULTRA_HD)).isCloseTo(0.96,
+            Percentage.withPercentage(1));
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.FULL_HD)).isCloseTo(0.48,
+            Percentage.withPercentage(1));
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HD_DVD)).isCloseTo(0.32,
+            Percentage.withPercentage(1));
 
-        PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageWidth))).thenReturn(2000);
-        PowerMockito.when(imgElt.getTagValue(Matchers.eq(TagW.ImageHeight))).thenReturn(4000);
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ULTRA_HD)).isCloseTo(0.96, Percentage.withPercentage(1));
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.FULL_HD)).isCloseTo(0.48, Percentage.withPercentage(1));
-        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HD_DVD)).isCloseTo(0.32, Percentage.withPercentage(1));
+        PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageWidth))).thenReturn(2000);
+        PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageHeight))).thenReturn(4000);
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.ULTRA_HD)).isCloseTo(0.96,
+            Percentage.withPercentage(1));
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.FULL_HD)).isCloseTo(0.48,
+            Percentage.withPercentage(1));
+        assertThat(ImageInfoHelper.calculateRatio(imgInfo, Resolution.HD_DVD)).isCloseTo(0.32,
+            Percentage.withPercentage(1));
     }
 
 }

@@ -118,7 +118,7 @@ public final class ImageFileHelper {
 
         JFileChooser fc = new JFileChooser(path);
         fc.setDialogType(JFileChooser.OPEN_DIALOG);
-        fc.setControlButtonsAreShown(true);;
+        fc.setControlButtonsAreShown(true);
         fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         int returnVal = fc.showOpenDialog(null);

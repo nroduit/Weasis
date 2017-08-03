@@ -44,8 +44,9 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public boolean matchIdValue(Object valueID) {
         Object v = tags.get(tagID);
-        if (v == valueID)
+        if (v == valueID) {
             return true;
+        }
         if (v == null) {
             return false;
         }
@@ -69,12 +70,15 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!(obj instanceof MediaSeriesGroup))
+        }
+        if (!(obj instanceof MediaSeriesGroup)) {
             return false;
+        }
         // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
         return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) obj).getTagValue(tagID));
     }

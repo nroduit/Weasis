@@ -66,7 +66,6 @@ public final class LutShape {
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
     }
 
-
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -132,7 +131,6 @@ public final class LutShape {
     public int hashCode() {
         return (function != null) ? function.hashCode() : lookup.hashCode();
     }
-    
 
     public static final LutShape getLutShape(String shape) {
         if (shape != null) {

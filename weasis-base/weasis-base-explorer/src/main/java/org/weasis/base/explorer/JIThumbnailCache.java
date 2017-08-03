@@ -76,7 +76,8 @@ public final class JIThumbnailCache {
         }
     }
 
-    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject, final ThumbnailList<? extends MediaElement> aThumbnailList, final int index) {
+    public ThumbnailIcon getThumbnailFor(final ImageElement diskObject,
+        final ThumbnailList<? extends MediaElement> aThumbnailList, final int index) {
         try {
 
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getMediaURI());
@@ -124,8 +125,8 @@ public final class JIThumbnailCache {
         final ThumbnailList<? extends MediaElement> thumbnailList;
         final int index;
 
-
-        public ThumbnailRunnable(ImageElement diskObject, ThumbnailList<? extends MediaElement> thumbnailList, int index) {
+        public ThumbnailRunnable(ImageElement diskObject, ThumbnailList<? extends MediaElement> thumbnailList,
+            int index) {
             this.diskObject = diskObject;
             this.thumbnailList = thumbnailList;
             this.index = index;
@@ -143,7 +144,6 @@ public final class JIThumbnailCache {
             return index;
         }
 
-
         @Override
         public void run() {
             RenderedImage img = null;
@@ -157,7 +157,7 @@ public final class JIThumbnailCache {
             if (img == null) {
                 img = diskObject.getRenderedImage(diskObject.getImage(null));
             }
-            
+
             if (img == null) {
                 return;
             }

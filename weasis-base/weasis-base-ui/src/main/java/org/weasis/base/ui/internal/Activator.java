@@ -69,7 +69,7 @@ public class Activator implements BundleActivator {
                 System.exit(-1);
             }
             MainWindowListener listener = BundlePreferences.getService(bundleContext, MainWindowListener.class);
-            if(listener !=null) {
+            if (listener != null) {
                 listener.setMainWindow(mainWindow);
             }
         });

@@ -23,12 +23,10 @@ public class WPropertiesTest {
     private static final String GREY_ALPHA = "80808080"; //$NON-NLS-1$
     private static final Color COLOR_ALPHA = new Color(128, 128, 128, 128);
 
-
-    
     @Before
     public void setUp() {
     }
-    
+
     @Test
     public void testSetPropertyString() {
         WProperties prop = new WProperties();

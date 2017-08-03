@@ -31,7 +31,7 @@ public interface Layer extends Comparable<Layer>, UUIDable {
 
     /**
      * Set a name to the layer. The default value is null and toString() gets the layer type name.
-     * 
+     *
      * @param layerName
      */
     void setName(String layerName);

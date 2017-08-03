@@ -81,14 +81,14 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
         boolean cellHasFocus) {
         ThumbnailIcon icon = null;
         if (value instanceof ImageElement) {
-            if(list instanceof AbstractThumbnailList) {
-                icon =  ((AbstractThumbnailList) list).getThumbCache().getThumbnailFor((ImageElement) value, (ThumbnailList<E>) list, index);
+            if (list instanceof AbstractThumbnailList) {
+                icon = ((AbstractThumbnailList) list).getThumbCache().getThumbnailFor((ImageElement) value,
+                    (ThumbnailList<E>) list, index);
             }
             if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
                 iconCheckedLabel.setIcon(ICON_CHECKED);
-            }
-            else {
-                iconCheckedLabel.setIcon(null); 
+            } else {
+                iconCheckedLabel.setIcon(null);
             }
         }
         this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);

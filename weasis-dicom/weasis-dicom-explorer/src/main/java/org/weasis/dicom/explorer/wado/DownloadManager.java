@@ -619,7 +619,8 @@ public class DownloadManager {
                         if (sopInstanceUID != null) {
                             DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
                             if (dicomInstances.contains(dcmInstance)) {
-                                LOGGER.warn("DICOM instance {} already exists, do not add to the model.", sopInstanceUID); //$NON-NLS-1$
+                                LOGGER.warn("DICOM instance {} already exists, do not add to the model.", //$NON-NLS-1$
+                                    sopInstanceUID);
                             } else {
                                 dcmInstance.setInstanceNumber(TagUtil.getIntegerTagAttribute(xmler,
                                     TagD.getKeywordFromTag(Tag.InstanceNumber, null), -1));

@@ -52,7 +52,7 @@ public class PrGraphicUtil {
 
     private PrGraphicUtil() {
     }
-    
+
     public static Graphic buildGraphic(Attributes go, Color color, boolean labelVisible, double width, double height,
         boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*
@@ -372,7 +372,8 @@ public class PrGraphicUtil {
             String id = dcmobj.getString(PresentationStateReader.PRIVATE_CREATOR_TAG);
             if (PresentationStateReader.PR_MODEL_ID.equals(id)) {
                 try {
-                    return XmlSerializer.buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
+                    return XmlSerializer
+                        .buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
                 } catch (Exception e) {
                     LOGGER.error("Cannot extract binary model: ", e); //$NON-NLS-1$
                 }

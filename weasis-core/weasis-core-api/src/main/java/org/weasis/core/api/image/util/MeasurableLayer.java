@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Gabriela Bauermann (gabriela@animati.com.br) - initial API and implementation
- *     Nicolas Roduit 
+ *     Nicolas Roduit
  *******************************************************************************/
 package org.weasis.core.api.image.util;
 

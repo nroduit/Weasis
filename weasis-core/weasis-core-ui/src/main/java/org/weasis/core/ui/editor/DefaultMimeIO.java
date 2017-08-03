@@ -48,7 +48,6 @@ public class DefaultMimeIO implements MediaReader {
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
     }
 
-
     @Override
     public PlanarImage getImageFragment(MediaElement media) throws Exception {
         return null;
@@ -73,7 +72,6 @@ public class DefaultMimeIO implements MediaReader {
     public boolean delegate(DataExplorerModel explorerModel) {
         return false;
     }
-
 
     @Override
     public MediaElement[] getMediaElement() {

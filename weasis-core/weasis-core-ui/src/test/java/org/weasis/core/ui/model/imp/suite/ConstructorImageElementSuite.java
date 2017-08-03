@@ -18,10 +18,10 @@ import org.weasis.core.ui.test.utils.ModelListHelper;
 
 @RunWith(PowerMockRunner.class)
 public class ConstructorImageElementSuite extends ModelListHelper {
-    
+
     @Test
     public void test_image_with_uuid_and_series_uuid() throws Exception {
-        ImageElement img = mockImage(UUID_1, UUID_2);                   
+        ImageElement img = mockImage(UUID_1, UUID_2);
         GraphicModel actual = new XmlGraphicModel(img);
 
         assertThat(actual).isNotNull();
@@ -143,5 +143,4 @@ public class ConstructorImageElementSuite extends ModelListHelper {
         assertThat(actual.getLayerCount()).isEqualTo(0);
     }
 
-    
 }

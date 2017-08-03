@@ -17,7 +17,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class PointAdapter {
-    
+
     private PointAdapter() {
     }
 
@@ -32,7 +32,7 @@ public class PointAdapter {
 
         @Override
         public Pt marshal(Point2D v) throws Exception {
-            if(Objects.isNull(v)) {
+            if (Objects.isNull(v)) {
                 return null;
             }
             Pt p = new Pt();

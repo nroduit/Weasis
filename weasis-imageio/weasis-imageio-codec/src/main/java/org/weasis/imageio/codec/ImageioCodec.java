@@ -115,7 +115,7 @@ public class ImageioCodec implements Codec {
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
-    
+
     @Activate
     protected void activate(ComponentContext context) {
         // Do not use cache. Images must be download locally before reading them.
@@ -150,7 +150,7 @@ public class ImageioCodec implements Codec {
         // Register the ImageRead and ImageWrite operation for JAI
         new ImageReadWriteSpi().updateRegistry(JAIUtil.getOperationRegistry());
     }
-    
+
     @Deactivate
     protected void deactivate(ComponentContext context) {
         Class[] jaiCodecs = { ChannelImageInputStreamSpi.class, ChannelImageOutputStreamSpi.class,

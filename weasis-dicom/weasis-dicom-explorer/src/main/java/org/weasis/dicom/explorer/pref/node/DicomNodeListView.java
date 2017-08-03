@@ -41,16 +41,16 @@ public class DicomNodeListView extends AbstractItemDialogPage {
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-        buildPanel(AbstractDicomNode.Type.DICOM_CALLING);   
-        buildPanel(AbstractDicomNode.Type.DICOM);        
+        buildPanel(AbstractDicomNode.Type.DICOM_CALLING);
+        buildPanel(AbstractDicomNode.Type.DICOM);
         buildPanel(AbstractDicomNode.Type.WEB);
-     //   buildPanel(AbstractDicomNode.Type.WEB_QIDO);
+        // buildPanel(AbstractDicomNode.Type.WEB_QIDO);
     }
-    
+
     private void buildPanel(AbstractDicomNode.Type nodeType) {
         JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(null, nodeType.toString(), TitledBorder.LEADING,
-            TitledBorder.TOP, null, null));
+        panel
+            .setBorder(new TitledBorder(null, nodeType.toString(), TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel);
         GridBagLayout gblPanel1 = new GridBagLayout();
         panel.setLayout(gblPanel1);
@@ -112,8 +112,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
         deleteButton.addActionListener(e -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
         editButton.addActionListener(e -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));
-        addNodeButton.addActionListener(
-            e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, nodeType));
+        addNodeButton.addActionListener(e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, nodeType));
 
         Box verticalBox = Box.createVerticalBox();
         GridBagConstraints gbcVerticalBox = new GridBagConstraints();

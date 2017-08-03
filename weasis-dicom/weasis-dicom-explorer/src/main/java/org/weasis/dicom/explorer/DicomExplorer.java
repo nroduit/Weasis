@@ -945,7 +945,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     public Set<Series> getSelectedPatientOpenSeries() {
-        return getPatientOpenSeries(selectedPatient == null ? null :selectedPatient.patient);
+        return getPatientOpenSeries(selectedPatient == null ? null : selectedPatient.patient);
     }
 
     public Set<Series> getPatientOpenSeries(MediaSeriesGroup patient) {
@@ -1304,20 +1304,26 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                         MediaSeriesGroup patient = (MediaSeriesGroup) newVal;
                         if (TagW.PatientPseudoUID.equals(patient.getTagID())) {
                             // Fix hash of key when patientUID has changed
-                            MediaSeriesGroupNode oldPt = new MediaSeriesGroupNode(patient.getTagID(), event.getOldValue(), null) {
+                            MediaSeriesGroupNode oldPt =
+                                new MediaSeriesGroupNode(patient.getTagID(), event.getOldValue(), null) {
 
-                                @Override
-                                public boolean equals(Object obj) {
-                                    if (this == obj)
-                                        return true;
-                                    if (obj == null)
-                                        return false;
-                                    if (!(obj instanceof MediaSeriesGroup))
-                                        return false;
-                                    // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
-                                    return Objects.equals(patient.getTagValue(getTagID()), ((MediaSeriesGroup) obj).getTagValue(getTagID()));
-                                }
-                            };
+                                    @Override
+                                    public boolean equals(Object obj) {
+                                        if (this == obj) {
+                                            return true;
+                                        }
+                                        if (obj == null) {
+                                            return false;
+                                        }
+                                        if (!(obj instanceof MediaSeriesGroup)) {
+                                            return false;
+                                        }
+                                        // According to the implementation of MediaSeriesGroupNode, the identifier
+                                        // cannot be null
+                                        return Objects.equals(patient.getTagValue(getTagID()),
+                                            ((MediaSeriesGroup) obj).getTagValue(getTagID()));
+                                    }
+                                };
                             patient2study.put(patient, patient2study.remove(oldPt));
                         }
                     } else if (newVal instanceof KOSpecialElement) {
@@ -1331,7 +1337,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (newVal instanceof ExplorerTask) {
                         addTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
                     }
-                } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action) || ObservableEvent.BasicAction.LOADING_CANCEL.equals(action)) {
+                } else if (ObservableEvent.BasicAction.LOADING_STOP.equals(action)
+                    || ObservableEvent.BasicAction.LOADING_CANCEL.equals(action)) {
                     if (newVal instanceof ExplorerTask) {
                         removeTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
                     }

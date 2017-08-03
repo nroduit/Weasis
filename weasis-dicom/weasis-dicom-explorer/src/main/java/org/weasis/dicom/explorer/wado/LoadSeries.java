@@ -174,7 +174,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             DownloadManager.removeLoadSeries(this, dicomModel);
 
             LOGGER.info("{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
-                new Object[] {AuditLog.MARKER_PERF, getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
+                new Object[] { AuditLog.MARKER_PERF, getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
                     TagD.getTagValue(dicomSeries, Tag.Modality, String.class), getImageNumber(),
                     (long) dicomSeries.getFileSize(), getDownloadTime() });
             dicomSeries.removeTag(DOWNLOAD_START_TIME);
@@ -825,7 +825,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     List<File> blkFiles = dis.getBulkDataFiles();
                     if (blkFiles != null) {
                         for (File file : blkFiles) {
-                            file.delete();
+                            FileUtil.delete(file);
                         }
                     }
                 }
@@ -938,7 +938,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         }
         DownloadManager.addLoadSeries(taskResume, dicomModel, true);
         DownloadManager.removeLoadSeries(s, dicomModel);
-        
+
         return taskResume;
     }
 

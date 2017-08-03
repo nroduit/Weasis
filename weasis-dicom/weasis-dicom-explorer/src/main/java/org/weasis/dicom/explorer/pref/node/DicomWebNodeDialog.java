@@ -169,7 +169,7 @@ public class DicomWebNodeDialog extends JDialog {
             validUrl = new URL(url);
         } catch (MalformedURLException e) {
             LOGGER.warn("Non valid url", e); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(this, "This URL is not valid", Messages.getString("PrinterDialog.error"),  //$NON-NLS-1$//$NON-NLS-2$
+            JOptionPane.showMessageDialog(this, "This URL is not valid", Messages.getString("PrinterDialog.error"), //$NON-NLS-1$//$NON-NLS-2$
                 JOptionPane.ERROR_MESSAGE);
             return;
         }

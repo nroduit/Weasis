@@ -225,7 +225,7 @@ public abstract class ImageOrientation {
         return makePatientOrientationFromPatientRelativeDirectionCosine(rowX, rowY, rowZ) + "\\" //$NON-NLS-1$
             + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
     }
-    
+
     public static final char getImageOrientationOposite(char c) {
         switch (c) {
             case 'L':

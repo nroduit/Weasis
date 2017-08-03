@@ -142,7 +142,7 @@ public class WeasisWin {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
     public static final String[] functions = { "info", "ui" }; //$NON-NLS-1$ //$NON-NLS-2$
-    
+
     private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
     private final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { //$NON-NLS-1$
@@ -1139,43 +1139,41 @@ public class WeasisWin {
             return super.getLocation(action, tab);
         }
     }
-  
 
     public void info(String[] argv) throws IOException {
-        final String[] usage =
-            { "Show information about Weasis", "Usage: weasis:info (-v | -a)",  //$NON-NLS-1$ //$NON-NLS-2$
-                "  -v --version    show version", //$NON-NLS-1$
-                "  -a --all        show weasis specifications",  //$NON-NLS-1$
-                "  -? --help       show help" };  //$NON-NLS-1$
+        final String[] usage = { "Show information about Weasis", "Usage: weasis:info (-v | -a)", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -v --version    show version", //$NON-NLS-1$
+            "  -a --all        show weasis specifications", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
 
         Option opt = Options.compile(usage).parse(argv);
 
         if (opt.isSet("version")) { //$NON-NLS-1$
             System.out.println(AppProperties.WEASIS_VERSION);
         } else if (opt.isSet("all")) { //$NON-NLS-1$
-           PrintStream out = System.out;
-           out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ //$NON-NLS-2$
-           out.println("  Installation path: " + AppProperties.WEASIS_PATH); //$NON-NLS-1$
-           out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); //$NON-NLS-1$
-           out.println("  Profile: " + AppProperties.WEASIS_PROFILE); //$NON-NLS-1$
-           out.println("  User: " + AppProperties.WEASIS_USER); //$NON-NLS-1$
-           out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
-           out.format("  Operating system: %s %s %s" , System.getProperty("os.name"), System.getProperty("os.version") , System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-           out.println();
-           out.println("  Java vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
-           out.println("  Java version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
-           out.println("  Java Path: " + System.getProperty("java.home"));           //$NON-NLS-1$ //$NON-NLS-2$
+            PrintStream out = System.out;
+            out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Installation path: " + AppProperties.WEASIS_PATH); //$NON-NLS-1$
+            out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); //$NON-NLS-1$
+            out.println("  Profile: " + AppProperties.WEASIS_PROFILE); //$NON-NLS-1$
+            out.println("  User: " + AppProperties.WEASIS_USER); //$NON-NLS-1$
+            out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.format("  Operating system: %s %s %s", System.getProperty("os.name"), System.getProperty("os.version"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                System.getProperty("os.arch")); //$NON-NLS-1$
+            out.println();
+            out.println("  Java vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Java version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Java Path: " + System.getProperty("java.home")); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             opt.usage();
         }
     }
 
     public void ui(String[] argv) throws IOException {
-        final String[] usage =
-            { "Manage user interface", "Usage: weasis:ui (-q | -v)",  //$NON-NLS-1$ //$NON-NLS-2$
-                "  -q --quit        shutdown Weasis", //$NON-NLS-1$ 
-                "  -v --visible     set window on top",  //$NON-NLS-1$
-                "  -? --help        show help" }; //$NON-NLS-1$ 
+        final String[] usage = { "Manage user interface", "Usage: weasis:ui (-q | -v)", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -q --quit        shutdown Weasis", //$NON-NLS-1$
+            "  -v --visible     set window on top", //$NON-NLS-1$
+            "  -? --help        show help" }; //$NON-NLS-1$
 
         Option opt = Options.compile(usage).parse(argv);
         if (opt.isSet("quit")) { //$NON-NLS-1$
@@ -1219,5 +1217,5 @@ public class WeasisWin {
             opt.usage();
         }
     }
-    
+
 }

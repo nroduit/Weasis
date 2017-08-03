@@ -92,7 +92,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 connectOptions.setConnectTimeout(3000);
                 connectOptions.setAcceptTimeout(5000);
                 params.setConnectOptions(connectOptions);
-                
+
                 if (RetrieveType.CGET == type) {
                     File sopClass = ResourceUtil.getResource("store-tcs.properties"); //$NON-NLS-1$
                     URL url = null;

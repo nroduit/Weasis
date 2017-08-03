@@ -42,7 +42,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
         this.thumbnailList.addListSelectionListener(new JIListSelectionAdapter());
         this.thumbnailList.registerListeners();
 
-        this.setPreferredSize(new Dimension(200,200));
+        this.setPreferredSize(new Dimension(200, 200));
         this.setAutoscrolls(true);
     }
 

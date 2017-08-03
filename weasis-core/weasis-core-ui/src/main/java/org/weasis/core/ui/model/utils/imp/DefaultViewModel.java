@@ -100,8 +100,7 @@ public class DefaultViewModel implements ViewModel {
     public void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale) {
         double scale = maybeCropViewScale(viewScale);
         if (MathUtil.isDifferent(this.modelOffsetX, modelOffsetX)
-            || MathUtil.isDifferent(this.modelOffsetY, modelOffsetY)
-            || MathUtil.isDifferent(this.viewScale, scale)) {
+            || MathUtil.isDifferent(this.modelOffsetY, modelOffsetY) || MathUtil.isDifferent(this.viewScale, scale)) {
             this.modelOffsetX = modelOffsetX;
             this.modelOffsetY = modelOffsetY;
             this.viewScale = scale;

@@ -311,8 +311,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset =
                         presetAction.isPresent() ? (PresetWindowLevel) presetAction.get().getSelectedItem() : null;
                     PresetWindowLevel newPreset = null;
-                    boolean pixelPadding = LangUtil.getNULLtoTrue(
-                        (Boolean) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+                    boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) view2d.getDisplayOpManager()
+                        .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
 

@@ -30,7 +30,7 @@ import javax.swing.SwingConstants;
 public class WtoolBar extends JPanel implements Toolbar {
 
     public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
-    
+
     private final String barName;
 
     private int barPosition = 100;

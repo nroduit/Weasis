@@ -37,11 +37,10 @@ public class DefaultExplorerFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
-
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
-    
+
     @Activate
     protected void activate(ComponentContext context) {
         if (model == null) {

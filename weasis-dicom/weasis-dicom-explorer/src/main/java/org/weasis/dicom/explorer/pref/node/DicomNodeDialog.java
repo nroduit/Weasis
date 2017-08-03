@@ -187,7 +187,7 @@ public class DicomNodeDialog extends JDialog {
             gbcComboBox.gridy = 3;
             content.add(comboBox, gbcComboBox);
             this.getContentPane().add(content, BorderLayout.CENTER);
-            
+
             if (typeNode == AbstractDicomNode.Type.DICOM_CALLING) {
                 portTf.setValue(11113);
                 hostnameTf.setText("localhost"); //$NON-NLS-1$
@@ -232,7 +232,7 @@ public class DicomNodeDialog extends JDialog {
             return;
         }
 
-        UsageType usageType =  Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
+        UsageType usageType = Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {

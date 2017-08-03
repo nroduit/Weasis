@@ -69,7 +69,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         setDockableWidth(400);
 
         JIThumbnailCache thumbCache = new JIThumbnailCache();
-        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album"),thumbCache); //$NON-NLS-1$
+        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album"), thumbCache); //$NON-NLS-1$
 
         browsePanel = new BrowsePanel(this);
         acquireThumbnailListPane = new AcquireThumbnailListPane<>(thumbCache);

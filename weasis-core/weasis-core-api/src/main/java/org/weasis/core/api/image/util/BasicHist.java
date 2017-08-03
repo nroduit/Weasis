@@ -13,7 +13,7 @@ package org.weasis.core.api.image.util;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
 
-// A simple histogram class 
+// A simple histogram class
 public class BasicHist {
 
     private static final String[] STATISTICS_LIST =
