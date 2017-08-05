@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 
@@ -24,6 +26,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     private final TagW tagID;
     private final TagView displayTag;
     private final HashMap<TagW, Object> tags = new HashMap<>();
+    private final List<Object> oldIds = new ArrayList<>();
 
     public MediaSeriesGroupNode(TagW tagID, Object identifier, TagView displayTag) {
         this.tagID = Objects.requireNonNull(tagID);
@@ -41,16 +44,27 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return tags.containsKey(tag);
     }
 
+    
+    @Override
+    public void addMergeIdValue(Object valueID) {
+        if(!oldIds.contains(valueID)) {
+            oldIds.add(valueID);
+        }
+    }
+    
     @Override
     public boolean matchIdValue(Object valueID) {
         Object v = tags.get(tagID);
-        if (v == valueID) {
+        
+        if(Objects.equals(v, valueID)) {
             return true;
         }
-        if (v == null) {
-            return false;
-        }
-        return v.equals(valueID);
+        for (Object id : oldIds) {
+            if(Objects.equals(id, valueID)) {
+                return true;
+            } 
+        }        
+        return false;
     }
 
     @Override

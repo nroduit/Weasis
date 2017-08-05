@@ -283,6 +283,7 @@ public final class FileUtil {
             }
             outputStream.flush();
         } catch (StreamIOException e) {
+            FileUtil.delete(outFile);
             throw e;
         } catch (IOException e) {
             FileUtil.delete(outFile);

@@ -843,7 +843,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                         String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
                         if (!patient.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
                             // Fix when patientUID in xml have different patient name
-                            dicomModel.replacePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID),
+                            dicomModel.mergePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID),
                                 dicomPtUID);
                         }
                     }
