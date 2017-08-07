@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.weasis.acquire.explorer.core.bean.helper;
 
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.powermock.api.mockito.PowerMockito.mock;
 import static org.powermock.api.mockito.PowerMockito.when;
 

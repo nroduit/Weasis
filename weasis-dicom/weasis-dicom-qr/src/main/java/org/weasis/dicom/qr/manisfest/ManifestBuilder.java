@@ -26,7 +26,6 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
 
-
 public class ManifestBuilder {
     // Manifest 2.5
     public static final String TAG_DOCUMENT_ROOT = "manifest"; //$NON-NLS-1$

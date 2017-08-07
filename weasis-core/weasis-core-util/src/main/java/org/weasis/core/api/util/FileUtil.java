@@ -268,7 +268,7 @@ public final class FileUtil {
 
     /**
      * Write URL content into a file
-     * 
+     *
      * @param urlConnection
      * @param outFile
      * @throws StreamIOException
@@ -283,6 +283,7 @@ public final class FileUtil {
             }
             outputStream.flush();
         } catch (StreamIOException e) {
+            FileUtil.delete(outFile);
             throw e;
         } catch (IOException e) {
             FileUtil.delete(outFile);
@@ -292,7 +293,7 @@ public final class FileUtil {
 
     /**
      * Write inputStream content into a file
-     * 
+     *
      * @param inputStream
      * @param outFile
      * @throws StreamIOException

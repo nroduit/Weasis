@@ -310,9 +310,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
                     sortStack(getCurrentSortComparator());
                 } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
-                    int frameIndex =
-                        tile ? LangUtil.getNULLtoFalse((Boolean) synch.getView().getActionValue(ActionW.KO_FILTER.cmd())) ? 0
-                            : synch.getView().getFrameIndex() - synch.getView().getTileOffset() : -1;
+                    int frameIndex = tile
+                        ? LangUtil.getNULLtoFalse((Boolean) synch.getView().getActionValue(ActionW.KO_FILTER.cmd())) ? 0
+                            : synch.getView().getFrameIndex() - synch.getView().getTileOffset()
+                        : -1;
                     KOManager.updateKOFilter(this, val,
                         (Boolean) (tile ? synch.getView().getActionValue(ActionW.KO_FILTER.cmd()) : null), frameIndex);
                 } else if (command.equals(ActionW.KO_FILTER.cmd())) {
@@ -367,8 +368,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                                         continue;
                                     }
                                     if (v instanceof View2d
-                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID))
-                                        && LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+                                        && fruid.equals(TagD.getTagValue(s, Tag.FrameOfReferenceUID)) && LangUtil
+                                            .getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
                                         ((View2d) v).computeCrosshair(p3);
                                         v.getJComponent().repaint();
                                     }
@@ -985,8 +986,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     @Override
     protected void fillPixelInfo(final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
         if (c != null && c.length >= 1) {
-            boolean pixelPadding = LangUtil
-                .getNULLtoTrue((Boolean) getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+            boolean pixelPadding = LangUtil.getNULLtoTrue(
+                (Boolean) getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
             PresentationStateReader prReader =
                 (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);

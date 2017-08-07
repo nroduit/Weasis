@@ -22,8 +22,7 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
         getTags("weasis.acquire.meta.image.display", "ImageComments,ContentDate,ContentTime"); //$NON-NLS-1$ //$NON-NLS-2$
     private static final TagW[] TAGS_EDITABLE =
         getTags("weasis.acquire.meta.image.edit", "ImageComments,ContentDate,ContentTime"); //$NON-NLS-1$ //$NON-NLS-2$
-    private static final TagW[] TAGS_TO_PUBLISH =
-        getTags("weasis.acquire.meta.image.required", "ContentDate"); //$NON-NLS-1$ //$NON-NLS-2$
+    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.image.required", "ContentDate"); //$NON-NLS-1$ //$NON-NLS-2$
 
     public AcquireImageMeta(AcquireImageInfo imageInfo) {
         super((imageInfo == null) ? null : imageInfo.getImage(), TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);

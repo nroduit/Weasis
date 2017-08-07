@@ -29,7 +29,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
 
-    private static final String ERROR_MSG = "Cannot open {} with the default system application";  //$NON-NLS-1$
+    private static final String ERROR_MSG = "Cannot open {} with the default system application"; //$NON-NLS-1$
 
     @Override
     public void close() {

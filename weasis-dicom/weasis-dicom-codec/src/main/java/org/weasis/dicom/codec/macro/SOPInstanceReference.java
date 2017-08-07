@@ -49,7 +49,7 @@ public class SOPInstanceReference extends Module {
 
     /**
      * Add frame number references (1 to n). Note: no frame means the entire series.
-     * 
+     *
      * @param dicomFrameNumber
      */
     public void setReferencedFrameNumber(int... dicomFrameNumber) {

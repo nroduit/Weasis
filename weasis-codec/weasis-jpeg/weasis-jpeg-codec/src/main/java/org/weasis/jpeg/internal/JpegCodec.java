@@ -59,7 +59,7 @@ public class JpegCodec implements NativeCodec {
                     msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
             }
         }
         return msg;
@@ -110,7 +110,7 @@ public class JpegCodec implements NativeCodec {
                     msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
             }
         }
         return msg;
@@ -155,7 +155,7 @@ public class JpegCodec implements NativeCodec {
                 } else {
                     return "JPEG driver exception: not valid input buffer";
                 }
-                buffer.flip();
+                StreamSegment.safeToBuffer(buffer).flip();
                 long stop = System.currentTimeMillis();
                 System.out.println("Convert array time: " + (stop - start) + " ms"); //$NON-NLS-1$
 

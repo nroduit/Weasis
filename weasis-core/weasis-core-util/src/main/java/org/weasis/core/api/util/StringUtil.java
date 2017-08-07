@@ -113,7 +113,7 @@ public class StringUtil {
         }
         return null;
     }
-    
+
     public static int getInt(String val) {
         if (StringUtil.hasText(val)) {
             try {
@@ -173,7 +173,7 @@ public class StringUtil {
 
     /**
      * Removing diacritical marks aka accents
-     * 
+     *
      * @param str
      * @return the input string without accents
      */
@@ -221,11 +221,11 @@ public class StringUtil {
 
     public static String getNonNullObject(Object object) {
         if (object == null) {
-            return null; 
+            return null;
         }
         return object.toString();
     }
-    
+
     public static String getEmpty2NullObject(Object object) {
         if (object == null) {
             return ""; //$NON-NLS-1$

@@ -25,6 +25,6 @@ public class SelectedDragSequence extends DefaultDragSequence {
         if (mouseEvent != null && mouseEvent.getID() == MouseEvent.MOUSE_RELEASED) {
             graphic.fireRemoveAndRepaintAction();
         }
-        return  Boolean.TRUE;
+        return Boolean.TRUE;
     }
 }

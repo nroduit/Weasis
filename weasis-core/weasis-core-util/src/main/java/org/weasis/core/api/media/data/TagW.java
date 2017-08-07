@@ -138,7 +138,7 @@ public class TagW implements Serializable {
     public static final TagW FilePath = new TagW("FilePath", TagType.STRING); //$NON-NLS-1$
     public static final TagW FileName = new TagW("FileName", TagType.STRING); //$NON-NLS-1$
     public static final TagW CurrentFolder =
-        new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING);  //$NON-NLS-1$//$NON-NLS-2$
+        new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING); //$NON-NLS-1$//$NON-NLS-2$
     public static final TagW Checked = new TagW("Checked", TagType.BOOLEAN); //$NON-NLS-1$
 
     /**
@@ -395,7 +395,7 @@ public class TagW implements Serializable {
     public synchronized void setAnonymizationType(int anonymizationType) {
         this.anonymizationType = anonymizationType;
     }
-    
+
     public String getFormattedTagValue(Object value, String format) {
         return getFormattedText(value, format);
     }

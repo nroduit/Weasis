@@ -45,7 +45,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
     private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default"); //$NON-NLS-1$
-    
+
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
@@ -67,7 +67,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         setComponentPosition(5);
         setBorder(new EmptyBorder(15, 10, 10, 10));
 
-        jComboName.addItem(DEFAULT_LABEL); 
+        jComboName.addItem(DEFAULT_LABEL);
         Arrays.stream(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames())
             .forEach(jComboName::addItem);
         jbInit();
@@ -167,7 +167,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        viewSetting.setFontName(DEFAULT_LABEL); 
+        viewSetting.setFontName(DEFAULT_LABEL);
         viewSetting.setFontType(0);
         viewSetting.setFontSize(12);
         initialize();
@@ -186,7 +186,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); //$NON-NLS-1$ 
+        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); //$NON-NLS-1$
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 

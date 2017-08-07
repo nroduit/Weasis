@@ -330,7 +330,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private void initLayers(ViewCanvas<?> view) {
-        initPathSelection(getTreePath(drawings), LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
+        initPathSelection(getTreePath(drawings),
+            LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
         initPathSelection(getTreePath(crosslines),
             LangUtil.getNULLtoTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
     }

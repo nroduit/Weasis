@@ -26,8 +26,8 @@ public class SeriesViewerEvent {
     private final EVENT eventType;
     private Object sharedObject;
 
-    public SeriesViewerEvent(SeriesViewer<? extends MediaElement> seriesViewer, MediaSeries<? extends MediaElement> series, MediaElement mediaElement,
-        EVENT eventType) {
+    public SeriesViewerEvent(SeriesViewer<? extends MediaElement> seriesViewer,
+        MediaSeries<? extends MediaElement> series, MediaElement mediaElement, EVENT eventType) {
         if (seriesViewer == null) {
             throw new IllegalArgumentException("SeriesViewer parameter cannot be null"); //$NON-NLS-1$
         }

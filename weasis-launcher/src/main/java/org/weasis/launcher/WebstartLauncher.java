@@ -39,7 +39,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         // org.weasis.imageio.codec.internal.Activator.java
         IIORegistry registry = IIORegistry.getDefaultInstance();
         Iterator<Class<?>> categories = registry.getCategories();
-        ArrayList<Object> toRemove = new ArrayList<Object>();
+        ArrayList<Object> toRemove = new ArrayList<>();
         while (categories.hasNext()) {
             Class<?> class1 = categories.next();
             Iterator<?> providers = registry.getServiceProviders(class1, false);

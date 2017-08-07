@@ -189,7 +189,7 @@ public class KernelData implements Serializable {
     public void setDivisor(int divisor) {
         this.divisor = divisor;
     }
-    
+
     public static KernelData[] getAllFilters() {
         return new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE,
             OUTLINE, EMBOSS, GAUSSIAN3, GAUSSIAN5, GAUSSIAN7, GAUSSIAN9, GAUSSIAN23, GAUSSIAN25, GAUSSIAN27 };

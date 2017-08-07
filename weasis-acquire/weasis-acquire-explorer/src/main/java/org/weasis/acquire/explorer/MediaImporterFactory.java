@@ -39,11 +39,10 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
         return explorer;
     }
 
-
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
-    
+
     @Activate
     protected void activate(ComponentContext context) {
         registerCommands(context);

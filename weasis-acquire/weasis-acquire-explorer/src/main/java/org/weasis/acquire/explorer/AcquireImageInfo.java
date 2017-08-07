@@ -437,6 +437,7 @@ public class AcquireImageInfo {
                 : TagUtil.toLocalDateTime(date);
             imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
             imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
+            imageElement.setTagNoNull(TagD.get(Tag.ImageComments), file.get().getName());
         }
     }
 }

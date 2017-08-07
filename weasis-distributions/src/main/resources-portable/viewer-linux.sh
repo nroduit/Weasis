@@ -9,6 +9,12 @@
 # Only major version is checked. Minor version or any other version string info is left out.
 REQUIRED_TEXT_VERSION=1.8
 
+# JVM Options
+DEFAULT_JVM_OPTIONS="-Xms64m -Xmx768m -Dgosh.args="
+GOSH_ARGS="-sc telnetd -p 17179 start"
+
+JAVA9_OPTIONS="--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED --add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED --add-opens=java.base/java.net=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.security=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED --add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED --add-opens=java.desktop/javax.imageio=ALL-UNNAMED --add-opens=java.desktop/com.sun.awt=ALL-UNNAMED"
+
 # Extract major version number for comparisons from the required version string.
 # In order to do that, remove leading "1." if exists, and minor and security versions.
 REQUIRED_MAJOR_VERSION=$(echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\..*//')
@@ -45,11 +51,17 @@ INSTALLED_VERSION=$($JAVACMD -version 2>&1 | awk '/version [0-9]*/ {print $3;}')
 echo "Found java $INSTALLED_VERSION"
 
 # Remove double quotes, remove leading "1." if it exists and remove everything apart from the major version number.
-INSTALLED_MAJOR_VERSION=$(echo $INSTALLED_VERSION | sed -e 's/"//' -e 's/^1\.//' -e 's/\..*//')
+INSTALLED_MAJOR_VERSION=$(echo $INSTALLED_VERSION | sed -e 's/"//g' -e 's/^1\.//' -e 's/\..*//')
 
 if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION ))
 then
 	die "Your version of java is too low to run Weasis.\nPlease update to $REQUIRED_TEXT_VERSION or higher"
+fi
+
+if (( INSTALLED_MAJOR_VERSION >= 9 ))
+then
+	echo "add options for Java 9: $JAVA9_OPTIONS"
+    DEFAULT_JVM_OPTIONS="$JAVA9_OPTIONS $DEFAULT_JVM_OPTIONS"
 fi
 
 # Get additional weasis arguments
@@ -66,4 +78,7 @@ echo user arguments: ${userParameters[@]}
 # If the correct Java version is detected, launch weasis from current path
 curPath=$(dirname "$(readlink -f "$0")")
 echo "Weasis launcher directory: $curPath"
-$JAVACMD -Xms64m -Xmx768m -Dgosh.args="-sc telnetd -p 17179 start" -Dweasis.portable.dir="$curPath" -classpath "$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
+
+cps="$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar"
+
+$JAVACMD $DEFAULT_JVM_OPTIONS"$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}

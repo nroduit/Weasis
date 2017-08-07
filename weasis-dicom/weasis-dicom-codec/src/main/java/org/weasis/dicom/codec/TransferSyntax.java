@@ -12,7 +12,6 @@ package org.weasis.dicom.codec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 
 public enum TransferSyntax {
     NONE(null, "None", null), //$NON-NLS-1$
@@ -48,7 +47,7 @@ public enum TransferSyntax {
     JPEG2000_LOSSLESS_2("1.2.840.10008.1.2.4.92", "JPEG 2000 Part 2 (Lossless Only)", null), //$NON-NLS-1$ //$NON-NLS-2$
 
     JPEG2000_2("1.2.840.10008.1.2.4.93", "JPEG 2000 Part 2", 75), //$NON-NLS-1$ //$NON-NLS-2$
-    
+
     JPIP("1.2.840.10008.1.2.4.94", "JPIP", null), //$NON-NLS-1$ //$NON-NLS-2$
 
     JPIP_DEFLATE("1.2.840.10008.1.2.4.95", " JPIP Deflate", null), //$NON-NLS-1$ //$NON-NLS-2$
@@ -105,6 +104,5 @@ public enum TransferSyntax {
         }
         return NONE;
     }
-
 
 }

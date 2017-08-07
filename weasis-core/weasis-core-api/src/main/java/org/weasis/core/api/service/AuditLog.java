@@ -25,7 +25,7 @@ import org.weasis.core.api.util.StringUtil;
 
 /**
  * The Class AuditLog allows to write specific traces for the application usage.
- * 
+ *
  */
 public class AuditLog {
     // Share this logger
@@ -40,8 +40,8 @@ public class AuditLog {
     public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern"; //$NON-NLS-1$
     public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names"; //$NON-NLS-1$
 
-    public static final String MARKER_PERF = "*PERF*";  //$NON-NLS-1$
-    
+    public static final String MARKER_PERF = "*PERF*"; //$NON-NLS-1$
+
     public enum LEVEL {
         TRACE, DEBUG, INFO, WARN, ERROR;
 

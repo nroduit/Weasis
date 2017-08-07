@@ -70,17 +70,19 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
-public abstract class AThumbnailList<E extends MediaElement> extends JList<E> implements IThumbnailList<E> {
+public abstract class AbstractThumbnailList<E extends MediaElement> extends JList<E> implements ThumbnailList<E> {
 
     public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
     public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
 
-    public static final Dimension ICON_DIM = new Dimension(150, 150);
-    private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
+    public static final Dimension DEF_ICON_DIM = new Dimension(150, 150);
 
+    private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
     static {
         intGroupFormat.setGroupingUsed(true);
     }
+
+    protected final JIThumbnailCache thumbCache;
 
     private final int editingIndex = -1;
     private final DefaultListSelectionModel selectionModel;
@@ -89,13 +91,13 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     private Point dragPressed = null;
     private DragSource dragSource = null;
 
-    public AThumbnailList() {
-        this(HORIZONTAL_WRAP);
+    public AbstractThumbnailList(JIThumbnailCache thumbCache) {
+        this(thumbCache, HORIZONTAL_WRAP);
     }
 
-    public AThumbnailList(final int scrollMode) {
+    public AbstractThumbnailList(JIThumbnailCache thumbCache, int scrollMode) {
         super();
-
+        this.thumbCache = thumbCache == null ? new JIThumbnailCache() : thumbCache;
         this.setModel(newModel());
         this.changed = false;
 
@@ -114,7 +116,10 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         setLayoutOrientation(scrollMode);
 
         setVerifyInputWhenFocusTarget(false);
-        JIThumbnailCache.getInstance().invalidate();
+    }
+
+    public JIThumbnailCache getThumbCache() {
+        return thumbCache;
     }
 
     @Override
@@ -164,7 +169,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
-                AThumbnailList.this.jiThumbnailKeyPressed(e);
+                AbstractThumbnailList.this.jiThumbnailKeyPressed(e);
             }
         });
     }
@@ -254,8 +259,8 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     }
 
     public void reset() {
-        setFixedCellHeight(ICON_DIM.height);
-        setFixedCellWidth(ICON_DIM.width);
+        setFixedCellHeight(DEF_ICON_DIM.height);
+        setFixedCellWidth(DEF_ICON_DIM.width);
         setLayoutOrientation(HORIZONTAL_WRAP);
 
         getThumbnailListModel().reload();
@@ -516,7 +521,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     public Action buildRefreshAction() {
         // TODO set this action in toolbar
         return new DefaultAction(Messages.getString("JIThumbnailList.refresh_list"), event -> { //$NON-NLS-1$
-            final Thread runner = new Thread(AThumbnailList.this.getThumbnailListModel()::reload);
+            final Thread runner = new Thread(AbstractThumbnailList.this.getThumbnailListModel()::reload);
             runner.start();
         });
     }
@@ -552,7 +557,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
         private void showPopup(final MouseEvent evt) {
             // Context menu
             if (SwingUtilities.isRightMouseButton(evt)) {
-                JPopupMenu popupMenu = AThumbnailList.this.buidContexMenu(evt);
+                JPopupMenu popupMenu = AbstractThumbnailList.this.buidContexMenu(evt);
                 if (popupMenu != null) {
                     popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
                 }
@@ -607,7 +612,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
     @Override
     public void dragGestureRecognized(DragGestureEvent dge) {
         Component comp = dge.getComponent();
-        if (comp instanceof AThumbnailList) {
+        if (comp instanceof AbstractThumbnailList) {
             int index = getSelectedIndex();
             E media = getSelectedValue();
             MediaSeries<?> series = buildSeriesFromMediaElement(media);
@@ -615,7 +620,7 @@ public abstract class AThumbnailList<E extends MediaElement> extends JList<E> im
                 GhostGlassPane glassPane = AppProperties.glassPane;
                 Icon icon = null;
                 if (media instanceof ImageElement) {
-                    icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) media, this, index);
+                    icon = thumbCache.getThumbnailFor((ImageElement) media, this, index);
                 }
                 if (icon == null) {
                     icon = JIUtility.getSystemIcon(media);

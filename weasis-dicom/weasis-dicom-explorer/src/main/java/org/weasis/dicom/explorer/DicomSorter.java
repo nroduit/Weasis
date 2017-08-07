@@ -122,7 +122,7 @@ public class DicomSorter {
                     }
                 }
 
-                if (c == 0 || (val1 == null && val2 == null)) {   
+                if (c == 0 || (val1 == null && val2 == null)) {
                     LocalDateTime date1 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st1);
                     LocalDateTime date2 = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, st2);
                     if (date1 != null && date2 != null) {

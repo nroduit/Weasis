@@ -49,7 +49,6 @@ public class FontTools {
         return font8;
     }
 
-
     public static float getAccurateFontHeight(Graphics g) {
         return (float) g.getFontMetrics().getStringBounds("0", g).getHeight(); //$NON-NLS-1$
     }

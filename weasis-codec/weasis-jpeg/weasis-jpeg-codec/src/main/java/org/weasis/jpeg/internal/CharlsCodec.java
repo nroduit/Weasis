@@ -75,7 +75,7 @@ public class CharlsCodec implements NativeCodec {
                     JpegParameters params = (JpegParameters) nImage.getImageParameters();
                     if (params.getBytesPerLine() == 0) {
                         ret = libijg.JpegLsReadHeaderStream(input, p);
-                        buffer.clear();
+                        StreamSegment.safeToBuffer(buffer).clear();
                         if (ret == libijg.OK) {
                             setParameters(params, p);
                         } else {
@@ -102,7 +102,7 @@ public class CharlsCodec implements NativeCodec {
                     }
                 }
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
 
                 if (ret == libijg.OK) {
                     int bps = p.bitspersample();
@@ -158,7 +158,7 @@ public class CharlsCodec implements NativeCodec {
                 } else {
                     return "JPGLS codec exception: not valid input buffer";
                 }
-                buffer.flip();
+                StreamSegment.safeToBuffer(buffer).flip();
 
                 try (SizeTPointer size = new SizeTPointer(1);
                                 SizeTPointer size2 = new SizeTPointer(1);
@@ -178,10 +178,10 @@ public class CharlsCodec implements NativeCodec {
                         }
                     }
                     // keep a reference to be not garbage collected
-                    buffer.clear();
+                    StreamSegment.safeToBuffer(buffer).clear();
 
                     if (ret == libijg.OK) {
-                        outBuf.rewind();
+                        StreamSegment.safeToBuffer(buffer).rewind();
                         NativeImage.writeByteBuffer(ouputStream, outBuf, (int) bytesWritten.get());
                     }
                 }

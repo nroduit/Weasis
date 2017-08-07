@@ -396,7 +396,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         }
         return (sliderValue * (modelMax - modelMin)) / sliderMax + modelMin;
     }
-    
+
     public static void setFont(JSlider jslider, Font font) {
         Enumeration<?> enumVal = jslider.getLabelTable().elements();
         while (enumVal.hasMoreElements()) {

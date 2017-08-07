@@ -105,7 +105,8 @@ public class ImageTool extends PluginTool {
 
         final JButton resetButton = new JButton();
         resetButton.setText(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-        resetButton.addActionListener(e -> EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem()));
+        resetButton
+            .addActionListener(e -> EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem()));
         panel2.add(resetButton);
         ActionState resetAction = EventManager.getInstance().getAction(ActionW.RESET);
         if (resetAction != null) {

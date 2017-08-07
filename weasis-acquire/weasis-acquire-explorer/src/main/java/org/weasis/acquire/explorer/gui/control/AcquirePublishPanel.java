@@ -69,7 +69,7 @@ public class AcquirePublishPanel extends JPanel {
 
         PUBLISH_DICOM.execute(publishDicomTask);
     }
-    
+
     private void publishChanged(PropertyChangeEvent evt) {
         if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
             int progress = (Integer) evt.getNewValue();

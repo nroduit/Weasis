@@ -99,7 +99,7 @@ public class MediaElement implements Tagable {
 
     /**
      * This file can be the result of a processing like downloading, tiling or uncompressing.
-     * 
+     *
      * @return the final file that has been load by the reader.
      */
     public File getFile() {

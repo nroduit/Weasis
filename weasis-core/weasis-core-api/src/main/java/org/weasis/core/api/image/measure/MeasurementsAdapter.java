@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.core.api.image.measure;
 
-
 public class MeasurementsAdapter {
     private final double calibRatio;
     private final boolean upYAxis;
@@ -54,7 +53,7 @@ public class MeasurementsAdapter {
     }
 
     public double getYUncalibratedValue(double yVal) {
-        return (upYAxis ? imageHeight - yVal: yVal) + offsetY;
+        return (upYAxis ? imageHeight - yVal : yVal) + offsetY;
     }
 
     public double getXCalibratedValue(double xVal) {
@@ -62,7 +61,7 @@ public class MeasurementsAdapter {
     }
 
     public double getYCalibratedValue(double yVal) {
-        return calibRatio * ((upYAxis ? imageHeight - yVal: yVal) + offsetY);
+        return calibRatio * ((upYAxis ? imageHeight - yVal : yVal) + offsetY);
     }
 
 }

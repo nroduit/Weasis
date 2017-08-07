@@ -408,7 +408,8 @@ public class AuView extends JPanel implements SeriesViewerListener {
                                 attributes.bigEndian());
                         }
 
-                        return new AudioInputStream(bulkData.openStream(), audioFormat, bulkData.length() / audioFormat.getFrameSize());
+                        return new AudioInputStream(bulkData.openStream(), audioFormat,
+                            bulkData.length() / audioFormat.getFrameSize());
                     } catch (Exception e) {
                         LOGGER.error("Get audio stream", e); //$NON-NLS-1$
                     }

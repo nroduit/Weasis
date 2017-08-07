@@ -59,7 +59,8 @@ public class CalibrationGraphic extends LineGraphic {
 
         if (!getResizingOrMoving()) {
             CalibrationView calibrationDialog = new CalibrationView(this, view, false);
-            int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog, Messages.getString("CalibrationGraphic.calib"), //$NON-NLS-1$
+            int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog,
+                Messages.getString("CalibrationGraphic.calib"), //$NON-NLS-1$
                 JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();

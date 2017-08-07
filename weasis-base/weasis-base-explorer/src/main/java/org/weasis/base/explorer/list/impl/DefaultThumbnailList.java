@@ -19,25 +19,27 @@ import javax.swing.JPopupMenu;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.Messages;
-import org.weasis.base.explorer.list.AThumbnailList;
-import org.weasis.base.explorer.list.IThumbnailList;
+import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
+import org.weasis.base.explorer.list.ThumbnailList;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 
 @SuppressWarnings("serial")
-public final class JIThumbnailList<E extends MediaElement> extends AThumbnailList<E> implements IThumbnailList<E> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JIThumbnailList.class);
+public final class DefaultThumbnailList<E extends MediaElement> extends AbstractThumbnailList<E>
+    implements ThumbnailList<E> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultThumbnailList.class);
 
-    public JIThumbnailList() {
-        super();
+    public DefaultThumbnailList(JIThumbnailCache thumbCache) {
+        super(thumbCache);
     }
 
     @Override
     public IThumbnailModel<E> newModel() {
-        return new JIListModel<>(this);
+        return new JIListModel<>(this, thumbCache);
     }
 
     @Override
@@ -105,5 +107,4 @@ public final class JIThumbnailList<E extends MediaElement> extends AThumbnailLis
             openSelection();
         }
     }
-
 }

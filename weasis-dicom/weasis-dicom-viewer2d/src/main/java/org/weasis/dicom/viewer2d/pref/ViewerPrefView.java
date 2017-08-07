@@ -46,7 +46,7 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
-    private final Hashtable<Integer, JLabel> labels = new Hashtable<Integer, JLabel>();
+    private final Hashtable<Integer, JLabel> labels = new Hashtable<>();
     private JSlider sliderWindow;
     private JSlider sliderLevel;
     private JSlider sliderZoom;

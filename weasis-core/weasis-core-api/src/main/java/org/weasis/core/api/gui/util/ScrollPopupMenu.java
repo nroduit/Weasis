@@ -29,7 +29,7 @@ public class ScrollPopupMenu extends JPopupMenu {
     private JPanel panelMenus = null;
     private JScrollPane scroll = null;
 
-    public ScrollPopupMenu( Point screenPt) {
+    public ScrollPopupMenu(Point screenPt) {
         super();
 
         scroll = new JScrollPane();
