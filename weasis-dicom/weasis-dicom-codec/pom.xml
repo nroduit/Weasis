@@ -16,7 +16,7 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
 		<powermock.version>1.7.0</powermock.version>
-		<weasis-dicom-tools.version>1.1.0-SNAPSHOT</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>1.2.0</weasis-dicom-tools.version>
 	</properties>
 	<repositories>
 		<repository>
