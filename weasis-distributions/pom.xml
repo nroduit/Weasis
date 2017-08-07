@@ -24,7 +24,7 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>5.6.4-p1</felix.framework.version>
+		<felix.framework.version>5.6.6-p1</felix.framework.version>
 		<felix.gogo.version>1.0.6</felix.gogo.version>
 		<felix.gogo.shell.version>1.0.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.0.2</felix.gogo.command.version>
