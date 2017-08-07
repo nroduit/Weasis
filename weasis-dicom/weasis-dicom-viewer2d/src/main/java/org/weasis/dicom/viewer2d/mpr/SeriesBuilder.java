@@ -129,7 +129,7 @@ public class SeriesBuilder {
 
                             final String uid1;
                             final String uid2;
-                            String[] uidsRef = TagD.getTagValue(series, SeriesReferences, String[].class);
+                            String[] uidsRef = TagW.getTagValue(series, SeriesReferences, String[].class);
                             if (uidsRef != null && uidsRef.length == 2) {
                                 uid1 = uidsRef[0];
                                 uid2 = uidsRef[1];

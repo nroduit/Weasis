@@ -17,14 +17,14 @@ public class DefaultGraphicLabel extends AbstractGraphicLabel {
     public DefaultGraphicLabel() {
         super();
     }
+
     public DefaultGraphicLabel(DefaultGraphicLabel object) {
         super(object);
     }
-    
+
     @Override
     public GraphicLabel copy() {
         return new DefaultGraphicLabel(this);
     }
-    
-    
+
 }

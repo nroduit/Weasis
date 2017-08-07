@@ -126,8 +126,9 @@ public class PrSerializer {
                         graphic.setLabel(label);
                     }
                     xmlModel.addGraphic(graphic);
-                } else
+                } else {
                     xmlModel.addGraphic(g);
+                }
             }
         }
         return xmlModel;

@@ -94,8 +94,9 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         boolean dirty = imageInfo.isDirtyFromDefault();
 
         if (dirty) {
-            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel, Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
-                "" , JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
+            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel,
+                Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
+                "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (confirm == 0) {
                 centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
             }

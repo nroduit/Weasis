@@ -34,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 import javax.swing.SwingWorker.StateValue;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -123,13 +124,14 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), ModalityType.APPLICATION_MODAL);  //$NON-NLS-1$
+        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), //$NON-NLS-1$
+            ModalityType.APPLICATION_MODAL);
         this.publishPanel = publishPanel;
 
         setContentPane(initContent());
         publishTree.getTree().addCheckingPath(new TreePath(publishTree.getModel().getRootNode().getPath()));
 
-        setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
@@ -210,7 +212,7 @@ public class AcquirePublishDialog extends JDialog {
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
         if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) { //$NON-NLS-1$
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
             if (comboNode.getItemCount() == 0) {
                 comboNode.addItem(getDestinationConfiguration());
             }
@@ -246,7 +248,7 @@ public class AcquirePublishDialog extends JDialog {
 
         if (toPublish.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
-                this.getTitle(), JOptionPane.ERROR_MESSAGE); 
+                this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -264,8 +266,8 @@ public class AcquirePublishDialog extends JDialog {
             }
         }
         if (!publishable) {
-            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"),  //$NON-NLS-1$
-                this.getTitle(), JOptionPane.ERROR_MESSAGE); 
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"), //$NON-NLS-1$
+                this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return;
         }
 

@@ -59,8 +59,9 @@ public class AnnotationOptionsPanel extends JPanel {
 
     public AnnotationOptionsPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setBorder(BorderFactory.createCompoundBorder(spaceY, new TitledBorder(null, Messages.getString("AnnotationOptionsPanel.options"), //$NON-NLS-1$
-            TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
+        setBorder(BorderFactory.createCompoundBorder(spaceY,
+            new TitledBorder(null, Messages.getString("AnnotationOptionsPanel.options"), //$NON-NLS-1$
+                TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         lineStylePanel = createLineStylePanel();
         drawOncePanel = createDrawOnePanel();

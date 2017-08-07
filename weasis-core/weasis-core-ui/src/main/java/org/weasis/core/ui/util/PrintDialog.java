@@ -118,7 +118,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         printButton = new javax.swing.JButton();
 
         printButton.setText(Messages.getString("PrintDialog.print")); //$NON-NLS-1$
-        printButton.addActionListener(e-> printAction());
+        printButton.addActionListener(e -> printAction());
 
         if (layout) {
             chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$

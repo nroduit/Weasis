@@ -19,8 +19,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;

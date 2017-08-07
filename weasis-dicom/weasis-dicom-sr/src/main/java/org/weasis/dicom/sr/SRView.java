@@ -278,23 +278,23 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 layer.setLevel(305);
             }
 
-            if (!addLayer) { 
+            if (!addLayer) {
                 List<Graphic> models = modelList.getModels();
                 int size = 0;
-                synchronized (models ) {
+                synchronized (models) {
                     for (Graphic g : models) {
                         boolean sr = layer.equals(g.getLayer());
                         if (sr) {
-                            size ++;
+                            size++;
                         }
                     }
                 }
-                
-                if(imgRef.getGraphics().size() == size) {
+
+                if (imgRef.getGraphics().size() == size) {
                     return;
                 }
-                
-                if(size > 0) {
+
+                if (size > 0) {
                     modelList.deleteByLayer(layer);
                 }
             }

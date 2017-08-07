@@ -27,7 +27,8 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
-import org.weasis.base.explorer.list.AThumbnailList;
+import org.weasis.base.explorer.JIThumbnailCache;
+import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.ImageOpNode;
@@ -38,17 +39,17 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings({ "serial" })
-public class AcquireCentralThumnailList<E extends MediaElement> extends AThumbnailList<E> {
+public class AcquireCentralThumnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
     private AcquireTabPanel acquireTabPanel;
 
-    public AcquireCentralThumnailList() {
-        super();
+    public AcquireCentralThumnailList(JIThumbnailCache thumbCache) {
+        super(thumbCache);
     }
 
     @Override
     public IThumbnailModel<E> newModel() {
-        return new AcquireCentralThumbnailModel<>(this);
+        return new AcquireCentralThumbnailModel<>(this, thumbCache);
     }
 
     public void setAcquireTabPanel(AcquireTabPanel acquireTabPanel) {

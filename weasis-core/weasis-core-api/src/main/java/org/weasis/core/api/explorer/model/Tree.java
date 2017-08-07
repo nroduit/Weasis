@@ -36,7 +36,7 @@ public class Tree<T> {
             addLeaf(root).addLeaf(leaf);
         }
     }
-    
+
     private Tree<T> addLeaf(T leaf) {
         Tree<T> t = new Tree<>(leaf);
         leafs.add(t);

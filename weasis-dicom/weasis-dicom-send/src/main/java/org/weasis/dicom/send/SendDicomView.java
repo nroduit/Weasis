@@ -173,7 +173,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         executor.execute(task);
     }
 
-    private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask<Boolean, String> t) throws IOException {
+    private boolean sendDicomFiles(final CheckTreeModel model, final ExplorerTask<Boolean, String> t)
+        throws IOException {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, t));
         File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -225,7 +226,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         return true;
     }
 
-    private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model) throws IOException {
+    private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model)
+        throws IOException {
         synchronized (this) {
             ArrayList<String> uids = new ArrayList<>();
             TreePath[] paths = model.getCheckingPaths();

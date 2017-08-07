@@ -22,7 +22,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;

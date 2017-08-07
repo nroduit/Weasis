@@ -1159,7 +1159,8 @@ public class DicomMediaUtils {
         }
     }
 
-    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID, String sopInstanceUID) {
+    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID,
+        String sopInstanceUID) {
 
         final int[] patientStudyAttributes = { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime,
             Tag.StudyDescription, Tag.AccessionNumber, Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName,
@@ -1170,7 +1171,8 @@ public class DicomMediaUtils {
 
         // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
         pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
-        pr.setString(Tag.SOPInstanceUID, VR.UI, StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
+        pr.setString(Tag.SOPInstanceUID, VR.UI,
+            StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
         Date now = new Date();
         pr.setDate(Tag.PresentationCreationDateAndTime, now);
         pr.setDate(Tag.ContentDateAndTime, now);

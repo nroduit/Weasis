@@ -164,7 +164,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         if (graphic != null) {
             GraphicLayer layer = graphic.getLayer();
             if (layer == null) {
-                layer = findLayerByType(graphic.getLayerType()).orElseGet(() -> new DefaultLayer(graphic.getLayerType()));
+                layer =
+                    findLayerByType(graphic.getLayerType()).orElseGet(() -> new DefaultLayer(graphic.getLayerType()));
                 graphic.setLayer(layer);
             }
             if (!layers.contains(layer)) {
@@ -218,7 +219,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             models.forEach(g -> g.removePropertyChangeListener(graphicsChangeHandler));
         }
     }
-    
 
     @Override
     public List<PropertyChangeListener> getGraphicsListeners() {

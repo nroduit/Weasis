@@ -54,7 +54,6 @@ public class DicomQidoNode extends AbstractDicomNode {
         return toolTips.toString();
     }
 
-
     @Override
     public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
         super.saveDicomNode(writer);

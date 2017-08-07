@@ -18,6 +18,8 @@ import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.TagD;
@@ -27,6 +29,7 @@ import org.weasis.dicom.explorer.DicomFieldsView.DicomData;
 import org.weasis.dicom.explorer.Messages;
 
 public class DicomManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomManager.class);
 
     /** The single instance of this singleton class. */
 
@@ -69,7 +72,7 @@ public class DicomManager {
         }
         return instance;
     }
-    
+
     public boolean containsImageioCodec(String tsuid) {
         if (!allImageCodecs && tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
             return DicomImageUtils.hasImageReader(tsuid);

@@ -231,12 +231,12 @@ public class View2d extends DefaultView2d<ImageElement> {
         } else if (command.equals(ActionW.WINLEVEL.cmd())) {
             return getAction(ActionW.LEVEL);
         }
-        
+
         Optional<ActionW> actionKey = eventManager.getActionKey(command);
         if (!actionKey.isPresent()) {
             return null;
         }
-        
+
         if (actionKey.get().isDrawingAction()) {
             return graphicMouseHandler;
         }
@@ -377,7 +377,8 @@ public class View2d extends DefaultView2d<ImageElement> {
                     calibMenu.addActionListener(e -> {
                         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
-                        CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this, false);
+                        CalibrationView calibrationDialog =
+                            new CalibrationView((LineGraphic) graph, View2d.this, false);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
                             title, JOptionPane.OK_CANCEL_OPTION);
                         if (layer != null) {

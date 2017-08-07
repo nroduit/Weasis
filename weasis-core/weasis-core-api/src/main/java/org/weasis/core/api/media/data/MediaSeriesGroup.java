@@ -13,10 +13,12 @@ package org.weasis.core.api.media.data;
 public interface MediaSeriesGroup extends Tagable {
 
     TagW getTagID();
-    
-    boolean matchIdValue(Object value);
+
+    boolean matchIdValue(Object valueID);
 
     TagW getTagElement(int id);
 
     void dispose();
+
+    void addMergeIdValue(Object valueID);
 }

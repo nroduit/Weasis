@@ -4,7 +4,7 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 
 [![CircleCI](https://circleci.com/gh/nroduit/Weasis.svg?style=svg&circle-token=000f0e7422ddff1a5351499010c9075f18e55522)](https://circleci.com/gh/nroduit/Weasis) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/50bdcb5275a84a9186a8e5d9d9d1b81d)](https://www.codacy.com/app/nicolas.roduit/Weasis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/Weasis&amp;utm_campaign=Badge_Grade)
 
-[General information](https://dcm4che.atlassian.net/wiki/display/WEA/Building+Weasis+from+source/Home)
+[General information](https://dcm4che.atlassian.net/wiki/display/WEA/Home)
 
 [Live Demo with different datasets](https://dcm4che.atlassian.net/wiki/display/WEA/DICOM+Samples)
 

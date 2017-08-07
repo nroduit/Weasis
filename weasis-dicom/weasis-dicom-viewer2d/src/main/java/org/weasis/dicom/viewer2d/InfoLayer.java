@@ -43,9 +43,9 @@ import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -132,13 +132,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
                 y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                DefaultGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
+                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
                     y, Color.RED);
             }
 
@@ -147,7 +147,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 for (String str : desc) {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
-                        DefaultGraphicLabel.paintColorFontOutline(g2, str,
+                        AbstractGraphicLabel.paintColorFontOutline(g2, str,
                             midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
@@ -192,7 +192,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     }
                 }
 
-                DefaultGraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
+                AbstractGraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
                 drawY -= fontHeight;
             }
 
@@ -204,7 +204,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             if (koElement != null) {
                 float y = midy;
                 String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
-                DefaultGraphicLabel.paintColorFontOutline(g2, message,
+                AbstractGraphicLabel.paintColorFontOutline(g2, message,
                     midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
             }
         }
@@ -218,7 +218,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
-            DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
+            AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3,
                 g2.getFontMetrics(view2DPane.getLayerFont()).stringWidth(str) + 4, (int) fontHeight + 2);
@@ -252,19 +252,19 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 }
             }
             if (outside) {
-                DefaultGraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
+                AbstractGraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
             } else {
-                DefaultGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+                AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
             }
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM) && hideMin) {
-            DefaultGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
                 + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION) && hideMin) {
-            DefaultGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
                 + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
                 + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
@@ -286,7 +286,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             buf.append(" / "); //$NON-NLS-1$
             buf.append(view2DPane.getSeries()
                 .size((Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())));
-            DefaultGraphicLabel.paintFontOutline(g2, buf.toString(), border, drawY);
+            AbstractGraphicLabel.paintFontOutline(g2, buf.toString(), border, drawY);
             drawY -= fontHeight;
 
             Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -317,7 +317,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY);
+                                        AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY);
                                         drawY += fontHeight;
                                     }
                                     break;
@@ -342,7 +342,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str,
+                                        AbstractGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
                                         drawY += fontHeight;
                                     }
@@ -368,7 +368,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str,
+                                        AbstractGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY -= fontHeight;
                                     }
@@ -470,29 +470,29 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 Map<TextAttribute, Object> map = new HashMap<>(1);
                 map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
                 String fistLetter = rowTop.substring(0, 1);
-                DefaultGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
+                AbstractGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
                 int shiftx = g2.getFontMetrics().stringWidth(fistLetter);
                 Font subscriptFont = bigFont.deriveFont(map);
                 if (rowTop.length() > 1) {
                     g2.setFont(subscriptFont);
-                    DefaultGraphicLabel.paintColorFontOutline(g2, rowTop.substring(1, rowTop.length()), midx + shiftx,
+                    AbstractGraphicLabel.paintColorFontOutline(g2, rowTop.substring(1, rowTop.length()), midx + shiftx,
                         fontHeight + 5f, highlight);
                     g2.setFont(bigFont);
                 }
 
-                DefaultGraphicLabel.paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength),
+                AbstractGraphicLabel.paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength),
                     midy + fontHeight / 2.0f, highlight);
 
                 if (colLeft.length() > 1) {
                     g2.setFont(subscriptFont);
-                    DefaultGraphicLabel.paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
+                    AbstractGraphicLabel.paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
                         (float) (border + thickLength + shiftx), midy + fontHeight / 2.0f, highlight);
                 }
                 g2.setFont(oldFont);
             }
 
-            DefaultGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
-                                                                                                                    // for
+            AbstractGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
+                                                                                                                     // for
             // outline
         } else {
             positions[0] = new Point2D.Float(border, border);

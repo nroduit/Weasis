@@ -94,7 +94,8 @@ class FileStreamSegment extends StreamSegment {
             for (int i = startSeg; i <= endSeg; i++) {
                 buffer.put(file.getChannel().map(FileChannel.MapMode.READ_ONLY, segPosition[i], segLength[i]));
             }
-            buffer.rewind();
+
+            StreamSegment.safeToBuffer(buffer).rewind();
             return buffer;
         }
 

@@ -99,7 +99,7 @@ public class LineGraphic extends AbstractDragGraphic {
         }
         buildShape(null);
     }
-    
+
     @Override
     public boolean isShapeValid() {
         updateTool();

@@ -112,7 +112,7 @@ public class LoadingTaskPanel extends JPanel {
             if (task != null) {
                 CircularProgressBar globalProgress = task.getBar();
                 this.add(globalProgress);
-                globalProgress.setIndeterminate(true); 
+                globalProgress.setIndeterminate(true);
             }
         }
         if (task != null) {

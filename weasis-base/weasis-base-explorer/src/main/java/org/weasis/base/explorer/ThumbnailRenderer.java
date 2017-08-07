@@ -28,7 +28,8 @@ import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
 
-import org.weasis.base.explorer.list.IThumbnailList;
+import org.weasis.base.explorer.list.AbstractThumbnailList;
+import org.weasis.base.explorer.list.ThumbnailList;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
@@ -80,12 +81,14 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements
         boolean cellHasFocus) {
         ThumbnailIcon icon = null;
         if (value instanceof ImageElement) {
-            icon = JIThumbnailCache.getInstance().getThumbnailFor((ImageElement) value, (IThumbnailList) list, index);
+            if (list instanceof AbstractThumbnailList) {
+                icon = ((AbstractThumbnailList) list).getThumbCache().getThumbnailFor((ImageElement) value,
+                    (ThumbnailList<E>) list, index);
+            }
             if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
                 iconCheckedLabel.setIcon(ICON_CHECKED);
-            }
-            else {
-                iconCheckedLabel.setIcon(null); 
+            } else {
+                iconCheckedLabel.setIcon(null);
             }
         }
         this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);

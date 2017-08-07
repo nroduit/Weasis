@@ -89,14 +89,14 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
     /**
      * Returns the line thickness value (default value: <b>1</b>).
-     * 
+     *
      * @return The line thickness value
      */
     Float getLineThickness();
 
     /**
      * Returns a build Stroke object regarding the line thickness value.
-     * 
+     *
      * @param lineThickness
      *            Line thickness
      * @return New Stroke object with defined thickness
@@ -105,21 +105,21 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
     /**
      * Returns graphic's color (Default value: <b>Color.YELLOW</b>)
-     * 
+     *
      * @return Graphic's color
      */
     Paint getColorPaint();
 
     /**
      * Returns <b>TRUE</b> if the graphic is filled, <b>FALSE</b> otherwise (Default value: <b>FALSE</b>)
-     * 
+     *
      * @return <b>TRUE</b> or <b>FALSE</b>
      */
     Boolean getFilled();
 
     /**
      * Returns the Handle size (Default value: <b>6</b>)
-     * 
+     *
      * @return The Handle size
      */
     Integer getHandleSize();
@@ -207,7 +207,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
     /**
      * Set the list of points. Do not use this method when building a graphic programmatically, use
      * buildGraphic(List<Point2D.Double> pts) instead.
-     * 
+     *
      * @param pts
      */
     void setPts(List<Point2D.Double> pts);
@@ -233,7 +233,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
     /**
      * This is the method for building a new graphic with a list of points. This method is an adapter as the constructor
      * must have no parameter for serialization.
-     * 
+     *
      * @param pts
      * @return
      * @throws InvalidShapeException

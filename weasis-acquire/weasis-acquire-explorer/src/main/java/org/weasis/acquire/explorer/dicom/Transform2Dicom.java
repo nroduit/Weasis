@@ -81,10 +81,11 @@ public final class Transform2Dicom {
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
             PlanarImage transformedImage = imageElement.getImage(opManager, false);
+            
             // TODO should be handled in the transformation
             // Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-            // Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME,
-            // RotationOp.P_ROTATE)).orElse(0);
+            // Integer rotationAngle = Optional
+            // .ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
             // rotationAngle = rotationAngle % 360;
             // if (area != null && rotationAngle != 0 && rotationAngle != 180) {
             // transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
@@ -159,7 +160,7 @@ public final class Transform2Dicom {
      * @param dicomTags
      */
     public static void buildStudySeriesDate(Collection<AcquireImageInfo> collection, final Tagable dicomTags) {
-   
+
         TagW seriesDate = TagD.get(Tag.SeriesDate);
         TagW seriesTime = TagD.get(Tag.SeriesTime);
         TagW studyDate = TagD.get(Tag.StudyDate);
@@ -172,8 +173,7 @@ public final class Transform2Dicom {
             i.getSeries().setTag(seriesDate, null);
             i.getSeries().setTag(seriesTime, null);
         });
-        
-        
+
         for (AcquireImageInfo imageInfo : collection) {
             ImageElement imageElement = imageInfo.getImage();
             LocalDateTime date = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageElement);

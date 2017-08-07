@@ -108,10 +108,10 @@ public class NonEditableGraphic extends AbstractGraphic {
     public void setStroke(Stroke stroke) {
         this.stroke = stroke;
     }
-    
+
     @Override
     public Stroke getStroke(Float lineThickness) {
-        if(stroke != null){
+        if (stroke != null) {
             return stroke;
         }
         return super.getStroke(lineThickness);

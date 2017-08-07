@@ -387,8 +387,8 @@ public final class TagUtil {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      * @param value1
      * @param value2
      * @param ignoreCase

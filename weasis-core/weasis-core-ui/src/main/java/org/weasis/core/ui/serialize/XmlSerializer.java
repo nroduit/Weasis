@@ -91,7 +91,7 @@ public class XmlSerializer {
         }
         return null;
     }
-    
+
     public static GraphicModel buildPresentationModel(byte[] gzipData) {
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);

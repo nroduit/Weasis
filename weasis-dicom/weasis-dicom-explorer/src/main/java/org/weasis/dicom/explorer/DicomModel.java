@@ -144,26 +144,34 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         return null;
     }
 
-    public void replacePatientUID(String oldPatientUID, String newPatientUID) {
+    public void mergePatientUID(String oldPatientUID, String newPatientUID) {
         MediaSeriesGroup pt = getHierarchyNode(MediaSeriesGroupNode.rootNode, oldPatientUID);
-        Collection<MediaSeriesGroup> studies = getChildren(pt);
-        Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
-        for (MediaSeriesGroup st : studies) {
-            studyMap.put(st, getChildren(st));
+        MediaSeriesGroup pt2 = getHierarchyNode(MediaSeriesGroupNode.rootNode, newPatientUID);
+
+        if (pt == null || Objects.equals(pt, pt2)) {
+            return;
         }
-
-        removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-        pt.setTagNoNull(TagW.PatientPseudoUID, newPatientUID);
-        addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-
-        for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
-            MediaSeriesGroup st = stEntry.getKey();
-            addHierarchyNode(pt, st);
-            for (MediaSeriesGroup s : stEntry.getValue()) {
-                addHierarchyNode(st, s);
+        if (pt2 == null) {
+            pt.addMergeIdValue(newPatientUID);
+        } else {
+            Collection<MediaSeriesGroup> studies = getChildren(pt);
+            Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
+            for (MediaSeriesGroup st : studies) {
+                studyMap.put(st, getChildren(st));
             }
+
+            removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+
+            for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
+                MediaSeriesGroup st = stEntry.getKey();
+                addHierarchyNode(pt, st);
+                for (MediaSeriesGroup s : stEntry.getValue()) {
+                    addHierarchyNode(st, s);
+                }
+            }
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT, DicomModel.this, pt, pt2));
         }
-        firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UPDATE, DicomModel.this, oldPatientUID, pt));
     }
 
     public MediaSeriesGroup getStudyNode(String studyUID) {

@@ -19,30 +19,30 @@ import java.util.List;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public interface IThumbnailList<E>
-    extends JIObservable, DragGestureListener, DragSourceMotionListener, DragSourceListener {
+public interface ThumbnailList<E>
+    extends ListObservable, DragGestureListener, DragSourceMotionListener, DragSourceListener {
 
-    public void registerListeners();
+    void registerListeners();
 
-    public Component asComponent();
+    Component asComponent();
 
-    public void addListSelectionListener(ListSelectionListener listener);
+    void addListSelectionListener(ListSelectionListener listener);
 
-    public void listValueChanged(final ListSelectionEvent e);
+    void listValueChanged(final ListSelectionEvent e);
 
-    public void setChanged();
+    void setChanged();
 
-    public void clearChanged();
+    void clearChanged();
 
-    public int getLastVisibleIndex();
+    int getLastVisibleIndex();
 
-    public int getFirstVisibleIndex();
+    int getFirstVisibleIndex();
 
-    public IThumbnailModel<E> getThumbnailListModel();
+    IThumbnailModel<E> getThumbnailListModel();
 
-    public int[] getSelectedIndices();
+    int[] getSelectedIndices();
 
     List<E> getSelectedValuesList();
 
-    public Object getCellRenderer();
+    Object getCellRenderer();
 }

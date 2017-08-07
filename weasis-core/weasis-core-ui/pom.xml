@@ -14,7 +14,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<powermock.version>1.6.5</powermock.version>
+		<powermock.version>1.7.0</powermock.version>
 	</properties>
 	<build>
 		<plugins>
@@ -35,6 +35,27 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>java9</id>
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<argLine>--add-modules=java.xml.bind</argLine>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
@@ -61,7 +82,7 @@
 		<dependency>
 			<groupId>com.github.lgooddatepicker</groupId>
 			<artifactId>LGoodDatePicker</artifactId>
-			<version>10.2.3</version>
+			<version>10.3.1</version>
 		</dependency>
 		<!-- <dependency> -->
 		<!-- <groupId>com.xeiam.xchart</groupId> -->
@@ -73,7 +94,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.5.2</version>
+			<version>3.8.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
