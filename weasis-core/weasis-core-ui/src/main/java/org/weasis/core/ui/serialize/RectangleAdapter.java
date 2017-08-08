@@ -17,7 +17,7 @@ import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
 public class RectangleAdapter {
-    
+
     private RectangleAdapter() {
     }
 

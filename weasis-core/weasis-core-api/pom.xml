@@ -14,7 +14,6 @@
 	<properties>
 		<bundle.namespace>org.weasis.core.api</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<powermock.version>1.6.5</powermock.version>
 	</properties>
 	<build>
 		<plugins>
@@ -24,12 +23,19 @@
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<!-- Force exporting org.weasis.core.api.util -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*;-split-package:=merge-first</Export-Package>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-util</artifactId>
+			<version>${project.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.prefs</artifactId>
@@ -58,19 +64,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.5.2</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito2</artifactId>
-			<version>${powermock.version}</version>
+			<version>3.8.0</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

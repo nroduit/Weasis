@@ -16,6 +16,7 @@ import java.nio.file.Path;
 
 import javax.swing.JList;
 
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailModel;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -24,8 +25,8 @@ import org.weasis.dicom.codec.DicomMediaIO;
 @SuppressWarnings({ "serial" })
 public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailModel<E> {
 
-    public AcquireThumbnailModel(JList<E> list) {
-        super(list);
+    public AcquireThumbnailModel(JList<E> list, JIThumbnailCache thumbCache) {
+        super(list, thumbCache);
     }
 
     @Override
@@ -48,10 +49,11 @@ public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailMod
             this.list.getSelectionModel().setValueIsAdjusting(false);
         }
     }
-    
+
     @Override
     public void loadContent(Path path) {
-        DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p) && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.MIMETYPE);
+        DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p)
+            && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.MIMETYPE);
         loadContent(path, filter);
     }
 

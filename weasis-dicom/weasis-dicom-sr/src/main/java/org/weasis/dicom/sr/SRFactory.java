@@ -116,11 +116,11 @@ public class SRFactory implements SeriesViewerFactory {
     public boolean canExternalizeSeries() {
         return true;
     }
-    
-    // *************************************************************** //
-    // ***************** OSGI service implementation ***************** //
-    // *************************************************************** //
-    
+
+    // ================================================================================
+    // OSGI service implementation
+    // ================================================================================
+
     @Deactivate
     protected void deactivate(ComponentContext context) {
         UIManager.closeSeriesViewerType(SRContainer.class);

@@ -15,7 +15,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.acquire.explorer</bundle.namespace>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<powermock.version>1.6.5</powermock.version>
+		<powermock.version>1.7.0</powermock.version>
 	</properties>
 	<build>
 		<plugins>
@@ -26,14 +26,35 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>
-					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-					</instructions>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>java9</id>
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<!-- TODO remove when powermock bug is fixed https://github.com/powermock/powermock/issues/783 -->
+								<exclude>ImageInfoHelperTest.java</exclude>
+								<exclude>SeriesGroupTest.java</exclude>
+								<exclude>GlobalTest.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
@@ -102,7 +123,7 @@
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.5.2</version>
+			<version>3.8.0</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

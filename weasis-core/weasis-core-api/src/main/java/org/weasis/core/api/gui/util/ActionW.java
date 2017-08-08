@@ -70,12 +70,13 @@ public class ActionW implements KeyActionValue {
                 return true;
             }
         };
-    public static final ActionW DRAW = new ActionW(Messages.getString("ActionW.draws"), "draw", KeyEvent.VK_G, 0, null) {  //$NON-NLS-1$//$NON-NLS-2$
-        @Override
-        public boolean isDrawingAction() {
-            return true;
-        }
-    };
+    public static final ActionW DRAW =
+        new ActionW(Messages.getString("ActionW.draws"), "draw", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$//$NON-NLS-2$
+            @Override
+            public boolean isDrawingAction() {
+                return true;
+            }
+        };
     // Starting cmd by "draw.sub." defines a derivative action
     public static final ActionW DRAW_MEASURE =
         new ActionW(Messages.getString("ActionW.measurement"), DRAW_CMD_PREFIX + MEASURE.cmd(), 0, 0, null); //$NON-NLS-1$

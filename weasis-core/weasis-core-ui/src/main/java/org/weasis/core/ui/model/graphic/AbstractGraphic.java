@@ -125,7 +125,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     /**
      * Returns the total number of points. If the value is null or negative then return 10 as the default value
-     * 
+     *
      * @return total number of points
      */
     @Override

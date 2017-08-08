@@ -240,7 +240,8 @@ public class MeasureToolBar extends WtoolBar {
         menu.setButton(dropDownButton);
         action.registerActionState(dropDownButton);
 
-        dropDownButton.setToolTipText(draw ? Messages.getString("MeasureToolBar.drawing_tools") : Messages.getString("MeasureToolBar.tools"));  //$NON-NLS-1$//$NON-NLS-2$
+        dropDownButton.setToolTipText(
+            draw ? Messages.getString("MeasureToolBar.drawing_tools") : Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$//$NON-NLS-2$
 
         // when user press the measure icon, set the action to measure
         dropDownButton.addActionListener(e -> {

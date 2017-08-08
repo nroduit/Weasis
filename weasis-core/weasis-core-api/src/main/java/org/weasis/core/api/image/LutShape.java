@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.weasis.core.api.Messages;
@@ -53,7 +53,19 @@ public final class LutShape {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public static final List<LutShape> DEFAULT_FACTORY_FUNCTIONS = Arrays.asList(LutShape.LINEAR, LutShape.SIGMOID,LutShape.SIGMOID_NORM,LutShape.LOG,LutShape.LOG_INV);
+
+    public static final List<LutShape> DEFAULT_FACTORY_FUNCTIONS;
+
+    static {
+        DEFAULT_FACTORY_FUNCTIONS = new ArrayList<>();
+
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LINEAR);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.SIGMOID_NORM);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG);
+        DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
+    }
+
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +132,6 @@ public final class LutShape {
     public int hashCode() {
         return (function != null) ? function.hashCode() : lookup.hashCode();
     }
-    
 
     public static final LutShape getLutShape(String shape) {
         if (shape != null) {

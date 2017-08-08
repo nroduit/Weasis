@@ -33,7 +33,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
@@ -94,8 +94,8 @@ public class RetrieveTreeModel {
 
     public static synchronized DefaultTreeModel buildModel(DicomModel dicomModel) {
         Collection<MediaSeriesGroup> patients = dicomModel.getChildren(MediaSeriesGroupNode.rootNode);
-        DefaultMutableTreeNode rootNode =
-            new DefaultMutableTreeNode(patients.isEmpty() ? Messages.getString("RetrieveTreeModel.no_pat") : DicomExplorer.ALL_PATIENTS); //$NON-NLS-1$
+        DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(
+            patients.isEmpty() ? Messages.getString("RetrieveTreeModel.no_pat") : DicomExplorer.ALL_PATIENTS); //$NON-NLS-1$
         for (MediaSeriesGroup pt : patients) {
             DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
             for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {
@@ -160,7 +160,7 @@ public class RetrieveTreeModel {
 
         public String getToolTipText() {
             TagReadable s = (TagReadable) getUserObject();
-            Thumbnail thumb = (Thumbnail) s.getTagValue(TagW.Thumbnail);
+            Thumbnailable thumb = (Thumbnailable) s.getTagValue(TagW.Thumbnail);
             if (thumb != null) {
                 try {
                     File path = thumb.getThumbnailPath();

@@ -14,12 +14,16 @@ import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
+import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -33,6 +37,7 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
@@ -357,6 +362,9 @@ public class WeasisLauncher {
 
         int exitStatus = 0;
         try {
+            final String goshArgs = System.getProperty("gosh.args", serverProp.get("gosh.args"));
+            serverProp.put("gosh.args", "--nointeractive --noshutdown");
+
             // Now create an instance of the framework with our configuration properties.
             m_felix = new Felix(serverProp);
             // Initialize the framework, but don't start it yet.
@@ -379,19 +387,14 @@ public class WeasisLauncher {
             loader.close();
             loader = null;
 
-            // Start telnet after all other bundles. This will ensure that all the plugins commands are activated once
-            // telnet is available
-            for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell") && b.getState() == Bundle.INSTALLED) { //$NON-NLS-1$
-                    b.start();
-                    break;
-                }
-            }
-
             SwingUtilities.invokeLater(() -> {
                 m_tracker.open();
                 Object commandSession = getCommandSession(m_tracker.getService());
                 if (commandSession != null) {
+                    // Start telnet after all other bundles. This will ensure that all the plugins commands are
+                    // activated once telnet is available
+                    initCommandSession(commandSession, goshArgs);
+
                     // execute the commands from main argv
                     for (StringBuilder command : commandList) {
                         commandSession_execute(commandSession, command);
@@ -596,7 +599,7 @@ public class WeasisLauncher {
 
     public static List<StringBuilder> splitCommand(String[] args) {
         int length = args.length;
-        ArrayList<StringBuilder> list = new ArrayList<>(5);
+        ArrayList<StringBuilder> list = new ArrayList<>();
         for (int i = 0; i < length; i++) {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuilder command = new StringBuilder(args[i].substring(1));
@@ -615,9 +618,6 @@ public class WeasisLauncher {
                 list.add(command);
             }
         }
-        // for (StringBuilder stringBuffer : list) {
-        // System.out.println("Command:" + stringBuffer);
-        // }
         return list;
     }
 
@@ -625,18 +625,87 @@ public class WeasisLauncher {
         if (commandProcessor == null) {
             return null;
         }
-        Class<?>[] parameterTypes = new Class[] { InputStream.class, PrintStream.class, PrintStream.class };
+        Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
 
-        Object[] arguments = new Object[] { System.in, System.out, System.err };
+        // Close stream is not handled but this is a workaround for stackoverflow issue when using System.in...
+        Object[] arguments = new Object[] { new FileInputStream(FileDescriptor.in),
+            new FileOutputStream(FileDescriptor.out), new FileOutputStream(FileDescriptor.err) };
 
         try {
             Method nameMethod = commandProcessor.getClass().getMethod("createSession", parameterTypes); //$NON-NLS-1$
             Object commandSession = nameMethod.invoke(commandProcessor, arguments);
+            addCommandSessionListener(commandProcessor);
             return commandSession;
         } catch (Exception ex) {
             // Since the services returned by the tracker could become
             // invalid at any moment, we will catch all exceptions, log
             // a message, and then ignore faulty services.
+            System.err.println(ex);
+        }
+
+        return null;
+    }
+
+    private static void addCommandSessionListener(Object commandProcessor) {
+        try {
+            ClassLoader loader = commandProcessor.getClass().getClassLoader();
+            Class<?> c = loader.loadClass(org.apache.felix.service.command.CommandSessionListener.class.getName());
+            Method nameMethod = commandProcessor.getClass().getMethod("addListener", c); //$NON-NLS-1$
+
+            Object listener = Proxy.newProxyInstance(loader, new Class[] { c }, new InvocationHandler() {
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    String listenerMethod = method.getName();
+
+                    if (listenerMethod.equals("beforeExecute")) {
+                        String arg = args[1].toString();
+                        if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) {
+                            // Force gogo to not use Expander to concatenate parameter with the current directory
+                            // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
+                            commandSession_execute(args[0], "gogo.option.noglob=on");
+                        }
+                    }
+                    return null;
+                }
+            });
+            nameMethod.invoke(commandProcessor, listener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean initCommandSession(Object commandSession, String args) {
+        try {
+            // wait for gosh command to be registered
+            for (int i = 0; (i < 100) && commandSession_get(commandSession, "gogo:gosh") == null; ++i) {
+                TimeUnit.MILLISECONDS.sleep(10);
+            }
+
+            Class<?>[] parameterTypes = new Class[] { CharSequence.class };
+            Object[] arguments = new Object[] { "gogo:gosh --login " + (args == null ? "" : args) };
+            Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
+            nameMethod.invoke(commandSession, arguments);
+        } catch (InterruptedException e) {
+            // Do not print
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static Object commandSession_get(Object commandSession, String key) {
+        if (commandSession == null || key == null) {
+            return null;
+        }
+
+        Class<?>[] parameterTypes = new Class[] { String.class };
+        Object[] arguments = new Object[] { key };
+
+        try {
+            Method nameMethod = commandSession.getClass().getMethod("get", parameterTypes); //$NON-NLS-1$
+            return nameMethod.invoke(commandSession, arguments);
+        } catch (Exception ex) {
             System.err.println(ex);
         }
 
@@ -661,27 +730,25 @@ public class WeasisLauncher {
         return false;
     }
 
-    public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
+    public static Object commandSession_execute(Object commandSession, CharSequence charSequence) {
         if (commandSession == null) {
             return false;
         }
-        Class[] parameterTypes = new Class[] { CharSequence.class };
+        Class<?>[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
 
         try {
             Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
-            nameMethod.invoke(commandSession, arguments);
-            return true;
+            return nameMethod.invoke(commandSession, arguments);
         } catch (Exception ex) {
             // Since the services returned by the tracker could become
             // invalid at any moment, we will catch all exceptions, log
             // a message, and then ignore faulty services.
-            System.err.println(ex);
             ex.printStackTrace();
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -1199,7 +1266,7 @@ public class WeasisLauncher {
             laf = UIManager.getSystemLookAndFeelClassName();
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource("SansSerif", Font.PLAIN, 12)); //$NON-NLS-1$
+        LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12)); // $NON-NLS-1$
         return laf;
     }
 

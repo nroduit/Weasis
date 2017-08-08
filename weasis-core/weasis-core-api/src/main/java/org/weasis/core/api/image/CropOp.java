@@ -57,8 +57,7 @@ public class CropOp extends AbstractOp {
         Rectangle area = (Rectangle) params.get(P_AREA);
 
         if (area != null) {
-            area = area
-                .intersection(new Rectangle(0, 0, source.width(), source.height()));
+            area = area.intersection(new Rectangle(0, 0, source.width(), source.height()));
             if (area.width > 1 && area.height > 1) {
                 result = ImageProcessor.crop(source.toMat(), area);
             }

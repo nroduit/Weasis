@@ -31,7 +31,6 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.DataFileBackingStoreImpl;
-import org.weasis.core.api.util.ProxyDetector;
 
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
@@ -61,8 +60,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public synchronized void serviceChanged(ServiceEvent event) {
+
         ServiceReference<?> sRef = event.getServiceReference();
-        BundleContext context = sRef.getBundle().getBundleContext();
+        BundleContext context = AppProperties.getBundleContext(sRef);
         Codec codec = null;
         try {
             codec = (Codec) context.getService(sRef);
@@ -121,8 +121,7 @@ public class Activator implements BundleActivator, ServiceListener {
                         // add this property to give us something unique to re-find this configuration
                         loggingProperties.put(loggerKey, loggerVal[0]);
                         logConfiguration.update(loggingProperties);
-                    }
-                    else {
+                    } else {
                         Dictionary loggingProperties = logConfiguration.getProperties();
                         loggingProperties.remove(AuditLog.LOG_FILE);
                         logConfiguration.update(loggingProperties);

@@ -22,7 +22,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.Mat;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
@@ -31,6 +30,7 @@ import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -107,7 +107,7 @@ public class ShutterOp extends AbstractOp {
         PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
         PlanarImage result = source;
 
-        boolean shutter = JMVUtils.getNULLtoFalse((Boolean) params.get(P_SHOW));
+        boolean shutter = LangUtil.getNULLtoFalse((Boolean) params.get(P_SHOW));
         Area area = (Area) params.get(P_SHAPE);
         Object pr = params.get(P_PR_ELEMENT);
 
@@ -120,7 +120,7 @@ public class ShutterOp extends AbstractOp {
             DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
             ImageCV imgOverlay = null;
             ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-            boolean overlays = JMVUtils.getNULLtoFalse(prReader.getTagValue(TagW.HasOverlay));
+            boolean overlays = LangUtil.getNULLtoFalse((Boolean) prReader.getTagValue(TagW.HasOverlay));
 
             if (overlays && image != null && image.getKey() instanceof Integer) {
                 int frame = (Integer) image.getKey();

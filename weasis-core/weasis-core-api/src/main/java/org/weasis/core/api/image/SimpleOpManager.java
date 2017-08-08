@@ -199,7 +199,7 @@ public class SimpleOpManager implements OpManager {
 
     /**
      * Allow to remove the preprocessing cache
-     * 
+     *
      * @param imgSource
      */
     public void resetLastNodeOutputImage() {

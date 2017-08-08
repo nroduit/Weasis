@@ -21,6 +21,7 @@ import javax.swing.JPanel;
 import javax.swing.JSlider;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontTools;
 
 /**
@@ -162,7 +163,7 @@ public class SwingHelper {
         });
 
         slider.setLabelTable(table);
-        FontTools.setFont10(slider);
+        SliderChangeListener.setFont(slider, FontTools.getFont10());
         slider.setMinorTickSpacing(1);
         slider.setMajorTickSpacing(spacing);
     }

@@ -23,11 +23,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
@@ -266,27 +266,33 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             g2d.setClip(rect);
         }
 
-        double ratioX = (Double) disOpManager.getParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X);
-        double ratioY = (Double) disOpManager.getParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y);
+        double[] matrix = (double[]) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX);
+        Rectangle2D bound = (Rectangle2D) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS);
+        double ratioX = matrix[0];
+        double ratioY = matrix[4];
 
         double imageResX = viewScale * sourceImage.getRescaleX();
         double imageResY = viewScale * sourceImage.getRescaleY();
         // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not interpolate)
-        // TODO add crop image as clip as no effect on the image
         imageResX = imageResX < ratioX ? ratioX : imageResX;
         imageResY = imageResY < ratioY ? ratioY : imageResY;
+        matrix[0] = imageResX;
+        matrix[4] = imageResY;
+        double rx = ratioX / imageResX;
+        double ry = ratioY / imageResY;
+        Rectangle2D b = new Rectangle2D.Double(bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
+        disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
+        disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, b);
+        PlanarImage img = bound.equals(b) ? displayImage: disOpManager.process();
 
-        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, imageResX);
-        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, imageResY);
+        matrix[0] = ratioX;
+        matrix[4] = ratioY;
+        disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
+        disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);
+        
+        
 
-        PlanarImage img = disOpManager.process();
-
-        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, ratioX);
-        disOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, ratioY);
-
-        ratioX /= imageResX;
-        ratioY /= imageResY;
-        g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(ratioX, ratioY));
+        g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(rx, ry));
 
         g2d.setClip(clip);
     }

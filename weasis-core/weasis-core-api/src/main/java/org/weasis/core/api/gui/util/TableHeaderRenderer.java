@@ -58,9 +58,9 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
                 setFont(header.getFont());
             }
         }
-        String val = value == null ? null : value.toString(); 
-        if(!StringUtil.hasText(val)) {
-            val = " ";
+        String val = value == null ? null : value.toString();
+        if (!StringUtil.hasText(val)) {
+            val = " "; //$NON-NLS-1$
         }
         setText(val);
         setToolTipText(val);

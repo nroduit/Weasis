@@ -39,7 +39,7 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
         marshaller.marshal(object, sw);
         return sw.toString();
     }
-    
+
     protected String serializeWithoutHeader(Object object) throws JAXBException {
         String result = serialize(object);
         String result2 = result.substring(TPL_XML_PREFIX.length());
@@ -50,17 +50,17 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
         StringReader sr = new StringReader(input);
         return deserialize(sr, clazz);
     }
-    
+
     protected <T> T deserialize(InputStream xmlInput, Class<T> clazz) throws Exception {
-        Reader reader = new InputStreamReader(xmlInput, "UTF-8");     //$NON-NLS-1$
+        Reader reader = new InputStreamReader(xmlInput, "UTF-8"); //$NON-NLS-1$
         return deserialize(reader, clazz);
     }
-    
+
     @SuppressWarnings("unchecked")
     private <T> T deserialize(Reader reader, Class<T> clazz) throws Exception {
         context = JAXBContext.newInstance(clazz);
         unmarshaller = context.createUnmarshaller();
 
         return (T) unmarshaller.unmarshal(reader);
-    } 
+    }
 }

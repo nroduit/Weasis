@@ -148,7 +148,7 @@ public class UIManager {
             }
 
             Collections.sort(plugins,
-                (s1, s2) -> (s1.getLevel() < s2.getLevel() ? -1 : (s1.getLevel() == s2.getLevel() ? 0 : 1)));
+                (s1, s2) -> s1.getLevel() < s2.getLevel() ? -1 : (s1.getLevel() == s2.getLevel() ? 0 : 1));
             return plugins;
         }
         return null;

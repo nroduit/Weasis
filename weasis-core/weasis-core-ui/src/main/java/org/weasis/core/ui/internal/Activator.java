@@ -13,7 +13,6 @@ package org.weasis.core.ui.internal;
 import java.io.File;
 import java.util.Dictionary;
 import java.util.Hashtable;
-import java.util.Objects;
 
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.BundleActivator;
@@ -25,6 +24,7 @@ import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
@@ -83,18 +83,18 @@ public class Activator implements BundleActivator, ServiceListener {
         // Must be instantiate in EDT
         GuiExecutor.instance().execute(() -> {
             ServiceReference<?> service = event.getServiceReference();
-            BundleContext context = AppProperties.getBundleContext(Activator.this.getClass());
+            BundleContext context = AppProperties.getBundleContext(service);
             SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(service);
-            Objects.requireNonNull(viewerFactory);
-
-            if (event.getType() == ServiceEvent.REGISTERED) {
-                registerSeriesViewerFactory(viewerFactory);
-            } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                    LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription()); //$NON-NLS-1$
-                    UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
+            if (viewerFactory != null) {
+                if (event.getType() == ServiceEvent.REGISTERED) {
+                    registerSeriesViewerFactory(viewerFactory);
+                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                    if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
+                        LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription()); //$NON-NLS-1$
+                        UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
+                    }
+                    context.ungetService(service);
                 }
-                context.ungetService(service);
             }
         });
     }
@@ -109,7 +109,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static void registerCommands(BundleContext context) {
         Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
-        dict.put(CommandProcessor.COMMAND_FUNCTION, FileModel.functions);
+        dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions);
         context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
     }
 

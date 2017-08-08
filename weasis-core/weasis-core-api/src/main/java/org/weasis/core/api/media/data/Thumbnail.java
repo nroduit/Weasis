@@ -49,7 +49,7 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 
 @SuppressWarnings("serial")
-public class Thumbnail extends JLabel {
+public class Thumbnail extends JLabel implements Thumbnailable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 
     public static final File THUMBNAIL_CACHE_DIR =
@@ -102,6 +102,7 @@ public class Thumbnail extends JLabel {
         buildThumbnail(media, keepMediaCache, opManager);
     }
 
+    @Override
     public void registerListeners() {
         removeMouseAndKeyListener();
     }
@@ -195,11 +196,13 @@ public class Thumbnail extends JLabel {
 
     }
 
+    @Override
     public File getThumbnailPath() {
         return thumbnailPath;
     }
 
-    public synchronized PlanarImage getImage(final MediaElement media, final boolean keepMediaCache,
+
+    protected synchronized PlanarImage getImage(final MediaElement media, final boolean keepMediaCache,
         final OpManager opManager) {
         PlanarImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && loading.compareAndSet(false, true)) {
@@ -326,6 +329,7 @@ public class Thumbnail extends JLabel {
         }
     }
 
+    @Override
     public void dispose() {
         // Unload image from memory
         mCache.remove(this);
@@ -337,6 +341,7 @@ public class Thumbnail extends JLabel {
         removeMouseAndKeyListener();
     }
 
+    @Override
     public void removeMouseAndKeyListener() {
         MouseListener[] listener = this.getMouseListeners();
         MouseMotionListener[] motionListeners = this.getMouseMotionListeners();

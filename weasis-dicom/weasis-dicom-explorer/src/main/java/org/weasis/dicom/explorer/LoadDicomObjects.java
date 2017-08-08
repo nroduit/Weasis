@@ -163,8 +163,8 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                 if (DicomModel.isSpecialModality(dicomSeries)) {
                     dicomModel.addSpecialModality(dicomSeries);
                     Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                    .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                 } else {
                     dicomModel.firePropertyChange(
                         new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
@@ -210,8 +210,9 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
                         Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                            .map(DicomSpecialElement.class::cast).findFirst()
+                            .ifPresent(d -> dicomModel.firePropertyChange(
+                                new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer

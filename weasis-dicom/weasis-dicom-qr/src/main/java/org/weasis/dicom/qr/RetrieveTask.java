@@ -38,6 +38,7 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.param.ListenerParams;
 import org.weasis.dicom.qr.manisfest.ManifestBuilder;
 import org.weasis.dicom.tool.DicomListener;
 
@@ -91,6 +92,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 connectOptions.setConnectTimeout(3000);
                 connectOptions.setAcceptTimeout(5000);
                 params.setConnectOptions(connectOptions);
+
                 if (RetrieveType.CGET == type) {
                     File sopClass = ResourceUtil.getResource("store-tcs.properties"); //$NON-NLS-1$
                     URL url = null;
@@ -109,11 +111,11 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         if (dicomListener == null) {
                             errorMessage = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
                         } else {
-                            dicomListener.setParams(params);
                             if (dicomListener.isRunning()) {
                                 errorMessage = Messages.getString("RetrieveTask.msg_running_listener"); //$NON-NLS-1$
                             } else {
-                                dicomListener.start(callingNode.getDicomNode());
+                                ListenerParams lparams = new ListenerParams(params, true);
+                                dicomListener.start(callingNode.getDicomNode(), lparams);
                             }
                         }
                     } catch (Exception e) {
@@ -167,7 +169,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     }
 
                     WadoParameters wadoParameters =
-                        new WadoParameters(wadoURLs.get(0).toString(), false, null, null, null);
+                        new WadoParameters("queryID", wadoURLs.get(0).toString(), false, null, null, null);
                     ManifestBuilder manifest = new ManifestBuilder();
                     manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);

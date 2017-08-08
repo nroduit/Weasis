@@ -13,7 +13,7 @@ package org.weasis.core.api.image;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.util.LangUtil;
 
 public abstract class AbstractOp implements ImageOpNode {
 
@@ -73,7 +73,7 @@ public abstract class AbstractOp implements ImageOpNode {
 
     @Override
     public boolean isEnabled() {
-        return JMVUtils.getNULLtoTrue(params.get(Param.ENABLE));
+        return LangUtil.getNULLtoTrue((Boolean) params.get(Param.ENABLE));
     }
 
     @Override

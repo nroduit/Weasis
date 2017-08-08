@@ -33,7 +33,7 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
 
     public ImportTask(Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
         this.imagesToImport = Objects.requireNonNull(toImport);
-        this.searchedSeries = Objects.requireNonNull(searchedSeries);
+        this.searchedSeries = searchedSeries;
         this.maxRangeInMinutes = maxRangeInMinutes;
     }
 

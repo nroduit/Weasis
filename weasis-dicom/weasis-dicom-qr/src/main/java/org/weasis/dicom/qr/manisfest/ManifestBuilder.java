@@ -15,12 +15,16 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.mf.Patient;
+import org.weasis.dicom.mf.SOPInstance;
+import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.Study;
+import org.weasis.dicom.mf.Xml;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.qr.manisfest.xml.TagUtil;
 
 public class ManifestBuilder {
     // Manifest 2.5
@@ -70,13 +74,13 @@ public class ManifestBuilder {
         manifest.append(TAG_ARC_QUERY);
         manifest.append(" "); //$NON-NLS-1$
 
-        TagUtil.addXmlAttribute(ARCHIVE_ID, "localWadoRetrieve", manifest); //$NON-NLS-1$
-        TagUtil.addXmlAttribute(BASE_URL, wadoParameters.getWadoURL(), manifest);
-        TagUtil.addXmlAttribute(WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
-        TagUtil.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
+        Xml.addXmlAttribute(ARCHIVE_ID, "localWadoRetrieve", manifest); //$NON-NLS-1$
+        Xml.addXmlAttribute(BASE_URL, wadoParameters.getWadoURL(), manifest);
+        Xml.addXmlAttribute(WEB_LOGIN, wadoParameters.getWebLogin(), manifest);
+        Xml.addXmlAttribute(WadoParameters.TAG_WADO_ONLY_SOP_UID, wadoParameters.isRequireOnlySOPInstanceUID(),
             manifest);
-        TagUtil.addXmlAttribute(ADDITIONNAL_PARAMETERS, wadoParameters.getAdditionnalParameters(), manifest);
-        TagUtil.addXmlAttribute(OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(), manifest);
+        Xml.addXmlAttribute(ADDITIONNAL_PARAMETERS, wadoParameters.getAdditionnalParameters(), manifest);
+        Xml.addXmlAttribute(OVERRIDE_TAGS, wadoParameters.getOverrideDicomTagsList(), manifest);
         manifest.append(">"); //$NON-NLS-1$
 
         buildHttpTags(wadoParameters.getHttpTaglist());
@@ -122,9 +126,9 @@ public class ManifestBuilder {
             manifest.append("\n<"); //$NON-NLS-1$
             manifest.append(TAG_DOCUMENT_MSG);
             manifest.append(" "); //$NON-NLS-1$
-            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_TITLE, message.title, manifest);
-            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_DESC, message.message, manifest);
-            TagUtil.addXmlAttribute(MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
+            Xml.addXmlAttribute(MSG_ATTRIBUTE_TITLE, message.title, manifest);
+            Xml.addXmlAttribute(MSG_ATTRIBUTE_DESC, message.message, manifest);
+            Xml.addXmlAttribute(MSG_ATTRIBUTE_LEVEL, message.level.name(), manifest);
             manifest.append("/>"); //$NON-NLS-1$
         }
     }

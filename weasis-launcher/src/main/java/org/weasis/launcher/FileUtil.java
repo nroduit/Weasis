@@ -165,8 +165,8 @@ public class FileUtil {
         }
         return fileDate;
     }
-    
-    public static  URLConnection getAdaptedConnection(URL url) throws IOException {
+
+    public static URLConnection getAdaptedConnection(URL url) throws IOException {
         URLConnection connection = url.openConnection();
         // Prevent caching of Java WebStart.
         connection.setUseCaches(false);

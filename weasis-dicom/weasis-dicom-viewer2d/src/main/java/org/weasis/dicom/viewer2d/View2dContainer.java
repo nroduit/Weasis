@@ -60,6 +60,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -541,7 +542,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     if (koFilterAction instanceof ToggleButtonListener) {
                         if (enableFilter == null) {
                             enableFilter =
-                                JMVUtils.getNULLtoFalse(selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
+                                LangUtil.getNULLtoFalse((Boolean) selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
                         }
                         ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
                     }

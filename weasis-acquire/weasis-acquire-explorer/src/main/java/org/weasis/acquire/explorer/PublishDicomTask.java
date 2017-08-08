@@ -85,7 +85,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
                 });
         }
     }
-    
+
     @Override
     protected void done() {
         super.done();

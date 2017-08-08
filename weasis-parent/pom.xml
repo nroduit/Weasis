@@ -8,9 +8,16 @@
 	<version>3.0.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
-	<prerequisites>
-		<maven>3.0.5</maven>
-	</prerequisites>
+
+
+	<properties>
+		<java-version>1.8</java-version>
+		<enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
+		<enforcer.maven-version>[3.0.5,)</enforcer.maven-version>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	</properties>
 
 	<licenses>
 		<license>
@@ -19,45 +26,44 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
-
-	<repositories>
-		<repository>
-			<id>mvn-repo-master</id>
-			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
-	</repositories>
-
 	<issueManagement>
 		<system>JIRA</system>
 		<url>http://www.dcm4che.org/jira/browse/WEA</url>
 	</issueManagement>
+
+	<repositories>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>https://repo.maven.apache.org/maven2</url>
+		</repository>
+		<repository>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>mvn-repo-master</id>
+			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
+		</repository>
+	</repositories>
+
 	<dependencyManagement>
 		<dependencies>
 		</dependencies>
 	</dependencyManagement>
+
 	<build>
 		<pluginManagement>
 			<plugins>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
-					<artifactId>maven-release-plugin</artifactId>
-					<version>2.5.3</version>
-				</plugin>
-				<plugin>
-					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.6.1</version>
 					<configuration>
-						<source>1.8</source>
-						<target>1.8</target>
+						<source>${java-version}</source>
+						<target>${java-version}</target>
 					</configuration>
 				</plugin>
 				<plugin>
@@ -121,6 +127,11 @@
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-release-plugin</artifactId>
+					<version>2.5.3</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jarsigner-plugin</artifactId>
 					<version>1.4</version>
 				</plugin>
@@ -144,15 +155,47 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
-					<version>3.0.0</version>
+					<version>3.0.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>exec-maven-plugin</artifactId>
 					<version>1.5.0</version>
 				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-enforcer-plugin</artifactId>
+					<version>1.4.1</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>min-requirement</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>${enforcer.maven-version}</version>
+								</requireMavenVersion>
+								<!-- Bug in maven-enforcer for jdk 9 -->
+								<!-- <requireJavaVersion> -->
+								<!-- <version>${enforcer.jdk-version}</version> -->
+								<!-- </requireJavaVersion> -->
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+
+
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -189,12 +232,12 @@
 	</profiles>
 
 	<dependencies>
- 		<dependency>
+		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
 			<version>1.12.0</version>
 			<scope>provided</scope>
-		</dependency> 
+		</dependency>
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>org.osgi.service.component.annotations</artifactId>

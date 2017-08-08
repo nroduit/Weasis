@@ -24,7 +24,7 @@
 
 		<pack200.ext></pack200.ext>
 
-		<felix.framework.version>5.6.4-p1</felix.framework.version>
+		<felix.framework.version>5.6.6-p1</felix.framework.version>
 		<felix.gogo.version>1.0.6</felix.gogo.version>
 		<felix.gogo.shell.version>1.0.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.0.2</felix.gogo.command.version>
@@ -33,7 +33,7 @@
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
 		<felix.configadmin.version>1.8.14</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.0.10</felix.scr.version>
+		<felix.scr.version>2.0.12</felix.scr.version>
 		<felix.metatype.version>1.1.2</felix.metatype.version>
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
@@ -49,14 +49,32 @@
 
 		<windowsName>weasis-native</windowsName>
 	</properties>
-	
+
 	<pluginRepositories>
+		<!-- Force to use central first (override from super POM) -->
 		<pluginRepository>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+			<id>central</id>
+			<name>Central Repository</name>
+			<url>https://repo.maven.apache.org/maven2</url>
+		</pluginRepository>
+		<pluginRepository>
+			<releases>
+				<updatePolicy>never</updatePolicy>
+			</releases>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 			<id>mvn-repo-master</id>
 			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
 		</pluginRepository>
 	</pluginRepositories>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -531,33 +549,31 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.6</version>
 				<executions>
 					<execution>
 						<id>zip-resources</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
 						<configuration>
-							<inherited>false</inherited>
+							<attach>false</attach>
 							<finalName>resources</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<descriptors>
 								<descriptor>src/assembly/zip-resources.xml</descriptor>
 							</descriptors>
-							<attach>false</attach>
 							<outputDirectory>${project.build.directory}</outputDirectory>
 						</configuration>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
 					</execution>
 					<execution>
 						<id>web</id>
 						<phase>package</phase>
 						<goals>
-							<goal>attached</goal>
+							<goal>single</goal>
 						</goals>
 						<configuration>
-							<inherited>false</inherited>
+							<attach>true</attach>
 							<finalName>weasis</finalName>
 							<appendAssemblyId>false</appendAssemblyId>
 							<outputDirectory>${project.build.directory}/web-dist</outputDirectory>
@@ -698,7 +714,7 @@
 					<plugin>
 						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.7.17</version>
+						<version>1.7.18</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
@@ -760,7 +776,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-dependency-plugin</artifactId>
-						<version>2.10</version>
+						<version>3.0.1</version>
 						<executions>
 							<execution>
 								<id>unpack-i18njar</id>
@@ -785,15 +801,16 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-assembly-plugin</artifactId>
-						<version>2.6</version>
+						<version>3.0.0</version>
 						<executions>
 							<execution>
 								<id>portable</id>
 								<phase>package</phase>
 								<goals>
-									<goal>attached</goal>
+									<goal>single</goal>
 								</goals>
 								<configuration>
+									<attach>true</attach>
 									<finalName>weasis-portable</finalName>
 									<appendAssemblyId>false</appendAssemblyId>
 									<outputDirectory>${project.build.directory}/portable-dist</outputDirectory>

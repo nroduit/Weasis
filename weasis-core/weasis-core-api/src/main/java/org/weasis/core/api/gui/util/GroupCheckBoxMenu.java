@@ -90,7 +90,7 @@ public class GroupCheckBoxMenu implements GroupPopup {
 
         itemList.forEach(m -> m.setSelected(selected));
     }
-    
+
     public void selectAll() {
         itemList.forEach(m -> m.setSelected(true));
     }
