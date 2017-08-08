@@ -12,6 +12,8 @@
 
 package org.weasis.dicom.rt;
 
+import org.apache.commons.math3.util.Pair;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Map;
@@ -85,6 +87,9 @@ public class Structure {
     }
 
     public double getVolume() {
+        if (this.volume < 0) {
+            this.recalculateVolume();
+        }
         return this.volume;
     }
 
@@ -114,11 +119,12 @@ public class Structure {
         // Iterate over structure planes (z)
         int n = 0;
         for (ArrayList<Contour> structurePlaneContours : this.planes.values()) {
-
-            double maxContourArea = 0.0;
-            int maxContourIndex = 0;
-
+            
             // Calculate the area for each contour in the current plane
+            Pair maxContour = this.calculateLargestContour(structurePlaneContours);
+            int maxContourIndex = (Integer)maxContour.getFirst();
+            double maxContourArea = (Double)maxContour.getSecond();
+
             for (int i = 0; i < structurePlaneContours.size(); i++) {
                 Contour polygon = structurePlaneContours.get(i);
 
@@ -160,6 +166,24 @@ public class Structure {
 
         // DICOM uses millimeters -> convert from mm^3 to cm^3
         this.volume = structureVolume / 1000;
+    }
+
+    public Pair<Integer, Double> calculateLargestContour(ArrayList<Contour> planeContours) {
+        double maxContourArea = 0.0;
+        int maxContourIndex = 0;
+
+        // Calculate the area for each contour of this structure in provided plane
+        for (int i = 0; i < planeContours.size(); i++) {
+            Contour polygon = planeContours.get(i);
+
+            // Find the largest polygon of contour
+            if (polygon.getArea() > maxContourArea) {
+                maxContourArea = polygon.getArea();
+                maxContourIndex = i;
+            }
+        }
+
+        return new Pair(maxContourIndex, maxContourArea);
     }
 
     @Override

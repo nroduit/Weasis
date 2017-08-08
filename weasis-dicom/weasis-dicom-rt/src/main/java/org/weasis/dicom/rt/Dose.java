@@ -14,14 +14,13 @@ package org.weasis.dicom.rt;
 
 import java.util.*;
 
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
+import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
 import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.multiply;
 
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = 1L;
@@ -201,6 +200,33 @@ public class Dose extends HashMap<Integer, Dvh> {
         }
 
         return dosePlane;
+    }
+
+    public Mat getMaskedDosePlaneHist(double slicePosition, Mat mask, int maxDose) {
+
+        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
+
+        int rows = dosePlane.getImage().toMat().rows();
+        int cols = dosePlane.getImage().toMat().cols();
+
+        Mat src = new Mat(rows, cols, CvType.CV_32FC1);
+        dosePlane.getImage().toMat().convertTo(src, CvType.CV_32FC1);
+        Scalar scalar = new Scalar(this.doseGridScaling * 100);
+        Mat dst = new Mat(rows, cols, CvType.CV_32FC1);
+        multiply(src, scalar, dst);
+        Vector<Mat> srcPlanes = new Vector<>();
+        srcPlanes.add(dst);
+
+        MatOfInt histSize = new MatOfInt(maxDose);
+        Mat hist = new Mat();
+        MatOfFloat histRange = new MatOfFloat(0, maxDose);
+
+        Mat maskSrc = new Mat(mask.rows(), mask.cols(), CvType.CV_8U);
+        mask.convertTo(maskSrc, CvType.CV_8U);
+
+        Imgproc.calcHist(srcPlanes, new MatOfInt(0), maskSrc, hist, histSize, histRange);
+        
+        return hist;
     }
 
     public List<MatOfPoint> getIsoDoseContourPoints(double slicePosition, double isoDoseThreshold) {

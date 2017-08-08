@@ -17,7 +17,7 @@ package org.weasis.dicom.rt;
 public class Dvh {
 
     public enum DVHSOURCE {
-        PROVIDED, CALCUALTED
+        PROVIDED, CALCULATED
     }
 
     private int referencedRoiNumber;
@@ -32,6 +32,7 @@ public class Dvh {
     private double dvhMeanDose;
     private double[] dvhData;
     private double[] scaledDvhData;
+    private DVHSOURCE dvhSource;
 
     public Dvh() {
         // Initial -> need to be calculated later
@@ -96,6 +97,15 @@ public class Dvh {
         this.dvhNumberOfBins = dvhNumberOfBins;
     }
 
+    public double getDvhMinimumDoseCGy() {
+        if (this.doseUnit.equals("GY")) {
+            return this.getDvhMinimumDose() * 100;
+        }
+        else {
+            return this.getDvhMinimumDose();
+        }
+    }
+
     public double getDvhMinimumDose() {
         if (this.dvhMinimumDose < 0) {
             this.dvhMinimumDose = this.calculateDvhMin();
@@ -107,6 +117,15 @@ public class Dvh {
         this.dvhMinimumDose = dvhMinimumDose;
     }
 
+    public double getDvhMaximumDoseCGy() {
+        if (this.doseUnit.equals("GY")) {
+            return this.getDvhMaximumDose() * 100;
+        }
+        else {
+            return this.getDvhMaximumDose();
+        }
+    }
+
     public double getDvhMaximumDose() {
         if (this.dvhMaximumDose < 0) {
             this.dvhMaximumDose = this.calculateDvhMax();
@@ -116,6 +135,15 @@ public class Dvh {
 
     public void setDvhMaximumDose(double dvhMaximumDose) {
         this.dvhMaximumDose = dvhMaximumDose;
+    }
+
+    public double getDvhMeanDoseCGy() {
+        if (this.doseUnit.equals("GY")) {
+            return this.getDvhMeanDose() * 100;
+        }
+        else {
+            return this.getDvhMeanDose();
+        }
     }
 
     public double getDvhMeanDose() {
@@ -137,7 +165,15 @@ public class Dvh {
         this.dvhData = dvhData;
     }
 
-//    public XYChart appendChart(String structureName, XYChart dvhChart) {
+    public DVHSOURCE getDvhSource() {
+        return this.dvhSource;
+    }
+
+    public void setDvhSource(DVHSOURCE dvhSource) {
+        this.dvhSource = dvhSource;
+    }
+
+    //    public XYChart appendChart(String structureName, XYChart dvhChart) {
 //
 //        // Each DVH element is 1 cGy and scaled value of each element is relative volume
 //        double[] x =  new double[this.dvhData.length];
@@ -248,12 +284,13 @@ public class Dvh {
      */
     private double[] calculateDDvh() {
 
-        double[] dDvh = new double[this.getScaledDvhData().length];
+        int size = this.getScaledDvhData().length;
+        double[] dDvh = new double[size];
 
-        for (int i = 0; i < this.getScaledDvhData().length - 1; i++) {
+        for (int i = 0; i < size - 1; i++) {
             dDvh[i] = this.getScaledDvhData()[i] - this.getScaledDvhData()[i + 1];
         }
-        dDvh[this.getScaledDvhData().length] = this.getScaledDvhData()[this.getScaledDvhData().length];
+        dDvh[size - 1] = this.getScaledDvhData()[size - 1];
 
         return dDvh;
     }

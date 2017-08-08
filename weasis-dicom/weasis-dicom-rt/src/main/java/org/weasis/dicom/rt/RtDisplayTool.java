@@ -32,11 +32,7 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -206,7 +202,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         return list;
     }
 
-
     private static boolean containsStructure(List<StructureLayer> list, Structure s) {
         for (StructureLayer structure : list) {
             if (structure.getStructure().getRoiNumber() == s.getRoiNumber() &&
@@ -297,28 +292,46 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         // Check which contours should be rendered
                         for (Contour c : contours) {
                             StructureLayer structLayer = (StructureLayer) c.getLayer();
-                            Structure struct = structLayer.getStructure();
-                            if (containsStructure(listStructure, struct)) {
+                            Structure structure = structLayer.getStructure();
+                            if (containsStructure(listStructure, structure)) {
+
+                                // Display volume
+                                String tooltip = String.format("Structure: " + structure.getRoiName() + ", Volume: %.4f cm^3", structure.getVolume());
+                                LOGGER.debug(tooltip);
 
                                 // If dose is loaded
                                 if (dose != null) {
 
-                                    // If DVH exists for the structure
-                                    Dvh structureDvh = dose.get(struct.getRoiNumber());
-                                    if (structureDvh != null) {
+                                    // If DVH exists for the structure and setting always recalculate is false
+                                    Dvh structureDvh = dose.get(structure.getRoiNumber());
 
+                                    // Re-calculate DVH
+                                    if (structureDvh == null ||
+                                       (structureDvh.getDvhSource().equals(Dvh.DVHSOURCE.PROVIDED) && RtSet.forceRecalculateDvh)) {
+                                        structureDvh = rt.initCalculatedDvh(structure, dose);
+                                        dose.put(structure.getRoiNumber(), structureDvh);
+                                    }
+                                    // Read provided DVH
+                                    else {
                                         // Absolute volume is defined in DVH (in cm^3) so use it
                                         if (structureDvh.getDvhVolumeUnit().equals("CM3")) {
-                                            struct.setVolume(structureDvh.getDvhData()[0]);
+                                            structure.setVolume(structureDvh.getDvhData()[0]);
                                         }
                                         // Otherwise recalculate structure volume
                                         else {
-                                            struct.recalculateVolume();
+                                            structure.recalculateVolume();
                                         }
+                                    }
 
-                                        // If plan is loaded with prescribed treatment dose calculate DVH statistics
+                                    // If plan is loaded with prescribed treatment dose calculate DVH statistics
+                                    String relativeMinDose = String.format("Structure: " + structure.getRoiName() + ", Min Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
+                                    String relativeMaxDose = String.format("Structure: " + structure.getRoiName() + ", Max Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
+                                    String relativeMeanDose = String.format("Structure: " + structure.getRoiName() + ", Mean Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
+                                    LOGGER.debug(relativeMinDose);
+                                    LOGGER.debug(relativeMaxDose);
+                                    LOGGER.debug(relativeMeanDose);
 
-                                        // DVH refresh display
+                                    // DVH refresh display
 //                                    rt.getDvhChart().removeSeries(struct.getRoiName());
 //                                    structureDvh.appendChart(struct.getRoiName(), rt.getDvhChart());
 //                                    try {
@@ -327,19 +340,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 //                                    catch (Exception err) {
 //
 //                                    }
-                                    }
                                 }
 
                                 // Structure graphics
                                 Graphic graphic = c.getGraphic(geometry);
                                 if (graphic != null) {
 
-                                    graphic.setLineThickness((float) struct.getThickness());
-                                    graphic.setPaint(struct.getColor());
+                                    graphic.setLineThickness((float) structure.getThickness());
+                                    graphic.setPaint(structure.getColor());
                                     graphic.setLayerType(LayerType.DICOM_RT);
                                     graphic.setLayer(structLayer.getLayer());
                                     // External contour do not fill
-                                    if (struct.getRtRoiInterpretedType().equals("EXTERNAL")) {
+                                    if (structure.getRtRoiInterpretedType().equals("EXTERNAL")) {
                                         graphic.setFilled(false);
                                     }
                                     // The other (organs, target volumes) should be filled
@@ -453,8 +465,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
                 Map<Integer, StructureLayer> structures = rtSet.getStructureSet(selectedStructure);
                 if (structures != null) {
-                    for (StructureLayer struct : structures.values()) {
-                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(struct, false);
+                    for (StructureLayer structureLayer : structures.values()) {
+                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(structureLayer, false);
                         this.nodeStructures.add(node);
                         initPathSelection(new TreePath(node.getPath()), false);
                     }
@@ -473,8 +485,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                 if (planDose != null) {
                     Map<Integer, IsoDoseLayer> isodoses = planDose.getIsoDoseSet();
                     if (isodoses != null) {
-                        for (IsoDoseLayer isoDose : isodoses.values()) {
-                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(isoDose, false);
+                        for (IsoDoseLayer isoDoseLayer : isodoses.values()) {
+                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(isoDoseLayer, false);
                             this.nodeIsodoses.add(node);
                             initPathSelection(new TreePath(node.getPath()), false);
                         }

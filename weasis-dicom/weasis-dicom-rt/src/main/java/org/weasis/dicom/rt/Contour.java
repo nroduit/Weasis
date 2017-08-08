@@ -13,13 +13,18 @@ package org.weasis.dicom.rt;
 
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
+import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -61,6 +66,19 @@ public class Contour {
 
     public void setPoints(double[] points) {
         this.points = points;
+    }
+
+    public List<Point> getListOfPoints() {
+        List<Point> listOfPoints = new ArrayList<>();
+        if (points != null && points.length % 3 == 0) {
+
+            for (int i = 0; i < points.length; i = i + 3) {
+                Point p = new Point(points[i], points[i+1]);
+                listOfPoints.add(p);
+            }
+        }
+
+        return listOfPoints;
     }
 
     public double getCoordinateX() {
@@ -243,13 +261,13 @@ public class Contour {
         return isInside;
     }
 
-    private static double polygonArea(double[] x, double[] y) {
+    private double polygonArea(double[] x, double[] y) {
         // Initialise the area
         double area = 0.0;
 
         // Calculate value of shoelace formula
         for (int i = 0; i < x.length; i++) {
-            int j = (i == (x.length - 1)) ? 0 : i + 1;
+            int j = (i + 1) % x.length;
             area += (x[i] * y[j]) - (x[j] * y[i]);
         }
 

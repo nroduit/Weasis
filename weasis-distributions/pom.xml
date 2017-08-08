@@ -658,6 +658,12 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-jarsigner-plugin</artifactId>
 						<version>1.4</version>
+						<configuration>
+							<arguments>
+								<argument>-J-Dhttp.proxyHost=ukd-proxy</argument>
+								<argument>-J-Dhttp.proxyPort=80</argument>
+							</arguments>
+						</configuration>
 						<executions>
 							<execution>
 								<id>sign</id>
