@@ -334,9 +334,7 @@ public final class KOManager {
         if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
             // KO Toogle State is changed only if KO Selection remains the same,
             // or if there was no previous KO Selection
-
-            List<DicomImageElement> dicomImageList = view2d.getSeries().getSortedMedias(null);
-            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, dicomImageList);
+            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries());
 
             if (hasKeyObjectReferenceChanged) {
                 DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);

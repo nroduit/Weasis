@@ -370,7 +370,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
 
         if (isSpecialModality(dicomSeries)) {
-
             List<DicomSpecialElement> specialElementList =
                 (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
 
@@ -512,6 +511,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     public static boolean isSpecialModality(MediaSeries<?> series) {
         String modality = (series == null) ? null : TagD.getTagValue(series, Tag.Modality, String.class);
         return modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    public static Collection<KOSpecialElement> getEditableKoSpecialElements(MediaSeriesGroup group) {
+        List<KOSpecialElement> list = getSpecialElements(group, KOSpecialElement.class);
+        if (list != null && !list.isEmpty()) {
+            for (int i = list.size() - 1; i >= 0; i--) {
+                KOSpecialElement koElement = list.get(i);
+                if (!koElement.getMediaReader().isEditableDicom()) {
+                    list.remove(i);
+                }
+            }
+            return list;
+        }
+        return Collections.emptyList();
     }
 
     public static Collection<KOSpecialElement> getKoSpecialElements(MediaSeries<DicomImageElement> dicomSeries) {

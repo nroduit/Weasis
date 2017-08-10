@@ -336,7 +336,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean more8bits = Boolean.parseBoolean(pref.getProperty(HEIGHT_BITS, Boolean.FALSE.toString()));
 
         try {
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> seriesGph = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -458,7 +458,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 writer = DicomDirLoader.open(dcmdirFile);
             }
 
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> uids = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {

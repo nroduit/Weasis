@@ -70,11 +70,11 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.mf.ArcParameters;
+import org.weasis.dicom.mf.WadoParameters;
 import org.xml.sax.SAXException;
 
 public class DownloadManager {
@@ -327,7 +327,7 @@ public class DownloadManager {
                             }
                         } else {
                             // Read old manifest: xmlns="http://www.weasis.org/xsd"
-                            if (WadoParameters.TAG_DOCUMENT_ROOT.equals(key)) {
+                            if (WadoParameters.TAG_WADO_QUERY.equals(key)) {
                                 readWadoQuery(model, seriesList, xmler);
                             }
                         }
@@ -371,11 +371,11 @@ public class DownloadManager {
         String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, null);
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
         String additionnalParameters =
-            TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
-        String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-        String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
+            TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
+        String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
         final WadoParameters wadoParameters =
             new WadoParameters(arcID, wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
         readQuery(model, seriesList, xmler, wadoParameters, ArcParameters.TAG_ARC_QUERY);
@@ -383,16 +383,16 @@ public class DownloadManager {
 
     private static void readWadoQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler)
         throws XMLStreamException {
-        String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_URL, null);
+        String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
         boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
         String additionnalParameters =
-            TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
-        String overrideList = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_OVERRIDE_TAGS, null);
-        String webLogin = TagUtil.getTagAttribute(xmler, WadoParameters.TAG_WADO_WEB_LOGIN, null);
+            TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
+        String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
         final WadoParameters wadoParameters =
-            new WadoParameters("wadoID", wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
-        readQuery(model, seriesList, xmler, wadoParameters, WadoParameters.TAG_DOCUMENT_ROOT);
+            new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        readQuery(model, seriesList, xmler, wadoParameters, WadoParameters.TAG_WADO_QUERY);
     }
 
     private static void readQuery(DicomModel model, ArrayList<LoadSeries> seriesList, XMLStreamReader xmler,
@@ -593,7 +593,7 @@ public class DownloadManager {
             if (wado == null) {
                 // Should not happen
                 dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-            } else if (!wado.getWadoURL().equals(wadoParameters.getWadoURL())) {
+            } else if (!wado.getBaseURL().equals(wadoParameters.getBaseURL())) {
                 LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
                 return dicomSeries;
             }

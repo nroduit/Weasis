@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 
 public class KOSpecialElement extends AbstractKOSpecialElement {
@@ -29,60 +30,36 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
     public void toggleKeyObjectReference(DicomImageElement dicomImage) {
 
-        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
-        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-        toggleKeyObjectReference(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
-    }
-
-    /**
-     * If the sopInstanceUID is not referenced, add a new Key Object reference<br>
-     * If the sopInstanceUID is already referenced, remove this Key Object reference
-     *
-     * @param studyInstanceUID
-     * @param seriesInstanceUID
-     * @param sopInstanceUID
-     * @param sopClassUID
-     */
-    private void toggleKeyObjectReference(String studyInstanceUID, String seriesInstanceUID, String sopInstanceUID,
-        String sopClassUID) {
+        Reference ref = new Reference(dicomImage);
 
         // Get the SOPInstanceReferenceMap for this seriesUID
         Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
-            sopInstanceReferenceMapBySeriesUID.get(seriesInstanceUID);
+            sopInstanceReferenceMapBySeriesUID.get(ref.getSeriesInstanceUID());
 
         boolean isSelected = sopInstanceReferenceBySOPInstanceUID != null
-            && sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID);
+            && sopInstanceReferenceBySOPInstanceUID.containsKey(ref.getSopInstanceUID());
 
-        setKeyObjectReference(!isSelected, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+        setKeyObjectReference(!isSelected, ref);
     }
 
     public boolean setKeyObjectReference(boolean selectedState, DicomImageElement dicomImage) {
-        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
-        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-        return setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+        return setKeyObjectReference(selectedState, new Reference(dicomImage));
     }
 
-    private boolean setKeyObjectReference(boolean selectedState, String studyInstanceUID, String seriesInstanceUID,
-        String sopInstanceUID, String sopClassUID) {
+    private boolean setKeyObjectReference(boolean selectedState, Reference ref) {
 
         if (selectedState) {
-            return addKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+            return addKeyObject(ref);
         } else {
-            return removeKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID);
+            return removeKeyObject(ref);
         }
     }
 
-    public boolean setKeyObjectReference(boolean selectedState, List<DicomImageElement> dicomImageList) {
-
+    public boolean setKeyObjectReference(boolean selectedState, MediaSeries<DicomImageElement> series) {
+        // TOOD add frameList
         Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<>();
 
-        for (DicomImageElement dicomImage : dicomImageList) {
+        for (DicomImageElement dicomImage : series.getSortedMedias(null)) {
             String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
             String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
             String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);

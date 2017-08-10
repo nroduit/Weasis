@@ -690,7 +690,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDate getDicomDate(String date) {
-        if (Objects.nonNull(date)) {
+        if (StringUtil.hasText(date)) {
             try {
                 if (date.length() > 8) {
                     StringBuilder buf = new StringBuilder(8);
@@ -707,7 +707,7 @@ public class TagD extends TagW {
     }
 
     public static LocalTime getDicomTime(String time) {
-        if (Objects.nonNull(time)) {
+        if (StringUtil.hasText(time)) {
             try {
                 return LocalTime.parse(time.trim(), DICOM_TIME);
             } catch (Exception e) {
@@ -729,7 +729,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDateTime getDicomDateTime(TimeZone tz, String value, boolean ceil) {
-        if (Objects.nonNull(value)) {
+        if (StringUtil.hasText(value)) {
             try {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());

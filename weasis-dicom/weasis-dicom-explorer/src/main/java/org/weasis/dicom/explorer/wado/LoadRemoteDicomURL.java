@@ -29,10 +29,10 @@ import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.mf.WadoParameters;
 
 public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadRemoteDicomURL.class);
@@ -92,7 +92,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
             Series dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
-            final WadoParameters wadoParameters = new WadoParameters("webServerID", "", false, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
+            final WadoParameters wadoParameters = new WadoParameters("", false); //$NON-NLS-1$ //$NON-NLS-2$
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             List<DicomInstance> dicomInstances = new ArrayList<>();
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);

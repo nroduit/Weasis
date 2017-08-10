@@ -2,8 +2,8 @@ package org.weasis.dicom.explorer.mf;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -12,38 +12,44 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.mf.ArcQuery;
-import org.weasis.dicom.mf.ArcQuery.ViewerMessage;
+import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
 import org.weasis.dicom.mf.Study;
+import org.weasis.dicom.mf.WadoParameters;
 
-public class ManifestBuilder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManifestBuilder.class);
+public class DicomModelQueryResult extends AbstractQueryResult {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomModelQueryResult.class);
 
-    public static String getManifest(DicomModel model) {
+    protected final WadoParameters wadoParameters;
 
+    public DicomModelQueryResult(DicomModel model) {
+        this.wadoParameters = init(model);
+    }
+
+    @Override
+    public WadoParameters getWadoParameters() {
+        return wadoParameters;
+    }
+
+    private WadoParameters init(DicomModel model) {
         WadoParameters wado = null;
-        ViewerMessage message = null;
         int imgNotAdd = 0;
-        final List<Patient> patientList = new ArrayList<>();
 
         for (MediaSeriesGroup patient : model.getChildren(MediaSeriesGroupNode.rootNode)) {
-            Patient p = getPatient(patient, patientList);
+            Patient p = getPatient(patient, patients);
             for (MediaSeriesGroup study : model.getChildren(patient)) {
                 Study st = getStudy(study, p);
                 for (MediaSeriesGroup series : model.getChildren(study)) {
                     Series s = getSeries(series, st);
                     if (series instanceof MediaSeries) {
                         WadoParameters wadoParams = (WadoParameters) series.getTagValue(TagW.WadoParameters);
+                        // TODO or not web series (URL or DICOMDIR)
                         if (wadoParams == null) {
                             imgNotAdd += ((MediaSeries) series).size(null);
                             continue;
@@ -64,72 +70,69 @@ public class ManifestBuilder {
             }
         }
 
-        if (wado != null) {
-            ArcQuery arquery;
-            try {
-                List<QueryResult> list = new ArrayList<>();
-                ModelResult result = new ModelResult(patientList,
-                    new org.weasis.dicom.mf.WadoParameters(wado.getArchiveID(), wado.getWadoURL(),
-                        wado.isRequireOnlySOPInstanceUID(), wado.getAdditionnalParameters(),
-                        wado.getOverrideDicomTagsList(), wado.getWebLogin()));
-                result.setViewerMessage(message);
-                list.add(result);
-                arquery = new ArcQuery(list);
-                return arquery.xmlManifest(null);
-            } catch (Exception e1) {
-                AuditLog.logError(LOGGER, e1, "Building wado query error"); //$NON-NLS-1$
-            }
-        }
-        if (imgNotAdd > 0) {
-            // JOptionPane.showMessageDialog(ExportClipBoardKOToolbar.this,
-            // imgNotAdd + " images cannot exported because they have be loaded locally!", //$NON-NLS-1$
-            // Messages.getString("ExportClipBoardKOToolbar.warning"), //$NON-NLS-1$
-            // JOptionPane.WARNING_MESSAGE);
-            // return;
-        }
+        // if (wado != null) {
+        // ArcQuery arquery;
+        // try {
+        // List<QueryResult> list = new ArrayList<>();
+        // DefaultQueryResult result = new DefaultQueryResult(patientList, wado);
+        // result.setViewerMessage(message);
+        // list.add(result);
+        // arquery = new ArcQuery(list);
+        // return arquery.xmlManifest(null);
+        // } catch (Exception e1) {
+        // AuditLog.logError(LOGGER, e1, "Building wado query error"); //$NON-NLS-1$
+        // }
+        // }
+        // if (imgNotAdd > 0) {
+        // // JOptionPane.showMessageDialog(ExportClipBoardKOToolbar.this,
+        // // imgNotAdd + " images cannot exported because they have be loaded locally!", //$NON-NLS-1$
+        // // Messages.getString("ExportClipBoardKOToolbar.warning"), //$NON-NLS-1$
+        // // JOptionPane.WARNING_MESSAGE);
+        // // return;
+        // }
 
-        return null;
-
+        return wado;
     }
 
-    private static Patient getPatient(MediaSeriesGroup patient, List<Patient> patientList) {
-        String id = (String) patient.getTagValue(TagD.get(Tag.PatientID));
-        String ispid = (String) patient.getTagValue(TagD.get(Tag.IssuerOfPatientID));
-        for (Patient p : patientList) {
+    public static Patient getPatient(MediaSeriesGroup patient, List<Patient> patientList) {
+        String id = TagD.getTagValue(Objects.requireNonNull(patient), Tag.PatientID, String.class);
+        String ispid = TagD.getTagValue(patient, Tag.IssuerOfPatientID, String.class);
+        for (Patient p : Objects.requireNonNull(patientList)) {
             if (p.hasSameUniqueID(id, ispid)) {
                 return p;
             }
         }
         Patient p = new Patient(id, ispid);
-        p.setPatientName((String) patient.getTagValue(TagD.get(Tag.PatientName)));
-        LocalDate date = (LocalDate) patient.getTagValue(TagD.get(Tag.PatientBirthDate));
+        p.setPatientName(TagD.getTagValue(patient, Tag.PatientName, String.class));
+        // Only set birth date, birth time is often not consistent (00:00)
+        LocalDate date = TagD.getTagValue(patient, Tag.PatientBirthDate, LocalDate.class);
         p.setPatientBirthDate(date == null ? null : TagD.formatDicomDate(date));
-        p.setPatientSex((String) patient.getTagValue(TagD.get(Tag.PatientSex)));
+        p.setPatientSex(TagD.getTagValue(patient, Tag.PatientSex, String.class));
         patientList.add(p);
         return p;
     }
 
-    private static Study getStudy(MediaSeriesGroup study, Patient patient) {
-        String uid = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
-        Study s = patient.getStudy(uid);
+    public static Study getStudy(MediaSeriesGroup study, Patient patient) {
+        String uid = TagD.getTagValue(Objects.requireNonNull(study), Tag.StudyInstanceUID, String.class);
+        Study s = Objects.requireNonNull(patient).getStudy(uid);
         if (s == null) {
             s = new Study(uid);
-            s.setStudyDescription((String) study.getTagValue(TagD.get(Tag.StudyDescription)));
+            s.setStudyDescription(TagD.getTagValue(study, Tag.StudyDescription, String.class));
             LocalDate date = TagD.getTagValue(study, Tag.StudyDate, LocalDate.class);
             s.setStudyDate(date == null ? null : TagD.formatDicomDate(date));
             LocalTime time = TagD.getTagValue(study, Tag.StudyTime, LocalTime.class);
             s.setStudyTime(time == null ? null : TagD.formatDicomTime(time));
-            s.setAccessionNumber((String) study.getTagValue(TagD.get(Tag.AccessionNumber)));
-            s.setStudyID((String) study.getTagValue(TagD.get(Tag.StudyID)));
-            s.setReferringPhysicianName((String) study.getTagValue(TagD.get(Tag.ReferringPhysicianName)));
+            s.setAccessionNumber(TagD.getTagValue(study, Tag.AccessionNumber, String.class));
+            s.setStudyID(TagD.getTagValue(study, Tag.StudyID, String.class));
+            s.setReferringPhysicianName(TagD.getTagValue(study, Tag.ReferringPhysicianName, String.class));
             patient.addStudy(s);
         }
         return s;
     }
 
-    private static Series getSeries(MediaSeriesGroup series, Study study) {
-        String uid = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
-        Series s = study.getSeries(uid);
+    public static Series getSeries(MediaSeriesGroup series, Study study) {
+        String uid = TagD.getTagValue(Objects.requireNonNull(series), Tag.SeriesInstanceUID, String.class);
+        Series s = Objects.requireNonNull(study).getSeries(uid);
         if (s == null) {
             s = new Series(uid);
             s.setSeriesDescription(TagD.getTagValue(series, Tag.SeriesDescription, String.class));

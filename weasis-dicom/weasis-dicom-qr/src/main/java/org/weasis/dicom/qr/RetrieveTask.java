@@ -6,6 +6,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -22,7 +23,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.LoadLocalDicom;
@@ -31,6 +31,8 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
+import org.weasis.dicom.mf.ArcQuery;
+import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.op.CGet;
 import org.weasis.dicom.op.CMove;
 import org.weasis.dicom.param.AdvancedParams;
@@ -39,7 +41,7 @@ import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.param.ListenerParams;
-import org.weasis.dicom.qr.manisfest.ManifestBuilder;
+import org.weasis.dicom.qr.manisfest.CFindQueryResult;
 import org.weasis.dicom.tool.DicomListener;
 
 public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, String> {
@@ -168,12 +170,12 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         });
                     }
 
-                    WadoParameters wadoParameters =
-                        new WadoParameters("queryID", wadoURLs.get(0).toString(), false, null, null, null);
-                    ManifestBuilder manifest = new ManifestBuilder();
-                    manifest.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
+                    WadoParameters wadoParameters = new WadoParameters(wadoURLs.get(0).toString(), false);
+                    CFindQueryResult query = new CFindQueryResult(wadoParameters);
+                    query.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);
-                    String wadoXmlGenerated = manifest.xmlManifest(wadoParameters, null);
+                    ArcQuery arquery = new ArcQuery(Arrays.asList(query));
+                    String wadoXmlGenerated = arquery.xmlManifest(null);
                     if (wadoXmlGenerated == null) {
                         state = new DicomState(Status.UnableToProcess,
                             Messages.getString("RetrieveTask.msg_build_manifest"), null); //$NON-NLS-1$

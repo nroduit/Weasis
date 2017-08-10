@@ -46,9 +46,9 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.wado.WadoParameters;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+import org.weasis.dicom.mf.WadoParameters;
 
 public class DicomDirLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirLoader.class);
@@ -68,7 +68,7 @@ public class DicomDirLoader {
         this.dicomModel = (DicomModel) explorerModel;
         this.writeInCache = writeInCache;
         this.dcmDirFile = dcmDirFile;
-        wadoParameters = new WadoParameters("id", "", true, "", null, null); //$NON-NLS-1$ //$NON-NLS-2$
+        wadoParameters = new WadoParameters("", true); //$NON-NLS-1$
         seriesList = new ArrayList<>();
 
     }
