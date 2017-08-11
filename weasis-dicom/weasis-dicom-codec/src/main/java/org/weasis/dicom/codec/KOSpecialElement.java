@@ -10,15 +10,8 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 
@@ -47,7 +40,6 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     }
 
     private boolean setKeyObjectReference(boolean selectedState, Reference ref) {
-
         if (selectedState) {
             return addKeyObject(ref);
         } else {
@@ -56,54 +48,10 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     }
 
     public boolean setKeyObjectReference(boolean selectedState, MediaSeries<DicomImageElement> series) {
-        // TOOD add frameList
-        Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<>();
-
-        for (DicomImageElement dicomImage : series.getSortedMedias(null)) {
-            String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-            String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-            String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-            String hashcode = studyInstanceUID + seriesInstanceUID + sopClassUID;
-
-            Set<DicomImageElement> dicomImageSet = dicomImageSetMap.get(hashcode);
-            if (dicomImageSet == null) {
-                dicomImageSet = new HashSet<>();
-                dicomImageSetMap.put(hashcode, dicomImageSet);
-            }
-            dicomImageSet.add(dicomImage);
-        }
-
         boolean hasDataModelChanged = false;
-
-        for (Set<DicomImageElement> dicomImageSet : dicomImageSetMap.values()) {
-
-            DicomImageElement firstDicomImage = dicomImageSet.iterator().next();
-
-            String studyInstanceUID = TagD.getTagValue(firstDicomImage, Tag.StudyInstanceUID, String.class);
-            String seriesInstanceUID = TagD.getTagValue(firstDicomImage, Tag.SeriesInstanceUID, String.class);
-            String sopClassUID = TagD.getTagValue(firstDicomImage, Tag.SOPClassUID, String.class);
-
-            Collection<String> sopInstanceUIDs = new ArrayList<>(dicomImageSet.size());
-            for (DicomImageElement dicomImage : dicomImageSet) {
-                sopInstanceUIDs.add(TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class));
-            }
-
-            hasDataModelChanged |=
-                setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
+        for (DicomImageElement dicomImage : series.getSortedMedias(null)) {
+            hasDataModelChanged |= setKeyObjectReference(selectedState, new Reference(dicomImage));
         }
-
         return hasDataModelChanged;
     }
-
-    private boolean setKeyObjectReference(boolean selectedState, String studyInstanceUID, String seriesInstanceUID,
-        Collection<String> sopInstanceUIDs, String sopClassUID) {
-
-        if (selectedState) {
-            return addKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
-        } else {
-            return removeKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs);
-        }
-    }
-
 }

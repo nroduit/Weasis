@@ -61,12 +61,12 @@ public class RenderingToolbar extends WtoolBar {
         exportClipBtn.setIcon(new ImageIcon(getClass().getResource("/icon/32x32/clipboard_ko.png"))); //$NON-NLS-1$
         exportClipBtn.setToolTipText(PUBLISH_MF.getTitle());
         exportClipBtn.setActionCommand(PUBLISH_MF.cmd());
-        exportClipBtn.addActionListener(newExportClipBoardKOAction());
+        exportClipBtn.addActionListener(publishManifestAction());
 
         add(exportClipBtn);
     }
 
-    private ActionListener newExportClipBoardKOAction() {
+    private ActionListener publishManifestAction() {
         return e -> {
             ImageViewerPlugin<DicomImageElement> view2dContainer =
                 EventManager.getInstance().getSelectedView2dContainer();
