@@ -453,7 +453,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             try {
                 file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
             } catch (Exception e) {
-                LOGGER.error("Downloading thbumbnail", e); //$NON-NLS-1$
+                LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
             }
         } else {
             String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
@@ -468,7 +468,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                             new URL(wadoParameters.getBaseURL() + thumURL).openConnection(), outFile);
                         file = outFile;
                     } catch (Exception e) {
-                        LOGGER.error("Downloading thbumbnail", e); //$NON-NLS-1$
+                        LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
                     }
                 }
             }
