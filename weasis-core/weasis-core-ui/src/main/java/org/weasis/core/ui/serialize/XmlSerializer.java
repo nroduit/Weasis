@@ -13,7 +13,7 @@ package org.weasis.core.ui.serialize;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.Writer;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -70,6 +70,21 @@ public class XmlSerializer {
         }
     }
 
+    public static void writePresentation(ImageElement img, Writer writer) {
+        GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+        if (model != null && !model.getModels().isEmpty()) {
+            try {
+                JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+                Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
+                // Remove the xml header tag
+                jaxbMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
+                jaxbMarshaller.marshal(model, writer);
+            } catch (Exception e) {
+                LOGGER.error("Cannot write GraphicModel", e); //$NON-NLS-1$
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     protected <T> T deserialize(String input, Class<T> clazz) throws JAXBException {
         StringReader sr = new StringReader(input);
@@ -77,19 +92,6 @@ public class XmlSerializer {
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
         return (T) unmarshaller.unmarshal(sr);
-    }
-
-    public static String serialize(GraphicModel model) {
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
-            Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
-            StringWriter sw = new StringWriter();
-            jaxbMarshaller.marshal(model, sw);
-            return sw.toString();
-        } catch (Exception e) {
-            LOGGER.error("Cannot serialize xml: ", e); //$NON-NLS-1$
-        }
-        return null;
     }
 
     public static GraphicModel buildPresentationModel(byte[] gzipData) {

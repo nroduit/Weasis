@@ -63,12 +63,12 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PrSerializer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PrSerializer.class);
+public class DicomPrSerializer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrSerializer.class);
 
     private static final String PIXEL = "PIXEL"; //$NON-NLS-1$
 
-    private PrSerializer() {
+    private DicomPrSerializer() {
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,

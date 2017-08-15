@@ -222,7 +222,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         if (errorMessage != null) {
             final String mes = errorMessage;
             final String errorTitle =
-                StringUtil.getEmpty2NullObject(dicomQrView.getComboDicomRetrieveType().getSelectedItem());
+                StringUtil.getEmptyStringIfNull(dicomQrView.getComboDicomRetrieveType().getSelectedItem());
             GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(dicomQrView.getBasePanel(), mes,
                 errorTitle, JOptionPane.ERROR_MESSAGE));
         }
