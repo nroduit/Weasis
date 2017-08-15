@@ -219,21 +219,21 @@ public class StringUtil {
         return bytesToHex(md.digest(val));
     }
 
-    public static String getNonNullObject(Object object) {
+    public static String getNullIfNull(Object object) {
         if (object == null) {
             return null;
         }
         return object.toString();
     }
 
-    public static String getEmpty2NullObject(Object object) {
+    public static String getEmptyStringIfNull(Object object) {
         if (object == null) {
             return ""; //$NON-NLS-1$
         }
         return object.toString();
     }
 
-    public static String getEmpty2NullEnum(Enum<?> object) {
+    public static String getEmptyStringIfNullEnum(Enum<?> object) {
         if (object == null) {
             return ""; //$NON-NLS-1$
         }

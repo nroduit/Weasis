@@ -73,7 +73,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 
 @SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -559,7 +559,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 File outputFile = new File(destinationDir, keepNames ? prUid : makeFileIDs(prUid));
                 destinationDir.mkdirs();
                 Attributes prAttributes =
-                    PrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
+                    DicomPrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
                 if (prAttributes != null) {
                     try {
                         writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);

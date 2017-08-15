@@ -2,18 +2,28 @@ package org.weasis.dicom.explorer.mf;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.DicomSpecialElement;
+import org.weasis.dicom.codec.KOSpecialElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.mf.AbstractQueryResult;
@@ -26,10 +36,19 @@ import org.weasis.dicom.mf.WadoParameters;
 public class DicomModelQueryResult extends AbstractQueryResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModelQueryResult.class);
 
-    protected final WadoParameters wadoParameters;
+    private final WadoParameters wadoParameters;
+    private final Set<KOSpecialElement> koEditable;
+    private final Set<DicomImageElement> images;
 
-    public DicomModelQueryResult(DicomModel model) {
-        this.wadoParameters = init(model);
+    public DicomModelQueryResult(DicomModel model, WadoParameters wadoParameters) {
+        this(model, wadoParameters, (MediaSeriesGroup[]) null);
+    }
+
+    public DicomModelQueryResult(DicomModel model, WadoParameters wadoParameters, MediaSeriesGroup... patient) {
+        this.wadoParameters = Objects.requireNonNull(wadoParameters);
+        this.koEditable = new LinkedHashSet<>();
+        this.images = new LinkedHashSet<>();
+        init(model, patient);
     }
 
     @Override
@@ -37,11 +56,22 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         return wadoParameters;
     }
 
-    private WadoParameters init(DicomModel model) {
-        WadoParameters wado = null;
-        int imgNotAdd = 0;
+    public Set<KOSpecialElement> getKoEditable() {
+        return koEditable;
+    }
 
-        for (MediaSeriesGroup patient : model.getChildren(MediaSeriesGroupNode.rootNode)) {
+    public Set<DicomImageElement> getImages() {
+        return images;
+    }
+
+    private void init(DicomModel model, MediaSeriesGroup... patientGroups) {
+        int imgNotAdd = 0;
+        Collection<MediaSeriesGroup> pts = patientGroups == null || patientGroups.length == 0
+            ? model.getChildren(MediaSeriesGroupNode.rootNode) : Arrays.asList(patientGroups);
+
+        for (MediaSeriesGroup patient : pts) {
+            List<DicomSpecialElement> dcmSpecElements =
+                (List<DicomSpecialElement>) patient.getTagValue(TagW.DicomSpecialElementList);
             Patient p = getPatient(patient, patients);
             for (MediaSeriesGroup study : model.getChildren(patient)) {
                 Study st = getStudy(study, p);
@@ -49,49 +79,34 @@ public class DicomModelQueryResult extends AbstractQueryResult {
                     Series s = getSeries(series, st);
                     if (series instanceof MediaSeries) {
                         WadoParameters wadoParams = (WadoParameters) series.getTagValue(TagW.WadoParameters);
-                        // TODO or not web series (URL or DICOMDIR)
-                        if (wadoParams == null) {
-                            imgNotAdd += ((MediaSeries) series).size(null);
+                        if (wadoParams == null || !StringUtil.hasText(wadoParams.getBaseURL())
+                            || !wadoParams.getBaseURL().equals(wadoParameters.getBaseURL())) {
+                            imgNotAdd += ((MediaSeries<?>) series).size(null);
                             continue;
                         }
-                        if (wado == null) {
-                            wado = wadoParams;
-                        }
-                        for (DicomImageElement media : ((MediaSeries<DicomImageElement>) series)
-                            .getSortedMedias(null)) {
-                            String sopUID = (String) media.getTagValue(TagD.get(Tag.SOPInstanceUID));
-                            SOPInstance sop = new SOPInstance(sopUID);
-                            sop.setInstanceNumber(
-                                ((Integer) media.getTagValue(TagD.get(Tag.InstanceNumber))).toString().toUpperCase());
-                            s.addSOPInstance(sop);
+
+                        if (DicomModel.isSpecialModality((MediaSeries<?>) series)) {
+                            String seriesInstanceUID = TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
+                            for (DicomSpecialElement spel : dcmSpecElements) {
+                                String seriesUID = TagD.getTagValue(spel, Tag.SeriesInstanceUID, String.class);
+                                if (seriesInstanceUID.equals(seriesUID)) {
+                                    if (!spel.getMediaReader().isEditableDicom()) {
+                                        buildInstance(spel, s);
+                                    }
+                                }
+                            }
+                        } else {
+                            for (MediaElement media : ((MediaSeries<MediaElement>) series).getSortedMedias(null)) {
+                                buildInstance(media, s);
+                            }
                         }
                     }
                 }
             }
+            koEditable.addAll(DicomModel.getEditableKoSpecialElements(patient));
         }
 
-        // if (wado != null) {
-        // ArcQuery arquery;
-        // try {
-        // List<QueryResult> list = new ArrayList<>();
-        // DefaultQueryResult result = new DefaultQueryResult(patientList, wado);
-        // result.setViewerMessage(message);
-        // list.add(result);
-        // arquery = new ArcQuery(list);
-        // return arquery.xmlManifest(null);
-        // } catch (Exception e1) {
-        // AuditLog.logError(LOGGER, e1, "Building wado query error"); //$NON-NLS-1$
-        // }
-        // }
-        // if (imgNotAdd > 0) {
-        // // JOptionPane.showMessageDialog(ExportClipBoardKOToolbar.this,
-        // // imgNotAdd + " images cannot exported because they have be loaded locally!", //$NON-NLS-1$
-        // // Messages.getString("ExportClipBoardKOToolbar.warning"), //$NON-NLS-1$
-        // // JOptionPane.WARNING_MESSAGE);
-        // // return;
-        // }
-
-        return wado;
+        removeItemsWithoutElements();
     }
 
     public static Patient getPatient(MediaSeriesGroup patient, List<Patient> patientList) {
@@ -136,7 +151,7 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         if (s == null) {
             s = new Series(uid);
             s.setSeriesDescription(TagD.getTagValue(series, Tag.SeriesDescription, String.class));
-            s.setSeriesNumber(StringUtil.getNonNullObject(TagD.getTagValue(series, Tag.SeriesNumber, Integer.class)));
+            s.setSeriesNumber(StringUtil.getNullIfNull(TagD.getTagValue(series, Tag.SeriesNumber, Integer.class)));
             s.setModality(TagD.getTagValue(series, Tag.Modality, String.class));
             // s.setDirectDownloadThumbnail(TagW.getTagValue(series, TagW.DirectDownloadThumbnail, String.class));
             s.setWadoTransferSyntaxUID(TagW.getTagValue(series, TagW.WadoTransferSyntaxUID, String.class));
@@ -145,5 +160,21 @@ public class DicomModelQueryResult extends AbstractQueryResult {
             study.addSeries(s);
         }
         return s;
+    }
+
+    public void buildInstance(MediaElement media, Series s) {
+        if (media != null) {
+            String sopUID = (String) media.getTagValue(TagD.get(Tag.SOPInstanceUID));
+            SOPInstance sop = new SOPInstance(sopUID);
+            sop.setInstanceNumber(((Integer) media.getTagValue(TagD.get(Tag.InstanceNumber))).toString().toUpperCase());
+            s.addSOPInstance(sop);
+
+            if (media instanceof DicomImageElement) {
+                GraphicModel model = (GraphicModel) media.getTagValue(TagW.PresentationModel);
+                if (model != null && !model.getModels().isEmpty()) {
+                    images.add((DicomImageElement) media);
+                }
+            }
+        }
     }
 }

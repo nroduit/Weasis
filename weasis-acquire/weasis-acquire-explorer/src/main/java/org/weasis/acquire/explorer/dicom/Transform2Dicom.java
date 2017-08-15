@@ -41,7 +41,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.tool.Dicomizer;
 
 public final class Transform2Dicom {
@@ -138,7 +138,7 @@ public final class Transform2Dicom {
                 }
                 String prUid = UIDUtils.createUID();
                 File outputFile = new File(exportDirDicom, prUid);
-                PrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
+                DicomPrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
             }
         } else {
             LOGGER.error("Cannot read JPEG image {}", imageElement.getName()); //$NON-NLS-1$
