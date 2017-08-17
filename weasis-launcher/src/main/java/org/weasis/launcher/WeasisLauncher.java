@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -348,6 +349,7 @@ public class WeasisLauncher {
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
+        handleWebstartHookBug();
         JVMShutdownHook shutdownHook = new JVMShutdownHook();
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         registerAdditionalShutdownHook();
@@ -1335,16 +1337,48 @@ public class WeasisLauncher {
         try {
             Class.forName("sun.misc.Signal"); //$NON-NLS-1$
             Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
-            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() { //$NON-NLS-1$
-                @Override
-                public void handle(sun.misc.Signal arg0) {
-                    shutdownHook();
-                }
-            });
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook());
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension"); //$NON-NLS-1$
+        }
+    }
+    
+    public static int getJavaMajorVersion() {
+        // Handle new versioning from Java 9
+        String jvmVersionString = System.getProperty("java.specification.version");
+        int verIndex = jvmVersionString.indexOf("1.");
+        if (verIndex >= 0) {
+            jvmVersionString = jvmVersionString.substring(verIndex + 2);
+        }
+        return Integer.parseInt(jvmVersionString);
+    }
+
+    /**
+     * @see https://bugs.openjdk.java.net/browse/JDK-8054639
+     *
+     */
+    private static void handleWebstartHookBug() {
+        int major = getJavaMajorVersion();
+        if (major < 9) {
+            // there is a bug that arrived sometime around the mid java7 releases. shutdown hooks get created that
+            // shutdown loggers and close down the classloader jars that means that anything we try to do in our
+            // shutdown hook throws an exception, but only after some random amount of time
+            try {
+                Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks");
+                Field field = clazz.getDeclaredField("hooks");
+                field.setAccessible(true);
+                Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
+                for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext();) {
+                    Thread thread = it.next();
+                    if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) {
+                        it.remove();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
