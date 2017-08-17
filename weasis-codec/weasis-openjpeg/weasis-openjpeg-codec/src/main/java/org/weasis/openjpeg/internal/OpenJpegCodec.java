@@ -80,7 +80,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(params.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + params.getType());
                 }
 
@@ -153,7 +153,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(j2kparams.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + j2kparams.getType());
                 }
 

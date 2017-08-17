@@ -73,13 +73,13 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.wado.WadoParameters;
-import org.weasis.dicom.codec.wado.WadoParameters.HttpTag;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
+import org.weasis.dicom.mf.HttpTag;
+import org.weasis.dicom.mf.WadoParameters;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
@@ -222,7 +222,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     private String getLoadType() {
         final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-        if (wado == null || !StringUtil.hasText(wado.getWadoURL())) {
+        if (wado == null || !StringUtil.hasText(wado.getBaseURL())) {
             if (wado != null) {
                 return wado.isRequireOnlySOPInstanceUID() ? "DICOMDIR" : "URL"; //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -339,7 +339,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     studyUID = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
                     seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
                 }
-                StringBuilder request = new StringBuilder(wado.getWadoURL());
+                StringBuilder request = new StringBuilder(wado.getBaseURL());
                 if (instance.getDirectDownloadFile() == null) {
                     request.append("?requestType=WADO&studyUID="); //$NON-NLS-1$
                     request.append(studyUID);
@@ -385,7 +385,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 continue;
             }
             LOGGER.debug("Download DICOM instance {} index {}.", urlConnection, k); //$NON-NLS-1$
-            Download ref = new Download(urlConnection);
+            Download ref = new Download(urlConnection, instance);
             tasks.add(ref);
         }
 
@@ -453,7 +453,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             try {
                 file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
             } catch (Exception e) {
-                LOGGER.error("Downloading thbumbnail", e); //$NON-NLS-1$
+                LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
             }
         } else {
             String thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
@@ -465,10 +465,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                         File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
                             Thumbnail.THUMBNAIL_CACHE_DIR);
                         FileUtil.writeStreamWithIOException(
-                            new URL(wadoParameters.getWadoURL() + thumURL).openConnection(), outFile);
+                            new URL(wadoParameters.getBaseURL() + thumURL).openConnection(), outFile);
                         file = outFile;
                     } catch (Exception e) {
-                        LOGGER.error("Downloading thbumbnail", e); //$NON-NLS-1$
+                        LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
                     }
                 }
             }
@@ -530,7 +530,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         String SOPInstanceUID) throws IOException {
         // TODO set quality as a preference
         URL url =
-            new URL(wadoParameters.getWadoURL() + "?requestType=WADO&studyUID=" + StudyUID + "&seriesUID=" + SeriesUID //$NON-NLS-1$ //$NON-NLS-2$
+            new URL(wadoParameters.getBaseURL() + "?requestType=WADO&studyUID=" + StudyUID + "&seriesUID=" + SeriesUID //$NON-NLS-1$ //$NON-NLS-2$
                 + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
@@ -582,10 +582,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
         private final URLConnection urlConnection; // download URL
         private Status status; // current status of download
+        private DicomInstance instance;
 
-        public Download(URLConnection urlConnection) {
+        public Download(URLConnection urlConnection, DicomInstance instance) {
             this.urlConnection = urlConnection;
-            status = Status.DOWNLOADING;
+            this.status = Status.DOWNLOADING;
+            this.instance = instance;
         }
 
         public String getUrl() {
@@ -729,7 +731,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
         private int downloadInFileCache(InputStream stream, File tempFile) throws IOException {
             final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-            int[] overrideList = Optional.ofNullable(wado).map(p -> p.getOverrideDicomTagIDList()).orElse(null);
+            int[] overrideList = Optional.ofNullable(wado).map(WadoParameters::getOverrideDicomTagIDList).orElse(null);
 
             boolean readTsuid =
                 DicomManager.getInstance().hasAllImageCodecs() ? false : getUrl().contains("?requestType=WADO"); //$NON-NLS-1$
@@ -850,6 +852,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 }
 
                 for (MediaElement media : medias) {
+                    media.setTag(TagW.PresentationModel, instance.getGraphicModel());
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }
                 if (firstImageToDisplay && dicomSeries.size(null) == 0) {

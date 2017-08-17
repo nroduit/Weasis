@@ -71,7 +71,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 
 @SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -327,7 +327,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean img16 = Boolean.parseBoolean(pref.getProperty(IMG_16_BIT, Boolean.FALSE.toString()));
 
         try {
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> seriesGph = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -446,7 +446,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 writer = DicomDirLoader.open(dcmdirFile);
             }
 
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> uids = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -547,7 +547,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 File outputFile = new File(destinationDir, keepNames ? prUid : makeFileIDs(prUid));
                 destinationDir.mkdirs();
                 Attributes prAttributes =
-                    PrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
+                    DicomPrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
                 if (prAttributes != null) {
                     try {
                         writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);

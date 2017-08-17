@@ -18,6 +18,7 @@ public class DicomInstance implements Comparable<DicomInstance> {
     private final String sopInstanceUID;
     private String directDownloadFile;
     private int instanceNumber;
+    private Object graphicModel;
 
     public DicomInstance(String sopInstanceUID) {
         this.sopInstanceUID = Objects.requireNonNull(sopInstanceUID);
@@ -42,6 +43,14 @@ public class DicomInstance implements Comparable<DicomInstance> {
 
     public void setDirectDownloadFile(String directDownloadFile) {
         this.directDownloadFile = directDownloadFile;
+    }
+
+    public Object getGraphicModel() {
+        return graphicModel;
+    }
+
+    public void setGraphicModel(Object graphicModel) {
+        this.graphicModel = graphicModel;
     }
 
     @Override

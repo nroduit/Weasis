@@ -570,9 +570,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             String seriesInstanceUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
 
             if (sopInstanceUID != null && seriesInstanceUID != null) {
+                Integer frame = (Integer) img.getKey();
                 if (selectedKO instanceof KOSpecialElement) {
                     KOSpecialElement koElement = (KOSpecialElement) selectedKO;
-                    if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID)) {
+                    if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID, frame)) {
                         newSelectionState = eState.SELECTED;
                     }
                 } else {
@@ -580,7 +581,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                     if (koElements != null) {
                         for (KOSpecialElement koElement : koElements) {
-                            if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID)) {
+                            if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID, frame)) {
                                 newSelectionState = eState.EXIST;
                                 break;
                             }

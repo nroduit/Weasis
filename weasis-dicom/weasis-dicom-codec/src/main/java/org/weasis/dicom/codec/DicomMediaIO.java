@@ -1043,13 +1043,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     private ImageInputStreamImpl iisOfFrame(int frameIndex) throws IOException {
-        // Extract compressed file
+        // // Extract compressed file
         // if (!fileCache.isElementInMemory()) {
-        // String extension = "." + Optional.ofNullable(decompressor).map(d ->
-        // d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
-        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex),
-        // new FileOutputStream(new File(AppProperties.FILE_CACHE_DIR,
-        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension)));
+        // String extension = "." + Optional.ofNullable(decompressor)
+        // .map(d -> d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
+        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex), new File(AppProperties.FILE_CACHE_DIR,
+        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension));
         // }
         org.dcm4che3.imageio.stream.SegmentedInputImageStream siis = buildSegmentedImageInputStream(frameIndex);
         return patchJpegLS != null ? new PatchJPEGLSImageInputStream(siis, patchJpegLS) : siis;

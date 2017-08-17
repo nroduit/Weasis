@@ -10,18 +10,26 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.util.ArrayList;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.mf.ArcParameters;
+import org.weasis.dicom.mf.Xml;
 
 public class KOSpecialElement extends AbstractKOSpecialElement {
+    private static final Logger LOGGER = LoggerFactory.getLogger(KOSpecialElement.class);
+
+    public static final String SEL_NAME = "name";
 
     public KOSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
@@ -29,104 +37,105 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
     public void toggleKeyObjectReference(DicomImageElement dicomImage) {
 
-        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
-        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-        toggleKeyObjectReference(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
-    }
-
-    /**
-     * If the sopInstanceUID is not referenced, add a new Key Object reference<br>
-     * If the sopInstanceUID is already referenced, remove this Key Object reference
-     *
-     * @param studyInstanceUID
-     * @param seriesInstanceUID
-     * @param sopInstanceUID
-     * @param sopClassUID
-     */
-    private void toggleKeyObjectReference(String studyInstanceUID, String seriesInstanceUID, String sopInstanceUID,
-        String sopClassUID) {
+        Reference ref = new Reference(dicomImage);
 
         // Get the SOPInstanceReferenceMap for this seriesUID
         Map<String, SOPInstanceReferenceAndMAC> sopInstanceReferenceBySOPInstanceUID =
-            sopInstanceReferenceMapBySeriesUID.get(seriesInstanceUID);
+            sopInstanceReferenceMapBySeriesUID.get(ref.getSeriesInstanceUID());
 
         boolean isSelected = sopInstanceReferenceBySOPInstanceUID != null
-            && sopInstanceReferenceBySOPInstanceUID.containsKey(sopInstanceUID);
+            && sopInstanceReferenceBySOPInstanceUID.containsKey(ref.getSopInstanceUID());
 
-        setKeyObjectReference(!isSelected, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+        setKeyObjectReference(!isSelected, ref);
     }
 
     public boolean setKeyObjectReference(boolean selectedState, DicomImageElement dicomImage) {
-        String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-        String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-        String sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
-        String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-        return setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+        return setKeyObjectReference(selectedState, new Reference(dicomImage));
     }
 
-    private boolean setKeyObjectReference(boolean selectedState, String studyInstanceUID, String seriesInstanceUID,
-        String sopInstanceUID, String sopClassUID) {
-
+    private boolean setKeyObjectReference(boolean selectedState, Reference ref) {
         if (selectedState) {
-            return addKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID, sopClassUID);
+            return addKeyObject(ref);
         } else {
-            return removeKeyObject(studyInstanceUID, seriesInstanceUID, sopInstanceUID);
+            return removeKeyObject(ref);
         }
     }
 
-    public boolean setKeyObjectReference(boolean selectedState, List<DicomImageElement> dicomImageList) {
-
-        Map<String, Set<DicomImageElement>> dicomImageSetMap = new HashMap<>();
-
-        for (DicomImageElement dicomImage : dicomImageList) {
-            String studyInstanceUID = TagD.getTagValue(dicomImage, Tag.StudyInstanceUID, String.class);
-            String seriesInstanceUID = TagD.getTagValue(dicomImage, Tag.SeriesInstanceUID, String.class);
-            String sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
-
-            String hashcode = studyInstanceUID + seriesInstanceUID + sopClassUID;
-
-            Set<DicomImageElement> dicomImageSet = dicomImageSetMap.get(hashcode);
-            if (dicomImageSet == null) {
-                dicomImageSet = new HashSet<>();
-                dicomImageSetMap.put(hashcode, dicomImageSet);
-            }
-            dicomImageSet.add(dicomImage);
-        }
-
+    public boolean setKeyObjectReference(boolean selectedState, MediaSeries<DicomImageElement> series) {
         boolean hasDataModelChanged = false;
-
-        for (Set<DicomImageElement> dicomImageSet : dicomImageSetMap.values()) {
-
-            DicomImageElement firstDicomImage = dicomImageSet.iterator().next();
-
-            String studyInstanceUID = TagD.getTagValue(firstDicomImage, Tag.StudyInstanceUID, String.class);
-            String seriesInstanceUID = TagD.getTagValue(firstDicomImage, Tag.SeriesInstanceUID, String.class);
-            String sopClassUID = TagD.getTagValue(firstDicomImage, Tag.SOPClassUID, String.class);
-
-            Collection<String> sopInstanceUIDs = new ArrayList<>(dicomImageSet.size());
-            for (DicomImageElement dicomImage : dicomImageSet) {
-                sopInstanceUIDs.add(TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class));
-            }
-
-            hasDataModelChanged |=
-                setKeyObjectReference(selectedState, studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
+        for (DicomImageElement dicomImage : series.getSortedMedias(null)) {
+            hasDataModelChanged |= setKeyObjectReference(selectedState, new Reference(dicomImage));
         }
-
         return hasDataModelChanged;
     }
 
-    private boolean setKeyObjectReference(boolean selectedState, String studyInstanceUID, String seriesInstanceUID,
-        Collection<String> sopInstanceUIDs, String sopClassUID) {
+    public static void writeSelection(Collection<KOSpecialElement> list, Writer manifest) {
+        if (list != null && manifest != null) {
+            try {
+                manifest.append("\n<");
+                manifest.append(ArcParameters.TAG_SEL_ROOT);
+                manifest.append(">");
+                for (KOSpecialElement ko : list) {
+                    writeKoElement(ko, manifest);
+                }
 
-        if (selectedState) {
-            return addKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs, sopClassUID);
-        } else {
-            return removeKeyObjects(studyInstanceUID, seriesInstanceUID, sopInstanceUIDs);
+                manifest.append("\n</");
+                manifest.append(ArcParameters.TAG_SEL_ROOT);
+                manifest.append(">");
+
+            } catch (Exception e) {
+                LOGGER.error("Cannot write Key Object Selection: ", e); //$NON-NLS-1$
+            }
         }
     }
 
+    private static void writeKoElement(KOSpecialElement ko, Writer mf) throws IOException {
+        mf.append("\n<");
+        mf.append(ArcParameters.TAG_SEL);
+        mf.append(" ");
+        Xml.addXmlAttribute(SEL_NAME, ko.getLabel(), mf);
+        mf.append(" ");
+        String sereiesUID = TagD.get(Tag.SeriesInstanceUID).getKeyword();
+        Xml.addXmlAttribute(sereiesUID, TagD.getTagValue(ko, Tag.SeriesInstanceUID, String.class), mf);
+        mf.append(">");
+
+        for (Entry<String, Map<String, SOPInstanceReferenceAndMAC>> entry : ko.sopInstanceReferenceMapBySeriesUID
+            .entrySet()) {
+            mf.append("\n<");
+            mf.append(Xml.Level.SERIES.getTagName());
+            mf.append(" ");
+            Xml.addXmlAttribute(sereiesUID, entry.getKey(), mf);
+            mf.append(">");
+
+            writeImages(entry.getValue(), mf);
+
+            mf.append("\n</");
+            mf.append(Xml.Level.SERIES.getTagName());
+            mf.append(">");
+        }
+
+        mf.append("\n</");
+        mf.append(ArcParameters.TAG_SEL);
+        mf.append(">");
+    }
+
+    private static void writeImages(Map<String, SOPInstanceReferenceAndMAC> map, Writer mf) throws IOException {
+        String sopUID = TagD.get(Tag.ReferencedSOPInstanceUID).getKeyword();
+        String sopClass = TagD.get(Tag.ReferencedSOPClassUID).getKeyword();
+        String frames = TagD.get(Tag.ReferencedFrameNumber).getKeyword();
+        
+        for (SOPInstanceReferenceAndMAC sopRef : map.values()) {
+            mf.append("\n<");
+            mf.append(Xml.Level.INSTANCE.getTagName());
+            mf.append(" ");
+            Xml.addXmlAttribute(sopUID, sopRef.getReferencedSOPInstanceUID(), mf);
+            Xml.addXmlAttribute(sopClass, sopRef.getReferencedSOPClassUID(), mf);
+            int[] fms = sopRef.getReferencedFrameNumber();
+            if (fms != null) {
+                String frameList = IntStream.of(fms).mapToObj(String::valueOf).collect(Collectors.joining("\\"));
+                Xml.addXmlAttribute(frames, frameList, mf);
+            }
+            mf.append("/>");
+        }
+    }
 }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns="http://www.weasis.org/xsd/2.5" targetNamespace="http://www.weasis.org/xsd/2.5"
+	elementFormDefault="qualified">
+
+	<xsd:complexType name="series">
+		<xsd:sequence>
+			<xsd:element name="image" minOccurs="0" maxOccurs="unbounded">
+				<xsd:complexType>
+					<xsd:attribute name="uuid" use="required" />
+					<xsd:attribute name="frames" />
+				</xsd:complexType>
+			</xsd:element>
+		</xsd:sequence>
+		<xsd:attribute name="uuid" use="required" />
+	</xsd:complexType>
+	
+	<xsd:complexType name="selection">
+		<xsd:sequence>
+			<xsd:element name="series" type="series" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+		<xsd:attribute name="uuid" use="required" />
+	</xsd:complexType>
+
+	<xsd:complexType name="selections">
+		<xsd:sequence>
+			<xsd:element name="selection" type="selection" minOccurs="0"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:element name="selections" type="selections" />
+</xsd:schema>
