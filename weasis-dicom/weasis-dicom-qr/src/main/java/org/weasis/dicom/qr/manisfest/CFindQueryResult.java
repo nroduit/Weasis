@@ -52,7 +52,7 @@ public class CFindQueryResult extends AbstractQueryResult {
             if (seriesRSP != null && !seriesRSP.isEmpty()) {
                 MediaSeriesGroup studyGroup = model.getStudyNode(studyUID);
                 MediaSeriesGroup patientGroup = model.getParent(studyGroup, DicomModel.patient);
-                Patient patient = DicomModelQueryResult.getPatient(patientGroup, patients);
+                Patient patient = DicomModelQueryResult.getPatient(patientGroup, patientMap);
                 Study study = DicomModelQueryResult.getStudy(studyGroup, patient);
                 for (Attributes seriesDataset : seriesRSP) {
                     fillInstance(advancedParams, callingNode, calledNode, seriesDataset, study);
@@ -96,7 +96,7 @@ public class CFindQueryResult extends AbstractQueryResult {
                     if (sopUID != null) {
                         SOPInstance sop = new SOPInstance(sopUID);
                         sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
-                        s.addSOPInstance(sop);
+                        s.addSopInstance(sop);
                     }
                 }
             }

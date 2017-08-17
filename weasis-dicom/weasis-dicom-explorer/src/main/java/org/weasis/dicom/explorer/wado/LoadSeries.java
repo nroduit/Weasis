@@ -66,6 +66,9 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.ReferencedImage;
+import org.weasis.core.ui.model.ReferencedSeries;
 import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -845,14 +848,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                         String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
                         if (!patient.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
                             // Fix when patientUID in xml have different patient name
-                            dicomModel.mergePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID),
-                                dicomPtUID);
+                            dicomModel.mergePatientUID((String) patient.getTagValue(TagW.PatientPseudoUID), dicomPtUID);
                         }
                     }
                 }
 
                 for (MediaElement media : medias) {
-                    media.setTag(TagW.PresentationModel, instance.getGraphicModel());
+                    applyPresentationModel((GraphicModel) instance.getGraphicModel(), media);
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }
                 if (firstImageToDisplay && dicomSeries.size(null) == 0) {
@@ -896,6 +898,32 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                             new ObservableEvent(ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
                     }
                 }
+            }
+        }
+    }
+
+    private void applyPresentationModel(GraphicModel model, MediaElement media) {
+        if (model != null) {
+            int frames = media.getMediaReader().getMediaElementNumber();
+            if (frames > 1 && media.getKey() instanceof Integer) {
+                String seriesUID = TagD.getTagValue(media, Tag.SeriesInstanceUID, String.class);
+                String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
+
+                for (ReferencedSeries s : model.getReferencedSeries()) {
+                    if (s.getUuid().equals(seriesUID)) {
+                        for (ReferencedImage refImg : s.getImages()) {
+                            if (refImg.getUuid().equals(sopUID)) {
+                                List<Integer> f = refImg.getFrames();
+                                if (f == null || f.contains(media.getKey())) {
+                                    media.setTag(TagW.PresentationModel, model);
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else {
+                media.setTag(TagW.PresentationModel, model);
             }
         }
     }
