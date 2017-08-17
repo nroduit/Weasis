@@ -295,43 +295,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             Structure structure = structLayer.getStructure();
                             if (containsStructure(listStructure, structure)) {
 
-                                // Display volume
-                                String tooltip = String.format("Structure: " + structure.getRoiName() + ", Volume: %.4f cm^3", structure.getVolume());
-                                LOGGER.debug(tooltip);
-
-                                // If dose is loaded
-                                if (dose != null) {
-
-                                    // If DVH exists for the structure and setting always recalculate is false
-                                    Dvh structureDvh = dose.get(structure.getRoiNumber());
-
-                                    // Re-calculate DVH
-                                    if (structureDvh == null ||
-                                       (structureDvh.getDvhSource().equals(Dvh.DVHSOURCE.PROVIDED) && RtSet.forceRecalculateDvh)) {
-                                        structureDvh = rt.initCalculatedDvh(structure, dose);
-                                        dose.put(structure.getRoiNumber(), structureDvh);
-                                    }
-                                    // Read provided DVH
-                                    else {
-                                        // Absolute volume is defined in DVH (in cm^3) so use it
-                                        if (structureDvh.getDvhVolumeUnit().equals("CM3")) {
-                                            structure.setVolume(structureDvh.getDvhData()[0]);
-                                        }
-                                        // Otherwise recalculate structure volume
-                                        else {
-                                            structure.recalculateVolume();
-                                        }
-                                    }
-
-                                    // If plan is loaded with prescribed treatment dose calculate DVH statistics
-                                    String relativeMinDose = String.format("Structure: " + structure.getRoiName() + ", Min Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
-                                    String relativeMaxDose = String.format("Structure: " + structure.getRoiName() + ", Max Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
-                                    String relativeMeanDose = String.format("Structure: " + structure.getRoiName() + ", Mean Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
-                                    LOGGER.debug(relativeMinDose);
-                                    LOGGER.debug(relativeMaxDose);
-                                    LOGGER.debug(relativeMeanDose);
-
-                                    // DVH refresh display
+//                                // If dose is loaded
+//                                if (dose != null) {
+//
+//                                    // DVH refresh display
 //                                    rt.getDvhChart().removeSeries(struct.getRoiName());
 //                                    structureDvh.appendChart(struct.getRoiName(), rt.getDvhChart());
 //                                    try {
@@ -340,7 +307,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 //                                    catch (Exception err) {
 //
 //                                    }
-                                }
+//                                }
 
                                 // Structure graphics
                                 Graphic graphic = c.getGraphic(geometry);
@@ -562,7 +529,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                 expandTree(tree, dtm);
             }
         }
-        return;
     }
 
     private static List<MediaElement> getRelatedSpecialElements(DicomModel model, MediaSeriesGroup patient,

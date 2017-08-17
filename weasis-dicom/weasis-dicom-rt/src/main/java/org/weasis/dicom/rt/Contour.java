@@ -22,8 +22,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
-import org.apache.commons.math3.geometry.euclidean.twod.Euclidean2D;
-import org.opencv.core.MatOfPoint;
 import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

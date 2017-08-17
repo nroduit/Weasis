@@ -51,19 +51,23 @@ public class RtSet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RtSet.class);
 
-    private static final int structureFillTransparency = 115;
-    private static final int isoFillTransparency = 70;
-    public static final boolean forceRecalculateDvh = true;
-
-    private final Map<RtSpecialElement, Plan> plans = new HashMap<>();
+    private final List<MediaElement> rtElements =  new ArrayList<>();
     private final Map<RtSpecialElement, StructureSet> structures = new HashMap<>();
+    private final Map<RtSpecialElement, Plan> plans = new HashMap<>();
     private final List<MediaElement> images = new ArrayList<>();
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
-    private Pair<double[], double[]> dosePixLUT;
 
     // Treatment case is loaded when plan and dose are loaded
     private boolean reload = false;
     private boolean loaded = false;
+
+    private Pair<double[], double[]> doseMmLUT;
+    private Pair<double[], double[]> dosePixLUT;
+
+    // TODO: this will be configurable via GUI
+    private int structureFillTransparency = 115;
+    private int isoFillTransparency = 70;
+    private boolean forceRecalculateDvh = false;
 
 //    private final XYChart dvhChart = new XYChartBuilder()
 //                                            .width(600)
@@ -72,11 +76,9 @@ public class RtSet {
 //                                            .xAxisTitle("Dose (cGy)")
 //                                            .yAxisTitle("Volume (%)")
 //                                            .build();
-
-    private final List<MediaElement> rtElements;
-
+    
     public RtSet(List<MediaElement> rtElements) {
-        this.rtElements = Objects.requireNonNull(rtElements);
+        this.rtElements.addAll(Objects.requireNonNull(rtElements));
 
         for (MediaElement rt : rtElements) {
             String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
@@ -100,7 +102,7 @@ public class RtSet {
         // Plans and doses are loaded
         if (!plans.isEmpty() && !images.isEmpty()) {
             for (Plan plan : plans.values()) {
-                if (plan.hasAssociatedDose() &&  dosePixLUT == null) {
+                if (plan.hasAssociatedDose() && dosePixLUT == null) {
 
                     DicomImageElement image = (DicomImageElement) this.getMiddleImage();
 
@@ -114,19 +116,53 @@ public class RtSet {
                     double[] imageSpacing = image.getSliceGeometry().getVoxelSpacingArray();
 
                     // Init LUTs
+                    Pair<double[], double[]> imageLUT = this.calculatePixelLookupTable(image);
                     for (Dose dose : plan.getDoses()) {
-                        Pair imageLUT = this.calculatePixelLookupTable(image);
-                        Pair doseLUT = this.calculatePixelLookupTable((DicomImageElement) dose.getImages().get(0));
-                        this.dosePixLUT = this.calculateDoseGridToImageGrid(imageLUT, imageSpacing, prone, feetFirst, doseLUT);
+                        this.doseMmLUT = this.calculatePixelLookupTable((DicomImageElement) dose.getImages().get(0));
+                        this.dosePixLUT = this.calculateDoseGridToImageGrid(imageLUT, imageSpacing, prone, feetFirst, this.doseMmLUT);
                     }
-
-                    // TODO: recalculate DVH for each structure if DVH is not provided: calculate dvh (structure, plan rxDose, number of cGy bins)
-                    this.initIsoDoses(plan, dosePixLUT);
+                    
+                    this.initIsoDoses(plan, this.doseMmLUT);
 
                     for (Dose dose : plan.getDoses()) {
                         if (dose.getDoseMax() > 0) {
                             this.loaded = true;
                             this.reload = true;
+
+                            // For all ROIs
+                            for (StructureLayer structureLayer : this.getStructureSet(this.getFirstStructure()).values()) {
+                                Structure structure = structureLayer.getStructure();
+
+                                // If DVH exists for the structure and setting always recalculate is false
+                                Dvh structureDvh = dose.get(structure.getRoiNumber());
+
+                                // Re-calculate DVH if it does not exists or if it is provided and force recalculation is setup
+                                if (structureDvh == null ||
+                                    (structureDvh.getDvhSource().equals(DataSource.PROVIDED) && this.getForceRecalculateDvh())) {
+                                    structureDvh = this.initCalculatedDvh(structure, dose);
+                                    dose.put(structure.getRoiNumber(), structureDvh);
+                                }
+                                // Otherwise read provided DVH
+                                else {
+                                    // Absolute volume is provided and defined in DVH (in cm^3) so use it
+                                    if (structureDvh.getDvhSource().equals(DataSource.PROVIDED) && structureDvh.getDvhVolumeUnit().equals("CM3")) {
+                                        structure.setVolume(structureDvh.getDvhData()[0]);
+                                    }
+                                }
+
+                                // Display volume
+                                String source = structure.getVolumeSource().toString();
+                                double volume = structure.getVolume();
+                                LOGGER.debug(String.format("Structure: " + structure.getRoiName() + ", " + source + " Volume: %.4f cm^3", volume));
+
+                                // If plan is loaded with prescribed treatment dose calculate DVH statistics
+                                String relativeMinDose = String.format("Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString() + " Min Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
+                                String relativeMaxDose = String.format("Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString() + " Max Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
+                                String relativeMeanDose = String.format("Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString() + " Mean Dose: %.3f %%", RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
+                                LOGGER.debug(relativeMinDose);
+                                LOGGER.debug(relativeMaxDose);
+                                LOGGER.debug(relativeMeanDose);
+                            }
                         }
                         else {
                             this.loaded = false;
@@ -259,8 +295,22 @@ public class RtSet {
 
         Attributes dcmItems = rtElement.getMediaReader().getDicomObject();
         if (dcmItems != null) {
+
             Plan plan = new Plan();
-            plan.setSopInstanceUid(dcmItems.getString(Tag.SOPInstanceUID));
+            String planSopInstanceUid = dcmItems.getString(Tag.SOPInstanceUID);
+            plan.setSopInstanceUid(planSopInstanceUid);
+
+            // Some plans exists (probably dummy plans)
+            if (!plans.isEmpty()) {
+                RtSpecialElement se = getPlans().entrySet().stream().filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid)).findFirst().get().getKey();
+                // Dummy plan exists, take the dummy and extend it
+                if (se == null) {
+                    plan = getPlans().entrySet().stream().filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid)).findFirst().get().getValue();
+                    // Remove the dummy from the set
+                    plans.remove(null, plan);
+                }
+            }
+
             plan.setLabel(dcmItems.getString(Tag.RTPlanLabel));
             plan.setName(dcmItems.getString(Tag.RTPlanName));
             plan.setDescription(dcmItems.getString(Tag.RTPlanDescription));
@@ -349,10 +399,10 @@ public class RtSet {
                 }
             }
 
+            plans.put(rtElement, plan);
+
             // To int
             // plan.setRxDose(plan.getRxDose().floatToIntBits());
-
-            plans.put(rtElement, plan);
         }
     }
 
@@ -366,15 +416,23 @@ public class RtSet {
 
             String sopInstanceUID = dcmItems.getString(Tag.SOPInstanceUID);
 
-            // Referenced Plan
-            Plan plan = null;
+            // Dose is Referencing Plan
+            Plan plan;
             String referencedPlanUid = "";
             for (Attributes refRtPlanSeq : dcmItems.getSequence(Tag.ReferencedRTPlanSequence)) {
                 referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
             }
+
+            // Plan is already loaded
             if (!plans.isEmpty()) {
                 String finalReferencedPlanUid = referencedPlanUid;
                 plan = getPlans().entrySet().stream().filter(p -> p.getValue().getSopInstanceUid().equals(finalReferencedPlanUid)).findFirst().get().getValue();
+            }
+            // Dummy plan will be created
+            else {
+                plan = new Plan();
+                plan.setSopInstanceUid(referencedPlanUid);
+                plans.put(null, plan);
             }
 
             if (plan != null) {
@@ -393,9 +451,6 @@ public class RtSet {
                     rtDose.setDoseSummationType(dcmItems.getString(Tag.DoseSummationType));
                     rtDose.setGridFrameOffsetVector(dcmItems.getDoubles(Tag.GridFrameOffsetVector));
                     rtDose.setDoseGridScaling(dcmItems.getDouble(Tag.DoseGridScaling, 0.0));
-                    if (rtDose.getDoseMax() < ((ImageElement) rtElement).getMaxValue(null, false)) {
-                        rtDose.setDoseMax(((ImageElement) rtElement).getMaxValue(null, false));
-                    }
 
                     // Check whether DVH is included
                     Sequence dvhSeq = dcmItems.getSequence(Tag.DVHSequence);
@@ -417,7 +472,7 @@ public class RtSet {
                             }
 
                             if (rtDvh != null) {
-                                rtDvh.setDvhSource(Dvh.DVHSOURCE.PROVIDED);
+                                rtDvh.setDvhSource(DataSource.PROVIDED);
                                 // Convert Differential DVH to Cumulative
                                 if (dvhSeq.get(0).getString(Tag.DVHType).equals("DIFFERENTIAL")) {
 
@@ -446,9 +501,9 @@ public class RtSet {
                                         double maxVolume = DoubleStream.of(volume).sum();
 
                                         // Determine the dose values that are missing from the original data
-                                        int[] missingDose = new int[minDose];
+                                        double[] missingDose = new double[minDose];
                                         for (int j = 0; j < minDose; j++) {
-                                            missingDose[j] *= maxVolume;
+                                            missingDose[j] = maxVolume;
                                         }
 
                                         // Cumulative dose - x of histogram
@@ -456,8 +511,7 @@ public class RtSet {
                                         double[] cumVolume = new double[dose.length];
                                         double[] cumDose = new double[dose.length];
                                         for (int k = 0; k < dose.length; k++) {
-                                            cumVolume[k] =
-                                                    DoubleStream.of(Arrays.copyOfRange(volume, k, dose.length)).sum();
+                                            cumVolume[k] = DoubleStream.of(Arrays.copyOfRange(volume, k, dose.length)).sum();
                                             cumDose[k] = DoubleStream.of(Arrays.copyOfRange(dose, 0, k)).sum() * 100;
                                         }
 
@@ -474,13 +528,8 @@ public class RtSet {
 
                                         // Append the interpolated values to the missing dose values
                                         double[] cumDvhData = new double[missingDose.length + interpCumVolume.length];
-                                        for (int n = 0; n < missingDose.length + interpCumVolume.length; n++) {
-                                            if (n < missingDose.length) {
-                                                cumDvhData[n] = missingDose[n];
-                                            } else {
-                                                cumDvhData[n] = interpCumVolume[n - missingDose.length];
-                                            }
-                                        }
+                                        System.arraycopy(missingDose, 0, cumDvhData, 0, cumDvhData.length);
+                                        System.arraycopy(interpCumVolume, 0, cumDvhData, missingDose.length, interpCumVolume.length);
 
                                         rtDvh.setDvhData(cumDvhData);
                                         rtDvh.setDvhNumberOfBins(cumDvhData.length);
@@ -533,7 +582,7 @@ public class RtSet {
     /**
      * Initialise ISO dose levels
      */
-    private void initIsoDoses(Plan plan, Pair<double[], double[]> dosePixLUT) {
+    private void initIsoDoses(Plan plan, Pair<double[], double[]> doseMmLUT) {
         // Init IsoDose levels for each dose
         for (Dose dose : plan.getDoses()) {
 
@@ -585,10 +634,19 @@ public class RtSet {
                                 // Populate point coordinates
                                 double[] newContour = new double[contour.toArray().length * 3];
                                 int k = 0;
+
+                                // TODO: not sure if this is necessary for rendering
+                                double voxelCenterOffsetX = ((DicomImageElement)dose.getImages().get(0)).getSliceGeometry().getVoxelSpacingArray()[0] / 2;
+                                double voxelCenterOffsetY = ((DicomImageElement)dose.getImages().get(0)).getSliceGeometry().getVoxelSpacingArray()[1] / 2;
+
                                 for (Point point : contour.toList()) {
-                                    double[] coordinates = getImageCoordinatesForDosePoint((int) point.x, (int) point.y, dosePixLUT);
-                                    newContour[k] = coordinates[0] + dose.getImagePositionPatient()[0];
-                                    newContour[k + 1] = coordinates[1] + dose.getImagePositionPatient()[1];
+                                    double[] coordinates = new double[2];
+                                    
+                                    coordinates[0] = doseMmLUT.getFirst()[(int) point.x] - voxelCenterOffsetX;
+                                    coordinates[1] = doseMmLUT.getSecond()[(int) point.y] - voxelCenterOffsetY;
+
+                                    newContour[k] = coordinates[0];
+                                    newContour[k + 1] = coordinates[1];
                                     newContour[k + 2] = z;
                                     k += 3;
                                 }
@@ -688,6 +746,30 @@ public class RtSet {
         return null;
     }
 
+    public int getStructureFillTransparency() {
+        return this.structureFillTransparency;
+    }
+
+    public void setStructureFillTransparency(int value) {
+        this.structureFillTransparency = value;
+    }
+
+    public int getIsoFillTransparency() {
+        return this.isoFillTransparency;
+    }
+
+    public void setIsoFillTransparency(int value) {
+        this.isoFillTransparency = value;
+    }
+
+    public boolean getForceRecalculateDvh() {
+        return this.forceRecalculateDvh;
+    }
+
+    public void setForceRecalculateDvh(boolean value) {
+        this.forceRecalculateDvh = value;
+    }
+
     /**
      * Calculates the structure plane thickness
      *
@@ -745,7 +827,7 @@ public class RtSet {
     public Dvh initCalculatedDvh(Structure structure, Dose dose) {
         Dvh dvh = new Dvh();
         dvh.setReferencedRoiNumber(structure.getRoiNumber());
-        dvh.setDvhSource(Dvh.DVHSOURCE.CALCULATED);
+        dvh.setDvhSource(DataSource.CALCULATED);
         dvh.setType("CUMULATIVE");
         dvh.setDoseUnit("CGY");
         dvh.setDvhVolumeUnit("CM3");
@@ -767,14 +849,11 @@ public class RtSet {
         DicomImageElement doseImage = (DicomImageElement)dose.getImages().get(0);
         double[] doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacingArray();
         double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
-        Pair<double[], double[]>  doseLUT = this.calculatePixelLookupTable(doseImage);
 
         double volume = 0f;
 
-        // Prepare empty histogram structure
-
+        // Prepare empty histogram (vector of bins in cGy) for structure
         Mat histogram = new Mat((int)maxDose, 1, CvType.CV_32FC1);
-
         if (structure.getPlanes() != null && !structure.getPlanes().isEmpty()) {
             // Each bin in histogram represents 1 cGy
             for (int i = 0; i < histogram.rows(); i++) {
@@ -801,7 +880,7 @@ public class RtSet {
 
                 Contour contour = entry.getValue().get(c);
                 
-                Mat contourMask = calculateContourMask(doseLUT, contour);
+                Mat contourMask = calculateContourMask(this.doseMmLUT, contour);
                 Mat hist = dose.getMaskedDosePlaneHist(z, contourMask, (int)maxDose);
 
                 double vol = 0;
@@ -814,7 +893,7 @@ public class RtSet {
                     volume += vol;
                     add(histogram, hist, histogram);
                 }
-                // Otherwise add or subtract depending on contour location
+                // TODO: Otherwise add or subtract depending on contour location
                 else {
 
                 }
@@ -823,7 +902,6 @@ public class RtSet {
 
         // Volume units are given in cm^3
         volume /= 1000;
-        LOGGER.debug(String.format("%f", volume));
 
         // Rescale the histogram to reflect the total volume
         double sumHistogram = 0;
@@ -844,7 +922,7 @@ public class RtSet {
 
         for (int i = 0; i < size; i++) {
             cumDvh[i] = 0;
-            for (int j = 0; j < size; j++) {
+            for (int j = i; j < size; j++) {
                 cumDvh[i] +=  difHistogram.get(j, 0)[0];
             }
         }
@@ -852,19 +930,19 @@ public class RtSet {
         return cumDvh;
     }
 
-    private Pair<double[], double[]> calculateDoseGridToImageGrid(Pair<double[], double[]> imageLUT, double[] imageSpacing, int prone, int feetFirst, Pair<double[], double[]>  doseLUT) {
-        
+    private Pair<double[], double[]> calculateDoseGridToImageGrid(Pair<double[], double[]> imageLUT, double[] imageSpacing, int prone, int feetFirst, Pair<double[], double[]>  doseMmLUT) {
+
         // Transpose the dose grid LUT onto the image grid LUT
-        double[] x = new double[doseLUT.getFirst().length];
-        for (int i = 0; i < doseLUT.getFirst().length; i++) {
-            x[i] = (doseLUT.getFirst()[i] - imageLUT.getFirst()[0]) * prone * feetFirst / imageSpacing[0];
+        double[] x = new double[doseMmLUT.getFirst().length];
+        for (int i = 0; i < doseMmLUT.getFirst().length; i++) {
+            x[i] = (doseMmLUT.getFirst()[i] - imageLUT.getFirst()[0]) * prone * feetFirst / imageSpacing[0];
 
         }
-        double[] y = new double[doseLUT.getSecond().length];
-        for (int j = 0; j < doseLUT.getSecond().length; j++) {
-            y[j] = (doseLUT.getSecond()[j]) - imageLUT.getSecond()[0] * prone / imageSpacing[1];
+        double[] y = new double[doseMmLUT.getSecond().length];
+        for (int j = 0; j < doseMmLUT.getSecond().length; j++) {
+            y[j] = (doseMmLUT.getSecond()[j]) - imageLUT.getSecond()[0] * prone / imageSpacing[1];
         }
-        
+
         return new Pair(x, y);
     }
 
@@ -930,15 +1008,6 @@ public class RtSet {
             }
         }
     }
-
-    public static double[] getImageCoordinatesForDosePoint(int doseX, int doseY, Pair<double[], double[]>  dosePixLUT) {
-        double[] coordinates = new double[2];
-
-        coordinates[0] = dosePixLUT.getFirst()[doseX];
-        coordinates[1] = dosePixLUT.getSecond()[doseY];
-
-        return coordinates;
-    }
     
     private static int firstIndexOf(double[] array, double valueToFind, double tolerance) {
         for(int i = 0; i < array.length; i++) {
@@ -949,10 +1018,10 @@ public class RtSet {
         return -1;
     }
 
-    private Mat calculateContourMask(Pair<double[], double[]> doseLUT, Contour contour) {
+    private Mat calculateContourMask(Pair<double[], double[]> doseMmLUT, Contour contour) {
 
-        int rows = doseLUT.getFirst().length;
-        int cols = doseLUT.getSecond().length;
+        int rows = doseMmLUT.getFirst().length;
+        int cols = doseMmLUT.getSecond().length;
 
         MatOfPoint2f mop = new MatOfPoint2f();
         mop.fromList(contour.getListOfPoints());
@@ -961,7 +1030,7 @@ public class RtSet {
 
         for( int i = 0; i < rows; i++) {
             for( int j = 0; j < cols; j++) {
-                double distance = Imgproc.pointPolygonTest(mop, new Point(doseLUT.getFirst()[i], doseLUT.getSecond()[j]), false);
+                double distance = Imgproc.pointPolygonTest(mop, new Point(doseMmLUT.getFirst()[i], doseMmLUT.getSecond()[j]), false);
                 // TODO: Include the border line as well?
                 if (distance > 0) {
                     binaryMask.put(i, j, 255);

@@ -16,10 +16,12 @@ import java.util.*;
 
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomImageElement;
 
 import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
 public class Dose extends HashMap<Integer, Dvh> {
@@ -43,6 +45,7 @@ public class Dose extends HashMap<Integer, Dvh> {
     public Dose() {
         // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without interpolation
         this.doseSlicePositionThreshold = 0.5;
+        this.doseMax = 0.0;
     }
 
     public String getSopInstanceUid() {
@@ -110,11 +113,17 @@ public class Dose extends HashMap<Integer, Dvh> {
     }
 
     public double getDoseMax() {
-        return doseMax;
-    }
+        // Initialise max dose once dose images are available
+        if (!this.images.isEmpty() && doseMax < 0.01) {
+            for (MediaElement me : this.images) {
+                Core.MinMaxLocResult minMaxLoc = minMaxLoc(((ImageElement) me).getImage().toMat());
+                if (doseMax < minMaxLoc.maxVal) {
+                    doseMax = minMaxLoc.maxVal;
+                }
+            }
+        }
 
-    public void setDoseMax(double doseMax) {
-        this.doseMax = doseMax;
+        return doseMax;
     }
 
     public double getDoseSlicePositionThreshold() {
@@ -209,22 +218,29 @@ public class Dose extends HashMap<Integer, Dvh> {
         int rows = dosePlane.getImage().toMat().rows();
         int cols = dosePlane.getImage().toMat().cols();
 
+        // Calculate dose matrix for OpenCV
         Mat src = new Mat(rows, cols, CvType.CV_32FC1);
         dosePlane.getImage().toMat().convertTo(src, CvType.CV_32FC1);
         Scalar scalar = new Scalar(this.doseGridScaling * 100);
-        Mat dst = new Mat(rows, cols, CvType.CV_32FC1);
-        multiply(src, scalar, dst);
-        Vector<Mat> srcPlanes = new Vector<>();
-        srcPlanes.add(dst);
+        Mat doseMatrix = new Mat(rows, cols, CvType.CV_32FC1);
+        multiply(src, scalar, doseMatrix);
+        Vector<Mat> doseMatrixVector = new Vector<>();
+        doseMatrixVector.add(doseMatrix);
 
-        MatOfInt histSize = new MatOfInt(maxDose);
+        // Masked dose plan histogram
         Mat hist = new Mat();
+        // Number of histogram bins
+        MatOfInt histSize = new MatOfInt(maxDose);
+        // Dose varies from 0 to maxDose
         MatOfFloat histRange = new MatOfFloat(0, maxDose);
+        // Only one 0-th channel
+        MatOfInt channels = new MatOfInt(0);
 
+        // Ned to change the structure dose mask type vor OpenCV histogram calculation
         Mat maskSrc = new Mat(mask.rows(), mask.cols(), CvType.CV_8U);
         mask.convertTo(maskSrc, CvType.CV_8U);
 
-        Imgproc.calcHist(srcPlanes, new MatOfInt(0), maskSrc, hist, histSize, histRange);
+        Imgproc.calcHist(doseMatrixVector, channels, maskSrc, hist, histSize, histRange);
         
         return hist;
     }
@@ -235,7 +251,7 @@ public class Dose extends HashMap<Integer, Dvh> {
         // Convert from threshold in cCy to raw pixel value threshold
         double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
 
-        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
+        DicomImageElement dosePlane = (DicomImageElement) this. getDosePlaneBySlice(slicePosition);
 
         int rows = dosePlane.getImage().toMat().rows();
         int cols = dosePlane.getImage().toMat().cols();
@@ -279,4 +295,5 @@ public class Dose extends HashMap<Integer, Dvh> {
         }
         return -1;
     }
+
 }
