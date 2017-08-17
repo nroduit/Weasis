@@ -108,7 +108,7 @@ public class DicomPrSerializer {
         return writePresentation(model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
     }
 
-    private static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
+    public static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
         // Remove non serializable graphics
         XmlGraphicModel xmlModel = new XmlGraphicModel();
         xmlModel.setReferencedSeries(model.getReferencedSeries());

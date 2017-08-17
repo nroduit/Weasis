@@ -28,10 +28,12 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.mf.ArcParameters;
 import org.weasis.dicom.mf.ArcQuery;
 import org.weasis.dicom.mf.QueryResult;
@@ -101,8 +103,12 @@ public class ManifestBuilder {
             buf.append(ArcParameters.TAG_PR_ROOT);
             buf.append(">\n");
 
-            for (DicomImageElement dicomImageElement : images) {
-                XmlSerializer.writePresentation(dicomImageElement, buf);
+            for (DicomImageElement img : images) {
+                GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
+                if (model != null && model.hasSerializableGraphics()) {
+                    GraphicModel m = DicomPrSerializer.getModelForSerialization(model, null);
+                    XmlSerializer.writePresentation(m, buf);
+                }
                 buf.append("\n");
             }
 

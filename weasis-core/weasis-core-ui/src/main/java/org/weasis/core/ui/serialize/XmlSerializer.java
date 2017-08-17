@@ -12,13 +12,16 @@ package org.weasis.core.ui.serialize;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.StringReader;
+import java.io.Reader;
 import java.io.Writer;
 
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.util.StreamReaderDelegate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +75,11 @@ public class XmlSerializer {
 
     public static void writePresentation(ImageElement img, Writer writer) {
         GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
-        if (model != null && !model.getModels().isEmpty()) {
+        writePresentation(model, writer);
+    }
+
+    public static void writePresentation(GraphicModel model, Writer writer) {
+        if (model != null && model.hasSerializableGraphics()) {
             try {
                 JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
                 Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
@@ -85,13 +92,32 @@ public class XmlSerializer {
         }
     }
 
+    public static GraphicModel readPresentation(XMLStreamReader xmler) {
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
+            JAXBElement<XmlGraphicModel> unmarshalledObj =
+                jaxbUnmarshaller.unmarshal(new NoNamespaceStreamReaderDelegate(xmler), XmlGraphicModel.class);
+            GraphicModel model = unmarshalledObj.getValue();
+
+            int length = model.getModels().size();
+            model.getModels().removeIf(g -> g.getLayer() == null);
+            if (length > model.getModels().size()) {
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
+            }
+            return model;
+        } catch (Exception e) {
+            LOGGER.error("Cannot write GraphicModel", e); //$NON-NLS-1$
+        }
+        return null;
+    }
+
     @SuppressWarnings("unchecked")
-    protected <T> T deserialize(String input, Class<T> clazz) throws JAXBException {
-        StringReader sr = new StringReader(input);
+    public static <T> T deserialize(Reader reader, Class<T> clazz) throws JAXBException {
         JAXBContext context = JAXBContext.newInstance(clazz);
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
-        return (T) unmarshaller.unmarshal(sr);
+        return (T) unmarshaller.unmarshal(reader);
     }
 
     public static GraphicModel buildPresentationModel(byte[] gzipData) {

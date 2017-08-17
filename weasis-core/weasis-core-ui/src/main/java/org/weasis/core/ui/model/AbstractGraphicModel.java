@@ -558,7 +558,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
                     JOptionPane.WARNING_MESSAGE);
             }
             if (Objects.equals(response, 0)) {
-                list.forEach(g -> g.fireRemoveAction());
+                list.forEach(Graphic::fireRemoveAction);
                 canvas.getJComponent().repaint();
             }
         }

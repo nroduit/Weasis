@@ -328,13 +328,11 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
         referencedSOP.setReferencedSOPInstanceUID(ref.sopInstanceUID);
         referencedSOP.setReferencedSOPClassUID(ref.sopClassUID);
         referencedSOP.setReferencedFrameNumber(ref.frameList.stream().mapToInt(i -> i).toArray());
-
         sopInstanceReferenceBySOPInstanceUID.put(ref.sopInstanceUID, referencedSOP);
 
         // Get the SeriesAndInstanceReferenceMap for this studyUID
         Map<String, SeriesAndInstanceReference> seriesAndInstanceReferenceBySeriesUID =
             seriesAndInstanceReferenceMapByStudyUID.get(ref.studyInstanceUID);
-
         if (seriesAndInstanceReferenceBySeriesUID == null) {
             // the studyUID is not referenced, create a new one SeriesAndInstanceReferenceMap
             seriesAndInstanceReferenceMapByStudyUID.put(ref.studyInstanceUID,
@@ -343,7 +341,6 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
 
         // Get the SeriesAndInstanceReference for this seriesUID
         SeriesAndInstanceReference referencedSerie = seriesAndInstanceReferenceBySeriesUID.get(ref.seriesInstanceUID);
-
         if (referencedSerie == null) {
             // the seriesUID is not referenced, create a new SeriesAndInstanceReference
             referencedSerie = new SeriesAndInstanceReference();
@@ -352,10 +349,7 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
         }
 
         // Update the current SeriesAndInstanceReference with the referencedSOPInstance Sequence
-        List<SOPInstanceReferenceAndMAC> referencedSOPInstances =
-            new ArrayList<>(sopInstanceReferenceBySOPInstanceUID.values());
-
-        referencedSerie.setReferencedSOPInstances(referencedSOPInstances);
+        referencedSerie.setReferencedSOPInstances(sopInstanceReferenceBySOPInstanceUID.values());
 
         // Get the HierachicalSOPInstanceReference for this studyUID
         HierachicalSOPInstanceReference hierachicalDicom =
@@ -369,18 +363,13 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
         }
 
         // Update the current HierachicalSOPInstance with the referencedSeries Sequence
-        List<SeriesAndInstanceReference> referencedSeries =
-            new ArrayList<>(seriesAndInstanceReferenceBySeriesUID.values());
-
-        hierachicalDicom.setReferencedSeries(referencedSeries);
+        hierachicalDicom.setReferencedSeries(seriesAndInstanceReferenceBySeriesUID.values());
 
         // Update the CurrentRequestedProcedureEvidences for the root dcmItems
         Attributes dcmItems = getMediaReader().getDicomObject();
 
-        List<HierachicalSOPInstanceReference> referencedStudies =
-            new ArrayList<>(hierachicalSOPInstanceReferenceByStudyUID.values());
-
-        new KODocumentModule(dcmItems).setCurrentRequestedProcedureEvidences(referencedStudies);
+        new KODocumentModule(dcmItems)
+            .setCurrentRequestedProcedureEvidences(hierachicalSOPInstanceReferenceByStudyUID.values());
 
         return true;
     }
@@ -436,10 +425,7 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
                     hierachicalSOPInstanceReferenceByStudyUID.get(ref.studyInstanceUID);
 
                 // Update the current HierachicalSOPInstance with the referencedSeries Sequence
-                List<SeriesAndInstanceReference> referencedSeries =
-                    new ArrayList<>(seriesAndInstanceReferenceBySeriesUID.values());
-
-                hierachicalDicom.setReferencedSeries(referencedSeries);
+                hierachicalDicom.setReferencedSeries(seriesAndInstanceReferenceBySeriesUID.values());
             }
 
         } else {
@@ -448,10 +434,7 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
                 seriesAndInstanceReferenceBySeriesUID.get(ref.seriesInstanceUID);
 
             // Update the current SeriesAndInstanceReference with the referencedSOPInstance Sequence
-            List<SOPInstanceReferenceAndMAC> referencedSOPInstances =
-                new ArrayList<>(sopInstanceReferenceBySOPInstanceUID.values());
-
-            referencedSeries.setReferencedSOPInstances(referencedSOPInstances);
+            referencedSeries.setReferencedSOPInstances(sopInstanceReferenceBySOPInstanceUID.values());
         }
 
         // Update the CurrentRequestedProcedureEvidences for the root dcmItems

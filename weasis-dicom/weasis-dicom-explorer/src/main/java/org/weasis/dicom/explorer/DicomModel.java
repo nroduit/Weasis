@@ -696,6 +696,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         s.setTag(TagW.SplitSeriesNumber, k + 1);
         s.setTag(TagW.ExplorerModel, this);
+        s.setTag(TagW.WadoParameters, original.getTagValue(TagW.WadoParameters));
         addHierarchyNode(st, s);
         LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
         return s;
@@ -724,6 +725,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         s.setTag(TagW.SplitSeriesNumber, k);
         s.setTag(TagW.ExplorerModel, this);
+        s.setTag(TagW.WadoParameters, original.getTagValue(TagW.WadoParameters));
         addHierarchyNode(st, s);
         s.addMedia(media);
         LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$

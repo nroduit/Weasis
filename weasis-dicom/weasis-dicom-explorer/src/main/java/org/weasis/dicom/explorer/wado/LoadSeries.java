@@ -385,7 +385,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 continue;
             }
             LOGGER.debug("Download DICOM instance {} index {}.", urlConnection, k); //$NON-NLS-1$
-            Download ref = new Download(urlConnection);
+            Download ref = new Download(urlConnection, instance);
             tasks.add(ref);
         }
 
@@ -582,10 +582,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
         private final URLConnection urlConnection; // download URL
         private Status status; // current status of download
+        private DicomInstance instance;
 
-        public Download(URLConnection urlConnection) {
+        public Download(URLConnection urlConnection, DicomInstance instance) {
             this.urlConnection = urlConnection;
-            status = Status.DOWNLOADING;
+            this.status = Status.DOWNLOADING;
+            this.instance = instance;
         }
 
         public String getUrl() {
@@ -850,6 +852,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 }
 
                 for (MediaElement media : medias) {
+                    media.setTag(TagW.PresentationModel, instance.getGraphicModel());
                     dicomModel.applySplittingRules(dicomSeries, media);
                 }
                 if (firstImageToDisplay && dicomSeries.size(null) == 0) {

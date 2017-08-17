@@ -23,13 +23,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.mf.ArcParameters;
 import org.weasis.dicom.mf.Xml;
 
 public class KOSpecialElement extends AbstractKOSpecialElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(KOSpecialElement.class);
 
-    public static final String TAG_SEL_ROOT = "selections";
-    public static final String TAG_SEL = "selection";
     public static final String SEL_NAME = "name";
 
     public KOSpecialElement(DicomMediaIO mediaIO) {
@@ -74,14 +73,14 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         if (list != null && manifest != null) {
             try {
                 manifest.append("\n<");
-                manifest.append(TAG_SEL_ROOT);
+                manifest.append(ArcParameters.TAG_SEL_ROOT);
                 manifest.append(">");
                 for (KOSpecialElement ko : list) {
                     writeKoElement(ko, manifest);
                 }
 
                 manifest.append("\n</");
-                manifest.append(TAG_SEL_ROOT);
+                manifest.append(ArcParameters.TAG_SEL_ROOT);
                 manifest.append(">");
 
             } catch (Exception e) {
@@ -92,7 +91,7 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
 
     private static void writeKoElement(KOSpecialElement ko, Writer mf) throws IOException {
         mf.append("\n<");
-        mf.append(TAG_SEL);
+        mf.append(ArcParameters.TAG_SEL);
         mf.append(" ");
         Xml.addXmlAttribute(SEL_NAME, ko.getLabel(), mf);
         mf.append(" ");
@@ -116,21 +115,24 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         }
 
         mf.append("\n</");
-        mf.append(TAG_SEL);
+        mf.append(ArcParameters.TAG_SEL);
         mf.append(">");
     }
 
     private static void writeImages(Map<String, SOPInstanceReferenceAndMAC> map, Writer mf) throws IOException {
         String sopUID = TagD.get(Tag.ReferencedSOPInstanceUID).getKeyword();
+        String sopClass = TagD.get(Tag.ReferencedSOPClassUID).getKeyword();
         String frames = TagD.get(Tag.ReferencedFrameNumber).getKeyword();
-        for (Entry<String, SOPInstanceReferenceAndMAC> entry : map.entrySet()) {
+        
+        for (SOPInstanceReferenceAndMAC sopRef : map.values()) {
             mf.append("\n<");
             mf.append(Xml.Level.INSTANCE.getTagName());
             mf.append(" ");
-            Xml.addXmlAttribute(sopUID, entry.getKey(), mf);
-            int[] fms = entry.getValue().getReferencedFrameNumber();
+            Xml.addXmlAttribute(sopUID, sopRef.getReferencedSOPInstanceUID(), mf);
+            Xml.addXmlAttribute(sopClass, sopRef.getReferencedSOPClassUID(), mf);
+            int[] fms = sopRef.getReferencedFrameNumber();
             if (fms != null) {
-                String frameList = IntStream.of(fms).mapToObj(String::valueOf).collect(Collectors.joining(","));
+                String frameList = IntStream.of(fms).mapToObj(String::valueOf).collect(Collectors.joining("\\"));
                 Xml.addXmlAttribute(frames, frameList, mf);
             }
             mf.append("/>");
