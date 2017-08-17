@@ -369,7 +369,7 @@ public final class KOManager {
                     selectedKO = (KOSpecialElement) actionValue;
 
                     // test if current ko_selection action in view do still exist
-                    Collection<KOSpecialElement> koElements = (view2D != null && view2D.getSeries() != null)
+                    Collection<KOSpecialElement> koElements = view2D.getSeries() != null
                         ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
                     if (koElements != null && koElements.contains(selectedKO) == false) {
                         selectedKO = null;

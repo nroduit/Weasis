@@ -86,14 +86,14 @@ public class StringUtil {
 
     public static String[] getStringArray(String val, String delimiter) {
         if (delimiter != null && StringUtil.hasText(val)) {
-            return val.split(delimiter);
+            return val.split(Pattern.quote(delimiter));
         }
         return EMPTY_STRING_ARRAY;
     }
 
     public static int[] getIntegerArray(String val, String delimiter) {
         if (delimiter != null && StringUtil.hasText(val)) {
-            String[] vl = val.split(delimiter);
+            String[] vl = val.split(Pattern.quote(delimiter));
             int[] res = new int[vl.length];
             for (int i = 0; i < res.length; i++) {
                 res[i] = getInt(vl[i]);

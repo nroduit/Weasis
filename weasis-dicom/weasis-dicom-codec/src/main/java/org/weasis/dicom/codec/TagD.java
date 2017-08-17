@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLInputFactory;
@@ -804,7 +805,7 @@ public class TagD extends TagW {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     if (TagType.TIME.equals(type)) {

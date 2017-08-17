@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -1533,7 +1534,7 @@ public class DicomMediaUtils {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     if (TagType.DICOM_TIME.equals(type)) {

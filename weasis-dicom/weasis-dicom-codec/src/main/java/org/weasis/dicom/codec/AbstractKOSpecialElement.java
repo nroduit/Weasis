@@ -459,10 +459,8 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
                     return false;
                 }
                 String sopInstanceUID = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
-                Set<String> referencedSOPInstanceUIDSet = getReferencedSOPInstanceUIDSet(seriesInstanceUID);
+                return isSopuidInReferencedSeriesSequence(getReferencedSOPInstanceUIDObject(seriesInstanceUID), sopInstanceUID, (Integer) dicom.getKey());
 
-                return referencedSOPInstanceUIDSet == null ? false
-                    : referencedSOPInstanceUIDSet.contains(sopInstanceUID);
             }
         };
     }
