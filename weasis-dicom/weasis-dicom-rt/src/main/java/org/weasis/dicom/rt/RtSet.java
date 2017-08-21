@@ -32,7 +32,6 @@ import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -57,10 +56,6 @@ public class RtSet {
     private final List<MediaElement> images = new ArrayList<>();
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
 
-    // Treatment case is loaded when plan and dose are loaded
-    private boolean reload = false;
-    private boolean loaded = false;
-
     private Pair<double[], double[]> doseMmLUT;
     private Pair<double[], double[]> dosePixLUT;
 
@@ -82,23 +77,37 @@ public class RtSet {
 
         for (MediaElement rt : rtElements) {
             String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
-            if (UID.RTStructureSetStorage.equals(sopUID) && rt instanceof RtSpecialElement) {
-                initStructures((RtSpecialElement) rt);
-            } else if (UID.RTPlanStorage.equals(sopUID) && rt instanceof RtSpecialElement) {
-                initPlan((RtSpecialElement) rt);
-            } else if (UID.RTDoseStorage.equals(sopUID)) {
-                initDose(rt);
-            } else if (UID.CTImageStorage.equals(sopUID)) {
+            if (UID.CTImageStorage.equals(sopUID)) {
                 initImage(rt);
             }
         }
     }
 
-    /**
-     * Re-initialise patient treatment case once all RT elements are loaded (or new series are loaded)
-     */
-    public void reloadPatientTreatmentCase() {
+    public void reloadRtCase() {
+        // First initialise all RTSTRUCT
+        for (MediaElement rt : this.rtElements) {
+            String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
+            if (UID.RTStructureSetStorage.equals(sopUID) && rt instanceof RtSpecialElement) {
+                initStructures((RtSpecialElement) rt);
+            }
+        }
 
+        // Than initialise all RTPLAN
+        for (MediaElement rt: this.rtElements) {
+            String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
+            if (UID.RTPlanStorage.equals(sopUID) && rt instanceof RtSpecialElement) {
+                initPlan((RtSpecialElement) rt);
+            }
+        }
+
+        // Than initialise all RTDOSE
+        for (MediaElement rt: this.rtElements) {
+            String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
+            if (UID.RTDoseStorage.equals(sopUID)) {
+                initDose(rt);
+            }
+        }
+        
         // Plans and doses are loaded
         if (!plans.isEmpty() && !images.isEmpty()) {
             for (Plan plan : plans.values()) {
@@ -121,13 +130,11 @@ public class RtSet {
                         this.doseMmLUT = this.calculatePixelLookupTable((DicomImageElement) dose.getImages().get(0));
                         this.dosePixLUT = this.calculateDoseGridToImageGrid(imageLUT, imageSpacing, prone, feetFirst, this.doseMmLUT);
                     }
-                    
+
                     this.initIsoDoses(plan, this.doseMmLUT);
 
                     for (Dose dose : plan.getDoses()) {
                         if (dose.getDoseMax() > 0) {
-                            this.loaded = true;
-                            this.reload = true;
 
                             // For all ROIs
                             for (StructureLayer structureLayer : this.getStructureSet(this.getFirstStructure()).values()) {
@@ -138,7 +145,7 @@ public class RtSet {
 
                                 // Re-calculate DVH if it does not exists or if it is provided and force recalculation is setup
                                 if (structureDvh == null ||
-                                    (structureDvh.getDvhSource().equals(DataSource.PROVIDED) && this.getForceRecalculateDvh())) {
+                                        (structureDvh.getDvhSource().equals(DataSource.PROVIDED) && this.getForceRecalculateDvh())) {
                                     structureDvh = this.initCalculatedDvh(structure, dose);
                                     dose.put(structure.getRoiNumber(), structureDvh);
                                 }
@@ -151,8 +158,8 @@ public class RtSet {
                                 }
 
                                 // Display volume
-                                String source = structure.getVolumeSource().toString();
                                 double volume = structure.getVolume();
+                                String source = structure.getVolumeSource().toString();
                                 LOGGER.debug(String.format("Structure: " + structure.getRoiName() + ", " + source + " Volume: %.4f cm^3", volume));
 
                                 // If plan is loaded with prescribed treatment dose calculate DVH statistics
@@ -163,10 +170,6 @@ public class RtSet {
                                 LOGGER.debug(relativeMaxDose);
                                 LOGGER.debug(relativeMeanDose);
                             }
-                        }
-                        else {
-                            this.loaded = false;
-                            break;
                         }
                     }
                 }
@@ -400,9 +403,6 @@ public class RtSet {
             }
 
             plans.put(rtElement, plan);
-
-            // To int
-            // plan.setRxDose(plan.getRxDose().floatToIntBits());
         }
     }
 
@@ -672,18 +672,6 @@ public class RtSet {
 
     private void initImage(MediaElement rtElement) {
         images.add(rtElement);
-    }
-
-    public boolean getLoaded() {
-        return this.loaded;
-    }
-
-    public boolean getReload() {
-        return this.reload;
-    }
-
-    public void setReload(boolean value) {
-        this.reload = value;
     }
 
     public StructureSet getStructureSet(RtSpecialElement rt) {

@@ -197,7 +197,21 @@ public class Structure {
 
     @Override
     public String toString() {
-        return getRoiName();
+        String resultLabel = "";
+
+        if (this.roiName != null && !this.roiName.equals("")) {
+            resultLabel += this.roiName;
+        }
+
+        if (this.rtRoiInterpretedType != null && !this.rtRoiInterpretedType.equals("")) {
+            resultLabel += " [" + this.rtRoiInterpretedType + "]";
+        }
+
+        if (this.roiObservationLabel != null && !this.roiObservationLabel.equals("")) {
+            resultLabel += " (" + this.roiObservationLabel + ")";
+        }
+
+        return resultLabel;
     }
 
 }

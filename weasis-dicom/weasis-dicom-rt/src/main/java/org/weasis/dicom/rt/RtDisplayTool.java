@@ -12,18 +12,14 @@
 package org.weasis.dicom.rt;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-import javax.swing.ImageIcon;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTree;
-import javax.swing.JViewport;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -64,13 +60,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
 
     private final JScrollPane rootPane;
-
+    private final JButton btnLoad;
     private final CheckboxTree tree;
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
     private TreePath rootPath;
-    private final JComboBox<RtSpecialElement> comboRtStructureSet = new JComboBox<>();
-    private final JComboBox<RtSpecialElement> comboRtPlan = new JComboBox<>();
+    private final JComboBox<RtSpecialElement> comboRtStructureSet;
+    private final JComboBox<RtSpecialElement> comboRtPlan;
     private JPanel panel_foot;
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
@@ -89,14 +85,45 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
         this.rootPane = new JScrollPane();
-        dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
-        setDockableWidth(DockableWidth);
-
+        this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
+        this.setDockableWidth(DockableWidth);
+        this.btnLoad = new JButton("Load RT");
+        this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
+        this.comboRtStructureSet = new JComboBox<>();
+        this.comboRtStructureSet.setVisible(false);
+        this.comboRtPlan = new JComboBox<>();
+        this.comboRtPlan.setVisible(false);
         this.tree = new CheckboxTree();
-        setLayout(new BorderLayout(0, 0));
-        nodeStructures = new DefaultMutableTreeNode("Structures", true);
-        nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
+        this.tree.setVisible(false);
+        this.setLayout(new BorderLayout(0, 0));
+        this.nodeStructures = new DefaultMutableTreeNode("Structures", true);
+        this.nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
         this.initTree();
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        if ("Load RT".equals(e.getActionCommand())) {
+
+            // Reload RT case data objects for GUI
+            this.rtSet.reloadRtCase();
+            this.btnLoad.setEnabled(false);
+            this.btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
+            this.comboRtStructureSet.setVisible(true);
+            this.comboRtPlan.setVisible(true);
+            this.tree.setVisible(true);
+
+            // Update GUI
+            ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
+            List<ViewCanvas<DicomImageElement>> views = null;
+            if (container != null) {
+                views = container.getImagePanels();
+            }
+            if (views != null) {
+                for (ViewCanvas<DicomImageElement> v : views) {
+                    updateCanvas(v);
+                }
+            }
+        }
     }
 
     public void initTree() {
@@ -120,12 +147,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         tree.setCellRenderer(renderer);
         tree.addTreeCheckingListener(this::treeValueChanged);
 
+        // GUI RT case selection
         JPanel panel = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
         add(panel, BorderLayout.NORTH);
-        panel.add(comboRtStructureSet);
-        panel.add(comboRtPlan);
+        panel.add(this.btnLoad);
+        panel.add(this.comboRtStructureSet);
+        panel.add(this.comboRtPlan);
+
+        this.btnLoad.addActionListener(this::actionPerformed);
 
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
@@ -388,12 +419,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             comboRtPlan.setSelectedItem(oldPlan);
         }
 
-        // Only one time
-        if (rt.getLoaded() && rt.getReload()) {
-            updateTree(oldStructure, oldPlan);
-            rt.setReload(false);
-        }
-
         comboRtStructureSet.addItemListener(structureChangeListener);
         comboRtPlan.addItemListener(planChangeListener);
 
@@ -429,7 +454,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             // Prepare parent node for structures
             if (selectedStructure != null) {
                 nodeStructures.removeAllChildren();
-
                 Map<Integer, StructureLayer> structures = rtSet.getStructureSet(selectedStructure);
                 if (structures != null) {
                     for (StructureLayer structureLayer : structures.values()) {
@@ -484,8 +508,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         String frameOfReferenceUID = TagD.getTagValue(dcmSeries, Tag.FrameOfReferenceUID, String.class);
                         List<MediaElement> list = getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
                         if (!list.isEmpty() && (rtSet == null || !rtSet.getRtElements().equals(list))) {
-                            rtSet = new RtSet(list);
-                            rtSet.reloadPatientTreatmentCase();
+                            this.rtSet = new RtSet(list);
+                            this.btnLoad.setEnabled(true);
                         }
                         updateCanvas(viewCanvas);
                     }

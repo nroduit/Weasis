@@ -25,18 +25,18 @@ public class StructureSet extends HashMap<Integer, StructureLayer> {
         this.label = Objects.requireNonNull(label);
         this.date = date;
     }
-
-    @Override
-    public String toString() {
-        return this.label;
-    }
-
+    
     public String getLabel() {
         return this.label;
     }
 
     public Date getDate() {
         return this.date;
+    }
+
+    @Override
+    public String toString() {
+        return this.label;
     }
 
     @Override
