@@ -46,15 +46,22 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
             sopInstanceUID = TagD.getTagValue(dicomImage, Tag.SOPInstanceUID, String.class);
             sopClassUID = TagD.getTagValue(dicomImage, Tag.SOPClassUID, String.class);
 
-            int frames = dicomImage.getMediaReader().getMediaElementNumber();
-            if (frames > 1 && dicomImage.getKey() instanceof Integer) {
+            if (dicomImage.getMediaReader().getMediaElementNumber() > 1) {
+                Integer frame = TagD.getTagValue(dicomImage, Tag.InstanceNumber, Integer.class);
                 frameList = new ArrayList<>(1);
-                frameList.add((Integer) dicomImage.getKey());
+                frameList.add(frame);
             } else {
                 frameList = Collections.emptyList();
             }
         }
 
+        /**
+         * @param studyInstanceUID
+         * @param seriesInstanceUID
+         * @param sopInstanceUID
+         * @param sopClassUID
+         * @param frames the list of DICOM Instance Number
+         */
         public Reference(String studyInstanceUID, String seriesInstanceUID, String sopInstanceUID, String sopClassUID,
             int[] frames) {
             this.studyInstanceUID = studyInstanceUID;
@@ -103,12 +110,20 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
          */
         StringBuilder buf = new StringBuilder(getLabelPrefix());
 
+        String name = getLabelWithoutPrefix();
+        if (name != null) {
+            buf.append(name);
+        }
+        label = buf.toString();
+    }
+    
+    protected String getLabelWithoutPrefix() {
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
         Attributes item = dicom.getNestedDataset(Tag.ContentSequence);
         if (item != null) {
-            buf.append(item.getString(Tag.TextValue));
+            return item.getString(Tag.TextValue);
         }
-        label = buf.toString();
+        return null;
     }
 
     public Set<String> getReferencedStudyInstanceUIDSet() {
@@ -459,7 +474,8 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
                     return false;
                 }
                 String sopInstanceUID = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
-                return isSopuidInReferencedSeriesSequence(getReferencedSOPInstanceUIDObject(seriesInstanceUID), sopInstanceUID, (Integer) dicom.getKey());
+                Integer frame = TagD.getTagValue(dicom, Tag.InstanceNumber, Integer.class);
+                return isSopuidInReferencedSeriesSequence(getReferencedSOPInstanceUIDObject(seriesInstanceUID), sopInstanceUID, frame);
 
             }
         };

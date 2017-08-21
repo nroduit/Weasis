@@ -179,11 +179,8 @@ public class DicomPrSerializer {
 
                 List<Integer> frames = imageRef.getFrames();
                 if (frames != null && !frames.isEmpty()) {
-                    int[] arrays = new int[frames.size()];
-                    for (int i = 0; i < arrays.length; i++) {
-                        arrays[i] = frames.get(i).intValue() + 1; // convert to DICOM frame
-                    }
-                    rfi.setInt(Tag.ReferencedFrameNumber, VR.IS, arrays);
+                    // convert to DICOM frame
+                    rfi.setInt(Tag.ReferencedFrameNumber, VR.IS, frames.stream().mapToInt(i -> i + 1).toArray());
                 }
 
                 imageSeq.add(rfi);

@@ -7,12 +7,13 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.mf.DicomModelQueryResult;
 import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.op.CFind;
@@ -52,7 +53,7 @@ public class CFindQueryResult extends AbstractQueryResult {
             if (seriesRSP != null && !seriesRSP.isEmpty()) {
                 MediaSeriesGroup studyGroup = model.getStudyNode(studyUID);
                 MediaSeriesGroup patientGroup = model.getParent(studyGroup, DicomModel.patient);
-                Patient patient = DicomModelQueryResult.getPatient(patientGroup, patientMap);
+                Patient patient = DicomModelQueryResult.getPatient(patientGroup, this);
                 Study study = DicomModelQueryResult.getStudy(studyGroup, patient);
                 for (Attributes seriesDataset : seriesRSP) {
                     fillInstance(advancedParams, callingNode, calledNode, seriesDataset, study);
@@ -92,11 +93,11 @@ public class CFindQueryResult extends AbstractQueryResult {
                 Series s = getSeries(study, seriesDataset);
 
                 for (Attributes instanceDataSet : instances) {
+                    Integer frame = DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
                     String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                    if (sopUID != null) {
-                        SOPInstance sop = new SOPInstance(sopUID);
-                        sop.setInstanceNumber(instanceDataSet.getString(Tag.InstanceNumber));
-                        s.addSopInstance(sop);
+                    SopInstance sop = s.getSopInstance(sopUID, frame);
+                    if (sop == null) {
+                        s.addSopInstance(new SopInstance(sopUID, frame));
                     }
                 }
             }

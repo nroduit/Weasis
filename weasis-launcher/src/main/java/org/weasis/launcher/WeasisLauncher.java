@@ -651,7 +651,7 @@ public class WeasisLauncher {
     private static void addCommandSessionListener(Object commandProcessor) {
         try {
             ClassLoader loader = commandProcessor.getClass().getClassLoader();
-            Class<?> c = loader.loadClass(org.apache.felix.service.command.CommandSessionListener.class.getName());
+            Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener");
             Method nameMethod = commandProcessor.getClass().getMethod("addListener", c); //$NON-NLS-1$
 
             Object listener = Proxy.newProxyInstance(loader, new Class[] { c }, new InvocationHandler() {

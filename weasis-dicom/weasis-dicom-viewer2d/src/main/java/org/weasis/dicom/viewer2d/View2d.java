@@ -578,7 +578,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             String seriesInstanceUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
 
             if (sopInstanceUID != null && seriesInstanceUID != null) {
-                Integer frame = (Integer) img.getKey();
+                Integer frame = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
                 if (selectedKO instanceof KOSpecialElement) {
                     KOSpecialElement koElement = (KOSpecialElement) selectedKO;
                     if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID, frame)) {

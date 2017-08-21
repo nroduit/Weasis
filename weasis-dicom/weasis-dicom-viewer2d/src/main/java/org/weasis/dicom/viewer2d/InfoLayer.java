@@ -198,10 +198,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 drawY -= fontHeight;
             }
 
-            Object key = image.getKey();
+            Integer frame = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
             RejectedKOSpecialElement koElement = DicomModel.getRejectionKoSpecialElement(view2DPane.getSeries(),
-                TagD.getTagValue(image, Tag.SOPInstanceUID, String.class),
-                key instanceof Integer ? (Integer) key + 1 : null);
+                TagD.getTagValue(image, Tag.SOPInstanceUID, String.class), frame);
 
             if (koElement != null) {
                 float y = midy;

@@ -12,8 +12,6 @@ package org.weasis.dicom.explorer.wado;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
@@ -25,13 +23,13 @@ import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 
 public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
@@ -92,21 +90,24 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
             Series dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
-            final WadoParameters wadoParameters = new WadoParameters("", false); //$NON-NLS-1$ //$NON-NLS-2$
+            final WadoParameters wadoParameters = new WadoParameters("", false); //$NON-NLS-1$
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-            List<DicomInstance> dicomInstances = new ArrayList<>();
-            dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
+            SeriesInstanceList seriesInstanceList = new SeriesInstanceList();
+            dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
             dicomModel.addHierarchyNode(study, dicomSeries);
             for (int i = 0; i < urls.length; i++) {
                 if (urls[i] != null) {
                     String url = urls[i].toString();
-                    DicomInstance dcmInstance = new DicomInstance(url);
-                    dcmInstance.setDirectDownloadFile(url);
-                    dicomInstances.add(dcmInstance);
+                    SopInstance sop = seriesInstanceList.getSopInstance(url, null);
+                    if (sop == null) {
+                        sop = new SopInstance(url, null);
+                        sop.setDirectDownloadFile(url);
+                        seriesInstanceList.addSopInstance(sop);
+                    }
                 }
             }
 
-            if (!dicomInstances.isEmpty()) {
+            if (!seriesInstanceList.isEmpty()) {
                 String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
                 boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
                 final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel,

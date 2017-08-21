@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -40,7 +41,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
-import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -48,6 +48,8 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
+import org.weasis.dicom.explorer.wado.SeriesInstanceList;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 
 public class DicomDirLoader {
@@ -169,7 +171,6 @@ public class DicomDirLoader {
                     dicomSeries = new DicomSeries(seriesUID);
                     dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
                     dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-                    dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
                     DicomMediaUtils.writeMetaData(dicomSeries, series);
                     dicomModel.addHierarchyNode(study, dicomSeries);
                 } else {
@@ -180,12 +181,10 @@ public class DicomDirLoader {
                     }
                 }
 
-                List<DicomInstance> dicomInstances =
-                    (List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
-                if (dicomInstances == null) {
-                    dicomInstances = new ArrayList<>();
-                    dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
-                }
+                SeriesInstanceList seriesInstanceList =
+                    Optional.ofNullable((SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
+                        .orElseGet(SeriesInstanceList::new);
+                dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
 
                 // Icon Image Sequence (0088,0200).This Icon Image is representative of the Series. It may or may not
                 // correspond to one of the images of the Series.
@@ -196,19 +195,16 @@ public class DicomDirLoader {
                     // Try to read all the file types of the Series.
 
                     String sopInstanceUID = instance.getString(Tag.ReferencedSOPInstanceUIDInFile);
-
                     if (sopInstanceUID != null) {
-                        DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
-                        if (dicomInstances.contains(dcmInstance)) {
-                            LOGGER.warn("DICOM instance {} already exists, abort downloading.", sopInstanceUID); //$NON-NLS-1$
-                        } else {
+                        Integer frame = DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, null);
+                        SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
+                        if (sop == null) {
                             File file = toFileName(instance, reader);
                             if (file != null) {
                                 if (file.exists()) {
-                                    dcmInstance.setInstanceNumber(
-                                        DicomMediaUtils.getIntegerFromDicomElement(instance, Tag.InstanceNumber, -1));
-                                    dcmInstance.setDirectDownloadFile(file.toURI().toString());
-                                    dicomInstances.add(dcmInstance);
+                                    sop = new SopInstance(sopInstanceUID, frame);
+                                    sop.setDirectDownloadFile(file.toURI().toString());
+                                    seriesInstanceList.addSopInstance(sop);
                                     if (iconInstance == null) {
                                         // Icon Image Sequence (0088,0200). This Icon Image is representative of the
                                         // Image. Only a single Item is permitted in this Sequence.
@@ -223,7 +219,7 @@ public class DicomDirLoader {
                     instance = findNextSiblingRecord(instance, reader);
                 }
 
-                if (!dicomInstances.isEmpty()) {
+                if (!seriesInstanceList.isEmpty()) {
                     dicomSeries.setTag(TagW.DirectDownloadThumbnail, readDicomDirIcon(iconInstance));
                     dicomSeries.setTag(TagW.ReadFromDicomdir, true);
                     final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel, 1, writeInCache);

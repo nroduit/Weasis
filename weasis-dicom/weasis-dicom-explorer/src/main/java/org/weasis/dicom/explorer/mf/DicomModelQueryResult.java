@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -27,8 +26,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.mf.WadoParameters;
 
@@ -71,7 +70,7 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         for (MediaSeriesGroup patient : pts) {
             List<DicomSpecialElement> dcmSpecElements =
                 (List<DicomSpecialElement>) patient.getTagValue(TagW.DicomSpecialElementList);
-            Patient p = getPatient(patient, patientMap);
+            Patient p = getPatient(patient, this);
             for (MediaSeriesGroup study : model.getChildren(patient)) {
                 Study st = getStudy(study, p);
                 for (MediaSeriesGroup series : model.getChildren(study)) {
@@ -108,11 +107,11 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         removeItemsWithoutElements();
     }
 
-    public static Patient getPatient(MediaSeriesGroup patient, Map<String, Patient> patientMap) {
+    public static Patient getPatient(MediaSeriesGroup patient, AbstractQueryResult query) {
         String id = TagD.getTagValue(Objects.requireNonNull(patient), Tag.PatientID, String.class);
         String ispid = TagD.getTagValue(patient, Tag.IssuerOfPatientID, String.class);
 
-        Patient p = patientMap.get(id + ispid);
+        Patient p = query.getPatient(id, ispid);
         if (p == null) {
             p = new Patient(id, ispid);
             p.setPatientName(TagD.getTagValue(patient, Tag.PatientName, String.class));
@@ -120,7 +119,7 @@ public class DicomModelQueryResult extends AbstractQueryResult {
             LocalDate date = TagD.getTagValue(patient, Tag.PatientBirthDate, LocalDate.class);
             p.setPatientBirthDate(date == null ? null : TagD.formatDicomDate(date));
             p.setPatientSex(TagD.getTagValue(patient, Tag.PatientSex, String.class));
-            patientMap.put(p.getPseudoPatientUID(), p);
+            query.addPatient(p);
         }
         return p;
     }
@@ -162,14 +161,12 @@ public class DicomModelQueryResult extends AbstractQueryResult {
 
     public void buildInstance(MediaElement media, Series s) {
         if (media != null) {
-            String sopUID = (String) media.getTagValue(TagD.get(Tag.SOPInstanceUID));
+            String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
+            Integer frame = TagD.getTagValue(media, Tag.InstanceNumber, Integer.class);
 
-            SOPInstance sop = s.getSopInstance(sopUID);
+            SopInstance sop = s.getSopInstance(sopUID, frame);
             if (sop == null) {
-                sop = new SOPInstance(sopUID);
-                sop.setInstanceNumber(
-                    ((Integer) media.getTagValue(TagD.get(Tag.InstanceNumber))).toString().toUpperCase());
-                s.addSopInstance(sop);
+                s.addSopInstance(new SopInstance(sopUID, frame));
             }
 
             if (media instanceof DicomImageElement) {

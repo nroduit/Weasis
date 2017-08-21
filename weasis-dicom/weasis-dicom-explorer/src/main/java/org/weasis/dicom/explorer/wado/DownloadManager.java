@@ -77,7 +77,6 @@ import org.weasis.core.ui.model.ReferencedImage;
 import org.weasis.core.ui.model.ReferencedSeries;
 import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.core.ui.util.ColorLayerUI;
-import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -92,6 +91,7 @@ import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.mf.ArcParameters;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 import org.weasis.dicom.mf.Xml;
 import org.xml.sax.SAXException;
@@ -314,7 +314,7 @@ public class DownloadManager {
             ReaderParams params = new ReaderParams(model, seriesMap);
             // Try to read the xml even it is not valid.
             xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
-            
+
             BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method = (x, r) -> {
                 String key = x.getName().getLocalPart();
                 // xmlns="http://www.weasis.org/xsd/2.5"
@@ -326,13 +326,11 @@ public class DownloadManager {
                         } else if (ArcParameters.TAG_PR_ROOT.equals(key2)) {
                             BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method3 =
                                 DownloadManager::readPresentation;
-                            readElement(x2, ArcParameters.TAG_PR, ArcParameters.TAG_PR_ROOT, method3,
-                                r2);
+                            readElement(x2, ArcParameters.TAG_PR, ArcParameters.TAG_PR_ROOT, method3, r2);
                         } else if (ArcParameters.TAG_SEL_ROOT.equals(key2)) {
                             BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method3 =
                                 DownloadManager::readSelection;
-                            readElement(x2, ArcParameters.TAG_SEL, ArcParameters.TAG_SEL_ROOT,
-                                method3, r2);
+                            readElement(x2, ArcParameters.TAG_SEL, ArcParameters.TAG_SEL_ROOT, method3, r2);
                         }
                     };
                     readElement(x, ArcParameters.TAG_DOCUMENT_ROOT, method2, r);
@@ -344,7 +342,7 @@ public class DownloadManager {
                 }
             };
             readElement(xmler, ArcParameters.TAG_DOCUMENT_ROOT, method, params);
-            
+
         } catch (StreamIOException e) {
             throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
@@ -540,7 +538,6 @@ public class DownloadManager {
             dicomSeries.setTag(seriesTag, seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, model);
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
-            dicomSeries.setTag(TagW.WadoInstanceReferenceList, new ArrayList<DicomInstance>());
 
             TagW[] tags =
                 TagD.getTagFromIDs(Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.ReferringPhysicianName);
@@ -567,31 +564,29 @@ public class DownloadManager {
             }
         }
 
-        List<DicomInstance> dicomInstances =
-            Optional.ofNullable((List<DicomInstance>) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
-                .orElseGet(ArrayList::new);
+        SeriesInstanceList seriesInstanceList =
+            Optional.ofNullable((SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
+                .orElseGet(SeriesInstanceList::new);
 
         BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method = (x, r) -> {
             String sopInstanceUID =
                 TagUtil.getTagAttribute(xmler, TagD.getKeywordFromTag(Tag.SOPInstanceUID, null), null);
             if (sopInstanceUID != null) {
-                DicomInstance dcmInstance = new DicomInstance(sopInstanceUID);
-                if (dicomInstances.contains(dcmInstance)) {
-                    LOGGER.warn("DICOM instance {} already exists, do not add to the model.", //$NON-NLS-1$
-                        sopInstanceUID);
-                } else {
-                    dcmInstance.setInstanceNumber(
-                        TagUtil.getIntegerTagAttribute(xmler, TagD.getKeywordFromTag(Tag.InstanceNumber, null), -1));
-                    dcmInstance.setDirectDownloadFile(
+                Integer frame =
+                    TagUtil.getIntegerTagAttribute(xmler, TagD.getKeywordFromTag(Tag.InstanceNumber, null), null);
+                SopInstance sop = seriesInstanceList.getSopInstance(sopInstanceUID, frame);
+                if (sop == null) {
+                    sop = new SopInstance(sopInstanceUID, frame);
+                    sop.setDirectDownloadFile(
                         TagUtil.getTagAttribute(xmler, TagW.DirectDownloadFile.getKeyword(), null));
-                    dicomInstances.add(dcmInstance);
+                    seriesInstanceList.addSopInstance(sop);
                 }
             }
         };
         readElement(xmler, TagD.Level.INSTANCE.getTagName(), TagD.Level.SERIES.getTagName(), method, params);
-        dicomSeries.setTag(TagW.WadoInstanceReferenceList, dicomInstances);
+        dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
 
-        if (!dicomInstances.isEmpty()) {
+        if (!seriesInstanceList.isEmpty()) {
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, model,
                 BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
             loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
@@ -607,13 +602,25 @@ public class DownloadManager {
             for (ReferencedSeries refSeries : model.getReferencedSeries()) {
                 LoadSeries series = params.getSeriesMap().get(refSeries.getUuid());
                 if (series != null) {
-                    List<DicomInstance> dicomInstances =
-                        (List<DicomInstance>) series.getDicomSeries().getTagValue(TagW.WadoInstanceReferenceList);
-                    if (dicomInstances != null) {
+                    SeriesInstanceList dicomInstanceMap =
+                        (SeriesInstanceList) series.getDicomSeries().getTagValue(TagW.WadoInstanceReferenceList);
+
+                    if (dicomInstanceMap != null) {
                         for (ReferencedImage refImg : refSeries.getImages()) {
-                            int index = dicomInstances.indexOf(new DicomInstance(refImg.getUuid()));
-                            if (index != -1) {
-                                dicomInstances.get(index).setGraphicModel(model);
+                            List<Integer> frames = refImg.getFrames();
+                            if (frames == null || frames.isEmpty()) {
+                                SopInstance sop = dicomInstanceMap.getSopInstance(refImg.getUuid());
+                                if (sop != null) {
+                                    sop.setGraphicModel(model);
+                                }
+                            } else {
+                                for (Integer f : refImg.getFrames()) {
+                                    // Convert MediaElement InstanceNumber to Dicom InstanceNumber
+                                    SopInstance sop = dicomInstanceMap.getSopInstance(refImg.getUuid(), f + 1);
+                                    if (sop != null) {
+                                        sop.setGraphicModel(model);
+                                    }
+                                }
                             }
                         }
                     }
@@ -644,9 +651,12 @@ public class DownloadManager {
         readElement(xmler, Xml.Level.SERIES.getTagName(), ArcParameters.TAG_SEL, method, params);
 
         if (!referencedSeries.isEmpty()) {
-            Attributes srcAttribute = new Attributes(15);
             MediaSeriesGroup s = model.getSeriesNode(referencedSeries.get(0).getSeriesInstanceUID());
             MediaSeriesGroup study = model.getParent(s, DicomModel.study);
+            if (study == null) {
+                return; // When the related series has not be loaded
+            }
+            Attributes srcAttribute = new Attributes(15);
             DicomMediaUtils.fillAttributes(study.getTagEntrySetIterator(), srcAttribute);
             MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
             DicomMediaUtils.fillAttributes(patient.getTagEntrySetIterator(), srcAttribute);
