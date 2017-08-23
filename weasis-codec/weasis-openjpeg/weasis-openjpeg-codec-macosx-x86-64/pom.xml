@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-openjpeg-codec-macosx-x86-64</artifactId>
 	<name>openjpeg native Mac amd64 codec</name>
-	<version>2.2.0</version>
+	<version>${weasis.openjpeg.native.version}</version>
 
 	<build>
 		<plugins>

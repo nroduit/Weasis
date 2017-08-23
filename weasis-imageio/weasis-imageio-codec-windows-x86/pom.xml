@@ -10,7 +10,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-imageio-codec-windows-x86</artifactId>
 	<name>ImageIO native Windows x86 codec</name>
-	<version>1.2-b04</version>
+	<version>${weasis.imageio.native.version}</version>
 
 	<build>
 		<plugins>
@@ -27,7 +27,7 @@
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2-b04</Specification-Version>
+						<Specification-Version>${weasis.imageio.native.version}</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 					</instructions>
 				</configuration>
@@ -39,21 +39,21 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio_sse2</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio_util</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>

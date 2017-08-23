@@ -10,7 +10,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-imageio-codec-linux-x86</artifactId>
 	<name>ImageIO native Linux x86 codec</name>
-	<version>1.2-b04</version>
+	<version>${weasis.imageio.native.version}</version>
 
 	<build>
 		<plugins>
@@ -26,7 +26,7 @@
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2-b04</Specification-Version>
+						<Specification-Version>${weasis.imageio.native.version}</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 					</instructions>
 				</configuration>
@@ -38,7 +38,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>libclib_jiio</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 			<type>so</type>
 			<classifier>linux-x86</classifier>
 		</dependency>

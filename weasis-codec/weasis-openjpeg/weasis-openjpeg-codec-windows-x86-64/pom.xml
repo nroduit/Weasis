@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-openjpeg-codec-windows-x86-64</artifactId>
 	<name>openjpeg native Windows x86-64 codec</name>
-	<version>2.2.0</version>
+	<version>${weasis.openjpeg.native.version}</version>
 
 	<build>
 		<plugins>

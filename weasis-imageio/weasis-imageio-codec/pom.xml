@@ -52,7 +52,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clibwrapper_jiio</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 		</dependency>
 
 		<dependency>
