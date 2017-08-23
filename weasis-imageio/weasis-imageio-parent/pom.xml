@@ -16,8 +16,12 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>2.5.4-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>jai-lib</artifactId>
 		</dependency>
 	</dependencies>
 </project>

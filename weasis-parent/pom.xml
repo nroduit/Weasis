@@ -9,14 +9,13 @@
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
-
 	<properties>
 		<java-version>1.8</java-version>
 		<enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
 		<enforcer.maven-version>[3.0.5,)</enforcer.maven-version>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 
 	<licenses>
@@ -26,6 +25,7 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
 	<issueManagement>
 		<system>JIRA</system>
 		<url>http://www.dcm4che.org/jira/browse/WEA</url>
@@ -48,11 +48,6 @@
 			<url>https://raw.github.com/nroduit/mvn-repo/master/</url>
 		</repository>
 	</repositories>
-
-	<dependencyManagement>
-		<dependencies>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<pluginManagement>
@@ -92,9 +87,8 @@
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
 							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-							<!-- Using <_exportcontents> requires to configure <Export-Package>, 
-								there is no default export (All packages, except any containing 'impl' or 
-								'internal' -->
+							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except 
+								any containing 'impl' or 'internal' -->
 							<_removeheaders>
 								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Build-Jdk,Created-By
 							</_removeheaders>
@@ -148,8 +142,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<!-- Updating surefire plugin version from 2.19 to 2.19.1 due to Netbeans 
-						compatibility issue. More information: https://netbeans.org/bugzilla/show_bug.cgi?id=256211 -->
+					<!-- Updating surefire plugin version from 2.19 to 2.19.1 due to Netbeans compatibility issue. More information: https://netbeans.org/bugzilla/show_bug.cgi?id=256211 -->
 					<version>2.19.1</version>
 				</plugin>
 				<plugin>
@@ -195,7 +188,6 @@
 			</plugin>
 		</plugins>
 
-
 		<resources>
 			<resource>
 				<directory>src/main/resources</directory>
@@ -207,7 +199,9 @@
 				</includes>
 			</resource>
 		</resources>
+
 	</build>
+
 	<profiles>
 		<profile>
 			<id>source-jar</id>
@@ -231,59 +225,204 @@
 		</profile>
 	</profiles>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.gogo.command</artifactId>
+				<version>1.0.2</version>
+				<scope>provided</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.osgi</groupId>
+						<artifactId>org.osgi.compendium</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>org.apache.felix.gogo.runtime</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.osgi</groupId>
+						<artifactId>org.osgi.core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.gogo.shell</artifactId>
+				<version>1.0.0</version>
+				<scope>provided</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>org.apache.felix.gogo.runtime</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.gogo.runtime</artifactId>
+				<version>1.0.6</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+				<artifactId>jai-lib</artifactId>
+				<version>1.1.4-b07</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty</groupId>
+				<artifactId>docking-frames</artifactId>
+				<version>1.1.2-P19</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!--The following dependencies are not required for compilation (required when loading the OSGI framework for debugging) -->
+			<dependency>
+				<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
+				<artifactId>javaws</artifactId>
+				<version>1.6.0-17</version>
+				<type>jar</type>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.sling</groupId>
+				<artifactId>org.apache.sling.commons.log</artifactId>
+				<version>3.0.2-r3</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.metatype</artifactId>
+				<version>1.1.2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.scr</artifactId>
+				<version>2.0.12</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.prefs</artifactId>
+				<version>1.1.0</version>
+				<scope>provided</scope>
+				<exclusions>
+					<!-- exclude these dependencies to avoid a mix with recent versions -->
+					<exclusion>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>org.osgi.core</artifactId>
+					</exclusion>
+					<exclusion>
+						<groupId>org.apache.felix</groupId>
+						<artifactId>org.osgi.compendium</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.bundlerepository</artifactId>
+				<version>2.0.10</version>
+				<scope>provided</scope>
+				<exclusions>
+					<exclusion>
+						<groupId>org.osgi</groupId>
+						<artifactId>org.osgi.core</artifactId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>org.apache.felix.configadmin</artifactId>
+				<version>1.8.14</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+				<artifactId>jai-lib-linux-x86</artifactId>
+				<version>1.1.4-b03</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+				<artifactId>jai-lib-linux-x86-64</artifactId>
+				<version>1.1.4-b03</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+				<artifactId>jai-lib-windows-x86</artifactId>
+				<version>1.1.4-b03</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+				<artifactId>vecmath</artifactId>
+				<version>1.5.2</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty</groupId>
+				<artifactId>tilecachetool</artifactId>
+				<version>1.0.2</version>
+				<scope>provided</scope>
+			</dependency>
+
+			<!-- FOR TESTS -->
+			<dependency>
+				<groupId>org.assertj</groupId>
+				<artifactId>assertj-core</artifactId>
+				<version>3.8.0</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.powermock</groupId>
+				<artifactId>powermock-module-junit4</artifactId>
+				<version>1.7.0</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.powermock</groupId>
+				<artifactId>powermock-api-mockito2</artifactId>
+				<version>1.7.0</version>
+				<scope>test</scope>
+			</dependency>
+			<dependency>
+				<groupId>com.google.code.bean-matchers</groupId>
+				<artifactId>bean-matchers</artifactId>
+				<version>0.10</version>
+				<scope>test</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.scr.annotations</artifactId>
-			<version>1.12.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.service.component.annotations</artifactId>
-			<version>1.3.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.sling</groupId>
-			<artifactId>org.apache.sling.commons.log</artifactId>
-			<version>3.0.2-r3</version>
-			<scope>provided</scope>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.25</version>
 			<scope>provided</scope>
 		</dependency>
+
+		<!-- The following dependencies are only required for compilation -->
 		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.gogo.command</artifactId>
-			<version>1.0.2</version>
+			<groupId>org.osgi</groupId>
+			<artifactId>osgi.core</artifactId>
+			<version>6.0.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>osgi.cmpn</artifactId>
+			<version>6.0.0</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.gogo.runtime</artifactId>
-			<version>1.0.6</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.gogo.shell</artifactId>
-			<version>1.0.0</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib</artifactId>
-			<version>1.1.4-b07</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>docking-frames</artifactId>
-			<version>1.1.2-P19</version>
+			<artifactId>org.apache.felix.scr.annotations</artifactId>
+			<version>1.12.0</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

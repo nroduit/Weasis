@@ -11,10 +11,7 @@
 	<artifactId>weasis-base-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>Media Explorer [${project.artifactId}]</name>
-	<properties>
-		<bundle.namespace>org.weasis.base.explorer</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -27,6 +24,4 @@
 			</plugin>
 		</plugins>
 	</build>
-	<dependencies>
-	</dependencies>
 </project>

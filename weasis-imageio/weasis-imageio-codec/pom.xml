@@ -11,9 +11,9 @@
 	<artifactId>weasis-imageio-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>ImageIO Codec [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.imageio.codec</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 
 	<build>
@@ -47,6 +47,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>

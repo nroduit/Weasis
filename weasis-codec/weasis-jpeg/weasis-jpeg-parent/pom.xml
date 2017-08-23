@@ -13,6 +13,7 @@
 	<artifactId>weasis-jpeg-parent</artifactId>
 	<name>Parent of Native JPEG Library</name>
 	<packaging>pom</packaging>
+	
 	<build>
 		<plugins>
 			<plugin>

@@ -12,9 +12,7 @@
 	<artifactId>weasis-openjpeg-codec-linux-x86</artifactId>
 	<name>openjpeg native Linux x86 codec</name>
 	<version>2.2.0</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +30,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.openjpeg</groupId>

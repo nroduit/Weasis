@@ -11,9 +11,7 @@
 	<artifactId>weasis-imageio-codec-windows-x86</artifactId>
 	<name>ImageIO native Windows x86 codec</name>
 	<version>1.2-b04</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -23,7 +21,7 @@
 					<instructions>
 						<Bundle-NativeCode>lib/clib_jiio.dll;lib/clib_jiio_sse2.dll;lib/clib_jiio_util.dll;
 							processor=x86; osname=win32; osname="windows server 2008 r2"</Bundle-NativeCode>
-						<Fragment-Host>weasis-imageio-codec;bundle-version="0.7.0"</Fragment-Host>
+						<Fragment-Host>weasis-imageio-codec;bundle-version="2.5"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
@@ -36,6 +34,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>

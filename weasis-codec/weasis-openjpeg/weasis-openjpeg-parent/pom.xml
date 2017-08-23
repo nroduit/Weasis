@@ -13,6 +13,7 @@
 	<artifactId>weasis-openjpeg-parent</artifactId>
 	<name>Parent of OpenJPEG Library</name>
 	<packaging>pom</packaging>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -25,4 +26,5 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 </project>
