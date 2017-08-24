@@ -12,6 +12,8 @@
 
 package org.weasis.dicom.rt;
 
+import org.apache.commons.math3.util.Pair;
+
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Map;
@@ -28,6 +30,7 @@ public class Structure {
     private String roiObservationLabel;
     private double thickness;
     private double volume; // unit cm^3
+    private DataSource volumeSource;
 
     private Color color;
     private Map<Double, ArrayList<Contour>> planes;
@@ -85,11 +88,22 @@ public class Structure {
     }
 
     public double getVolume() {
+        // If volume was not initialised from DVH (e.g. DVH does not exist) recalculate it
+        if (this.volume < 0) {
+            this.volume = this.calculateVolume();
+            this.volumeSource = DataSource.CALCULATED;
+        }
+
         return this.volume;
     }
 
     public void setVolume(double value) {
         this.volume = value;
+        this.volumeSource = DataSource.PROVIDED;
+    }
+
+    public DataSource getVolumeSource() {
+        return this.volumeSource;
     }
 
     public Color getColor() {
@@ -108,17 +122,36 @@ public class Structure {
         this.planes = contours;
     }
 
-    public void recalculateVolume() {
+    public Pair<Integer, Double> calculateLargestContour(ArrayList<Contour> planeContours) {
+        double maxContourArea = 0.0;
+        int maxContourIndex = 0;
+
+        // Calculate the area for each contour of this structure in provided plane
+        for (int i = 0; i < planeContours.size(); i++) {
+            Contour polygon = planeContours.get(i);
+
+            // Find the largest polygon of contour
+            if (polygon.getArea() > maxContourArea) {
+                maxContourArea = polygon.getArea();
+                maxContourIndex = i;
+            }
+        }
+
+        return new Pair(maxContourIndex, maxContourArea);
+    }
+
+    private double calculateVolume() {
         double structureVolume = 0.0;
 
         // Iterate over structure planes (z)
         int n = 0;
         for (ArrayList<Contour> structurePlaneContours : this.planes.values()) {
 
-            double maxContourArea = 0.0;
-            int maxContourIndex = 0;
-
             // Calculate the area for each contour in the current plane
+            Pair maxContour = this.calculateLargestContour(structurePlaneContours);
+            int maxContourIndex = (Integer)maxContour.getFirst();
+            double maxContourArea = (Double)maxContour.getSecond();
+
             for (int i = 0; i < structurePlaneContours.size(); i++) {
                 Contour polygon = structurePlaneContours.get(i);
 
@@ -159,12 +192,26 @@ public class Structure {
         }
 
         // DICOM uses millimeters -> convert from mm^3 to cm^3
-        this.volume = structureVolume / 1000;
+        return structureVolume / 1000;
     }
 
     @Override
     public String toString() {
-        return getRoiName();
+        String resultLabel = "";
+
+        if (this.roiName != null && !this.roiName.equals("")) {
+            resultLabel += this.roiName;
+        }
+
+        if (this.rtRoiInterpretedType != null && !this.rtRoiInterpretedType.equals("")) {
+            resultLabel += " [" + this.rtRoiInterpretedType + "]";
+        }
+
+        if (this.roiObservationLabel != null && !this.roiObservationLabel.equals("")) {
+            resultLabel += " (" + this.roiObservationLabel + ")";
+        }
+
+        return resultLabel;
     }
 
 }

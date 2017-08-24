@@ -18,8 +18,8 @@ import java.util.Date;
 import java.util.List;
 
 public class Plan implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+    private static final long serialVersionUID = -7174986553617095338L;
+    
     private String sopInstanceUid;
     private String label;
     private Date date;

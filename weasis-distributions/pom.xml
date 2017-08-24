@@ -674,6 +674,14 @@
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-jarsigner-plugin</artifactId>
 						<version>1.4</version>
+						<!-- Uncomment and provide proxy server setting when it is necessary to reach
+						     time stamping server from corporate network  -->
+						<!--<configuration>-->
+							<!--<arguments>-->
+								<!--<argument>-J-Dhttp.proxyHost=</argument>-->
+								<!--<argument>-J-Dhttp.proxyPort=</argument>-->
+							<!--</arguments>-->
+						<!--</configuration>-->
 						<executions>
 							<execution>
 								<id>sign</id>
