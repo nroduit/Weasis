@@ -11,10 +11,11 @@
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>2D DICOM Viewer [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +33,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
@@ -42,32 +44,30 @@
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

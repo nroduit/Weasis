@@ -12,11 +12,7 @@
 	<artifactId>weasis-acquire-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>Media Importer [${project.artifactId}]</name>
-	<properties>
-		<bundle.namespace>org.weasis.acquire.explorer</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<powermock.version>1.7.0</powermock.version>
-	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -59,49 +55,61 @@
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
 			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.command</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.runtime</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.base</groupId>
 			<artifactId>weasis-base-explorer</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.base</groupId>
 			<artifactId>weasis-base-viewer2d</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -119,24 +127,19 @@
 			<artifactId>usbdrivedectector</artifactId>
 			<version>1.0.2</version>
 		</dependency>
+		
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.8.0</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-module-junit4</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-mockito2</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

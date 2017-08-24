@@ -14,8 +14,6 @@
 	<name>Native JPEG Codecs [${project.artifactId}]</name>
 	<properties>
 		<bundle.namespace>org.weasis.jpeg</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<javacpp.skip>false</javacpp.skip>
 		<!-- skip native compilation phase, only generating source files -->

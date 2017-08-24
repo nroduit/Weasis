@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
@@ -11,18 +12,23 @@
 	<artifactId>weasis-base-parent</artifactId>
 	<packaging>pom</packaging>
 	<name>Parent of Default Plug-ins [${project.artifactId}]</name>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>3.0.0-SNAPSHOT</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
 		</dependency>
 	</dependencies>
 </project>

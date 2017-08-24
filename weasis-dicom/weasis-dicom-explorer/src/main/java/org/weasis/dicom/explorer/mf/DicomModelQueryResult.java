@@ -2,7 +2,6 @@ package org.weasis.dicom.explorer.mf;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -23,13 +22,12 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.mf.AbstractQueryResult;
 import org.weasis.dicom.mf.Patient;
-import org.weasis.dicom.mf.SOPInstance;
 import org.weasis.dicom.mf.Series;
+import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.mf.WadoParameters;
 
@@ -72,7 +70,7 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         for (MediaSeriesGroup patient : pts) {
             List<DicomSpecialElement> dcmSpecElements =
                 (List<DicomSpecialElement>) patient.getTagValue(TagW.DicomSpecialElementList);
-            Patient p = getPatient(patient, patients);
+            Patient p = getPatient(patient, this);
             for (MediaSeriesGroup study : model.getChildren(patient)) {
                 Study st = getStudy(study, p);
                 for (MediaSeriesGroup series : model.getChildren(study)) {
@@ -109,21 +107,20 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         removeItemsWithoutElements();
     }
 
-    public static Patient getPatient(MediaSeriesGroup patient, List<Patient> patientList) {
+    public static Patient getPatient(MediaSeriesGroup patient, AbstractQueryResult query) {
         String id = TagD.getTagValue(Objects.requireNonNull(patient), Tag.PatientID, String.class);
         String ispid = TagD.getTagValue(patient, Tag.IssuerOfPatientID, String.class);
-        for (Patient p : Objects.requireNonNull(patientList)) {
-            if (p.hasSameUniqueID(id, ispid)) {
-                return p;
-            }
+
+        Patient p = query.getPatient(id, ispid);
+        if (p == null) {
+            p = new Patient(id, ispid);
+            p.setPatientName(TagD.getTagValue(patient, Tag.PatientName, String.class));
+            // Only set birth date, birth time is often not consistent (00:00)
+            LocalDate date = TagD.getTagValue(patient, Tag.PatientBirthDate, LocalDate.class);
+            p.setPatientBirthDate(date == null ? null : TagD.formatDicomDate(date));
+            p.setPatientSex(TagD.getTagValue(patient, Tag.PatientSex, String.class));
+            query.addPatient(p);
         }
-        Patient p = new Patient(id, ispid);
-        p.setPatientName(TagD.getTagValue(patient, Tag.PatientName, String.class));
-        // Only set birth date, birth time is often not consistent (00:00)
-        LocalDate date = TagD.getTagValue(patient, Tag.PatientBirthDate, LocalDate.class);
-        p.setPatientBirthDate(date == null ? null : TagD.formatDicomDate(date));
-        p.setPatientSex(TagD.getTagValue(patient, Tag.PatientSex, String.class));
-        patientList.add(p);
         return p;
     }
 
@@ -164,14 +161,17 @@ public class DicomModelQueryResult extends AbstractQueryResult {
 
     public void buildInstance(MediaElement media, Series s) {
         if (media != null) {
-            String sopUID = (String) media.getTagValue(TagD.get(Tag.SOPInstanceUID));
-            SOPInstance sop = new SOPInstance(sopUID);
-            sop.setInstanceNumber(((Integer) media.getTagValue(TagD.get(Tag.InstanceNumber))).toString().toUpperCase());
-            s.addSOPInstance(sop);
+            String sopUID = TagD.getTagValue(media, Tag.SOPInstanceUID, String.class);
+            Integer frame = TagD.getTagValue(media, Tag.InstanceNumber, Integer.class);
+
+            SopInstance sop = s.getSopInstance(sopUID, frame);
+            if (sop == null) {
+                s.addSopInstance(new SopInstance(sopUID, frame));
+            }
 
             if (media instanceof DicomImageElement) {
                 GraphicModel model = (GraphicModel) media.getTagValue(TagW.PresentationModel);
-                if (model != null && !model.getModels().isEmpty()) {
+                if (model != null && model.hasSerializableGraphics()) {
                     images.add((DicomImageElement) media);
                 }
             }

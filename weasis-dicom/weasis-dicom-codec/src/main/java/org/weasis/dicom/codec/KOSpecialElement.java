@@ -93,7 +93,7 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         mf.append("\n<");
         mf.append(ArcParameters.TAG_SEL);
         mf.append(" ");
-        Xml.addXmlAttribute(SEL_NAME, ko.getLabel(), mf);
+        Xml.addXmlAttribute(SEL_NAME, ko.getLabelWithoutPrefix(), mf);
         mf.append(" ");
         String sereiesUID = TagD.get(Tag.SeriesInstanceUID).getKeyword();
         Xml.addXmlAttribute(sereiesUID, TagD.getTagValue(ko, Tag.SeriesInstanceUID, String.class), mf);
