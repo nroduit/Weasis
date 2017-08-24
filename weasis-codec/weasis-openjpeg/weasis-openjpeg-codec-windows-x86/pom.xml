@@ -10,7 +10,8 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-openjpeg-codec-windows-x86</artifactId>
 	<name>openjpeg native Windows x86 codec</name>
-	<version>${weasis.openjpeg.native.version}</version>
+	<!-- version must match to the parent property ${weasis.openjpeg.native.version} -->
+	<version>2.2.0</version>
 
 	<build>
 		<plugins>

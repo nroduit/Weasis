@@ -10,7 +10,8 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-imageio-codec-windows-x86</artifactId>
 	<name>ImageIO native Windows x86 codec</name>
-	<version>${weasis.imageio.native.version}</version>
+	<!-- version must match to the parent property ${weasis.imageio.native.version} -->	
+	<version>1.2-b04</version>
 
 	<build>
 		<plugins>
@@ -39,21 +40,21 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio</artifactId>
-			<version>${weasis.imageio.native.version}</version>
+			<version>${project.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio_sse2</artifactId>
-			<version>${weasis.imageio.native.version}</version>
+			<version>${project.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clib_jiio_util</artifactId>
-			<version>${weasis.imageio.native.version}</version>
+			<version>${project.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 		</dependency>
