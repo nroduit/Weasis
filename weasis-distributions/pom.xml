@@ -78,7 +78,7 @@
 								<artifactItem>
 									<groupId>org.weasis.launcher</groupId>
 									<artifactId>weasis-launcher</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>weasis-launcher.jar</destFileName>
 								</artifactItem>
@@ -202,13 +202,13 @@
 								<artifactItem>
 									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-api</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.core</groupId>
 									<artifactId>weasis-core-ui</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
@@ -219,7 +219,7 @@
 								<artifactItem>
 									<groupId>org.weasis.imageio</groupId>
 									<artifactId>weasis-imageio-codec</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -247,13 +247,13 @@
 								<artifactItem>
 									<groupId>org.weasis</groupId>
 									<artifactId>weasis-image-jni</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.jpeg</groupId>
 									<artifactId>weasis-jpeg-codec</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -289,7 +289,7 @@
 								<artifactItem>
 									<groupId>org.weasis.openjpeg</groupId>
 									<artifactId>weasis-openjpeg-codec</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -329,19 +329,19 @@
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-ui</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-viewer2d</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.base</groupId>
 									<artifactId>weasis-base-explorer</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
@@ -351,43 +351,43 @@
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-codec</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-explorer</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-viewer2d</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-sr</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-au</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-send</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.dicom</groupId>
 									<artifactId>weasis-dicom-qr</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
@@ -397,13 +397,13 @@
 								<artifactItem>
 									<groupId>org.weasis.acquire</groupId>
 									<artifactId>weasis-acquire-explorer</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.acquire</groupId>
 									<artifactId>weasis-acquire-editor</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 

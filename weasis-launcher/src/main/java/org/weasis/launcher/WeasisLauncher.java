@@ -84,7 +84,6 @@ public class WeasisLauncher {
             }
             return "UNKNOWN"; //$NON-NLS-1$
         }
-
     }
 
     /**
@@ -789,6 +788,12 @@ public class WeasisLauncher {
             props = readProperties(propURI, props);
         }
 
+        // Only required for dev purposes (running the app in IDE)
+        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo"));
+        if (mvnRepo != null) {
+            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/"));
+        }
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
         Map<String, String> map = new HashMap<>();
@@ -819,21 +824,28 @@ public class WeasisLauncher {
                 return null;
             }
         } else {
-            // Determine where the configuration directory is by figuring
-            // out where felix.jar is located on the system class path.
-            File confDir;
-            String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
-            int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
-            int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
-            if (index >= start) {
-                // Get the path of the felix.jar file.
-                String jarLocation = classpath.substring(start, index);
-                // Calculate the conf directory based on the parent
-                // directory of the felix.jar directory.
-                confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
-            } else {
-                // Can't figure it out so use the current directory as default.
-                confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+            // Development folder only
+            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$
+            if (!confDir.canRead()) {
+                confDir = null;
+            }
+
+            if (confDir == null) {
+                // Determine where the configuration directory is by figuring
+                // out where felix.jar is located on the system class path.
+                String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
+                int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
+                int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
+                if (index >= start) {
+                    // Get the path of the felix.jar file.
+                    String jarLocation = classpath.substring(start, index);
+                    // Calculate the conf directory based on the parent
+                    // directory of the felix.jar directory.
+                    confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
+                } else {
+                    // Can't figure it out so use the current directory as default.
+                    confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+                }
             }
 
             try {
@@ -1344,7 +1356,7 @@ public class WeasisLauncher {
             System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension"); //$NON-NLS-1$
         }
     }
-    
+
     public static int getJavaMajorVersion() {
         // Handle new versioning from Java 9
         String jvmVersionString = System.getProperty("java.specification.version");
