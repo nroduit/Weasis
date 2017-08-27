@@ -11,10 +11,7 @@
 	<artifactId>weasis-base-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>Media Explorer [${project.artifactId}]</name>
-	<properties>
-		<bundle.namespace>org.weasis.base.explorer</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -31,7 +28,7 @@
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
 			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

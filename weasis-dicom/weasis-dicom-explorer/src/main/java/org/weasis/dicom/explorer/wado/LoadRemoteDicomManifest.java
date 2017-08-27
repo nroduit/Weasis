@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -181,7 +182,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
                 uri = new URL(path).toURI();
             }
 
-            List<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
+            Collection<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
             iter.remove();
 
             if (wadoTasks != null) {
@@ -195,8 +196,8 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
         }
     }
 
-    private void startDownloadingSeries(List<LoadSeries> series, boolean downloadImmediately) {
-        for (final LoadSeries loadSeries : series) {
+    private void startDownloadingSeries(Collection<LoadSeries> wadoTasks, boolean downloadImmediately) {
+        for (final LoadSeries loadSeries : wadoTasks) {
             DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
         }
 

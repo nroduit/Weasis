@@ -1316,6 +1316,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     if (newVal instanceof ExplorerTask) {
                         removeTaskToGlobalProgression((ExplorerTask<?, ?>) newVal);
                     }
+                    Object item = modelPatient.getSelectedItem();
+                    if (item instanceof MediaSeriesGroupNode) {
+                        koOpen.setVisible(
+                            DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
+                    }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {
                 if (ObservableEvent.BasicAction.SELECT.equals(action)) {

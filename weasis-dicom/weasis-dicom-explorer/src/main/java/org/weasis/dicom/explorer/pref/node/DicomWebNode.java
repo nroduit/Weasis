@@ -85,7 +85,7 @@ public class DicomWebNode extends AbstractDicomNode {
     public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
         super.saveDicomNode(writer);
         writer.writeAttribute(T_URL, url.toString());
-        writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmpty2NullEnum(webType));
+        writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmptyStringIfNullEnum(webType));
     }
 
     public static UsageType getUsageType(WebType webType) {

@@ -10,10 +10,9 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-imageio-codec-linux-x86-64</artifactId>
 	<name>ImageIO native Linux amd64 codec</name>
+	<!-- version must match to the parent property ${weasis.imageio.native.version} -->	
 	<version>1.2-b04</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -21,26 +20,26 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
-						<Bundle-NativeCode>lib/libclib_jiio.so; processor=x86-64;
-							osname=Linux</Bundle-NativeCode>
-						<Fragment-Host>weasis-imageio-codec;bundle-version="0.7.0"</Fragment-Host>
+						<Bundle-NativeCode>lib/libclib_jiio.so; processor=x86-64; osname=Linux</Bundle-NativeCode>
+						<Fragment-Host>weasis-imageio-codec;bundle-version="2.5"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2-b04</Specification-Version>
+						<Specification-Version>${weasis.imageio.native.version}</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>libclib_jiio</artifactId>
-			<version>1.2-b04</version>
+			<version>${project.version}</version>
 			<type>so</type>
 			<classifier>linux-x86-64</classifier>
 		</dependency>

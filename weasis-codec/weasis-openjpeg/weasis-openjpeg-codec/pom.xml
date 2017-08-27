@@ -12,15 +12,15 @@
 	<artifactId>weasis-openjpeg-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>Native OpenJPEG Codec [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.openjpeg</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<javacpp.skip>false</javacpp.skip>
 		<!-- skip native compilation phase, only generating source files -->
 		<javacpp.options>-nocompile -d gen-cpp</javacpp.options>
 	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>

@@ -178,9 +178,9 @@ public abstract class AbstractDicomNode {
 
     public void saveDicomNode(XMLStreamWriter writer) throws XMLStreamException {
         writer.writeAttribute(T_DESCRIPTION, description);
-        writer.writeAttribute(T_TYPE, StringUtil.getEmpty2NullEnum(type));
-        writer.writeAttribute(T_USAGE_TYPE, StringUtil.getEmpty2NullEnum(usageType));
-        writer.writeAttribute(T_TSUID, StringUtil.getEmpty2NullEnum(tsuid));
+        writer.writeAttribute(T_TYPE, StringUtil.getEmptyStringIfNullEnum(type));
+        writer.writeAttribute(T_USAGE_TYPE, StringUtil.getEmptyStringIfNullEnum(usageType));
+        writer.writeAttribute(T_TSUID, StringUtil.getEmptyStringIfNullEnum(tsuid));
     }
 
     public static void loadDicomNodes(JComboBox<AbstractDicomNode> comboBox, Type type) {
