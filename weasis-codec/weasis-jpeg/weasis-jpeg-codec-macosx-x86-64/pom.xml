@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-jpeg-codec-macosx-x86-64</artifactId>
 	<name>JPEG native Mac amd64 codec</name>
-	<version>$1.0.7-6b</version>
+	<version>1.0.7-6b</version>
 	<!-- version must match to the parent property {weasis.jpeg.native.version} -->
 
 	<build>
