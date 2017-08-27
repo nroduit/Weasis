@@ -26,8 +26,8 @@
 						<!-- Force to import jaxb binding classes -->
 						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<!-- add for Xchart: ,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.* -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*</Export-Package>
+						<!-- add for Xchart: ,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.* -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.*</Export-Package>
 						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
 						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
 					</instructions>
@@ -85,7 +85,7 @@
 		<dependency>
 			<groupId>org.knowm.xchart</groupId>
 			<artifactId>xchart</artifactId>
-			<version>3.3.1</version>
+			<version>3.5.0</version>
 		</dependency>
 
 		<!-- FOR TESTS -->

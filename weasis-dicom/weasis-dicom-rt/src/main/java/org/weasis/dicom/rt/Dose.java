@@ -12,17 +12,28 @@
 
 package org.weasis.dicom.rt;
 
-import java.util.*;
+import static org.opencv.core.Core.addWeighted;
+import static org.opencv.core.Core.minMaxLoc;
+import static org.opencv.core.Core.multiply;
 
-import org.opencv.core.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfFloat;
+import org.opencv.core.MatOfInt;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomImageElement;
-
-import static org.opencv.core.Core.addWeighted;
-import static org.opencv.core.Core.minMaxLoc;
-import static org.opencv.core.Core.multiply;
 
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = 1L;
@@ -40,7 +51,7 @@ public class Dose extends HashMap<Integer, Dvh> {
     private double doseSlicePositionThreshold;
 
     private List<MediaElement> images = new ArrayList<>();
-    private LinkedHashMap<Integer, IsoDoseLayer> isoDoseSet = new LinkedHashMap<>();
+    private Map<Integer, IsoDoseLayer> isoDoseSet = new LinkedHashMap<>();
 
     public Dose() {
         // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without interpolation
@@ -142,11 +153,11 @@ public class Dose extends HashMap<Integer, Dvh> {
         this.images = images;
     }
 
-    public LinkedHashMap<Integer, IsoDoseLayer> getIsoDoseSet() {
+    public Map<Integer, IsoDoseLayer> getIsoDoseSet() {
         return this.isoDoseSet;
     }
 
-    public void setIsoDoseSet(LinkedHashMap<Integer, IsoDoseLayer> isoDoseSet) {
+    public void setIsoDoseSet(Map<Integer, IsoDoseLayer> isoDoseSet) {
         this.isoDoseSet = isoDoseSet;
     }
 
@@ -224,7 +235,7 @@ public class Dose extends HashMap<Integer, Dvh> {
         Scalar scalar = new Scalar(this.doseGridScaling * 100);
         Mat doseMatrix = new Mat(rows, cols, CvType.CV_32FC1);
         multiply(src, scalar, doseMatrix);
-        Vector<Mat> doseMatrixVector = new Vector<>();
+        List<Mat> doseMatrixVector = new ArrayList<>();
         doseMatrixVector.add(doseMatrix);
 
         // Masked dose plan histogram
