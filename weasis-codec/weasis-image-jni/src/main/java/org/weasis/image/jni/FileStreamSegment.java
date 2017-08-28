@@ -11,6 +11,7 @@
 package org.weasis.image.jni;
 
 import java.io.FileDescriptor;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
@@ -25,16 +26,24 @@ import javax.imageio.stream.FileImageOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.media.imageioimpl.common.ExtendImageParam;
+
 class FileStreamSegment extends StreamSegment {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileStreamSegment.class);
 
     private final RandomAccessFile file;
     private final int fileID;
 
-    FileStreamSegment(RandomAccessFile fdes, int fileID, long[] startPos, int[] length) {
+    FileStreamSegment(RandomAccessFile fdes, int fileID, long[] startPos, long[] length) {
         super(startPos, length);
         this.file = fdes;
         this.fileID = fileID;
+    }
+
+    public FileStreamSegment(ExtendImageParam param) throws FileNotFoundException {
+        super(param.getSegmentPositions(), param.getSegmentLengths());
+        this.file = new RandomAccessFile(param.getFile(), "r");
+        this.fileID = -1;
     }
 
     public RandomAccessFile getFile() {
@@ -82,14 +91,14 @@ class FileStreamSegment extends StreamSegment {
         if (segPosition == null || segPosition.length <= endSeg || segLength == null || segLength.length <= endSeg) {
             throw new IllegalArgumentException("Invalid position of the file to read!");
         }
-        int length = segLength[startSeg];
+        long length = segLength[startSeg];
 
         // DICOM PS 3.5.8.2 Handle frame with multiple fragments
         if (startSeg < endSeg) {
             for (int i = startSeg + 1; i <= endSeg; i++) {
                 length += segLength[i];
             }
-            ByteBuffer buffer = ByteBuffer.allocateDirect(length);
+            ByteBuffer buffer = ByteBuffer.allocateDirect((int) length);
             buffer.order(ByteOrder.nativeOrder());
             for (int i = startSeg; i <= endSeg; i++) {
                 buffer.put(file.getChannel().map(FileChannel.MapMode.READ_ONLY, segPosition[i], segLength[i]));

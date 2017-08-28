@@ -27,13 +27,13 @@ class MemoryStreamSegment extends StreamSegment {
     private final byte[] inputStream;
 
     MemoryStreamSegment(byte[] b) {
-        super(new long[] { 0 }, new int[] { b.length });
+        super(new long[] { 0 }, new long[] { b.length });
         this.inputStream = b;
     }
 
     @Override
     public ByteBuffer getDirectByteBuffer(int segment) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocateDirect(segLength[segment]);
+        ByteBuffer buffer = ByteBuffer.allocateDirect((int) segLength[segment]);
         buffer.order(ByteOrder.nativeOrder());
         buffer.put(inputStream);
         return buffer;
