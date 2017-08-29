@@ -75,6 +75,7 @@ import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -110,7 +111,6 @@ import org.weasis.dicom.codec.utils.OverlayUtils;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ExtendImageParam;
-
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -751,35 +751,56 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
 
-                FileCache cache = media.getFileCache();
-
-                Path imgCachePath = null;
-                File file = cache.getTransformedFile();
-                if (file == null) {
-                    StringBuilder buf = new StringBuilder(media.getMediaURI().toString());
-                    if (frame > 0) {
-                        buf.append(frame);
-                    }
-                    String filename = StringUtil.bytesToMD5(buf.toString().getBytes());
-                    imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
-                    if (Files.isReadable(imgCachePath)) {
-                        file = imgCachePath.toFile();
-                        cache.setTransformedFile(file);
-                        imgCachePath = null;
-                    }
+                Mat img = getUncacheImage(media, frame);
+                if (img != null) {
+                    return ImageCV.toImageCV(img);
                 }
+                // FileCache cache = media.getFileCache();
+                //
+                // Path imgCachePath = null;
+                // File file = cache.getTransformedFile();
+                // if (file == null) {
+                // StringBuilder buf = new StringBuilder(media.getMediaURI().toString());
+                // if (frame > 0) {
+                // buf.append(frame);
+                // }
+                // String filename = StringUtil.bytesToMD5(buf.toString().getBytes());
+                // imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
+                // if (Files.isReadable(imgCachePath)) {
+                // file = imgCachePath.toFile();
+                // cache.setTransformedFile(file);
+                // imgCachePath = null;
+                // }
+                // }
+                //
+                // if (file == null && imgCachePath != null) {
+                // PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);
+                // try {
+                // new FileRawImage(imgCachePath.toFile()).write(mat);
+                // } catch (Exception e) {
+                // FileUtil.delete(imgCachePath.toFile());
+                // throw e;
+                // }
+                // return mat;
+                // }
+                // return new FileRawImage(file).read();
+            }
+        }
+        return null;
+    }
 
-                if (file == null && imgCachePath != null) {
-                    PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);
-                    try {
-                        new FileRawImage(imgCachePath.toFile()).write(mat);
-                    } catch (Exception e) {
-                        FileUtil.delete(imgCachePath.toFile());
-                        throw e;
-                    }
-                    return mat;
-                }
-                return new FileRawImage(file).read();
+    private Mat getUncacheImage(MediaElement media, int frame) throws IOException {
+        FileCache cache = media.getFileCache();
+        Optional<File> orinigal = cache.getOriginalFile();
+        if (orinigal.isPresent()) {
+            if (cache.getSegmentPositions() == null) {
+                readMetaData(true);
+                buildSegmentedImageInputStream(frame);
+                resetInternalState();
+            }
+            if (cache.getSegmentPositions() != null && cache.getSegmentPositions().length == 1) {
+                return Imgcodecs.imreadseg(orinigal.get().getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED,
+                    (int) cache.getSegmentPositions()[0], (int) cache.getSegmentLengths()[0]);
             }
         }
         return null;
@@ -1108,6 +1129,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
             }
         }
+
+        fileCache.setSegmentPositions(offsets);
+        fileCache.setSegmentLengths(Arrays.stream(length).asLongStream().toArray());
 
         return new ExtendSegmentedInputImageStream(iis, fileCache.getOriginalFile().orElse(null), offsets, length);
     }

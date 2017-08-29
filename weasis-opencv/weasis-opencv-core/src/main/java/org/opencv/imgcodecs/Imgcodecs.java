@@ -83,6 +83,11 @@ public class Imgcodecs {
             IMWRITE_PAM_FORMAT_RGB_ALPHA = 5;
 
 
+    
+    public static  void loadNativeLibrary() {
+        System.loadLibrary("opencv_java330");
+    }
+    
     //
     // C++:  Mat imdecode(Mat buf, int flags)
     //
@@ -119,9 +124,29 @@ public class Imgcodecs {
         return retVal;
     }
 
-    public static  void loadNativeLibrary() {
-        System.loadLibrary("opencv_java");
+
+    //
+    // C++:  Mat imreadseg(String filename, int flags = IMREAD_COLOR, int segposition = 0, int seglength = 0)
+    //
+
+    //javadoc: imreadseg(filename, flags, segposition, seglength)
+    public static Mat imreadseg(String filename, int flags, int segposition, int seglength)
+    {
+        
+        Mat retVal = new Mat(imreadseg_0(filename, flags, segposition, seglength));
+        
+        return retVal;
     }
+
+    //javadoc: imreadseg(filename)
+    public static Mat imreadseg(String filename)
+    {
+        
+        Mat retVal = new Mat(imreadseg_1(filename));
+        
+        return retVal;
+    }
+
 
     //
     // C++:  bool imencode(String ext, Mat img, vector_uchar& buf, vector_int params = std::vector<int>())
@@ -202,6 +227,10 @@ public class Imgcodecs {
     private static native long imread_0(String filename, int flags);
     private static native long imread_1(String filename);
 
+    // C++:  Mat imreadseg(String filename, int flags = IMREAD_COLOR, int segposition = 0, int seglength = 0)
+    private static native long imreadseg_0(String filename, int flags, int segposition, int seglength);
+    private static native long imreadseg_1(String filename);
+    
     // C++:  bool imencode(String ext, Mat img, vector_uchar& buf, vector_int params = std::vector<int>())
     private static native boolean imencode_0(String ext, long img_nativeObj, long buf_mat_nativeObj, long params_mat_nativeObj);
     private static native boolean imencode_1(String ext, long img_nativeObj, long buf_mat_nativeObj);
