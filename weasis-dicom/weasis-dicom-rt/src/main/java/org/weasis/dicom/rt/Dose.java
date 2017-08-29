@@ -14,6 +14,7 @@ package org.weasis.dicom.rt;
 
 import java.util.*;
 
+import org.apache.commons.math3.util.Pair;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.ImageElement;
@@ -25,7 +26,7 @@ import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
 public class Dose extends HashMap<Integer, Dvh> {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = -1659662753587452881L;
 
     private String sopInstanceUid;
     private double[] imagePositionPatient;
@@ -41,6 +42,10 @@ public class Dose extends HashMap<Integer, Dvh> {
 
     private List<MediaElement> images = new ArrayList<>();
     private LinkedHashMap<Integer, IsoDoseLayer> isoDoseSet = new LinkedHashMap<>();
+
+    // Dose LUTs
+    private Pair<double[], double[]> doseMmLUT;
+    private Pair<double[], double[]> dosePixLUT;
 
     public Dose() {
         // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without interpolation
@@ -148,6 +153,22 @@ public class Dose extends HashMap<Integer, Dvh> {
 
     public void setIsoDoseSet(LinkedHashMap<Integer, IsoDoseLayer> isoDoseSet) {
         this.isoDoseSet = isoDoseSet;
+    }
+
+    public Pair<double[], double[]> getDoseMmLUT() {
+        return this.doseMmLUT;
+    }
+
+    public void setDoseMmLUT(Pair<double[], double[]> lut) {
+        this.doseMmLUT = lut;
+    }
+
+    public Pair<double[], double[]> getDosePixLUT() {
+        return this.dosePixLUT;
+    }
+
+    public void setDosePixLUT(Pair<double[], double[]> lut) {
+        this.dosePixLUT = lut;
     }
 
     public MediaElement getDosePlaneBySlice(double slicePosition) {
@@ -270,6 +291,22 @@ public class Dose extends HashMap<Integer, Dvh> {
         Imgproc.findContours(thrSrc, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
         return contours;
+    }
+
+    public void initialiseDoseGridToImageGrid(Image patientImage) {
+
+        // Transpose the dose grid LUT onto the image grid LUT
+        double[] x = new double[this.doseMmLUT.getFirst().length];
+        for (int i = 0; i < this.doseMmLUT.getFirst().length; i++) {
+            x[i] = (this.doseMmLUT.getFirst()[i] - patientImage.getImageLUT().getFirst()[0]) * patientImage.getProne() * patientImage.getFeetFirst() / patientImage.getImageSpacing()[0];
+
+        }
+        double[] y = new double[this.doseMmLUT.getSecond().length];
+        for (int j = 0; j < this.doseMmLUT.getSecond().length; j++) {
+            y[j] = (this.doseMmLUT.getSecond()[j]) - patientImage.getImageLUT().getSecond()[0] * patientImage.getProne() / patientImage.getImageSpacing()[1];
+        }
+
+        this.dosePixLUT = new Pair(x, y);
     }
 
     private MediaElement interpolateDosePlanes(int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {
