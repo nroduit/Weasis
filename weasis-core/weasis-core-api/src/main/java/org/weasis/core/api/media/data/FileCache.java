@@ -23,29 +23,10 @@ public class FileCache {
     private volatile File originalTempFile;
     private volatile File transformedFile;
     private volatile boolean requireTransformation;
-    
-    private volatile long[] segmentPositions;
-    private volatile long[] segmentLengths;
 
     public FileCache(MediaReader reader) {
         this.reader = Objects.requireNonNull(reader);
         this.requireTransformation = false;
-    }
-
-    public long[] getSegmentPositions() {
-        return segmentPositions;
-    }
-
-    public void setSegmentPositions(long[] segmentPositions) {
-        this.segmentPositions = segmentPositions;
-    }
-
-    public long[] getSegmentLengths() {
-        return segmentLengths;
-    }
-
-    public void setSegmentLengths(long[] segmentLengths) {
-        this.segmentLengths = segmentLengths;
     }
 
     public boolean isLocalFile() {

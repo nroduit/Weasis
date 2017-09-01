@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
+import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfInt;
 import org.opencv.utils.Converters;
 
@@ -126,14 +127,15 @@ public class Imgcodecs {
 
 
     //
-    // C++:  Mat imreadseg(String filename, int flags = IMREAD_COLOR, int segposition = 0, int seglength = 0)
+    // C++:  Mat imreadseg(String filename, vector_double segposition = std::vector<double>(), vector_double seglength = std::vector<double>(), int dicomflags = 0, int flags = IMREAD_COLOR)
     //
 
-    //javadoc: imreadseg(filename, flags, segposition, seglength)
-    public static Mat imreadseg(String filename, int flags, int segposition, int seglength)
+    //javadoc: imreadseg(filename, segposition, seglength, dicomflags, flags)
+    public static Mat imreadseg(String filename, MatOfDouble segposition, MatOfDouble seglength, int dicomflags, int flags)
     {
-        
-        Mat retVal = new Mat(imreadseg_0(filename, flags, segposition, seglength));
+        Mat segposition_mat = segposition;
+        Mat seglength_mat = seglength;
+        Mat retVal = new Mat(imreadseg_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
         
         return retVal;
     }
@@ -227,8 +229,8 @@ public class Imgcodecs {
     private static native long imread_0(String filename, int flags);
     private static native long imread_1(String filename);
 
-    // C++:  Mat imreadseg(String filename, int flags = IMREAD_COLOR, int segposition = 0, int seglength = 0)
-    private static native long imreadseg_0(String filename, int flags, int segposition, int seglength);
+    // C++:  Mat imreadseg(String filename, vector_double segposition = std::vector<double>(), vector_double seglength = std::vector<double>(), int dicomflags = 0, int flags = IMREAD_COLOR)
+    private static native long imreadseg_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
     private static native long imreadseg_1(String filename);
     
     // C++:  bool imencode(String ext, Mat img, vector_uchar& buf, vector_int params = std::vector<int>())

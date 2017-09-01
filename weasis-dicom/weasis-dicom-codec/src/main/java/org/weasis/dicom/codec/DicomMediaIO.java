@@ -32,7 +32,6 @@ import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.ByteOrder;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,7 +51,6 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageInputStreamImpl;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
@@ -64,25 +62,21 @@ import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
-import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
-import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
-import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
-import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.cv.FileRawImage;
 import org.weasis.core.api.image.cv.ImageCV;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
@@ -751,10 +745,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
 
-                Mat img = getUncacheImage(media, frame);
-                if (img != null) {
-                    return ImageCV.toImageCV(img);
-                }
+                return getUncacheImage(media, frame);
                 // FileCache cache = media.getFileCache();
                 //
                 // Path imgCachePath = null;
@@ -789,18 +780,24 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return null;
     }
 
-    private Mat getUncacheImage(MediaElement media, int frame) throws IOException {
+    private PlanarImage getUncacheImage(MediaElement media, int frame) throws IOException {
         FileCache cache = media.getFileCache();
         Optional<File> orinigal = cache.getOriginalFile();
         if (orinigal.isPresent()) {
-            if (cache.getSegmentPositions() == null) {
-                readMetaData(true);
-                buildSegmentedImageInputStream(frame);
-                resetInternalState();
+            readMetaData(true);
+            if(decompressor == null) {
+                return getValidImage(readAsRenderedImage(frame, null), media);
             }
-            if (cache.getSegmentPositions() != null && cache.getSegmentPositions().length == 1) {
-                return Imgcodecs.imreadseg(orinigal.get().getAbsolutePath(), Imgcodecs.IMREAD_UNCHANGED,
-                    (int) cache.getSegmentPositions()[0], (int) cache.getSegmentLengths()[0]);
+            ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
+            resetInternalState();
+
+            if (extParams.getSegmentPositions() != null) {
+                MatOfDouble positions =
+                    new MatOfDouble(Arrays.stream(extParams.getSegmentPositions()).asDoubleStream().toArray());
+                MatOfDouble lengths =
+                    new MatOfDouble(Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
+                return ImageCV.toImageCV(Imgcodecs.imreadseg(orinigal.get().getAbsolutePath(), positions, lengths, 2,
+                    Imgcodecs.IMREAD_UNCHANGED));
             }
         }
         return null;
@@ -820,6 +817,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             if (image.getColorModel() instanceof PaletteColorModel) {
                 img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
             }
+            
+            //TODO should be applied for all images
             /*
              * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
              * pixel data.
@@ -1095,6 +1094,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     offsets[i] = bulkData.offset();
                     length[i] = bulkData.length();
                 }
+                // TODO should be replaced by a more genric fonction for all compressed type
+                ImageReaderSpi provider = decompressor.getOriginatingProvider();
+                if (!provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
+                    new long[] {  offsets[0] }, new int[] { length[0] }))) {
+                    throw new IOException("Cannot find magic number"); //$NON-NLS-1$
+                }
             } else {
                 // Multi-frames where each frames can have multiple fragments.
                 if (fragmentsPositions.isEmpty()) {
@@ -1102,9 +1107,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         throw new IOException("no decompressor!"); //$NON-NLS-1$
                     }
 
+                    ImageReaderSpi provider = decompressor.getOriginatingProvider();
                     for (int i = 1; i < nbFragments; i++) {
                         BulkData bulkData = (BulkData) pixeldataFragments.get(i);
-                        ImageReaderSpi provider = decompressor.getOriginatingProvider();
                         if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
                             new long[] { bulkData.offset() }, new int[] { bulkData.length() }))) {
                             fragmentsPositions.add(i);
@@ -1129,10 +1134,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
             }
         }
-
-        fileCache.setSegmentPositions(offsets);
-        fileCache.setSegmentLengths(Arrays.stream(length).asLongStream().toArray());
-
         return new ExtendSegmentedInputImageStream(iis, fileCache.getOriginalFile().orElse(null), offsets, length);
     }
 
