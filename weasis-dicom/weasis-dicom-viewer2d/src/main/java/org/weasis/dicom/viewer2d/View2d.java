@@ -827,12 +827,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 this.addMouseListener(win);
                 this.addMouseMotionListener(win);
             }
-            // set level action with inverse progression (move the cursor down will decrease the values)
-            adapter.setInverse(true);
+            // set level action with inverse progression (moving the cursor down will decrease the values)
+            adapter.setInverse(eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
         } else if (actionName.equals(ActionW.WINDOW.cmd())) {
             adapter.setMoveOnX(false);
         } else if (actionName.equals(ActionW.LEVEL.cmd())) {
-            adapter.setInverse(true);
+            adapter.setInverse(eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
         }
         this.addMouseListener(adapter);
         this.addMouseMotionListener(adapter);

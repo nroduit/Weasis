@@ -275,7 +275,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     }
                 }
             }
-
         }
     }
 

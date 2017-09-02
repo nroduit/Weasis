@@ -25,6 +25,7 @@ public class WindowOp extends AbstractOp {
     public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
     public static final String P_FILL_OUTSIDE_LUT = "fill.outside.lut"; //$NON-NLS-1$
     public static final String P_APPLY_WL_COLOR = "weasis.color.wl.apply"; //$NON-NLS-1$
+    public static final String P_INVERSE_LEVEL = "weasis.level.inverse"; //$NON-NLS-1$
 
     public WindowOp() {
         setName(OP_NAME);

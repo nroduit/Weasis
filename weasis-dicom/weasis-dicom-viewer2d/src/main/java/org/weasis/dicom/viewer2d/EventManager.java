@@ -210,6 +210,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
              */
             prefNode = prefs.node("other"); //$NON-NLS-1$
             WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.TRUE.toString());
+            WProperties.setProperty(options, WindowOp.P_INVERSE_LEVEL, prefNode, Boolean.TRUE.toString());
         }
 
         initializeParameters();
@@ -1264,6 +1265,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             prefNode = prefs.node("other"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_APPLY_WL_COLOR,
                 options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
+            BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_INVERSE_LEVEL,
+                options.getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
 
             Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
