@@ -91,4 +91,17 @@ public class Monitor {
         }
         return null;
     }
+    
+
+    public static Monitor getDefaultMonitor() {
+        int defIndex = ScreenPrefView.getDefaultMonitor();
+        List<Monitor> monitors = MeasureTool.viewSetting.getMonitors();
+        if (monitors.isEmpty()) {
+            return null;
+        }
+        if (defIndex < 0 || defIndex >= monitors.size()) {
+            defIndex = 0;
+        }
+        return monitors.get(defIndex);
+    }
 }
