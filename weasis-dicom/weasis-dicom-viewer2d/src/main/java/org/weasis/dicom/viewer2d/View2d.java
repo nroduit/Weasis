@@ -645,8 +645,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         super.setImage(img);
 
-        updatePrButtonState(img, newImg);
         if (newImg) {
+            updatePrButtonState(img);
             updateKOselectedState(img);
         }
     }
@@ -655,7 +655,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // Delete previous PR Layers
         List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
-            PRManager.deleteDicomLayers(dcmLayers, graphicManager);
+            // Prefer to delete by type because layer uid can change
+            graphicManager.deleteByLayerType(LayerType.DICOM_PR);
             actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
         }
     }
@@ -663,24 +664,22 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     void updatePR() {
         DicomImageElement img = imageLayer.getSourceImage();
         if (img != null) {
-            updatePrButtonState(img, true);
+            updatePrButtonState(img);
         }
     }
 
-    private synchronized void updatePrButtonState(DicomImageElement img, boolean newImg) {
-        if (newImg) {
-            Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
-            ViewButton prButton = PRManager.buildPrSelection(this, series, img);
-            getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
-            if (prButton != null) {
-                getViewButtons().add(prButton);
-            } else if (oldPR instanceof PRSpecialElement) {
-                setPresentationState(null, newImg);
-                actionsInView.put(ActionW.PR_STATE.cmd(), oldPR);
-            } else if (ActionState.NoneLabel.NONE.equals(oldPR)) {
-                // No persistence for NONE
-                actionsInView.put(ActionW.PR_STATE.cmd(), null);
-            }
+    private synchronized void updatePrButtonState(DicomImageElement img) {
+        Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
+        ViewButton prButton = PRManager.buildPrSelection(this, series, img);
+        getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
+        if (prButton != null) {
+            getViewButtons().add(prButton);
+        } else if (oldPR instanceof PRSpecialElement) {
+            setPresentationState(null, true);
+            actionsInView.put(ActionW.PR_STATE.cmd(), oldPR);
+        } else if (ActionState.NoneLabel.NONE.equals(oldPR)) {
+            // No persistence for NONE
+            actionsInView.put(ActionW.PR_STATE.cmd(), null);
         }
     }
 

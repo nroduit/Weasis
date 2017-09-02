@@ -41,6 +41,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.PRManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 
@@ -54,6 +55,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     private JComboBox<String> comboBoxInterpolation;
     private JCheckBox checkBoxWLcolor;
     private JCheckBox checkBoxLevelInverse;
+    private JCheckBox checkBoxApplyPR;
 
     public ViewerPrefView() {
         super(View2dFactory.NAME);
@@ -107,7 +109,6 @@ public class ViewerPrefView extends AbstractItemDialogPage {
                 WindowOp.P_APPLY_WL_COLOR, true));
         GridBagConstraints gbccheckBoxWLcolor = new GridBagConstraints();
         gbccheckBoxWLcolor.anchor = GridBagConstraints.WEST;
-        gbccheckBoxWLcolor.insets = new Insets(0, 0, 5, 0);
         gbccheckBoxWLcolor.gridx = 0;
         gbccheckBoxWLcolor.gridy = 0;
         winLevelPanel.add(checkBoxWLcolor, gbccheckBoxWLcolor);
@@ -115,11 +116,20 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         checkBoxLevelInverse = new JCheckBox("Inverse level direction (down to increase brightness)",
             eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
         GridBagConstraints gbccheckBoxLevelInverse = new GridBagConstraints();
-        gbccheckBoxLevelInverse.weightx = 1.0;
         gbccheckBoxLevelInverse.anchor = GridBagConstraints.WEST;
         gbccheckBoxLevelInverse.gridx = 0;
         gbccheckBoxLevelInverse.gridy = 1;
         winLevelPanel.add(checkBoxLevelInverse, gbccheckBoxLevelInverse);
+        
+        checkBoxApplyPR = new JCheckBox("Apply by default the most recent Presentation State",
+            eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
+        GridBagConstraints gbccheckBoxapplyPR = new GridBagConstraints();
+        gbccheckBoxapplyPR.insets = new Insets(0, 0, 5, 0);
+        gbccheckBoxapplyPR.weightx = 1.0;
+        gbccheckBoxapplyPR.anchor = GridBagConstraints.WEST;
+        gbccheckBoxapplyPR.gridx = 0;
+        gbccheckBoxapplyPR.gridy = 2;
+        winLevelPanel.add(checkBoxApplyPR, gbccheckBoxapplyPR);
 
         JPanel panel2 = new JPanel();
         FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
@@ -272,8 +282,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         boolean applyWLcolor = checkBoxWLcolor.isSelected();
         eventManager.getOptions().putBooleanProperty(WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
 
-        boolean levelInverse = checkBoxLevelInverse.isSelected();
-        eventManager.getOptions().putBooleanProperty(WindowOp.P_INVERSE_LEVEL, levelInverse);
+        eventManager.getOptions().putBooleanProperty(PRManager.PR_APPLY, checkBoxApplyPR.isSelected());
+        eventManager.getOptions().putBooleanProperty(WindowOp.P_INVERSE_LEVEL, checkBoxLevelInverse.isSelected());
         ImageViewerPlugin<DicomImageElement> view = eventManager.getSelectedView2dContainer();
         if (view != null) {
             view.setMouseActions(eventManager.getMouseActions());
@@ -308,6 +318,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         checkBoxWLcolor.setSelected(eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
         checkBoxLevelInverse.setSelected(eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
+        checkBoxApplyPR.setSelected(eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
     }
 
     private void formatSlider(JSlider slider) {

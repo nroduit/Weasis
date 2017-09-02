@@ -71,6 +71,8 @@ import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
+    public static final String PR_APPLY = "weasis.apply.latest.pr"; //$NON-NLS-1$
+    
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
@@ -419,6 +421,10 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
+                if(oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+                    oldPR = ActionState.NoneLabel.NONE_SERIES;
+                    view.setActionsInView(ActionW.PR_STATE.cmd(), oldPR);
+                }
                 if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
                     // Set the previous selected value, otherwise set the more recent PR by default
                     view.setPresentationState(prList.indexOf(oldPR) == -1 ? prList.get(0) : oldPR, true);
