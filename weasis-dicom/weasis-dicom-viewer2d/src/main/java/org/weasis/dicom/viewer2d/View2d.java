@@ -553,6 +553,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
 
         if (needToRepaint) {
+            // Required to update KO bar (toggle button state)
+            if(eventManager instanceof EventManager) {
+                ((EventManager) eventManager).updateKeyObjectComponentsListener(this);
+            }
             repaint();
         }
     }

@@ -565,7 +565,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 for (ViewCanvas<DicomImageElement> view : viewList) {
 
-                    if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
+                    if (!(view.getSeries() instanceof DicomSeries) || !(view instanceof View2d)) {
                         continue;
                     }
 
@@ -576,7 +576,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     DicomSeries dicomSeries = (DicomSeries) view.getSeries();
                     String seriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
 
-                    if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false) {
+                    if (!updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID)) {
                         continue;
                     }
 
