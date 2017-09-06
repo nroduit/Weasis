@@ -396,10 +396,10 @@ public class AcquireManager {
 
             try {
                 WorklistDialog dialog =
-                    new WorklistDialog(UIManager.getApplicationWindow(), "DICOM Worklist", calling, called);
+                    new WorklistDialog(UIManager.getApplicationWindow(), Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
-                LOGGER.error("Cannot get items from worklist", e);
+                LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
             }
         }
     }

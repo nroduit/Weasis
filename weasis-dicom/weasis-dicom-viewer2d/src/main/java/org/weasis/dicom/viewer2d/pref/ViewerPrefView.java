@@ -113,7 +113,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbccheckBoxWLcolor.gridy = 0;
         winLevelPanel.add(checkBoxWLcolor, gbccheckBoxWLcolor);
 
-        checkBoxLevelInverse = new JCheckBox("Inverse level direction (down to increase brightness)",
+        checkBoxLevelInverse = new JCheckBox(Messages.getString("ViewerPrefView.inverse_wl"), //$NON-NLS-1$
             eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
         GridBagConstraints gbccheckBoxLevelInverse = new GridBagConstraints();
         gbccheckBoxLevelInverse.anchor = GridBagConstraints.WEST;
@@ -121,7 +121,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbccheckBoxLevelInverse.gridy = 1;
         winLevelPanel.add(checkBoxLevelInverse, gbccheckBoxLevelInverse);
         
-        checkBoxApplyPR = new JCheckBox("Apply by default the most recent Presentation State",
+        checkBoxApplyPR = new JCheckBox(Messages.getString("ViewerPrefView.apply_pr"), //$NON-NLS-1$
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
         GridBagConstraints gbccheckBoxapplyPR = new GridBagConstraints();
         gbccheckBoxapplyPR.insets = new Insets(0, 0, 5, 0);

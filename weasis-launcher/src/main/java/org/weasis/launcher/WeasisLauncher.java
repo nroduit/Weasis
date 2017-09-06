@@ -363,8 +363,8 @@ public class WeasisLauncher {
 
         int exitStatus = 0;
         try {
-            final String goshArgs = System.getProperty("gosh.args", serverProp.get("gosh.args"));
-            serverProp.put("gosh.args", "--nointeractive --noshutdown");
+            final String goshArgs = System.getProperty("gosh.args", serverProp.get("gosh.args")); //$NON-NLS-1$ //$NON-NLS-2$
+            serverProp.put("gosh.args", "--nointeractive --noshutdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
             // Now create an instance of the framework with our configuration properties.
             m_felix = new Felix(serverProp);
@@ -650,7 +650,7 @@ public class WeasisLauncher {
     private static void addCommandSessionListener(Object commandProcessor) {
         try {
             ClassLoader loader = commandProcessor.getClass().getClassLoader();
-            Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener");
+            Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener"); //$NON-NLS-1$
             Method nameMethod = commandProcessor.getClass().getMethod("addListener", c); //$NON-NLS-1$
 
             Object listener = Proxy.newProxyInstance(loader, new Class[] { c }, new InvocationHandler() {
@@ -659,12 +659,12 @@ public class WeasisLauncher {
                 public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                     String listenerMethod = method.getName();
 
-                    if (listenerMethod.equals("beforeExecute")) {
+                    if (listenerMethod.equals("beforeExecute")) { //$NON-NLS-1$
                         String arg = args[1].toString();
-                        if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) {
+                        if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { //$NON-NLS-1$ //$NON-NLS-2$
                             // Force gogo to not use Expander to concatenate parameter with the current directory
                             // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
-                            commandSession_execute(args[0], "gogo.option.noglob=on");
+                            commandSession_execute(args[0], "gogo.option.noglob=on"); //$NON-NLS-1$
                         }
                     }
                     return null;
@@ -679,12 +679,12 @@ public class WeasisLauncher {
     public static boolean initCommandSession(Object commandSession, String args) {
         try {
             // wait for gosh command to be registered
-            for (int i = 0; (i < 100) && commandSession_get(commandSession, "gogo:gosh") == null; ++i) {
+            for (int i = 0; (i < 100) && commandSession_get(commandSession, "gogo:gosh") == null; ++i) { //$NON-NLS-1$
                 TimeUnit.MILLISECONDS.sleep(10);
             }
 
             Class<?>[] parameterTypes = new Class[] { CharSequence.class };
-            Object[] arguments = new Object[] { "gogo:gosh --login " + (args == null ? "" : args) };
+            Object[] arguments = new Object[] { "gogo:gosh --login " + (args == null ? "" : args) }; //$NON-NLS-1$ //$NON-NLS-2$
             Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
             nameMethod.invoke(commandSession, arguments);
         } catch (InterruptedException e) {
@@ -789,9 +789,9 @@ public class WeasisLauncher {
         }
 
         // Only required for dev purposes (running the app in IDE)
-        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo"));
+        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$
         if (mvnRepo != null) {
-            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/"));
+            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
         // Perform variable substitution for system properties and
@@ -825,7 +825,7 @@ public class WeasisLauncher {
             }
         } else {
             // Development folder only
-            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$
+            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$ //$NON-NLS-2$
             if (!confDir.canRead()) {
                 confDir = null;
             }
@@ -1349,7 +1349,7 @@ public class WeasisLauncher {
         try {
             Class.forName("sun.misc.Signal"); //$NON-NLS-1$
             Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
-            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook());
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook()); //$NON-NLS-1$
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
@@ -1359,8 +1359,8 @@ public class WeasisLauncher {
 
     public static int getJavaMajorVersion() {
         // Handle new versioning from Java 9
-        String jvmVersionString = System.getProperty("java.specification.version");
-        int verIndex = jvmVersionString.indexOf("1.");
+        String jvmVersionString = System.getProperty("java.specification.version"); //$NON-NLS-1$
+        int verIndex = jvmVersionString.indexOf("1."); //$NON-NLS-1$
         if (verIndex >= 0) {
             jvmVersionString = jvmVersionString.substring(verIndex + 2);
         }
@@ -1378,13 +1378,13 @@ public class WeasisLauncher {
             // shutdown loggers and close down the classloader jars that means that anything we try to do in our
             // shutdown hook throws an exception, but only after some random amount of time
             try {
-                Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks");
-                Field field = clazz.getDeclaredField("hooks");
+                Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks"); //$NON-NLS-1$
+                Field field = clazz.getDeclaredField("hooks"); //$NON-NLS-1$
                 field.setAccessible(true);
                 Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
                 for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext();) {
                     Thread thread = it.next();
-                    if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) {
+                    if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) { //$NON-NLS-1$
                         it.remove();
                     }
                 }

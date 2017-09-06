@@ -193,7 +193,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public static GridBagLayoutModel buildGridBagLayoutModel(int rows, int cols, String type) {
         StringBuilder buf = new StringBuilder();
         buf.append(rows);
-        buf.append("x");
+        buf.append("x"); //$NON-NLS-1$
         buf.append(cols);
         return new GridBagLayoutModel(buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf.toString()), rows, cols, type);
     }

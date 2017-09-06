@@ -41,7 +41,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
     private static final long serialVersionUID = 1338490067849040408L;
 
-    public static final String P_ALL_VIEWS = "annotations.all.views";
+    public static final String P_ALL_VIEWS = "annotations.all.views"; //$NON-NLS-1$
     public static volatile boolean applyToAllView = true;
     public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();
     private static final Map<String, String> conversionMapForStorage = new HashMap<>();
@@ -58,17 +58,17 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         defaultDisplayPreferences.put(FRAME, true);
         defaultDisplayPreferences.put(PIXEL, true);
 
-        conversionMapForStorage.put(ANNOTATIONS, "annotations");
-        conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations");
-        conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym");
-        conversionMapForStorage.put(SCALE, "scale");
-        conversionMapForStorage.put(LUT, "lut");
-        conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation");
-        conversionMapForStorage.put(WINDOW_LEVEL, "wl");
-        conversionMapForStorage.put(ZOOM, "zoom");
-        conversionMapForStorage.put(ROTATION, "rotation");
-        conversionMapForStorage.put(FRAME, "frame");
-        conversionMapForStorage.put(PIXEL, "pixel");
+        conversionMapForStorage.put(ANNOTATIONS, "annotations"); //$NON-NLS-1$
+        conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations"); //$NON-NLS-1$
+        conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym"); //$NON-NLS-1$
+        conversionMapForStorage.put(SCALE, "scale"); //$NON-NLS-1$
+        conversionMapForStorage.put(LUT, "lut"); //$NON-NLS-1$
+        conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation"); //$NON-NLS-1$
+        conversionMapForStorage.put(WINDOW_LEVEL, "wl"); //$NON-NLS-1$
+        conversionMapForStorage.put(ZOOM, "zoom"); //$NON-NLS-1$
+        conversionMapForStorage.put(ROTATION, "rotation"); //$NON-NLS-1$
+        conversionMapForStorage.put(FRAME, "frame"); //$NON-NLS-1$
+        conversionMapForStorage.put(PIXEL, "pixel"); //$NON-NLS-1$
     }
 
     protected static final int BORDER = 10;
