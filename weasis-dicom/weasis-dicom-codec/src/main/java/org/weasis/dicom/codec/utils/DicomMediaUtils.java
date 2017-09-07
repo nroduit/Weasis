@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
@@ -1159,7 +1160,8 @@ public class DicomMediaUtils {
         }
     }
 
-    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID, String sopInstanceUID) {
+    public static Attributes createDicomPR(Attributes dicomSourceAttribute, String seriesInstanceUID,
+        String sopInstanceUID) {
 
         final int[] patientStudyAttributes = { Tag.SpecificCharacterSet, Tag.StudyDate, Tag.StudyTime,
             Tag.StudyDescription, Tag.AccessionNumber, Tag.IssuerOfAccessionNumberSequence, Tag.ReferringPhysicianName,
@@ -1170,7 +1172,8 @@ public class DicomMediaUtils {
 
         // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
         pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
-        pr.setString(Tag.SOPInstanceUID, VR.UI, StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
+        pr.setString(Tag.SOPInstanceUID, VR.UI,
+            StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
         Date now = new Date();
         pr.setDate(Tag.PresentationCreationDateAndTime, now);
         pr.setDate(Tag.ContentDateAndTime, now);
@@ -1531,7 +1534,7 @@ public class DicomMediaUtils {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     if (TagType.DICOM_TIME.equals(type)) {

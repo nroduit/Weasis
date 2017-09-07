@@ -56,7 +56,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read() throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -74,7 +74,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read(byte[] b) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;
@@ -91,7 +91,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         if (isLoadingSeriesCanceled()) {
-            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL); 
+            InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
             exc.bytesTransferred = nread;
             series.setFileSize(series.getFileSize() - nread);
             nread = 0;

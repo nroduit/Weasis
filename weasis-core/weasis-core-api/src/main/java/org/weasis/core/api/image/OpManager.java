@@ -23,7 +23,7 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     void clearNodeParams();
 
     void clearNodeIOCache();
-    
+
     List<ImageOpNode> getOperations();
 
     void setFirstNode(RenderedImage imgSource);
@@ -45,7 +45,7 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
     boolean setParamValue(String opName, String param, Object value);
 
     void removeParam(String opName, String param);
-    
+
     default boolean needProcessing() {
         for (ImageOpNode op : getOperations()) {
             if (op.getParam(Param.INPUT_IMG) == null || op.getParam(Param.OUTPUT_IMG) == null) {
@@ -54,6 +54,5 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
         }
         return false;
     }
-
 
 }

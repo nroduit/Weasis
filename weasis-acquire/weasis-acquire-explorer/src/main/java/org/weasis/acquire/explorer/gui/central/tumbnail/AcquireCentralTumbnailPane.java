@@ -28,6 +28,7 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.ImageElement;
@@ -42,8 +43,8 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralTumbnailPane.class);
 
-    public AcquireCentralTumbnailPane(List<E> list) {
-        super(new AcquireCentralThumnailList<E>());
+    public AcquireCentralTumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
+        super(new AcquireCentralThumnailList<E>(thumbCache));
         setList(list);
         setTransferHandler(new SequenceHandler());
     }

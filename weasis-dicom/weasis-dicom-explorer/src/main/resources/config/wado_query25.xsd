@@ -107,8 +107,10 @@
 			<xsd:element name="arcQuery" type="ArcQuery" minOccurs="0"
 				maxOccurs="unbounded" />
 			<xsd:element name="presentations" minOccurs="0" maxOccurs="1"/>
+			<xsd:element name="selections" minOccurs="0" maxOccurs="1"/>
 		</xsd:sequence>
 	</xsd:complexType>
+
 	<xsd:complexType name="ArcQuery">
 		<xsd:sequence>
 			<xsd:element name="httpTag" minOccurs="0" maxOccurs="unbounded">

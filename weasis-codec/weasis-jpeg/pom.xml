@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-codec</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.5.4-SNAPSHOT</version>
+		<version>2.6.0-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -12,8 +12,6 @@
 	<artifactId>weasis-jpeg</artifactId>
 	<name>Native JPEG Library [${project.artifactId}]</name>
 	<packaging>pom</packaging>
-
-	<dependencies />
 
 	<modules>
 		<module>weasis-jpeg-parent</module>

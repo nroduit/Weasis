@@ -110,7 +110,7 @@ public class ImageElementIO implements MediaReader {
 
             if (imgCachePath != null) {
                 File rawFile = uncompress(imgCachePath, img);
-                if( rawFile != null){
+                if (rawFile != null) {
                     file = rawFile;
                 }
                 cache.setTransformedFile(file);

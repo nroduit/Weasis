@@ -138,7 +138,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
         UIManager.DOCKING_CONTROL.getController()
             .setFocusedDockable(new DefaultFocusRequest(dockable.intern(), this, false, true, false));
     }
-    
+
     public void handleFocusAfterClosing() {
         int size = UIManager.VIEWER_PLUGINS.size();
         if (size > 0) {
@@ -147,8 +147,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 lp.dockable.toFront();
             }
         } else {
-            ViewerPluginBuilder.DefaultDataModel.firePropertyChange(new ObservableEvent(
-                ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
+            ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, ViewerPlugin.this, null, null));
         }
     }
 
@@ -177,8 +177,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                 dockable.add(getComponent());
                 dockable.setFocusComponent(ViewerPlugin.this);
                 UIManager.MAIN_AREA.add(getDockable());
-                dockable.setDefaultLocation(ExtendedMode.NORMALIZED,
-                    CLocation.working(UIManager.MAIN_AREA).stack());
+                dockable.setDefaultLocation(ExtendedMode.NORMALIZED, CLocation.working(UIManager.MAIN_AREA).stack());
                 dockable.setVisible(true);
             }
         });

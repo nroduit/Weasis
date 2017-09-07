@@ -173,8 +173,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newFilterAction());
         setAction(newSortStackAction());
         setAction(newLayoutAction(
-            View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
+            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
@@ -210,6 +210,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
              */
             prefNode = prefs.node("other"); //$NON-NLS-1$
             WProperties.setProperty(options, WindowOp.P_APPLY_WL_COLOR, prefNode, Boolean.TRUE.toString());
+            WProperties.setProperty(options, WindowOp.P_INVERSE_LEVEL, prefNode, Boolean.TRUE.toString());
+            WProperties.setProperty(options, PRManager.PR_APPLY, prefNode, Boolean.FALSE.toString());
         }
 
         initializeParameters();
@@ -311,8 +313,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     PresetWindowLevel oldPreset =
                         presetAction.isPresent() ? (PresetWindowLevel) presetAction.get().getSelectedItem() : null;
                     PresetWindowLevel newPreset = null;
-                    boolean pixelPadding = LangUtil.getNULLtoTrue(
-                        (Boolean) view2d.getDisplayOpManager().getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+                    boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) view2d.getDisplayOpManager()
+                        .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
 
                     List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
 
@@ -1264,6 +1266,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             prefNode = prefs.node("other"); //$NON-NLS-1$
             BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_APPLY_WL_COLOR,
                 options.getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
+            BundlePreferences.putBooleanPreferences(prefNode, WindowOp.P_INVERSE_LEVEL,
+                options.getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
+            BundlePreferences.putBooleanPreferences(prefNode, PRManager.PR_APPLY,
+                options.getBooleanProperty(PRManager.PR_APPLY, false));
 
             Preferences containerNode = prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
             InsertableUtil.savePreferences(View2dContainer.TOOLBARS, containerNode, Type.TOOLBAR);
@@ -1675,7 +1681,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void synch(String[] argv) throws IOException {
         final String[] usage = { "Set a synchronization mode", //$NON-NLS-1$
             "Usage: dcmview2d:synch VALUE", //$NON-NLS-1$
-            "VALUE is " + View2dContainer.SYNCH_LIST.stream().map(s -> s.getCommand()) //$NON-NLS-1$
+            "VALUE is " + View2dContainer.DEFAULT_SYNCH_LIST.stream().map(s -> s.getCommand()) //$NON-NLS-1$
                 .collect(Collectors.joining("|", "(", ")")), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);

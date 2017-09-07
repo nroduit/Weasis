@@ -38,7 +38,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
  */
 
 @org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
-    "org.weasis.base.viewer2d.View2dContainer=true"  })
+    "org.weasis.base.viewer2d.View2dContainer=true" })
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
@@ -107,7 +107,7 @@ public class EditionToolFactory implements InsertableFactory {
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
-    
+
     @Activate
     protected void activate(ComponentContext context) {
         LOGGER.info("Activate the TransformationTool panel"); //$NON-NLS-1$

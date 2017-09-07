@@ -11,12 +11,16 @@
 package org.weasis.base.viewer2d;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 import javax.swing.Action;
@@ -39,6 +43,7 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -70,33 +75,17 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 
+
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
-    public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
-
-    static {
-        SYNCH_LIST.add(SynchView.NONE);
-        SYNCH_LIST.add(SynchView.DEFAULT_STACK);
-        SYNCH_LIST.add(SynchView.DEFAULT_TILE);
-    }
-
-    public static final List<GridBagLayoutModel> LAYOUT_LIST =
-        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
-
-    static {
-        LAYOUT_LIST.add(VIEWS_1x1);
-        LAYOUT_LIST.add(VIEWS_1x2);
-        LAYOUT_LIST.add(VIEWS_2x1);
-        LAYOUT_LIST.add(VIEWS_2x2_f2);
-        LAYOUT_LIST.add(VIEWS_2_f1x2);
-        LAYOUT_LIST.add(VIEWS_2x2);
-        LAYOUT_LIST.add(VIEWS_3x2);
-        LAYOUT_LIST.add(VIEWS_3x3);
-        LAYOUT_LIST.add(VIEWS_4x3);
-        LAYOUT_LIST.add(VIEWS_4x4);
-    }
+    // Unmodifiable list of the default synchronization elements
+    public static final List<SynchView> DEFAULT_SYNCH_LIST =
+        Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
+    // Unmodifiable list of the default layout elements
+    public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST = Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1,
+        VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x2);
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
@@ -112,6 +101,20 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
         super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
         setSynchView(SynchView.DEFAULT_STACK);
+        addComponentListener(new ComponentAdapter() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                ImageViewerPlugin<ImageElement> container =
+                    EventManager.getInstance().getSelectedView2dContainer();
+                if (container == View2dContainer.this) {
+                    Optional<ComboItemListener> layoutAction =
+                        EventManager.getInstance().getAction(ActionW.LAYOUT, ComboItemListener.class);
+                    layoutAction.ifPresent(a -> a.setDataListWithoutTriggerAction(getLayoutList().toArray()));
+                }
+            }
+        });
+        
         if (!initComponents) {
             initComponents = true;
 
@@ -415,11 +418,52 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
     @Override
     public List<SynchView> getSynchList() {
-        return SYNCH_LIST;
+        return DEFAULT_SYNCH_LIST;
     }
 
     @Override
     public List<GridBagLayoutModel> getLayoutList() {
-        return LAYOUT_LIST;
+        int rx = 1;
+        int ry = 1;
+        double ratio = getWidth() / (double) getHeight();
+        if (ratio >= 1.0) {
+            rx = (int) Math.round(ratio * 1.5);
+        } else {
+            ry = (int) Math.round((1.0 / ratio) * 1.5);
+        }
+
+        ArrayList<GridBagLayoutModel> list = new ArrayList<>(DEFAULT_LAYOUT_LIST);
+        // Exclude 1x1
+        if (rx != ry && rx != 0 && ry != 0) {
+            int factorLimit = (int) (rx == 1 ? Math.round(getWidth() / 512.0) : Math.round(getHeight() / 512.0));
+            if (factorLimit < 1) {
+                factorLimit = 1;
+            }
+            if (rx > ry) {
+                int step = 1 + (rx / 20);
+                for (int i = rx / 2; i < rx; i = i + step) {
+                    addLayout(list, factorLimit, i, ry);
+                }
+            } else {
+                int step = 1 + (ry / 20);
+                for (int i = ry / 2; i < ry; i = i + step) {
+                    addLayout(list, factorLimit, rx, i);
+                }
+            }
+
+            addLayout(list, factorLimit, rx, ry);
+        }
+        Collections.sort(list, (o1, o2) -> Integer.compare(o1.getConstraints().size(), o2.getConstraints().size()));
+        return list;
+    }
+
+    private void addLayout(List<GridBagLayoutModel> list, int factorLimit, int rx, int ry) {
+        for (int i = 1; i <= factorLimit; i++) {
+            if (i > 2 || i * ry > 2 || i * rx > 2) {
+                if (i * ry < 50 && i * rx < 50) {
+                    list.add(ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
+                }
+            }
+        }
     }
 }

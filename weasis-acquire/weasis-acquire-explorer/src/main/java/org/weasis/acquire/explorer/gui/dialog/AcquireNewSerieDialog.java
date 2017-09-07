@@ -66,7 +66,8 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
         if (action != null) {
             if (AcquireImportDialog.OPTIONS[0].equals(action)) {
                 if (serieName.getText() != null && !serieName.getText().isEmpty()) {
-                    acquireTabPanel.moveElements(new SeriesGroup(serieName.getText()), AcquireManager.toAcquireImageInfo(medias));
+                    acquireTabPanel.moveElements(new SeriesGroup(serieName.getText()),
+                        AcquireManager.toAcquireImageInfo(medias));
                 } else {
                     JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
                         Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$

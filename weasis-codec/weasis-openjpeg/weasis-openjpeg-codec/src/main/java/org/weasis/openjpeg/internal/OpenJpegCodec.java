@@ -80,7 +80,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(params.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + params.getType());
                 }
 
@@ -104,7 +104,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
                 setParameters(nImage.getImageParameters(), image);
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
                 j2kFile.deallocate();
             } finally {
                 if (lstream != null) {
@@ -153,7 +153,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(j2kparams.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + j2kparams.getType());
                 }
 
@@ -264,7 +264,7 @@ public class OpenJpegCodec implements NativeCodec {
                  * Has not effect on releasing memory but only keep a reference to be not garbage collected during the
                  * native decode (ByteBuffer.allocateDirect() has PhantomReference)
                  */
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
                 openjpeg.opj_stream_destroy(lstream);
                 j2kFile.deallocate();
                 lstream.deallocate();

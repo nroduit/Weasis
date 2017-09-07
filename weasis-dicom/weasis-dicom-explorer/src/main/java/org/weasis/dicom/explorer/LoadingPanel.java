@@ -20,7 +20,7 @@ public class LoadingPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final ArrayList<ExplorerTask<?,?>> tasks = new ArrayList<>();
+    private final ArrayList<ExplorerTask<?, ?>> tasks = new ArrayList<>();
     private final LoadingTaskPanel globalDownloadTask = new LoadingTaskPanel(true);
 
     public LoadingPanel() {
@@ -29,7 +29,7 @@ public class LoadingPanel extends JPanel {
         this.setAlignmentY(TOP_ALIGNMENT);
     }
 
-    public boolean addTask(ExplorerTask<?,?> task) {
+    public boolean addTask(ExplorerTask<?, ?> task) {
         boolean update = false;
         if (task != null && !tasks.contains(task)) {
             tasks.add(task);
@@ -48,7 +48,7 @@ public class LoadingPanel extends JPanel {
         return update;
     }
 
-    public boolean removeTask(ExplorerTask<?,?> task) {
+    public boolean removeTask(ExplorerTask<?, ?> task) {
         boolean update = false;
         if (task != null) {
             tasks.remove(task);

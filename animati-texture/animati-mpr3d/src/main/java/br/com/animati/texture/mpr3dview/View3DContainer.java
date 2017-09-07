@@ -64,7 +64,6 @@ import org.weasis.core.ui.editor.image.RotationToolBar;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -127,8 +126,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr =
-        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", "MPR Views",
-            new ImageIcon(View3DContainer.class.getResource("/icon/22x22/layout_mpr3.png")));
+        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", "MPR Views");
 
     static {
         Map<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
@@ -141,8 +139,7 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
     }
 
     public static final GridBagLayoutModel VIEWS_2x2_mpr =
-        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(4), "mpr4", "MPR-3D Views",
-            new ImageIcon(ViewerPlugin.class.getResource("/icon/22x22/layout2x2.png")));
+        new GridBagLayoutModel(new LinkedHashMap<LayoutConstraints, Component>(4), "mpr4", "MPR-3D Views");
 
     static {
         Map<LayoutConstraints, Component> constraints = VIEWS_2x2_mpr.getConstraints();

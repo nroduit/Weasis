@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -37,11 +36,11 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.DicomInstance;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
+import org.weasis.dicom.explorer.wado.SeriesInstanceList;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
@@ -391,10 +390,9 @@ public class ImageSeriesFactory {
         }
 
         // Num of images:
-        Object wado = series.getTagValue(TagW.WadoInstanceReferenceList);
-        if (wado instanceof List) {
-            List<DicomInstance> sopList = (List<DicomInstance>) wado;
-            dims[2] = sopList.size();
+        SeriesInstanceList seriesInstanceList = (SeriesInstanceList) series.getTagValue(TagW.WadoInstanceReferenceList);
+        if (seriesInstanceList != null) {
+            dims[2] = seriesInstanceList.size();
             if (dims[2] < series.size(null)) {
                 dims[2] = series.size(null);
             }

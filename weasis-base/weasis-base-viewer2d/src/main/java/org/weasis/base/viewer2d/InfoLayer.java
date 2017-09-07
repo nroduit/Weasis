@@ -25,9 +25,9 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 
 /**
  * The Class InfoLayer.
@@ -48,7 +48,6 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
-
     }
 
     @Override
@@ -86,14 +85,14 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.error_msg"); //$NON-NLS-1$
             float y = midy;
-            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
                 y, Color.RED);
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
                 for (String str : desc) {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
-                        DefaultGraphicLabel.paintColorFontOutline(g2, str,
+                        AbstractGraphicLabel.paintColorFontOutline(g2, str,
                             midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
@@ -115,7 +114,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
-            DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
+            AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3, g2.getFontMetrics().stringWidth(str) + 4,
                 (int) fontHeight + 2);
@@ -132,25 +131,24 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
                 sb.append("/");//$NON-NLS-1$
                 sb.append(DecFormater.oneDecimal(level));
             }
-            DefaultGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+            AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
-            DefaultGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
                 + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            DefaultGraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
-                    + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
-            DefaultGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.frame") //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.frame") //$NON-NLS-1$
                 + StringUtil.COLON_AND_SPACE + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$
                 + view2DPane.getSeries()
                     .size((Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())),

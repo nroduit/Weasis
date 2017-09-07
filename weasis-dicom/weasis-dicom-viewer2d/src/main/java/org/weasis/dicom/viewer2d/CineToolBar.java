@@ -13,8 +13,6 @@ package org.weasis.dicom.viewer2d;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderCineListener;

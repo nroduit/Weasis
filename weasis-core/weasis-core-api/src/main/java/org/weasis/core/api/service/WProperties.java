@@ -30,7 +30,7 @@ public class WProperties extends Properties {
     private final transient BundleContext context;
 
     public WProperties() {
-        context = AppProperties.getBundleContext(this.getClass());
+        context = AppProperties.getBundleContext();
     }
 
     @Override

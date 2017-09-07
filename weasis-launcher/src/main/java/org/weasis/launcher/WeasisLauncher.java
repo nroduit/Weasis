@@ -14,13 +14,17 @@ import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.awt.Font;
 import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -34,6 +38,7 @@ import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.InstanceNotFoundException;
 import javax.management.MBeanServer;
@@ -79,7 +84,6 @@ public class WeasisLauncher {
             }
             return "UNKNOWN"; //$NON-NLS-1$
         }
-
     }
 
     /**
@@ -344,6 +348,7 @@ public class WeasisLauncher {
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
+        handleWebstartHookBug();
         JVMShutdownHook shutdownHook = new JVMShutdownHook();
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         registerAdditionalShutdownHook();
@@ -358,6 +363,9 @@ public class WeasisLauncher {
 
         int exitStatus = 0;
         try {
+            final String goshArgs = System.getProperty("gosh.args", serverProp.get("gosh.args")); //$NON-NLS-1$ //$NON-NLS-2$
+            serverProp.put("gosh.args", "--nointeractive --noshutdown"); //$NON-NLS-1$ //$NON-NLS-2$
+
             // Now create an instance of the framework with our configuration properties.
             m_felix = new Felix(serverProp);
             // Initialize the framework, but don't start it yet.
@@ -380,19 +388,14 @@ public class WeasisLauncher {
             loader.close();
             loader = null;
 
-            // Start telnet after all other bundles. This will ensure that all the plugins commands are activated once
-            // telnet is available
-            for (Bundle b : m_felix.getBundleContext().getBundles()) {
-                if (b.getSymbolicName().equals("org.apache.felix.gogo.shell") && b.getState() == Bundle.INSTALLED) { //$NON-NLS-1$
-                    b.start();
-                    break;
-                }
-            }
-
             SwingUtilities.invokeLater(() -> {
                 m_tracker.open();
                 Object commandSession = getCommandSession(m_tracker.getService());
                 if (commandSession != null) {
+                    // Start telnet after all other bundles. This will ensure that all the plugins commands are
+                    // activated once telnet is available
+                    initCommandSession(commandSession, goshArgs);
+
                     // execute the commands from main argv
                     for (StringBuilder command : commandList) {
                         commandSession_execute(commandSession, command);
@@ -597,7 +600,7 @@ public class WeasisLauncher {
 
     public static List<StringBuilder> splitCommand(String[] args) {
         int length = args.length;
-        ArrayList<StringBuilder> list = new ArrayList<>(5);
+        ArrayList<StringBuilder> list = new ArrayList<>();
         for (int i = 0; i < length; i++) {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuilder command = new StringBuilder(args[i].substring(1));
@@ -616,9 +619,6 @@ public class WeasisLauncher {
                 list.add(command);
             }
         }
-        // for (StringBuilder stringBuffer : list) {
-        // System.out.println("Command:" + stringBuffer);
-        // }
         return list;
     }
 
@@ -628,16 +628,85 @@ public class WeasisLauncher {
         }
         Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
 
-        Object[] arguments = new Object[] { System.in, System.out, System.err };
+        // Close stream is not handled but this is a workaround for stackoverflow issue when using System.in...
+        Object[] arguments = new Object[] { new FileInputStream(FileDescriptor.in),
+            new FileOutputStream(FileDescriptor.out), new FileOutputStream(FileDescriptor.err) };
 
         try {
             Method nameMethod = commandProcessor.getClass().getMethod("createSession", parameterTypes); //$NON-NLS-1$
             Object commandSession = nameMethod.invoke(commandProcessor, arguments);
+            addCommandSessionListener(commandProcessor);
             return commandSession;
         } catch (Exception ex) {
             // Since the services returned by the tracker could become
             // invalid at any moment, we will catch all exceptions, log
             // a message, and then ignore faulty services.
+            System.err.println(ex);
+        }
+
+        return null;
+    }
+
+    private static void addCommandSessionListener(Object commandProcessor) {
+        try {
+            ClassLoader loader = commandProcessor.getClass().getClassLoader();
+            Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener"); //$NON-NLS-1$
+            Method nameMethod = commandProcessor.getClass().getMethod("addListener", c); //$NON-NLS-1$
+
+            Object listener = Proxy.newProxyInstance(loader, new Class[] { c }, new InvocationHandler() {
+
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    String listenerMethod = method.getName();
+
+                    if (listenerMethod.equals("beforeExecute")) { //$NON-NLS-1$
+                        String arg = args[1].toString();
+                        if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { //$NON-NLS-1$ //$NON-NLS-2$
+                            // Force gogo to not use Expander to concatenate parameter with the current directory
+                            // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
+                            commandSession_execute(args[0], "gogo.option.noglob=on"); //$NON-NLS-1$
+                        }
+                    }
+                    return null;
+                }
+            });
+            nameMethod.invoke(commandProcessor, listener);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static boolean initCommandSession(Object commandSession, String args) {
+        try {
+            // wait for gosh command to be registered
+            for (int i = 0; (i < 100) && commandSession_get(commandSession, "gogo:gosh") == null; ++i) { //$NON-NLS-1$
+                TimeUnit.MILLISECONDS.sleep(10);
+            }
+
+            Class<?>[] parameterTypes = new Class[] { CharSequence.class };
+            Object[] arguments = new Object[] { "gogo:gosh --login " + (args == null ? "" : args) }; //$NON-NLS-1$ //$NON-NLS-2$
+            Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
+            nameMethod.invoke(commandSession, arguments);
+        } catch (InterruptedException e) {
+            // Do not print
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static Object commandSession_get(Object commandSession, String key) {
+        if (commandSession == null || key == null) {
+            return null;
+        }
+
+        Class<?>[] parameterTypes = new Class[] { String.class };
+        Object[] arguments = new Object[] { key };
+
+        try {
+            Method nameMethod = commandSession.getClass().getMethod("get", parameterTypes); //$NON-NLS-1$
+            return nameMethod.invoke(commandSession, arguments);
+        } catch (Exception ex) {
             System.err.println(ex);
         }
 
@@ -662,27 +731,25 @@ public class WeasisLauncher {
         return false;
     }
 
-    public static boolean commandSession_execute(Object commandSession, CharSequence charSequence) {
+    public static Object commandSession_execute(Object commandSession, CharSequence charSequence) {
         if (commandSession == null) {
             return false;
         }
-        Class[] parameterTypes = new Class[] { CharSequence.class };
+        Class<?>[] parameterTypes = new Class[] { CharSequence.class };
 
         Object[] arguments = new Object[] { charSequence };
 
         try {
             Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
-            nameMethod.invoke(commandSession, arguments);
-            return true;
+            return nameMethod.invoke(commandSession, arguments);
         } catch (Exception ex) {
             // Since the services returned by the tracker could become
             // invalid at any moment, we will catch all exceptions, log
             // a message, and then ignore faulty services.
-            System.err.println(ex);
             ex.printStackTrace();
         }
 
-        return false;
+        return null;
     }
 
     /**
@@ -721,6 +788,12 @@ public class WeasisLauncher {
             props = readProperties(propURI, props);
         }
 
+        // Only required for dev purposes (running the app in IDE)
+        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$
+        if (mvnRepo != null) {
+            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        }
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
         Map<String, String> map = new HashMap<>();
@@ -751,21 +824,28 @@ public class WeasisLauncher {
                 return null;
             }
         } else {
-            // Determine where the configuration directory is by figuring
-            // out where felix.jar is located on the system class path.
-            File confDir;
-            String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
-            int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
-            int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
-            if (index >= start) {
-                // Get the path of the felix.jar file.
-                String jarLocation = classpath.substring(start, index);
-                // Calculate the conf directory based on the parent
-                // directory of the felix.jar directory.
-                confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
-            } else {
-                // Can't figure it out so use the current directory as default.
-                confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+            // Development folder only
+            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$ //$NON-NLS-2$
+            if (!confDir.canRead()) {
+                confDir = null;
+            }
+
+            if (confDir == null) {
+                // Determine where the configuration directory is by figuring
+                // out where felix.jar is located on the system class path.
+                String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
+                int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
+                int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
+                if (index >= start) {
+                    // Get the path of the felix.jar file.
+                    String jarLocation = classpath.substring(start, index);
+                    // Calculate the conf directory based on the parent
+                    // directory of the felix.jar directory.
+                    confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
+                } else {
+                    // Can't figure it out so use the current directory as default.
+                    confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+                }
             }
 
             try {
@@ -1269,16 +1349,48 @@ public class WeasisLauncher {
         try {
             Class.forName("sun.misc.Signal"); //$NON-NLS-1$
             Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
-            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() { //$NON-NLS-1$
-                @Override
-                public void handle(sun.misc.Signal arg0) {
-                    shutdownHook();
-                }
-            });
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook()); //$NON-NLS-1$
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension"); //$NON-NLS-1$
+        }
+    }
+
+    public static int getJavaMajorVersion() {
+        // Handle new versioning from Java 9
+        String jvmVersionString = System.getProperty("java.specification.version"); //$NON-NLS-1$
+        int verIndex = jvmVersionString.indexOf("1."); //$NON-NLS-1$
+        if (verIndex >= 0) {
+            jvmVersionString = jvmVersionString.substring(verIndex + 2);
+        }
+        return Integer.parseInt(jvmVersionString);
+    }
+
+    /**
+     * @see https://bugs.openjdk.java.net/browse/JDK-8054639
+     *
+     */
+    private static void handleWebstartHookBug() {
+        int major = getJavaMajorVersion();
+        if (major < 9) {
+            // there is a bug that arrived sometime around the mid java7 releases. shutdown hooks get created that
+            // shutdown loggers and close down the classloader jars that means that anything we try to do in our
+            // shutdown hook throws an exception, but only after some random amount of time
+            try {
+                Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks"); //$NON-NLS-1$
+                Field field = clazz.getDeclaredField("hooks"); //$NON-NLS-1$
+                field.setAccessible(true);
+                Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
+                for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext();) {
+                    Thread thread = it.next();
+                    if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) { //$NON-NLS-1$
+                        it.remove();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

@@ -153,15 +153,13 @@ public class ModalityView {
 
     private static void readTagDisplayByModality() {
         XMLStreamReader xmler = null;
-        InputStream stream = null;
         try {
             File file = ResourceUtil.getResource("attributes-view.xml"); //$NON-NLS-1$
             if (!file.canRead()) {
                 return;
             }
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(file); // $NON-NLS-1$
-            xmler = xmlif.createXMLStreamReader(stream);
+            xmler = xmlif.createXMLStreamReader(new FileInputStream(file));
 
             while (xmler.hasNext()) {
                 switch (xmler.next()) {
@@ -181,7 +179,6 @@ public class ModalityView {
             LOGGER.error("Cannot read attributes-view.xml! ", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(xmler);
-            FileUtil.safeClose(stream);
         }
     }
 

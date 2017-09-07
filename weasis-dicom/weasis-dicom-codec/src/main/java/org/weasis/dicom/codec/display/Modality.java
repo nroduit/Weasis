@@ -130,7 +130,7 @@ public enum Modality {
         }
         return v;
     }
-    
+
     public static Modality[] getAllModalitiesExceptDefault() {
         Modality[] vals = Modality.values();
         return Arrays.copyOfRange(vals, 1, vals.length);

@@ -15,6 +15,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import javax.swing.SwingWorker;
 
@@ -49,6 +50,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         DF3.setMaximumFractionDigits(3); // 3 decimals
     }
 
+
+    private final List<Object> oldIds = new ArrayList<>();
     private TagW tagID;
     private Map<TagW, Object> tags;
     /** Original series. */
@@ -188,16 +191,52 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
             factoryReference = null;
         }
     }
+    
+
+    @Override
+    public void addMergeIdValue(Object valueID) {
+        if(!oldIds.contains(valueID)) {
+            oldIds.add(valueID);
+        }
+    }
 
     @Override
     public boolean matchIdValue(Object valueID) {
         Object v = tags.get(tagID);
-        if (v == valueID)
+        
+        if(Objects.equals(v, valueID)) {
             return true;
-        if (v == null) {
+        }
+        for (Object id : oldIds) {
+            if(Objects.equals(id, valueID)) {
+                return true;
+            } 
+        }        
+        return false;
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        Object val = tags.get(tagID);
+        result = prime * result + ((val == null) ? tags.hashCode() : val.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
             return false;
         }
-        return v.equals(valueID);
+        if (!(obj instanceof MediaSeriesGroup)) {
+            return false;
+        }
+        // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
+        return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) obj).getTagValue(tagID));
     }
 
     @Override
@@ -598,5 +637,4 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
             internalThread.start();
         }
     }
-
 }

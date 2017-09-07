@@ -226,11 +226,13 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                     measVal.add(new MeasureItem(TOP_LEFT_POINT_Y, val, unitStr));
                 }
                 if (WIDTH.getComputed()) {
-                    Double val = Optional.ofNullable(pathArea).map(pa -> ratio * pa.getBounds2D().getWidth()).orElse(null);
+                    Double val =
+                        Optional.ofNullable(pathArea).map(pa -> ratio * pa.getBounds2D().getWidth()).orElse(null);
                     measVal.add(new MeasureItem(WIDTH, val, unitStr));
                 }
                 if (HEIGHT.getComputed()) {
-                    Double val = Optional.ofNullable(pathArea).map(pa -> ratio * pa.getBounds2D().getHeight()).orElse(null);
+                    Double val =
+                        Optional.ofNullable(pathArea).map(pa -> ratio * pa.getBounds2D().getHeight()).orElse(null);
                     measVal.add(new MeasureItem(HEIGHT, val, unitStr));
                 }
 
@@ -240,7 +242,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lineSegmentList = getClosedPathSegments(pathArea);
                     }
                     centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                    Double val = (centroid != null) ? adapter.getXCalibratedValue( centroid.getX()) : null;
+                    Double val = (centroid != null) ? adapter.getXCalibratedValue(centroid.getX()) : null;
                     measVal.add(new MeasureItem(CENTROID_X, val, unitStr));
                 }
                 if (CENTROID_Y.getComputed()) {
@@ -248,7 +250,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         lineSegmentList = getClosedPathSegments(pathArea);
                     }
                     centroid = (centroid == null) ? getCentroid(lineSegmentList) : centroid;
-                    Double val = (centroid != null) ? adapter.getYCalibratedValue( centroid.getY()) : null;
+                    Double val = (centroid != null) ? adapter.getYCalibratedValue(centroid.getY()) : null;
                     measVal.add(new MeasureItem(CENTROID_Y, val, unitStr));
                 }
                 if (AREA.getComputed()) {

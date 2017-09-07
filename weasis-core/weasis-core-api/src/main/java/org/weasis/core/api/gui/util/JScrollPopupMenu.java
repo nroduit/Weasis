@@ -1,5 +1,6 @@
 package org.weasis.core.api.gui.util;
 
+import java.awt.Adjustable;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
@@ -15,7 +16,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollBar;
 
 public class JScrollPopupMenu extends JPopupMenu {
-    
+
     protected int maximumVisibleRows = 10;
     private JScrollBar popupScrollBar;
 
@@ -42,10 +43,9 @@ public class JScrollPopupMenu extends JPopupMenu {
         });
     }
 
-
     protected JScrollBar getScrollBar() {
         if (popupScrollBar == null) {
-            popupScrollBar = new JScrollBar(JScrollBar.VERTICAL);
+            popupScrollBar = new JScrollBar(Adjustable.VERTICAL);
             popupScrollBar.addAdjustmentListener(new AdjustmentListener() {
                 @Override
                 public void adjustmentValueChanged(AdjustmentEvent e) {

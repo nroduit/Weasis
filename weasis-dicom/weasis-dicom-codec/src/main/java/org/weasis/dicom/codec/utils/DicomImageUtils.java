@@ -32,7 +32,6 @@ import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TransferSyntax;
 
 /**
  *

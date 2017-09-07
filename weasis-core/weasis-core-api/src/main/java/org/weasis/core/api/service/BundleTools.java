@@ -95,7 +95,7 @@ public class BundleTools {
                 LocalUtil.setLocaleFormat(l);
             }
         }
-        
+
         String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
         ResourceUtil.setResourcePath(path);
     }

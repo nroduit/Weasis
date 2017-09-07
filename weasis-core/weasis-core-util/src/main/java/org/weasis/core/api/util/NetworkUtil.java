@@ -15,10 +15,13 @@ public class NetworkUtil {
 
     private NetworkUtil() {
     }
+
     public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
         return getUrlInputStream(urlConnection, 5000, 7000);
     }
-    public static InputStream getUrlInputStream(URLConnection urlConnection, int connectTimeout, int readTimeout) throws StreamIOException {
+
+    public static InputStream getUrlInputStream(URLConnection urlConnection, int connectTimeout, int readTimeout)
+        throws StreamIOException {
         urlConnection.setConnectTimeout(connectTimeout);
         urlConnection.setReadTimeout(readTimeout);
         if (urlConnection instanceof HttpURLConnection) {
@@ -32,7 +35,7 @@ public class NetworkUtil {
                     if (LOGGER.isTraceEnabled()) {
                         writeErrorResponse(httpURLConnection);
                     }
-                    throw new StreamIOException(httpURLConnection.getResponseMessage()); 
+                    throw new StreamIOException(httpURLConnection.getResponseMessage());
                 }
             } catch (StreamIOException e) {
                 throw e;
@@ -47,7 +50,7 @@ public class NetworkUtil {
             throw new StreamIOException(e);
         }
     }
-    
+
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
         InputStream errorStream = httpURLConnection.getErrorStream();
         if (errorStream != null) {

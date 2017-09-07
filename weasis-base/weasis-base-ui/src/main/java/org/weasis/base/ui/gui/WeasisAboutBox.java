@@ -14,6 +14,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Frame;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -65,12 +66,10 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     private final JPanel jPanel1 = new JPanel();
     private final JScrollPane jScrollPane3 = new JScrollPane();
 
-    public WeasisAboutBox() {
-        super(WeasisWin.getInstance().getFrame(),
-            String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
-        sysTable = new JTable(new SimpleTableModel(
-            new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
-                Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
+    public WeasisAboutBox(Frame owner) {
+        super(owner, String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
+        sysTable = new JTable(new SimpleTableModel(new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
+            Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
             createSysInfo()));
         sysTable.getColumnModel().setColumnMargin(5);
         JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);

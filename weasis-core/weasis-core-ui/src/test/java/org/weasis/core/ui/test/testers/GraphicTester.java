@@ -15,19 +15,19 @@ import org.junit.Before;
 import org.junit.Test;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.DragGraphic;
-import org.weasis.core.ui.model.graphic.GraphicArea;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicArea;
 import org.weasis.core.ui.test.utils.XmlSerialisationHelper;
 
 /**
  * Graphic helper for general testing. Test serialization/deserialization of basic and complete objects Test copy() of
  * objects It is possible to add more test with methods <code>additionnalTestsFor<<b>name of the test</b>></code>
- * 
+ *
  * @author ylar - Yannick LARVOR (ylarvor@smarwavesa.com)
  *
  * @param <E>
  *            Class implementing {@link Graphic}
- * 
+ *
  * @since v2.5.0 - 2016-07-12 - Creation
  */
 public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationHelper {
@@ -95,7 +95,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     /**
      * Check object has a default constructor.
-     * 
+     *
      * @since v2.5.0 - ylar - Creation
      */
     @Test
@@ -111,7 +111,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     /**
      * Check an empty object can be reconstruct from an XML correctly.
-     * 
+     *
      * @since v2.5.0 - ylar - Creation
      */
     @Test
@@ -144,7 +144,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     /**
      * Check an object with points can be reconstruct from an XML correctly.
-     * 
+     *
      * @since v2.5.0 - ylar - Creation
      */
     @Test
@@ -155,7 +155,6 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
         E result = deserialize(xml, getGraphicClass());
         E expected = getExpectedDeserializeCompleteGraphicCopy();
-        
 
         assertThat(result).isNotNull();
         assertThat(expected).isNotNull();
@@ -175,24 +174,22 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         additionalTestsForDeserializeCompleteGraphic(result, expected);
     }
 
-    
     private E getExpectedDeserializeCompleteGraphicCopy() {
         E original = getExpectedDeserializeCompleteGraphic();
         return getCopy(original);
     }
-    
+
     @SuppressWarnings("unchecked")
     private E getCopy(E original) {
-        E copy = (E)original.copy();
+        E copy = (E) original.copy();
         copy.setUuid(original.getUuid());
         return copy;
     }
-    
 
     /**
      * Check object copy works correctly. The copied object Must be exactly the same has the given one except for the
      * <b>UUID</b>
-     * 
+     *
      * @since v2.5.0 - ylar - Creation
      */
     @Test
@@ -236,7 +233,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     /**
      * Check values that never change during serialization
-     * 
+     *
      * @param result
      */
     protected void checkDefaultValues(Graphic result) {
@@ -252,7 +249,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     /**
      * Override this method in case you want to make more test on the result and expected object
-     * 
+     *
      * @param result
      *            Object result of the XML deserialization
      * @param expected

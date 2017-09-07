@@ -20,6 +20,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLStreamReader;
 
@@ -164,7 +165,7 @@ public final class TagUtil {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                return val.split(separator);
+                return val.split(Pattern.quote(separator));
             }
         }
         return defaultValue;
@@ -207,10 +208,10 @@ public final class TagUtil {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 int[] vals = new int[strs.length];
                 for (int i = 0; i < strs.length; i++) {
-                    vals[i] = Integer.parseInt(strs[0], 10);
+                    vals[i] = Integer.parseInt(strs[i], 10);
                 }
                 return vals;
             }
@@ -241,7 +242,7 @@ public final class TagUtil {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 double[] vals = new double[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     vals[i] = Double.parseDouble(strs[0]);
@@ -275,7 +276,7 @@ public final class TagUtil {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 float[] vals = new float[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     vals[i] = Float.parseFloat(strs[0]);
@@ -317,7 +318,7 @@ public final class TagUtil {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     try {
@@ -387,8 +388,8 @@ public final class TagUtil {
     }
 
     /**
-     * 
-     * 
+     *
+     *
      * @param value1
      * @param value2
      * @param ignoreCase

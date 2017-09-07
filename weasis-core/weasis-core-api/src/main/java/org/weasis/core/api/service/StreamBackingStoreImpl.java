@@ -110,7 +110,8 @@ public abstract class StreamBackingStoreImpl implements BackingStore {
     /**
      * Has the tree changes.
      *
-     * @param prefs the prefs
+     * @param prefs
+     *            the prefs
      * @return true, if successful
      */
     protected boolean hasChanges(PreferencesImpl prefs) {

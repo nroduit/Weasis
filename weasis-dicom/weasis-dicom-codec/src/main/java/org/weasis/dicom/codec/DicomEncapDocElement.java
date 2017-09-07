@@ -22,7 +22,7 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor 
     public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
         super(mediaIO, key);
     }
-    
+
     @Override
     public String getMimeType() {
         String val = TagD.getTagValue(this, Tag.MIMETypeOfEncapsulatedDocument, String.class);

@@ -396,10 +396,10 @@ public class AcquireManager {
 
             try {
                 WorklistDialog dialog =
-                    new WorklistDialog(UIManager.getApplicationWindow(), "DICOM Worklist", calling, called);
+                    new WorklistDialog(UIManager.getApplicationWindow(), Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
-                LOGGER.error("Cannot get items from worklist", e);
+                LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
             }
         }
     }
@@ -480,13 +480,13 @@ public class AcquireManager {
             for (int i = 0; i < nodeList.getLength(); i++) {
                 Node n = nodeList.item(i);
                 if (n != null) {
-                    Optional.ofNullable(TagD.get(n.getNodeName())).ifPresent(t -> attributes.setValue(t.getId(), ElementDictionary.vrOf(t.getId(), null), n.getTextContent()));
+                    Optional.ofNullable(TagD.get(n.getNodeName())).ifPresent(t -> attributes.setValue(t.getId(),
+                        ElementDictionary.vrOf(t.getId(), null), n.getTextContent()));
                 }
             }
             list[0] = attributes.getParent() == null ? attributes : new Attributes(attributes);
             def.setTagNoNull(tag, list);
 
-            
         } else {
             tag.readValue(node.getTextContent(), def);
         }

@@ -73,7 +73,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 
 @SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -282,29 +282,30 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            final ExplorerTask<Boolean, String> task = new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
+            final ExplorerTask<Boolean, String> task =
+                new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
-                @Override
-                protected Boolean doInBackground() throws Exception {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-                    if (EXPORT_FORMAT[0].equals(format)) {
-                        writeDicom(this, exportDir, model, false);
-                    } else if (EXPORT_FORMAT[1].equals(format)) {
-                        writeDicom(this, exportDir, model, true);
-                    } else {
-                        writeOther(this, exportDir, model, format);
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+                        if (EXPORT_FORMAT[0].equals(format)) {
+                            writeDicom(this, exportDir, model, false);
+                        } else if (EXPORT_FORMAT[1].equals(format)) {
+                            writeDicom(this, exportDir, model, true);
+                        } else {
+                            writeOther(this, exportDir, model, format);
+                        }
+                        return true;
                     }
-                    return true;
-                }
 
-                @Override
-                protected void done() {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-                }
+                    @Override
+                    protected void done() {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+                    }
 
-            };
+                };
             task.execute();
         }
     }
@@ -335,7 +336,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         boolean more8bits = Boolean.parseBoolean(pref.getProperty(HEIGHT_BITS, Boolean.FALSE.toString()));
 
         try {
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> seriesGph = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -457,7 +458,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 writer = DicomDirLoader.open(dcmdirFile);
             }
 
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> uids = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -558,7 +559,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 File outputFile = new File(destinationDir, keepNames ? prUid : makeFileIDs(prUid));
                 destinationDir.mkdirs();
                 Attributes prAttributes =
-                    PrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
+                    DicomPrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
                 if (prAttributes != null) {
                     try {
                         writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);

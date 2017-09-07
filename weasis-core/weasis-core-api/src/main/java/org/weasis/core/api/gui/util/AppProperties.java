@@ -17,6 +17,7 @@ import javax.swing.LookAndFeel;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.FileUtil;
@@ -95,10 +96,15 @@ public class AppProperties {
 
     }
 
-    public static BundleContext getBundleContext(Class<?> clazz) {
-        if (clazz != null) {
-            Bundle bundle = FrameworkUtil.getBundle(clazz);
-            return bundle == null ? null : bundle.getBundleContext();
+    public static BundleContext getBundleContext() {
+        Bundle bundle = FrameworkUtil.getBundle(AppProperties.class);
+        return bundle == null ? null : bundle.getBundleContext();
+    }
+
+    public static BundleContext getBundleContext(ServiceReference<?> sRef) {
+        if (sRef != null) {
+            Bundle bundle = sRef.getBundle();
+            return bundle == null ? getBundleContext() : bundle.getBundleContext();
         }
         return null;
     }

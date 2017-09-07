@@ -63,12 +63,12 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PrSerializer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(PrSerializer.class);
+public class DicomPrSerializer {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrSerializer.class);
 
     private static final String PIXEL = "PIXEL"; //$NON-NLS-1$
 
-    private PrSerializer() {
+    private DicomPrSerializer() {
     }
 
     public static Attributes writePresentation(GraphicModel model, Attributes parentAttributes, File outputFile,
@@ -108,7 +108,7 @@ public class PrSerializer {
         return writePresentation(model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
     }
 
-    private static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
+    public static GraphicModel getModelForSerialization(GraphicModel model, Point2D offset) {
         // Remove non serializable graphics
         XmlGraphicModel xmlModel = new XmlGraphicModel();
         xmlModel.setReferencedSeries(model.getReferencedSeries());
@@ -126,8 +126,9 @@ public class PrSerializer {
                         graphic.setLabel(label);
                     }
                     xmlModel.addGraphic(graphic);
-                } else
+                } else {
                     xmlModel.addGraphic(g);
+                }
             }
         }
         return xmlModel;
@@ -178,11 +179,8 @@ public class PrSerializer {
 
                 List<Integer> frames = imageRef.getFrames();
                 if (frames != null && !frames.isEmpty()) {
-                    int[] arrays = new int[frames.size()];
-                    for (int i = 0; i < arrays.length; i++) {
-                        arrays[i] = frames.get(i).intValue() + 1; // convert to DICOM frame
-                    }
-                    rfi.setInt(Tag.ReferencedFrameNumber, VR.IS, arrays);
+                    // convert to DICOM frame
+                    rfi.setInt(Tag.ReferencedFrameNumber, VR.IS, frames.stream().mapToInt(i -> i + 1).toArray());
                 }
 
                 imageSeq.add(rfi);

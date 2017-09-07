@@ -277,7 +277,7 @@ public class MagicMimeEntry {
             return null;
         }
         raf.seek(startPos);
-        
+
         ByteBuffer buf;
         if (STRING_TYPE == type) {
             int len;

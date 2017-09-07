@@ -53,13 +53,16 @@ public class DefaultUUID implements UUIDable {
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (!(obj instanceof DefaultUUID))
+        }
+        if (!(obj instanceof DefaultUUID)) {
             return false;
+        }
         DefaultUUID other = (DefaultUUID) obj;
-        if (!uuid.equals(other.uuid))
+        if (!uuid.equals(other.uuid)) {
             return false;
+        }
         return true;
     }
 

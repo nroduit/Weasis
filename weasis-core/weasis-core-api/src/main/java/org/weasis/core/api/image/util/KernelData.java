@@ -199,7 +199,6 @@ public class KernelData implements Serializable {
             return new KernelJAI(width, height, xOrigin, yOrigin, data);
         }
     }
-    
 
     public static KernelData[] getAllFilters() {
         return new KernelData[] { NONE, MEAN, BLUR, BLURMORE, SHARPEN, SHARPENMORE, DEFOCUS, EDGE1, EDGE2, STRONGEDGE,

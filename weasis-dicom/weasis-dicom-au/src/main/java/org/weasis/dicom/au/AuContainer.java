@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 
@@ -57,8 +56,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
         Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     static final GridBagLayoutModel DEFAULT_VIEW = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, AuView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
-            .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+        "1x1", 1, 1, AuView.class.getName()); //$NON-NLS-1$
 
     static {
         SYNCH_LIST.add(SynchView.NONE);

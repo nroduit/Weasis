@@ -50,7 +50,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.base.explorer.list.IDiskFileList;
+import org.weasis.base.explorer.list.DiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -82,7 +82,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     private final JTree tree;
     private JPanel jRootPanel = new JPanel();
 
-    public DefaultExplorer(final FileTreeModel model) {
+    public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
         super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 10);
         if (model == null) {
             throw new IllegalArgumentException();
@@ -90,7 +90,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         setDockableWidth(400);
 
         this.tree = new JTree(model);
-        this.jilist = new JIThumbnailListPane<>();
+        this.jilist = new JIThumbnailListPane<>(thumbCache);
         this.changed = false;
 
         this.model = model;
@@ -137,7 +137,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             try {
                 prefDir = Paths.get(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
             } catch (InvalidPathException e) {
-                LOGGER.error("Get last dir path", e);
+                LOGGER.error("Get last dir path", e); //$NON-NLS-1$
             }
         }
 
@@ -196,7 +196,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         return null;
     }
 
-    public IDiskFileList getJIList() {
+    public DiskFileList getJIList() {
         return this.jilist;
     }
 

@@ -75,7 +75,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
 
     protected void initialize(boolean afirst) {
-         // Do nothing     
+        // Do nothing
     }
 
     public void resetSettingsToDefault() {

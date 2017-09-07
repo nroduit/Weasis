@@ -95,12 +95,12 @@ public class WorklistDialog extends JDialog {
         okButton = new JButton();
         footPanel.add(okButton);
 
-        okButton.setText("Apply");
+        okButton.setText(Messages.getString("WorklistDialog.apply")); //$NON-NLS-1$
         okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(Messages.getString("WorklistDialog.cancel")); //$NON-NLS-1$
         cancelButton.addActionListener(e -> dispose());
     }
 
@@ -145,12 +145,12 @@ public class WorklistDialog extends JDialog {
                 int row = jtable.getSelectedRow();
                 if (row < 0) {
                     selectedItem = null;
-                    selection.setText("");
+                    selection.setText(""); //$NON-NLS-1$
                 } else {
                     selectedItem = items.get(row);
                     TagW name = TagD.get(Tag.PatientName);
                     StringBuilder buf = new StringBuilder(name.getFormattedTagValue(name.getValue(selectedItem), null));
-                    buf.append(" ");
+                    buf.append(" "); //$NON-NLS-1$
                     TagW date = TagD.get(Tag.PatientBirthDate);
                     buf.append(date.getFormattedTagValue(date.getValue(selectedItem), null));
                     selection.setText(buf.toString());
@@ -193,7 +193,7 @@ public class WorklistDialog extends JDialog {
 
             AcquireManager.getInstance().applyToGlobal(tagable);
             selectedItem = null;
-            selection.setText("");
+            selection.setText(""); //$NON-NLS-1$
             jtable.getSelectionModel().clearSelection();
             return true;
         }

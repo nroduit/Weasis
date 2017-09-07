@@ -14,7 +14,7 @@ import java.awt.color.ColorSpace;
 
 public class CIELab extends ColorSpace {
     private static final long serialVersionUID = -8341937056180131312L;
-    
+
     private static final ColorSpace CIEXYZ = ColorSpace.getInstance(ColorSpace.CS_CIEXYZ);
     private static final double N = 4.0 / 29.0;
 
@@ -24,6 +24,9 @@ public class CIELab extends ColorSpace {
 
     private static class Holder {
         static final CIELab INSTANCE = new CIELab();
+
+        private Holder() {
+        }
     }
 
     public static CIELab getInstance() {

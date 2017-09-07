@@ -9,11 +9,15 @@ import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
 import javax.media.jai.PlanarImage;
 
+import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.ImageOpNode;
@@ -23,20 +27,52 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
+import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
+import org.weasis.core.ui.pref.ViewSetting;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID implements LayerAnnotation {
 
     private static final long serialVersionUID = 1338490067849040408L;
 
+    public static final String P_ALL_VIEWS = "annotations.all.views"; //$NON-NLS-1$
+    public static volatile boolean applyToAllView = true;
+    public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();
+    private static final Map<String, String> conversionMapForStorage = new HashMap<>();
+    static {
+        defaultDisplayPreferences.put(ANNOTATIONS, true);
+        defaultDisplayPreferences.put(MIN_ANNOTATIONS, false);
+        defaultDisplayPreferences.put(ANONYM_ANNOTATIONS, false);
+        defaultDisplayPreferences.put(SCALE, true);
+        defaultDisplayPreferences.put(LUT, false);
+        defaultDisplayPreferences.put(IMAGE_ORIENTATION, true);
+        defaultDisplayPreferences.put(WINDOW_LEVEL, true);
+        defaultDisplayPreferences.put(ZOOM, true);
+        defaultDisplayPreferences.put(ROTATION, false);
+        defaultDisplayPreferences.put(FRAME, true);
+        defaultDisplayPreferences.put(PIXEL, true);
+
+        conversionMapForStorage.put(ANNOTATIONS, "annotations"); //$NON-NLS-1$
+        conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations"); //$NON-NLS-1$
+        conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym"); //$NON-NLS-1$
+        conversionMapForStorage.put(SCALE, "scale"); //$NON-NLS-1$
+        conversionMapForStorage.put(LUT, "lut"); //$NON-NLS-1$
+        conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation"); //$NON-NLS-1$
+        conversionMapForStorage.put(WINDOW_LEVEL, "wl"); //$NON-NLS-1$
+        conversionMapForStorage.put(ZOOM, "zoom"); //$NON-NLS-1$
+        conversionMapForStorage.put(ROTATION, "rotation"); //$NON-NLS-1$
+        conversionMapForStorage.put(FRAME, "frame"); //$NON-NLS-1$
+        conversionMapForStorage.put(PIXEL, "pixel"); //$NON-NLS-1$
+    }
+
     protected static final int BORDER = 10;
-    
+
     protected final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     protected boolean visible = true;
     protected static final Color color = Color.yellow;
@@ -53,6 +89,45 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         this.view2DPane = view2DPane;
         this.pixelInfoBound = new Rectangle();
         this.preloadingProgressBound = new Rectangle();
+    }
+
+    public static void applyPreferences(Preferences prefs) {
+        if (prefs != null) {
+            Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
+            Preferences pref = p.node("infolayer"); //$NON-NLS-1$
+            applyToAllView = pref.getBoolean("allViews", true); //$NON-NLS-1$
+
+            Iterator<Entry<String, Boolean>> d = defaultDisplayPreferences.entrySet().iterator();
+            while (d.hasNext()) {
+                Entry<String, Boolean> v = d.next();
+                v.setValue(pref.getBoolean(conversionMapForStorage.get(v.getKey()), v.getValue()));
+            }
+        }
+    }
+
+    public static void savePreferences(Preferences prefs) {
+        if (prefs != null) {
+            Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
+            Preferences pref = p.node("infolayer"); //$NON-NLS-1$
+            BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView); //$NON-NLS-1$
+
+            Iterator<Entry<String, String>> d = conversionMapForStorage.entrySet().iterator();
+            while (d.hasNext()) {
+                Entry<String, String> v = d.next();
+                BundlePreferences.putBooleanPreferences(pref, v.getValue(), defaultDisplayPreferences.get(v.getKey()));
+            }
+        }
+    }
+
+    public static Boolean setDefaultDisplayPreferencesValue(String item, Boolean selected) {
+        Boolean selected2 = Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
+        defaultDisplayPreferences.put(item, selected);
+        return !Objects.equals(selected, selected2);
+    }
+
+    @Override
+    public void resetToDefault() {
+        displayPreferences.putAll(defaultDisplayPreferences);
     }
 
     @Override
@@ -122,12 +197,16 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
     @Override
     public Boolean getDisplayPreferences(String item) {
-        return Optional.ofNullable(displayPreferences.get(item)).orElse(Boolean.FALSE);
+        if (applyToAllView) {
+            return Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
+        }
+        return Optional.ofNullable(displayPreferences.getOrDefault(item, defaultDisplayPreferences.get(item)))
+            .orElse(Boolean.FALSE);
     }
 
     @Override
     public Boolean setDisplayPreferencesValue(String displayItem, Boolean selected) {
-        boolean selected2 = getDisplayPreferences(displayItem);
+        Boolean selected2 = getDisplayPreferences(displayItem);
         displayPreferences.put(displayItem, selected);
         return !Objects.equals(selected, selected2);
     }
@@ -210,21 +289,21 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
                 int stepWindow = (int) (ww / separation);
                 int firstlevel = (int) (wl - stepWindow * 2.0);
                 String str = Integer.toString(firstlevel); // $NON-NLS-1$
-                DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
+                AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
                     y + midfontHeight);
                 for (int i = 1; i < separation; i++) {
                     float posY = y + i * step;
                     line.setLine(x - 5f, posY, x - 1f, posY);
                     g2.draw(line);
                     str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
-                    DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
+                    AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
                         posY + midfontHeight);
                 }
 
                 line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
                 g2.draw(line);
                 str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
-                DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
+                AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
                     y + length + midfontHeight);
                 rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
                 g2.draw(rect);
@@ -248,8 +327,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
         double scale = image.getPixelSize() / zoomFactor;
-        double scaleSizex =
-            ajustShowScale(scale, (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.getHeight() / 2.0));
+        double scaleSizex = ajustShowScale(scale,
+            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.getHeight() / 2.0));
         if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
@@ -309,11 +388,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
             String pixSizeDesc = image.getPixelSizeCalibrationDescription();
             if (StringUtil.hasText(pixSizeDesc)) {
-                DefaultGraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5),
+                AbstractGraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5),
                     (float) posy - fontHeight);
             }
             str += " " + unit[0].getAbbreviation(); //$NON-NLS-1$
-            DefaultGraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
+            AbstractGraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
         double scaleSizeY = ajustShowScale(scale,
@@ -380,7 +459,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-            DefaultGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, //$NON-NLS-1$
                 (int) (posy - 5 * strokeWidth));
         }
 
@@ -448,7 +527,5 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength)
             : DecFormater.twoDecimal(ajustScaleLength);
     }
-
-
 
 }

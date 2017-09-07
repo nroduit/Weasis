@@ -35,7 +35,7 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     @Override
     public AcquireMetadataTableModel newTableModel() {
         AcquireSerieMeta model = new AcquireSerieMeta(seriesGroup);
-        model.addTableModelListener(e -> {            
+        model.addTableModelListener(e -> {
             this.titleBorder.setTitle(getDisplayText());
             seriesGroup.fireDataChanged();
         });

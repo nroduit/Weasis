@@ -43,12 +43,13 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
+import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape.BasicShape;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape.ScaleInvariantShape;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.serialize.RectangleAdapter;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -195,9 +196,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
             }
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(ptBox.getX(), ptBox.getY(),
-                ptBox.getX() + labelWidth / 2.0 + DefaultGraphicLabel.GROWING_BOUND, ptBox.getY()
-                    + labelHeight * (labels == null ? 1 : labels.length) / 2.0 + DefaultGraphicLabel.GROWING_BOUND);
-            GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2.0 + GraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * (labels == null ? 1 : labels.length) / 2.0 + GraphicLabel.GROWING_BOUND);
+            GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
             if (line != null) {
                 newShape.addLinkSegmentToInvariantShape(line, ptBox, labelBounds, getDashStroke(lineThickness), false);
 
@@ -244,13 +245,13 @@ public class AnnotationGraphic extends AbstractDragGraphic {
                 transform.transform(pt, pt);
             }
 
-            float px = (float) (pt.getX() - rect.getWidth() / 2 + DefaultGraphicLabel.GROWING_BOUND);
-            float py = (float) (pt.getY() - rect.getHeight() / 2 + DefaultGraphicLabel.GROWING_BOUND);
+            float px = (float) (pt.getX() - rect.getWidth() / 2 + GraphicLabel.GROWING_BOUND);
+            float py = (float) (pt.getY() - rect.getHeight() / 2 + GraphicLabel.GROWING_BOUND);
 
             for (String label : labels) {
                 if (StringUtil.hasText(label)) {
                     py += labelHeight;
-                    DefaultGraphicLabel.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
+                    AbstractGraphicLabel.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
                 }
             }
             g2d.setPaint(oldPaint);
@@ -319,9 +320,9 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
             labelBounds = new Rectangle.Double();
             labelBounds.setFrameFromCenter(pos.getX(), pos.getY(),
-                ptBox.getX() + labelWidth / 2.0 + DefaultGraphicLabel.GROWING_BOUND,
-                ptBox.getY() + labelHeight * this.labels.length / 2.0 + DefaultGraphicLabel.GROWING_BOUND);
-            GeomUtil.growRectangle(labelBounds, DefaultGraphicLabel.GROWING_BOUND);
+                ptBox.getX() + labelWidth / 2.0 + GraphicLabel.GROWING_BOUND,
+                ptBox.getY() + labelHeight * this.labels.length / 2.0 + GraphicLabel.GROWING_BOUND);
+            GeomUtil.growRectangle(labelBounds, GraphicLabel.GROWING_BOUND);
         }
         buildShape(null);
     }
@@ -329,7 +330,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     protected void updateBoundsSize(Font defaultFont, FontRenderContext fontRenderContext) {
         Objects.requireNonNull(defaultFont);
         Objects.requireNonNull(fontRenderContext);
-        
+
         if (labels == null || labels.length == 0) {
             reset();
         } else {

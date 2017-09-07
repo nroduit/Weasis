@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.weasis.base.explorer.list;
 
-public interface JIObservable {
+public interface ListObservable {
 
     void notifyObservers(Object arg);
 

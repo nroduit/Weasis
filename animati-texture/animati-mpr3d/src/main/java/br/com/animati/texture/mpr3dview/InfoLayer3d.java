@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.util.Comparator;
 
 import javax.vecmath.Vector3d;
 
@@ -24,6 +25,7 @@ import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
+import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.CornerDisplay;
@@ -42,8 +44,6 @@ import br.com.animati.texture.mpr3dview.api.DisplayUtils;
 import br.com.animati.texture.mpr3dview.internal.Messages;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
-import java.util.Comparator;
-import org.weasis.dicom.codec.DicomImageElement;
 
 /**
  *
@@ -377,9 +377,9 @@ public class InfoLayer3d extends AbstractInfoLayer {
                 && owner.getParentImageSeries() != null && owner.isShowingAcquisitionAxis() && !isVolumetricView()) {
 
             if (isMipActive()) {
-                if (((TextureDicomSeries) owner.getSeriesObject()).isSliceSpacingRegular()) {
-                    int currentSlice = ((ViewTexture) owner).getCurrentSlice() - 1;
-                    Comparator sorter = ((ViewTexture) owner).getCurrentSortComparator();
+                if (owner.getSeriesObject().isSliceSpacingRegular()) {
+                    int currentSlice = owner.getCurrentSlice() - 1;
+                    Comparator sorter = owner.getCurrentSortComparator();
                     Object depth = owner.getActionValue(ActionWA.MIP_DEPTH.cmd());
                     if (depth instanceof Integer) {
                         DicomImageElement firstMedia = (DicomImageElement) series.getMedia(currentSlice, null, sorter);
@@ -406,7 +406,7 @@ public class InfoLayer3d extends AbstractInfoLayer {
                 }
                 return UNDEFINED;
             } else {
-                return ((TextureDicomSeries) owner.getSeriesObject()).getTagValue(tag, owner.getCurrentSlice() - 1);
+                return owner.getSeriesObject().getTagValue(tag, owner.getCurrentSlice() - 1);
             }
         }
         return DisplayUtils.getTagValue(tag, patient, study, series, null);
@@ -616,6 +616,11 @@ public class InfoLayer3d extends AbstractInfoLayer {
             }
         }
         g2d.setColor(oldColor);
+    }
+
+    @Override
+    public void resetToDefault() {
+        // TODO implement the persistence
     }
 
 }
