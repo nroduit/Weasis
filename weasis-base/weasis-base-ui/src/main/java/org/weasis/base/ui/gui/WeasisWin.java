@@ -106,6 +106,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
@@ -626,10 +627,17 @@ public class WeasisWin {
     public void showWindow() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
-
-        Rectangle bound;
-
-        GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        
+        Monitor defMonitor = Monitor.getDefaultMonitor();
+        GraphicsConfiguration config;
+       
+        if (defMonitor == null) {
+             config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        }
+        else {
+            config = defMonitor.getGraphicsConfiguration();
+        }
+        
         Rectangle b;
         if (config != null) {
             b = config.getBounds();
@@ -641,15 +649,12 @@ public class WeasisWin {
         } else {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
-        bound = b;
-
-        LOGGER.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
-        // setMaximizedBounds(bound);
-
+        LOGGER.debug("Max main screen bound: {}", b.toString()); //$NON-NLS-1$
+        
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
             // set a valid size, insets of screen is often non consistent
-            frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
+            frame.setBounds(b.x, b.y, b.width - 150, b.height - 150);
             frame.setVisible(true);
 
             frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH

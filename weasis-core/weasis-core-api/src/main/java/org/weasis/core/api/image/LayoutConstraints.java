@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 
@@ -21,6 +22,7 @@ public class LayoutConstraints extends GridBagConstraints
     public static final int SPACE = 3;
     private String type;
     private int layoutID;
+    private Color color;
 
     public LayoutConstraints(String type, int layoutID, int gridx, int gridy, int gridwidth, int gridheight,
         double weightx, double weighty, int anchor, int fill) {
@@ -53,6 +55,14 @@ public class LayoutConstraints extends GridBagConstraints
     @Override
     public LayoutConstraints copy() {
         return new LayoutConstraints(this);
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
     }
 
 }

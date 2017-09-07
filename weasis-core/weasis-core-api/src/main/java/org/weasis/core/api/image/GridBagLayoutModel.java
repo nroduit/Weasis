@@ -10,9 +10,13 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
+import java.awt.geom.Rectangle2D;
 import java.io.InputStream;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -25,6 +29,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.Copyable;
 import org.weasis.core.api.util.StringUtil;
 import org.xml.sax.Attributes;
@@ -39,16 +44,17 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
 
+    private static final Color background = new Color(67, 72, 70);
+
     private String title;
     private final Icon icon;
     private final String id;
 
     private final Map<LayoutConstraints, Component> constraints;
 
-    public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass, Icon icon) {
+    public GridBagLayoutModel(String id, String title, int rows, int cols, String defaultClass) {
         this.title = title;
         this.id = id;
-        this.icon = icon;
         this.constraints = new LinkedHashMap<>(cols * rows);
         double weightx = 1.0 / cols;
         double weighty = 1.0 / rows;
@@ -58,22 +64,22 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
                     GridBagConstraints.CENTER, GridBagConstraints.BOTH), null);
             }
         }
+        this.icon = buildIcon();
     }
 
-    public GridBagLayoutModel(Map<LayoutConstraints, Component> constraints, String id, String title, Icon icon) {
+    public GridBagLayoutModel(Map<LayoutConstraints, Component> constraints, String id, String title) {
         if (constraints == null) {
             throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
         }
         this.title = title;
         this.id = id;
-        this.icon = icon;
         this.constraints = constraints;
+        this.icon = buildIcon();
     }
 
-    public GridBagLayoutModel(InputStream stream, String id, String title, Icon icon) {
+    public GridBagLayoutModel(InputStream stream, String id, String title) {
         this.title = title;
         this.id = id;
-        this.icon = icon;
         this.constraints = new LinkedHashMap<>();
         try {
             SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
@@ -82,6 +88,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         } catch (Exception e) {
             LOGGER.error("Loading layout xml", e); //$NON-NLS-1$
         }
+        this.icon = buildIcon();
     }
 
     public GridBagLayoutModel(GridBagLayoutModel layoutModel) {
@@ -94,6 +101,46 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         while (enumVal.hasNext()) {
             this.constraints.put(enumVal.next().copy(), null);
         }
+    }
+
+    private Icon buildIcon() {
+        return new Icon() {
+
+            @Override
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+                Graphics2D g2d = (Graphics2D) g;
+                g2d.setColor(background);
+                g2d.fillRect(x, y, getIconWidth(), getIconHeight());
+                g2d.setColor(Color.WHITE);
+                Dimension dim = getGridSize();
+                double stepX = getIconWidth() / dim.getWidth();
+                double stepY = getIconHeight() / dim.getHeight();
+
+                Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
+                while (enumVal.hasNext()) {
+                    LayoutConstraints l = enumVal.next();
+                    Rectangle2D rect = new Rectangle2D.Double(x + l.gridx * stepX, y + l.gridy * stepY,
+                        l.gridwidth * stepX, l.gridheight * stepY);
+                    Color color = l.getColor();
+                    if (color != null) {
+                        g2d.setColor(color);
+                        g2d.fill(rect);
+                        g2d.setColor(Color.WHITE);
+                    }
+                    g2d.draw(rect);
+                }
+            }
+
+            @Override
+            public int getIconWidth() {
+                return 22;
+            }
+
+            @Override
+            public int getIconHeight() {
+                return 22;
+            }
+        };
     }
 
     public String getId() {
@@ -195,6 +242,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
          * ID of the component
          */
         private int increment = 0;
+        private Color color;
 
         private int tag = -1;
         private StringBuilder name = new StringBuilder(80);
@@ -219,7 +267,10 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
                 weighty = getDoubleValue(attributes.getValue("weighty")); //$NON-NLS-1$
                 position = Integer.parseInt(attributes.getValue("position")); //$NON-NLS-1$
                 expand = Integer.parseInt(attributes.getValue("expand")); //$NON-NLS-1$
-
+                String ctype = attributes.getValue("typeColor"); //$NON-NLS-1$
+                if (StringUtil.hasText(ctype)) {
+                    color = WProperties.hexadecimal2Color(ctype);
+                }
             } else if (title == null && "layoutModel".equals(qName)) { //$NON-NLS-1$
                 title = attributes.getValue("name"); //$NON-NLS-1$
             }
@@ -229,9 +280,10 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         public void endElement(String uri, String localName, String qName) throws SAXException {
             if ("element".equals(qName)) { //$NON-NLS-1$
                 increment++;
-                constraints.put(
-                    new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position, expand),
-                    null);
+                LayoutConstraints c =
+                    new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position, expand);
+                c.setColor(color);
+                constraints.put(c, null);
                 name.setLength(0);
                 tag = -1;
             }
