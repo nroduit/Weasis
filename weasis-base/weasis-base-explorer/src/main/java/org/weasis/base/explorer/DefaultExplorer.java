@@ -137,7 +137,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             try {
                 prefDir = Paths.get(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
             } catch (InvalidPathException e) {
-                LOGGER.error("Get last dir path", e);
+                LOGGER.error("Get last dir path", e); //$NON-NLS-1$
             }
         }
 

@@ -57,4 +57,6 @@ public interface LayerAnnotation extends Layer {
 
     void setShowBottomScale(Boolean showBottomScale);
 
+    void resetToDefault();
+
 }
