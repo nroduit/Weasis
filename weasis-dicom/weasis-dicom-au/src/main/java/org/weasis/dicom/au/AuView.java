@@ -385,7 +385,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                         int bitsPerSample = attributes.getInt(Tag.WaveformBitsAllocated, 0);
                         String spInterpretation = attributes.getString(Tag.WaveformSampleInterpretation, 0);
 
-                        // http://medical.nema.org/medical/dicom/current/output/chtml/part03/sect_A.34.html
+                        // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.9.html
                         // SB: signed 8 bit linear
                         // UB: unsigned 8 bit linear
                         // MB: 8 bit mu-law (in accordance with ITU-T Recommendation G.711)

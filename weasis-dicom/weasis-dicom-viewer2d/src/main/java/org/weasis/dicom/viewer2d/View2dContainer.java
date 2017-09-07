@@ -11,6 +11,8 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.Component;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -19,8 +21,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -98,35 +102,16 @@ import org.weasis.dicom.viewer2d.dockable.ImageTool;
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
-    public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<SynchView>());
-
-    static {
-        SYNCH_LIST.add(SynchView.NONE);
-        SYNCH_LIST.add(SynchView.DEFAULT_STACK);
-        SYNCH_LIST.add(SynchView.DEFAULT_TILE);
-    }
+    // Unmodifiable list of the default synchronization elements
+    public static final List<SynchView> DEFAULT_SYNCH_LIST =
+        Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
         new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("View2dContainer.layout_dump"), new ImageIcon( //$NON-NLS-1$
-                View2dContainer.class.getResource("/icon/22x22/layout1x2_c2.png"))); //$NON-NLS-1$
-
-    public static final List<GridBagLayoutModel> LAYOUT_LIST =
-        Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
-
-    static {
-        LAYOUT_LIST.add(VIEWS_1x1);
-        LAYOUT_LIST.add(VIEWS_1x2);
-        LAYOUT_LIST.add(VIEWS_2x1);
-        LAYOUT_LIST.add(VIEWS_2x2_f2);
-        LAYOUT_LIST.add(VIEWS_2_f1x2);
-        LAYOUT_LIST.add(VIEWS_2x1_r1xc2_dump);
-        LAYOUT_LIST.add(VIEWS_2x2);
-        LAYOUT_LIST.add(VIEWS_3x2);
-        LAYOUT_LIST.add(VIEWS_3x3);
-        LAYOUT_LIST.add(VIEWS_4x3);
-        LAYOUT_LIST.add(VIEWS_4x4);
-    }
+            Messages.getString("View2dContainer.layout_dump")); //$NON-NLS-1$
+    // Unmodifiable list of the default layout elements
+    public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
+        Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x1_r1xc2_dump, VIEWS_2x2);
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
@@ -142,6 +127,20 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     public View2dContainer(GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
         super(EventManager.getInstance(), layoutModel, uid, pluginName, icon, tooltips);
         setSynchView(SynchView.DEFAULT_STACK);
+        addComponentListener(new ComponentAdapter() {
+
+            @Override
+            public void componentResized(ComponentEvent e) {
+                ImageViewerPlugin<DicomImageElement> container =
+                    EventManager.getInstance().getSelectedView2dContainer();
+                if (container == View2dContainer.this) {
+                    Optional<ComboItemListener> layoutAction =
+                        EventManager.getInstance().getAction(ActionW.LAYOUT, ComboItemListener.class);
+                    layoutAction.ifPresent(a -> a.setDataListWithoutTriggerAction(getLayoutList().toArray()));
+                }
+            }
+        });
+        
         if (!initComponents) {
             initComponents = true;
 
@@ -566,7 +565,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
                 for (ViewCanvas<DicomImageElement> view : viewList) {
 
-                    if ((view.getSeries() instanceof DicomSeries) == false || (view instanceof View2d) == false) {
+                    if (!(view.getSeries() instanceof DicomSeries) || !(view instanceof View2d)) {
                         continue;
                     }
 
@@ -577,7 +576,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                     DicomSeries dicomSeries = (DicomSeries) view.getSeries();
                     String seriesInstanceUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
 
-                    if (updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID) == false) {
+                    if (!updatedKOSelection.containsSeriesInstanceUIDReference(seriesInstanceUID)) {
                         continue;
                     }
 
@@ -740,12 +739,52 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public List<SynchView> getSynchList() {
-        return SYNCH_LIST;
+        return DEFAULT_SYNCH_LIST;
     }
 
     @Override
     public List<GridBagLayoutModel> getLayoutList() {
-        return LAYOUT_LIST;
+        int rx = 1;
+        int ry = 1;
+        double ratio = getWidth() / (double) getHeight();
+        if (ratio >= 1.0) {
+            rx = (int) Math.round(ratio * 1.5);
+        } else {
+            ry = (int) Math.round((1.0 / ratio) * 1.5);
+        }
+
+        ArrayList<GridBagLayoutModel> list = new ArrayList<>(DEFAULT_LAYOUT_LIST);
+        // Exclude 1x1
+        if (rx != ry && rx != 0 && ry != 0) {
+            int factorLimit = (int) (rx == 1 ? Math.round(getWidth() / 512.0) : Math.round(getHeight() / 512.0));
+            if (factorLimit < 1) {
+                factorLimit = 1;
+            }
+            if (rx > ry) {
+                int step = 1 + (rx / 20);
+                for (int i = rx / 2; i < rx; i = i + step) {
+                    addLayout(list, factorLimit, i, ry);
+                }
+            } else {
+                int step = 1 + (ry / 20);
+                for (int i = ry / 2; i < ry; i = i + step) {
+                    addLayout(list, factorLimit, rx, i);
+                }
+            }
+
+            addLayout(list, factorLimit, rx, ry);
+        }
+        Collections.sort(list, (o1, o2) -> Integer.compare(o1.getConstraints().size(), o2.getConstraints().size()));
+        return list;
     }
 
+    private void addLayout(List<GridBagLayoutModel> list, int factorLimit, int rx, int ry) {
+        for (int i = 1; i <= factorLimit; i++) {
+            if (i > 2 || i * ry > 2 || i * rx > 2) {
+                if (i * ry < 50 && i * rx < 50) {
+                    list.add(ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
+                }
+            }
+        }
+    }
 }

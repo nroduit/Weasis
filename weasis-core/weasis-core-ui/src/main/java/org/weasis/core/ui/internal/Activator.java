@@ -22,6 +22,7 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
@@ -35,6 +36,7 @@ import org.weasis.core.ui.editor.FileModel;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 
 public class Activator implements BundleActivator, ServiceListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
@@ -46,8 +48,10 @@ public class Activator implements BundleActivator, ServiceListener {
         if (dataFolder != null) {
             FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
         }
+        Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
+        AbstractInfoLayer.applyPreferences(prefs );
         MeasureTool.viewSetting.initMonitors();
-        MeasureTool.viewSetting.applyPreferences(BundlePreferences.getDefaultPreferences(bundleContext));
+        MeasureTool.viewSetting.applyPreferences(prefs);
 
         // Must be instantiate in EDT
         GuiExecutor.instance().execute(() -> {
@@ -68,7 +72,9 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences
-        MeasureTool.viewSetting.savePreferences(BundlePreferences.getDefaultPreferences(bundleContext));
+        Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
+        AbstractInfoLayer.savePreferences(prefs);
+        MeasureTool.viewSetting.savePreferences(prefs);
         File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
             File file = new File(dataFolder, "persitence.properties"); //$NON-NLS-1$
