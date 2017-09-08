@@ -88,6 +88,32 @@ public class Imgcodecs {
     public static  void loadNativeLibrary() {
         System.loadLibrary("opencv_java330");
     }
+ 
+    
+    //
+    // C++:  Mat dicomimread(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
+    //
+
+    //javadoc: dicomimread(filename, segposition, seglength, dicomflags, flags)
+    public static Mat dicomimread(String filename, MatOfDouble segposition, MatOfDouble seglength, int dicomflags, int flags)
+    {
+        Mat segposition_mat = segposition;
+        Mat seglength_mat = seglength;
+        Mat retVal = new Mat(dicomimread_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
+        
+        return retVal;
+    }
+
+    //javadoc: dicomimread(filename, segposition, seglength)
+    public static Mat dicomimread(String filename, MatOfDouble segposition, MatOfDouble seglength)
+    {
+        Mat segposition_mat = segposition;
+        Mat seglength_mat = seglength;
+        Mat retVal = new Mat(dicomimread_1(filename, segposition_mat.nativeObj, seglength_mat.nativeObj));
+        
+        return retVal;
+    }
+    
     
     //
     // C++:  Mat imdecode(Mat buf, int flags)
@@ -121,30 +147,6 @@ public class Imgcodecs {
     {
         
         Mat retVal = new Mat(imread_1(filename));
-        
-        return retVal;
-    }
-
-
-    //
-    // C++:  Mat imreadseg(String filename, vector_double segposition = std::vector<double>(), vector_double seglength = std::vector<double>(), int dicomflags = 0, int flags = IMREAD_COLOR)
-    //
-
-    //javadoc: imreadseg(filename, segposition, seglength, dicomflags, flags)
-    public static Mat imreadseg(String filename, MatOfDouble segposition, MatOfDouble seglength, int dicomflags, int flags)
-    {
-        Mat segposition_mat = segposition;
-        Mat seglength_mat = seglength;
-        Mat retVal = new Mat(imreadseg_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
-        
-        return retVal;
-    }
-
-    //javadoc: imreadseg(filename)
-    public static Mat imreadseg(String filename)
-    {
-        
-        Mat retVal = new Mat(imreadseg_1(filename));
         
         return retVal;
     }
@@ -221,17 +223,16 @@ public class Imgcodecs {
 
 
 
-
+    // C++:  Mat dicomimread(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
+    private static native long dicomimread_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
+    private static native long dicomimread_1(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj);
+    
     // C++:  Mat imdecode(Mat buf, int flags)
     private static native long imdecode_0(long buf_nativeObj, int flags);
 
     // C++:  Mat imread(String filename, int flags = IMREAD_COLOR)
     private static native long imread_0(String filename, int flags);
     private static native long imread_1(String filename);
-
-    // C++:  Mat imreadseg(String filename, vector_double segposition = std::vector<double>(), vector_double seglength = std::vector<double>(), int dicomflags = 0, int flags = IMREAD_COLOR)
-    private static native long imreadseg_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
-    private static native long imreadseg_1(String filename);
     
     // C++:  bool imencode(String ext, Mat img, vector_uchar& buf, vector_int params = std::vector<int>())
     private static native boolean imencode_0(String ext, long img_nativeObj, long buf_mat_nativeObj, long params_mat_nativeObj);

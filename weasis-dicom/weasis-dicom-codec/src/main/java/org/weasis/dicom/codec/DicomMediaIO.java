@@ -796,7 +796,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     new MatOfDouble(Arrays.stream(extParams.getSegmentPositions()).asDoubleStream().toArray());
                 MatOfDouble lengths =
                     new MatOfDouble(Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
-                return ImageCV.toImageCV(Imgcodecs.imreadseg(orinigal.get().getAbsolutePath(), positions, lengths, 2,
+                return ImageCV.toImageCV(Imgcodecs.dicomimread(orinigal.get().getAbsolutePath(), positions, lengths, 2,
                     Imgcodecs.IMREAD_UNCHANGED));
             }
         }
