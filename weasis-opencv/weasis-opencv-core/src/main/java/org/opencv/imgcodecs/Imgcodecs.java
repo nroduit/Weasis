@@ -84,6 +84,9 @@ public class Imgcodecs {
             IMWRITE_PAM_FORMAT_RGB_ALPHA = 5;
 
 
+    public static final int DICOM_IMREAD_DEFAULT = -1, DICOM_IMREAD_UNSIGNED = 0, DICOM_IMREAD_SIGNED = 1,
+                    DICOM_IMREAD_YBR = 2;
+    
     
     public static  void loadNativeLibrary() {
         System.loadLibrary("opencv_java330");

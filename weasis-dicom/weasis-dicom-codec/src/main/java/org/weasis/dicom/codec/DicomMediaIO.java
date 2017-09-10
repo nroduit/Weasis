@@ -792,11 +792,15 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             resetInternalState();
 
             if (extParams.getSegmentPositions() != null) {
+                int dcmFlags = dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
+                if(pmi.name().startsWith("YBR")) {
+                    dcmFlags &= Imgcodecs.DICOM_IMREAD_YBR;
+                }
                 MatOfDouble positions =
                     new MatOfDouble(Arrays.stream(extParams.getSegmentPositions()).asDoubleStream().toArray());
                 MatOfDouble lengths =
                     new MatOfDouble(Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
-                return ImageCV.toImageCV(Imgcodecs.dicomimread(orinigal.get().getAbsolutePath(), positions, lengths, 2,
+                return ImageCV.toImageCV(Imgcodecs.dicomimread(orinigal.get().getAbsolutePath(), positions, lengths, dcmFlags,
                     Imgcodecs.IMREAD_UNCHANGED));
             }
         }

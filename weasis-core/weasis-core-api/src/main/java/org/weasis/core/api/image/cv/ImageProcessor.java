@@ -590,6 +590,29 @@ public class ImageProcessor {
         return extrema;
     }
 
+    public static double[] findMinMaxValues(Mat source, Integer paddingValue, Integer paddingLimit) {
+        double[] extrema = null;
+        if (source != null) {
+            Mat srcImg = Objects.requireNonNull(source);
+            Mat mask = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(0));
+            if (paddingValue != null) {
+                if (paddingLimit == null) {
+                    paddingLimit = paddingValue;
+                } else if (paddingLimit < paddingValue) {
+                    int temp = paddingValue;
+                    paddingValue = paddingLimit;
+                    paddingLimit = temp;
+                }
+                exludePaddingValue(srcImg, mask, paddingValue, paddingLimit);
+            }
+            MinMaxLocResult minMax = Core.minMaxLoc(srcImg, mask);
+            extrema = new double[2];
+            extrema[0] = minMax.minVal;
+            extrema[1] = minMax.maxVal;
+        }
+        return extrema;
+    }
+
     public static ImageCV buildThumbnail(PlanarImage source, Dimension iconDim, boolean keepRatio) {
         Objects.requireNonNull(source);
         if (Objects.requireNonNull(iconDim).width < 1 || iconDim.height < 1) {
