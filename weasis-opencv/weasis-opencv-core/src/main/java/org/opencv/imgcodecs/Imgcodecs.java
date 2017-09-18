@@ -83,9 +83,42 @@ public class Imgcodecs {
             IMWRITE_PAM_FORMAT_RGB = 4,
             IMWRITE_PAM_FORMAT_RGB_ALPHA = 5;
 
+    
+    public static final int
+        ILV_NONE = 0,
+        ILV_LINE = 1,
+        ILV_SAMPLE = 2; // Default is pixel interleave
 
-    public static final int DICOM_IMREAD_DEFAULT = -1, DICOM_IMREAD_UNSIGNED = 0, DICOM_IMREAD_SIGNED = 1,
-                    DICOM_IMREAD_YBR = 2;
+    public static final int
+        /* Default */
+        DICOM_IMREAD_DEFAULT = -1,
+        /* Unsigned data */
+        DICOM_IMREAD_UNSIGNED = 0,
+        /* Signed data */
+        DICOM_IMREAD_SIGNED = 1,
+        /* YBR color model */
+        DICOM_IMREAD_YBR = 2,
+        /* Big endian data */
+        DICOM_IMREAD_BIGENDIAN = 4,
+        /* Float type */
+        DICOM_IMREAD_FLOAT = 16;
+
+    public static final int // (index for the int vector)
+        /* flags */
+        DICOM_PARAM_IMREAD = 0,
+        /* dicomflags */
+        DICOM_PARAM_DCM_IMREAD = 1,
+        /* Image width */
+        DICOM_PARAM_WIDTH = 2,
+        /* Image height */
+        DICOM_PARAM_HEIGHT = 3,
+        /* Number of components */
+        DICOM_PARAM_COMPONENTS = 4,
+        /* Bits per sample */
+        DICOM_PARAM_BITS_PER_SAMPLE = 5,
+        /* Interleave mode */
+        DICOM_PARAM_INTERLEAVE_MODE = 6;
+    
     
     
     public static  void loadNativeLibrary() {
@@ -94,29 +127,44 @@ public class Imgcodecs {
  
     
     //
-    // C++:  Mat dicomimread(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
+    // C++:  Mat dicomJpgRead(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
     //
 
-    //javadoc: dicomimread(filename, segposition, seglength, dicomflags, flags)
-    public static Mat dicomimread(String filename, MatOfDouble segposition, MatOfDouble seglength, int dicomflags, int flags)
+    //javadoc: dicomJpgRead(filename, segposition, seglength, dicomflags, flags)
+    public static Mat dicomJpgRead(String filename, MatOfDouble segposition, MatOfDouble seglength, int dicomflags, int flags)
     {
         Mat segposition_mat = segposition;
         Mat seglength_mat = seglength;
-        Mat retVal = new Mat(dicomimread_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
+        Mat retVal = new Mat(dicomJpgRead_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
         
         return retVal;
     }
 
-    //javadoc: dicomimread(filename, segposition, seglength)
-    public static Mat dicomimread(String filename, MatOfDouble segposition, MatOfDouble seglength)
+    //javadoc: dicomJpgRead(filename, segposition, seglength)
+    public static Mat dicomJpgRead(String filename, MatOfDouble segposition, MatOfDouble seglength)
     {
         Mat segposition_mat = segposition;
         Mat seglength_mat = seglength;
-        Mat retVal = new Mat(dicomimread_1(filename, segposition_mat.nativeObj, seglength_mat.nativeObj));
+        Mat retVal = new Mat(dicomJpgRead_1(filename, segposition_mat.nativeObj, seglength_mat.nativeObj));
         
         return retVal;
     }
-    
+
+
+    //
+    // C++:  Mat dicomRawRead(String filename, vector_double segposition, vector_double seglength, vector_int dicomparams, String colormodel)
+    //
+
+    //javadoc: dicomRawRead(filename, segposition, seglength, dicomparams, colormodel)
+    public static Mat dicomRawRead(String filename, MatOfDouble segposition, MatOfDouble seglength, MatOfInt dicomparams, String colormodel)
+    {
+        Mat segposition_mat = segposition;
+        Mat seglength_mat = seglength;
+        Mat dicomparams_mat = dicomparams;
+        Mat retVal = new Mat(dicomRawRead_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomparams_mat.nativeObj, colormodel));
+        
+        return retVal;
+    }
     
     //
     // C++:  Mat imdecode(Mat buf, int flags)
@@ -226,10 +274,13 @@ public class Imgcodecs {
 
 
 
-    // C++:  Mat dicomimread(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
-    private static native long dicomimread_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
-    private static native long dicomimread_1(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj);
-    
+    // C++:  Mat dicomJpgRead(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
+    private static native long dicomJpgRead_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
+    private static native long dicomJpgRead_1(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj);
+
+    // C++:  Mat dicomRawRead(String filename, vector_double segposition, vector_double seglength, vector_int dicomparams, String colormodel)
+    private static native long dicomRawRead_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, long dicomparams_mat_nativeObj, String colormodel);
+
     // C++:  Mat imdecode(Mat buf, int flags)
     private static native long imdecode_0(long buf_nativeObj, int flags);
 

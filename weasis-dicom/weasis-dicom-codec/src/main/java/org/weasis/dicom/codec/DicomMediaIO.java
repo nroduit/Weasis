@@ -70,6 +70,7 @@ import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -305,6 +306,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private int dataType = 0;
     private boolean hasPixel = false;
     private boolean banded = false;
+    private boolean bigendian = false;
 
     private int bitsStored;
     private int bitsAllocated;
@@ -745,7 +747,49 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
 
-                return getUncacheImage(media, frame);
+                PlanarImage img = getUncacheImage(media, frame);
+                if (pmi == PhotometricInterpretation.PALETTE_COLOR) {
+                    img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
+                }
+
+                /*
+                 * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in
+                 * the pixel data.
+                 */
+                Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
+                if (overlayBitMask != null) {
+                    if (media.getTagValue(TagW.OverlayBurninDataPath) == null) {
+                        // Serialize overlay (from pixel data)
+                        Attributes ds = getDicomObject();
+                        int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
+                        if (embeddedOverlayGroupOffsets.length > 0) {
+                            FileOutputStream fileOut = null;
+                            ObjectOutput objOut = null;
+                            try {
+                                byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
+                                for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
+                                    overlayData[i] = OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i],
+                                        ImageProcessor.toBufferedImage(img).getRaster(), ds);
+                                }
+                                File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                fileOut = new FileOutputStream(file);
+                                objOut = new ObjectOutputStream(fileOut);
+                                objOut.writeObject(overlayData);
+                                media.setTag(TagW.OverlayBurninDataPath, file.getPath());
+                            } catch (Exception e) {
+                                LOGGER.error("Cannot serialize overlay", e); //$NON-NLS-1$
+                            } finally {
+                                FileUtil.safeClose(objOut);
+                                FileUtil.safeClose(fileOut);
+                            }
+                        }
+                    }
+                    // Set to 0 all bits outside bitStored
+                    img = ImageProcessor.bitwiseAnd(img.toMat(), overlayBitMask);
+                }
+
+                return img;
+
                 // FileCache cache = media.getFileCache();
                 //
                 // Path imgCachePath = null;
@@ -785,23 +829,42 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         Optional<File> orinigal = cache.getOriginalFile();
         if (orinigal.isPresent()) {
             readMetaData(true);
-            if(decompressor == null) {
-                return getValidImage(readAsRenderedImage(frame, null), media);
+            if(pmi == PhotometricInterpretation.YBR_FULL_422) {
+                return ImageProcessor.toMat(readAsRenderedImage(frame, null));
             }
+            boolean rawData = decompressor == null || isRLELossless();
             ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
             resetInternalState();
 
             if (extParams.getSegmentPositions() != null) {
-                int dcmFlags = dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
-                if(pmi.name().startsWith("YBR")) {
-                    dcmFlags &= Imgcodecs.DICOM_IMREAD_YBR;
+                int dcmFlags =
+                    dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
+                if (pmi.name().startsWith("YBR")) {
+                    dcmFlags |= Imgcodecs.DICOM_IMREAD_YBR;
                 }
+                if (bigendian) {
+                    dcmFlags |= Imgcodecs.DICOM_IMREAD_BIGENDIAN;
+                }
+                if (dataType == DataBuffer.TYPE_FLOAT || dataType == DataBuffer.TYPE_DOUBLE) {
+                    dcmFlags |= Imgcodecs.DICOM_IMREAD_FLOAT;
+                }
+
                 MatOfDouble positions =
                     new MatOfDouble(Arrays.stream(extParams.getSegmentPositions()).asDoubleStream().toArray());
                 MatOfDouble lengths =
                     new MatOfDouble(Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
-                return ImageCV.toImageCV(Imgcodecs.dicomimread(orinigal.get().getAbsolutePath(), positions, lengths, dcmFlags,
-                    Imgcodecs.IMREAD_UNCHANGED));
+
+                if (rawData) {
+                    MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
+                        TagD.getTagValue(this, Tag.Columns, Integer.class),
+                        TagD.getTagValue(this, Tag.Rows, Integer.class),
+                        TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
+                        banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
+                    return ImageCV.toImageCV(Imgcodecs.dicomRawRead(orinigal.get().getAbsolutePath(), positions,
+                        lengths, dicomparams, pmi.name()));
+                }
+                return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(orinigal.get().getAbsolutePath(), positions, lengths,
+                    dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
             }
         }
         return null;
@@ -821,8 +884,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             if (image.getColorModel() instanceof PaletteColorModel) {
                 img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
             }
-            
-            //TODO should be applied for all images
+
+            // TODO should be applied for all images
             /*
              * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
              * pixel data.
@@ -1078,63 +1141,73 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     private ExtendSegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
-        int nbFragments = pixeldataFragments.size();
         long[] offsets;
         int[] length;
-        if (numberOfFrame >= nbFragments - 1) {
-            // nbFrames > nbFragments should never happen
+
+        if (pixeldataFragments == null) {
             offsets = new long[1];
             length = new int[offsets.length];
-            int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
-            BulkData bulkData = (BulkData) pixeldataFragments.get(index);
-            offsets[0] = bulkData.offset();
-            length[0] = bulkData.length();
+            offsets[0] = pixeldata.offset() + frameIndex * frameLength;
+            length[0] = frameLength;
         } else {
-            if (numberOfFrame == 1) {
-                offsets = new long[nbFragments - 1];
+            int nbFragments = pixeldataFragments.size();
+
+            if (numberOfFrame >= nbFragments - 1) {
+                // nbFrames > nbFragments should never happen
+                offsets = new long[1];
                 length = new int[offsets.length];
-                for (int i = 0; i < length.length; i++) {
-                    BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
-                    offsets[i] = bulkData.offset();
-                    length[i] = bulkData.length();
-                }
-                // TODO should be replaced by a more genric fonction for all compressed type
-                ImageReaderSpi provider = decompressor.getOriginatingProvider();
-                if (!provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
-                    new long[] {  offsets[0] }, new int[] { length[0] }))) {
-                    throw new IOException("Cannot find magic number"); //$NON-NLS-1$
-                }
+                int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
+                BulkData bulkData = (BulkData) pixeldataFragments.get(index);
+                offsets[0] = bulkData.offset();
+                length[0] = bulkData.length();
             } else {
-                // Multi-frames where each frames can have multiple fragments.
-                if (fragmentsPositions.isEmpty()) {
-                    if (decompressor == null) {
-                        throw new IOException("no decompressor!"); //$NON-NLS-1$
-                    }
-
-                    ImageReaderSpi provider = decompressor.getOriginatingProvider();
-                    for (int i = 1; i < nbFragments; i++) {
-                        BulkData bulkData = (BulkData) pixeldataFragments.get(i);
-                        if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
-                            new long[] { bulkData.offset() }, new int[] { bulkData.length() }))) {
-                            fragmentsPositions.add(i);
-                        }
-                    }
-                }
-
-                if (fragmentsPositions.size() == numberOfFrame) {
-                    int start = fragmentsPositions.get(frameIndex);
-                    int end = (frameIndex + 1) >= fragmentsPositions.size() ? nbFragments
-                        : fragmentsPositions.get(frameIndex + 1);
-
-                    offsets = new long[end - start];
+                if (numberOfFrame == 1) {
+                    offsets = new long[nbFragments - 1];
                     length = new int[offsets.length];
-                    for (int i = 0; i < offsets.length; i++) {
-                        BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
+                    for (int i = 0; i < length.length; i++) {
+                        BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
                         offsets[i] = bulkData.offset();
                         length[i] = bulkData.length();
                     }
+                    // TODO should be replaced by a more genric fonction for all compressed type
+                    ImageReaderSpi provider = decompressor.getOriginatingProvider();
+                    // RLE must pass
+                    // if (!provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
+                    // new long[] { offsets[0] }, new int[] { length[0] }))) {
+                    // throw new IOException("Cannot find magic number"); //$NON-NLS-1$
+                    // }
                 } else {
-                    throw new IOException("Cannot match all the fragments to all the frames!"); //$NON-NLS-1$
+                    // Multi-frames where each frames can have multiple fragments.
+                    if (fragmentsPositions.isEmpty()) {
+                        if (decompressor == null) {
+                            throw new IOException("no decompressor!"); //$NON-NLS-1$
+                        }
+
+                        ImageReaderSpi provider = decompressor.getOriginatingProvider();
+                        for (int i = 1; i < nbFragments; i++) {
+                            BulkData bulkData = (BulkData) pixeldataFragments.get(i);
+                            if (provider.canDecodeInput(new org.dcm4che3.imageio.stream.SegmentedInputImageStream(iis,
+                                new long[] { bulkData.offset() }, new int[] { bulkData.length() }))) {
+                                fragmentsPositions.add(i);
+                            }
+                        }
+                    }
+
+                    if (fragmentsPositions.size() == numberOfFrame) {
+                        int start = fragmentsPositions.get(frameIndex);
+                        int end = (frameIndex + 1) >= fragmentsPositions.size() ? nbFragments
+                            : fragmentsPositions.get(frameIndex + 1);
+
+                        offsets = new long[end - start];
+                        length = new int[offsets.length];
+                        for (int i = 0; i < offsets.length; i++) {
+                            BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
+                            offsets[i] = bulkData.offset();
+                            length[i] = bulkData.length();
+                        }
+                    } else {
+                        throw new IOException("Cannot match all the fragments to all the frames!"); //$NON-NLS-1$
+                    }
                 }
             }
         }
@@ -1494,11 +1567,13 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         int width = TagD.getTagValue(this, Tag.Columns, Integer.class);
                         int height = TagD.getTagValue(this, Tag.Rows, Integer.class);
                         int samples = TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class);
+                        bigendian = ds.bigEndian();
                         iis.setByteOrder(ds.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
                         this.frameLength = pmi.frameLength(width, height, samples, bitsAllocated);
                         this.pixeldata = (BulkData) pixdata;
                         // Handle JPIP
                     } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
+                        // always little endian: http://dicom.nema.org/medical/dicom/2017b/output/chtml/part05/sect_A.6.html
                         if (numberOfFrame == 0) {
                             numberOfFrame = 1;
                             // compressed = true;
@@ -1510,6 +1585,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         }
                         this.decompressor = readerItem.getImageReader();
                         this.pixeldataFragments = (Fragments) pixdata;
+                        bigendian = pixeldataFragments.bigEndian();
+                        if(bigendian) {
+                            LOGGER.error("Big endian fragments?");
+                        }
                     }
                 }
             }
