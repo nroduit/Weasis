@@ -361,7 +361,7 @@ public final class KOManager {
 
         if (view2D instanceof View2d) {
             boolean tiledMode = imgSelectionIndex >= 0;
-            boolean koFilter = false;
+            boolean koFilter;
             KOSpecialElement selectedKO = null;
             if (newSelectedKO == null) {
                 Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());

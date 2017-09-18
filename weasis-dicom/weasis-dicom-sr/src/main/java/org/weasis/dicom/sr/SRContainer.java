@@ -81,8 +81,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
     public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, SRView.class.getName(), new ImageIcon(ImageViewerPlugin.class //$NON-NLS-1$
-            .getResource("/icon/22x22/layout1x1.png"))); //$NON-NLS-1$
+        "1x1", 1, 1, SRView.class.getName()); //$NON-NLS-1$
 
     static {
         LAYOUT_LIST.add(VIEWS_1x1);

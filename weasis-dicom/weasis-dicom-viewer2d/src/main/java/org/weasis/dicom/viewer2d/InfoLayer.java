@@ -73,17 +73,18 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
         super(view2DPane);
         displayPreferences.put(ANNOTATIONS, true);
+        displayPreferences.put(MIN_ANNOTATIONS, false);
         displayPreferences.put(ANONYM_ANNOTATIONS, false);
-        displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(SCALE, true);
         displayPreferences.put(LUT, false);
-        displayPreferences.put(PIXEL, true);
+        displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(WINDOW_LEVEL, true);
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
+        displayPreferences.put(PIXEL, true);
+        
         displayPreferences.put(PRELOADING_BAR, true);
-        displayPreferences.put(MIN_ANNOTATIONS, false);
     }
 
     @Override

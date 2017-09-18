@@ -17,7 +17,7 @@ public final class NoNamespaceStreamReaderDelegate extends StreamReaderDelegate 
     @Override
     public String getNamespacePrefix(int index) {
         if (index == 0) {
-            return "xsi";
+            return "xsi"; //$NON-NLS-1$
         }
         throw new NullPointerException();
     }
@@ -29,7 +29,7 @@ public final class NoNamespaceStreamReaderDelegate extends StreamReaderDelegate 
 
     @Override
     public String getNamespaceURI(String prefix) {
-        if ("xsi".equals(prefix)) {
+        if ("xsi".equals(prefix)) { //$NON-NLS-1$
             return XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
         }
         return null;

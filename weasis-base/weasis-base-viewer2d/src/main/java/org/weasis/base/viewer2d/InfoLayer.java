@@ -47,7 +47,6 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
-
     }
 
     @Override

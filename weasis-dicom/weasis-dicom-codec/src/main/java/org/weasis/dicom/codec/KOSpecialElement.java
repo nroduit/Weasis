@@ -29,7 +29,7 @@ import org.weasis.dicom.mf.Xml;
 public class KOSpecialElement extends AbstractKOSpecialElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(KOSpecialElement.class);
 
-    public static final String SEL_NAME = "name";
+    public static final String SEL_NAME = "name"; //$NON-NLS-1$
 
     public KOSpecialElement(DicomMediaIO mediaIO) {
         super(mediaIO);
@@ -72,16 +72,16 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     public static void writeSelection(Collection<KOSpecialElement> list, Writer manifest) {
         if (list != null && manifest != null) {
             try {
-                manifest.append("\n<");
+                manifest.append("\n<"); //$NON-NLS-1$
                 manifest.append(ArcParameters.TAG_SEL_ROOT);
-                manifest.append(">");
+                manifest.append(">"); //$NON-NLS-1$
                 for (KOSpecialElement ko : list) {
                     writeKoElement(ko, manifest);
                 }
 
-                manifest.append("\n</");
+                manifest.append("\n</"); //$NON-NLS-1$
                 manifest.append(ArcParameters.TAG_SEL_ROOT);
-                manifest.append(">");
+                manifest.append(">"); //$NON-NLS-1$
 
             } catch (Exception e) {
                 LOGGER.error("Cannot write Key Object Selection: ", e); //$NON-NLS-1$
@@ -90,33 +90,33 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     }
 
     private static void writeKoElement(KOSpecialElement ko, Writer mf) throws IOException {
-        mf.append("\n<");
+        mf.append("\n<"); //$NON-NLS-1$
         mf.append(ArcParameters.TAG_SEL);
-        mf.append(" ");
+        mf.append(" "); //$NON-NLS-1$
         Xml.addXmlAttribute(SEL_NAME, ko.getLabelWithoutPrefix(), mf);
-        mf.append(" ");
+        mf.append(" "); //$NON-NLS-1$
         String sereiesUID = TagD.get(Tag.SeriesInstanceUID).getKeyword();
         Xml.addXmlAttribute(sereiesUID, TagD.getTagValue(ko, Tag.SeriesInstanceUID, String.class), mf);
-        mf.append(">");
+        mf.append(">"); //$NON-NLS-1$
 
         for (Entry<String, Map<String, SOPInstanceReferenceAndMAC>> entry : ko.sopInstanceReferenceMapBySeriesUID
             .entrySet()) {
-            mf.append("\n<");
+            mf.append("\n<"); //$NON-NLS-1$
             mf.append(Xml.Level.SERIES.getTagName());
-            mf.append(" ");
+            mf.append(" "); //$NON-NLS-1$
             Xml.addXmlAttribute(sereiesUID, entry.getKey(), mf);
-            mf.append(">");
+            mf.append(">"); //$NON-NLS-1$
 
             writeImages(entry.getValue(), mf);
 
-            mf.append("\n</");
+            mf.append("\n</"); //$NON-NLS-1$
             mf.append(Xml.Level.SERIES.getTagName());
-            mf.append(">");
+            mf.append(">"); //$NON-NLS-1$
         }
 
-        mf.append("\n</");
+        mf.append("\n</"); //$NON-NLS-1$
         mf.append(ArcParameters.TAG_SEL);
-        mf.append(">");
+        mf.append(">"); //$NON-NLS-1$
     }
 
     private static void writeImages(Map<String, SOPInstanceReferenceAndMAC> map, Writer mf) throws IOException {
@@ -125,17 +125,17 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         String frames = TagD.get(Tag.ReferencedFrameNumber).getKeyword();
         
         for (SOPInstanceReferenceAndMAC sopRef : map.values()) {
-            mf.append("\n<");
+            mf.append("\n<"); //$NON-NLS-1$
             mf.append(Xml.Level.INSTANCE.getTagName());
-            mf.append(" ");
+            mf.append(" "); //$NON-NLS-1$
             Xml.addXmlAttribute(sopUID, sopRef.getReferencedSOPInstanceUID(), mf);
             Xml.addXmlAttribute(sopClass, sopRef.getReferencedSOPClassUID(), mf);
             int[] fms = sopRef.getReferencedFrameNumber();
             if (fms != null) {
-                String frameList = IntStream.of(fms).mapToObj(String::valueOf).collect(Collectors.joining("\\"));
+                String frameList = IntStream.of(fms).mapToObj(String::valueOf).collect(Collectors.joining("\\")); //$NON-NLS-1$
                 Xml.addXmlAttribute(frames, frameList, mf);
             }
-            mf.append("/>");
+            mf.append("/>"); //$NON-NLS-1$
         }
     }
 }
