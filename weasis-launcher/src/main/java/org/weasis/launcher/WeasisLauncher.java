@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -83,7 +84,6 @@ public class WeasisLauncher {
             }
             return "UNKNOWN"; //$NON-NLS-1$
         }
-
     }
 
     /**
@@ -348,6 +348,7 @@ public class WeasisLauncher {
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits.
+        handleWebstartHookBug();
         JVMShutdownHook shutdownHook = new JVMShutdownHook();
         Runtime.getRuntime().addShutdownHook(shutdownHook);
         registerAdditionalShutdownHook();
@@ -649,7 +650,7 @@ public class WeasisLauncher {
     private static void addCommandSessionListener(Object commandProcessor) {
         try {
             ClassLoader loader = commandProcessor.getClass().getClassLoader();
-            Class<?> c = loader.loadClass(org.apache.felix.service.command.CommandSessionListener.class.getName());
+            Class<?> c = loader.loadClass("org.apache.felix.service.command.CommandSessionListener");
             Method nameMethod = commandProcessor.getClass().getMethod("addListener", c); //$NON-NLS-1$
 
             Object listener = Proxy.newProxyInstance(loader, new Class[] { c }, new InvocationHandler() {
@@ -787,6 +788,12 @@ public class WeasisLauncher {
             props = readProperties(propURI, props);
         }
 
+        // Only required for dev purposes (running the app in IDE)
+        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo"));
+        if (mvnRepo != null) {
+            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/"));
+        }
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
         Map<String, String> map = new HashMap<>();
@@ -817,21 +824,28 @@ public class WeasisLauncher {
                 return null;
             }
         } else {
-            // Determine where the configuration directory is by figuring
-            // out where felix.jar is located on the system class path.
-            File confDir;
-            String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
-            int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
-            int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
-            if (index >= start) {
-                // Get the path of the felix.jar file.
-                String jarLocation = classpath.substring(start, index);
-                // Calculate the conf directory based on the parent
-                // directory of the felix.jar directory.
-                confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
-            } else {
-                // Can't figure it out so use the current directory as default.
-                confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+            // Development folder only
+            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$
+            if (!confDir.canRead()) {
+                confDir = null;
+            }
+
+            if (confDir == null) {
+                // Determine where the configuration directory is by figuring
+                // out where felix.jar is located on the system class path.
+                String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
+                int index = classpath.toLowerCase().indexOf("felix.jar"); //$NON-NLS-1$
+                int start = classpath.lastIndexOf(File.pathSeparator, index) + 1;
+                if (index >= start) {
+                    // Get the path of the felix.jar file.
+                    String jarLocation = classpath.substring(start, index);
+                    // Calculate the conf directory based on the parent
+                    // directory of the felix.jar directory.
+                    confDir = new File(new File(new File(jarLocation).getAbsolutePath()).getParent(), CONFIG_DIRECTORY);
+                } else {
+                    // Can't figure it out so use the current directory as default.
+                    confDir = new File(System.getProperty("user.dir"), CONFIG_DIRECTORY); //$NON-NLS-1$
+                }
             }
 
             try {
@@ -1335,16 +1349,48 @@ public class WeasisLauncher {
         try {
             Class.forName("sun.misc.Signal"); //$NON-NLS-1$
             Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
-            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), new sun.misc.SignalHandler() { //$NON-NLS-1$
-                @Override
-                public void handle(sun.misc.Signal arg0) {
-                    shutdownHook();
-                }
-            });
+            sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook());
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
         } catch (ClassNotFoundException e) {
             System.err.println("Cannot find sun.misc.Signal for shutdown hook exstension"); //$NON-NLS-1$
+        }
+    }
+
+    public static int getJavaMajorVersion() {
+        // Handle new versioning from Java 9
+        String jvmVersionString = System.getProperty("java.specification.version");
+        int verIndex = jvmVersionString.indexOf("1.");
+        if (verIndex >= 0) {
+            jvmVersionString = jvmVersionString.substring(verIndex + 2);
+        }
+        return Integer.parseInt(jvmVersionString);
+    }
+
+    /**
+     * @see https://bugs.openjdk.java.net/browse/JDK-8054639
+     *
+     */
+    private static void handleWebstartHookBug() {
+        int major = getJavaMajorVersion();
+        if (major < 9) {
+            // there is a bug that arrived sometime around the mid java7 releases. shutdown hooks get created that
+            // shutdown loggers and close down the classloader jars that means that anything we try to do in our
+            // shutdown hook throws an exception, but only after some random amount of time
+            try {
+                Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks");
+                Field field = clazz.getDeclaredField("hooks");
+                field.setAccessible(true);
+                Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
+                for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext();) {
+                    Thread thread = it.next();
+                    if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) {
+                        it.remove();
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

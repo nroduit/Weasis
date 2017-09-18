@@ -11,6 +11,7 @@
 	<artifactId>weasis-core</artifactId>
 	<name>Core Plug-ins [${project.artifactId}]</name>
 	<packaging>pom</packaging>
+	
 	<modules>
 		<module>weasis-core-parent</module>
 		<module>weasis-core-util</module>

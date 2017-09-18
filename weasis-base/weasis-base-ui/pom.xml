@@ -11,10 +11,11 @@
 	<artifactId>weasis-base-ui</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis Base UI [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.base.ui</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +33,15 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.command</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.runtime</artifactId>
+		</dependency>
 	</dependencies>
 </project>

@@ -25,8 +25,8 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
-//import org.knowm.xchart.XYChart;
-//import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
@@ -55,27 +55,22 @@ public class RtSet {
     private final Map<RtSpecialElement, Plan> plans = new HashMap<>();
     private final List<MediaElement> images = new ArrayList<>();
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
-    
-    private Image patientImage;
 
-    // TODO: should go to Dose
-    // Dose LUTs
-//    private Pair<double[], double[]> doseMmLUT;
-//    private Pair<double[], double[]> dosePixLUT;
+    private Image patientImage;
 
     // TODO: this will be configurable via GUI
     private int structureFillTransparency = 115;
     private int isoFillTransparency = 70;
     private boolean forceRecalculateDvh = false;
 
-//    private final XYChart dvhChart = new XYChartBuilder()
-//                                            .width(600)
-//                                            .height(500)
-//                                            .title("DVH")
-//                                            .xAxisTitle("Dose (cGy)")
-//                                            .yAxisTitle("Volume (%)")
-//                                            .build();
-    
+    private final XYChart dvhChart = new XYChartBuilder()
+                                            .width(600)
+                                            .height(500)
+                                            .title("DVH")
+                                            .xAxisTitle("Dose (cGy)")
+                                            .yAxisTitle("Volume (%)")
+                                            .build();
+
     public RtSet(List<MediaElement> rtElements) {
         this.rtElements.addAll(Objects.requireNonNull(rtElements));
 
@@ -101,7 +96,7 @@ public class RtSet {
             String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
             // Photon and Proton Plans
             if ((UID.RTPlanStorage.equals(sopUID) && rt instanceof RtSpecialElement) ||
-                (UID.RTIonPlanStorage.equals(sopUID) && rt instanceof RtSpecialElement)) {
+                    (UID.RTIonPlanStorage.equals(sopUID) && rt instanceof RtSpecialElement)) {
                 initPlan((RtSpecialElement) rt);
             }
         }
@@ -649,7 +644,7 @@ public class RtSet {
 
                                 for (Point point : contour.toList()) {
                                     double[] coordinates = new double[2];
-                                    
+
                                     coordinates[0] = dose.getDoseMmLUT().getFirst()[(int) point.x];
                                     coordinates[1] = dose.getDoseMmLUT().getSecond()[(int) point.y];
 
@@ -724,9 +719,9 @@ public class RtSet {
         return null;
     }
 
-//    public XYChart getDvhChart() {
-//        return this.dvhChart;
-//    }
+    public XYChart getDvhChart() {
+        return this.dvhChart;
+    }
 
     public List<MediaElement> getRtElements() {
         return rtElements;
@@ -801,7 +796,7 @@ public class RtSet {
 
     /**
      * Calculated relative dose with respect to absolute planned dose
-     * 
+     *
      * @param dose absolute simulated dose in cGy
      * @param planDose absolute planned dose in cGy
      * @return relative dose in %
@@ -821,7 +816,7 @@ public class RtSet {
 
         // Calculate differential DVH
         Mat difHistogram = calculateDifferentialDvh(structure, dose);
-        
+
         // Convert differential DVH to cumulative DVH
         double[] cumHistogram = convertDifferentialToCumulativeDvh(difHistogram);
         dvh.setDvhData(cumHistogram);
@@ -831,7 +826,7 @@ public class RtSet {
     }
 
     private Mat calculateDifferentialDvh(Structure structure, Dose dose) {
-        
+
         DicomImageElement doseImage = (DicomImageElement)dose.getImages().get(0);
         double[] doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacingArray();
         double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
@@ -865,7 +860,7 @@ public class RtSet {
             for (int c = 0; c < entry.getValue().size(); c++) {
 
                 Contour contour = entry.getValue().get(c);
-                
+
                 Mat contourMask = calculateContourMask(dose.getDoseMmLUT(), contour);
                 Mat hist = dose.getMaskedDosePlaneHist(z, contourMask, (int)maxDose);
 
@@ -896,9 +891,9 @@ public class RtSet {
         }
         Scalar scalar = new Scalar(volume / sumHistogram);
         multiply(histogram, scalar, histogram);
-        
+
         //TODO: Remove the zero bins from the end of histogram
-        
+
         return histogram;
     }
 
@@ -925,15 +920,15 @@ public class RtSet {
 
         double[] rowDirection = dicomImage.getSliceGeometry().getRowArray();
         double[] columnDirection = dicomImage.getSliceGeometry().getColumnArray();
-        
+
         double[] position = dicomImage.getSliceGeometry().getTLHCArray();
 
         // DICOM C.7.6.2.1 Equation C.7.6.2.1-1.
         double[][] m = {
-            { rowDirection[0] * deltaI, columnDirection[0] * deltaJ, 0, position[0] },
-            { rowDirection[1] * deltaI, columnDirection[1] * deltaJ, 0, position[1] },
-            { rowDirection[2] * deltaI, columnDirection[2] * deltaJ, 0, position[2] },
-            {0, 0, 0, 1 }
+                { rowDirection[0] * deltaI, columnDirection[0] * deltaJ, 0, position[0] },
+                { rowDirection[1] * deltaI, columnDirection[1] * deltaJ, 0, position[1] },
+                { rowDirection[2] * deltaI, columnDirection[2] * deltaJ, 0, position[2] },
+                {0, 0, 0, 1 }
         };
         RealMatrix matrix = MatrixUtils.createRealMatrix(m);
 
@@ -981,7 +976,7 @@ public class RtSet {
 //            }
 //        }
 //    }
-    
+
     private static int firstIndexOf(double[] array, double valueToFind, double tolerance) {
         for(int i = 0; i < array.length; i++) {
             if (Math.abs(array[i] - valueToFind) < tolerance) {

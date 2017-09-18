@@ -11,24 +11,40 @@
 
 package org.weasis.dicom.rt;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTree;
+import javax.swing.JViewport;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.dcm4che3.data.Tag;
+import org.knowm.xchart.BitmapEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.media.data.*;
+import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -64,10 +80,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private final CheckboxTree tree;
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
-    private TreePath rootPath;
     private final JComboBox<RtSpecialElement> comboRtStructureSet;
     private final JComboBox<RtSpecialElement> comboRtPlan;
-    private JPanel panel_foot;
+    private JPanel panelfoot;
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
     private RtSet rtSet;
@@ -134,7 +149,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         rootNode.add(nodeStructures);
         rootNode.add(nodeIsodoses);
-        rootPath = new TreePath(rootNode.getPath());
+        TreePath rootPath = new TreePath(rootNode.getPath());
         tree.addCheckingPath(rootPath);
 
         tree.setShowsRootHandles(true);
@@ -161,12 +176,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         expandTree(tree, rootNode);
         add(new JScrollPane(tree), BorderLayout.CENTER);
 
-        panel_foot = new JPanel();
-        panel_foot.setUI(new javax.swing.plaf.PanelUI() {
+        panelfoot = new JPanel();
+        panelfoot.setUI(new javax.swing.plaf.PanelUI() {
         });
-        panel_foot.setOpaque(true);
-        panel_foot.setBackground(JMVUtils.TREE_BACKROUND);
-        add(panel_foot, BorderLayout.SOUTH);
+        panelfoot.setOpaque(true);
+        panelfoot.setBackground(JMVUtils.TREE_BACKROUND);
+        add(panelfoot, BorderLayout.SOUTH);
     }
 
     private void initPathSelection(TreePath path, boolean selected) {
@@ -180,7 +195,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private void treeValueChanged(TreeCheckingEvent e) {
         if (!initPathSelection) {
             TreePath path = e.getPath();
-            boolean selected = e.isCheckedPath();
             Object selObject = path.getLastPathComponent();
             Object parent = null;
             if (path.getParentPath() != null) {
@@ -327,18 +341,19 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             if (containsStructure(listStructure, structure)) {
 
 //                                // If dose is loaded
-//                                if (dose != null) {
-//
-//                                    // DVH refresh display
-//                                    rt.getDvhChart().removeSeries(struct.getRoiName());
-//                                    structureDvh.appendChart(struct.getRoiName(), rt.getDvhChart());
-//                                    try {
-//                                        BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH", BitmapEncoder.BitmapFormat.PNG);
-//                                    }
-//                                    catch (Exception err) {
-//
-//                                    }
-//                                }
+                                if (dose != null) {
+
+                                    // DVH refresh display
+                                    rt.getDvhChart().removeSeries(structure.getRoiName());
+                                    Dvh structureDvh = dose.get(structure.getRoiNumber());
+                                    structureDvh.appendChart(structure.getRoiName(), rt.getDvhChart());
+                                    try {
+                                        BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH",
+                                            BitmapEncoder.BitmapFormat.PNG);
+                                    } catch (Exception err) {
+
+                                    }
+                                }
 
                                 // Structure graphics
                                 Graphic graphic = c.getGraphic(geometry);

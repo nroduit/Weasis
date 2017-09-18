@@ -12,7 +12,7 @@
 
 package org.weasis.dicom.rt;
 
-//import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChart;
 
 public class Dvh {
 
@@ -96,8 +96,7 @@ public class Dvh {
     public double getDvhMinimumDoseCGy() {
         if (this.doseUnit.equals("GY")) {
             return this.getDvhMinimumDose() * 100;
-        }
-        else {
+        } else {
             return this.getDvhMinimumDose();
         }
     }
@@ -116,8 +115,7 @@ public class Dvh {
     public double getDvhMaximumDoseCGy() {
         if (this.doseUnit.equals("GY")) {
             return this.getDvhMaximumDose() * 100;
-        }
-        else {
+        } else {
             return this.getDvhMaximumDose();
         }
     }
@@ -136,8 +134,7 @@ public class Dvh {
     public double getDvhMeanDoseCGy() {
         if (this.doseUnit.equals("GY")) {
             return this.getDvhMeanDose() * 100;
-        }
-        else {
+        } else {
             return this.getDvhMeanDose();
         }
     }
@@ -169,21 +166,22 @@ public class Dvh {
         this.dvhSource = dvhSource;
     }
 
-    //    public XYChart appendChart(String structureName, XYChart dvhChart) {
-//
-//        // Each DVH element is 1 cGy and scaled value of each element is relative volume
-//        double[] x =  new double[this.dvhData.length];
-//        for (int i = 0; i < x.length; i++) {
-//            x[i] = i;
-//        }
-//
-//        dvhChart.addSeries(structureName, x, this.getScaledDvhData());
-//
-//        //axes.set_xlim(0, maxlen)
-//        //axes.set_ylim(0, 100)
-//
-//        return dvhChart;
-//    }
+    public XYChart appendChart(String structureName, XYChart dvhChart) {
+
+        // Each DVH element is 1 cGy and scaled value of each element is relative volume
+        double[] x = new double[this.dvhData.length];
+        for (int i = 0; i < x.length; i++) {
+            x[i] = i;
+        }
+
+        //TODO scale data ?
+        dvhChart.addSeries(structureName, x, this.getDvhData());
+
+        // axes.set_xlim(0, maxlen)
+        // axes.set_ylim(0, 100)
+
+        return dvhChart;
+    }
 
     public double[] getOtherDvhData() {
         if (this.otherDvhData == null) {
@@ -231,7 +229,7 @@ public class Dvh {
         for (int i = dDvh.length - 1; i >= 0; i--) {
             // If bin (dose level) found that was received by more then 0 % of ROI volume
             if (dDvh[i] > 0.0) {
-                maxDose = i + 1;
+                maxDose = i + 1.0;
                 break;
             }
         }
@@ -259,6 +257,7 @@ public class Dvh {
 
     /**
      * Return dDVH from this DVH array (dDVH is the negative "slope" of the cDVH)
+     * 
      * @return dDVH array
      */
     private double[] calculateDDvh() {

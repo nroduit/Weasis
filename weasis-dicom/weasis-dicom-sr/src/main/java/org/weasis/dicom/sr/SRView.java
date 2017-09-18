@@ -54,6 +54,7 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.dicom.codec.AbstractKOSpecialElement.Reference;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
@@ -213,11 +214,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         }
 
                         if (keyReferences != null) {
-                            // TODO Handle multiframe and select the current frame or SOPInstanceUID
-                            // int[] frames = ref.getReferencedFrameNumber();
-                            keyReferences.addKeyObject(TagD.getTagValue(s, Tag.StudyInstanceUID, String.class),
+                            Reference koRef = new Reference(TagD.getTagValue(s, Tag.StudyInstanceUID, String.class),
                                 TagD.getTagValue(s, Tag.SeriesInstanceUID, String.class),
-                                ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID());
+                                ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID(), ref.getReferencedFrameNumber());
+                            keyReferences.addKeyObject(koRef);
                             SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
                             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
                                 addGraphicstoView(s.getMedia(0, null, null), imgRef);

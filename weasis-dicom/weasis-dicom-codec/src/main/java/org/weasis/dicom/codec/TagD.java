@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLInputFactory;
@@ -690,7 +691,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDate getDicomDate(String date) {
-        if (Objects.nonNull(date)) {
+        if (StringUtil.hasText(date)) {
             try {
                 if (date.length() > 8) {
                     StringBuilder buf = new StringBuilder(8);
@@ -707,7 +708,7 @@ public class TagD extends TagW {
     }
 
     public static LocalTime getDicomTime(String time) {
-        if (Objects.nonNull(time)) {
+        if (StringUtil.hasText(time)) {
             try {
                 return LocalTime.parse(time.trim(), DICOM_TIME);
             } catch (Exception e) {
@@ -729,7 +730,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDateTime getDicomDateTime(TimeZone tz, String value, boolean ceil) {
-        if (Objects.nonNull(value)) {
+        if (StringUtil.hasText(value)) {
             try {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -804,7 +805,7 @@ public class TagD extends TagW {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     if (TagType.TIME.equals(type)) {

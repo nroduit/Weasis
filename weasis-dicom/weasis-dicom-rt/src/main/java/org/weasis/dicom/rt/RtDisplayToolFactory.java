@@ -25,8 +25,7 @@ import org.weasis.dicom.viewer2d.EventManager;
 @org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
     "org.weasis.dicom.viewer2d.View2dContainer=true" })
 public class RtDisplayToolFactory implements InsertableFactory {
-
-    private final Logger LOGGER = LoggerFactory.getLogger(RtDisplayToolFactory.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RtDisplayToolFactory.class);
 
     private RtDisplayTool toolPane = null;
 

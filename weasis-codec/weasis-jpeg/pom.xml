@@ -13,8 +13,6 @@
 	<name>Native JPEG Library [${project.artifactId}]</name>
 	<packaging>pom</packaging>
 
-	<dependencies />
-
 	<modules>
 		<module>weasis-jpeg-parent</module>
 		<module>weasis-jpeg-codec</module>

@@ -11,10 +11,11 @@
 	<artifactId>weasis-core-api</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis Core API [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.core.api</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -30,6 +31,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
@@ -39,33 +41,12 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.prefs</artifactId>
-			<version>1.1.0</version>
-			<scope>provided</scope>
-			<exclusions>
-				<!-- exclude these dependencies to avoid a mix with recent versions -->
-				<exclusion>
-					<groupId>org.apache.felix</groupId>
-					<artifactId>org.osgi.core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.felix</groupId>
-					<artifactId>org.osgi.compendium</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.opencv</groupId>
-			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.8.0</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

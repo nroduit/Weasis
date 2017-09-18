@@ -11,11 +11,11 @@
 	<artifactId>weasis-core-ui</artifactId>
 	<packaging>bundle</packaging>
 	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<powermock.version>1.7.0</powermock.version>
 	</properties>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -26,8 +26,8 @@
 						<!-- Force to import jaxb binding classes -->
 						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<!-- add for Xchart: ,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.* -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*</Export-Package>
+						<!-- add for Xchart: ,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.* -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.*</Export-Package>
 						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
 						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
 					</instructions>
@@ -60,14 +60,12 @@
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.opencv</groupId>
-			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
-			<scope>provided</scope>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>it.cnr.imaa.essi</groupId>
@@ -87,33 +85,25 @@
 		<dependency>
 			<groupId>org.knowm.xchart</groupId>
 			<artifactId>xchart</artifactId>
-			<version>3.3.1</version>
+			<version>3.5.0</version>
 		</dependency>
 
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.8.0</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-module-junit4</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-mockito2</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.code.bean-matchers</groupId>
 			<artifactId>bean-matchers</artifactId>
-			<version>0.10</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>

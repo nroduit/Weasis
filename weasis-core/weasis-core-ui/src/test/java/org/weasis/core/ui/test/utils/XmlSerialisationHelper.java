@@ -13,6 +13,7 @@ import javax.xml.bind.Unmarshaller;
 
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.serialize.XmlSerializer;
 
 public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
     protected JAXBContext context;
@@ -48,19 +49,11 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
 
     protected <T> T deserialize(String input, Class<T> clazz) throws Exception {
         StringReader sr = new StringReader(input);
-        return deserialize(sr, clazz);
+        return XmlSerializer.deserialize(sr, clazz);
     }
 
     protected <T> T deserialize(InputStream xmlInput, Class<T> clazz) throws Exception {
         Reader reader = new InputStreamReader(xmlInput, "UTF-8"); //$NON-NLS-1$
-        return deserialize(reader, clazz);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T deserialize(Reader reader, Class<T> clazz) throws Exception {
-        context = JAXBContext.newInstance(clazz);
-        unmarshaller = context.createUnmarshaller();
-
-        return (T) unmarshaller.unmarshal(reader);
+        return XmlSerializer.deserialize(reader, clazz);
     }
 }

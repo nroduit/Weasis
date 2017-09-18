@@ -11,13 +11,13 @@
 	<artifactId>weasis-dicom-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Codec [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
-		<powermock.version>1.7.0</powermock.version>
-		<weasis-dicom-tools.version>1.2.0</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>1.2.1</weasis-dicom-tools.version>
 	</properties>
+	
 	<repositories>
 		<repository>
 			<snapshots>
@@ -28,6 +28,7 @@
 			<url>http://www.dcm4che.org/maven2</url>
 		</repository>
 	</repositories>
+	
 	<build>
 		<plugins>
 			<plugin>
@@ -114,7 +115,7 @@
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
-			<version>${project.parent.version}</version>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -126,28 +127,20 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
-			<scope>provided</scope>
 		</dependency>
 
 		<!-- FOR TESTS -->
 		<dependency>
 			<groupId>org.assertj</groupId>
 			<artifactId>assertj-core</artifactId>
-			<version>3.8.0</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-module-junit4</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.powermock</groupId>
 			<artifactId>powermock-api-mockito2</artifactId>
-			<version>${powermock.version}</version>
-			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
