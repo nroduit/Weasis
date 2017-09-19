@@ -72,8 +72,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(RtDisplayTool.class);
 
     public static final String BUTTON_NAME = "RT Tool";
-    public static final int DockableWidth = javax.swing.UIManager.getLookAndFeel() != null
-        ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 : 205; //$NON-NLS-1$
 
     private final JScrollPane rootPane;
     private final JButton btnLoad;
@@ -101,7 +99,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
         this.rootPane = new JScrollPane();
         this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
-        this.setDockableWidth(DockableWidth);
+        this.setDockableWidth(350);
         this.btnLoad = new JButton("Load RT");
         this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
         this.comboRtStructureSet = new JComboBox<>();
@@ -208,9 +206,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             }
             if (views != null) {
                 RtSet rt = rtSet;
-                if (rt != null &&
-                   ((selObject == nodeStructures || parent == nodeStructures) ||
-                    (selObject == nodeIsodoses || parent == nodeIsodoses))) {
+                if (rt != null && ((selObject == nodeStructures || parent == nodeStructures)
+                    || (selObject == nodeIsodoses || parent == nodeIsodoses))) {
                     for (ViewCanvas<DicomImageElement> v : views) {
                         showGraphic(rt, getStructureSelection(), getIsoDoseSelection(), v);
                     }
@@ -249,8 +246,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     private static boolean containsStructure(List<StructureLayer> list, Structure s) {
         for (StructureLayer structure : list) {
-            if (structure.getStructure().getRoiNumber() == s.getRoiNumber() &&
-                structure.getStructure().getRoiName().equals(s.getRoiName())) {
+            if (structure.getStructure().getRoiNumber() == s.getRoiNumber()
+                && structure.getStructure().getRoiName().equals(s.getRoiName())) {
                 return true;
             }
         }
@@ -258,16 +255,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private static boolean containsIsoDose(List<IsoDoseLayer> list, IsoDose i) {
-        for (IsoDoseLayer isoDoseLayer: list) {
-            if (isoDoseLayer.getIsoDose().getLevel() == i.getLevel() &&
-                isoDoseLayer.getIsoDose().getLabel().equals(i.getLabel())) {
+        for (IsoDoseLayer isoDoseLayer : list) {
+            if (isoDoseLayer.getIsoDose().getLevel() == i.getLevel()
+                && isoDoseLayer.getIsoDose().getLabel().equals(i.getLabel())) {
                 return true;
             }
         }
         return false;
     }
 
-    private static void showGraphic(RtSet rt, List<StructureLayer> listStructure, List<IsoDoseLayer> listIsoDose, ViewCanvas<?> v) {
+    private static void showGraphic(RtSet rt, List<StructureLayer> listStructure, List<IsoDoseLayer> listIsoDose,
+        ViewCanvas<?> v) {
         if (rt != null) {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
@@ -306,7 +304,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             if (containsIsoDose(listIsoDose, isoDose)) {
 
                                 // Contours for specific slice
-                                ArrayList<Contour> isoContours = isoDose.getPlanes().get(z);
+                                List<Contour> isoContours = isoDose.getPlanes().get(z);
                                 if (isoContours != null) {
 
                                     // Iso dose graphics
@@ -438,14 +436,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         comboRtPlan.addItemListener(planChangeListener);
 
         // Update selected dose plane
-//        ImageElement dicom = viewCanvas.getImage();
-//        if (dicom instanceof DicomImageElement) {
-//            GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
-//
-//            if (rt.getFirstDose() != null) {
-//                rt.getDoseValueForPixel(247, 263, geometry.getTLHC().getZ());
-//            }
-//        }
+        // ImageElement dicom = viewCanvas.getImage();
+        // if (dicom instanceof DicomImageElement) {
+        // GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
+        //
+        // if (rt.getFirstDose() != null) {
+        // rt.getDoseValueForPixel(247, 263, geometry.getTLHC().getZ());
+        // }
+        // }
 
         showGraphic(rt, getStructureSelection(), getIsoDoseSelection(), viewCanvas);
     }
@@ -478,7 +476,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     }
                 }
                 initPathSelection(new TreePath(nodeStructures.getPath()), true);
-                for (Enumeration<?> children = nodeStructures.children(); children.hasMoreElements(); ) {
+                for (Enumeration<?> children = nodeStructures.children(); children.hasMoreElements();) {
                     DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
                     initPathSelection(new TreePath(dtm.getPath()), false);
                 }
@@ -498,7 +496,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         }
                     }
                     initPathSelection(new TreePath(nodeIsodoses.getPath()), true);
-                    for (Enumeration<?> children = nodeIsodoses.children(); children.hasMoreElements(); ) {
+                    for (Enumeration<?> children = nodeIsodoses.children(); children.hasMoreElements();) {
                         DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
                         initPathSelection(new TreePath(dtm.getPath()), false);
                     }
@@ -553,7 +551,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             initTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
         }
     }
-    
+
     @Override
     protected void changeToolWindowAnchor(CLocation clocation) {
         // TODO Auto-generated method stub
@@ -584,16 +582,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             specialElementList.addAll(list);
                         }
                         if ("RTDOSE".equals(modality) && s instanceof DicomSeries) {
-                            for (DicomImageElement media : ((DicomSeries) s).getMedias(null, null)) {
-                                if ("RTDOSE".equals(TagD.getTagValue(media, Tag.Modality))) {
-                                    specialElementList.add(media);
+                            synchronized (s) {
+                                for (DicomImageElement media : ((DicomSeries) s).getMedias(null, null)) {
+                                    if ("RTDOSE".equals(TagD.getTagValue(media, Tag.Modality))) {
+                                        specialElementList.add(media);
+                                    }
                                 }
                             }
                         }
                         if ("CT".equals(modality) && s instanceof DicomSeries) {
-                            for (DicomImageElement media : ((DicomSeries) s).getMedias(null, null)) {
-                                if ("CT".equals(TagD.getTagValue(media, Tag.Modality))) {
-                                    specialElementList.add(media);
+                            synchronized (s) {
+                                for (DicomImageElement media : ((DicomSeries) s).getMedias(null, null)) {
+                                    if ("CT".equals(TagD.getTagValue(media, Tag.Modality))) {
+                                        specialElementList.add(media);
+                                    }
                                 }
                             }
                         }
@@ -603,5 +605,5 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         }
         return specialElementList;
     }
-    
+
 }

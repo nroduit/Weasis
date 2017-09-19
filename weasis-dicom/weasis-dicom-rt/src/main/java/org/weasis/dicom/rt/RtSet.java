@@ -12,8 +12,19 @@
 
 package org.weasis.dicom.rt;
 
+import static org.opencv.core.Core.add;
+import static org.opencv.core.Core.multiply;
+
 import java.awt.Color;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
 import java.util.stream.DoubleStream;
 
 import org.apache.commons.math3.analysis.interpolation.LinearInterpolator;
@@ -28,7 +39,12 @@ import org.dcm4che3.data.UID;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
 import org.knowm.xchart.XYSeries;
-import org.opencv.core.*;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfPoint;
+import org.opencv.core.MatOfPoint2f;
+import org.opencv.core.Point;
+import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,9 +56,6 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-
-import static org.opencv.core.Core.add;
-import static org.opencv.core.Core.multiply;
 
 /**
  * RtSet is a collection of linked DICOM-RT entities that form the whole treatment case (Plans, Doses, StructureSets)
@@ -231,7 +244,7 @@ public class RtSet {
                 Color color2 = new Color(color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
                 layer.getStructure().setColor(color2);
 
-                Map<Double, ArrayList<Contour>> planes = new HashMap<>();
+                Map<Double, List<Contour>> planes = new HashMap<>();
 
                 Sequence cseq = roiContourSeq.getSequence(Tag.ContourSequence);
                 if (cseq != null) {
@@ -761,7 +774,7 @@ public class RtSet {
      *
      * @return structure plane thickness
      */
-    private static double calculatePlaneThickness(Map<Double, ArrayList<Contour>> planesMap) {
+    private static double calculatePlaneThickness(Map<Double, List<Contour>> planesMap) {
         // Sort the list of z coordinates
         List<Double> planes = new ArrayList<>();
         planes.addAll(planesMap.keySet());
@@ -848,12 +861,12 @@ public class RtSet {
         }
 
         // Go through all structure plane slices
-        for (Map.Entry<Double, ArrayList<Contour>> entry : structure.getPlanes().entrySet()) {
+        for (Map.Entry<Double, List<Contour>> entry : structure.getPlanes().entrySet()) {
             double z = entry.getKey();
 
             // Calculate the area for each contour in the current plane
-            Pair maxContour = structure.calculateLargestContour(entry.getValue());
-            int maxContourIndex = (Integer)maxContour.getFirst();
+            Pair<Integer, Double> maxContour = structure.calculateLargestContour(entry.getValue());
+            int maxContourIndex = maxContour.getFirst();
 
             // If dose plane does not exist for z, continue with next plane
             MediaElement dosePlane = dose.getDosePlaneBySlice(z);
@@ -949,7 +962,7 @@ public class RtSet {
             y[j] = matrix.multiply(MatrixUtils.createColumnRealMatrix(new double[] { 0, j, 0, 1 })).getRow(1)[0];
         }
 
-        return new Pair(x, y);
+        return new Pair<>(x, y);
     }
 
     //TODO: this has to consider all plan doses

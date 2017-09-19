@@ -16,7 +16,6 @@ import static org.opencv.core.Core.addWeighted;
 import static org.opencv.core.Core.minMaxLoc;
 import static org.opencv.core.Core.multiply;
 
-import org.apache.commons.math3.util.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.math3.util.Pair;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -317,7 +317,7 @@ public class Dose extends HashMap<Integer, Dvh> {
             y[j] = (this.doseMmLUT.getSecond()[j]) - patientImage.getImageLUT().getSecond()[0] * patientImage.getProne() / patientImage.getImageSpacing()[1];
         }
 
-        this.dosePixLUT = new Pair(x, y);
+        this.dosePixLUT = new Pair<>(x, y);
     }
 
     private MediaElement interpolateDosePlanes(int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {

@@ -12,8 +12,8 @@
 
 package org.weasis.dicom.rt;
 
-import java.awt.*;
-import java.util.ArrayList;
+import java.awt.Color;
+import java.util.List;
 import java.util.Map;
 
 public class IsoDose {
@@ -24,13 +24,13 @@ public class IsoDose {
     private double thickness;
 
     private Color color;
-    private Map<Double, ArrayList<Contour>> planes;
+    private Map<Double, List<Contour>> planes;
 
     public IsoDose(int level, Color color, String name, double planDose) {
         this.level = level;
         this.color = color;
         this.name = name;
-        this.absoluteDose = (((double) this.level) * planDose) / 100.0;
+        this.absoluteDose = ((this.level) * planDose) / 100.0;
     }
 
     public int getLevel() {
@@ -69,11 +69,11 @@ public class IsoDose {
         this.thickness = value;
     }
 
-    public Map<Double, ArrayList<Contour>> getPlanes() {
+    public Map<Double, List<Contour>> getPlanes() {
         return this.planes;
     }
 
-    public void setPlanes(Map<Double, ArrayList<Contour>> contours) {
+    public void setPlanes(Map<Double, List<Contour>> contours) {
         this.planes = contours;
     }
 

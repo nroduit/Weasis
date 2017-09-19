@@ -12,11 +12,11 @@
 
 package org.weasis.dicom.rt;
 
-import org.apache.commons.math3.util.Pair;
-
 import java.awt.Color;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.math3.util.Pair;
 
 /**
  * Created by toskrip on 2/1/15.
@@ -33,7 +33,7 @@ public class Structure {
     private DataSource volumeSource;
 
     private Color color;
-    private Map<Double, ArrayList<Contour>> planes;
+    private Map<Double, List<Contour>> planes;
 
     public Structure() {
         this.volume = -1.0;
@@ -114,15 +114,15 @@ public class Structure {
         this.color = color;
     }
 
-    public Map<Double, ArrayList<Contour>> getPlanes() {
+    public Map<Double, List<Contour>> getPlanes() {
         return this.planes;
     }
 
-    public void setPlanes(Map<Double, ArrayList<Contour>> contours) {
+    public void setPlanes(Map<Double, List<Contour>> contours) {
         this.planes = contours;
     }
 
-    public Pair<Integer, Double> calculateLargestContour(ArrayList<Contour> planeContours) {
+    public Pair<Integer, Double> calculateLargestContour(List<Contour> planeContours) {
         double maxContourArea = 0.0;
         int maxContourIndex = 0;
 
@@ -137,7 +137,7 @@ public class Structure {
             }
         }
 
-        return new Pair(maxContourIndex, maxContourArea);
+        return new Pair<>(maxContourIndex, maxContourArea);
     }
 
     private double calculateVolume() {
@@ -145,12 +145,12 @@ public class Structure {
 
         // Iterate over structure planes (z)
         int n = 0;
-        for (ArrayList<Contour> structurePlaneContours : this.planes.values()) {
+        for (List<Contour> structurePlaneContours : this.planes.values()) {
 
             // Calculate the area for each contour in the current plane
-            Pair maxContour = this.calculateLargestContour(structurePlaneContours);
-            int maxContourIndex = (Integer)maxContour.getFirst();
-            double maxContourArea = (Double)maxContour.getSecond();
+            Pair<Integer, Double> maxContour = this.calculateLargestContour(structurePlaneContours);
+            int maxContourIndex = maxContour.getFirst();
+            double maxContourArea = maxContour.getSecond();
 
             for (int i = 0; i < structurePlaneContours.size(); i++) {
                 Contour polygon = structurePlaneContours.get(i);
@@ -180,7 +180,7 @@ public class Structure {
             }
 
             // For first and last plane calculate with half of thickness
-            if ((n == 0) || (n == this.planes.size() -1)) {
+            if ((n == 0) || (n == this.planes.size() - 1)) {
                 structureVolume += area * this.thickness * 0.5;
             }
             // For rest use full slice thickness
