@@ -13,6 +13,7 @@
 package org.weasis.dicom.rt;
 
 import org.knowm.xchart.XYChart;
+import org.knowm.xchart.style.markers.SeriesMarkers;
 
 public class Dvh {
 
@@ -166,16 +167,24 @@ public class Dvh {
         this.dvhSource = dvhSource;
     }
 
-    public XYChart appendChart(String structureName, XYChart dvhChart) {
+    public XYChart appendChart(Structure structure, XYChart dvhChart) {
 
-        // Each DVH element is 1 cGy and scaled value of each element is relative volume
+        // Each element represent 1cGY bin on x axes
         double[] x = new double[this.dvhData.length];
         for (int i = 0; i < x.length; i++) {
             x[i] = i;
         }
 
-        //TODO scale data ?
-        dvhChart.addSeries(structureName, x, this.getDvhData());
+        // Convert structure DVH data in cm^3 to relative volume representation
+        double[] y = new double[this.dvhData.length];
+        for (int i = 0; i < y.length; i++) {
+            y[i] = (100 / structure.getVolume()) * this.dvhData[i];
+        }
+
+        // Create a line
+        dvhChart
+            .addSeries(structure.getRoiName(), x, y)
+            .setMarker(SeriesMarkers.NONE);
 
         // axes.set_xlim(0, maxlen)
         // axes.set_ylim(0, 100)

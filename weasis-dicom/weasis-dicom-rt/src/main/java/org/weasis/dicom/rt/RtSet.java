@@ -27,6 +27,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
 import org.opencv.core.*;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
@@ -83,6 +84,10 @@ public class RtSet {
     }
 
     public void reloadRtCase() {
+
+        // Init DVH chart style
+        this.dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+
         // First initialise all RTSTRUCT
         for (MediaElement rt : this.rtElements) {
             String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);

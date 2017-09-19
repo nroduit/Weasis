@@ -340,18 +340,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             Structure structure = structLayer.getStructure();
                             if (containsStructure(listStructure, structure)) {
 
-//                                // If dose is loaded
+                                // If dose is loaded
                                 if (dose != null) {
 
                                     // DVH refresh display
                                     rt.getDvhChart().removeSeries(structure.getRoiName());
                                     Dvh structureDvh = dose.get(structure.getRoiNumber());
-                                    structureDvh.appendChart(structure.getRoiName(), rt.getDvhChart());
+                                    structureDvh.appendChart(structure, rt.getDvhChart());
                                     try {
                                         BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH",
                                             BitmapEncoder.BitmapFormat.PNG);
                                     } catch (Exception err) {
-
+                                        // NOOP
                                     }
                                 }
 
@@ -363,14 +363,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                     graphic.setPaint(structure.getColor());
                                     graphic.setLayerType(LayerType.DICOM_RT);
                                     graphic.setLayer(structLayer.getLayer());
-                                    // External contour do not fill
-                                    if (structure.getRtRoiInterpretedType().equals("EXTERNAL")) {
-                                        graphic.setFilled(false);
-                                    }
-                                    // The other (organs, target volumes) should be filled
-                                    else {
-                                        graphic.setFilled(true);
-                                    }
+
+                                    // External body contour -> do not fill
+                                    boolean filled = !"EXTERNAL".equals(structure.getRtRoiInterpretedType());
+                                    graphic.setFilled(filled);
 
                                     for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
                                         graphic.addPropertyChangeListener(listener);
@@ -420,16 +416,20 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         if (update) {
             RtSpecialElement selectedStructure = rt.getFirstStructure();
-            comboRtStructureSet.setSelectedItem(selectedStructure);
-            updateTree(selectedStructure, oldPlan);
+            if (selectedStructure != null) {
+                comboRtStructureSet.setSelectedItem(selectedStructure);
+                updateTree(selectedStructure, oldPlan);
+            }
         } else {
             comboRtStructureSet.setSelectedItem(oldStructure);
         }
 
         if (update1 || !nodeIsodoses.children().hasMoreElements()) {
             RtSpecialElement selectedPlan = rt.getFirstPlanKey();
-            comboRtPlan.setSelectedItem(selectedPlan);
-            updateTree(oldStructure, selectedPlan);
+            if (selectedPlan != null) {
+                comboRtPlan.setSelectedItem(selectedPlan);
+                updateTree(oldStructure, selectedPlan);
+            }
         } else {
             comboRtPlan.setSelectedItem(oldPlan);
         }
