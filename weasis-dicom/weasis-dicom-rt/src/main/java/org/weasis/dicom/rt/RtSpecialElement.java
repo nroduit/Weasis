@@ -24,11 +24,20 @@ public class RtSpecialElement extends DicomSpecialElement {
     @Override
     protected void initLabel() {
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
-        String clabel = dicom.getString(Tag.StructureSetLabel);
-        if (clabel == null) {
+        String modality = dicom.getString(Tag.Modality);
+
+        String rtLabel = null;
+        if ("RTSTRUCT".equals(modality)) {
+            rtLabel = dicom.getString(Tag.StructureSetLabel);
+        }
+        else if ("RTPLAN".equals(modality)) {
+            rtLabel = dicom.getString(Tag.RTPlanLabel);
+        }
+
+        if (rtLabel == null) {
             super.initLabel();
         } else {
-            label = clabel;
+            this.label = rtLabel;
         }
     }
 }
