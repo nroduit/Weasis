@@ -789,36 +789,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
 
                 return img;
-
-                // FileCache cache = media.getFileCache();
-                //
-                // Path imgCachePath = null;
-                // File file = cache.getTransformedFile();
-                // if (file == null) {
-                // StringBuilder buf = new StringBuilder(media.getMediaURI().toString());
-                // if (frame > 0) {
-                // buf.append(frame);
-                // }
-                // String filename = StringUtil.bytesToMD5(buf.toString().getBytes());
-                // imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
-                // if (Files.isReadable(imgCachePath)) {
-                // file = imgCachePath.toFile();
-                // cache.setTransformedFile(file);
-                // imgCachePath = null;
-                // }
-                // }
-                //
-                // if (file == null && imgCachePath != null) {
-                // PlanarImage mat = getValidImage(readAsRenderedImage(frame, null), media);
-                // try {
-                // new FileRawImage(imgCachePath.toFile()).write(mat);
-                // } catch (Exception e) {
-                // FileUtil.delete(imgCachePath.toFile());
-                // throw e;
-                // }
-                // return mat;
-                // }
-                // return new FileRawImage(file).read();
             }
         }
         return null;
@@ -829,9 +799,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         Optional<File> orinigal = cache.getOriginalFile();
         if (orinigal.isPresent()) {
             readMetaData(true);
-            if(pmi == PhotometricInterpretation.YBR_FULL_422) {
-                return ImageProcessor.toMat(readAsRenderedImage(frame, null));
-            }
+            String syntax = tsuid;
             boolean rawData = decompressor == null || isRLELossless();
             ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
             resetInternalState();
@@ -847,6 +815,9 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 }
                 if (dataType == DataBuffer.TYPE_FLOAT || dataType == DataBuffer.TYPE_DOUBLE) {
                     dcmFlags |= Imgcodecs.DICOM_IMREAD_FLOAT;
+                }
+                if (TransferSyntax.RLE.getTransferSyntaxUID().equals(syntax)) {
+                    dcmFlags |= Imgcodecs.DICOM_IMREAD_RLE;
                 }
 
                 MatOfDouble positions =

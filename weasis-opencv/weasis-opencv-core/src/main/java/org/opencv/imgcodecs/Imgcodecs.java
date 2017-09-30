@@ -101,7 +101,9 @@ public class Imgcodecs {
         /* Big endian data */
         DICOM_IMREAD_BIGENDIAN = 4,
         /* Float type */
-        DICOM_IMREAD_FLOAT = 16;
+        DICOM_IMREAD_FLOAT = 16,
+        /* RLE compression */
+        DICOM_IMREAD_RLE = 32;
 
     public static final int // (index for the int vector)
         /* flags */
