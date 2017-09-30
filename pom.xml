@@ -20,7 +20,6 @@
 		<module>weasis-opencv</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
-		<module>weasis-codec</module>
 		<module>weasis-base</module>
 		<module>weasis-acquire</module>
 		<module>weasis-dicom</module>

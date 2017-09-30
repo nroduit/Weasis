@@ -162,7 +162,7 @@ public class DicomCodec implements Codec {
         // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        ImageioUtil.registerServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.registerServiceProvider(rleImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
 
         ConfigurationAdmin confAdmin =
@@ -189,7 +189,7 @@ public class DicomCodec implements Codec {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
-        ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
     }
 
