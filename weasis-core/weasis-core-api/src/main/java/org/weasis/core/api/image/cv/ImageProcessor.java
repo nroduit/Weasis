@@ -124,6 +124,9 @@ public class ImageProcessor {
     }
 
     public static BufferedImage toBufferedImage(PlanarImage matrix) {
+        if (matrix == null) {
+            return null;
+        }
         return toBufferedImage(matrix.toMat());
     }
 

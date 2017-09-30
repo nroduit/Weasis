@@ -1171,7 +1171,7 @@ public class DicomMediaUtils {
         Attributes pr = new Attributes(dicomSourceAttribute, patientStudyAttributes);
 
         // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
-        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
+        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorage);
         pr.setString(Tag.SOPInstanceUID, VR.UI,
             StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
         Date now = new Date();
