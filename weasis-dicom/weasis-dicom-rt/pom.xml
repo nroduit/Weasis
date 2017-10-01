@@ -70,7 +70,6 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>vecmath</artifactId>
-			<version>1.5.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -79,11 +78,6 @@
 			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
-		<!--<dependency>-->
-			<!--<groupId>org.knowm.xchart</groupId>-->
-			<!--<artifactId>xchart</artifactId>-->
-			<!--<version>3.3.1</version>-->
-		<!--</dependency>-->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>

@@ -12,6 +12,7 @@
 package org.weasis.dicom.rt;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
@@ -19,27 +20,33 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
+import javax.swing.BoxLayout;
+import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTree;
 import javax.swing.JViewport;
+import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.dcm4che3.data.Tag;
-import org.knowm.xchart.BitmapEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.JSliderW;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -73,14 +80,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     public static final String BUTTON_NAME = "RT Tool";
 
+    private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JScrollPane rootPane;
     private final JButton btnLoad;
-    private final CheckboxTree tree;
+    private final CheckboxTree treeStructures;
+    private final CheckboxTree treeIsodoses;
     private boolean initPathSelection;
-    private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+    private DefaultMutableTreeNode rootNodeStructures = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+    private DefaultMutableTreeNode rootNodeIsodoses = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
     private final JComboBox<RtSpecialElement> comboRtStructureSet;
     private final JComboBox<RtSpecialElement> comboRtPlan;
-    private JPanel panelfoot;
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
     private RtSet rtSet;
@@ -94,9 +103,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             updateTree(null, (RtSpecialElement) e.getItem());
         }
     };
+    private final JPanel panelFoot = new JPanel();
+    private final JSliderW slider;
 
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
+        this.setLayout(new BorderLayout(0, 0));
         this.rootPane = new JScrollPane();
         this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
         this.setDockableWidth(350);
@@ -106,12 +118,13 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.comboRtStructureSet.setVisible(false);
         this.comboRtPlan = new JComboBox<>();
         this.comboRtPlan.setVisible(false);
-        this.tree = new CheckboxTree();
-        this.tree.setVisible(false);
-        this.setLayout(new BorderLayout(0, 0));
+        this.slider = createTransparencySlider(5, true);
+
+        this.treeStructures = new CheckboxTree();
+        this.treeIsodoses = new CheckboxTree();
         this.nodeStructures = new DefaultMutableTreeNode("Structures", true);
         this.nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
-        this.initTree();
+        this.initData();
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -123,8 +136,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             this.btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
             this.comboRtStructureSet.setVisible(true);
             this.comboRtPlan.setVisible(true);
-            this.tree.setVisible(true);
+            this.treeStructures.setVisible(true);
+            this.treeIsodoses.setVisible(true);
 
+            initSlider();
+            
             // Update GUI
             ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
             List<ViewCanvas<DicomImageElement>> views = null;
@@ -139,27 +155,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         }
     }
 
-    public void initTree() {
-        this.tree.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
-
-        DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
-        tree.setModel(model);
-
-        rootNode.add(nodeStructures);
-        rootNode.add(nodeIsodoses);
-        TreePath rootPath = new TreePath(rootNode.getPath());
-        tree.addCheckingPath(rootPath);
-
-        tree.setShowsRootHandles(true);
-        tree.setRootVisible(false);
-        tree.setExpandsSelectedPaths(true);
-        DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
-        renderer.setOpenIcon(null);
-        renderer.setClosedIcon(null);
-        renderer.setLeafIcon(null);
-        tree.setCellRenderer(renderer);
-        tree.addTreeCheckingListener(this::treeValueChanged);
-
+    public void initData() {
         // GUI RT case selection
         JPanel panel = new JPanel();
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
@@ -171,23 +167,115 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         this.btnLoad.addActionListener(this::actionPerformed);
 
-        expandTree(tree, rootNode);
-        add(new JScrollPane(tree), BorderLayout.CENTER);
+        add(tabbedPane, BorderLayout.CENTER);
 
-        panelfoot = new JPanel();
-        panelfoot.setUI(new javax.swing.plaf.PanelUI() {
-        });
-        panelfoot.setOpaque(true);
-        panelfoot.setBackground(JMVUtils.TREE_BACKROUND);
-        add(panelfoot, BorderLayout.SOUTH);
+        add(panelFoot, BorderLayout.SOUTH);
+
+        panelFoot.add(slider.getParent());
+
+        initStructureTree();
+        initIsodosesTree();
+
+        tabbedPane.addChangeListener(e -> initSlider());
+    }
+    
+    private void initSlider() {
+        RtSet rt = rtSet;
+        if (rt != null) {
+            if (tabbedPane.getSelectedIndex() == 0) {
+                slider.setValue(rt.getStructureFillTransparency() * 100 / 255);
+            } else if (tabbedPane.getSelectedIndex() == 1) {
+                slider.setValue(rt.getIsoFillTransparency() * 100 / 255);
+            }
+        }
     }
 
-    private void initPathSelection(TreePath path, boolean selected) {
-        if (selected) {
-            tree.addCheckingPath(path);
-        } else {
-            tree.removeCheckingPath(path);
+    public void initStructureTree() {
+        this.treeStructures.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
+        this.treeStructures.setVisible(false);
+        DefaultTreeModel model = new DefaultTreeModel(rootNodeStructures, false);
+        treeStructures.setModel(model);
+
+        rootNodeStructures.add(nodeStructures);
+        TreePath rootPath = new TreePath(rootNodeStructures.getPath());
+        treeStructures.addCheckingPath(rootPath);
+        treeStructures.setShowsRootHandles(true);
+        treeStructures.setRootVisible(false);
+        treeStructures.setExpandsSelectedPaths(true);
+        DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
+        renderer.setOpenIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setLeafIcon(null);
+        treeStructures.setCellRenderer(renderer);
+        treeStructures.addTreeCheckingListener(this::treeValueChanged);
+
+        expandTree(treeStructures, rootNodeStructures);
+        tabbedPane.add(new JScrollPane(treeStructures), nodeStructures.toString());
+    }
+
+    public void initIsodosesTree() {
+        this.treeIsodoses.getCheckingModel().setCheckingMode(TreeCheckingModel.CheckingMode.SIMPLE);
+        this.treeIsodoses.setVisible(false);
+        DefaultTreeModel model = new DefaultTreeModel(rootNodeIsodoses, false);
+        treeIsodoses.setModel(model);
+
+        rootNodeIsodoses.add(nodeIsodoses);
+        TreePath rootPath = new TreePath(rootNodeIsodoses.getPath());
+        treeIsodoses.addCheckingPath(rootPath);
+        treeIsodoses.setShowsRootHandles(true);
+        treeIsodoses.setRootVisible(false);
+        treeIsodoses.setExpandsSelectedPaths(true);
+        DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
+        renderer.setOpenIcon(null);
+        renderer.setClosedIcon(null);
+        renderer.setLeafIcon(null);
+        treeIsodoses.setCellRenderer(renderer);
+        treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
+
+        expandTree(treeIsodoses, rootNodeIsodoses);
+        tabbedPane.add(new JScrollPane(treeIsodoses), nodeIsodoses.toString());
+    }
+
+    public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
+        final JPanel palenSlider1 = new JPanel();
+        palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
+        palenSlider1.setBorder(new TitledBorder("Graphic Opacity"));
+        DefaultBoundedRangeModel model = new DefaultBoundedRangeModel(50, 0, 0, 100);
+        JSliderW s = new JSliderW(model);
+        s.setLabelDivision(labelDivision);
+        s.setdisplayValueInTitle(displayValueInTitle);
+        s.setPaintTicks(true);
+        s.setShowLabels(labelDivision > 0);
+        palenSlider1.add(s);
+        if (s.isShowLabels()) {
+            s.setPaintLabels(true);
+            SliderChangeListener.setSliderLabelValues(s, model.getMinimum(), model.getMaximum(), 0.0, 100.0);
         }
+        s.addChangeListener(l -> {
+            if (!model.getValueIsAdjusting()) {
+                RtSet rt = rtSet;
+                if (rt != null) {
+                    if (tabbedPane.getSelectedIndex() == 0) {
+                        rt.setStructureFillTransparency(model.getValue() * 255 / 100);
+                    } else if (tabbedPane.getSelectedIndex() == 1) {
+                        rt.setIsoFillTransparency(model.getValue() * 255 / 100);
+                    }
+
+                    ImageViewerPlugin<DicomImageElement> container =
+                        EventManager.getInstance().getSelectedView2dContainer();
+                    List<ViewCanvas<DicomImageElement>> views = null;
+                    if (container != null) {
+                        views = container.getImagePanels();
+                    }
+                    if (views != null) {
+                        for (ViewCanvas<DicomImageElement> v : views) {
+                            showGraphic(rt, getStructureSelection(), getIsoDoseSelection(), v);
+                        }
+                    }
+                }
+            }
+        });
+        return s;
     }
 
     private void treeValueChanged(TreeCheckingEvent e) {
@@ -218,8 +306,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     private List<StructureLayer> getStructureSelection() {
         ArrayList<StructureLayer> list = new ArrayList<>();
-        if (tree.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()))) {
-            TreePath[] paths = tree.getCheckingModel().getCheckingPaths();
+        if (treeStructures.getCheckingModel().isPathChecked(new TreePath(nodeStructures.getPath()))) {
+            TreePath[] paths = treeStructures.getCheckingModel().getCheckingPaths();
             for (TreePath treePath : paths) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
                 if (node.getUserObject() instanceof StructureLayer) {
@@ -232,8 +320,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     private List<IsoDoseLayer> getIsoDoseSelection() {
         ArrayList<IsoDoseLayer> list = new ArrayList<>();
-        if (tree.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()))) {
-            TreePath[] paths = tree.getCheckingModel().getCheckingPaths();
+        if (treeIsodoses.getCheckingModel().isPathChecked(new TreePath(nodeIsodoses.getPath()))) {
+            TreePath[] paths = treeIsodoses.getCheckingModel().getCheckingPaths();
             for (TreePath treePath : paths) {
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
                 if (node.getUserObject() instanceof IsoDoseLayer) {
@@ -328,6 +416,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                 }
                             }
                         }
+                        
+                        Collections.reverse(modelList.getModels());
                     }
 
                     // Contours layer
@@ -341,16 +431,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                 // If dose is loaded
                                 if (dose != null) {
 
-                                    // DVH refresh display
-                                    rt.getDvhChart().removeSeries(structure.getRoiName());
-                                    Dvh structureDvh = dose.get(structure.getRoiNumber());
-                                    structureDvh.appendChart(structure, rt.getDvhChart());
-                                    try {
-                                        BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH",
-                                            BitmapEncoder.BitmapFormat.PNG);
-                                    } catch (Exception err) {
-                                        // NOOP
-                                    }
+                                    // DVH refresh display (comment temporarily)
+                                    // rt.getDvhChart().removeSeries(structure.getRoiName());
+                                    // Dvh structureDvh = dose.get(structure.getRoiNumber());
+                                    // structureDvh.appendChart(structure, rt.getDvhChart());
+                                    // try {
+                                    // BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH",
+                                    // BitmapEncoder.BitmapFormat.PNG);
+                                    // } catch (Exception err) {
+                                    // // NOOP
+                                    // }
                                 }
 
                                 // Structure graphics
@@ -381,6 +471,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             }
         }
     }
+   
 
     public void updateCanvas(ViewCanvas<?> viewCanvas) {
         RtSet rt = rtSet;
@@ -388,9 +479,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             this.nodeStructures.removeAllChildren();
             this.nodeIsodoses.removeAllChildren();
 
-            DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
-            tree.setModel(model);
-
+            treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
+            treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
             return;
         }
 
@@ -412,11 +502,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         boolean update = !rtStructElements.contains(oldStructure);
         boolean update1 = !rtPlanElements.contains(oldPlan);
 
+        boolean updateTree = false;
         if (update) {
             RtSpecialElement selectedStructure = rt.getFirstStructure();
             if (selectedStructure != null) {
-                comboRtStructureSet.setSelectedItem(selectedStructure);
-                updateTree(selectedStructure, oldPlan);
+                updateTree = true;
             }
         } else {
             comboRtStructureSet.setSelectedItem(oldStructure);
@@ -426,10 +516,15 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             RtSpecialElement selectedPlan = rt.getFirstPlanKey();
             if (selectedPlan != null) {
                 comboRtPlan.setSelectedItem(selectedPlan);
-                updateTree(oldStructure, selectedPlan);
+                updateTree = true;
             }
         } else {
             comboRtPlan.setSelectedItem(oldPlan);
+        }
+
+        if (updateTree) {
+            updateTree((RtSpecialElement) comboRtStructureSet.getSelectedItem(),
+                (RtSpecialElement) comboRtPlan.getSelectedItem());
         }
 
         comboRtStructureSet.addItemListener(structureChangeListener);
@@ -453,16 +548,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         if (rtSet == null) {
             nodeStructures.removeAllChildren();
             nodeIsodoses.removeAllChildren();
-            DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
-            tree.setModel(model);
+            treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
+            treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
             return;
         }
 
         initPathSelection = true;
         try {
             // Prepare root tree model
-            DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
-            tree.setModel(model);
+            treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
+            treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
 
             // Prepare parent node for structures
             if (selectedStructure != null) {
@@ -470,16 +565,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                 Map<Integer, StructureLayer> structures = rtSet.getStructureSet(selectedStructure);
                 if (structures != null) {
                     for (StructureLayer structureLayer : structures.values()) {
-                        DefaultMutableTreeNode node = new DefaultMutableTreeNode(structureLayer, false);
-                        this.nodeStructures.add(node);
-                        initPathSelection(new TreePath(node.getPath()), false);
+                        DefaultMutableTreeNode node = new StructToolTipTreeNode(structureLayer, false);
+                        nodeStructures.add(node);
+                        treeStructures.addCheckingPath(new TreePath(node.getPath()));
                     }
                 }
-                initPathSelection(new TreePath(nodeStructures.getPath()), true);
-                for (Enumeration<?> children = nodeStructures.children(); children.hasMoreElements();) {
-                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                    initPathSelection(new TreePath(dtm.getPath()), false);
-                }
+                treeStructures.addCheckingPath(new TreePath(nodeStructures.getPath()));
             }
 
             // Prepare parent node for isodoses
@@ -490,21 +581,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     Map<Integer, IsoDoseLayer> isodoses = planDose.getIsoDoseSet();
                     if (isodoses != null) {
                         for (IsoDoseLayer isoDoseLayer : isodoses.values()) {
-                            DefaultMutableTreeNode node = new DefaultMutableTreeNode(isoDoseLayer, false);
+                            DefaultMutableTreeNode node = new IsoToolTipTreeNode(isoDoseLayer, false);
                             this.nodeIsodoses.add(node);
-                            initPathSelection(new TreePath(node.getPath()), false);
+                            treeIsodoses.addCheckingPath(new TreePath(node.getPath()));
                         }
                     }
-                    initPathSelection(new TreePath(nodeIsodoses.getPath()), true);
-                    for (Enumeration<?> children = nodeIsodoses.children(); children.hasMoreElements();) {
-                        DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                        initPathSelection(new TreePath(dtm.getPath()), false);
-                    }
+                    treeIsodoses.removeCheckingPath(new TreePath(nodeIsodoses.getPath()));
                 }
             }
 
             // Expand
-            expandTree(tree, rootNode);
+            expandTree(treeStructures, rootNodeStructures);
+            expandTree(treeIsodoses, rootNodeIsodoses);
         } finally {
             initPathSelection = false;
         }
@@ -604,6 +692,58 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             }
         }
         return specialElementList;
+    }
+
+    private static String getColorBullet(Color c, String label) {
+        StringBuilder buf = new StringBuilder("<html><font color='rgb("); //$NON-NLS-1$
+        buf.append(c.getRed());
+        buf.append(",");
+        buf.append(c.getGreen());
+        buf.append(",");
+        buf.append(c.getBlue());
+        // Other square: u2B1B
+        buf.append(")'> \u2588 </font>");
+        buf.append(label);
+        buf.append("</html>"); //$NON-NLS-1$
+        return buf.toString();
+    }
+
+    static class StructToolTipTreeNode extends DefaultMutableTreeNode {
+
+        public StructToolTipTreeNode(StructureLayer userObject, boolean allowsChildren) {
+            super(Objects.requireNonNull(userObject), allowsChildren);
+        }
+
+        public String getToolTipText() {
+            StructureLayer layer = (StructureLayer) getUserObject();
+            // TODO
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            StructureLayer layer = (StructureLayer) getUserObject();
+            return getColorBullet(layer.getStructure().getColor(), layer.toString());
+        }
+    }
+
+    static class IsoToolTipTreeNode extends DefaultMutableTreeNode {
+
+        public IsoToolTipTreeNode(IsoDoseLayer userObject, boolean allowsChildren) {
+            super(Objects.requireNonNull(userObject), allowsChildren);
+        }
+
+        public String getToolTipText() {
+            IsoDoseLayer layer = (IsoDoseLayer) getUserObject();
+            // TODO
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            IsoDoseLayer layer = (IsoDoseLayer) getUserObject();
+            return getColorBullet(layer.getIsoDose().getColor(), layer.toString());
+        }
     }
 
 }
