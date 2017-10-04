@@ -36,10 +36,10 @@
 						<Embed-Dependency>*;scope=compile;inline=com.sun.media.imageio.**|com.sun.media.imageioimpl.**|com.sun.medialib.**|jj2000.**</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2.8</Specification-Version>
+						<Specification-Version>1.3.0</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 						<Implementation-Title>weasis.thirdparty.com.sun.media.imageio</Implementation-Title>
-						<Implementation-Version>1.2.8</Implementation-Version>
+						<Implementation-Version>1.3.0</Implementation-Version>
 						<Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
 						<Extension-Name>weasis.thirdparty.com.sun.media.imageio</Extension-Name>
 						<Sealed>true</Sealed>
@@ -58,13 +58,8 @@
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>clibwrapper_jiio</artifactId>
-			<version>${weasis.imageio.native.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.8</version>
+			<version>1.3.0</version>
 		</dependency>
 	</dependencies>
 </project>
