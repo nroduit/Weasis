@@ -124,7 +124,7 @@ public class Imgcodecs {
     
     
     public static  void loadNativeLibrary() {
-        System.loadLibrary("opencv_java330");
+        System.loadLibrary("opencv_java");
     }
  
     
