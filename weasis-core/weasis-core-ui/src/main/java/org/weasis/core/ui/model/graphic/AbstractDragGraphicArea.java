@@ -85,7 +85,6 @@ public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implem
                         
                         Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue")); //$NON-NLS-1$
                         Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit")); //$NON-NLS-1$
-                        // TODO remove cast
                         double[][] extrema = ImageProcessor.meanStdDev(image.toMat(), roi ,paddingValue, paddingLimit);
                         
                         

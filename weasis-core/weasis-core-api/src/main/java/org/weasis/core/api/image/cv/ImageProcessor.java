@@ -374,11 +374,20 @@ public class ImageProcessor {
         MatOfDouble stddev = new MatOfDouble();
         Core.meanStdDev(srcImg, mean, stddev, mask);
 
-        MinMaxLocResult minMax = Core.minMaxLoc(srcImg, mask);
+        List<Mat> channels = new ArrayList<>();
+        if (srcImg.channels() > 1) {
+            Core.split(srcImg, channels);
+        } else {
+            channels.add(srcImg);
+        }
 
-        double[][] val = new double[4][];
-        val[0] = new double[] { minMax.minVal };
-        val[1] = new double[] { minMax.maxVal };
+        double[][] val = new double[4][channels.size()];
+        for (int i = 0; i < channels.size(); i++) {
+            MinMaxLocResult minMax = Core.minMaxLoc(channels.get(i), mask);
+            val[0][i] = minMax.minVal;
+            val[1][i] = minMax.maxVal;
+        }
+
         val[2] = mean.toArray();
         val[3] = stddev.toArray();
 
@@ -854,11 +863,15 @@ public class ImageProcessor {
             PlanarImage img = firstImg.getImage(null, false);
 
             Integer type = null;
-            Mat mean = Mat.zeros(img.width(), img.height(), CvType.CV_32F);
+            Mat mean = new Mat(img.height(), img.width(), CvType.CV_64F);
+            img.toMat().convertTo(mean, CvType.CV_64F);
             int numbSrc = sources.size();
-            for (int i = 0; i < numbSrc; i++) {
+            for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
                 PlanarImage image = imgElement.getImage(null, false);
+                if (image.width() != img.width() && image.height() != img.height()) {
+                    continue;
+                }
                 if (type == null) {
                     type = image.type();
                 }
@@ -878,12 +891,16 @@ public class ImageProcessor {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
             ImageCV dstImg = new ImageCV();
-            dstImg.copyTo(firstImg.getImage(null, false).toMat());
+            PlanarImage img = firstImg.getImage(null, false);
+            img.toMat().copyTo(dstImg);
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
                 PlanarImage image = imgElement.getImage(null, false);
+                if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
+                    continue;
+                }
                 if (image instanceof Mat) {
                     Core.min(dstImg, (Mat) image, dstImg);
                 }
@@ -897,12 +914,16 @@ public class ImageProcessor {
         if (sources.size() > 1) {
             ImageElement firstImg = sources.get(0);
             ImageCV dstImg = new ImageCV();
-            dstImg.copyTo(firstImg.getImage(null, false).toMat());
+            PlanarImage img = firstImg.getImage(null, false);
+            img.toMat().copyTo(dstImg);
 
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
                 PlanarImage image = imgElement.getImage(null, false);
+                if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
+                    continue;
+                }
                 if (image instanceof Mat) {
                     Core.max(dstImg, (Mat) image, dstImg);
                 }

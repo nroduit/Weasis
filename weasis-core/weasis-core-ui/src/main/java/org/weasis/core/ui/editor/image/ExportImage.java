@@ -44,8 +44,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     public ExportImage(ViewCanvas<E> view2d) {
         super(view2d.getEventManager(), null);
         this.view2d = view2d;
-        // Pixel iterator is necessary for updating label of measurements
-        this.imageLayer.setBuildIterator(true);
         // Remove OpEventListener to avoid reseting some parameters when setting the series
         this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
         setFont(FontTools.getFont8());

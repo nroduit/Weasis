@@ -42,18 +42,14 @@ public class MeanCollectionZprojection {
             throw new TaskInterruptionException("Operation from " + this.getClass().getName() + " has been canceled"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         if (taskMonitor.isShowProgression()) {
-            GuiExecutor.instance().execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    taskMonitor.setProgress(progress);
-                    StringBuilder buf = new StringBuilder(Messages.getString("MeanCollectionZprojection.operation")); //$NON-NLS-1$
-                    buf.append(StringUtil.COLON_AND_SPACE);
-                    buf.append(progress);
-                    buf.append("/"); //$NON-NLS-1$
-                    buf.append(taskMonitor.getMaximum());
-                    taskMonitor.setNote(buf.toString());
-                }
+            GuiExecutor.instance().execute(() -> {
+                taskMonitor.setProgress(progress);
+                StringBuilder buf = new StringBuilder(Messages.getString("MeanCollectionZprojection.operation")); //$NON-NLS-1$
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(progress);
+                buf.append("/"); //$NON-NLS-1$
+                buf.append(taskMonitor.getMaximum());
+                taskMonitor.setNote(buf.toString());
             });
         }
     }

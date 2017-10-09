@@ -102,7 +102,7 @@ public class StringUtil {
         }
         return EMPTY_INT_ARRAY;
     }
-
+    
     public static Integer getInteger(String val) {
         if (StringUtil.hasText(val)) {
             try {
@@ -113,6 +113,7 @@ public class StringUtil {
         }
         return null;
     }
+
 
     public static int getInt(String val) {
         if (StringUtil.hasText(val)) {
@@ -129,12 +130,23 @@ public class StringUtil {
         int result = defaultValue;
         if (value != null) {
             try {
-                return Integer.parseInt(value);
+                return Integer.parseInt(value.trim());
             } catch (NumberFormatException e) {
                 LOGGER.warn("Cannot parse {} to int", value); //$NON-NLS-1$
             }
         }
         return result;
+    }
+    
+    public static Double getDouble(String val) {
+        if (StringUtil.hasText(val)) {
+            try {
+                return Double.parseDouble(val.trim());
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Cannot parse {} to Double", val); //$NON-NLS-1$
+            }
+        }
+        return null;
     }
 
     public static String splitCamelCaseString(String s) {
