@@ -686,7 +686,7 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if ((!LangUtil.getNULLtoFalse(wlOnColorImage) || window == 255 && MathUtil.isEqual(level, 127.5)) && !isPhotometricInterpretationMonochrome()) {
+            if ((!LangUtil.getNULLtoFalse(wlOnColorImage) || MathUtil.isEqual(windowValue, 255.0) && MathUtil.isEqual(levelValue, 127.5)) && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.
