@@ -103,12 +103,12 @@ public class DefaultViewModel implements ViewModel {
     
     @Override
     public double getModelOffsetX() {
-        return modelOffsetX + rotationOffsetX;
+        return modelOffsetX;
     }
 
     @Override
     public double getModelOffsetY() {
-        return modelOffsetY + rotationOffsetY;
+        return modelOffsetY;
     }
 
     @Override
@@ -231,5 +231,15 @@ public class DefaultViewModel implements ViewModel {
         if (ratio < viewScaleMin) {
             this.viewScaleMin = ratio;
         }
+    }
+
+    @Override
+    public double getAllOffsetX() {
+        return modelOffsetX + rotationOffsetX;
+    }
+
+    @Override
+    public double getAllOffsetY() {
+        return modelOffsetY + rotationOffsetY;
     }
 }

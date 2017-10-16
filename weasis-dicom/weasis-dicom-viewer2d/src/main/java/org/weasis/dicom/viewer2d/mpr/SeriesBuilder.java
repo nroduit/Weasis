@@ -13,8 +13,6 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.geom.Point2D;
-import java.awt.image.DataBuffer;
-import java.awt.image.SampleModel;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,7 +31,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Core;
 import org.opencv.imgproc.Imgproc;
@@ -312,8 +309,6 @@ public class SeriesBuilder {
         int bitsStored = img.getBitsStored();
         double[] pixSpacing = new double[] { sPixSize, origPixSize };
 
-        int dataType = 0;
-        SampleModel sampleModel = null;
         final JProgressBar bar = view.getProgressBar();
 
         if (params.rotateOutputImg) {
@@ -329,20 +324,6 @@ public class SeriesBuilder {
 
             pixSpacing = new double[] { origPixSize, sPixSize };
 
-            int samplesPerPixel = TagD.getTagValue(img, Tag.SamplesPerPixel, Integer.class);
-            boolean banded = samplesPerPixel > 1
-                && DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PlanarConfiguration, 0) != 0;
-            int pixelRepresentation =
-                DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.PixelRepresentation, 0);
-            dataType = bitsAllocated <= 8 ? DataBuffer.TYPE_BYTE
-                : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
-            if (bitsAllocated > 16 && samplesPerPixel == 1) {
-                dataType = DataBuffer.TYPE_INT;
-            }
-
-            String photometricInterpretation = TagD.getTagValue(img, Tag.PhotometricInterpretation, String.class);
-            PhotometricInterpretation pmi = PhotometricInterpretation.fromString(photometricInterpretation);
-            sampleModel = pmi.createSampleModel(dataType, dim.width, dim.height, samplesPerPixel, banded);
             int tmp = dim.width;
             dim.width = dim.height;
             dim.height = tmp;

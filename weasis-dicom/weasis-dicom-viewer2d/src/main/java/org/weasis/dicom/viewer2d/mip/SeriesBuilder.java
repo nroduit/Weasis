@@ -154,6 +154,9 @@ public class SeriesBuilder {
                         if (raw != null) {
                             FileUtil.delete(raw.getFile());
                         }
+                        if (taskMonitor.isAborting()) {
+                            throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
+                        }
                         LOGGER.error("Writing MIP", e);
                     }
                     if (raw == null) {
@@ -216,7 +219,7 @@ public class SeriesBuilder {
 
                     dicoms.add(dicom);
 
-                    if (taskMonitor.isCanceled()) {
+                    if (taskMonitor.isAborting()) {
                         throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                     }
                     final int progress = index - minImg;

@@ -863,8 +863,8 @@ public class ImageProcessor {
             PlanarImage img = firstImg.getImage(null, false);
 
             Integer type = null;
-            Mat mean = new Mat(img.height(), img.width(), CvType.CV_64F);
-            img.toMat().convertTo(mean, CvType.CV_64F);
+            Mat mean = new Mat(img.height(), img.width(), CvType.CV_32F);
+            img.toMat().convertTo(mean, CvType.CV_32F);
             int numbSrc = sources.size();
             for (int i = 1; i < numbSrc; i++) {
                 ImageElement imgElement = sources.get(i);
@@ -876,7 +876,15 @@ public class ImageProcessor {
                     type = image.type();
                 }
                 if (image instanceof Mat) {
-                    Imgproc.accumulate((Mat) image, mean);
+                    // Accumulate not supported 16-bit signed: https://docs.opencv.org/3.3.0/d7/df3/group__imgproc__motion.html#ga1a567a79901513811ff3b9976923b199
+                    if(CvType.depth(image.type()) == CvType.CV_16S) {
+                        Mat floatImage = new Mat(img.height(), img.width(), CvType.CV_32F);
+                        image.toMat().convertTo(floatImage, CvType.CV_32F);
+                        Imgproc.accumulate(floatImage, mean);
+                    }
+                    else {
+                        Imgproc.accumulate((Mat) image, mean);
+                    }
                 }
             }
             ImageCV dstImg = new ImageCV();

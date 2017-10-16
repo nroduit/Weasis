@@ -16,11 +16,13 @@ import javax.swing.ProgressMonitor;
 
 public class TaskMonitor extends ProgressMonitor {
 
-    private boolean showProgression;
+    private volatile boolean showProgression;
+    private volatile boolean aborting;
 
     public TaskMonitor(Component parentComponent, Object message, String note, int min, int max) {
         super(parentComponent, message, note, min, max);
         this.showProgression = true;
+        this.aborting = false;
     }
 
     public boolean isShowProgression() {
@@ -29,6 +31,14 @@ public class TaskMonitor extends ProgressMonitor {
 
     public void setShowProgression(boolean showProgression) {
         this.showProgression = showProgression;
+    }
+
+    public boolean isAborting() {
+        return aborting || isCanceled();
+    }
+
+    public void setAborting(boolean aborting) {
+        this.aborting = aborting;
     }
 
 }

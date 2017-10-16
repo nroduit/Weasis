@@ -170,7 +170,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
     private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
     private int pointerType = 0;
-
+    
     protected final Color pointerColor1 = Color.black;
     protected final Color pointerColor2 = Color.white;
     protected final Border normalBorder = new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
@@ -247,7 +247,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, null);
         disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
         disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, ByteLut.defaultLUT);
-        disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false);
+        disOp.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE, false); 
     }
 
     @Override
@@ -862,8 +862,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         Stroke oldStroke = g2d.getStroke();
         Paint oldColor = g2d.getPaint();
         double viewScale = getViewModel().getViewScale();
-        double offsetX = getViewModel().getModelOffsetX() * viewScale;
-        double offsetY = getViewModel().getModelOffsetY() * viewScale;
+        double offsetX = getViewModel().getAllOffsetX() * viewScale;
+        double offsetY = getViewModel().getAllOffsetY() * viewScale;
         // Paint the visible area
         g2d.translate(-offsetX, -offsetY);
         // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
@@ -872,7 +872,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
-
+        
         g2d.translate(offsetX, offsetY);
 
         drawPointer(g2d);
@@ -894,8 +894,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
             graphicManager.draw(g2d, transform, inverseTransform,
-                new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
-                    modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
+                new Rectangle2D.Double(modelToViewLength(getViewModel().getAllOffsetX()),
+                    modelToViewLength(getViewModel().getAllOffsetY()), getWidth(), getHeight()));
         }
     }
 
@@ -925,13 +925,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
              */
             center();
         }
-        updateAffineTransform(false);
+        updateAffineTransform();
         if (panner != null) {
             panner.updateImageSize();
         }
     }
 
-    protected void updateAffineTransform(boolean rotation) {
+    protected void updateAffineTransform() {
         Rectangle2D modelArea = getViewModel().getModelArea();
         double viewScale = getViewModel().getViewScale();
 
@@ -987,14 +987,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             r.width -= r.x;
             r.height -= r.y;
 
-            if (rotation && rotationAngle != null && rotationAngle != 0) {
+            if (rotationAngle != null && rotationAngle != 0) {
                 double mWidth = modelArea.getWidth();
                 double mHeight = modelArea.getHeight();
                 int angle = -rotationAngle;
                 org.opencv.core.Point ptCenter =
                     new org.opencv.core.Point(0.0, 0.0);
                 Rect rotRect = new RotatedRect(ptCenter, new Size(mWidth, mHeight), angle).boundingRect();
-                getViewModel().setRotationOffset((rotRect.width - mWidth) / 2.0, (rotRect.height - mHeight) / 2.0);
+                getViewModel().setRotationOffset((rotRect.width - mWidth) / 2.0, (rotRect.height - mHeight)  / 2.0);
             } else {
                 getViewModel().setRotationOffset(0.0, 0.0);
             }
@@ -1166,7 +1166,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             } else if (command.equals(ActionW.ROTATION.cmd())) {
                 Object old = actionsInView.put(ActionW.ROTATION.cmd(), entry.getValue());
                 if (!Objects.equals(old, entry.getValue())) {
-                    updateAffineTransform(true);
+                    updateAffineTransform();
                 }
             } else if (command.equals(ActionW.RESET.cmd())) {
                 reset();
@@ -1222,7 +1222,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 // Horizontal flip is applied after rotation (To be compliant with DICOM PR)
                 Object old = actionsInView.put(ActionW.FLIP.cmd(), entry.getValue());
                 if (!Objects.equals(old, entry.getValue())) {
-                    updateAffineTransform(true);
+                    updateAffineTransform();
                 }
             } else if (command.equals(ActionW.LUT.cmd())) {
                 if (manager.setParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT, entry.getValue())) {

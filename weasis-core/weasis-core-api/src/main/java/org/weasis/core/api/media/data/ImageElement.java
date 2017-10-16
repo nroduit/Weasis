@@ -82,6 +82,10 @@ public class ImageElement extends MediaElement {
         super(mediaIO, key);
     }
 
+    public static int getNumberOfImagesInCache() {
+        return mCache.size();
+    }
+
     protected void findMinMaxValues(PlanarImage img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done

@@ -38,7 +38,7 @@ public class MinCollectionZprojection {
         if (taskMonitor == null) {
             return;
         }
-        if (taskMonitor.isCanceled()) {
+        if (taskMonitor.isAborting()) {
             throw new TaskInterruptionException("Operation from " + this.getClass().getName() + " has been canceled"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         if (taskMonitor.isShowProgression()) {
