@@ -16,6 +16,7 @@ import static org.opencv.core.Core.add;
 import static org.opencv.core.Core.multiply;
 
 import java.awt.Color;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -253,7 +254,7 @@ public class RtSet {
                     new Color(color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
                 layer.getStructure().setColor(color2);
 
-                Map<Double, List<Contour>> planes = new HashMap<>();
+                Map<String, List<Contour>> planes = new HashMap<>();
 
                 Sequence cseq = roiContourSeq.getSequence(Tag.ContourSequence);
                 if (cseq != null) {
@@ -291,12 +292,12 @@ public class RtSet {
                         }
 
                         // Add each plane to the planes dictionary of the current ROI
-                        double z = plane.getCoordinateZ();
+                        String keyZ = String.format("%.2f", plane.getCoordinateZ());
 
                         // If there are no contour on specific z position
-                        if (!planes.containsKey(z)) {
-                            planes.put(z, new ArrayList<>());
-                            planes.get(z).add(plane);
+                        if (!planes.containsKey(keyZ)) {
+                            planes.put(keyZ, new ArrayList<>());
+                            planes.get(keyZ).add(plane);
                         }
 
                     }
@@ -360,57 +361,39 @@ public class RtSet {
 
                 String doseRefStructType = doseRef.getString(Tag.DoseReferenceStructureType);
 
-                // POINT (dose reference point specified as ROI)
-                if ("POINT".equals(doseRefStructType)) {
-                    // NOOP
-                    LOGGER.info("Not supported: dose reference point specified as ROI");
-                }
+                // Prescribed dose in Gy
+                Double targetDose = DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
 
-                // VOLUME structure is associated with dose (dose reference volume specified as ROI)
-                else if ("VOLUME".equals(doseRefStructType)) {
-                    Double targetPrescDose =
-                        DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
+                if (targetDose != null) {
 
                     // DICOM specifies prescription dose In Gy -> convert to cGy
-                    if (targetPrescDose != null) {
-                        plan.setRxDose(targetPrescDose * 100);
-                    }
-                }
+                    double rxDose = targetDose * 100;
 
-                // COORDINATES (point specified by Dose Reference Point Coordinates (300A,0018))
-                else if ("COORDINATES".equals(doseRefStructType)) {
-                    // NOOP
-                    Double targetPrescDose =
-                        DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
-
-                    // DICOM specifies prescription dose In Gy -> convert to cGy
-                    if (targetPrescDose != null) {
-                        plan.setRxDose(targetPrescDose * 100);
-                    }
-                    // TODO: if target prescribed dose is not defined it should be possible to get the dose value from
-                    // Dose Reference Point Coordinates
-                }
-
-                // SITE structure is associated with dose (dose reference clinical site)
-                else if ("SITE".equals(doseRefStructType)) {
-
-                    // Add user defined dose description to plan name
-                    String doseRefDesc = doseRef.getString(Tag.DoseReferenceDescription);
-                    if (StringUtil.hasText(doseRefDesc)) {
-                        plan.setName(plan.getName() + " - " + doseRefDesc);
+                    // POINT (dose reference point specified as ROI)
+                    if ("POINT".equals(doseRefStructType)) {
+                        // NOOP
+                        LOGGER.info("Not supported: dose reference point specified as ROI");
                     }
 
-                    Double targetPrescDose =
-                        DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
+                    // VOLUME structure is associated with dose (dose reference volume specified as ROI)
+                    // SITE structure is associated with dose (dose reference clinical site)
+                    // COORDINATES (point specified by Dose Reference Point Coordinates (300A,0018))
+                    else if ("VOLUME".equals(doseRefStructType) || "SITE".equals(doseRefStructType) || "COORDINATES".equals(doseRefStructType)) {
 
-                    // DICOM specifies prescription dose In Gy -> convert to cGy
-                    if (targetPrescDose != null) {
-                        double rxDose = targetPrescDose * 100;
-                        if (rxDose > plan.getRxDose()) {
+                        // Keep the highest prescribed dose
+                        if (plan.getRxDose() != null && rxDose > plan.getRxDose()) {
                             plan.setRxDose(rxDose);
+
+                            // Add user defined dose description to plan name
+                            String doseRefDesc = doseRef.getString(Tag.DoseReferenceDescription);
+                            if (StringUtil.hasText(doseRefDesc)) {
+                                plan.appendName(doseRefDesc);
+                            }
                         }
                     }
                 }
+                // TODO: if target prescribed dose is not defined it should be possible to get the dose value from
+                // Dose Reference Point Coordinates
             }
 
             // When fractionation group sequence is defined get prescribed dose from there (in cGy unit)
@@ -665,12 +648,12 @@ public class RtSet {
                         new IsoDose(30, new Color(0, 0, 128, isoFillTransparency), "", plan.getRxDose())));
 
                     // Commented level just for testing
-                    // dose.getIsoDoseSet().put(0, new IsoDoseLayer(new IsoDose(0, new Color(0, 0, 111,
-                    // isoFillTransparency), "", plan.getRxDose())));
+                    //dose.getIsoDoseSet().put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0, 111,
+                    //isoFillTransparency), "", plan.getRxDose())));
 
                     // Go through whole dose grid
                     for (int i = 0; i < dose.getImages().size(); i++) {
-
+                        
                         double z = dose.getGridFrameOffsetVector()[i] + dose.getImagePositionPatient()[2];
 
                         for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
@@ -687,7 +670,8 @@ public class RtSet {
 
                                 // Create a new IsoDose contour plane for Z or select existing one
                                 // it will hold list of contours for that plane
-                                isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(z, k -> new ArrayList<>());
+                                String keyZ = String.format("%.2f", z);
+                                isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(keyZ, k -> new ArrayList<>());
 
                                 // For each iso contour create a new contour
                                 MatOfPoint contour = isoContours.get(j);
@@ -714,7 +698,7 @@ public class RtSet {
                                 isoContour.setGeometricType("CLOSED_PLANAR");
 
                                 // Assign
-                                isoDoseLayer.getIsoDose().getPlanes().get(z).add(isoContour);
+                                isoDoseLayer.getIsoDose().getPlanes().get(keyZ).add(isoContour);
                             }
                         }
                     }
@@ -821,10 +805,12 @@ public class RtSet {
      *
      * @return structure plane thickness
      */
-    private static double calculatePlaneThickness(Map<Double, List<Contour>> planesMap) {
+    private static double calculatePlaneThickness(Map<String, List<Contour>> planesMap) {
         // Sort the list of z coordinates
         List<Double> planes = new ArrayList<>();
-        planes.addAll(planesMap.keySet());
+        for (String key : planesMap.keySet()) {
+            planes.add(Double.parseDouble(key));
+        }
         Collections.sort(planes);
 
         // Set maximum thickness as initial value
@@ -845,7 +831,7 @@ public class RtSet {
 
         return thickness;
     }
-
+    
     private static double[] interpolate(int[] interpolatedX, double[] xCoordinates, double[] yCoordinates) {
         double[] interpolatedY = new double[interpolatedX.length];
 
@@ -910,8 +896,8 @@ public class RtSet {
         }
 
         // Go through all structure plane slices
-        for (Map.Entry<Double, List<Contour>> entry : structure.getPlanes().entrySet()) {
-            double z = entry.getKey();
+        for (Map.Entry<String, List<Contour>> entry : structure.getPlanes().entrySet()) {
+            double z = Double.parseDouble(entry.getKey());
 
             // Calculate the area for each contour in the current plane
             Pair<Integer, Double> maxContour = structure.calculateLargestContour(entry.getValue());

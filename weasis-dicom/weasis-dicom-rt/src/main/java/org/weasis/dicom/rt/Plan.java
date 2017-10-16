@@ -105,9 +105,27 @@ public class Plan implements Serializable {
         return null;
     }
 
+    public void appendName(String text) {
+        if (this.name != null && !this.name.isEmpty()) {
+            this.name += " (" + text + ")";
+        }
+        else if (this.label != null && !this.label.isEmpty()) {
+            this.name = this.label +  " (" + text + ")";
+        }
+    }
+
     @Override
     public String toString() {
-        return this.label;
+        String result = "";
+        
+        if (this.name != null && !this.name.isEmpty()) {
+            result = this.name;
+        }
+        else if (this.label != null && !this.label.isEmpty()) {
+            result = this.label;
+        }
+
+        return result;
     }
 
     @Override

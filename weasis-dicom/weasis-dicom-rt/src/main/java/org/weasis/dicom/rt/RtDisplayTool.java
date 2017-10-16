@@ -237,16 +237,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
-        final JPanel palenSlider1 = new JPanel();
-        palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
-        palenSlider1.setBorder(new TitledBorder("Graphic Opacity"));
+        final JPanel panelSlider1 = new JPanel();
+        panelSlider1.setLayout(new BoxLayout(panelSlider1, BoxLayout.Y_AXIS));
+        panelSlider1.setBorder(new TitledBorder("Graphic Opacity"));
         DefaultBoundedRangeModel model = new DefaultBoundedRangeModel(50, 0, 0, 100);
         JSliderW s = new JSliderW(model);
         s.setLabelDivision(labelDivision);
         s.setdisplayValueInTitle(displayValueInTitle);
         s.setPaintTicks(true);
         s.setShowLabels(labelDivision > 0);
-        palenSlider1.add(s);
+        panelSlider1.add(s);
         if (s.isShowLabels()) {
             s.setPaintLabels(true);
             SliderChangeListener.setSliderLabelValues(s, model.getMinimum(), model.getMaximum(), 0.0, 100.0);
@@ -358,7 +358,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
-                double z = geometry.getTLHC().getZ();
+                String keyZ = String.format("%.2f", geometry.getTLHC().getZ());
 
                 // List of detected contours from RtSet
                 List<Contour> contours =
@@ -392,7 +392,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             if (containsIsoDose(listIsoDose, isoDose)) {
 
                                 // Contours for specific slice
-                                List<Contour> isoContours = isoDose.getPlanes().get(z);
+                                List<Contour> isoContours = isoDose.getPlanes().get(keyZ);
                                 if (isoContours != null) {
 
                                     // Iso dose graphics
@@ -716,8 +716,31 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         public String getToolTipText() {
             StructureLayer layer = (StructureLayer) getUserObject();
+            
             // TODO
-            return null;
+            double volume = layer.getStructure().getVolume();
+            String source = layer.getStructure().getVolumeSource().toString();
+
+            StringBuilder structTooltip = new StringBuilder();
+            structTooltip.append("Structure Information:");
+            structTooltip.append(String.format(source + " Volume: %.4f cm^3", volume));
+
+            //TODO: I actually need to find DVH for structure from the plan dose ...
+//            Dvh structureDvh = dose.get(structure.getRoiNumber());
+//
+//            String relativeMinDose = String.format(structureDvh.getDvhSource().toString()
+//                    + " Min Dose: %.3f %%",
+//                RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
+//            String relativeMaxDose = String.format(
+//                    "Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString()
+//                            + " Max Dose: %.3f %%",
+//                    RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
+//            String relativeMeanDose = String.format(
+//                    "Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString()
+//                            + " Mean Dose: %.3f %%",
+//                    RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
+
+            return structTooltip.toString();
         }
 
         @Override
