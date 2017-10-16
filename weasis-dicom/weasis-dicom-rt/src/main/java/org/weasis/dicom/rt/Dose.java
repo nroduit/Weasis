@@ -283,7 +283,7 @@ public class Dose extends HashMap<Integer, Dvh> {
         // Convert from threshold in cCy to raw pixel value threshold
         double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
 
-        DicomImageElement dosePlane = (DicomImageElement) this. getDosePlaneBySlice(slicePosition);
+        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
 
         int rows = dosePlane.getImage().toMat().rows();
         int cols = dosePlane.getImage().toMat().cols();

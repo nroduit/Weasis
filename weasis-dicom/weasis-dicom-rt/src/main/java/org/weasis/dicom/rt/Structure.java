@@ -33,7 +33,7 @@ public class Structure {
     private DataSource volumeSource;
 
     private Color color;
-    private Map<Double, List<Contour>> planes;
+    private Map<String, List<Contour>> planes;
 
     public Structure() {
         this.volume = -1.0;
@@ -114,11 +114,11 @@ public class Structure {
         this.color = color;
     }
 
-    public Map<Double, List<Contour>> getPlanes() {
+    public Map<String, List<Contour>> getPlanes() {
         return this.planes;
     }
 
-    public void setPlanes(Map<Double, List<Contour>> contours) {
+    public void setPlanes(Map<String, List<Contour>> contours) {
         this.planes = contours;
     }
 
