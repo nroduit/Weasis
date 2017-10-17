@@ -18,6 +18,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -120,8 +121,41 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.comboRtPlan.setVisible(false);
         this.slider = createTransparencySlider(5, true);
 
-        this.treeStructures = new CheckboxTree();
-        this.treeIsodoses = new CheckboxTree();
+        this.treeStructures = new CheckboxTree() {
+            @Override
+            public String getToolTipText(MouseEvent evt) {
+                if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
+                    return null;
+                }
+                TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
+                if (curPath != null) {
+                    Object object = curPath.getLastPathComponent();
+                    if (object instanceof StructToolTipTreeNode) {
+                        return ((StructToolTipTreeNode) object).getToolTipText();
+                    }
+                }
+                return null;
+            }
+        };
+        treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
+        
+        this.treeIsodoses = new CheckboxTree() {
+            @Override
+            public String getToolTipText(MouseEvent evt) {
+                if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
+                    return null;
+                }
+                TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
+                if (curPath != null) {
+                    Object object = curPath.getLastPathComponent();
+                    if (object instanceof IsoToolTipTreeNode) {
+                        return ((IsoToolTipTreeNode) object).getToolTipText();
+                    }
+                }
+                return null;
+            }
+        };
+        treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
         this.nodeStructures = new DefaultMutableTreeNode("Structures", true);
         this.nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
         this.initData();
@@ -358,7 +392,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
-                String keyZ = String.format("%.2f", geometry.getTLHC().getZ());
+                KeyDouble z = new KeyDouble(geometry.getTLHC().getZ());
 
                 // List of detected contours from RtSet
                 List<Contour> contours =
@@ -392,7 +426,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             if (containsIsoDose(listIsoDose, isoDose)) {
 
                                 // Contours for specific slice
-                                List<Contour> isoContours = isoDose.getPlanes().get(keyZ);
+                                List<Contour> isoContours = isoDose.getPlanes().get(z);
                                 if (isoContours != null) {
 
                                     // Iso dose graphics

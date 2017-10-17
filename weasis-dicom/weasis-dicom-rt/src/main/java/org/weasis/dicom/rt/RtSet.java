@@ -16,7 +16,6 @@ import static org.opencv.core.Core.add;
 import static org.opencv.core.Core.multiply;
 
 import java.awt.Color;
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -254,7 +253,7 @@ public class RtSet {
                     new Color(color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
                 layer.getStructure().setColor(color2);
 
-                Map<String, List<Contour>> planes = new HashMap<>();
+                Map<KeyDouble, List<Contour>> planes = new HashMap<>();
 
                 Sequence cseq = roiContourSeq.getSequence(Tag.ContourSequence);
                 if (cseq != null) {
@@ -292,14 +291,14 @@ public class RtSet {
                         }
 
                         // Add each plane to the planes dictionary of the current ROI
-                        String keyZ = String.format("%.2f", plane.getCoordinateZ());
+                        KeyDouble z = new  KeyDouble(plane.getCoordinateZ());
 
                         // If there are no contour on specific z position
-                        if (!planes.containsKey(keyZ)) {
-                            planes.put(keyZ, new ArrayList<>());
-                            planes.get(keyZ).add(plane);
+                        if (!planes.containsKey(z)) {
+                            ArrayList<Contour> list = new ArrayList<>();
+                            list.add(plane);
+                            planes.put(z,list);
                         }
-
                     }
                 }
 
@@ -654,7 +653,7 @@ public class RtSet {
                     // Go through whole dose grid
                     for (int i = 0; i < dose.getImages().size(); i++) {
                         
-                        double z = dose.getGridFrameOffsetVector()[i] + dose.getImagePositionPatient()[2];
+                        KeyDouble z =  new KeyDouble( dose.getGridFrameOffsetVector()[i] + dose.getImagePositionPatient()[2]);
 
                         for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
                             double isoDoseThreshold = isoDoseLayer.getIsoDose().getAbsoluteDose();
@@ -670,8 +669,7 @@ public class RtSet {
 
                                 // Create a new IsoDose contour plane for Z or select existing one
                                 // it will hold list of contours for that plane
-                                String keyZ = String.format("%.2f", z);
-                                isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(keyZ, k -> new ArrayList<>());
+                                isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(z, k -> new ArrayList<>());
 
                                 // For each iso contour create a new contour
                                 MatOfPoint contour = isoContours.get(j);
@@ -689,7 +687,7 @@ public class RtSet {
 
                                     newContour[k] = coordinates[0];
                                     newContour[k + 1] = coordinates[1];
-                                    newContour[k + 2] = z;
+                                    newContour[k + 2] = z.getValue();
                                     k += 3;
                                 }
 
@@ -698,7 +696,7 @@ public class RtSet {
                                 isoContour.setGeometricType("CLOSED_PLANAR");
 
                                 // Assign
-                                isoDoseLayer.getIsoDose().getPlanes().get(keyZ).add(isoContour);
+                                isoDoseLayer.getIsoDose().getPlanes().get(z).add(isoContour);
                             }
                         }
                     }
@@ -805,12 +803,10 @@ public class RtSet {
      *
      * @return structure plane thickness
      */
-    private static double calculatePlaneThickness(Map<String, List<Contour>> planesMap) {
+    private static double calculatePlaneThickness(Map<KeyDouble, List<Contour>> planesMap) {
         // Sort the list of z coordinates
-        List<Double> planes = new ArrayList<>();
-        for (String key : planesMap.keySet()) {
-            planes.add(Double.parseDouble(key));
-        }
+        List<KeyDouble> planes = new ArrayList<>();
+        planes.addAll(planesMap.keySet());
         Collections.sort(planes);
 
         // Set maximum thickness as initial value
@@ -818,7 +814,7 @@ public class RtSet {
 
         // Compare z of each two next to each other planes in order to find the minimal shift in z
         for (int i = 1; i < planes.size(); i++) {
-            double newThickness = planes.get(i) - planes.get(i - 1);
+            double newThickness = planes.get(i).getValue() - planes.get(i - 1).getValue();
             if (newThickness < thickness) {
                 thickness = newThickness;
             }
@@ -896,15 +892,15 @@ public class RtSet {
         }
 
         // Go through all structure plane slices
-        for (Map.Entry<String, List<Contour>> entry : structure.getPlanes().entrySet()) {
-            double z = Double.parseDouble(entry.getKey());
+        for (Map.Entry<KeyDouble, List<Contour>> entry : structure.getPlanes().entrySet()) {
+            KeyDouble z = entry.getKey();
 
             // Calculate the area for each contour in the current plane
             Pair<Integer, Double> maxContour = structure.calculateLargestContour(entry.getValue());
             int maxContourIndex = maxContour.getFirst();
 
             // If dose plane does not exist for z, continue with next plane
-            MediaElement dosePlane = dose.getDosePlaneBySlice(z);
+            MediaElement dosePlane = dose.getDosePlaneBySlice(z.getValue());
             if (dosePlane == null) {
                 continue;
             }
@@ -915,7 +911,7 @@ public class RtSet {
                 Contour contour = entry.getValue().get(c);
 
                 Mat contourMask = calculateContourMask(dose.getDoseMmLUT(), contour);
-                Mat hist = dose.getMaskedDosePlaneHist(z, contourMask, (int) maxDose);
+                Mat hist = dose.getMaskedDosePlaneHist(z.getValue(), contourMask, (int) maxDose);
 
                 double vol = 0;
                 for (int i = 0; i < hist.rows(); i++) {

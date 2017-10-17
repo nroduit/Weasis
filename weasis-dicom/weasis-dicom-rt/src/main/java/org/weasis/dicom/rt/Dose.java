@@ -277,13 +277,13 @@ public class Dose extends HashMap<Integer, Dvh> {
         return hist;
     }
 
-    public List<MatOfPoint> getIsoDoseContourPoints(double slicePosition, double isoDoseThreshold) {
+    public List<MatOfPoint> getIsoDoseContourPoints(KeyDouble slicePosition, double isoDoseThreshold) {
         List<MatOfPoint> contours = new ArrayList<>();
 
         // Convert from threshold in cCy to raw pixel value threshold
         double rawThreshold = (isoDoseThreshold / 100) / this.doseGridScaling;
 
-        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition);
+        DicomImageElement dosePlane = (DicomImageElement) this.getDosePlaneBySlice(slicePosition.getValue());
 
         int rows = dosePlane.getImage().toMat().rows();
         int cols = dosePlane.getImage().toMat().cols();

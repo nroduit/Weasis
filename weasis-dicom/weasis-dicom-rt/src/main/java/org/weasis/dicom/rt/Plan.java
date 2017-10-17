@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.weasis.core.api.util.StringUtil;
+
 public class Plan implements Serializable {
     private static final long serialVersionUID = -7174986553617095338L;
     
@@ -106,26 +108,23 @@ public class Plan implements Serializable {
     }
 
     public void appendName(String text) {
-        if (this.name != null && !this.name.isEmpty()) {
+        if (StringUtil.hasText(this.name)) {
             this.name += " (" + text + ")";
         }
-        else if (this.label != null && !this.label.isEmpty()) {
+        else if (StringUtil.hasText(this.label)) {
             this.name = this.label +  " (" + text + ")";
         }
     }
 
     @Override
     public String toString() {
-        String result = "";
-        
-        if (this.name != null && !this.name.isEmpty()) {
-            result = this.name;
+        if (StringUtil.hasText(this.name)) {
+            return this.name;
         }
-        else if (this.label != null && !this.label.isEmpty()) {
-            result = this.label;
+        else if (StringUtil.hasText(this.label)) {
+            return this.label;
         }
-
-        return result;
+        return StringUtil.EMPTY_STRING;
     }
 
     @Override

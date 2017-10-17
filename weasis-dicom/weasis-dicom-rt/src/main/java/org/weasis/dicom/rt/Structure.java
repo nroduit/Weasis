@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.math3.util.Pair;
+import org.weasis.core.api.util.StringUtil;
 
 /**
  * Created by toskrip on 2/1/15.
@@ -33,7 +34,7 @@ public class Structure {
     private DataSource volumeSource;
 
     private Color color;
-    private Map<String, List<Contour>> planes;
+    private Map<KeyDouble, List<Contour>> planes;
 
     public Structure() {
         this.volume = -1.0;
@@ -114,11 +115,11 @@ public class Structure {
         this.color = color;
     }
 
-    public Map<String, List<Contour>> getPlanes() {
+    public Map<KeyDouble, List<Contour>> getPlanes() {
         return this.planes;
     }
 
-    public void setPlanes(Map<String, List<Contour>> contours) {
+    public void setPlanes(Map<KeyDouble, List<Contour>> contours) {
         this.planes = contours;
     }
 
@@ -199,15 +200,15 @@ public class Structure {
     public String toString() {
         String resultLabel = "";
 
-        if (this.roiName != null && !this.roiName.equals("")) {
+        if (StringUtil.hasText(this.roiName)) {
             resultLabel += this.roiName;
         }
 
-        if (this.rtRoiInterpretedType != null && !this.rtRoiInterpretedType.equals("")) {
+        if (StringUtil.hasText(this.rtRoiInterpretedType)) {
             resultLabel += " [" + this.rtRoiInterpretedType + "]";
         }
 
-        if (this.roiObservationLabel != null && !this.roiObservationLabel.equals("")) {
+        if (StringUtil.hasText(this.roiObservationLabel)) {
             resultLabel += " (" + this.roiObservationLabel + ")";
         }
 
