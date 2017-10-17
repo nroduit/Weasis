@@ -1,23 +1,27 @@
 package org.weasis.dicom.rt;
 
-import java.util.Objects;
-
 import org.weasis.core.api.gui.util.MathUtil;
 
 public class KeyDouble implements Comparable<KeyDouble> {
-    private final Double value;
+    private final double value;
+    private final double key;
 
-    public KeyDouble(Double value) {
-        this.value = Objects.requireNonNull(value);
+    public KeyDouble(double value) {
+        this.value = value;
+        this.key = MathUtil.round(value, 2);
     }
 
-    public Double getValue() {
+    public double getValue() {
         return value;
+    }
+
+    public double getKey() {
+        return key;
     }
 
     @Override
     public int hashCode() {
-        return Double.hashCode(value);
+        return Double.hashCode(key);
     }
 
     @Override
@@ -28,11 +32,12 @@ public class KeyDouble implements Comparable<KeyDouble> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        return MathUtil.isEqual(value, ((KeyDouble) obj).value);
+        return MathUtil.isEqual(key, ((KeyDouble) obj).key);
     }
 
     @Override
     public int compareTo(KeyDouble v) {
         return Double.compare(value, v.getValue());
     }
+
 }
