@@ -104,6 +104,7 @@ public class MipView extends View2d {
         final MipProcess t = process;
         if (t != null) {
             process = null;
+            t.taskMonitor.setAborting(true);
             // Close won't stop the process immediately
             t.taskMonitor.close();
             t.interrupt();
@@ -155,38 +156,33 @@ public class MipView extends View2d {
                         AuditLog.logError(LOGGER, t, "Mip renderding error"); //$NON-NLS-1$
                     } finally {
                         // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                try {
-                                    if (dicoms.size() == 1) {
-                                        view.setMip(dicoms.get(0));
-                                    } else if (dicoms.size() > 1) {
-                                        DicomImageElement dcm = dicoms.get(0);
-                                        Series s =
-                                            new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
-                                        s.addAll(dicoms);
-                                        ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
-                                        DataExplorerModel model =
-                                            (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
-                                        if (model instanceof DicomModel) {
-                                            DicomModel dicomModel = (DicomModel) model;
-                                            MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-                                            if (study != null) {
-                                                s.setTag(TagW.ExplorerModel, dicomModel);
-                                                dicomModel.addHierarchyNode(study, s);
-                                                dicomModel.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-                                            }
-
-                                            View2dFactory factory = new View2dFactory();
-                                            ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
+                        GuiExecutor.instance().execute(() -> {
+                            try {
+                                if (dicoms.size() == 1) {
+                                    view.setMip(dicoms.get(0));
+                                } else if (dicoms.size() > 1) {
+                                    DicomImageElement dcm = dicoms.get(0);
+                                    Series s =
+                                        new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
+                                    s.addAll(dicoms);
+                                    ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
+                                    DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
+                                    if (model instanceof DicomModel) {
+                                        DicomModel dicomModel = (DicomModel) model;
+                                        MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
+                                        if (study != null) {
+                                            s.setTag(TagW.ExplorerModel, dicomModel);
+                                            dicomModel.addHierarchyNode(study, s);
+                                            dicomModel.firePropertyChange(new ObservableEvent(
+                                                ObservableEvent.BasicAction.ADD, dicomModel, null, s));
                                         }
+
+                                        View2dFactory factory = new View2dFactory();
+                                        ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
                                     }
-                                } finally {
-                                    taskMonitor.close();
                                 }
+                            } finally {
+                                taskMonitor.close();
                             }
                         });
                     }
@@ -225,12 +221,11 @@ public class MipView extends View2d {
 
     static class MipProcess extends Thread {
         final TaskMonitor taskMonitor;
-
+        
         public MipProcess(String name, TaskMonitor taskMonitor) {
             super(name);
             this.taskMonitor = Objects.requireNonNull(taskMonitor);
         }
-
     }
 
 }

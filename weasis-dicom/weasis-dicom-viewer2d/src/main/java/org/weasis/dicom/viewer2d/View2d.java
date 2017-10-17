@@ -160,6 +160,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super(eventManager);
 
         SimpleOpManager manager = imageLayer.getDisplayOpManager();
+        // TODO clip
         manager.addImageOperationAction(new WindowAndPresetsOp());
         manager.addImageOperationAction(new FilterOp());
         manager.addImageOperationAction(new PseudoColorOp());
@@ -546,7 +547,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (needToRepaint) {
             // Required to update KO bar (toggle button state)
-            if(eventManager instanceof EventManager) {
+            if (eventManager instanceof EventManager) {
                 ((EventManager) eventManager).updateKeyObjectComponentsListener(this);
             }
             repaint();

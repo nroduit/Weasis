@@ -14,7 +14,7 @@
 	
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
+		<dcm4che.version>5.10.5</dcm4che.version>
 		<weasis-dicom-tools.version>1.2.1</weasis-dicom-tools.version>
 	</properties>
 	
@@ -65,11 +65,6 @@
 		<dependency>
 			<groupId>org.dcm4che</groupId>
 			<artifactId>dcm4che-imageio</artifactId>
-			<version>${dcm4che.version}-r1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-imageio-rle</artifactId>
 			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>

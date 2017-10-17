@@ -44,8 +44,6 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     public ExportImage(ViewCanvas<E> view2d) {
         super(view2d.getEventManager(), null);
         this.view2d = view2d;
-        // Pixel iterator is necessary for updating label of measurements
-        this.imageLayer.setBuildIterator(true);
         // Remove OpEventListener to avoid reseting some parameters when setting the series
         this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
         setFont(FontTools.getFont8());
@@ -66,8 +64,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
         setPreferredSize(new Dimension(1024, 1024));
         ViewModel model = view2d.getViewModel();
-        Rectangle2D canvas = new Rectangle2D.Double(view2d.modelToViewLength(model.getModelOffsetX()),
-            view2d.modelToViewLength(model.getModelOffsetY()), view2d.getJComponent().getWidth(),
+        Rectangle2D canvas = new Rectangle2D.Double(view2d.modelToViewLength(model.getAllOffsetX()),
+            view2d.modelToViewLength(model.getAllOffsetY()), view2d.getJComponent().getWidth(),
             view2d.getJComponent().getHeight());
         Rectangle2D mArea = view2d.getViewModel().getModelArea();
         Rectangle2D viewFullImg = new Rectangle2D.Double(0, 0, view2d.modelToViewLength(mArea.getWidth()),

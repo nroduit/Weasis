@@ -10,26 +10,13 @@
  *******************************************************************************/
 package org.weasis.dicom.codec.utils;
 
-import java.awt.geom.AffineTransform;
-import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
-import java.awt.image.RenderedImage;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.image.PaletteColorModel;
-import org.dcm4che3.imageio.codec.ImageReaderFactory;
-import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
-import org.opencv.core.Mat;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.cv.ImageCV;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -544,29 +531,6 @@ public class DicomImageUtils {
                 Array.set(outLut, i, (short) value);
             }
         }
-    }
-
-    public static boolean hasImageReader(String tsuid) {
-        ImageReaderFactory factory = ImageReaderFactory.getDefault();
-        if (factory != null) {
-            List<ImageReaderParam> list = factory.get(tsuid);
-            if (list != null) {
-                synchronized (list) {
-                    for (Iterator<ImageReaderParam> it = list.iterator(); it.hasNext();) {
-                        ImageReaderParam imageParam = it.next();
-                        String cl = imageParam.className;
-                        Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName(imageParam.formatName);
-                        while (iter.hasNext()) {
-                            ImageReader reader = iter.next();
-                            if (cl == null || reader.getClass().getName().equals(cl)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
     }
 
     public static double pixel2rescale(TagReadable tagable, double pixelValue) {

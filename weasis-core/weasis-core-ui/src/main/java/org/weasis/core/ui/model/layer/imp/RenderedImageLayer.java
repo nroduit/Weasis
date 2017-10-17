@@ -25,9 +25,11 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
+import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
@@ -56,36 +58,20 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     private OpManager preprocessing;
     private E sourceImage;
-    private PlanarImage readIterator;
-    private boolean buildIterator = false;
     private PlanarImage displayImage;
     private Boolean visible = true;
     private boolean enableDispOperations = true;
     private Point offset;
 
-    public RenderedImageLayer(boolean buildIterator) {
-        this(null, buildIterator);
+    public RenderedImageLayer() {
+        this(null);
     }
 
-    public RenderedImageLayer(SimpleOpManager disOpManager, boolean buildIterator) {
+    public RenderedImageLayer(SimpleOpManager disOpManager) {
         this.disOpManager = Optional.ofNullable(disOpManager).orElseGet(SimpleOpManager::new);
         this.listenerList = new ArrayList<>();
         this.opListeners = new ArrayList<>();
-        this.buildIterator = buildIterator;
         addEventListener(this.disOpManager);
-    }
-
-    public boolean isBuildIterator() {
-        return buildIterator;
-    }
-
-    public void setBuildIterator(boolean buildIterator) {
-        this.buildIterator = buildIterator;
-    }
-
-    @Override
-    public PlanarImage getReadIterator() {
-        return readIterator;
     }
 
     @Override
@@ -196,8 +182,22 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     public void setImage(E image, OpManager preprocessing) {
         boolean init = (image != null && !image.equals(this.sourceImage)) || (image == null && sourceImage != null);
         this.sourceImage = image;
-
         this.preprocessing = preprocessing;
+        // Rectify non square pixel image in the first operation
+        if (sourceImage != null && init && MathUtil.isDifferent(sourceImage.getRescaleX(), sourceImage.getRescaleY())) {
+            SimpleOpManager process = new SimpleOpManager();
+            ZoomOp node = new ZoomOp();
+            node.setParam(ZoomOp.P_RATIO_X, sourceImage.getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, sourceImage.getRescaleY());
+            process.addImageOperationAction(node);
+            if (preprocessing != null) {
+                for (ImageOpNode op : preprocessing.getOperations()) {
+                    process.addImageOperationAction(op);
+                }
+            }
+            this.preprocessing = process;
+        }
+
         if (preprocessing != null || init) {
             disOpManager.setFirstNode(getSourceRenderedImage());
             updateDisplayOperations();
@@ -212,8 +212,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(0, 0,
-                displayImage.width() - 1, displayImage.height() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1, displayImage.height() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -224,7 +223,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         }
 
         try {
-            g2d.drawRenderedImage(ImageProcessor.toBufferedImage(displayImage), AffineTransform.getTranslateInstance(0.0, 0.0));
+            g2d.drawRenderedImage(ImageProcessor.toBufferedImage(displayImage),
+                AffineTransform.getTranslateInstance(0.0, 0.0));
         } catch (Exception | OutOfMemoryError e) {
             LOGGER.error("Draw rendered image", e);//$NON-NLS-1$
             if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
@@ -257,8 +257,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(0, 0,
-                displayImage.width() - 1, displayImage.height() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1, displayImage.height() - 1);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -266,13 +265,15 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             g2d.setClip(rect);
         }
 
-        double[] matrix = (double[]) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX);
-        Rectangle2D bound = (Rectangle2D) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS);
+        double[] matrix =
+            (double[]) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX);
+        Rectangle2D bound =
+            (Rectangle2D) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS);
         double ratioX = matrix[0];
         double ratioY = matrix[4];
 
-        double imageResX = viewScale * sourceImage.getRescaleX();
-        double imageResY = viewScale * sourceImage.getRescaleY();
+        double imageResX = viewScale;
+        double imageResY = viewScale;
         // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not interpolate)
         imageResX = imageResX < ratioX ? ratioX : imageResX;
         imageResY = imageResY < ratioY ? ratioY : imageResY;
@@ -280,17 +281,16 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         matrix[4] = imageResY;
         double rx = ratioX / imageResX;
         double ry = ratioY / imageResY;
-        Rectangle2D b = new Rectangle2D.Double(bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
+        Rectangle2D b =
+            new Rectangle2D.Double(bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, b);
-        PlanarImage img = bound.equals(b) ? displayImage: disOpManager.process();
+        PlanarImage img = bound.equals(b) ? displayImage : disOpManager.process();
 
         matrix[0] = ratioX;
         matrix[4] = ratioY;
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);
-        
-        
 
         g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(rx, ry));
 
@@ -323,11 +323,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         if (displayImage == null) {
             disOpManager.clearNodeIOCache();
         }
-        PlanarImage img = null;
-        if (buildIterator && sourceImage != null) {
-            img = sourceImage.getImage(preprocessing);
-        }
-        readIterator = img;
         fireLayerChanged();
     }
 
@@ -374,14 +369,6 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     @Override
     public AffineTransform getShapeTransform() {
-        E imageElement = getSourceImage();
-        if (imageElement != null) {
-            double scaleX = imageElement.getRescaleX();
-            double scaleY = imageElement.getRescaleY();
-            if (MathUtil.isDifferent(scaleX, scaleY)) {
-                return AffineTransform.getScaleInstance(1.0 / scaleX, 1.0 / scaleY);
-            }
-        }
         return null;
     }
 

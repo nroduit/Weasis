@@ -143,11 +143,16 @@ public interface ViewModel {
      *            the listener, ignored if it does not exists or if it is null
      */
     void removeViewModelChangeListener(ViewModelChangeListener l);
+    
+    void setRotationOffset(double rotationOffsetX, double rotationOffsetY);
+    
+    double getAllOffsetX();
+
+    double getAllOffsetY();
 
     double getRotationOffsetX();
 
     double getRotationOffsetY();
 
-    void setRotationOffset(double rotationOffsetX, double rotationOffsetY);
 
 }

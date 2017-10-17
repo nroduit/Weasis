@@ -208,12 +208,12 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     @Override
     public double viewToModelX(Double viewX) {
-        return viewModel.getModelOffsetX() + viewToModelLength(viewX);
+        return viewModel.getAllOffsetX() + viewToModelLength(viewX);
     }
 
     @Override
     public double viewToModelY(Double viewY) {
-        return viewModel.getModelOffsetY() + viewToModelLength(viewY);
+        return viewModel.getAllOffsetY() + viewToModelLength(viewY);
     }
 
     @Override
@@ -223,12 +223,12 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     @Override
     public double modelToViewX(Double modelX) {
-        return modelToViewLength(modelX - viewModel.getModelOffsetX());
+        return modelToViewLength(modelX - viewModel.getAllOffsetX());
     }
 
     @Override
     public double modelToViewY(Double modelY) {
-        return modelToViewLength(modelY - viewModel.getModelOffsetY());
+        return modelToViewLength(modelY - viewModel.getAllOffsetY());
     }
 
     @Override
@@ -239,8 +239,8 @@ public class GraphicsPane extends JComponent implements Canvas {
     @Override
     public Point2D getImageCoordinatesFromMouse(Integer x, Integer y) {
         double viewScale = getViewModel().getViewScale();
-        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
-            y + getViewModel().getModelOffsetY() * viewScale);
+        Point2D p2 = new Point2D.Double(x + getViewModel().getAllOffsetX() * viewScale,
+            y + getViewModel().getAllOffsetY() * viewScale);
         inverseTransform.transform(p2, p2);
         return p2;
     }
@@ -250,8 +250,8 @@ public class GraphicsPane extends JComponent implements Canvas {
         Point2D p2 = new Point2D.Double(x, y);
         affineTransform.transform(p2, p2);
         double viewScale = getViewModel().getViewScale();
-        return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
-            (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
+        return new Point((int) Math.floor(p2.getX() - getViewModel().getAllOffsetX() * viewScale + 0.5),
+            (int) Math.floor(p2.getY() - getViewModel().getAllOffsetY() * viewScale + 0.5));
     }
 
     @Override
@@ -273,8 +273,8 @@ public class GraphicsPane extends JComponent implements Canvas {
         if (rectangle != null) {
             // Add the offset of the canvas
             double viewScale = canvas.getViewModel().getViewScale();
-            int x = (int) (rectangle.x - canvas.getViewModel().getModelOffsetX() * viewScale);
-            int y = (int) (rectangle.y - canvas.getViewModel().getModelOffsetY() * viewScale);
+            int x = (int) (rectangle.x - canvas.getViewModel().getAllOffsetX() * viewScale);
+            int y = (int) (rectangle.y - canvas.getViewModel().getAllOffsetY() * viewScale);
             canvas.getJComponent().repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
         }
     }

@@ -19,8 +19,6 @@ import org.weasis.core.api.media.data.PlanarImage;
 
 public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 
-    PlanarImage getReadIterator();
-
     E getSourceImage();
 
     PlanarImage getDisplayImage();

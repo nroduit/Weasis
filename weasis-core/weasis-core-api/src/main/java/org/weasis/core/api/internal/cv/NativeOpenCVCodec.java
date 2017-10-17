@@ -17,11 +17,15 @@ import org.opencv.imgcodecs.Imgcodecs;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaReader;
 
 @org.osgi.service.component.annotations.Component(service = Codec.class, immediate = false)
 public class NativeOpenCVCodec implements Codec {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NativeOpenCVCodec.class);
+
     private static final String[] readerMIMETypes = { "image/bmp", "image/x-bmp", "image/x-windows-bmp", "image/jpeg",
         "image/pjpeg", "image/png", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-greymap",
         "image/x-portable-pixmap", "image/x-portable-anymap", "application/x-portable-anymap", "image/cmu-raster",
@@ -84,6 +88,7 @@ public class NativeOpenCVCodec implements Codec {
     protected void activate(ComponentContext context) {
         // Load the native OpenCV library
         Imgcodecs.loadNativeLibrary();
+        LOGGER.info("Native OpenCV is activated"); //$NON-NLS-1$
     }
 
     @Deactivate

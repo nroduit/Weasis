@@ -518,8 +518,8 @@ public class DicomImageElement extends ImageElement {
                 Integer paddingValue = getPaddingValue();
                 if (paddingValue != null) {
                     Integer paddingLimit = getPaddingLimit();
-                    int paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
-                    int paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
+                    Integer paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+                    Integer paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
                     findMinMaxValues(img, paddingValueMin, paddingValueMax);
                 }
             }
@@ -561,15 +561,14 @@ public class DicomImageElement extends ImageElement {
      * @param paddingValueMin
      * @param paddingValueMax
      */
-    private void findMinMaxValues(PlanarImage img, double paddingValueMin, double paddingValueMax) {
+    private void findMinMaxValues(PlanarImage img, Integer paddingValueMin, Integer paddingValueMax) {
         if (img != null) {
             if (ImageProcessor.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(img.toMat());
+                double[] val = ImageProcessor.findMinMaxValues(img.toMat(), paddingValueMin, paddingValueMax);
                 if (val != null && val.length == 2) {
-                    // TODO padding values?
                     this.minPixelValue = val[0];
                     this.maxPixelValue = val[1];
                 }
@@ -692,7 +691,7 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if ((!LangUtil.getNULLtoFalse(wlOnColorImage) || window == 255 && MathUtil.isEqual(level, 127.5)) && !isPhotometricInterpretationMonochrome()) {
+            if ((!LangUtil.getNULLtoFalse(wlOnColorImage) || MathUtil.isEqual(windowValue, 255.0) && MathUtil.isEqual(levelValue, 127.5)) && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.

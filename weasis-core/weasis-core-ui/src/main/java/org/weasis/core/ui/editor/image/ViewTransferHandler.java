@@ -99,7 +99,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
                 viewModel.setModelArea(originViewModel.getModelArea());
                 viewModel.setModelOffset(originViewModel.getModelOffsetX(), originViewModel.getModelOffsetY(),
                     originViewModel.getViewScale());
-
+                viewModel.setRotationOffset(originViewModel.getRotationOffsetX(), originViewModel.getRotationOffsetY());
                 exportImage.setBounds(canvas.getX(), canvas.getY(), canvas.getWidth(), canvas.getHeight());
                 boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
                 exportImage.zoom(originViewModel.getViewScale());

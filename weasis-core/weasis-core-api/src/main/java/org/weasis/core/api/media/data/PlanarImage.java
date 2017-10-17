@@ -36,7 +36,7 @@ public interface PlanarImage extends ImageSize {
     // javadoc:Mat::width()
     int width();
 
-    double[] get(int x, int y);
+    double[] get(int row, int column);
 
     int get(int i, int j, byte[] pixelData);
 
