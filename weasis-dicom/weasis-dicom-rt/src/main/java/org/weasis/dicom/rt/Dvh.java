@@ -30,6 +30,7 @@ public class Dvh {
     private double[] dvhData;
     private double[] otherDvhData;
     private DataSource dvhSource;
+    private Plan plan;
 
     public Dvh() {
         // Initial -> need to be calculated later
@@ -165,6 +166,14 @@ public class Dvh {
 
     public void setDvhSource(DataSource dvhSource) {
         this.dvhSource = dvhSource;
+    }
+
+    public Plan getPlan() {
+        return this.plan;
+    }
+
+    public void setPlan(Plan plan) {
+        this.plan = plan;
     }
 
     public XYChart appendChart(Structure structure, XYChart dvhChart) {
