@@ -190,10 +190,16 @@ public class Dvh {
             y[i] = (100 / structure.getVolume()) * this.dvhData[i];
         }
 
+        String sName = structure.getRoiName();
+        int k = 2;
+        while (dvhChart.getSeriesMap().get(sName) != null){
+            sName = structure.getRoiName() + " " + k;
+            k++;
+        }
         // Create a line
         dvhChart
-            .addSeries(structure.getRoiName(), x, y)
-            .setMarker(SeriesMarkers.NONE);
+            .addSeries(sName, x, y)
+            .setMarker(SeriesMarkers.NONE).setLineColor(structure.getColor());
 
         // axes.set_xlim(0, maxlen)
         // axes.set_ylim(0, 100)

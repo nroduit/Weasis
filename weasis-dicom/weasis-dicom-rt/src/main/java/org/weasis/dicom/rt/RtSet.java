@@ -23,7 +23,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.DoubleStream;
 
@@ -36,9 +38,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
-import org.knowm.xchart.XYChart;
-import org.knowm.xchart.XYChartBuilder;
-import org.knowm.xchart.XYSeries;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -69,6 +68,7 @@ public class RtSet {
     private final Map<RtSpecialElement, Plan> plans = new HashMap<>();
     private final List<MediaElement> images = new ArrayList<>();
     private final Map<String, ArrayList<Contour>> contourMap = new HashMap<>();
+    private final String frameOfReferenceUID;
 
     private Image patientImage;
 
@@ -76,12 +76,9 @@ public class RtSet {
     private int isoFillTransparency = 70;
     private boolean forceRecalculateDvh = false;
 
-    private final XYChart dvhChart = new XYChartBuilder().width(600).height(500).title("DVH").xAxisTitle("Dose (cGy)")
-        .yAxisTitle("Volume (%)").build();
-
-    public RtSet(List<MediaElement> rtElements) {
+    public RtSet(String frameOfReferenceUID, List<MediaElement> rtElements) {
+        this.frameOfReferenceUID = Objects.requireNonNull(frameOfReferenceUID);
         this.rtElements.addAll(Objects.requireNonNull(rtElements));
-
         for (MediaElement rt : rtElements) {
             String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
             if (UID.CTImageStorage.equals(sopUID)) {
@@ -93,9 +90,6 @@ public class RtSet {
     public void reloadRtCase(boolean forceRecalculateDvh) {
 
         this.forceRecalculateDvh = forceRecalculateDvh;
-
-        // Init DVH chart style
-        this.dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
 
         // First initialise all RTSTRUCT
         for (MediaElement rt : this.rtElements) {
@@ -202,6 +196,24 @@ public class RtSet {
             }
         }
     }
+
+    @Override
+    public int hashCode() {
+        return frameOfReferenceUID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        RtSet other = (RtSet) obj;
+        return (!frameOfReferenceUID.equals(other.frameOfReferenceUID));
+    }
+    
 
     /**
      * Initialise RTSTRUCT objects
@@ -342,14 +354,15 @@ public class RtSet {
                     .anyMatch(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid));
                 if (planWithSopExists) {
                     // Plan do not have associated RTSpecialElement = it is dummy
-                    if (getPlans().entrySet().stream()
-                        .filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid)).findFirst().get()
-                        .getKey() == null) {
-                        plan = getPlans().entrySet().stream()
-                            .filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid)).findFirst().get()
-                            .getValue();
-                        // Remove the dummy from the set
-                        plans.remove(null, plan);
+                    Optional<Entry<RtSpecialElement, Plan>> opPlan = getPlans().entrySet().stream()
+                        .filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid)).findFirst();
+
+                    if (opPlan.isPresent()) {
+                        if (opPlan.get().getKey() == null) {
+                            plan = opPlan.get().getValue();
+                            // Remove the dummy from the set
+                            plans.remove(null, plan);
+                        }
                     }
                 }
             }
@@ -368,7 +381,8 @@ public class RtSet {
                 String doseRefStructType = doseRef.getString(Tag.DoseReferenceStructureType);
 
                 // Prescribed dose in Gy
-                Double targetDose = DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
+                Double targetDose =
+                    DicomMediaUtils.getDoubleFromDicomElement(doseRef, Tag.TargetPrescriptionDose, null);
 
                 if (targetDose != null) {
 
@@ -384,7 +398,8 @@ public class RtSet {
                     // VOLUME structure is associated with dose (dose reference volume specified as ROI)
                     // SITE structure is associated with dose (dose reference clinical site)
                     // COORDINATES (point specified by Dose Reference Point Coordinates (300A,0018))
-                    else if ("VOLUME".equals(doseRefStructType) || "SITE".equals(doseRefStructType) || "COORDINATES".equals(doseRefStructType)) {
+                    else if ("VOLUME".equals(doseRefStructType) || "SITE".equals(doseRefStructType)
+                        || "COORDINATES".equals(doseRefStructType)) {
 
                         // Keep the highest prescribed dose
                         if (plan.getRxDose() != null && rxDose > plan.getRxDose()) {
@@ -442,7 +457,7 @@ public class RtSet {
             String sopInstanceUID = dcmItems.getString(Tag.SOPInstanceUID);
 
             // Dose is Referencing Plan
-            Plan plan;
+            Plan plan = null;
             String referencedPlanUid = "";
             for (Attributes refRtPlanSeq : dcmItems.getSequence(Tag.ReferencedRTPlanSequence)) {
                 referencedPlanUid = refRtPlanSeq.getString(Tag.ReferencedSOPInstanceUID);
@@ -451,9 +466,11 @@ public class RtSet {
             // Plan is already loaded
             if (!plans.isEmpty()) {
                 String finalReferencedPlanUid = referencedPlanUid;
-                plan = getPlans().entrySet().stream()
-                    .filter(p -> p.getValue().getSopInstanceUid().equals(finalReferencedPlanUid)).findFirst().get()
-                    .getValue();
+                Optional<Entry<RtSpecialElement, Plan>> opPlan = getPlans().entrySet().stream()
+                    .filter(p -> p.getValue().getSopInstanceUid().equals(finalReferencedPlanUid)).findFirst();
+                if (opPlan.isPresent()) {
+                    plan = opPlan.get().getValue();
+                }
             }
             // Dummy plan will be created
             else {
@@ -471,8 +488,11 @@ public class RtSet {
                     boolean doseWithSopExists =
                         plan.getDoses().stream().anyMatch(i -> i.getSopInstanceUid().equals(sopInstanceUID));
                     if (doseWithSopExists) {
-                        rtDose = plan.getDoses().stream().filter(i -> i.getSopInstanceUid().equals(sopInstanceUID))
-                            .findFirst().get();
+                        Optional<Dose> opPlan = plan.getDoses().stream()
+                            .filter(i -> i.getSopInstanceUid().equals(sopInstanceUID)).findFirst();
+                        if (opPlan.isPresent()) {
+                            rtDose = opPlan.get();
+                        }
                     }
                 }
                 // Create a new dose object
@@ -655,17 +675,17 @@ public class RtSet {
                         new IsoDose(30, new Color(0, 0, 128, isoFillTransparency), "", plan.getRxDose())));
 
                     // Commented level just for testing
-                    //dose.getIsoDoseSet().put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0, 111,
-                    //isoFillTransparency), "", plan.getRxDose())));
-                    
+                    // dose.getIsoDoseSet().put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0, 111,
+                    // isoFillTransparency), "", plan.getRxDose())));
+
                     // Go through whole imaging grid (CT)
                     for (MediaElement me : this.images) {
-                        
+
                         // Image slice UID and position
                         DicomImageElement image = (DicomImageElement) me;
                         String uidKey = TagD.getTagValue(me, Tag.SOPInstanceUID, String.class);
                         KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().getZ());
-                        
+
                         for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
                             double isoDoseThreshold = isoDoseLayer.getIsoDose().getAbsoluteDose();
 
@@ -708,7 +728,8 @@ public class RtSet {
 
                                 // For lookup from GUI use specific image UID
                                 if (StringUtil.hasText(uidKey)) {
-                                    ArrayList<Contour> pls = dose.getIsoContourMap().computeIfAbsent(uidKey, l -> new ArrayList<>());
+                                    ArrayList<Contour> pls =
+                                        dose.getIsoContourMap().computeIfAbsent(uidKey, l -> new ArrayList<>());
                                     pls.add(isoContour);
                                 }
 
@@ -774,10 +795,6 @@ public class RtSet {
         return null;
     }
 
-    public XYChart getDvhChart() {
-        return this.dvhChart;
-    }
-
     public List<MediaElement> getRtElements() {
         return rtElements;
     }
@@ -836,7 +853,7 @@ public class RtSet {
 
         return thickness;
     }
-    
+
     private static double[] interpolate(int[] interpolatedX, double[] xCoordinates, double[] yCoordinates) {
         double[] interpolatedY = new double[interpolatedX.length];
 
@@ -1034,8 +1051,8 @@ public class RtSet {
 
     private Mat calculateContourMask(Pair<double[], double[]> doseMmLUT, Contour contour) {
 
-        int rows = doseMmLUT.getFirst().length;
-        int cols = doseMmLUT.getSecond().length;
+        int cols = doseMmLUT.getFirst().length;
+        int rows = doseMmLUT.getSecond().length;
 
         MatOfPoint2f mop = new MatOfPoint2f();
         mop.fromList(contour.getListOfPoints());
@@ -1045,7 +1062,7 @@ public class RtSet {
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
                 double distance =
-                    Imgproc.pointPolygonTest(mop, new Point(doseMmLUT.getFirst()[i], doseMmLUT.getSecond()[j]), false);
+                    Imgproc.pointPolygonTest(mop, new Point(doseMmLUT.getFirst()[j], doseMmLUT.getSecond()[i]), false);
                 // TODO: Include the border line as well?
                 if (distance > 0) {
                     binaryMask.put(i, j, 255);

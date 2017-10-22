@@ -15,34 +15,53 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTree;
+import javax.swing.JViewport;
+import javax.swing.SwingWorker;
+import javax.swing.SwingWorker.StateValue;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
 import org.dcm4che3.data.Tag;
+import org.knowm.xchart.XChartPanel;
+import org.knowm.xchart.XYChart;
+import org.knowm.xchart.XYChartBuilder;
+import org.knowm.xchart.XYSeries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.docking.PluginTool;
@@ -72,20 +91,23 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     public static final String BUTTON_NAME = "RT Tool";
 
+    private static final SoftHashMap<String, RtSet> RtSet_Cache = new SoftHashMap<>();
+
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JScrollPane rootPane;
-    private final JButton btnLoad;
-    private final JCheckBox cbDvhRecalculate;
+    private final JButton btnLoad = new JButton("Load RT");
+    private final JCheckBox cbDvhRecalculate = new JCheckBox("DVH recalculate");
 
     private final CheckboxTree treeStructures;
     private final CheckboxTree treeIsodoses;
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNodeStructures = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
     private DefaultMutableTreeNode rootNodeIsodoses = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
-    private final JComboBox<RtSpecialElement> comboRtStructureSet;
-    private final JComboBox<RtSpecialElement> comboRtPlan;
+    private final JComboBox<RtSpecialElement> comboRtStructureSet = new JComboBox<>();
+    private final JComboBox<RtSpecialElement> comboRtPlan = new JComboBox<>();
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
+    private final CircularProgressBar progressBar = new CircularProgressBar();
     private RtSet rtSet;
     private final transient ItemListener structureChangeListener = e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -99,6 +121,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     };
     private final JPanel panelFoot = new JPanel();
     private final JSliderW slider;
+    private JPanel panelHead;
+    private JPanel panelDvh;
+    private JButton btnShowdvh;
 
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -106,19 +131,18 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.rootPane = new JScrollPane();
         this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
         this.setDockableWidth(350);
-        this.btnLoad = new JButton("Load RT");
         this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
         // By default recalculate DVH only when it is missing for structure
-        this.cbDvhRecalculate = new JCheckBox("DVH recalculate");
         this.cbDvhRecalculate.setSelected(false);
-        this.cbDvhRecalculate.setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
-        this.comboRtStructureSet = new JComboBox<>();
+        this.cbDvhRecalculate
+            .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
         this.comboRtStructureSet.setVisible(false);
-        this.comboRtPlan = new JComboBox<>();
         this.comboRtPlan.setVisible(false);
         this.slider = createTransparencySlider(5, true);
 
         this.treeStructures = new CheckboxTree() {
+            private static final long serialVersionUID = 778188275507301929L;
+
             @Override
             public String getToolTipText(MouseEvent evt) {
                 if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
@@ -135,8 +159,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             }
         };
         treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
-        
+
         this.treeIsodoses = new CheckboxTree() {
+            private static final long serialVersionUID = 9185787644491574319L;
+
             @Override
             public String getToolTipText(MouseEvent evt) {
                 if (getRowForLocation(evt.getX(), evt.getY()) == -1) {
@@ -158,48 +184,62 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.initData();
     }
 
-    public void actionPerformed(ActionEvent e) {
-        if ("Load RT".equals(e.getActionCommand())) {
+    private void loadData() {
+        final RtSet rt = this.rtSet;
+        SwingWorker<Boolean, Boolean> loadTask = new SwingWorker<Boolean, Boolean>() {
 
-            // Reload RT case data objects for GUI
-            this.rtSet.reloadRtCase(this.cbDvhRecalculate.isSelected());
-            this.btnLoad.setEnabled(false);
-            this.btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
-            this.cbDvhRecalculate.setEnabled(false);
-            this.cbDvhRecalculate.setToolTipText("DVH calculation cannot be modified after the RT objects creation");
-            this.comboRtStructureSet.setVisible(true);
-            this.comboRtPlan.setVisible(true);
-            this.treeStructures.setVisible(true);
-            this.treeIsodoses.setVisible(true);
-
-            initSlider();
-            
-            // Update GUI
-            ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
-            List<ViewCanvas<DicomImageElement>> views = null;
-            if (container != null) {
-                views = container.getImagePanels();
+            @Override
+            protected Boolean doInBackground() throws Exception {
+                // Reload RT case data objects for GUI
+                rt.reloadRtCase(cbDvhRecalculate.isSelected());
+                return true;
             }
-            if (views != null) {
-                for (ViewCanvas<DicomImageElement> v : views) {
-                    updateCanvas(v);
+        };
+
+        loadTask.addPropertyChangeListener(evt -> {
+            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
+                int progress = (Integer) evt.getNewValue();
+                progressBar.setValue(progress);
+
+            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
+                if (StateValue.STARTED == evt.getNewValue()) {
+                    btnLoad.setEnabled(false);
+                    progressBar.setVisible(true);
+                    progressBar.setIndeterminate(true);
+
+                } else if (StateValue.DONE == evt.getNewValue()) {
+                    progressBar.setIndeterminate(false);
+                    progressBar.setVisible(false);
+                    btnLoad.setEnabled(false);
+                    btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
+                    cbDvhRecalculate.setEnabled(false);
+                    cbDvhRecalculate.setToolTipText("DVH calculation cannot be modified after the RT objects creation");
+                    comboRtStructureSet.setVisible(true);
+                    comboRtPlan.setVisible(true);
+                    treeStructures.setVisible(true);
+                    treeIsodoses.setVisible(true);
+
+                    initSlider();
+
+                    // Update GUI
+                    ImageViewerPlugin<DicomImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
+                    List<ViewCanvas<DicomImageElement>> views = null;
+                    if (container != null) {
+                        views = container.getImagePanels();
+                    }
+                    if (views != null) {
+                        for (ViewCanvas<DicomImageElement> v : views) {
+                            updateCanvas(v);
+                        }
+                    }
                 }
             }
-        }
+        });
+        
+        new Thread(loadTask).start();
     }
 
     public void initData() {
-        // GUI RT case selection
-        JPanel panel = new JPanel();
-        FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-        flowLayout.setAlignment(FlowLayout.LEFT);
-        add(panel, BorderLayout.NORTH);
-        panel.add(this.btnLoad);
-        panel.add(this.cbDvhRecalculate);
-        panel.add(this.comboRtStructureSet);
-        panel.add(this.comboRtPlan);
-
-        this.btnLoad.addActionListener(this::actionPerformed);
 
         add(tabbedPane, BorderLayout.CENTER);
 
@@ -207,12 +247,68 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         panelFoot.add(slider.getParent());
 
+        panelHead = new JPanel();
+        add(panelHead, BorderLayout.NORTH);
+        panelHead.setLayout(new BoxLayout(panelHead, BoxLayout.Y_AXIS));
+        this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
+        this.comboRtStructureSet.setVisible(false);
+        this.comboRtPlan.setVisible(false);
+        // GUI RT case selection
+        JPanel panelLoad = new JPanel();
+        panelHead.add(panelLoad);
+        FlowLayout fl_panelLoad = (FlowLayout) panelLoad.getLayout();
+        fl_panelLoad.setAlignment(FlowLayout.LEFT);
+        panelLoad.add(this.btnLoad);
+        panelLoad.add(progressBar);
+        progressBar.setVisible(false);
+        panelLoad.add(this.comboRtStructureSet);
+        panelLoad.add(this.comboRtPlan);
+
+        panelDvh = new JPanel();
+        FlowLayout flowLayout = (FlowLayout) panelDvh.getLayout();
+        flowLayout.setAlignment(FlowLayout.LEFT);
+        panelHead.add(panelDvh);
+        // By default recalculate DVH only when it is missing for structure
+        panelDvh.add(cbDvhRecalculate);
+        this.cbDvhRecalculate.setSelected(false);
+        this.cbDvhRecalculate
+            .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
+
+        btnShowdvh = new JButton("Display DVH chart");
+        btnShowdvh.addActionListener(e -> showDvhChart());
+        panelDvh.add(btnShowdvh);
+
+        this.btnLoad.addActionListener(e -> loadData());
+
         initStructureTree();
         initIsodosesTree();
 
         tabbedPane.addChangeListener(e -> initSlider());
     }
-    
+
+    private void showDvhChart() {
+        RtSet rt = rtSet;
+        if (rt != null) {
+            List<StructureLayer> strcuts = getStructureSelection();
+            if (!strcuts.isEmpty()) {
+                XYChart dvhChart = new XYChartBuilder().width(800).height(500).title("DVH").xAxisTitle("Dose (cGy)")
+                    .yAxisTitle("Volume (%)").build();
+                dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
+                for (StructureLayer structureLayer : strcuts) {
+                    Structure structure = structureLayer.getStructure();
+                    Dvh structureDvh = structure.getDvh();
+                    structureDvh.appendChart(structure, dvhChart);
+                }
+
+                JDialog d = new JDialog(WinUtil.getParentWindow(this), "DVH Chart");
+                XChartPanel<XYChart> chartPanel = new XChartPanel<>(dvhChart);
+                d.getContentPane().add(chartPanel, BorderLayout.CENTER);
+                d.pack();
+                JMVUtils.showCenterScreen(d);
+            }
+        }
+    }
+
     private void initSlider() {
         RtSet rt = rtSet;
         if (rt != null) {
@@ -417,44 +513,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         modelList.deleteByLayerType(LayerType.DICOM_RT);
                     }
 
-                    // Iso dose contour layer
-                    if (dose != null) {
-
-                        List<Contour> isoContours = dose.getIsoContourMap().get(imageUID);
-                        if (isoContours != null) {
-
-                            // Check which iso contours should be rendered
-                            for (Contour isoContour : isoContours) {
-
-                                IsoDoseLayer isoDoseLayer = (IsoDoseLayer) isoContour.getLayer();
-                                IsoDose isoDose = isoDoseLayer.getIsoDose();
-
-                                // Only selected
-                                if (containsIsoDose(listIsoDose, isoDose)) {
-
-                                    // Iso dose graphics
-                                    Graphic graphic = isoContour.getGraphic(geometry);
-                                    if (graphic != null) {
-
-                                        graphic.setLineThickness((float) isoDose.getThickness());
-                                        graphic.setPaint(isoDose.getColor());
-                                        graphic.setLayerType(LayerType.DICOM_RT);
-                                        graphic.setLayer(isoDoseLayer.getLayer());
-                                        graphic.setFilled(true);
-
-                                        for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
-                                            graphic.addPropertyChangeListener(listener);
-                                        }
-
-                                        modelList.addGraphic(graphic);
-                                    }
-                                }
-                            }
-                        }
-                        
-                        Collections.reverse(modelList.getModels());
-                    }
-
                     // Contours layer
                     if (contours != null) {
                         // Check which contours should be rendered
@@ -462,22 +520,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             StructureLayer structLayer = (StructureLayer) c.getLayer();
                             Structure structure = structLayer.getStructure();
                             if (containsStructure(listStructure, structure)) {
-
-                                // If dose is loaded
-                                //if (dose != null) {
-
-                                    // DVH refresh display (comment temporarily)
-                                    // rt.getDvhChart().removeSeries(structure.getRoiName());
-                                    // Dvh structureDvh = dose.get(structure.getRoiNumber());
-                                    // structureDvh.appendChart(structure, rt.getDvhChart());
-                                    // try {
-                                    // BitmapEncoder.saveBitmap(rt.getDvhChart(), "./TEST-DVH",
-                                    // BitmapEncoder.BitmapFormat.PNG);
-                                    // } catch (Exception err) {
-                                    // // NOOP
-                                    // }
-                                //}
-
                                 // Structure graphics
                                 Graphic graphic = c.getGraphic(geometry);
                                 if (graphic != null) {
@@ -501,21 +543,58 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                         }
                     }
 
+                    // Iso dose contour layer
+                    if (dose != null) {
+
+                        List<Contour> isoContours = dose.getIsoContourMap().get(imageUID);
+                        if (isoContours != null) {
+                            // Check which iso contours should be rendered
+                            for (int i = isoContours.size() - 1; i >= 0; i--) {
+                                Contour isoContour = isoContours.get(i);
+                                IsoDoseLayer isoDoseLayer = (IsoDoseLayer) isoContour.getLayer();
+                                IsoDose isoDose = isoDoseLayer.getIsoDose();
+
+                                // Only selected
+                                if (containsIsoDose(listIsoDose, isoDose)) {
+
+                                    // Iso dose graphics
+                                    Graphic graphic = isoContour.getGraphic(geometry);
+                                    if (graphic != null) {
+
+                                        graphic.setLineThickness((float) isoDose.getThickness());
+                                        graphic.setPaint(isoDose.getColor());
+                                        graphic.setLayerType(LayerType.DICOM_RT);
+                                        graphic.setLayer(isoDoseLayer.getLayer());
+                                        graphic.setFilled(true);
+
+                                        for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
+                                            graphic.addPropertyChangeListener(listener);
+                                        }
+                                        modelList.addGraphic(graphic);
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
                     v.getJComponent().repaint();
                 }
             }
         }
     }
-   
 
     public void updateCanvas(ViewCanvas<?> viewCanvas) {
         RtSet rt = rtSet;
-        if (rt == null) {
+        if (rt == null || rt.getStructures().isEmpty()) {
             this.nodeStructures.removeAllChildren();
             this.nodeIsodoses.removeAllChildren();
 
             treeStructures.setModel(new DefaultTreeModel(rootNodeStructures, false));
             treeIsodoses.setModel(new DefaultTreeModel(rootNodeIsodoses, false));
+
+            comboRtStructureSet.removeAllItems();
+            comboRtPlan.removeAllItems();
             return;
         }
 
@@ -643,10 +722,16 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     if (patient != null) {
                         String frameOfReferenceUID = TagD.getTagValue(dcmSeries, Tag.FrameOfReferenceUID, String.class);
                         List<MediaElement> list = getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
-                        if (!list.isEmpty() && (rtSet == null || !rtSet.getRtElements().equals(list))) {
-                            this.rtSet = new RtSet(list);
-                            this.btnLoad.setEnabled(true);
+                        RtSet set = RtSet_Cache.get(frameOfReferenceUID);
+                        boolean reload = set == null || (!list.isEmpty() && !set.getRtElements().equals(list));
+                        if (reload) {
+                            set = new RtSet(frameOfReferenceUID, list);
+                            RtSet_Cache.put(frameOfReferenceUID, set);
                         }
+                        boolean empty = set.getStructures().isEmpty();
+                        btnLoad.setEnabled(empty || reload);
+                        this.rtSet = set;
+
                         updateCanvas(viewCanvas);
                     }
                 }
@@ -768,9 +853,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             buf.append(String.format(source + " Volume: %.4f cm^3<br>", volume));
 
             if (structureDvh != null) {
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Min Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())));
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Max Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())));
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Mean Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Min Dose: %.3f %%<br>", RtSet
+                    .calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Max Dose: %.3f %%<br>", RtSet
+                    .calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Mean Dose: %.3f %%<br>",
+                    RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())));
             }
             buf.append("</html>");
 
@@ -801,7 +889,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                 buf.append(String.format("Thickness: %.2f<br>", layer.getIsoDose().getThickness()));
             }
             buf.append("</html>");
-            
+
             return buf.toString();
         }
 
