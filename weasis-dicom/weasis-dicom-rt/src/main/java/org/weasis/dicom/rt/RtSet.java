@@ -90,7 +90,9 @@ public class RtSet {
         }
     }
 
-    public void reloadRtCase() {
+    public void reloadRtCase(boolean forceRecalculateDvh) {
+
+        this.forceRecalculateDvh = forceRecalculateDvh;
 
         // Init DVH chart style
         this.dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
@@ -154,7 +156,7 @@ public class RtSet {
                             // Re-calculate DVH if it does not exists or if it is provided and force recalculation is
                             // setup
                             if (structureDvh == null || (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
-                                && this.getForceRecalculateDvh())) {
+                                && this.forceRecalculateDvh)) {
                                 structureDvh = this.initCalculatedDvh(structure, dose);
                                 dose.put(structure.getRoiNumber(), structureDvh);
                             }
@@ -166,6 +168,11 @@ public class RtSet {
                                     structure.setVolume(structureDvh.getDvhData()[0]);
                                 }
                             }
+
+                            // Associate Plan with DVH to make it accessible from DVH
+                            structureDvh.setPlan(plan);
+                            // Associate DVH with structure to make this data accessible from structure
+                            structure.setDvh(structureDvh);
 
                             // Display volume
                             double volume = structure.getVolume();
@@ -291,13 +298,13 @@ public class RtSet {
                         }
 
                         // Add each plane to the planes dictionary of the current ROI
-                        KeyDouble z = new  KeyDouble(plane.getCoordinateZ());
+                        KeyDouble z = new KeyDouble(plane.getCoordinateZ());
 
                         // If there are no contour on specific z position
                         if (!planes.containsKey(z)) {
                             ArrayList<Contour> list = new ArrayList<>();
                             list.add(plane);
-                            planes.put(z,list);
+                            planes.put(z, list);
                         }
                     }
                 }
@@ -618,7 +625,8 @@ public class RtSet {
         // Init IsoDose levels for each dose
         for (Dose dose : plan.getDoses()) {
 
-            if (dose.getIsoDoseSet().isEmpty()) {
+            // Plan has specified prescribed dose and IsoDoses have not been initialised for specific dose yet
+            if (plan.getRxDose() != null && dose.getIsoDoseSet().isEmpty()) {
 
                 int doseMaxLevel = (int) calculateRelativeDose((dose.getDoseMax() * dose.getDoseGridScaling() * 100),
                     plan.getRxDose());
@@ -649,12 +657,15 @@ public class RtSet {
                     // Commented level just for testing
                     //dose.getIsoDoseSet().put(2, new IsoDoseLayer(new IsoDose(2, new Color(0, 0, 111,
                     //isoFillTransparency), "", plan.getRxDose())));
-
-                    // Go through whole dose grid
-                    for (int i = 0; i < dose.getImages().size(); i++) {
+                    
+                    // Go through whole imaging grid (CT)
+                    for (MediaElement me : this.images) {
                         
-                        KeyDouble z =  new KeyDouble( dose.getGridFrameOffsetVector()[i] + dose.getImagePositionPatient()[2]);
-
+                        // Image slice UID and position
+                        DicomImageElement image = (DicomImageElement) me;
+                        String uidKey = TagD.getTagValue(me, Tag.SOPInstanceUID, String.class);
+                        KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().getZ());
+                        
                         for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
                             double isoDoseThreshold = isoDoseLayer.getIsoDose().getAbsoluteDose();
 
@@ -694,6 +705,12 @@ public class RtSet {
                                 isoContour.setPoints(newContour);
                                 isoContour.setContourPoints(newContour.length);
                                 isoContour.setGeometricType("CLOSED_PLANAR");
+
+                                // For lookup from GUI use specific image UID
+                                if (StringUtil.hasText(uidKey)) {
+                                    ArrayList<Contour> pls = dose.getIsoContourMap().computeIfAbsent(uidKey, l -> new ArrayList<>());
+                                    pls.add(isoContour);
+                                }
 
                                 // Assign
                                 isoDoseLayer.getIsoDose().getPlanes().get(z).add(isoContour);
@@ -788,14 +805,6 @@ public class RtSet {
                 Color c = l.getIsoDose().getColor();
                 l.getIsoDose().setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), isoFillTransparency));
             }));
-    }
-
-    public boolean getForceRecalculateDvh() {
-        return this.forceRecalculateDvh;
-    }
-
-    public void setForceRecalculateDvh(boolean value) {
-        this.forceRecalculateDvh = value;
     }
 
     /**
@@ -1022,15 +1031,6 @@ public class RtSet {
     // }
     // }
     // }
-
-    private static int firstIndexOf(double[] array, double valueToFind, double tolerance) {
-        for (int i = 0; i < array.length; i++) {
-            if (Math.abs(array[i] - valueToFind) < tolerance) {
-                return i;
-            }
-        }
-        return -1;
-    }
 
     private Mat calculateContourMask(Pair<double[], double[]> doseMmLUT, Contour contour) {
 

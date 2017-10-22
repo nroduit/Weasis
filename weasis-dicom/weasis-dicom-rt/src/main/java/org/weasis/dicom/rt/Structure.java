@@ -34,6 +34,7 @@ public class Structure {
     private DataSource volumeSource;
 
     private Color color;
+    private Dvh dvh;
     private Map<KeyDouble, List<Contour>> planes;
 
     public Structure() {
@@ -113,6 +114,14 @@ public class Structure {
 
     public void setColor(Color color) {
         this.color = color;
+    }
+
+    public Dvh getDvh() {
+        return this.dvh;
+    }
+
+    public void setDvh(Dvh dvh) {
+        this.dvh = dvh;
     }
 
     public Map<KeyDouble, List<Contour>> getPlanes() {
@@ -207,11 +216,7 @@ public class Structure {
         if (StringUtil.hasText(this.rtRoiInterpretedType)) {
             resultLabel += " [" + this.rtRoiInterpretedType + "]";
         }
-
-        if (StringUtil.hasText(this.roiObservationLabel)) {
-            resultLabel += " (" + this.roiObservationLabel + ")";
-        }
-
+        
         return resultLabel;
     }
 

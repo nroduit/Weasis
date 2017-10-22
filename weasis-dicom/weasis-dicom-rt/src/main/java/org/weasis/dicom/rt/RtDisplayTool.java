@@ -28,16 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.swing.BoxLayout;
-import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTree;
-import javax.swing.JViewport;
+import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -84,6 +75,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JScrollPane rootPane;
     private final JButton btnLoad;
+    private final JCheckBox cbDvhRecalculate;
+
     private final CheckboxTree treeStructures;
     private final CheckboxTree treeIsodoses;
     private boolean initPathSelection;
@@ -115,6 +108,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.setDockableWidth(350);
         this.btnLoad = new JButton("Load RT");
         this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
+        // By default recalculate DVH only when it is missing for structure
+        this.cbDvhRecalculate = new JCheckBox("DVH recalculate");
+        this.cbDvhRecalculate.setSelected(false);
+        this.cbDvhRecalculate.setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
         this.comboRtStructureSet = new JComboBox<>();
         this.comboRtStructureSet.setVisible(false);
         this.comboRtPlan = new JComboBox<>();
@@ -165,9 +162,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         if ("Load RT".equals(e.getActionCommand())) {
 
             // Reload RT case data objects for GUI
-            this.rtSet.reloadRtCase();
+            this.rtSet.reloadRtCase(this.cbDvhRecalculate.isSelected());
             this.btnLoad.setEnabled(false);
             this.btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
+            this.cbDvhRecalculate.setEnabled(false);
+            this.cbDvhRecalculate.setToolTipText("DVH calculation cannot be modified after the RT objects creation");
             this.comboRtStructureSet.setVisible(true);
             this.comboRtPlan.setVisible(true);
             this.treeStructures.setVisible(true);
@@ -196,6 +195,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         flowLayout.setAlignment(FlowLayout.LEFT);
         add(panel, BorderLayout.NORTH);
         panel.add(this.btnLoad);
+        panel.add(this.cbDvhRecalculate);
         panel.add(this.comboRtStructureSet);
         panel.add(this.comboRtPlan);
 
@@ -392,11 +392,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             ImageElement dicom = v.getImage();
             if (dicom instanceof DicomImageElement) {
                 GeometryOfSlice geometry = ((DicomImageElement) dicom).getDispSliceGeometry();
-                KeyDouble z = new KeyDouble(geometry.getTLHC().getZ());
+
+                // Key for contour lookup
+                String imageUID = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
 
                 // List of detected contours from RtSet
-                List<Contour> contours =
-                    rt.getContourMap().get(TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class));
+                List<Contour> contours = rt.getContourMap().get(imageUID);
 
                 // List of detected plans from RtSet
                 Plan plan = rt.getFirstPlan();
@@ -419,33 +420,33 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     // Iso dose contour layer
                     if (dose != null) {
 
-                        for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
-                            IsoDose isoDose = isoDoseLayer.getIsoDose();
+                        List<Contour> isoContours = dose.getIsoContourMap().get(imageUID);
+                        if (isoContours != null) {
 
-                            // Only selected
-                            if (containsIsoDose(listIsoDose, isoDose)) {
+                            // Check which iso contours should be rendered
+                            for (Contour isoContour : isoContours) {
 
-                                // Contours for specific slice
-                                List<Contour> isoContours = isoDose.getPlanes().get(z);
-                                if (isoContours != null) {
+                                IsoDoseLayer isoDoseLayer = (IsoDoseLayer) isoContour.getLayer();
+                                IsoDose isoDose = isoDoseLayer.getIsoDose();
+
+                                // Only selected
+                                if (containsIsoDose(listIsoDose, isoDose)) {
 
                                     // Iso dose graphics
-                                    for (Contour isoContour : isoContours) {
-                                        Graphic graphic = isoContour.getGraphic(geometry);
-                                        if (graphic != null) {
+                                    Graphic graphic = isoContour.getGraphic(geometry);
+                                    if (graphic != null) {
 
-                                            graphic.setLineThickness((float) isoDose.getThickness());
-                                            graphic.setPaint(isoDose.getColor());
-                                            graphic.setLayerType(LayerType.DICOM_RT);
-                                            graphic.setLayer(isoDoseLayer.getLayer());
-                                            graphic.setFilled(true);
+                                        graphic.setLineThickness((float) isoDose.getThickness());
+                                        graphic.setPaint(isoDose.getColor());
+                                        graphic.setLayerType(LayerType.DICOM_RT);
+                                        graphic.setLayer(isoDoseLayer.getLayer());
+                                        graphic.setFilled(true);
 
-                                            for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
-                                                graphic.addPropertyChangeListener(listener);
-                                            }
-
-                                            modelList.addGraphic(graphic);
+                                        for (PropertyChangeListener listener : modelList.getGraphicsListeners()) {
+                                            graphic.addPropertyChangeListener(listener);
                                         }
+
+                                        modelList.addGraphic(graphic);
                                     }
                                 }
                             }
@@ -463,7 +464,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                             if (containsStructure(listStructure, structure)) {
 
                                 // If dose is loaded
-                                if (dose != null) {
+                                //if (dose != null) {
 
                                     // DVH refresh display (comment temporarily)
                                     // rt.getDvhChart().removeSeries(structure.getRoiName());
@@ -475,7 +476,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                                     // } catch (Exception err) {
                                     // // NOOP
                                     // }
-                                }
+                                //}
 
                                 // Structure graphics
                                 Graphic graphic = c.getGraphic(geometry);
@@ -750,31 +751,30 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         public String getToolTipText() {
             StructureLayer layer = (StructureLayer) getUserObject();
-            
-            // TODO
+
             double volume = layer.getStructure().getVolume();
             String source = layer.getStructure().getVolumeSource().toString();
+            Dvh structureDvh = layer.getStructure().getDvh();
 
-            StringBuilder structTooltip = new StringBuilder();
-            structTooltip.append("Structure Information:");
-            structTooltip.append(String.format(source + " Volume: %.4f cm^3", volume));
+            StringBuilder buf = new StringBuilder();
+            buf.append("<html>");
+            buf.append("Structure Information:<br>");
+            if (StringUtil.hasText(layer.getStructure().getRoiObservationLabel())) {
+                buf.append("Observation Label: ");
+                buf.append(layer.getStructure().getRoiObservationLabel());
+                buf.append("<br>");
+            }
+            buf.append(String.format("Thickness: %.2f<br>", layer.getStructure().getThickness()));
+            buf.append(String.format(source + " Volume: %.4f cm^3<br>", volume));
 
-            //TODO: I actually need to find DVH for structure from the plan dose ...
-//            Dvh structureDvh = dose.get(structure.getRoiNumber());
-//
-//            String relativeMinDose = String.format(structureDvh.getDvhSource().toString()
-//                    + " Min Dose: %.3f %%",
-//                RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
-//            String relativeMaxDose = String.format(
-//                    "Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString()
-//                            + " Max Dose: %.3f %%",
-//                    RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
-//            String relativeMeanDose = String.format(
-//                    "Structure: " + structure.getRoiName() + ", " + structureDvh.getDvhSource().toString()
-//                            + " Mean Dose: %.3f %%",
-//                    RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
+            if (structureDvh != null) {
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Min Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Max Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(String.format(structureDvh.getDvhSource().toString() + " Mean Dose: %.3f %%<br>", RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())));
+            }
+            buf.append("</html>");
 
-            return structTooltip.toString();
+            return buf.toString();
         }
 
         @Override
@@ -792,8 +792,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
         public String getToolTipText() {
             IsoDoseLayer layer = (IsoDoseLayer) getUserObject();
-            // TODO
-            return null;
+
+            StringBuilder buf = new StringBuilder();
+            buf.append("<html>");
+            buf.append("Isodose Information:<br>");
+            if (layer.getIsoDose() != null) {
+                buf.append(String.format("Level: %d %%<br>", layer.getIsoDose().getLevel()));
+                buf.append(String.format("Thickness: %.2f<br>", layer.getIsoDose().getThickness()));
+            }
+            buf.append("</html>");
+            
+            return buf.toString();
         }
 
         @Override

@@ -53,6 +53,7 @@ public class Dose extends HashMap<Integer, Dvh> {
 
     private List<MediaElement> images = new ArrayList<>();
     private Map<Integer, IsoDoseLayer> isoDoseSet = new LinkedHashMap<>();
+    private Map<String, ArrayList<Contour>> isoContourMap = new HashMap<>();
 
     // Dose LUTs
     private Pair<double[], double[]> doseMmLUT;
@@ -164,6 +165,14 @@ public class Dose extends HashMap<Integer, Dvh> {
 
     public void setIsoDoseSet(Map<Integer, IsoDoseLayer> isoDoseSet) {
         this.isoDoseSet = isoDoseSet;
+    }
+
+    public Map<String, ArrayList<Contour>> getIsoContourMap() {
+        return this.isoContourMap;
+    }
+
+    public void setIsoContourMap(Map<String, ArrayList<Contour>> isoContourMap) {
+        this.isoContourMap = isoContourMap;
     }
 
     public Pair<double[], double[]> getDoseMmLUT() {
