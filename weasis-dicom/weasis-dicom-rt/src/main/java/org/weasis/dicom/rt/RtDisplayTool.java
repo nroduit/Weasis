@@ -26,19 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.swing.BoxLayout;
-import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JDialog;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTree;
-import javax.swing.JViewport;
-import javax.swing.SwingWorker;
+import javax.swing.*;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -103,8 +91,14 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private boolean initPathSelection;
     private DefaultMutableTreeNode rootNodeStructures = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
     private DefaultMutableTreeNode rootNodeIsodoses = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+    private final JLabel lblRtStructureSet = new JLabel("Structure Set:");
     private final JComboBox<RtSpecialElement> comboRtStructureSet = new JComboBox<>();
+    private final JLabel lblRtPlan = new JLabel("Plan:");
     private final JComboBox<RtSpecialElement> comboRtPlan = new JComboBox<>();
+    private final JLabel lblRtPlanName = new JLabel();
+    private final JLabel lblRtPlanDose = new JLabel("Dose:");
+    private final JTextField txtRtPlanDoseValue = new JTextField();
+    private final JLabel lblRtPlanDoseUnit = new JLabel("cGy");
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
     private final CircularProgressBar progressBar = new CircularProgressBar();
@@ -123,7 +117,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private final JSliderW slider;
     private JPanel panelHead;
     private JPanel panelDvh;
-    private JButton btnShowdvh;
+    private JButton btnShowDvh;
 
     public RtDisplayTool() {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -136,8 +130,15 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.cbDvhRecalculate.setSelected(false);
         this.cbDvhRecalculate
             .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
+        this.lblRtStructureSet.setVisible(false);
         this.comboRtStructureSet.setVisible(false);
+        this.lblRtPlan.setVisible(false);
         this.comboRtPlan.setVisible(false);
+        this.lblRtPlanName.setVisible(false);
+        this.lblRtPlanDose.setVisible(false);
+        this.txtRtPlanDoseValue.setVisible(false);
+        this.lblRtPlanDoseUnit.setVisible(false);
+        //this.btnShowDvh.setVisible(false);
         this.slider = createTransparencySlider(5, true);
 
         this.treeStructures = new CheckboxTree() {
@@ -214,10 +215,17 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
                     cbDvhRecalculate.setEnabled(false);
                     cbDvhRecalculate.setToolTipText("DVH calculation cannot be modified after the RT objects creation");
+                    lblRtStructureSet.setVisible(true);
                     comboRtStructureSet.setVisible(true);
+                    lblRtPlan.setVisible(true);
                     comboRtPlan.setVisible(true);
+                    lblRtPlanName.setVisible(true);
+                    lblRtPlanDose.setVisible(true);
+                    txtRtPlanDoseValue.setVisible(true);
+                    lblRtPlanDoseUnit.setVisible(true);
                     treeStructures.setVisible(true);
                     treeIsodoses.setVisible(true);
+                    //btnShowDvh.setVisible(true);
 
                     initSlider();
 
@@ -253,7 +261,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
         this.comboRtStructureSet.setVisible(false);
         this.comboRtPlan.setVisible(false);
-        // GUI RT case selection
+
+        // RT data load panel
         JPanel panelLoad = new JPanel();
         panelHead.add(panelLoad);
         FlowLayout fl_panelLoad = (FlowLayout) panelLoad.getLayout();
@@ -261,12 +270,38 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         panelLoad.add(this.btnLoad);
         panelLoad.add(progressBar);
         progressBar.setVisible(false);
-        panelLoad.add(this.comboRtStructureSet);
-        panelLoad.add(this.comboRtPlan);
+        
+        // RTStruct panel
+        JPanel panelStruct = new JPanel();
+        FlowLayout flStruct = (FlowLayout) panelStruct.getLayout();
+        flStruct.setAlignment(FlowLayout.LEFT);
+        panelHead.add(panelStruct);
+        panelStruct.add(this.lblRtStructureSet);
+        panelStruct.add(this.comboRtStructureSet);
 
+        // RTPlan panel
+        JPanel panelPlan = new JPanel();
+        FlowLayout flPlan = (FlowLayout) panelPlan.getLayout();
+        flPlan.setAlignment(FlowLayout.LEFT);
+        panelHead.add(panelPlan);
+        panelPlan.add(this.lblRtPlan);
+        // TODO: multi-select data table (with check box selection) -> with info about each plan dose
+        panelPlan.add(this.comboRtPlan);
+        panelPlan.add(this.lblRtPlanName);
+
+        // RTDose panel
+        JPanel panelDose = new JPanel();
+        FlowLayout flDose = (FlowLayout) panelDose.getLayout();
+        flDose.setAlignment(FlowLayout.LEFT);
+        panelHead.add(panelDose);
+        panelDose.add(this.lblRtPlanDose);
+        panelDose.add(this.txtRtPlanDoseValue);
+        panelDose.add(this.lblRtPlanDoseUnit);
+
+        // DVH panel
         panelDvh = new JPanel();
-        FlowLayout flowLayout = (FlowLayout) panelDvh.getLayout();
-        flowLayout.setAlignment(FlowLayout.LEFT);
+        FlowLayout flDvh = (FlowLayout) panelDvh.getLayout();
+        flDvh.setAlignment(FlowLayout.LEFT);
         panelHead.add(panelDvh);
         // By default recalculate DVH only when it is missing for structure
         panelDvh.add(cbDvhRecalculate);
@@ -274,9 +309,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.cbDvhRecalculate
             .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
 
-        btnShowdvh = new JButton("Display DVH chart");
-        btnShowdvh.addActionListener(e -> showDvhChart());
-        panelDvh.add(btnShowdvh);
+        btnShowDvh = new JButton("Display DVH chart");
+        btnShowDvh.addActionListener(e -> showDvhChart());
+        panelDvh.add(btnShowDvh);
 
         this.btnLoad.addActionListener(e -> loadData());
 
@@ -289,12 +324,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private void showDvhChart() {
         RtSet rt = rtSet;
         if (rt != null) {
-            List<StructureLayer> strcuts = getStructureSelection();
-            if (!strcuts.isEmpty()) {
+            List<StructureLayer> structs = getStructureSelection();
+            if (!structs.isEmpty()) {
                 XYChart dvhChart = new XYChartBuilder().width(800).height(500).title("DVH").xAxisTitle("Dose (cGy)")
                     .yAxisTitle("Volume (%)").build();
                 dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
-                for (StructureLayer structureLayer : strcuts) {
+                for (StructureLayer structureLayer : structs) {
                     Structure structure = structureLayer.getStructure();
                     Dvh structureDvh = structure.getDvh();
                     structureDvh.appendChart(structure, dvhChart);
@@ -690,7 +725,12 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             // Prepare parent node for isodoses
             if (selectedPlan != null) {
                 nodeIsodoses.removeAllChildren();
-                Dose planDose = rtSet.getPlan(selectedPlan).getFirstDose();
+
+                Plan plan = rtSet.getPlan(selectedPlan);
+                this.lblRtPlanName.setText(plan.getName());
+                this.txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose()));
+
+                Dose planDose = plan.getFirstDose();
                 if (planDose != null) {
                     Map<Integer, IsoDoseLayer> isodoses = planDose.getIsoDoseSet();
                     if (isodoses != null) {
