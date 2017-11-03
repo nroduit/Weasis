@@ -742,7 +742,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (selImage != null) {
                         // IntersectVolume: display a rectangle to show the slice thickness
-                        addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true);
+                        if(!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
+                            // When the volume limits are outside the image, get the only the intersection
+                            addCrossline(selImage, layer, slice, true);
+                        }
                     }
                     repaint();
                 }
@@ -751,7 +754,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     }
 
-    protected void addCrossline(DicomImageElement selImage, GraphicLayer layer, LocalizerPoster localizer,
+    protected boolean addCrossline(DicomImageElement selImage, GraphicLayer layer, LocalizerPoster localizer,
         boolean center) {
         GeometryOfSlice sliceGeometry = selImage.getDispSliceGeometry();
         if (sliceGeometry != null) {
@@ -770,12 +773,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     graphic.setLayer(layer);
 
                     graphicManager.addGraphic(graphic);
-
+                    return true;
                 } catch (InvalidShapeException e) {
                     LOGGER.error("Building crossline", e); //$NON-NLS-1$
                 }
             }
         }
+        return false;
     }
 
     @Override
