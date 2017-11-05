@@ -109,6 +109,7 @@
 			<xsd:element name="presentations" minOccurs="0" maxOccurs="1"/>
 			<xsd:element name="selections" minOccurs="0" maxOccurs="1"/>
 		</xsd:sequence>
+		<xsd:attribute name="uid" type="xsd:string" />
 	</xsd:complexType>
 
 	<xsd:complexType name="ArcQuery">

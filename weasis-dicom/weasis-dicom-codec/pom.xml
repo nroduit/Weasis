@@ -15,7 +15,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<dcm4che.version>5.10.5</dcm4che.version>
-		<weasis-dicom-tools.version>1.2.2-SNAPSHOT</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>1.2.2</weasis-dicom-tools.version>
 	</properties>
 	
 	<repositories>

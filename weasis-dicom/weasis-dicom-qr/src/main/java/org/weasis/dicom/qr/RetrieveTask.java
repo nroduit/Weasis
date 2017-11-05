@@ -121,7 +121,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                             }
                         }
                     } catch (Exception e) {
-                        dicomListener.stop();
+                        if (dicomListener != null) {
+                            dicomListener.stop();
+                        }
                         String msg = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
                         errorMessage = String.format("%s: %s.", msg, e.getMessage()); //$NON-NLS-1$
                         LOGGER.error("Start DICOM listener", e); //$NON-NLS-1$
@@ -132,7 +134,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     } else {
                         state = CMove.process(params, callingNode.getDicomNode(), node.getDicomNode(),
                             callingNode.getAeTitle(), progress, dcmParams);
-                        dicomListener.stop();
+                        if (dicomListener != null) {
+                            dicomListener.stop();
+                        }
                     }
                 } else if (RetrieveType.WADO == type) {
                     List<AbstractDicomNode> webNodes = AbstractDicomNode.loadDicomNodes(AbstractDicomNode.Type.WEB,
@@ -170,7 +174,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         });
                     }
 
-                    WadoParameters wadoParameters = new WadoParameters(wadoURLs.get(0).toString(), false);
+                    WadoParameters wadoParameters =
+                        new WadoParameters("local", wadoURLs.get(0).toString(), false, null, null, null);
                     CFindQueryResult query = new CFindQueryResult(wadoParameters);
                     query.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);
