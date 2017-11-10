@@ -459,20 +459,26 @@ public class ImageProcessor {
     public static ImageCV overlay(Mat source, RenderedImage imgOverlay, Color color) {
         ImageCV srcImg = ImageCV.toImageCV(Objects.requireNonNull(source));
         Mat mask = toMat(Objects.requireNonNull(imgOverlay));
-        if (isGray(color)) {
+        if (isGray(color) && srcImg.channels() == 1) {
             Mat grayImg = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(color.getRed()));
-            grayImg.copyTo(srcImg, mask);
-            return srcImg;
-        }
-        if (srcImg.channels() < 3) {
             ImageCV dstImg = new ImageCV();
-            Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
-            srcImg = dstImg;
+            srcImg.copyTo(dstImg);
+            grayImg.copyTo(dstImg, mask);
+            return dstImg;
         }
+        
+        ImageCV dstImg = new ImageCV();
+        if (srcImg.channels() < 3) {
+            Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
+        }
+        else {
+            srcImg.copyTo(dstImg); 
+        }
+        
         Mat colorImg =
-            new Mat(srcImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
-        colorImg.copyTo(srcImg, mask);
-        return srcImg;
+            new Mat(dstImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
+        colorImg.copyTo(dstImg, mask);
+        return dstImg;
     }
 
     public static BufferedImage drawShape(RenderedImage source, Shape shape, Color color) {
@@ -496,21 +502,26 @@ public class ImageProcessor {
     public static ImageCV applyShutter(Mat source, RenderedImage imgOverlay, Color color) {
         ImageCV srcImg = ImageCV.toImageCV(Objects.requireNonNull(source));
         Mat mask = toMat(Objects.requireNonNull(imgOverlay));
-        if (isGray(color)) {
+        if (isGray(color) && srcImg.channels() == 1) {
             Mat grayImg = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(color.getRed()));
-            grayImg.copyTo(srcImg, mask);
-            return srcImg;
+            ImageCV dstImg = new ImageCV();
+            srcImg.copyTo(dstImg);
+            grayImg.copyTo(dstImg, mask);
+            return dstImg;
         }
 
+        ImageCV dstImg = new ImageCV();
         if (srcImg.channels() < 3) {
-            ImageCV dstImg = new ImageCV();
             Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
-            srcImg = dstImg;
         }
+        else {
+            srcImg.copyTo(dstImg); 
+        }
+        
         Mat colorImg =
-            new Mat(srcImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
-        colorImg.copyTo(srcImg, mask);
-        return srcImg;
+            new Mat(dstImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
+        colorImg.copyTo(dstImg, mask);
+        return dstImg;
     }
 
     public static BufferedImage getAsImage(Area shape, RenderedImage source) {

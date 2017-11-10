@@ -13,7 +13,7 @@ package org.weasis.core.api.internal.cv;
 import java.net.URI;
 import java.util.Hashtable;
 
-import org.opencv.imgcodecs.Imgcodecs;
+import org.opencv.osgi.OpenCVNativeLoader;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
@@ -87,7 +87,8 @@ public class NativeOpenCVCodec implements Codec {
     @Activate
     protected void activate(ComponentContext context) {
         // Load the native OpenCV library
-        Imgcodecs.loadNativeLibrary();
+        OpenCVNativeLoader loader = new OpenCVNativeLoader();
+        loader.init();
         LOGGER.info("Native OpenCV is activated"); //$NON-NLS-1$
     }
 

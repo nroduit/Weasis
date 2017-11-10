@@ -1,42 +1,42 @@
 package org.opencv.core;
 
-//javadoc:Rect_
-public class Rect {
+//javadoc:Rect2d_
+public class Rect2d {
 
-    public int x, y, width, height;
+    public double x, y, width, height;
 
-    public Rect(int x, int y, int width, int height) {
+    public Rect2d(double x, double y, double width, double height) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
     }
 
-    public Rect() {
+    public Rect2d() {
         this(0, 0, 0, 0);
     }
 
-    public Rect(Point p1, Point p2) {
-        x = (int) (p1.x < p2.x ? p1.x : p2.x);
-        y = (int) (p1.y < p2.y ? p1.y : p2.y);
-        width = (int) (p1.x > p2.x ? p1.x : p2.x) - x;
-        height = (int) (p1.y > p2.y ? p1.y : p2.y) - y;
+    public Rect2d(Point p1, Point p2) {
+        x = (double) (p1.x < p2.x ? p1.x : p2.x);
+        y = (double) (p1.y < p2.y ? p1.y : p2.y);
+        width = (double) (p1.x > p2.x ? p1.x : p2.x) - x;
+        height = (double) (p1.y > p2.y ? p1.y : p2.y) - y;
     }
 
-    public Rect(Point p, Size s) {
-        this((int) p.x, (int) p.y, (int) s.width, (int) s.height);
+    public Rect2d(Point p, Size s) {
+        this((double) p.x, (double) p.y, (double) s.width, (double) s.height);
     }
 
-    public Rect(double[] vals) {
+    public Rect2d(double[] vals) {
         set(vals);
     }
 
     public void set(double[] vals) {
         if (vals != null) {
-            x = vals.length > 0 ? (int) vals[0] : 0;
-            y = vals.length > 1 ? (int) vals[1] : 0;
-            width = vals.length > 2 ? (int) vals[2] : 0;
-            height = vals.length > 3 ? (int) vals[3] : 0;
+            x = vals.length > 0 ? (double) vals[0] : 0;
+            y = vals.length > 1 ? (double) vals[1] : 0;
+            width = vals.length > 2 ? (double) vals[2] : 0;
+            height = vals.length > 3 ? (double) vals[3] : 0;
         } else {
             x = 0;
             y = 0;
@@ -45,8 +45,8 @@ public class Rect {
         }
     }
 
-    public Rect clone() {
-        return new Rect(x, y, width, height);
+    public Rect2d clone() {
+        return new Rect2d(x, y, width, height);
     }
 
     public Point tl() {
@@ -92,8 +92,8 @@ public class Rect {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (!(obj instanceof Rect)) return false;
-        Rect it = (Rect) obj;
+        if (!(obj instanceof Rect2d)) return false;
+        Rect2d it = (Rect2d) obj;
         return x == it.x && y == it.y && width == it.width && height == it.height;
     }
 

@@ -13,6 +13,7 @@ public class Algorithm {
     protected final long nativeObj;
     protected Algorithm(long addr) { nativeObj = addr; }
 
+    public long getNativeObjAddr() { return nativeObj; }
 
     //
     // C++:  String getDefaultName()
