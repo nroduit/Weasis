@@ -351,7 +351,8 @@ public class ImageProcessor {
     }
 
     public static double[][] meanStdDev(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
-        Rectangle b = shape.getBounds();
+        Rectangle b = new Rectangle(0,0, source.width(), source.height()).intersection(shape.getBounds());
+
         Mat srcImg = Objects.requireNonNull(source).submat(new Rect(b.x, b.y, b.width, b.height));
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
         List<MatOfPoint> pts = transformShapeToContour(shape, false);
