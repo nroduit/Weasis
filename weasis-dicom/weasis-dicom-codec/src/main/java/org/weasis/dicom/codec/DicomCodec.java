@@ -17,6 +17,7 @@ import java.util.Hashtable;
 import java.util.List;
 
 import org.dcm4che3.data.ItemPointer;
+import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
@@ -156,6 +157,9 @@ public class DicomCodec implements Codec {
          */
         String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
         UIDUtils.setRoot(weasisRootUID);
+        
+        // Set the default encoding (must contain ASCII)
+        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100");
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:

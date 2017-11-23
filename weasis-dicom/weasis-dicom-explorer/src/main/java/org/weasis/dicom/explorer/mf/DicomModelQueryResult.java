@@ -150,10 +150,12 @@ public class DicomModelQueryResult extends AbstractQueryResult {
             s.setSeriesDescription(TagD.getTagValue(series, Tag.SeriesDescription, String.class));
             s.setSeriesNumber(StringUtil.getNullIfNull(TagD.getTagValue(series, Tag.SeriesNumber, Integer.class)));
             s.setModality(TagD.getTagValue(series, Tag.Modality, String.class));
-            // s.setDirectDownloadThumbnail(TagW.getTagValue(series, TagW.DirectDownloadThumbnail, String.class));
+            s.setThumbnail(TagW.getTagValue(series, TagW.DirectDownloadThumbnail, String.class));
             s.setWadoTransferSyntaxUID(TagW.getTagValue(series, TagW.WadoTransferSyntaxUID, String.class));
-            // s.setWadoCompressionRate(
-            // StringUtil.getNonNullObject(TagW.getTagValue(series, TagW.WadoCompressionRate, Integer.class)));
+            Integer rate = TagW.getTagValue(series, TagW.WadoCompressionRate, Integer.class);
+            if (rate != null) {
+                s.setWadoCompression( rate);
+            }
             study.addSeries(s);
         }
         return s;
@@ -166,7 +168,13 @@ public class DicomModelQueryResult extends AbstractQueryResult {
 
             SopInstance sop = s.getSopInstance(sopUID, frame);
             if (sop == null) {
-                s.addSopInstance(new SopInstance(sopUID, frame));
+                sop = new SopInstance(sopUID, frame);
+                sop.setDirectDownloadFile(TagD.getTagValue(media,TagW.DirectDownloadFile, String.class));
+                sop.setImageComments(TagD.getTagValue(media, Tag.ImageComments, String.class));
+                // Out of date (as the real server syntax is unknown and client has now all the codecs)
+                // sop.setTransferSyntaxUID(TagD.getTagValue(media, Tag.TransferSyntaxUID, String.class));
+                s.addSopInstance(sop);
+                
             }
 
             if (media instanceof DicomImageElement) {

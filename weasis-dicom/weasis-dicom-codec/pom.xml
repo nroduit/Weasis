@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>2.6.0</version>
+		<version>2.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -15,7 +15,7 @@
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
 		<dcm4che.version>dcm4chee-arc-light-5.10.1</dcm4che.version>
-		<weasis-dicom-tools.version>1.2.1</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>1.2.2</weasis-dicom-tools.version>
 	</properties>
 	
 	<repositories>

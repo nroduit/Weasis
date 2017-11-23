@@ -301,7 +301,7 @@ public class DownloadManager {
             try {
                 Schema schema = schemaFactory.newSchema(new Source[] {
                     new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()), //$NON-NLS-1$
-                    new StreamSource(DownloadManager.class.getResource("/config/wado_query25.xsd").toExternalForm()) }); //$NON-NLS-1$
+                    new StreamSource(DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm()) }); //$NON-NLS-1$
                 Validator validator = schema.newValidator();
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
@@ -374,7 +374,7 @@ public class DownloadManager {
     }
 
     private static void readArcQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
-        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, null);
+        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, "");
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID =
             Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
