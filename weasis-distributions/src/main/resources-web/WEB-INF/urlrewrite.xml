@@ -11,8 +11,30 @@
 		</note>
 
 		<from>^/weasis-launcher(.+)\.jar$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
 		<to type="redirect">%{context-path}/weasis-launcher.jar</to>
 	</rule>
+	<rule>
+		<note>
+			Any "/weasis-launcher${profile.suffix}.jar" download Request will be redirected to "weasis-launcher.jar.pack.gz" file
+		</note>
 
+		<from>^/weasis-launcher(.+)\.jar.pack.gz$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+		<to type="redirect">%{context-path}/weasis-launcher.jar.pack.gz</to>
+	</rule>
+	
+    <rule>
+        <from>^/felix(.+)\.jar.*</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+    </rule>
+    <rule>
+        <from>^/substance(.+)\.jar.*</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+    </rule>
 </urlrewrite>
 
