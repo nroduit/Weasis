@@ -352,6 +352,9 @@ public class ImageProcessor {
 
     public static double[][] meanStdDev(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
         Rectangle b = new Rectangle(0,0, source.width(), source.height()).intersection(shape.getBounds());
+        if(b.getWidth() < 1 || b.getHeight() < 1) {
+            return null;
+        }
 
         Mat srcImg = Objects.requireNonNull(source).submat(new Rect(b.x, b.y, b.width, b.height));
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
