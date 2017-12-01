@@ -27,6 +27,17 @@
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-web</directory>
 			<outputDirectory></outputDirectory>
+			<excludes>
+				<exclude>WEB-INF/urlrewrite.xml</exclude>
+			</excludes>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/resources-web</directory>
+			<includes>
+				<include>WEB-INF/urlrewrite.xml</include>
+			</includes>
+			<outputDirectory></outputDirectory>
+			<filtered>true</filtered>
 		</fileSet>
 		<fileSet>
 			<!-- copy resources.zip -->
