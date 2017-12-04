@@ -22,6 +22,7 @@ public class Subdiv2D {
     protected final long nativeObj;
     protected Subdiv2D(long addr) { nativeObj = addr; }
 
+    public long getNativeObjAddr() { return nativeObj; }
 
     public static final int
             PTLOC_ERROR = -2,

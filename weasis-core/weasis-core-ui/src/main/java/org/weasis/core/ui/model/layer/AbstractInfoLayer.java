@@ -309,6 +309,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             }
 
             for (int k = 0; k < length; k++) {
+                // Convert BGR LUT to RBG color
                 g2.setPaint(new Color(table[2][k] & 0xff, table[1][k] & 0xff, table[0][k] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);

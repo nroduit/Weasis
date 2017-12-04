@@ -44,7 +44,7 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
             synchronized (hash) {
                 List<K> remKeys = new ArrayList<>();
                 // 5% of max memory + diff
-                long maxfreeSize = maxNativeMemory / 5 + (useNativeMemory - maxNativeMemory);
+                long maxfreeSize = maxNativeMemory / 20 + (useNativeMemory - maxNativeMemory);
                 long freeSize = 0;
                 
                 for (Map.Entry<K, V> e : hash.entrySet()) {

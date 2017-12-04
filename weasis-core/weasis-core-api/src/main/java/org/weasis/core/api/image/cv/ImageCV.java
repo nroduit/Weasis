@@ -43,7 +43,7 @@ public class ImageCV extends Mat implements PlanarImage {
 
     @Override
     public long physicalBytes() {
-        return width() * height() * elemSize();
+        return total() * elemSize();
     }
 
     public static Mat toMat(PlanarImage source) {

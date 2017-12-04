@@ -13,6 +13,7 @@ public class TickMeter {
     protected final long nativeObj;
     protected TickMeter(long addr) { nativeObj = addr; }
 
+    public long getNativeObjAddr() { return nativeObj; }
 
     //
     // C++:   TickMeter()
