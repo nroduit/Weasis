@@ -102,23 +102,26 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     private boolean selectPage(String title, DefaultMutableTreeNode root) {
         if (title != null) {
-            for (@SuppressWarnings("unchecked")
-            Enumeration<DefaultMutableTreeNode>  children = root.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = children.nextElement();
-                Object object = dtm.getUserObject();
-                if (object instanceof PageProps) {
-                    PageProps page = (PageProps) object;
-                    if (page.getTitle().equals(title)) {
-                        TreePath tp = new TreePath(dtm.getPath());
-                        if (!dtm.isLeaf()) {
-                            tree.expandPath(tp);
+            Enumeration<?> children = root.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    Object object = dtm.getUserObject();
+                    if (object instanceof PageProps) {
+                        PageProps page = (PageProps) object;
+                        if (page.getTitle().equals(title)) {
+                            TreePath tp = new TreePath(dtm.getPath());
+                            if (!dtm.isLeaf()) {
+                                tree.expandPath(tp);
+                            }
+                            tree.setSelectionPath(tp);
+                            return true;
                         }
-                        tree.setSelectionPath(tp);
+                    }
+                    if (dtm.getChildCount() > 0 && selectPage(title, dtm)) {
                         return true;
                     }
-                }
-                if (dtm.getChildCount() > 0 && selectPage(title, dtm)) {
-                    return true;
                 }
             }
         }
@@ -155,19 +158,23 @@ public abstract class AbstractWizardDialog extends JDialog {
     protected void iniTree() {
 
         // fill up tree
-        @SuppressWarnings("unchecked")
-        Enumeration<DefaultMutableTreeNode>  children = pagesRoot.children();
-        while (children.hasMoreElements()) {
-            PageProps[] subpages = null;
-            DefaultMutableTreeNode node = children.nextElement();
-            Object object = node.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                subpages = ((AbstractItemDialogPage) object).getSubPages();
-            }
 
-            if (subpages != null) {
-                for (int j = 0; j < subpages.length; j++) {
-                    node.add(new DefaultMutableTreeNode(subpages[j]));
+        Enumeration<?> children = pagesRoot.children();
+        while (children.hasMoreElements()) {
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
+                PageProps[] subpages = null;
+
+                Object object = node.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
+                    subpages = ((AbstractItemDialogPage) object).getSubPages();
+                }
+
+                if (subpages != null) {
+                    for (int j = 0; j < subpages.length; j++) {
+                        node.add(new DefaultMutableTreeNode(subpages[j]));
+                    }
                 }
             }
         }
@@ -195,45 +202,52 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
         if (maxDeep > 1) {
-            for (@SuppressWarnings("unchecked")
-            Enumeration<DefaultMutableTreeNode> children = start.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = children.nextElement();
-                if (!dtm.isLeaf()) {
-                    TreePath tp = new TreePath(dtm.getPath());
-                    tree.expandPath(tp);
+            Enumeration<?> children = start.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    if (!dtm.isLeaf()) {
+                        TreePath tp = new TreePath(dtm.getPath());
+                        tree.expandPath(tp);
 
-                    expandTree(tree, dtm, maxDeep - 1);
+                        expandTree(tree, dtm, maxDeep - 1);
+                    }
                 }
             }
         }
-        return;
     }
 
     public void closeAllPages() {
-        @SuppressWarnings("unchecked")
-        Enumeration<DefaultMutableTreeNode> children = pagesRoot.children();
+        Enumeration<?> children = pagesRoot.children();
         while (children.hasMoreElements()) {
-            DefaultMutableTreeNode page = children.nextElement();
-            Object object = page.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                ((AbstractItemDialogPage) object).closeAdditionalWindow();
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode page = (DefaultMutableTreeNode) child;
+
+                Object object = page.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
+                    ((AbstractItemDialogPage) object).closeAdditionalWindow();
+                }
             }
         }
     }
 
     protected void resetAlltoDefault() {
-        @SuppressWarnings("unchecked")
-        Enumeration<DefaultMutableTreeNode> children = pagesRoot.children();
+        Enumeration<?> children = pagesRoot.children();
         while (children.hasMoreElements()) {
-            DefaultMutableTreeNode node = children.nextElement();
-            Object object = node.getUserObject();
-            if (object instanceof AbstractItemDialogPage) {
-                AbstractItemDialogPage page = (AbstractItemDialogPage) object;
-                PageProps[] subpages = page.getSubPages();
-                for (int j = 0; j < subpages.length; j++) {
-                    subpages[j].resetoDefaultValues();
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
+                Object object = node.getUserObject();
+                if (object instanceof AbstractItemDialogPage) {
+                    AbstractItemDialogPage page = (AbstractItemDialogPage) object;
+                    PageProps[] subpages = page.getSubPages();
+                    for (int j = 0; j < subpages.length; j++) {
+                        subpages[j].resetoDefaultValues();
+                    }
+                    page.resetoDefaultValues();
                 }
-                page.resetoDefaultValues();
             }
         }
     }

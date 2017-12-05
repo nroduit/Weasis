@@ -41,7 +41,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.tool.Dicomizer;
 
 public final class Transform2Dicom {
@@ -75,14 +75,15 @@ public final class Transform2Dicom {
 
         // Transform to JPEG
         File imgFile = imageElement.getFileCache().getOriginalFile().get();
-        if (imgFile == null || !imageElement.getMimeType().contains("jpg") //$NON-NLS-1$
+        if (imgFile == null || !imageElement.getMimeType().contains("jpeg") //$NON-NLS-1$
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
             PlanarImage transformedImage = imageElement.getImage(opManager, false);
             Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-            Integer rotationAngle = Optional.ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+            Integer rotationAngle = Optional
+                .ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
             rotationAngle = rotationAngle % 360;
             if (area != null && rotationAngle != 0 && rotationAngle != 180) {
                 transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
@@ -125,7 +126,8 @@ public final class Transform2Dicom {
                 Rectangle crop =
                     (Rectangle) imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
                 if (crop != null) {
-                    Integer rotationAngle = Optional.ofNullable((Integer) imageInfo.getPostProcessOpManager().getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+                    Integer rotationAngle = Optional.ofNullable((Integer) imageInfo.getPostProcessOpManager()
+                        .getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
                     rotationAngle = rotationAngle % 360;
                     if (rotationAngle == 0 || rotationAngle == 180) {
                         offset = new Point2D.Double(crop.getX(), crop.getY());
@@ -136,7 +138,7 @@ public final class Transform2Dicom {
                 }
                 String prUid = UIDUtils.createUID();
                 File outputFile = new File(exportDirDicom, prUid);
-                PrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
+                DicomPrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
             }
         } else {
             LOGGER.error("Cannot read JPEG image {}", imageElement.getName()); //$NON-NLS-1$
@@ -160,6 +162,14 @@ public final class Transform2Dicom {
         TagW seriesTime = TagD.get(Tag.SeriesTime);
         TagW studyDate = TagD.get(Tag.StudyDate);
         TagW studyTime = TagD.get(Tag.StudyTime);
+
+        // Reset study and series values
+        dicomTags.setTag(studyDate, null);
+        dicomTags.setTag(studyTime, null);
+        collection.forEach(i -> {
+            i.getSeries().setTag(seriesDate, null);
+            i.getSeries().setTag(seriesTime, null);
+        });
 
         for (AcquireImageInfo imageInfo : collection) {
             ImageElement imageElement = imageInfo.getImage();

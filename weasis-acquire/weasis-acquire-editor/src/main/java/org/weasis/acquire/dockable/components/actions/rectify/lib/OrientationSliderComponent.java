@@ -35,7 +35,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
 
         for (int i = 0; i < div; i++) {
             Integer index = i * space + RECTIFY_ORIENTATION_MIN;
-            labels.put(index, new JLabel("" + index)); //$NON-NLS-1$
+            labels.put(index, new JLabel(index.toString()));
         }
     }
 

@@ -14,8 +14,6 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
@@ -59,13 +57,10 @@ public class DicomExport extends AbstractWizardDialog {
         this.treeModel = new CheckTreeModel(dicomModel);
 
         final JButton exportandClose = new JButton(Messages.getString("DicomExport.exp_close")); //$NON-NLS-1$
-        exportandClose.addActionListener(new ActionListener() {
+        exportandClose.addActionListener(e -> {
+            exportSelection();
+            cancel();
 
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                exportSelection(true);
-
-            }
         });
         final GridBagConstraints gridBagConstraints0 = new GridBagConstraints();
         gridBagConstraints0.insets = new Insets(10, 15, 10, 0);
@@ -76,13 +71,7 @@ public class DicomExport extends AbstractWizardDialog {
         jPanelButtom.add(exportandClose, gridBagConstraints0);
 
         final JButton exportButton = new JButton();
-        exportButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(final ActionEvent e) {
-                exportSelection(false);
-            }
-        });
+        exportButton.addActionListener(e -> exportSelection());
         exportButton.setText(Messages.getString("DicomExport.exp")); //$NON-NLS-1$
         final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
         gridBagConstraints1.insets = new Insets(10, 15, 10, 0);
@@ -149,17 +138,21 @@ public class DicomExport extends AbstractWizardDialog {
             if (!openSeriesSet.isEmpty() && rootNode instanceof DefaultMutableTreeNode) {
                 List<TreePath> selectedSeriesPathsList = new ArrayList<>();
 
-                for (Enumeration<DefaultMutableTreeNode> enumTreeNode =
-                    ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration(); enumTreeNode.hasMoreElements();) {
+                if (rootNode instanceof DefaultMutableTreeNode) {
+                    Enumeration<?> enumTreeNode = ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration();
+                    while (enumTreeNode.hasMoreElements()) {
+                        Object child = enumTreeNode.nextElement();
+                        if (child instanceof DefaultMutableTreeNode) {
+                            DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) child;
+                            if (treeNode.getLevel() != 3) { // 3 stands for Series Level
+                                continue;
+                            }
 
-                    DefaultMutableTreeNode treeNode = enumTreeNode.nextElement();
-                    if (treeNode.getLevel() != 3) { // 3 stands for Series Level
-                        continue;
-                    }
-
-                    Object userObject = treeNode.getUserObject();
-                    if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
-                        selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
+                            Object userObject = treeNode.getUserObject();
+                            if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
+                                selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
+                            }
+                        }
                     }
                 }
 
@@ -173,7 +166,7 @@ public class DicomExport extends AbstractWizardDialog {
         }
     }
 
-    private void exportSelection(boolean closeWin) {
+    private void exportSelection() {
         Object object = null;
         try {
             object = jScrollPanePage.getViewport().getComponent(0);
@@ -182,9 +175,6 @@ public class DicomExport extends AbstractWizardDialog {
         }
         if (object instanceof ExportDicom) {
             final ExportDicom selectedPage = (ExportDicom) object;
-            if (closeWin) {
-                cancel();
-            }
             try {
                 selectedPage.exportDICOM(treeModel, null);
             } catch (IOException e) {

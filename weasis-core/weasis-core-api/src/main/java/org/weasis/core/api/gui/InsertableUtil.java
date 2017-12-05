@@ -20,7 +20,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 
 public class InsertableUtil {
-    public static final  String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
+    public static final String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
     public static final String ALL = "all"; //$NON-NLS-1$
 
     private InsertableUtil() {

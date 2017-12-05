@@ -12,17 +12,21 @@ package org.weasis.acquire.explorer.core.bean;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.gui.central.SeriesDataListener;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
-public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGroup> {
+public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGroup> {
     public enum Type {
         NONE, DATE, NAME;
     }
@@ -30,6 +34,8 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
     private final Type type;
     private String name;
     private LocalDateTime date;
+    private final List<SeriesDataListener> listenerList = new ArrayList<>();
+    private boolean needUpateFromGlobaTags = false;
 
     public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
 
@@ -51,22 +57,35 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
     }
 
     public SeriesGroup(LocalDateTime date) {
-        Objects.requireNonNull(date);
         this.type = Type.DATE;
-        this.date = date;
+        this.date = Objects.requireNonNull(date);
         init();
     }
 
     private void init() {
-        // Default Modality if not overridden
-        tags.put(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
         tags.put(TagD.get(Tag.SeriesInstanceUID), UIDUtils.createUID());
+        tags.put(TagD.get(Tag.SeriesDescription), getDisplayName());
         updateDicomTags();
     }
 
+    public boolean isNeedUpateFromGlobaTags() {
+        return needUpateFromGlobaTags;
+    }
+
+    public void setNeedUpateFromGlobaTags(boolean needUpateFromGlobaTags) {
+        this.needUpateFromGlobaTags = needUpateFromGlobaTags;
+    }
+
+    private void setIfnotInGlobal(TagW tag, Object value) {
+        Object globalValue = AcquireManager.GLOBAL.getTagValue(tag);
+        tags.put(tag, globalValue == null ? value : globalValue);
+    }
+
     public void updateDicomTags() {
-        TagW operator = TagD.get(Tag.OperatorsName);
-        tags.put(operator, AcquireManager.GLOBAL.getTagValue(operator));
+        // Modality from worklist otherwise XC
+        setIfnotInGlobal(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
+        setIfnotInGlobal(TagD.get(Tag.OperatorsName), null);
+        setIfnotInGlobal(TagD.get(Tag.ReferringPhysicianName), null);
     }
 
     public Type getType() {
@@ -86,6 +105,10 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
     }
 
     public String getDisplayName() {
+        String desc = TagD.getTagValue(this, Tag.SeriesDescription, String.class);
+        if (StringUtil.hasText(desc)) {
+            return desc;
+        }
         switch (type) {
             case NAME:
                 return name;
@@ -206,6 +229,24 @@ public class SeriesGroup extends AbstractTagable implements Comparable<SeriesGro
         assert this.equals(that) : "compareTo inconsistent with equals."; //$NON-NLS-1$
 
         return EQUAL;
+    }
+
+    public void addLayerChangeListener(SeriesDataListener listener) {
+        if (listener != null && !listenerList.contains(listener)) {
+            listenerList.add(listener);
+        }
+    }
+
+    public void removeLayerChangeListener(SeriesDataListener listener) {
+        if (listener != null) {
+            listenerList.remove(listener);
+        }
+    }
+
+    public void fireDataChanged() {
+        for (SeriesDataListener l : listenerList) {
+            l.handleSeriesChanged();
+        }
     }
 
 }

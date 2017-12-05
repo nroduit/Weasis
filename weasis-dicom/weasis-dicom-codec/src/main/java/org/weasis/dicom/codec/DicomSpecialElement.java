@@ -79,8 +79,7 @@ public class DicomSpecialElement extends MediaElement {
                 Integer val1 = TagD.getTagValue(m1, Tag.SeriesNumber, Integer.class);
                 Integer val2 = TagD.getTagValue(m2, Tag.SeriesNumber, Integer.class);
                 if (val1 != null && val2 != null) {
-                    // inverse number
-                    int comp = val1 > val2 ? -1 : (val1 == val2 ? 0 : 1);
+                    int comp = val1.compareTo(val2);
                     if (comp != 0) {
                         return comp;
                     }
@@ -213,14 +212,14 @@ public class DicomSpecialElement extends MediaElement {
     public static boolean isSopuidInReferencedSeriesSequence(Map<String, SOPInstanceReferenceAndMAC> seq, String sopUID,
         Integer dicomFrameNumber) {
         if (seq != null && StringUtil.hasText(sopUID) && seq.containsKey(sopUID)) {
-            if (dicomFrameNumber != null && dicomFrameNumber > 1) {
+            if (dicomFrameNumber != null) {
                 SOPInstanceReferenceAndMAC val = seq.get(sopUID);
                 int[] seqFrame = val == null ? null : val.getReferencedFrameNumber();
                 if (seqFrame == null || seqFrame.length == 0) {
                     return true;
                 } else {
                     for (int k : seqFrame) {
-                        if (k == dicomFrameNumber) {
+                        if (k == dicomFrameNumber.intValue()) {
                             return true;
                         }
                     }

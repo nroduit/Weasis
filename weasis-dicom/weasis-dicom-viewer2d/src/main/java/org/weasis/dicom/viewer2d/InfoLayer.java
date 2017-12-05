@@ -10,30 +10,16 @@
  *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
-import java.awt.Paint;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
-import java.awt.Stroke;
 import java.awt.font.TextAttribute;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
-import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 
-import javax.media.jai.Histogram;
-import javax.media.jai.LookupTableJAI;
-import javax.media.jai.PlanarImage;
 import javax.swing.Icon;
 import javax.vecmath.Vector3d;
 
@@ -42,16 +28,10 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.FlipOp;
-import org.weasis.core.api.image.ImageOpNode;
-import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
-import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -59,16 +39,15 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
-import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
+import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
-import org.weasis.core.ui.model.layer.LayerType;
-import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
-import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -88,40 +67,26 @@ import org.weasis.dicom.explorer.DicomModel;
  *
  * @author Nicolas Roduit
  */
-public class InfoLayer extends DefaultUUID implements LayerAnnotation {
+public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     private static final long serialVersionUID = 3234560631747133075L;
 
     private static final Color highlight = new Color(255, 153, 153);
 
-    private final HashMap<String, Boolean> displayPreferences = new HashMap<>();
-    private Boolean visible = Boolean.TRUE;
-    private static final int BORDER = 10;
-    private final ViewCanvas<DicomImageElement> view2DPane;
-    private PixelInfo pixelInfo = null;
-    private final Rectangle pixelInfoBound;
-    private final Rectangle preloadingProgressBound;
-    private int border = BORDER;
-    private double thickLength = 15.0;
-    private boolean showBottomScale = true;
-
-    private String name;
-
     public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
-        this.view2DPane = view2DPane;
+        super(view2DPane);
         displayPreferences.put(ANNOTATIONS, true);
+        displayPreferences.put(MIN_ANNOTATIONS, false);
         displayPreferences.put(ANONYM_ANNOTATIONS, false);
-        displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(SCALE, true);
         displayPreferences.put(LUT, false);
-        displayPreferences.put(PIXEL, true);
+        displayPreferences.put(IMAGE_ORIENTATION, true);
         displayPreferences.put(WINDOW_LEVEL, true);
         displayPreferences.put(ZOOM, true);
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
+        displayPreferences.put(PIXEL, true);
+        
         displayPreferences.put(PRELOADING_BAR, true);
-        displayPreferences.put(MIN_ANNOTATIONS, false);
-        this.pixelInfoBound = new Rectangle();
-        this.preloadingProgressBound = new Rectangle();
     }
 
     @Override
@@ -144,105 +109,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
     }
 
     @Override
-    public Integer getBorder() {
-        return border;
-    }
-
-    @Override
-    public void setBorder(Integer border) {
-        this.border = border;
-    }
-
-    @Override
-    public Boolean isShowBottomScale() {
-        return showBottomScale;
-    }
-
-    @Override
-    public void setShowBottomScale(Boolean showBottomScale) {
-        this.showBottomScale = showBottomScale;
-    }
-
-    @Override
-    public Boolean getVisible() {
-        return visible;
-    }
-
-    @Override
-    public void setVisible(Boolean visible) {
-        this.visible = Optional.ofNullable(visible).orElse(getType().getVisible());
-    }
-
-    @Override
-    public Integer getLevel() {
-        return getType().getLevel();
-    }
-
-    @Override
-    public void setLevel(Integer i) {
-        // Do Nothing
-    }
-
-    @Override
-    public LayerType getType() {
-        return LayerType.IMAGE_ANNOTATION;
-    }
-
-    @Override
-    public void setType(LayerType type) {
-        // Cannot change this type
-    }
-
-    @Override
-    public void setName(String layerName) {
-        this.name = layerName;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public String toString() {
-        return Optional.ofNullable(getName()).orElse(getType().getDefaultName());
-    }
-
-    @Override
-    public Boolean getDisplayPreferences(String item) {
-        return Optional.ofNullable(displayPreferences.get(item)).orElse(Boolean.FALSE);
-    }
-
-    @Override
-    public Boolean setDisplayPreferencesValue(String displayItem, Boolean selected) {
-        boolean selected2 = getDisplayPreferences(displayItem);
-        displayPreferences.put(displayItem, selected);
-        return !Objects.equals(selected, selected2);
-    }
-
-    @Override
-    public Rectangle getPreloadingProgressBound() {
-        return preloadingProgressBound;
-    }
-
-    @Override
-    public Rectangle getPixelInfoBound() {
-        return pixelInfoBound;
-    }
-
-    @Override
-    public void setPixelInfo(PixelInfo pixelInfo) {
-        this.pixelInfo = pixelInfo;
-    }
-
-    @Override
-    public PixelInfo getPixelInfo() {
-        return pixelInfo;
-    }
-
-    @Override
     public void paint(Graphics2D g2) {
-        ImageElement image = view2DPane.getImage();
+        DicomImageElement image = view2DPane.getImage();
         if (!visible || image == null) {
             return;
         }
@@ -263,20 +131,17 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         final float fontHeight = FontTools.getAccurateFontHeight(g2);
         final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
         float drawY = bound.height - border - 1.5f; // -1.5 for outline
-        DicomImageElement dcm = null;
-        if (image instanceof DicomImageElement) {
-            dcm = (DicomImageElement) image;
-        }
+
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            DefaultGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
                 y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                DefaultGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
+                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
                     y, Color.RED);
             }
 
@@ -285,7 +150,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 for (String str : desc) {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
-                        DefaultGraphicLabel.paintColorFontOutline(g2, str,
+                        AbstractGraphicLabel.paintColorFontOutline(g2, str,
                             midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
                     }
                 }
@@ -299,7 +164,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             drawLUT(g2, bound, midfontHeight);
         }
 
-        if (dcm != null) {
+        if (image != null) {
             /*
              * IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
              *
@@ -309,40 +174,39 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
              * Image Management Devices, July 27, 2000).
              */
             drawY -= fontHeight;
-            if ("01".equals(TagD.getTagValue(dcm, Tag.LossyImageCompression))) { //$NON-NLS-1$
-                double[] rates = TagD.getTagValue(dcm, Tag.LossyImageCompressionRatio, double[].class);
-                StringBuilder buf =
-                    new StringBuilder(Messages.getString("InfoLayer.lossy") + StringUtil.COLON_AND_SPACE);//$NON-NLS-1$
+            if ("01".equals(TagD.getTagValue(image, Tag.LossyImageCompression))) { //$NON-NLS-1$
+                double[] rates = TagD.getTagValue(image, Tag.LossyImageCompressionRatio, double[].class);
+                StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
+                buf.append(StringUtil.COLON_AND_SPACE);
                 if (rates != null && rates.length > 0) {
                     for (int i = 0; i < rates.length; i++) {
                         if (i > 0) {
                             buf.append(","); //$NON-NLS-1$
                         }
                         buf.append(" ["); //$NON-NLS-1$
-                        buf.append((int) rates[i]);
+                        buf.append(Math.round(rates[i]));
                         buf.append(":1"); //$NON-NLS-1$
                         buf.append(']');
                     }
                 } else {
-                    String val = TagD.getTagValue(dcm, Tag.DerivationDescription, String.class);
+                    String val = TagD.getTagValue(image, Tag.DerivationDescription, String.class);
                     if (val != null) {
                         buf.append(StringUtil.getTruncatedString(val, 25, Suffix.THREE_PTS));
                     }
                 }
 
-                DefaultGraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
+                AbstractGraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
                 drawY -= fontHeight;
             }
 
-            Object key = dcm.getKey();
+            Integer frame = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
             RejectedKOSpecialElement koElement = DicomModel.getRejectionKoSpecialElement(view2DPane.getSeries(),
-                TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class),
-                key instanceof Integer ? (Integer) key + 1 : null);
+                TagD.getTagValue(image, Tag.SOPInstanceUID, String.class), frame);
 
             if (koElement != null) {
                 float y = midy;
                 String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
-                DefaultGraphicLabel.paintColorFontOutline(g2, message,
+                AbstractGraphicLabel.paintColorFontOutline(g2, message,
                     midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
             }
         }
@@ -356,7 +220,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
-            DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
+            AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
             drawY -= fontHeight + 2;
             pixelInfoBound.setBounds(border - 2, (int) drawY + 3,
                 g2.getFontMetrics(view2DPane.getLayerFont()).stringWidth(str) + 4, (int) fontHeight + 2);
@@ -372,8 +236,10 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 sb.append(DecFormater.oneDecimal(window));
                 sb.append("/");//$NON-NLS-1$
                 sb.append(DecFormater.oneDecimal(level));
-                if (dcm != null) {
-                    PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
+
+                if (image != null) {
+                    PresentationStateReader prReader =
+                        (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
                     boolean pixelPadding =
                         (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
                     double minModLUT = image.getMinValue(prReader, pixelPadding);
@@ -388,39 +254,41 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 }
             }
             if (outside) {
-                DefaultGraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
+                AbstractGraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
             } else {
-                DefaultGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+                AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
             }
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM) && hideMin) {
-            DefaultGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
                 + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION) && hideMin) {
-            DefaultGraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                    + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
-                    + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+                + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME) && hideMin) {
-            String instance = StringUtil.COLON_AND_SPACE;
-            if (dcm != null) {
-                Integer inst = TagD.getTagValue(dcm, Tag.InstanceNumber, Integer.class);
+            StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.frame")); //$NON-NLS-1$
+            buf.append(StringUtil.COLON_AND_SPACE);
+            if (image != null) {
+                Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
                 if (inst != null) {
-                    instance += "[" + inst + "] "; //$NON-NLS-1$ //$NON-NLS-2$
+                    buf.append("["); //$NON-NLS-1$
+                    buf.append(inst);
+                    buf.append("] "); //$NON-NLS-1$
                 }
             }
-            DefaultGraphicLabel.paintFontOutline(g2,
-                Messages.getString("InfoLayer.frame") + instance + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$ //$NON-NLS-2$
-                    + view2DPane.getSeries()
-                        .size((Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())),
-                border, drawY);
+            buf.append(view2DPane.getFrameIndex() + 1);
+            buf.append(" / "); //$NON-NLS-1$
+            buf.append(view2DPane.getSeries()
+                .size((Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())));
+            AbstractGraphicLabel.paintFontOutline(g2, buf.toString(), border, drawY);
             drawY -= fontHeight;
 
             Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -434,7 +302,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         Point2D.Float[] positions = new Point2D.Float[4];
         positions[3] = new Point2D.Float(border, drawY - 5);
 
-        if (getDisplayPreferences(ANNOTATIONS) && dcm != null) {
+        if (getDisplayPreferences(ANNOTATIONS) && image != null) {
             Series series = (Series) view2DPane.getSeries();
             MediaSeriesGroup study = getParent(series, DicomModel.study);
             MediaSeriesGroup patient = getParent(series, DicomModel.patient);
@@ -447,11 +315,11 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                     if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                Object value = getTagValue(tag, patient, study, series, dcm);
+                                Object value = getTagValue(tag, patient, study, series, image);
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str, border, drawY);
+                                        AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY);
                                         drawY += fontHeight;
                                     }
                                     break;
@@ -472,11 +340,11 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                         Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = getTagValue(tag, patient, study, series, dcm);
+                                value = getTagValue(tag, patient, study, series, image);
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str,
+                                        AbstractGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
                                         drawY += fontHeight;
                                     }
@@ -498,11 +366,11 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                         Object value;
                         for (TagW tag : infos[j].getTag()) {
                             if (!anonymize || tag.getAnonymizationType() != 1) {
-                                value = getTagValue(tag, patient, study, series, dcm);
+                                value = getTagValue(tag, patient, study, series, image);
                                 if (value != null) {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
-                                        DefaultGraphicLabel.paintFontOutline(g2, str,
+                                        AbstractGraphicLabel.paintFontOutline(g2, str,
                                             bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
                                         drawY -= fontHeight;
                                     }
@@ -521,9 +389,9 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             // String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
             // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
 
-            double[] v = TagD.getTagValue(dcm, Tag.ImageOrientationPatient, double[].class);
-            Integer columns = TagD.getTagValue(dcm, Tag.Columns, Integer.class);
-            Integer rows = TagD.getTagValue(dcm, Tag.Rows, Integer.class);
+            double[] v = TagD.getTagValue(image, Tag.ImageOrientationPatient, double[].class);
+            Integer columns = TagD.getTagValue(image, Tag.Columns, Integer.class);
+            Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
             StringBuilder orientation = new StringBuilder(mod.name());
             if (rows != null && columns != null) {
                 orientation.append(" (");//$NON-NLS-1$
@@ -537,8 +405,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
             String rowTop = null;
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
                 orientation.append(" - ");//$NON-NLS-1$
-                Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0],
-                    v[1], v[2], v[3], v[4], v[5]);
+                Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
+                    v[2], v[3], v[4], v[5]);
                 orientation.append(imgOrientation);
 
                 // Set the opposite vector direction (otherwise label should be placed in mid-right and mid-bottom
@@ -561,7 +429,7 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                     }
                 }
 
-                if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                     vr.x = -vr.x;
                     vr.y = -vr.y;
                     vr.z = -vr.z;
@@ -571,22 +439,22 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 rowTop = ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(vc.x, vc.y, vc.z);
 
             } else {
-                String[] po = TagD.getTagValue(dcm, Tag.PatientOrientation, String[].class);
+                String[] po = TagD.getTagValue(image, Tag.PatientOrientation, String[].class);
                 Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
                 if (po != null && po.length == 2 && (rotationAngle == null || rotationAngle == 0)) {
                     // Do not display if there is a transformation
-                    if (JMVUtils.getNULLtoFalse(disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                    if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
                         colLeft = po[0];
                     } else {
                         StringBuilder buf = new StringBuilder();
                         for (char c : po[0].toCharArray()) {
-                            buf.append(getImageOrientationOposite(c));
+                            buf.append(ImageOrientation.getImageOrientationOposite(c));
                         }
                         colLeft = buf.toString();
                     }
                     StringBuilder buf = new StringBuilder();
                     for (char c : po[1].toCharArray()) {
-                        buf.append(getImageOrientationOposite(c));
+                        buf.append(ImageOrientation.getImageOrientationOposite(c));
                     }
                     rowTop = buf.toString();
                 }
@@ -604,29 +472,29 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 Map<TextAttribute, Object> map = new HashMap<>(1);
                 map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
                 String fistLetter = rowTop.substring(0, 1);
-                DefaultGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
+                AbstractGraphicLabel.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
                 int shiftx = g2.getFontMetrics().stringWidth(fistLetter);
                 Font subscriptFont = bigFont.deriveFont(map);
                 if (rowTop.length() > 1) {
                     g2.setFont(subscriptFont);
-                    DefaultGraphicLabel.paintColorFontOutline(g2, rowTop.substring(1, rowTop.length()), midx + shiftx,
+                    AbstractGraphicLabel.paintColorFontOutline(g2, rowTop.substring(1, rowTop.length()), midx + shiftx,
                         fontHeight + 5f, highlight);
                     g2.setFont(bigFont);
                 }
 
-                DefaultGraphicLabel.paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength),
+                AbstractGraphicLabel.paintColorFontOutline(g2, colLeft.substring(0, 1), (float) (border + thickLength),
                     midy + fontHeight / 2.0f, highlight);
 
                 if (colLeft.length() > 1) {
                     g2.setFont(subscriptFont);
-                    DefaultGraphicLabel.paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
+                    AbstractGraphicLabel.paintColorFontOutline(g2, colLeft.substring(1, colLeft.length()),
                         (float) (border + thickLength + shiftx), midy + fontHeight / 2.0f, highlight);
                 }
                 g2.setFont(oldFont);
             }
 
-            DefaultGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
-                                                                                                                    // for
+            AbstractGraphicLabel.paintFontOutline(g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
+                                                                                                                     // for
             // outline
         } else {
             positions[0] = new Point2D.Float(border, border);
@@ -693,752 +561,412 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
         return null;
     }
 
-    public Rectangle2D getOutLine(Line2D l) {
-        Rectangle2D r = l.getBounds2D();
-        r.setFrame(r.getX() - 1.0, r.getY() - 1.0, r.getWidth() + 2.0, r.getHeight() + 2.0);
-        return r;
-    }
-
-    public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        OpManager disOp = view2DPane.getDisplayOpManager();
-        ImageOpNode pseudoColorOp = disOp.getNode(PseudoColorOp.OP_NAME);
-        ByteLut lut = null;
-        if (pseudoColorOp != null) {
-            lut = (ByteLut) pseudoColorOp.getParam(PseudoColorOp.P_LUT);
-        }
-        if (lut != null && bound.height > 350) {
-            if (lut.getLutTable() == null) {
-                lut = ByteLut.grayLUT;
-            }
-            byte[][] table = JMVUtils.getNULLtoFalse(pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
-                ? lut.getInvertedLutTable() : lut.getLutTable();
-            float length = table[0].length;
-
-            int width = 0;
-            for (ViewButton b : view2DPane.getViewButtons()) {
-                if (b.isVisible() && b.getPosition() == GridBagConstraints.EAST) {
-                    int w = b.getIcon().getIconWidth() + 5;
-                    if (w > width) {
-                        width = w;
-                    }
-                }
-            }
-            float x = bound.width - 30f - width;
-            float y = bound.height / 2f - length / 2f;
-
-            g2.setPaint(Color.BLACK);
-            Rectangle2D.Float rect = new Rectangle2D.Float(x - 11f, y - 2f, 12f, 2f);
-            g2.draw(rect);
-            int separation = 4;
-            float step = length / separation;
-            for (int i = 1; i < separation; i++) {
-                float posY = y + i * step;
-                rect.setRect(x - 6f, posY - 1f, 7f, 2f);
-                g2.draw(rect);
-            }
-            rect.setRect(x - 11f, y + length, 12f, 2f);
-            g2.draw(rect);
-            rect.setRect(x - 2f, y - 2f, 23f, length + 4f);
-            g2.draw(rect);
-
-            g2.setPaint(Color.WHITE);
-            Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
-            g2.draw(line);
-
-            Double ww = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
-            Double wl = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
-            if (ww != null && wl != null) {
-                int stepWindow = (int) (ww / separation);
-                int firstlevel = (int) (wl - stepWindow * 2.0);
-                String str = Integer.toString(firstlevel); // $NON-NLS-1$
-                DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
-                    y + midfontHeight);
-                for (int i = 1; i < separation; i++) {
-                    float posY = y + i * step;
-                    line.setLine(x - 5f, posY, x - 1f, posY);
-                    g2.draw(line);
-                    str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
-                    DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
-                        posY + midfontHeight);
-                }
-
-                line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
-                g2.draw(line);
-                str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
-                DefaultGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
-                    y + length + midfontHeight);
-                rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
-                g2.draw(rect);
-            }
-
-            for (int k = 0; k < length; k++) {
-                g2.setPaint(new Color(table[0][k] & 0xff, table[1][k] & 0xff, table[2][k] & 0xff));
-                rect.setRect(x, y + k, 19f, 1f);
-                g2.draw(rect);
-            }
-        }
-    }
-
-    // TODO must be implemented as component of the layout (must inherit Jcomponent and implements SeriesViewerListener)
-    public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
-
-        final Paint oldPaint = g2d.getPaint();
-        final RenderingHints oldRenderingHints = g2d.getRenderingHints();
-        final Stroke oldStroke = g2d.getStroke();
-
-        // /////////////////////////////////////////////////////////////////////////////////////
-
-        final DicomImageElement image = view2DPane.getImage();
-
-        // Min/Max out Lut pixel values defined as unsigned 8 bits data
-        final int minOutputValue = 0;
-        final int maxOutputValue = 255;
-
-        OpManager dispOp = view2DPane.getDisplayOpManager();
-        ImageOpNode wlOp = dispOp.getNode(ImageOpNode.Param.NAME);
-        if (wlOp == null) {
-            return;
-        }
-
-        boolean pixelPadding = (Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd());
-
-        final double window = (Double) wlOp.getParam(ActionW.WINDOW.cmd());
-        final double level = (Double) wlOp.getParam(ActionW.LEVEL.cmd());
-
-        final double lowLevel = Math.round(level - window / 2);
-        final double highLevel = Math.round(level + window / 2);
-
-        PresentationStateReader prReader = (PresentationStateReader) view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
-
-        int lowInputValue = (int) (image.getMinValue(prReader, pixelPadding) < lowLevel ? lowLevel
-            : image.getMinValue(prReader, pixelPadding));
-        int highInputValue = (int) (image.getMaxValue(prReader, pixelPadding) > highLevel ? highLevel
-            : image.getMaxValue(prReader, pixelPadding));
-
-        final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERT_LUT.cmd());
-
-        LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
-
-        LookupTableJAI lookup = image.getVOILookup(prReader, window, level, null, null, lutShape, true, pixelPadding);
-        // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
-
-        final byte[] fullRangeVoiLUT = lookup.getByteData(0);
-
-        final int lutInputRange = fullRangeVoiLUT.length - 1;
-        final int minInputValue = lookup.getOffset();
-        final int maxInputValue = minInputValue + lutInputRange;
-
-        lowInputValue = (lowInputValue < minInputValue) ? minInputValue : lowInputValue;
-        highInputValue = (highInputValue > maxInputValue) ? maxInputValue : highInputValue;
-
-        // /////////////////////////////////////////////////////////////////////////////////////
-
-        // Size in pixel of Input/Ouput LUT Range
-        final float xAxisCoordinateSystemRange = 511;
-        final float yAxisCoordinateSystemRange = 255;
-
-        // Offset in pixel for the Left/Down side of the coordinate system
-        boolean isMinInputValueNegative = minInputValue < 0;
-        final float xOffsetCoordinateSystemOrigin = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : -5f;
-        final float yOffsetCoordinateSystemOrigin = -5f;
-
-        final float xAxisCoordinateSystemMinValue = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : 0;
-        final float xAxisCoordinateSystemMaxValue = xAxisCoordinateSystemRange + xOffsetCoordinateSystemOrigin;
-
-        // TODO - better to use a scaleTransform instead of scale ratio with many variables!!!
-        final float xAxisRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
-        final float yAxisRescaleRatio = yAxisCoordinateSystemRange / maxOutputValue;
-
-        // /////////////////////////////////////////////////////////////////////////////////////
-        // Coordinate system arrows and lines defined in a CW system
-        final Path2D upArrow = new Path2D.Float();
-        upArrow.moveTo(0, 0);
-        upArrow.lineTo(0, 3);
-        upArrow.lineTo(-3, 3);
-        upArrow.lineTo(0, 10);
-        upArrow.lineTo(3, 3);
-        upArrow.lineTo(0, 3);
-
-        final Path2D rightArrow = (Path2D) upArrow.clone();
-        rightArrow.transform(AffineTransform.getQuadrantRotateInstance(3));
-
-        final Shape upArrowCoordinateSystemPath =
-            AffineTransform.getTranslateInstance(0, yAxisCoordinateSystemRange + 1).createTransformedShape(upArrow);
-        final Shape rightArrowCoordinateSystemPath = AffineTransform
-            .getTranslateInstance(xAxisCoordinateSystemMaxValue + 1, 0).createTransformedShape(rightArrow);
-
-        final Path2D coordinateSystemPath = new Path2D.Float();
-        coordinateSystemPath.moveTo(0, yOffsetCoordinateSystemOrigin);
-        coordinateSystemPath.lineTo(0, yAxisCoordinateSystemRange);
-        coordinateSystemPath.append(upArrowCoordinateSystemPath, false);
-        coordinateSystemPath.moveTo(xOffsetCoordinateSystemOrigin, 0);
-        coordinateSystemPath.lineTo(xAxisCoordinateSystemMaxValue, 0);
-        coordinateSystemPath.append(rightArrowCoordinateSystemPath, false);
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // LUT graph bounding rectangle defined in a CCW system
-        final float lutGraphMargin = 30f;
-        final float lutGraphWidth = (float) coordinateSystemPath.getBounds2D().getWidth() + 2f * lutGraphMargin;
-        final float lutGraphHeight = (float) coordinateSystemPath.getBounds2D().getHeight() + 2f * lutGraphMargin;
-
-        final Path2D lutGraphBoundingRect =
-            new Path2D.Float(new Rectangle2D.Float(0, 0, lutGraphWidth, lutGraphHeight));
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Selected LUT defined in a CW system with the full range input.
-        // Note : two path are distinct from the inside and ouside range part of lowInput and highInput values
-
-        final Path2D insideRangeLutPath = new Path2D.Float();
-        final Path2D outsideRangeLutPath = new Path2D.Float();
-
-        boolean isOutsideRangeLutPathMoveToDefined = false;
-        boolean isRealValuesLutPathMoveToDefined = false;
-
-        for (int i = 0; i < fullRangeVoiLUT.length; i++) {
-            int xVal = Math.round((minInputValue + i) * xAxisRescaleRatio);
-            int yVal = fullRangeVoiLUT[i] & 0x000000FF; // Mask because byte is signed by default
-            yVal = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yVal) : yVal));
-
-            // if (yVal == maxOutputValue || yVal == minOutputValue) {
-            // isRealValuesLutPathMoveToDefined = false;
-            // isOutsideRangeLutPathMoveToDefined = false;
-            // } else {
-            if ((minInputValue + i) < lowInputValue || (minInputValue + i) > highInputValue) {
-                if (isOutsideRangeLutPathMoveToDefined) {
-                    outsideRangeLutPath.lineTo(xVal, yVal);
-                    isRealValuesLutPathMoveToDefined = false;
-                } else {
-                    outsideRangeLutPath.moveTo(xVal, yVal);
-                    isOutsideRangeLutPathMoveToDefined = true;
-                }
-            } else {
-                if (isRealValuesLutPathMoveToDefined) {
-                    insideRangeLutPath.lineTo(xVal, yVal);
-                    isOutsideRangeLutPathMoveToDefined = false;
-                } else {
-                    insideRangeLutPath.moveTo(xVal, yVal);
-                    isRealValuesLutPathMoveToDefined = true;
-                }
-            }
-        }
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Path of Interest defined in a CW system
-
-        final Path2D xAxisMaxOutValueLine = new Path2D.Float();
-        xAxisMaxOutValueLine.moveTo(xAxisCoordinateSystemMinValue, yAxisCoordinateSystemRange);
-        xAxisMaxOutValueLine.lineTo(xAxisCoordinateSystemMaxValue, yAxisCoordinateSystemRange);
-
-        int xLowLevel = (int) Math.round(xAxisRescaleRatio * lowLevel);
-        int xHighLevel = (int) Math.round(xAxisRescaleRatio * highLevel);
-        int xLevel = (int) Math.round(xAxisRescaleRatio * level);
-
-        final Path2D yAxisOnLowLevelLine = new Path2D.Float();
-        if (lowLevel >= lowInputValue) {
-            yAxisOnLowLevelLine.moveTo(xLowLevel, 0);
-            yAxisOnLowLevelLine.lineTo(xLowLevel, yAxisCoordinateSystemRange);
-        }
-        final Path2D yAxisOnHighLevelLine = new Path2D.Float();
-        if (highLevel <= highInputValue) {
-            yAxisOnHighLevelLine.moveTo(xHighLevel, 0);
-            yAxisOnHighLevelLine.lineTo(xHighLevel, yAxisCoordinateSystemRange);
-        }
-        // final Path2D yAxisOnLevelLine = new Path2D.Float();
-        // yAxisOnLevelLine.moveTo(xLevel, 0);
-        // yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
-        //
-        // final Path2D xAxisOnLevelLine = new Path2D.Float();
-        // int yLevel = lookup.lookup(0, (int) level) & 0x000000FF;
-        // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
-        // xAxisOnLevelLine.moveTo(0, yLevel);
-        // xAxisOnLevelLine.lineTo(xLevel, yLevel);
-
-        // if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
-        // int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
-        // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
-        //
-        // xAxisOnLevelLine.moveTo(0, yLevel);
-        // xAxisOnLevelLine.lineTo(xLevel, yLevel);
-        // }
-
-        final Path2D xAxisOnMinValueLine = new Path2D.Float();
-        int xMinVal = lowInputValue;
-        // int yMinVal = fullRangeVoiLUT[lowInputValue] & 0x000000FF;
-        int yMinVal = lookup.lookup(0, lowInputValue) & 0x000000FF;
-        yMinVal = inverseLut ? maxOutputValue - yMinVal : yMinVal;
-
-        if (yMinVal != minOutputValue && yMinVal != maxOutputValue) {
-            xAxisOnMinValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMinVal));
-            xAxisOnMinValueLine.lineTo(Math.round(xAxisRescaleRatio * xMinVal),
-                Math.round(yAxisRescaleRatio * yMinVal));
-        }
-
-        final Path2D yAxisOnMinValueLine = new Path2D.Float();
-        // if (xMinVal != xLowLevel && xMinVal != xLevel && xMinVal != xHighLevel) {
-        yAxisOnMinValueLine.moveTo(Math.round(xAxisRescaleRatio * xMinVal), 0);
-        yAxisOnMinValueLine.lineTo(Math.round(xAxisRescaleRatio * xMinVal), Math.round(yAxisRescaleRatio * yMinVal));
-        // }
-
-        int xMaxVal = highInputValue;
-        // int yMaxVal = fullRangeVoiLUT[highInputValue] & 0x000000FF;
-        int yMaxVal = lookup.lookup(0, highInputValue) & 0x000000FF;
-        yMaxVal = inverseLut ? maxOutputValue - yMaxVal : yMaxVal;
-
-        final Path2D xAxisOnMaxValueLine = new Path2D.Float();
-        if (yMaxVal != minOutputValue && yMaxVal != maxOutputValue) {
-            xAxisOnMaxValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMaxVal));
-            xAxisOnMaxValueLine.lineTo(Math.round(xAxisRescaleRatio * xMaxVal),
-                Math.round(yAxisRescaleRatio * yMaxVal));
-        }
-        final Path2D yAxisOnMaxValue = new Path2D.Float();
-        // if (xMaxVal != xLowLevel && xMaxVal != xLevel && xMaxVal != xHighLevel) {
-        yAxisOnMaxValue.moveTo(Math.round(xAxisRescaleRatio * xMaxVal), 0);
-        yAxisOnMaxValue.lineTo(Math.round(xAxisRescaleRatio * xMaxVal), Math.round(yAxisRescaleRatio * yMaxVal));
-        // }
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // ViewPane transform in a CCW system
-
-        final float lutGraphXPos = (viewPaneBound.width - lutGraphWidth) / 2;
-        final float lutGraphYPos = (viewPaneBound.height - lutGraphHeight) / 2;
-
-        final AffineTransform lutGraphViewPaneTranslate =
-            AffineTransform.getTranslateInstance(lutGraphXPos, lutGraphYPos);
-
-        final AffineTransform coordinateSystemViewPaneTransform =
-            AffineTransform.getTranslateInstance(-xOffsetCoordinateSystemOrigin,
-                coordinateSystemPath.getBounds2D().getHeight() + yOffsetCoordinateSystemOrigin);
-        coordinateSystemViewPaneTransform.translate(lutGraphMargin, lutGraphMargin);
-        coordinateSystemViewPaneTransform.concatenate(lutGraphViewPaneTranslate);
-
-        final AffineTransform flipVerticalTransform = AffineTransform.getScaleInstance(1, -1);
-        // Note : this flipVertical transform has to be used when drawing is defined in a CW system knowing that
-        // graphics2D coordinate system is CCW
-        coordinateSystemViewPaneTransform.concatenate(flipVerticalTransform);
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Transform all path
-
-        lutGraphBoundingRect.transform(lutGraphViewPaneTranslate);
-
-        coordinateSystemPath.transform(coordinateSystemViewPaneTransform);
-        xAxisMaxOutValueLine.transform(coordinateSystemViewPaneTransform);
-        insideRangeLutPath.transform(coordinateSystemViewPaneTransform);
-        outsideRangeLutPath.transform(coordinateSystemViewPaneTransform);
-        xAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
-        yAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
-        xAxisOnMaxValueLine.transform(coordinateSystemViewPaneTransform);
-        yAxisOnMaxValue.transform(coordinateSystemViewPaneTransform);
-        yAxisOnLowLevelLine.transform(coordinateSystemViewPaneTransform);
-        yAxisOnHighLevelLine.transform(coordinateSystemViewPaneTransform);
-        // yAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
-        // xAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Draw Background
-
-        float alphaReal = 0.75f; // [0.0 ; 1.0]
-        int alphaMask = 0x00FFFFFF | (Math.round(alphaReal * 255) << 24);
-        g2d.setPaint(new Color(Color.GRAY.getRGB() & alphaMask, true));
-        g2d.fill(lutGraphBoundingRect); // Handles background transparency inside bounding rectangle
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Draw Histogram
-
-        boolean showHistogram = true;
-        Histogram histogram =
-            showHistogram ? image.getHistogram(view2DPane.getSourceImage(), null, pixelPadding) : null;
-
-        if (histogram != null) {
-
-            boolean logarithmRescale = true;
-
-            final int[] histoData = histogram.getBins(0);
-            int histoCount = Integer.MIN_VALUE;
-            for (int c : histoData) {
-                histoCount = Math.max(histoCount, c);
-            }
-
-            double maxHistoCount = logarithmRescale ? Math.log1p(histoCount) : histoCount;
-
-            final float yAxisHistoRescaleRatio = (float) (yAxisCoordinateSystemRange / maxHistoCount);
-            // final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);
-            final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
-
-            // assert histogram.getNumBins(0) == lutInputRange;
-
-            final Point2D pt0 = new Point2D.Float();
-            final Point2D pt1 = new Point2D.Float();
-
-            g2d.setPaint(Color.DARK_GRAY);
-            g2d.setStroke(new BasicStroke(1.0F));
-
-            // for (int i = 0; i < histogram.getNumBins(0); i++) {
-            for (int i = 0; i < lutInputRange; i++) {
-                double xVal = (minInputValue + i) * xAxisHistoRescaleRatio;
-                double yVal =
-                    (logarithmRescale ? Math.log1p(histoData[i]) : (double) histoData[i]) * yAxisHistoRescaleRatio;
-                pt0.setLocation(xVal, 0);
-                pt1.setLocation(xVal, yVal);
-
-                coordinateSystemViewPaneTransform.transform(pt0, pt0);
-                coordinateSystemViewPaneTransform.transform(pt1, pt1);
-
-                g2d.drawLine((int) Math.round(pt0.getX()), (int) Math.round(pt0.getY()), (int) Math.round(pt1.getX()),
-                    (int) Math.round(pt1.getY()));
-            }
-        }
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Draw Path
-
-        g2d.setPaint(Color.ORANGE);
-        g2d.setStroke(new BasicStroke(2.0F));
-        g2d.draw(lutGraphBoundingRect);
-
-        g2d.setPaint(Color.RED);
-        g2d.setStroke(new BasicStroke(1.0F));
-        g2d.draw(coordinateSystemPath);
-
-        g2d.setStroke(
-            new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 5.0f }, 0.0f));
-        g2d.draw(xAxisMaxOutValueLine);
-
-        g2d.setPaint(Color.BLUE);
-        g2d.setStroke(new BasicStroke(1.0F));
-        g2d.draw(insideRangeLutPath);
-
-        g2d.setStroke(
-            new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5f, new float[] { 5.0f }, 0.0f));
-        g2d.draw(outsideRangeLutPath);
-
-        g2d.draw(xAxisOnMinValueLine);
-        g2d.draw(yAxisOnMinValueLine);
-        g2d.draw(xAxisOnMaxValueLine);
-        g2d.draw(yAxisOnMaxValue);
-
-        g2d.setPaint(Color.CYAN);
-        g2d.draw(yAxisOnLowLevelLine);
-        g2d.draw(yAxisOnHighLevelLine);
-        // g2d.draw(yAxisOnLevelLine);
-        // g2d.draw(xAxisOnLevelLine);
-
-        // /////////////////////////////////////////////////////////////////////////////////
-        // Draw Strings
-
-        String str = Integer.toString(maxOutputValue);
-        int strWidth = g2d.getFontMetrics().stringWidth(str);
-        float xStrPos = -strWidth - 8;
-        float yStrPos = Math.round(maxOutputValue * yAxisRescaleRatio) - midfontHeight;
-        Point2D ptStr = new Point2D.Float(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        str = Integer.toString(minOutputValue);
-        strWidth = g2d.getFontMetrics().stringWidth(str);
-        xStrPos = -strWidth - 8;
-        yStrPos = Math.round(minOutputValue * yAxisRescaleRatio) - midfontHeight;
-        ptStr.setLocation(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        str = Integer.toString(yMinVal);
-        strWidth = g2d.getFontMetrics().stringWidth(str);
-        xStrPos = -strWidth - 8;
-        yStrPos = Math.round(yAxisRescaleRatio * yMinVal) - midfontHeight;
-        ptStr.setLocation(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        str = Integer.toString(yMaxVal);
-        strWidth = g2d.getFontMetrics().stringWidth(str);
-        xStrPos = -strWidth - 8;
-        yStrPos = Math.round(yAxisRescaleRatio * yMaxVal) - midfontHeight;
-        ptStr.setLocation(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        str = Integer.toString(xMinVal);
-        strWidth = g2d.getFontMetrics().stringWidth(str);
-        xStrPos = Math.round(xAxisRescaleRatio * xMinVal) - strWidth / 2;
-        yStrPos = -midfontHeight - 8;
-        ptStr.setLocation(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        str = Integer.toString(xMaxVal);
-        strWidth = g2d.getFontMetrics().stringWidth(str);
-        xStrPos = Math.round(xAxisRescaleRatio * xMaxVal) - strWidth / 2;
-        yStrPos = -midfontHeight - 8;
-        ptStr.setLocation(xStrPos, yStrPos);
-        coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
-        DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
-
-        // ///////////////////////////////////////////////////////////////////////////////
-        g2d.setPaint(oldPaint);
-        g2d.setStroke(oldStroke);
-        g2d.setRenderingHints(oldRenderingHints);
-    }
-
-    public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {
-        ImageElement image = view2DPane.getImage();
-        PlanarImage source = image.getImage();
-        if (source == null) {
-            return;
-        }
-
-        double zoomFactor = view2DPane.getViewModel().getViewScale();
-
-        double scale = image.getPixelSize() / zoomFactor;
-        double scaleSizex = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.width / 2.0));
-        if (showBottomScale && scaleSizex > 50.0d) {
-            Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizex * scale, unit);
-            g2d.setStroke(new BasicStroke(1.0F));
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setPaint(Color.BLACK);
-
-            double posx = bound.width / 2.0 - scaleSizex / 2.0;
-            double posy = bound.height - border - 1.5; // - 1.5 is for outline
-            Line2D line = new Line2D.Double(posx, posy, posx + scaleSizex, posy);
-            g2d.draw(getOutLine(line));
-            line.setLine(posx, posy - thickLength, posx, posy);
-            g2d.draw(getOutLine(line));
-            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
-            g2d.draw(getOutLine(line));
-            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
-            double midThick = thickLength * 2.0 / 3.0;
-            double smallThick = thickLength / 3.0;
-            double divSquare = scaleSizex / divisor;
-            for (int i = 1; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
-                g2d.draw(getOutLine(line));
-            }
-            if (divSquare > 90) {
-                double secondSquare = divSquare / 10.0;
-                for (int i = 0; i < divisor; i++) {
-                    for (int k = 1; k < 10; k++) {
-                        double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - smallThick);
-                        g2d.draw(getOutLine(line));
-                    }
-                }
-            }
-
-            g2d.setPaint(Color.white);
-            line.setLine(posx, posy, posx + scaleSizex, posy);
-            g2d.draw(line);
-            line.setLine(posx, posy - thickLength, posx, posy);
-            g2d.draw(line);
-            line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
-            g2d.draw(line);
-
-            for (int i = 0; i < divisor; i++) {
-                line.setLine(posx + divSquare * i, posy, posx + divSquare * i, posy - midThick);
-                g2d.draw(line);
-            }
-            if (divSquare > 90) {
-                double secondSquare = divSquare / 10.0;
-                for (int i = 0; i < divisor; i++) {
-                    for (int k = 1; k < 10; k++) {
-                        double secBar = posx + divSquare * i + secondSquare * k;
-                        line.setLine(secBar, posy, secBar, posy - smallThick);
-                        g2d.draw(line);
-                    }
-                }
-            }
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-            String pixSizeDesc = image.getPixelSizeCalibrationDescription();
-            if (StringUtil.hasText(pixSizeDesc)) {
-                DefaultGraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5),
-                    (float) posy - fontHeight);
-            }
-            str += " " + unit[0].getAbbreviation(); //$NON-NLS-1$
-            DefaultGraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
-        }
-
-        double scaleSizeY = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
-
-        if (scaleSizeY > 30.0d) {
-            Unit[] unit = { image.getPixelSpacingUnit() };
-            String str = ajustLengthDisplay(scaleSizeY * scale, unit);
-
-            float strokeWidth = g2d.getFont().getSize() / 15.0f;
-            strokeWidth = strokeWidth < 1.0f ? 1.0f : strokeWidth;
-            g2d.setStroke(new BasicStroke(strokeWidth));
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2d.setPaint(Color.black);
-
-            double posx = border - 1.5f; // -1.5 for outline
-            double posy = bound.height / 2.0 - scaleSizeY / 2.0;
-            Line2D line = new Line2D.Double(posx, posy, posx, posy + scaleSizeY);
-            g2d.draw(getOutLine(line));
-            line.setLine(posx, posy, posx + thickLength, posy);
-            g2d.draw(getOutLine(line));
-            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
-            g2d.draw(getOutLine(line));
-            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
-            double divSquare = scaleSizeY / divisor;
-            double midThick = thickLength * 2.0 / 3.0;
-            double smallThick = thickLength / 3.0;
-            for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
-                g2d.draw(getOutLine(line));
-            }
-            if (divSquare > 90) {
-                double secondSquare = divSquare / 10.0;
-                for (int i = 0; i < divisor; i++) {
-                    for (int k = 1; k < 10; k++) {
-                        double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + smallThick, secBar);
-                        g2d.draw(getOutLine(line));
-                    }
-                }
-            }
-
-            g2d.setPaint(Color.WHITE);
-            line.setLine(posx, posy, posx, posy + scaleSizeY);
-            g2d.draw(line);
-            line.setLine(posx, posy, posx + thickLength, posy);
-            g2d.draw(line);
-            line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
-            g2d.draw(line);
-            for (int i = 0; i < divisor; i++) {
-                line.setLine(posx, posy + divSquare * i, posx + midThick, posy + divSquare * i);
-                g2d.draw(line);
-            }
-            if (divSquare > 90) {
-                double secondSquare = divSquare / 10.0;
-                for (int i = 0; i < divisor; i++) {
-                    for (int k = 1; k < 10; k++) {
-                        double secBar = posy + divSquare * i + secondSquare * k;
-                        line.setLine(posx, secBar, posx + smallThick, secBar);
-                        g2d.draw(line);
-                    }
-                }
-            }
-
-            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-
-            DefaultGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, //$NON-NLS-1$
-                (int) (posy - 5 * strokeWidth));
-        }
-
-    }
-
-    private double ajustShowScale(double ratio, int maxLength) {
-        int digits = (int) ((Math.log(maxLength * ratio) / Math.log(10)) + 1);
-        double scaleLength = Math.pow(10, digits);
-        double scaleSize = scaleLength / ratio;
-
-        int loop = 0;
-        while ((int) scaleSize > maxLength) {
-            scaleLength /= findGeometricSuite(scaleLength);
-            scaleSize = scaleLength / ratio;
-            loop++;
-            if (loop > 50) {
-                return 0.0;
-            }
-        }
-        return scaleSize;
-    }
-
-    public double findGeometricSuite(double length) {
-        int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
-        int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
-        if (firstDigit == 5) {
-            return 2.5;
-        }
-        return 2.0;
-
-    }
-
-    public String ajustLengthDisplay(double scaleLength, Unit[] unit) {
-        double ajustScaleLength = scaleLength;
-
-        Unit ajustUnit = unit[0];
-
-        if (scaleLength < 1.0) {
-            Unit down = ajustUnit;
-            while ((down = down.getDownUnit()) != null) {
-                double length = scaleLength * down.getConversionRatio(unit[0].getConvFactor());
-                if (length > 1) {
-                    ajustUnit = down;
-                    ajustScaleLength = length;
-                    break;
-                }
-            }
-        } else if (scaleLength > 10.0) {
-            Unit up = ajustUnit;
-            while ((up = up.getUpUnit()) != null) {
-                double length = scaleLength * up.getConversionRatio(unit[0].getConvFactor());
-                if (length < 1) {
-                    break;
-                }
-                ajustUnit = up;
-                ajustScaleLength = length;
-            }
-        }
-        // Trick to keep the value as a return parameter
-        unit[0] = ajustUnit;
-        if (ajustScaleLength < 1.0) {
-            return ajustScaleLength < 0.001 ? DecFormater.scientificFormat(ajustScaleLength)
-                : DecFormater.fourDecimal(ajustScaleLength);
-        }
-        return ajustScaleLength > 50000.0 ? DecFormater.scientificFormat(ajustScaleLength)
-            : DecFormater.twoDecimal(ajustScaleLength);
-    }
-
-    public static final char getImageOrientationOposite(char c) {
-        switch (c) {
-            case 'L':
-                return 'R';
-            case 'R':
-                return 'L';
-            case 'P':
-                return 'A';
-            case 'A':
-                return 'P';
-            case 'H':
-                return 'F';
-            case 'F':
-                return 'H';
-        }
-        return ' ';
-    }
-
-    public static final char getMajorAxisFromPatientRelativeDirectionCosine(double x, double y, double z) {
-        char axis = ' ';
-
-        char orientationX = x < 0 ? 'L' : 'R';
-        char orientationY = y < 0 ? 'P' : 'A';
-        char orientationZ = z < 0 ? 'H' : 'F';
-
-        double absX = Math.abs(x);
-        double absY = Math.abs(y);
-        double absZ = Math.abs(z);
-
-        // The tests here really don't need to check the other dimensions,
-        // just the threshold, since the sum of the squares should be == 1.0
-        // but just in case ...
-
-        if (absX > 0.8 && absX > absY && absX > absZ) {
-            axis = orientationX;
-        } else if (absY > 0.8 && absY > absX && absY > absZ) {
-            axis = orientationY;
-        } else if (absZ > 0.8 && absZ > absX && absZ > absY) {
-            axis = orientationZ;
-        }
-
-        return axis;
-    }
-
-
+    //
+    // // TODO must be implemented as component of the layout (must inherit Jcomponent and implements
+    // SeriesViewerListener)
+    // public void drawLUTgraph(Graphics2D g2d, Rectangle viewPaneBound, float midfontHeight) {
+    //
+    // final Paint oldPaint = g2d.getPaint();
+    // final RenderingHints oldRenderingHints = g2d.getRenderingHints();
+    // final Stroke oldStroke = g2d.getStroke();
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////////
+    //
+    // final DicomImageElement image = view2DPane.getImage();
+    //
+    // // Min/Max out Lut pixel values defined as unsigned 8 bits data
+    // final int minOutputValue = 0;
+    // final int maxOutputValue = 255;
+    //
+    // OpManager dispOp = view2DPane.getDisplayOpManager();
+    // ImageOpNode wlOp = dispOp.getNode(ImageOpNode.Param.NAME);
+    // if (wlOp == null) {
+    // return;
+    // }
+    //
+    // boolean pixelPadding = (Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd());
+    //
+    // final double window = (Double) wlOp.getParam(ActionW.WINDOW.cmd());
+    // final double level = (Double) wlOp.getParam(ActionW.LEVEL.cmd());
+    //
+    // final double lowLevel = Math.round(level - window / 2);
+    // final double highLevel = Math.round(level + window / 2);
+    //
+    // PresentationStateReader prReader = (PresentationStateReader)
+    // view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
+    //
+    // int lowInputValue = (int) (image.getMinValue(prReader, pixelPadding) < lowLevel ? lowLevel
+    // : image.getMinValue(prReader, pixelPadding));
+    // int highInputValue = (int) (image.getMaxValue(prReader, pixelPadding) > highLevel ? highLevel
+    // : image.getMaxValue(prReader, pixelPadding));
+    //
+    // final boolean inverseLut = (Boolean) wlOp.getParam(ActionW.INVERT_LUT.cmd());
+    //
+    // LutShape lutShape = (LutShape) wlOp.getParam(ActionW.LUT_SHAPE.cmd());
+    //
+    // LookupTableJAI lookup = image.getVOILookup(prReader, window, level, null, null, lutShape, true, pixelPadding);
+    // // Note : when fillLutOutside argument is true lookupTable returned is full range allocated
+    //
+    // final byte[] fullRangeVoiLUT = lookup.getByteData(0);
+    //
+    // final int lutInputRange = fullRangeVoiLUT.length - 1;
+    // final int minInputValue = lookup.getOffset();
+    // final int maxInputValue = minInputValue + lutInputRange;
+    //
+    // lowInputValue = (lowInputValue < minInputValue) ? minInputValue : lowInputValue;
+    // highInputValue = (highInputValue > maxInputValue) ? maxInputValue : highInputValue;
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////////
+    //
+    // // Size in pixel of Input/Ouput LUT Range
+    // final float xAxisCoordinateSystemRange = 511;
+    // final float yAxisCoordinateSystemRange = 255;
+    //
+    // // Offset in pixel for the Left/Down side of the coordinate system
+    // boolean isMinInputValueNegative = minInputValue < 0;
+    // final float xOffsetCoordinateSystemOrigin = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : -5f;
+    // final float yOffsetCoordinateSystemOrigin = -5f;
+    //
+    // final float xAxisCoordinateSystemMinValue = isMinInputValueNegative ? (-xAxisCoordinateSystemRange / 2f) : 0;
+    // final float xAxisCoordinateSystemMaxValue = xAxisCoordinateSystemRange + xOffsetCoordinateSystemOrigin;
+    //
+    // // TODO - better to use a scaleTransform instead of scale ratio with many variables!!!
+    // final float xAxisRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
+    // final float yAxisRescaleRatio = yAxisCoordinateSystemRange / maxOutputValue;
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////////
+    // // Coordinate system arrows and lines defined in a CW system
+    // final Path2D upArrow = new Path2D.Float();
+    // upArrow.moveTo(0, 0);
+    // upArrow.lineTo(0, 3);
+    // upArrow.lineTo(-3, 3);
+    // upArrow.lineTo(0, 10);
+    // upArrow.lineTo(3, 3);
+    // upArrow.lineTo(0, 3);
+    //
+    // final Path2D rightArrow = (Path2D) upArrow.clone();
+    // rightArrow.transform(AffineTransform.getQuadrantRotateInstance(3));
+    //
+    // final Shape upArrowCoordinateSystemPath =
+    // AffineTransform.getTranslateInstance(0, yAxisCoordinateSystemRange + 1).createTransformedShape(upArrow);
+    // final Shape rightArrowCoordinateSystemPath = AffineTransform
+    // .getTranslateInstance(xAxisCoordinateSystemMaxValue + 1, 0).createTransformedShape(rightArrow);
+    //
+    // final Path2D coordinateSystemPath = new Path2D.Float();
+    // coordinateSystemPath.moveTo(0, yOffsetCoordinateSystemOrigin);
+    // coordinateSystemPath.lineTo(0, yAxisCoordinateSystemRange);
+    // coordinateSystemPath.append(upArrowCoordinateSystemPath, false);
+    // coordinateSystemPath.moveTo(xOffsetCoordinateSystemOrigin, 0);
+    // coordinateSystemPath.lineTo(xAxisCoordinateSystemMaxValue, 0);
+    // coordinateSystemPath.append(rightArrowCoordinateSystemPath, false);
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // LUT graph bounding rectangle defined in a CCW system
+    // final float lutGraphMargin = 30f;
+    // final float lutGraphWidth = (float) coordinateSystemPath.getBounds2D().getWidth() + 2f * lutGraphMargin;
+    // final float lutGraphHeight = (float) coordinateSystemPath.getBounds2D().getHeight() + 2f * lutGraphMargin;
+    //
+    // final Path2D lutGraphBoundingRect =
+    // new Path2D.Float(new Rectangle2D.Float(0, 0, lutGraphWidth, lutGraphHeight));
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Selected LUT defined in a CW system with the full range input.
+    // // Note : two path are distinct from the inside and ouside range part of lowInput and highInput values
+    //
+    // final Path2D insideRangeLutPath = new Path2D.Float();
+    // final Path2D outsideRangeLutPath = new Path2D.Float();
+    //
+    // boolean isOutsideRangeLutPathMoveToDefined = false;
+    // boolean isRealValuesLutPathMoveToDefined = false;
+    //
+    // for (int i = 0; i < fullRangeVoiLUT.length; i++) {
+    // int xVal = Math.round((minInputValue + i) * xAxisRescaleRatio);
+    // int yVal = fullRangeVoiLUT[i] & 0x000000FF; // Mask because byte is signed by default
+    // yVal = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yVal) : yVal));
+    //
+    // // if (yVal == maxOutputValue || yVal == minOutputValue) {
+    // // isRealValuesLutPathMoveToDefined = false;
+    // // isOutsideRangeLutPathMoveToDefined = false;
+    // // } else {
+    // if ((minInputValue + i) < lowInputValue || (minInputValue + i) > highInputValue) {
+    // if (isOutsideRangeLutPathMoveToDefined) {
+    // outsideRangeLutPath.lineTo(xVal, yVal);
+    // isRealValuesLutPathMoveToDefined = false;
+    // } else {
+    // outsideRangeLutPath.moveTo(xVal, yVal);
+    // isOutsideRangeLutPathMoveToDefined = true;
+    // }
+    // } else {
+    // if (isRealValuesLutPathMoveToDefined) {
+    // insideRangeLutPath.lineTo(xVal, yVal);
+    // isOutsideRangeLutPathMoveToDefined = false;
+    // } else {
+    // insideRangeLutPath.moveTo(xVal, yVal);
+    // isRealValuesLutPathMoveToDefined = true;
+    // }
+    // }
+    // }
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Path of Interest defined in a CW system
+    //
+    // final Path2D xAxisMaxOutValueLine = new Path2D.Float();
+    // xAxisMaxOutValueLine.moveTo(xAxisCoordinateSystemMinValue, yAxisCoordinateSystemRange);
+    // xAxisMaxOutValueLine.lineTo(xAxisCoordinateSystemMaxValue, yAxisCoordinateSystemRange);
+    //
+    // int xLowLevel = (int) Math.round(xAxisRescaleRatio * lowLevel);
+    // int xHighLevel = (int) Math.round(xAxisRescaleRatio * highLevel);
+    // int xLevel = (int) Math.round(xAxisRescaleRatio * level);
+    //
+    // final Path2D yAxisOnLowLevelLine = new Path2D.Float();
+    // if (lowLevel >= lowInputValue) {
+    // yAxisOnLowLevelLine.moveTo(xLowLevel, 0);
+    // yAxisOnLowLevelLine.lineTo(xLowLevel, yAxisCoordinateSystemRange);
+    // }
+    // final Path2D yAxisOnHighLevelLine = new Path2D.Float();
+    // if (highLevel <= highInputValue) {
+    // yAxisOnHighLevelLine.moveTo(xHighLevel, 0);
+    // yAxisOnHighLevelLine.lineTo(xHighLevel, yAxisCoordinateSystemRange);
+    // }
+    // // final Path2D yAxisOnLevelLine = new Path2D.Float();
+    // // yAxisOnLevelLine.moveTo(xLevel, 0);
+    // // yAxisOnLevelLine.lineTo(xLevel, yAxisCoordinateSystemRange);
+    // //
+    // // final Path2D xAxisOnLevelLine = new Path2D.Float();
+    // // int yLevel = lookup.lookup(0, (int) level) & 0x000000FF;
+    // // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+    // // xAxisOnLevelLine.moveTo(0, yLevel);
+    // // xAxisOnLevelLine.lineTo(xLevel, yLevel);
+    //
+    // // if (((int) level >= 0 && (int) level < fullRangeVoiLUT.length)) {
+    // // int yLevel = fullRangeVoiLUT[(int) level] & 0x000000FF;
+    // // yLevel = Math.round(yAxisRescaleRatio * (inverseLut ? (maxOutputValue - yLevel) : yLevel));
+    // //
+    // // xAxisOnLevelLine.moveTo(0, yLevel);
+    // // xAxisOnLevelLine.lineTo(xLevel, yLevel);
+    // // }
+    //
+    // final Path2D xAxisOnMinValueLine = new Path2D.Float();
+    // int xMinVal = lowInputValue;
+    // // int yMinVal = fullRangeVoiLUT[lowInputValue] & 0x000000FF;
+    // int yMinVal = lookup.lookup(0, lowInputValue) & 0x000000FF;
+    // yMinVal = inverseLut ? maxOutputValue - yMinVal : yMinVal;
+    //
+    // if (yMinVal != minOutputValue && yMinVal != maxOutputValue) {
+    // xAxisOnMinValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMinVal));
+    // xAxisOnMinValueLine.lineTo(Math.round(xAxisRescaleRatio * xMinVal),
+    // Math.round(yAxisRescaleRatio * yMinVal));
+    // }
+    //
+    // final Path2D yAxisOnMinValueLine = new Path2D.Float();
+    // // if (xMinVal != xLowLevel && xMinVal != xLevel && xMinVal != xHighLevel) {
+    // yAxisOnMinValueLine.moveTo(Math.round(xAxisRescaleRatio * xMinVal), 0);
+    // yAxisOnMinValueLine.lineTo(Math.round(xAxisRescaleRatio * xMinVal), Math.round(yAxisRescaleRatio * yMinVal));
+    // // }
+    //
+    // int xMaxVal = highInputValue;
+    // // int yMaxVal = fullRangeVoiLUT[highInputValue] & 0x000000FF;
+    // int yMaxVal = lookup.lookup(0, highInputValue) & 0x000000FF;
+    // yMaxVal = inverseLut ? maxOutputValue - yMaxVal : yMaxVal;
+    //
+    // final Path2D xAxisOnMaxValueLine = new Path2D.Float();
+    // if (yMaxVal != minOutputValue && yMaxVal != maxOutputValue) {
+    // xAxisOnMaxValueLine.moveTo(0, Math.round(yAxisRescaleRatio * yMaxVal));
+    // xAxisOnMaxValueLine.lineTo(Math.round(xAxisRescaleRatio * xMaxVal),
+    // Math.round(yAxisRescaleRatio * yMaxVal));
+    // }
+    // final Path2D yAxisOnMaxValue = new Path2D.Float();
+    // // if (xMaxVal != xLowLevel && xMaxVal != xLevel && xMaxVal != xHighLevel) {
+    // yAxisOnMaxValue.moveTo(Math.round(xAxisRescaleRatio * xMaxVal), 0);
+    // yAxisOnMaxValue.lineTo(Math.round(xAxisRescaleRatio * xMaxVal), Math.round(yAxisRescaleRatio * yMaxVal));
+    // // }
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // ViewPane transform in a CCW system
+    //
+    // final float lutGraphXPos = (viewPaneBound.width - lutGraphWidth) / 2;
+    // final float lutGraphYPos = (viewPaneBound.height - lutGraphHeight) / 2;
+    //
+    // final AffineTransform lutGraphViewPaneTranslate =
+    // AffineTransform.getTranslateInstance(lutGraphXPos, lutGraphYPos);
+    //
+    // final AffineTransform coordinateSystemViewPaneTransform =
+    // AffineTransform.getTranslateInstance(-xOffsetCoordinateSystemOrigin,
+    // coordinateSystemPath.getBounds2D().getHeight() + yOffsetCoordinateSystemOrigin);
+    // coordinateSystemViewPaneTransform.translate(lutGraphMargin, lutGraphMargin);
+    // coordinateSystemViewPaneTransform.concatenate(lutGraphViewPaneTranslate);
+    //
+    // final AffineTransform flipVerticalTransform = AffineTransform.getScaleInstance(1, -1);
+    // // Note : this flipVertical transform has to be used when drawing is defined in a CW system knowing that
+    // // graphics2D coordinate system is CCW
+    // coordinateSystemViewPaneTransform.concatenate(flipVerticalTransform);
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Transform all path
+    //
+    // lutGraphBoundingRect.transform(lutGraphViewPaneTranslate);
+    //
+    // coordinateSystemPath.transform(coordinateSystemViewPaneTransform);
+    // xAxisMaxOutValueLine.transform(coordinateSystemViewPaneTransform);
+    // insideRangeLutPath.transform(coordinateSystemViewPaneTransform);
+    // outsideRangeLutPath.transform(coordinateSystemViewPaneTransform);
+    // xAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
+    // yAxisOnMinValueLine.transform(coordinateSystemViewPaneTransform);
+    // xAxisOnMaxValueLine.transform(coordinateSystemViewPaneTransform);
+    // yAxisOnMaxValue.transform(coordinateSystemViewPaneTransform);
+    // yAxisOnLowLevelLine.transform(coordinateSystemViewPaneTransform);
+    // yAxisOnHighLevelLine.transform(coordinateSystemViewPaneTransform);
+    // // yAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+    // // xAxisOnLevelLine.transform(coordinateSystemViewPaneTransform);
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Draw Background
+    //
+    // float alphaReal = 0.75f; // [0.0 ; 1.0]
+    // int alphaMask = 0x00FFFFFF | (Math.round(alphaReal * 255) << 24);
+    // g2d.setPaint(new Color(Color.GRAY.getRGB() & alphaMask, true));
+    // g2d.fill(lutGraphBoundingRect); // Handles background transparency inside bounding rectangle
+    // g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Draw Histogram
+    //
+    // boolean showHistogram = true;
+    // Histogram histogram =
+    // showHistogram ? image.getHistogram(view2DPane.getSourceImage(), null, pixelPadding) : null;
+    //
+    // if (histogram != null) {
+    //
+    // boolean logarithmRescale = true;
+    //
+    // final int[] histoData = histogram.getBins(0);
+    // int histoCount = Integer.MIN_VALUE;
+    // for (int c : histoData) {
+    // histoCount = Math.max(histoCount, c);
+    // }
+    //
+    // double maxHistoCount = logarithmRescale ? Math.log1p(histoCount) : histoCount;
+    //
+    // final float yAxisHistoRescaleRatio = (float) (yAxisCoordinateSystemRange / maxHistoCount);
+    // // final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / histogram.getNumBins(0);
+    // final float xAxisHistoRescaleRatio = xAxisCoordinateSystemRange / lutInputRange;
+    //
+    // // assert histogram.getNumBins(0) == lutInputRange;
+    //
+    // final Point2D pt0 = new Point2D.Float();
+    // final Point2D pt1 = new Point2D.Float();
+    //
+    // g2d.setPaint(Color.DARK_GRAY);
+    // g2d.setStroke(new BasicStroke(1.0F));
+    //
+    // // for (int i = 0; i < histogram.getNumBins(0); i++) {
+    // for (int i = 0; i < lutInputRange; i++) {
+    // double xVal = (minInputValue + i) * xAxisHistoRescaleRatio;
+    // double yVal =
+    // (logarithmRescale ? Math.log1p(histoData[i]) : (double) histoData[i]) * yAxisHistoRescaleRatio;
+    // pt0.setLocation(xVal, 0);
+    // pt1.setLocation(xVal, yVal);
+    //
+    // coordinateSystemViewPaneTransform.transform(pt0, pt0);
+    // coordinateSystemViewPaneTransform.transform(pt1, pt1);
+    //
+    // g2d.drawLine((int) Math.round(pt0.getX()), (int) Math.round(pt0.getY()), (int) Math.round(pt1.getX()),
+    // (int) Math.round(pt1.getY()));
+    // }
+    // }
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Draw Path
+    //
+    // g2d.setPaint(Color.ORANGE);
+    // g2d.setStroke(new BasicStroke(2.0F));
+    // g2d.draw(lutGraphBoundingRect);
+    //
+    // g2d.setPaint(Color.RED);
+    // g2d.setStroke(new BasicStroke(1.0F));
+    // g2d.draw(coordinateSystemPath);
+    //
+    // g2d.setStroke(
+    // new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[] { 5.0f }, 0.0f));
+    // g2d.draw(xAxisMaxOutValueLine);
+    //
+    // g2d.setPaint(Color.BLUE);
+    // g2d.setStroke(new BasicStroke(1.0F));
+    // g2d.draw(insideRangeLutPath);
+    //
+    // g2d.setStroke(
+    // new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5f, new float[] { 5.0f }, 0.0f));
+    // g2d.draw(outsideRangeLutPath);
+    //
+    // g2d.draw(xAxisOnMinValueLine);
+    // g2d.draw(yAxisOnMinValueLine);
+    // g2d.draw(xAxisOnMaxValueLine);
+    // g2d.draw(yAxisOnMaxValue);
+    //
+    // g2d.setPaint(Color.CYAN);
+    // g2d.draw(yAxisOnLowLevelLine);
+    // g2d.draw(yAxisOnHighLevelLine);
+    // // g2d.draw(yAxisOnLevelLine);
+    // // g2d.draw(xAxisOnLevelLine);
+    //
+    // // /////////////////////////////////////////////////////////////////////////////////
+    // // Draw Strings
+    //
+    // String str = Integer.toString(maxOutputValue);
+    // int strWidth = g2d.getFontMetrics().stringWidth(str);
+    // float xStrPos = -strWidth - 8;
+    // float yStrPos = Math.round(maxOutputValue * yAxisRescaleRatio) - midfontHeight;
+    // Point2D ptStr = new Point2D.Float(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // str = Integer.toString(minOutputValue);
+    // strWidth = g2d.getFontMetrics().stringWidth(str);
+    // xStrPos = -strWidth - 8;
+    // yStrPos = Math.round(minOutputValue * yAxisRescaleRatio) - midfontHeight;
+    // ptStr.setLocation(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // str = Integer.toString(yMinVal);
+    // strWidth = g2d.getFontMetrics().stringWidth(str);
+    // xStrPos = -strWidth - 8;
+    // yStrPos = Math.round(yAxisRescaleRatio * yMinVal) - midfontHeight;
+    // ptStr.setLocation(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // str = Integer.toString(yMaxVal);
+    // strWidth = g2d.getFontMetrics().stringWidth(str);
+    // xStrPos = -strWidth - 8;
+    // yStrPos = Math.round(yAxisRescaleRatio * yMaxVal) - midfontHeight;
+    // ptStr.setLocation(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // str = Integer.toString(xMinVal);
+    // strWidth = g2d.getFontMetrics().stringWidth(str);
+    // xStrPos = Math.round(xAxisRescaleRatio * xMinVal) - strWidth / 2;
+    // yStrPos = -midfontHeight - 8;
+    // ptStr.setLocation(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // str = Integer.toString(xMaxVal);
+    // strWidth = g2d.getFontMetrics().stringWidth(str);
+    // xStrPos = Math.round(xAxisRescaleRatio * xMaxVal) - strWidth / 2;
+    // yStrPos = -midfontHeight - 8;
+    // ptStr.setLocation(xStrPos, yStrPos);
+    // coordinateSystemViewPaneTransform.transform(ptStr, ptStr);
+    // DefaultGraphicLabel.paintFontOutline(g2d, str, Math.round(ptStr.getX()), Math.round(ptStr.getY()));
+    //
+    // // ///////////////////////////////////////////////////////////////////////////////
+    // g2d.setPaint(oldPaint);
+    // g2d.setStroke(oldStroke);
+    // g2d.setRenderingHints(oldRenderingHints);
+    // }
 
     protected void drawExtendedActions(Graphics2D g2d, Point2D.Float[] positions) {
-        if (view2DPane.getViewButtons().size() > 0) {
+        if (!view2DPane.getViewButtons().isEmpty()) {
             int space = 5;
             int height = 0;
             for (ViewButton b : view2DPane.getViewButtons()) {
@@ -1447,8 +975,8 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 }
             }
 
-            Point2D.Float midy =
-                new Point2D.Float(positions[1].x, (float) (view2DPane.getJComponent().getHeight() * 0.5 - (height - space) * 0.5));
+            Point2D.Float midy = new Point2D.Float(positions[1].x,
+                (float) (view2DPane.getJComponent().getHeight() * 0.5 - (height - space) * 0.5));
             SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
             boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
@@ -1486,7 +1014,6 @@ public class InfoLayer extends DefaultUUID implements LayerAnnotation {
                 }
             }
         }
-        return;
     }
 
 }

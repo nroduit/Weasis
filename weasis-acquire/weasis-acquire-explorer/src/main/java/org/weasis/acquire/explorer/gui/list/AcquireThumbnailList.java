@@ -21,7 +21,8 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
-import org.weasis.base.explorer.list.AThumbnailList;
+import org.weasis.base.explorer.JIThumbnailCache;
+import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -30,12 +31,12 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.util.DefaultAction;
 
 @SuppressWarnings("serial")
-public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList<E> {
+public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
     private AcquireThumbnailListPane<E> mainPanel;
 
-    public AcquireThumbnailList() {
-        super();
+    public AcquireThumbnailList(JIThumbnailCache thumbCache) {
+        super(thumbCache);
     }
 
     public AcquireThumbnailListPane<E> getMainPanel() {
@@ -48,7 +49,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AThumbnailList
 
     @Override
     public IThumbnailModel<E> newModel() {
-        return new AcquireThumbnailModel<>(this);
+        return new AcquireThumbnailModel<>(this, thumbCache);
     }
 
     @Override

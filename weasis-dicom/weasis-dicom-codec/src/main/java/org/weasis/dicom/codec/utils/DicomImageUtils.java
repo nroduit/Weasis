@@ -32,7 +32,6 @@ import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TransferSyntax;
 
 /**
  *
@@ -546,17 +545,6 @@ public class DicomImageUtils {
                 Array.set(outLut, i, (short) value);
             }
         }
-    }
-
-    public static boolean hasPlatformAllImageioCodecs() {
-        TransferSyntax[] syntaxes = { TransferSyntax.JPEG_LOSSY_12, TransferSyntax.JPEG_LOSSLESS_57,
-            TransferSyntax.JPEG_LOSSLESS_70, TransferSyntax.JPEGLS_LOSSLESS, TransferSyntax.JPEGLS_NEAR_LOSSLESS };
-        for (TransferSyntax tsuid : syntaxes) {
-            if (!DicomImageUtils.hasImageReader(tsuid.getTransferSyntaxUID())) {
-                return false;
-            }
-        }
-        return true;
     }
 
     public static boolean hasImageReader(String tsuid) {

@@ -4,17 +4,16 @@
 	<parent>
 		<artifactId>weasis-jpeg-parent</artifactId>
 		<groupId>org.weasis.jpeg</groupId>
-		<version>2.5.3-SNAPSHOT</version>
+		<version>2.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-jpeg-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>bundle</packaging>
 	<artifactId>weasis-jpeg-codec-windows-x86-64</artifactId>
 	<name>JPEG native Windows x86-64 codec</name>
-	<version>1.0.7-6b</version>
-	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-	</properties>
+	<version>2.0.0-6b</version>
+	<!-- version must match to the parent property {weasis.jpeg.native.version} -->
+
 	<build>
 		<plugins>
 			<plugin>
@@ -32,6 +31,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.jpeg</groupId>

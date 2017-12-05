@@ -21,6 +21,8 @@ import javax.swing.border.Border;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
+import org.weasis.core.api.util.StringUtil;
+
 /**
  * The Class TableHaederRenderer.
  *
@@ -56,7 +58,10 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
                 setFont(header.getFont());
             }
         }
-        String val = ((value == null) || (value == "")) ? " " : value.toString(); //$NON-NLS-1$ //$NON-NLS-2$
+        String val = value == null ? null : value.toString();
+        if (!StringUtil.hasText(val)) {
+            val = " "; //$NON-NLS-1$
+        }
         setText(val);
         setToolTipText(val);
         Border border = null;

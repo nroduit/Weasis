@@ -48,7 +48,6 @@ public class DefaultMimeIO implements MediaReader {
         this.mimeType = mimeType == null ? MimeInspector.UNKNOWN_MIME_TYPE : mimeType;
     }
 
-
     @Override
     public PlanarImage getImageFragment(MediaElement media) throws Exception {
         return null;
@@ -73,7 +72,6 @@ public class DefaultMimeIO implements MediaReader {
     public boolean delegate(DataExplorerModel explorerModel) {
         return false;
     }
-
 
     @Override
     public MediaElement[] getMediaElement() {
@@ -104,7 +102,7 @@ public class DefaultMimeIO implements MediaReader {
                 public void addMedia(MediaElement media) {
                     if (media != null) {
                         this.add(media);
-                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
+                        DataExplorerModel model = (DataExplorerModel) this.getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                                 new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));

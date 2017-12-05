@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -32,6 +31,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -296,7 +296,7 @@ public final class KOManager {
                         new ObservableEvent(ObservableEvent.BasicAction.UPDATE, view2d, null, validKOSelection));
                 }
 
-                boolean filter = JMVUtils.getNULLtoFalse(view2d.getActionValue(ActionW.KO_FILTER.cmd()));
+                boolean filter = LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
                 if (filter && (view2d.getEventManager().getSelectedViewPane() == view2d)) {
                     // When unchecking an image, force to call the filter action to resize the views
                     ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
@@ -334,9 +334,7 @@ public final class KOManager {
         if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
             // KO Toogle State is changed only if KO Selection remains the same,
             // or if there was no previous KO Selection
-
-            List<DicomImageElement> dicomImageList = view2d.getSeries().getSortedMedias(null);
-            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, dicomImageList);
+            hasKeyObjectReferenceChanged = validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries());
 
             if (hasKeyObjectReferenceChanged) {
                 DicomModel dicomModel = (DicomModel) view2d.getSeries().getTagValue(TagW.ExplorerModel);
@@ -363,7 +361,7 @@ public final class KOManager {
 
         if (view2D instanceof View2d) {
             boolean tiledMode = imgSelectionIndex >= 0;
-            boolean koFilter = false;
+            boolean koFilter;
             KOSpecialElement selectedKO = null;
             if (newSelectedKO == null) {
                 Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
@@ -371,7 +369,7 @@ public final class KOManager {
                     selectedKO = (KOSpecialElement) actionValue;
 
                     // test if current ko_selection action in view do still exist
-                    Collection<KOSpecialElement> koElements = (view2D != null && view2D.getSeries() != null)
+                    Collection<KOSpecialElement> koElements = view2D.getSeries() != null
                         ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
                     if (koElements != null && koElements.contains(selectedKO) == false) {
                         selectedKO = null;
@@ -387,7 +385,7 @@ public final class KOManager {
             }
 
             if (enableFilter == null) {
-                koFilter = JMVUtils.getNULLtoFalse(view2D.getActionValue(ActionW.KO_FILTER.cmd()));
+                koFilter = LangUtil.getNULLtoFalse((Boolean) view2D.getActionValue(ActionW.KO_FILTER.cmd()));
             } else {
                 koFilter = enableFilter;
             }
@@ -402,6 +400,9 @@ public final class KOManager {
 
             if (selectedKO == null || view2D.getSeries() == null || (view2D.getImage() == null && !tiledMode)) {
                 if (newSelectedKO != null) {
+                    if (updateImage) {
+                        updateImage(view2D, null, view2D.getFrameIndex());
+                    }
                     // Update the None KO selection
                     ((View2d) view2D).updateKOButtonVisibleState();
                 }
@@ -450,27 +451,35 @@ public final class KOManager {
                     }
                 }
 
-                if (view2D == view2D.getEventManager().getSelectedViewPane()) {
-                    /*
-                     * Update the sliceAction action according to nearest image when the filter hides the image of the
-                     * previous state. And update the action min and max.
-                     */
-                    ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
-                    if (seqAction instanceof SliderCineListener) {
-                        SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-                        moveTroughSliceAction.setSliderMinMaxValue(1, dicomSeries.size(sopInstanceUIDFilter),
-                            newImageIndex + 1);
-                    }
-                }
-                DicomImageElement newImage =
-                    dicomSeries.getMedia(newImageIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
-                if (newImage != null && !newImage.isImageAvailable()) {
-                    newImage.getImage();
-                }
-                ((View2d) view2D).setImage(newImage);
-
+                updateImage(view2D, sopInstanceUIDFilter, newImageIndex);
             }
             ((View2d) view2D).updateKOButtonVisibleState();
         }
+    }
+
+    private static void updateImage(ViewCanvas<DicomImageElement> view2D,
+        Filter<DicomImageElement> sopInstanceUIDFilter, int newImageIndex) {
+        int imgIndex = newImageIndex < 0 ? 0 : newImageIndex;
+        if (view2D == view2D.getEventManager().getSelectedViewPane()) {
+            /*
+             * Update the sliceAction action according to nearest image when the filter hides the image of the previous
+             * state. And update the action min and max.
+             */
+            ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
+            if (seqAction instanceof SliderCineListener) {
+                SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
+                moveTroughSliceAction.setSliderMinMaxValue(1, view2D.getSeries().size(sopInstanceUIDFilter),
+                    imgIndex + 1);
+            }
+        }
+
+        DicomImageElement newImage = null;
+        if (view2D.getSeries() != null) {
+            newImage = view2D.getSeries().getMedia(imgIndex, sopInstanceUIDFilter, view2D.getCurrentSortComparator());
+        }
+        if (newImage != null && !newImage.isImageAvailable()) {
+            newImage.getImage();
+        }
+        ((View2d) view2D).setImage(newImage);
     }
 }

@@ -43,9 +43,11 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     protected final JList<E> list;
     protected final DefaultListModel<E> listModel;
+    protected final JIThumbnailCache thumbCache;
 
-    public AThumbnailModel(final JList<E> list) {
+    public AThumbnailModel(JList<E> list, JIThumbnailCache thumbCache) {
         this.list = list;
+        this.thumbCache = thumbCache;
         // Fix list reselection interval when dragging
         this.list.putClientProperty("List.isFileList", Boolean.TRUE); //$NON-NLS-1$
         listModel = new DefaultListModel<>();
@@ -95,10 +97,12 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public void clear() {
-        for (int i = 0; i < listModel.size(); i++) {
-            E m = listModel.getElementAt(i);
-            if (m instanceof ImageElement) {
-                JIThumbnailCache.removeInQueue((ImageElement) m);
+        if (thumbCache != null) {
+            for (int i = 0; i < listModel.size(); i++) {
+                E m = listModel.getElementAt(i);
+                if (m instanceof ImageElement) {
+                    thumbCache.removeInQueue((ImageElement) m);
+                }
             }
         }
         list.getSelectionModel().clearSelection();
@@ -122,8 +126,8 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public boolean removeElement(E obj) {
-        if (obj instanceof ImageElement) {
-            JIThumbnailCache.removeInQueue((ImageElement) obj);
+        if (thumbCache != null && obj instanceof ImageElement) {
+            thumbCache.removeInQueue((ImageElement) obj);
         }
         return listModel.removeElement(obj);
     }

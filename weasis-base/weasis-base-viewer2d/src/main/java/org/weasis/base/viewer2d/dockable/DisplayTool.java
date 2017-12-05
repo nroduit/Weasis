@@ -35,7 +35,7 @@ import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -148,7 +148,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             LayerAnnotation layer = view.getInfoLayer();
             if (layer != null) {
                 initPathSelection(getTreePath(info), layer.getVisible());
-                Enumeration en = info.children();
+                Enumeration<?> en = info.children();
                 while (en.hasMoreElements()) {
                     Object node = en.nextElement();
                     if (node instanceof TreeNode) {
@@ -166,8 +166,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     if (cps > 0) {
                         Component cp = panelFoot.getComponent(0);
                         if (cp != panner) {
-                            if (cp instanceof Thumbnail) {
-                                ((Thumbnail) cp).removeMouseAndKeyListener();
+                            if (cp instanceof Thumbnailable) {
+                                ((Thumbnailable) cp).removeMouseAndKeyListener();
                             }
                             panner.registerListeners();
                             panelFoot.removeAll();
@@ -209,7 +209,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
             if (views == null) {
                 return;
             }
-            
+
             if (rootNode.equals(parent)) {
                 if (image.equals(selObject)) {
                     for (ViewCanvas<ImageElement> v : views) {
@@ -240,7 +240,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                         }
                     }
                 }
-            } 
+            }
         }
     }
 
@@ -279,15 +279,18 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private static void expandTree(JTree tree, DefaultMutableTreeNode start) {
-        for (Enumeration<?> children = start.children(); children.hasMoreElements();) {
-            DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-            if (!dtm.isLeaf()) {
-                TreePath tp = new TreePath(dtm.getPath());
-                tree.expandPath(tp);
-                expandTree(tree, dtm);
+        Enumeration<?> children = start.children();
+        while (children.hasMoreElements()) {
+            Object child = children.nextElement();
+            if (child instanceof DefaultMutableTreeNode) {
+                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                if (!dtm.isLeaf()) {
+                    TreePath tp = new TreePath(dtm.getPath());
+                    tree.expandPath(tp);
+                    expandTree(tree, dtm);
+                }
             }
         }
-        return;
     }
 
 }

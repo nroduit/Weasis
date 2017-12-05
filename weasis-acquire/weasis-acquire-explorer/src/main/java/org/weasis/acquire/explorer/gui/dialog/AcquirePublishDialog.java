@@ -35,6 +35,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 import javax.swing.SwingWorker.StateValue;
+import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -44,8 +45,12 @@ import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
@@ -119,13 +124,14 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), "", ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
+        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), //$NON-NLS-1$
+            ModalityType.APPLICATION_MODAL);
         this.publishPanel = publishPanel;
 
         setContentPane(initContent());
         publishTree.getTree().addCheckingPath(new TreePath(publishTree.getModel().getRootNode().getPath()));
 
-        setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent we) {
@@ -206,7 +212,7 @@ public class AcquirePublishDialog extends JDialog {
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
         if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) { //$NON-NLS-1$
-            DefaultDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+            AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
             if (comboNode.getItemCount() == 0) {
                 comboNode.addItem(getDestinationConfiguration());
             }
@@ -242,7 +248,26 @@ public class AcquirePublishDialog extends JDialog {
 
         if (toPublish.isEmpty()) {
             JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
-                "", JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        boolean publishable = AcquireGlobalMeta.isPublishable(AcquireManager.GLOBAL);
+        if (publishable) {
+            for (AcquireImageInfo info : toPublish) {
+                publishable = AcquireSerieMeta.isPublishable(info.getSeries());
+                if (!publishable) {
+                    break;
+                }
+                publishable = AcquireImageMeta.isPublishable(info.getImage());
+                if (!publishable) {
+                    break;
+                }
+            }
+        }
+        if (!publishable) {
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"), //$NON-NLS-1$
+                this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -250,7 +275,7 @@ public class AcquirePublishDialog extends JDialog {
         if (!overSizedSelected.isEmpty()) {
             Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
             for (AcquireImageInfo imgInfo : overSizedSelected) {
-                // caculate zoom ration
+                // calculate zoom ration
                 Double ratio = ImageInfoHelper.calculateRatio(imgInfo, resolution);
 
                 imgInfo.getCurrentValues().setRatio(ratio);
@@ -263,11 +288,11 @@ public class AcquirePublishDialog extends JDialog {
         ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
 
         dicomizeTask.addPropertyChangeListener(evt -> {
-            if ("progress" == evt.getPropertyName()) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state" == evt.getPropertyName()) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
 
                 if (StateValue.STARTED == evt.getNewValue()) {
                     resolutionPane.setVisible(false);
@@ -333,8 +358,8 @@ public class AcquirePublishDialog extends JDialog {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
 
-            Integer width = img.getWidth();
-            Integer height = img.getHeight();
+            int width = img.getWidth();
+            int height = img.getHeight();
 
             return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
         };
@@ -343,7 +368,7 @@ public class AcquirePublishDialog extends JDialog {
     public void clearAndHide() {
         Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
         dispose();
-        
+
         Preferences prefs =
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {

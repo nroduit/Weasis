@@ -73,7 +73,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
         }
         buildShape(null);
     }
-    
+
     @Override
     public boolean isShapeValid() {
         updateTool();

@@ -64,7 +64,8 @@ public class MaskOp extends AbstractOp {
         Boolean mask = (Boolean) params.get(P_SHOW);
         Area area = (Area) params.get(P_SHAPE);
 
-        if (mask != null && mask && area != null && !area.equals(new Area(new Rectangle(0, 0, source.getWidth(), source.getHeight())))) {
+        if (mask != null && mask && area != null
+            && !area.equals(new Area(new Rectangle(0, 0, source.getWidth(), source.getHeight())))) {
             Integer transparency = (Integer) params.get(P_GRAY_TRANSPARENCY);
             Byte[] color = getMaskColor();
             if (transparency == null && isBlack(color)) {
@@ -89,7 +90,7 @@ public class MaskOp extends AbstractOp {
 
     private static PlanarImage getEmptyImage(Byte[] bandValues, RenderedImage source) {
         RenderingHints hints = new RenderingHints(JAI.KEY_IMAGE_LAYOUT, new ImageLayout(source));
-        return ConstantDescriptor.create((float) source.getWidth() , (float) source.getHeight(), bandValues, hints);
+        return ConstantDescriptor.create((float) source.getWidth(), (float) source.getHeight(), bandValues, hints);
     }
 
     private boolean isBlack(Byte[] color) {

@@ -17,8 +17,8 @@ public class ObservableEvent extends PropertyChangeEvent {
     private static final long serialVersionUID = 2727161739305072870L;
 
     public enum BasicAction {
-        SELECT, ADD, REMOVE, UPDATE, UDPATE_PARENT, NULL_SELECTION, UPDATE_TOOLS, UPDTATE_TOOLBARS, REGISTER, UNREGISTER,
-        REPLACE, LOADING_START, LOADING_STOP
+        SELECT, ADD, REMOVE, UPDATE, UDPATE_PARENT, NULL_SELECTION, UPDATE_TOOLS, UPDTATE_TOOLBARS, REGISTER,
+        UNREGISTER, REPLACE, LOADING_START, LOADING_CANCEL, LOADING_STOP
     }
 
     private final BasicAction actionCommand;

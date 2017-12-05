@@ -16,6 +16,8 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.op.CStore;
+import org.weasis.dicom.param.AdvancedParams;
+import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
@@ -60,8 +62,13 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
     protected DicomState doInBackground() throws Exception {
         List<String> exportFilesDicomPath = new ArrayList<>();
         exportFilesDicomPath.add(exportDirDicom.getPath());
+        AdvancedParams params = new AdvancedParams();
+        ConnectOptions connectOptions = new ConnectOptions();
+        connectOptions.setConnectTimeout(3000);
+        connectOptions.setAcceptTimeout(5000);
+        params.setConnectOptions(connectOptions);
         try {
-            return CStore.process(callingNode, destinationNode, exportFilesDicomPath, dicomProgress);
+            return CStore.process(params, callingNode, destinationNode, exportFilesDicomPath, dicomProgress);
         } finally {
             FileUtil.recursiveDelete(exportDirDicom);
         }
@@ -78,7 +85,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
                 });
         }
     }
-    
+
     @Override
     protected void done() {
         super.done();

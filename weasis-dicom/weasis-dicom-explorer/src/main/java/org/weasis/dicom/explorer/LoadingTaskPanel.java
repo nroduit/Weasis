@@ -14,8 +14,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -30,24 +28,24 @@ import org.weasis.dicom.explorer.wado.DownloadManager;
 public class LoadingTaskPanel extends JPanel {
     private static final long serialVersionUID = 1L;
 
-    private final ExplorerTask task;
-    private final boolean interruptible;
+    private final ExplorerTask<?, ?> task;
+    private final boolean globalLoadingManager;
     private final JLabel message = new JLabel();
 
-    public LoadingTaskPanel(ExplorerTask task) {
+    public LoadingTaskPanel(ExplorerTask<?, ?> task) {
         this.task = task;
-        this.interruptible = task.isInterruptible();
+        this.globalLoadingManager = task.isGlobalLoadingManager();
         init();
     }
 
-    public LoadingTaskPanel(boolean interruptible) {
+    public LoadingTaskPanel(boolean globalLoadingManager) {
         this.task = null;
-        this.interruptible = interruptible;
+        this.globalLoadingManager = globalLoadingManager;
         init();
     }
 
     private void init() {
-        if (interruptible) {
+        if (globalLoadingManager) {
             JButton globalResumeButton = new JButton(new Icon() {
 
                 @Override
@@ -95,50 +93,34 @@ public class LoadingTaskPanel extends JPanel {
             });
 
             globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all")); //$NON-NLS-1$
-            globalResumeButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DownloadManager.resume();
-                }
-            });
+            globalResumeButton.addActionListener(e -> DownloadManager.resume());
             this.add(globalResumeButton);
             globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all")); //$NON-NLS-1$
-            globalStopButton.addActionListener(new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    DownloadManager.stop();
-                }
-            });
+            globalStopButton.addActionListener(e -> DownloadManager.stop());
             this.add(globalStopButton);
         } else {
             JButton cancelButton =
                 new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); //$NON-NLS-1$
-            cancelButton.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    // TODO set indeterminate false
-                    message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
-                    if (task != null) {
-                        task.cancel(true);
-                    }
+            cancelButton.addActionListener(e -> {
+                message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
+                if (task != null) {
+                    task.cancel();
                 }
             });
             cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process")); //$NON-NLS-1$
             this.add(cancelButton);
             if (task != null) {
                 CircularProgressBar globalProgress = task.getBar();
-                if (globalProgress == null) {
-                    globalProgress = new CircularProgressBar(0, 100);
-                    globalProgress.setIndeterminate(true);
-                }
                 this.add(globalProgress);
+                globalProgress.setIndeterminate(true);
             }
         }
         if (task != null) {
             message.setText(task.getMessage());
         }
         this.add(message);
+        this.revalidate();
+        this.repaint();
     }
 
     public void setMessage(String msg) {
@@ -148,5 +130,4 @@ public class LoadingTaskPanel extends JPanel {
     public ExplorerTask getTask() {
         return task;
     }
-
 }

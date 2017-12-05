@@ -149,7 +149,7 @@ public class SeriesBuilder {
 
                             final String uid1;
                             final String uid2;
-                            String[] uidsRef = TagD.getTagValue(series, SeriesReferences, String[].class);
+                            String[] uidsRef = TagW.getTagValue(series, SeriesReferences, String[].class);
                             if (uidsRef != null && uidsRef.length == 2) {
                                 uid1 = uidsRef[0];
                                 uid2 = uidsRef[1];
@@ -563,9 +563,10 @@ public class SeriesBuilder {
                 }
                 DicomImageElement dcm = iter.next();
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
-                if (sp == null && !abort[1]) {
+                boolean validSp = sp != null && sp.length == 3;
+                if (!validSp && !abort[1]) {
                     confirmMessage(view, Messages.getString("SeriesBuilder.space_missing"), abort); //$NON-NLS-1$
-                } else {
+                } else if (validSp) {
                     double pos = sp[0] + sp[1] + sp[2];
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);

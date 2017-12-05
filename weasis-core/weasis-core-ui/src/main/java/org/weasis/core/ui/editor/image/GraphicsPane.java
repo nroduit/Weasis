@@ -53,7 +53,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     protected ViewModel viewModel;
     protected final LayerModelHandler layerModelHandler;
     protected final ViewModelHandler viewModelHandler;
-    
+
     protected final DrawingsKeyListeners drawingsKeyListeners = new DrawingsKeyListeners();
     protected final HashMap<String, Object> actionsInView = new HashMap<>();
     protected final AffineTransform affineTransform = new AffineTransform();
@@ -115,8 +115,7 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     @Override
     public void disposeView() {
-        Optional.ofNullable(viewModel).ifPresent(model -> 
-            model.removeViewModelChangeListener(viewModelHandler));
+        Optional.ofNullable(viewModel).ifPresent(model -> model.removeViewModelChangeListener(viewModelHandler));
         // Unregister listener
         graphicManager.removeChangeListener(layerModelHandler);
         graphicManager.removeGraphicChangeHandler(graphicsChangeHandler);
@@ -184,7 +183,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     }
 
     public void zoom(double centerX, double centerY, double viewScale) {
-        Double vScale = cropViewScale(viewScale);
+        double vScale = cropViewScale(viewScale);
         double viewportWidth = getWidth() - 1.0;
         double viewportHeight = getHeight() - 1.0;
         double modelOffsetX = centerX - 0.5 * viewportWidth / vScale;
@@ -431,8 +430,7 @@ public class GraphicsPane extends JComponent implements Canvas {
             return rectangle1 == null ? rectangle : rectangle.union(rectangle1);
         }
 
-        protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape,
-            AffineTransform transform) {
+        protected void graphicBoundsChanged(Graphic graphic, Shape oldShape, Shape shape, AffineTransform transform) {
             if (graphic != null) {
                 if (oldShape == null) {
                     if (shape != null) {

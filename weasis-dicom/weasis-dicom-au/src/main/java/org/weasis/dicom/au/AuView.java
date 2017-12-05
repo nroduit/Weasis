@@ -353,9 +353,9 @@ public class AuView extends JPanel implements SeriesViewerListener {
         s.setValue((int) ((fval - min) / width * 1000));
 
         java.util.Hashtable<Integer, JLabel> labels = new java.util.Hashtable<>(3);
-        labels.put(new Integer(0), new JLabel(c.getMinLabel()));
-        labels.put(new Integer(500), new JLabel(c.getMidLabel()));
-        labels.put(new Integer(1000), new JLabel(c.getMaxLabel()));
+        labels.put(0, new JLabel(c.getMinLabel()));
+        labels.put(500, new JLabel(c.getMidLabel()));
+        labels.put(1000, new JLabel(c.getMaxLabel()));
         s.setLabelTable(labels);
         s.setPaintLabels(true);
 
@@ -385,7 +385,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                         int bitsPerSample = attributes.getInt(Tag.WaveformBitsAllocated, 0);
                         String spInterpretation = attributes.getString(Tag.WaveformSampleInterpretation, 0);
 
-                        // http://medical.nema.org/medical/dicom/current/output/chtml/part03/sect_A.34.html
+                        // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.9.html
                         // SB: signed 8 bit linear
                         // UB: unsigned 8 bit linear
                         // MB: 8 bit mu-law (in accordance with ITU-T Recommendation G.711)
@@ -408,7 +408,8 @@ public class AuView extends JPanel implements SeriesViewerListener {
                                 attributes.bigEndian());
                         }
 
-                        return new AudioInputStream(bulkData.openStream(), audioFormat, bulkData.length() / audioFormat.getFrameSize());
+                        return new AudioInputStream(bulkData.openStream(), audioFormat,
+                            bulkData.length() / audioFormat.getFrameSize());
                     } catch (Exception e) {
                         LOGGER.error("Get audio stream", e); //$NON-NLS-1$
                     }

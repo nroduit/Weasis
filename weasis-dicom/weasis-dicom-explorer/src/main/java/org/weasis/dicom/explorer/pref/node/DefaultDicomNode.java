@@ -89,7 +89,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
         if (port != null && (port < 1 || port > 65535)) {
             throw new IllegalArgumentException("Port out of bound"); //$NON-NLS-1$
         }
-        this.port = port;
+        this.port = port == null ? 104 : port;
     }
 
     public TlsOptions getTlsOptions() {
@@ -102,6 +102,10 @@ public class DefaultDicomNode extends AbstractDicomNode {
 
     public DicomNode getDicomNode() {
         return new DicomNode(aeTitle, hostname, port);
+    }
+
+    public DicomNode getDicomNodeWithOnlyAET() {
+        return new DicomNode(aeTitle);
     }
 
     @Override

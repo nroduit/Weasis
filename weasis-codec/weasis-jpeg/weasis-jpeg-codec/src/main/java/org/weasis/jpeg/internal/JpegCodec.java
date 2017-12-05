@@ -38,6 +38,8 @@ import org.weasis.jpeg.cpp.libijg.DJDecompressIJG8Bit;
 import org.weasis.jpeg.cpp.libijg.RETURN_MSG;
 import org.weasis.jpeg.cpp.libijg.jpeg_decompress_struct;
 
+import com.sun.media.imageioimpl.common.ExtendImageParam;
+
 public class JpegCodec implements NativeCodec {
     private static final Logger LOGGER = LoggerFactory.getLogger(JpegCodec.class);
 
@@ -59,7 +61,7 @@ public class JpegCodec implements NativeCodec {
                     msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
             }
         }
         return msg;
@@ -81,9 +83,15 @@ public class JpegCodec implements NativeCodec {
                 int segmentFragment = 0;
                 ByteBuffer buffer = seg.getDirectByteBuffer(segmentFragment);
                 boolean signed = params.isSignedData();
-                // Force to convert YBR to RGB even when jpeg header has an RGB input color model. Not supported for
-                // signed data.
-                decomp.init(false);
+                // Use to handle conversion
+                Boolean ybr = true;
+                if (param instanceof ExtendImageParam) {
+                    String cmd = ((ExtendImageParam) param).getYbrColorModel();
+                    if(cmd != null) {
+                        ybr = cmd.startsWith("YBR");
+                    }
+                }
+                decomp.init(ybr);
                 // Force RBG (for gray keeps grayscale model), except for signed data where the conversion is not
                 // supported.
                 RETURN_MSG val = decomp.readHeader(buffer, buffer.limit(), signed);
@@ -110,14 +118,15 @@ public class JpegCodec implements NativeCodec {
                     msg = val.msg().getString();
                 }
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
             }
         }
         return msg;
     }
 
     @Override
-    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param) throws IOException {
+    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param)
+        throws IOException {
         String msg = null;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
             try {
@@ -155,7 +164,7 @@ public class JpegCodec implements NativeCodec {
                 } else {
                     return "JPEG driver exception: not valid input buffer";
                 }
-                buffer.flip();
+                StreamSegment.safeToBuffer(buffer).flip();
                 long stop = System.currentTimeMillis();
                 System.out.println("Convert array time: " + (stop - start) + " ms"); //$NON-NLS-1$
 

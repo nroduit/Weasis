@@ -16,14 +16,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.Unmarshaller;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -33,7 +29,6 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
@@ -41,8 +36,8 @@ import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
-import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -57,7 +52,7 @@ public class PrGraphicUtil {
 
     private PrGraphicUtil() {
     }
-    
+
     public static Graphic buildGraphic(Attributes go, Color color, boolean labelVisible, double width, double height,
         boolean canBeEdited, AffineTransform inverse, boolean dcmSR) throws InvalidShapeException {
         /*
@@ -272,8 +267,8 @@ public class PrGraphicUtil {
 
     private static double euclideanDistance(float[] points, int p1, int p2, boolean isDisp, double width,
         double height) {
-        float dx = points[p1] - points[p2];
-        float dy = points[p1 + 1] - points[p2 + 1];
+        double dx = points[p1] - points[p2];
+        double dy = points[p1 + 1] - points[p2 + 1];
         if (isDisp) {
             dx *= width;
             dy *= height;
@@ -377,7 +372,8 @@ public class PrGraphicUtil {
             String id = dcmobj.getString(PresentationStateReader.PRIVATE_CREATOR_TAG);
             if (PresentationStateReader.PR_MODEL_ID.equals(id)) {
                 try {
-                    return buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
+                    return XmlSerializer
+                        .buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
                 } catch (Exception e) {
                     LOGGER.error("Cannot extract binary model: ", e); //$NON-NLS-1$
                 }
@@ -390,30 +386,12 @@ public class PrGraphicUtil {
         if (img != null) {
             byte[] prBinary = TagW.getTagValue(img, TagW.PresentationModelBirary, byte[].class);
             if (prBinary != null) {
-                GraphicModel model = buildPresentationModel(prBinary);
+                GraphicModel model = XmlSerializer.buildPresentationModel(prBinary);
                 img.setTag(TagW.PresentationModel, model);
                 img.setTag(TagW.PresentationModelBirary, null);
                 return true;
             }
         }
         return false;
-    }
-
-    private static GraphicModel buildPresentationModel(byte[] binary) {
-        try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
-            Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager.gzipUncompressToByte(binary));
-            GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
-            int length = model.getModels().size();
-            model.getModels().removeIf(g -> g.getLayer() == null);
-            if (length > model.getModels().size()) {
-                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
-            }
-            return model;
-        } catch (Exception e) {
-            LOGGER.error("Cannot load xml graphic model: ", e); //$NON-NLS-1$
-        }
-        return null;
     }
 }

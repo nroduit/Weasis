@@ -117,7 +117,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     }
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title"), null); //$NON-NLS-1$ //$NON-NLS-2$
+        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title")); //$NON-NLS-1$ //$NON-NLS-2$
 
     static {
         Map<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();

@@ -19,7 +19,8 @@ public interface DataExplorerViewFactory {
     /**
      * Creates a new DataExplorerView object. It should be a unique instance.
      *
-     * @param properties the properties. Can be null.
+     * @param properties
+     *            the properties. Can be null.
      * @return the explorer view
      */
     DataExplorerView createDataExplorerView(Hashtable<String, Object> properties);

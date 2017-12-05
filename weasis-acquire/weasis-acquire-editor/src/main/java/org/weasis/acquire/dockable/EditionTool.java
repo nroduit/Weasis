@@ -29,7 +29,6 @@ import org.weasis.acquire.dockable.components.actions.AcquireAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
-import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.media.data.ImageElement;
@@ -73,8 +72,6 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
         topPanel = new AcquireActionButtonsPanel(this);
 
         add(topPanel, BorderLayout.NORTH);
-
-        EventManager.getInstance().addSeriesViewerListener(this);
     }
 
     @Override
@@ -127,6 +124,8 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
                     AcquireActionButton button = topPanel.getSelected();
                     button.getAcquireAction().validate(old, oldView);
                 }
+                // Commit current editable
+                centralPanel.stopEditing();
             }
         }
     }

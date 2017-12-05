@@ -143,9 +143,8 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
                     break;
                 default:
                     break;
-            }        
+            }
         });
-
     }
 
     private void addUsbDevice(USBStorageDevice storageDevice) {
@@ -161,7 +160,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         if (mediaSourceList.isEmpty()) {
             mediaSourceSelectionCombo.setSelectedItem(null);
         }
-        
+
         if (selected == null || selected.getID().startsWith(id)) {
             mediaSourceSelectionCombo.setSelectedIndex(0);
         }

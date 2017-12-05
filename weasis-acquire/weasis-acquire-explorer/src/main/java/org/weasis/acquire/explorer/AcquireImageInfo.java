@@ -189,7 +189,7 @@ public class AcquireImageInfo {
                 nextValues.isAutoLevel());
             postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, nextValues.isFlip());
 
-            if (nextValues.getRatio() != currentValues.getRatio()) {
+            if (!Objects.equals(nextValues.getRatio(), currentValues.getRatio())) {
                 postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
                 postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
                 postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[1]);
@@ -435,6 +435,7 @@ public class AcquireImageInfo {
                 : TagUtil.toLocalDateTime(date);
             imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
             imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
+            imageElement.setTagNoNull(TagD.get(Tag.ImageComments), file.get().getName());
         }
     }
 }

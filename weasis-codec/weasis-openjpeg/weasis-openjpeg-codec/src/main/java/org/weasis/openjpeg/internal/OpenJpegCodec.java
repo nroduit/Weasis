@@ -47,7 +47,7 @@ public class OpenJpegCodec implements NativeCodec {
     public static final int J2K_CFMT = 0;
     public static final int JP2_CFMT = 1;
     public static final int JPT_CFMT = 2;
-    
+
     static final info_handler infoHandler = new info_handler();
     static final warning_handler warningHandler = new warning_handler();
     static final error_handler errorHandler = new error_handler();
@@ -80,14 +80,14 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(params.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + params.getType());
                 }
 
                 /* catch events using our callbacks and give a local context */
                 openjpeg.opj_set_info_handler(codec, infoHandler, null);
-                openjpeg.opj_set_warning_handler(codec,  warningHandler, null);
-                openjpeg.opj_set_error_handler(codec,  errorHandler, null);
+                openjpeg.opj_set_warning_handler(codec, warningHandler, null);
+                openjpeg.opj_set_error_handler(codec, errorHandler, null);
 
                 /* setup the decoder decoding parameters using user parameters */
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
@@ -104,7 +104,7 @@ public class OpenJpegCodec implements NativeCodec {
                 }
                 setParameters(nImage.getImageParameters(), image);
                 // keep a reference to be not garbage collected
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
                 j2kFile.deallocate();
             } finally {
                 if (lstream != null) {
@@ -153,14 +153,14 @@ public class OpenJpegCodec implements NativeCodec {
                 }
 
                 codec = getCodec(j2kparams.getType());
-                if (codec.isNull()) {
+                if (codec == null || codec.isNull()) {
                     throw new IOException("No j2k decoder for this type: " + j2kparams.getType());
                 }
 
                 /* catch events using our callbacks and give a local context */
                 openjpeg.opj_set_info_handler(codec, infoHandler, null);
                 openjpeg.opj_set_warning_handler(codec, warningHandler, null);
-                openjpeg.opj_set_error_handler(codec,  errorHandler, null);
+                openjpeg.opj_set_error_handler(codec, errorHandler, null);
 
                 /* setup the decoder decoding parameters using user parameters */
                 /* Read the main header of the codestream and if necessary the JP2 boxes */
@@ -264,7 +264,7 @@ public class OpenJpegCodec implements NativeCodec {
                  * Has not effect on releasing memory but only keep a reference to be not garbage collected during the
                  * native decode (ByteBuffer.allocateDirect() has PhantomReference)
                  */
-                buffer.clear();
+                StreamSegment.safeToBuffer(buffer).clear();
                 openjpeg.opj_stream_destroy(lstream);
                 j2kFile.deallocate();
                 lstream.deallocate();
@@ -300,54 +300,51 @@ public class OpenJpegCodec implements NativeCodec {
                     }
                     int imgSize = area.width * area.height;
                     int length = imgSize * bands;
-                    Object array = null;
-                    if (bps > 0 && bps <= 16) {
-                        array = bps <= 8 ? new byte[length] : new short[length];
-                        opj_image_comp cp = image.comps().position(0);
-                        int dx = cp.dx();
-                        int dy = cp.dy();
-                        for (int i = 0; i < bands; i++) {
-                            if (i > 0) {
-                                cp = image.comps().position(i);
-                                if (cp.prec() != bps) {
-                                    LOGGER.error(
-                                        "Cannot read band {} because bits per sample = {}, which is different from the first band = {}.",
-                                        new Object[] { i, cp.prec(), bps });
-                                    continue;
-                                }
-                                if (cp.dx() != dx || cp.dy() != dy) {
-                                    LOGGER.error(
-                                        "Cannot read band {} because separation of a sample is different from the first band.",
-                                        i);
-                                    continue;
-                                }
+                    Object array = bps <= 8 ? new byte[length] : new short[length];
+                    opj_image_comp cp = image.comps().position(0);
+                    int dx = cp.dx();
+                    int dy = cp.dy();
+                    for (int i = 0; i < bands; i++) {
+                        if (i > 0) {
+                            cp = image.comps().position(i);
+                            if (cp.prec() != bps) {
+                                LOGGER.error(
+                                    "Cannot read band {} because bits per sample = {}, which is different from the first band = {}.",
+                                    new Object[] { i, cp.prec(), bps });
+                                continue;
                             }
+                            if (cp.dx() != dx || cp.dy() != dy) {
+                                LOGGER.error(
+                                    "Cannot read band {} because separation of a sample is different from the first band.",
+                                    i);
+                                continue;
+                            }
+                        }
 
-                            // TODO convert band to pixel interleaved, store in temporary file when size >= 1024
-                            IntPointer intBuf = cp.data();
-                            if (imgSize <= cp.w() * cp.h()) {
-                                if (bps <= 8) {
-                                    byte[] data = (byte[]) array;
-                                    for (int k = 0; k < imgSize; k++) {
-                                        data[k * bands + i] = (byte) intBuf.get(k);
-                                    }
-                                } else {
-                                    short[] data = (short[]) array;
-
-                                    // boolean signed = params.isSignedData();
-                                    // if (signed) {
-                                    // int singedOffset = (1 << bps) / 2;
-                                    // for (int k = 0; k < imgSize; k++) {
-                                    // int val = intBuf.get(k);
-                                    // data[k * bands + i] =
-                                    // (short) (val < singedOffset ? val + singedOffset : val - singedOffset);
-                                    // }
-                                    // } else {
-                                    for (int k = 0; k < imgSize; k++) {
-                                        data[k * bands + i] = (short) intBuf.get(k);
-                                    }
-                                    // }
+                        // TODO convert band to pixel interleaved, store in temporary file when size >= 1024
+                        IntPointer intBuf = cp.data();
+                        if (imgSize <= cp.w() * cp.h()) {
+                            if (bps <= 8) {
+                                byte[] data = (byte[]) array;
+                                for (int k = 0; k < imgSize; k++) {
+                                    data[k * bands + i] = (byte) intBuf.get(k);
                                 }
+                            } else {
+                                short[] data = (short[]) array;
+
+                                // boolean signed = params.isSignedData();
+                                // if (signed) {
+                                // int singedOffset = (1 << bps) / 2;
+                                // for (int k = 0; k < imgSize; k++) {
+                                // int val = intBuf.get(k);
+                                // data[k * bands + i] =
+                                // (short) (val < singedOffset ? val + singedOffset : val - singedOffset);
+                                // }
+                                // } else {
+                                for (int k = 0; k < imgSize; k++) {
+                                    data[k * bands + i] = (short) intBuf.get(k);
+                                }
+                                // }
                             }
                         }
                     }
@@ -376,7 +373,8 @@ public class OpenJpegCodec implements NativeCodec {
     }
 
     @Override
-    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param) throws IOException {
+    public String compress(NativeImage nImage, ImageOutputStream ouputStream, ImageWriteParam param)
+        throws IOException {
         String msg = null;
         if (nImage != null && ouputStream != null && nImage.getInputBuffer() != null) {
             try {

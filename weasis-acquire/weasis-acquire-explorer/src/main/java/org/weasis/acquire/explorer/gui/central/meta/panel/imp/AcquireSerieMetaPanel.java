@@ -21,7 +21,8 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     private static final long serialVersionUID = -2751941971479265507L;
 
     private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series"); //$NON-NLS-1$
-    private static final String SERIE_PREFIX = Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
+    private static final String SERIE_PREFIX =
+        Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
 
     protected SeriesGroup seriesGroup;
 
@@ -33,12 +34,18 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
 
     @Override
     public AcquireMetadataTableModel newTableModel() {
-        return new AcquireSerieMeta(seriesGroup);
+        AcquireSerieMeta model = new AcquireSerieMeta(seriesGroup);
+        model.addTableModelListener(e -> {
+            this.titleBorder.setTitle(getDisplayText());
+            seriesGroup.fireDataChanged();
+        });
+        return model;
     }
 
     @Override
     public String getDisplayText() {
-        return (seriesGroup == null) ? NO_SERIE : new StringBuilder(SERIE_PREFIX).append(seriesGroup.getDisplayName()).toString();
+        return (seriesGroup == null) ? NO_SERIE
+            : new StringBuilder(SERIE_PREFIX).append(seriesGroup.getDisplayName()).toString();
     }
 
     public SeriesGroup getSerie() {

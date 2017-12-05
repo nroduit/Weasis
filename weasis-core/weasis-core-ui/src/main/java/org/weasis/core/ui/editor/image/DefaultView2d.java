@@ -60,7 +60,6 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -79,7 +78,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -105,6 +103,7 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -221,11 +220,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         imageLayer.addLayerChangeListener(this);
     }
 
-    @Override
-    public JComponent getJComponent() {
-        return this;
-    }
-
     protected void buildPanner() {
         panner = Optional.ofNullable(panner).orElseGet(() -> new Panner<>(this));
     }
@@ -236,7 +230,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
 
     protected void initActionWState() {
-        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
+        E img = getImage();
+        actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img == null ? Unit.PIXEL : img.getPixelSpacingUnit());
         actionsInView.put(ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
         actionsInView.put(ActionW.LENS.cmd(), false);
@@ -873,12 +868,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) //$NON-NLS-1$
                     / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-        return new Font("SansSerif", 0, fontSize); //$NON-NLS-1$
+        return new Font(Font.SANS_SERIF, 0, fontSize);
     }
 
     /** paint routine */
     @Override
-    public synchronized void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
         if (g instanceof Graphics2D) {
             draw((Graphics2D) g);
         }
@@ -970,17 +965,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         affineTransform.setToScale(viewScale, viewScale);
 
         OpManager dispOp = getDisplayOpManager();
-        Boolean flip = JMVUtils.getNULLtoFalse(dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
+        boolean flip = LangUtil.getNULLtoFalse((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
         if (rotationAngle != null && rotationAngle > 0) {
-            if (flip != null && flip) {
+            if (flip) {
                 rotationAngle = 360 - rotationAngle;
             }
             affineTransform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0,
                 modelArea.getHeight() / 2.0);
         }
-        if (flip != null && flip) {
+        if (flip) {
             // Using only one allows to enable or disable flip with the rotation action
 
             // case FlipMode.TOP_BOTTOM:
@@ -1028,7 +1023,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void changeZoomInterpolation(Integer interpolation) {
         Integer val = (Integer) getDisplayOpManager().getParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION);
-        boolean update = val == null || val != interpolation;
+        boolean update = !Objects.equals(val, interpolation);
         if (update) {
             getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
             if (lens != null) {
@@ -1071,7 +1066,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 } else if (value.getLocation() != null) {
                     Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
                     if (cutlines != null && cutlines) {
-                        if (JMVUtils.getNULLtoTrue(actionsInView.get(LayerType.CROSSLINES.name()))) {
+                        if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
                             // Compute cutlines from the location of selected image
                             computeCrosslines(value.getLocation().doubleValue());
                         }
@@ -1503,13 +1498,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (pane != null) {
             pane.resetMaximizedSelectedImagePane(this);
         }
-
+        Object oldUnit = actionsInView.get(ActionW.SPATIAL_UNIT.cmd());
         initActionWState();
         imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, getImage(), null));
         resetZoom();
         resetPan();
         imageLayer.setEnableDispOperations(true);
         eventManager.updateComponentsListener(this);
+        // When pixel unit is reset
+        if (!Objects.equals(oldUnit, actionsInView.get(ActionW.SPATIAL_UNIT.cmd()))) {
+            graphicManager.updateLabels(Boolean.TRUE, this);
+        }
     }
 
     @Override

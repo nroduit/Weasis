@@ -97,10 +97,10 @@ public class CircularProgressBar extends JProgressBar {
 
     @Override
     public synchronized void setIndeterminate(boolean newValue) {
+        if (animateThread != null) {
+            stopIndeterminate();
+        }
         if (newValue != this.isIndeterminate()) {
-            if (animateThread != null) {
-                stopIndeterminate();
-            }
             if (newValue && animateThread == null) {
                 animateThread = new Animate(50);
                 animateThread.start();

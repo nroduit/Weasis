@@ -19,40 +19,43 @@ import javax.swing.UIManager.LookAndFeelInfo;
 
 public final class LookAndFeels {
 
-    private static final String[] NAMES = { "Substance Autumn", "Substance BusinessBlackSteel", //$NON-NLS-1$ //$NON-NLS-2$
-        "Substance BusinessBlueSteel", "Substance Business", "Substance Cerulean", "Substance ChallengerDeep (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance CremeCoffee", "Substance Creme", "Substance DustCoffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance EmeraldDusk (dark)", "Substance Gemini", "Substance GraphiteAqua", "Substance GraphiteGlass (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance MistAqua", "Substance MistSilver", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance Moderate", "Substance NebulaBrickWall", "Substance Nebula", "Substance OfficeBlue2007 (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "Substance OfficeSilver2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-    private static final String[] CLASSES =
-        { "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceCeruleanLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceChallengerDeepLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceDustCoffeeLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceDustLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceEmeraldDuskLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceGeminiLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceGraphiteAquaLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceGraphiteLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceMagellanLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceMistAquaLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceMistSilverLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceNebulaBrickWallLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceOfficeBlue2007LookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceOfficeSilver2007LookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceRavenLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel", //$NON-NLS-1$
-            "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel" }; //$NON-NLS-1$
+    private static final String[] NAMES = { "Substance Autumn", "Substance Business Black Steel", //$NON-NLS-1$ //$NON-NLS-2$
+        "Substance Business Blue Steel", "Substance Business", "Substance Cerulean", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance Creme Coffee", "Substance Creme", "Substance Dust Coffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance Gemini", "Substance Graphite Aqua (dark)", "Substance Graphite Chalk (dark)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance Graphite Glass (dark)", "Substance Graphite Gold (dark)", //$NON-NLS-1$ //$NON-NLS-2$
+        "Substance Graphite (dark)", "Substance Magellan (dark)", "Substance Mariner", "Substance Mist Aqua", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        "Substance Mist Silver", //$NON-NLS-1$
+        "Substance Moderate", "Substance Nebula Bric kWall", "Substance Nebula", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance Office Blue 2007 (saturated)", //$NON-NLS-1$
+        "Substance Office Silver 2007", "Substance Raven (dark)", "Substance Sahara", "Substance Twilight (dark)" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    private static final String[] CLASSES = { "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCeruleanLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceDustCoffeeLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceDustLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGeminiLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteAquaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteChalkLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteGoldLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMagellanLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMarinerLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMistAquaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceMistSilverLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceNebulaBrickWallLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceOfficeBlue2007LookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceOfficeSilver2007LookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceRavenLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel" }; //$NON-NLS-1$
 
     public static boolean installSubstanceLookAndFeels() {
         try {

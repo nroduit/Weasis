@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.base.ui.gui;
 
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -21,6 +22,7 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -30,6 +32,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -69,6 +73,8 @@ import javax.swing.WindowConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
+import org.weasis.core.api.command.Option;
+import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -87,6 +93,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -99,6 +106,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
@@ -132,21 +140,20 @@ import bibliothek.gui.dock.util.laf.LookAndFeelColors;
 import bibliothek.util.Colors;
 
 public class WeasisWin {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
-    private static final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
-    private static final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
-    private static final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { //$NON-NLS-1$
+    public static final String[] functions = { "info", "ui" }; //$NON-NLS-1$ //$NON-NLS-2$
+
+    private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
+    private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
+    private final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { //$NON-NLS-1$
 
         @Override
         public void popupMenuWillBecomeVisible() {
             buildSelectedPluginMenu(this);
         }
     };
-    private static ViewerPlugin<?> selectedPlugin = null;
-
-    private static final WeasisWin instance = new WeasisWin();
+    private ViewerPlugin<?> selectedPlugin = null;
 
     private final ToolBarContainer toolbarContainer;
 
@@ -172,7 +179,7 @@ public class WeasisWin {
         }
     };
 
-    private WeasisWin() {
+    public WeasisWin() {
 
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         RootPaneContainer container = null;
@@ -225,10 +232,6 @@ public class WeasisWin {
                 frame.setIconImage(icon.getImage());
             }
         }
-    }
-
-    public static WeasisWin getInstance() {
-        return instance;
     }
 
     public Frame getFrame() {
@@ -360,10 +363,11 @@ public class WeasisWin {
         Map<String, Object> props = builder.getProperties();
 
         Rectangle screenBound = (Rectangle) props.get(ViewerPluginBuilder.SCREEN_BOUND);
-        boolean setInSelection = JMVUtils.getNULLtoFalse(props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
+        boolean setInSelection = LangUtil.getNULLtoFalse((Boolean) props.get(ViewerPluginBuilder.OPEN_IN_SELECTION));
 
-        if (screenBound == null && factory != null && group != null) {
-            boolean bestDefaultLayout = JMVUtils.getNULLtoTrue(props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
+        if (screenBound == null && group != null) {
+            boolean bestDefaultLayout =
+                LangUtil.getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
             synchronized (UIManager.VIEWER_PLUGINS) {
                 for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
                     final ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
@@ -623,10 +627,17 @@ public class WeasisWin {
     public void showWindow() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
-
-        Rectangle bound;
-
-        GraphicsConfiguration config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        
+        Monitor defMonitor = Monitor.getDefaultMonitor();
+        GraphicsConfiguration config;
+       
+        if (defMonitor == null) {
+             config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        }
+        else {
+            config = defMonitor.getGraphicsConfiguration();
+        }
+        
         Rectangle b;
         if (config != null) {
             b = config.getBounds();
@@ -638,15 +649,12 @@ public class WeasisWin {
         } else {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
-        bound = b;
-
-        LOGGER.debug("Max main screen bound: {}", bound.toString()); //$NON-NLS-1$
-        // setMaximizedBounds(bound);
-
+        LOGGER.debug("Max main screen bound: {}", b.toString()); //$NON-NLS-1$
+        
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
             // set a valid size, insets of screen is often non consistent
-            frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
+            frame.setBounds(b.x, b.y, b.width - 150, b.height - 150);
             frame.setVisible(true);
 
             frame.setExtendedState((frame.getExtendedState() & Frame.MAXIMIZED_BOTH) == Frame.MAXIMIZED_BOTH
@@ -703,7 +711,7 @@ public class WeasisWin {
             new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
         aboutMenuItem.addActionListener(e -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
-            WeasisAboutBox about = new WeasisAboutBox();
+            WeasisAboutBox about = new WeasisAboutBox(getFrame());
             ColorLayerUI.showCenterScreen(about, layer);
         });
         helpMenuItem.add(aboutMenuItem);
@@ -727,7 +735,7 @@ public class WeasisWin {
         }
     }
 
-    private static void buildToolSubMenu(final JMenu toolMenu) {
+    private void buildToolSubMenu(final JMenu toolMenu) {
         List<DockableTool> tools = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
         if (tools != null) {
             for (final DockableTool t : tools) {
@@ -774,7 +782,7 @@ public class WeasisWin {
         }
     }
 
-    private static void buildPrintSubMenu(final JMenu printMenu) {
+    private void buildPrintSubMenu(final JMenu printMenu) {
         if (selectedPlugin != null) {
             fillMenu(printMenu, selectedPlugin.getPrintActions());
         }
@@ -788,7 +796,7 @@ public class WeasisWin {
         UIManager.EXPLORER_PLUGINS.forEach(d -> fillMenu(importMenu, d.getOpenImportDialogAction()));
     }
 
-    private static void buildExportSubMenu(final JMenu exportMenu) {
+    private void buildExportSubMenu(final JMenu exportMenu) {
         if (selectedPlugin != null) {
             fillMenu(exportMenu, selectedPlugin.getExportActions());
         }
@@ -799,7 +807,7 @@ public class WeasisWin {
         Optional.ofNullable(actions).ifPresent(l -> l.forEach(a -> menu.add(new JMenuItem(a))));
     }
 
-    private static void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
+    private void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
         if (selectedPlugin != null) {
             selectedPlugin.fillSelectedPluginMenu(selectedPluginMenu);
         }
@@ -878,7 +886,7 @@ public class WeasisWin {
         // menuView.add(loadAction);
     }
 
-    private static void buildMenuFile() {
+    private void buildMenuFile() {
         menuFile.removeAll();
         DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
 
@@ -923,8 +931,8 @@ public class WeasisWin {
 
         menuFile.add(new JSeparator());
         Consumer<ActionEvent> prefAction = e -> {
-            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(WeasisWin.getInstance().getRootPaneContainer());
-            PreferenceDialog dialog = new PreferenceDialog(WeasisWin.getInstance().getFrame());
+            ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(getRootPaneContainer());
+            PreferenceDialog dialog = new PreferenceDialog(getFrame());
             ColorLayerUI.showCenterScreen(dialog, layer);
         };
         DefaultAction preferencesAction =
@@ -935,7 +943,7 @@ public class WeasisWin {
 
         menuFile.add(new JSeparator());
         DefaultAction exitAction = new DefaultAction(Messages.getString("ExitAction.title"), //$NON-NLS-1$
-            e -> WeasisWin.getInstance().closeWindow());
+            e -> closeWindow());
         menuFile.add(new JMenuItem(exitAction));
     }
 
@@ -1136,4 +1144,83 @@ public class WeasisWin {
             return super.getLocation(action, tab);
         }
     }
+
+    public void info(String[] argv) throws IOException {
+        final String[] usage = { "Show information about Weasis", "Usage: weasis:info (-v | -a)", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -v --version    show version", //$NON-NLS-1$
+            "  -a --all        show weasis specifications", //$NON-NLS-1$
+            "  -? --help       show help" }; //$NON-NLS-1$
+
+        Option opt = Options.compile(usage).parse(argv);
+
+        if (opt.isSet("version")) { //$NON-NLS-1$
+            System.out.println(AppProperties.WEASIS_VERSION);
+        } else if (opt.isSet("all")) { //$NON-NLS-1$
+            PrintStream out = System.out;
+            out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Installation path: " + AppProperties.WEASIS_PATH); //$NON-NLS-1$
+            out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); //$NON-NLS-1$
+            out.println("  Profile: " + AppProperties.WEASIS_PROFILE); //$NON-NLS-1$
+            out.println("  User: " + AppProperties.WEASIS_USER); //$NON-NLS-1$
+            out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.format("  Operating system: %s %s %s", System.getProperty("os.name"), System.getProperty("os.version"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                System.getProperty("os.arch")); //$NON-NLS-1$
+            out.println();
+            out.println("  Java vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Java version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Java Path: " + System.getProperty("java.home")); //$NON-NLS-1$ //$NON-NLS-2$
+        } else {
+            opt.usage();
+        }
+    }
+
+    public void ui(String[] argv) throws IOException {
+        final String[] usage = { "Manage user interface", "Usage: weasis:ui (-q | -v)", //$NON-NLS-1$ //$NON-NLS-2$
+            "  -q --quit        shutdown Weasis", //$NON-NLS-1$
+            "  -v --visible     set window on top", //$NON-NLS-1$
+            "  -? --help        show help" }; //$NON-NLS-1$
+
+        Option opt = Options.compile(usage).parse(argv);
+        if (opt.isSet("quit")) { //$NON-NLS-1$
+            System.exit(0);
+        } else if (opt.isSet("visible")) { //$NON-NLS-1$
+            GuiExecutor.instance().execute(() -> {
+                Frame app = getFrame();
+                app.setVisible(true);
+                int state = app.getExtendedState();
+                state &= ~Frame.ICONIFIED;
+                app.setExtendedState(state);
+                app.setVisible(true);
+                /*
+                 * Sets the window to be "always on top" instead using toFront() method that does not always bring the
+                 * window to the front. It depends the platform, Windows XP or Ubuntu has the facility to prevent
+                 * windows from stealing focus; instead it flashes the taskbar icon.
+                 */
+                if (app.isAlwaysOnTopSupported()) {
+                    app.setAlwaysOnTop(true);
+
+                    try {
+                        Thread.sleep(500L);
+                        Robot robot = new Robot();
+                        Point p = app.getLocationOnScreen();
+                        robot.mouseMove(p.x + app.getWidth() / 2, p.y + 5);
+                        // Simulate a mouse click
+                        robot.mousePress(InputEvent.BUTTON1_MASK);
+                        robot.mouseRelease(InputEvent.BUTTON1_MASK);
+                    } catch (AWTException e1) {
+                    } catch (InterruptedException e) {
+                    } finally {
+                        app.setAlwaysOnTop(false);
+                    }
+
+                } else {
+                    app.toFront();
+                }
+            });
+
+        } else {
+            opt.usage();
+        }
+    }
+
 }

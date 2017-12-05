@@ -341,7 +341,13 @@ public class ImageElement extends MediaElement {
 
     private PlanarImage getCacheImage(PlanarImage cacheImage, OpManager manager, boolean findMinMax) {
         if (findMinMax) {
-            findMinMaxValues(cacheImage, true);
+            try {
+                findMinMaxValues(cacheImage, true);
+            } catch (Exception e) {
+                mCache.remove(this);
+                readable = false;
+                LOGGER.error("Cannot read image: {}", this, e); //$NON-NLS-1$
+            }
         }
         if (manager != null && cacheImage != null) {
             RenderedImage img = manager.getLastNodeOutputImage();

@@ -14,6 +14,7 @@ import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.swing.JScrollPane;
@@ -36,11 +37,7 @@ public class ExportTree extends JScrollPane {
     }
 
     public ExportTree(final CheckTreeModel checkTreeModel) {
-        if (checkTreeModel == null) {
-            throw new IllegalArgumentException();
-        }
-
-        this.checkTreeModel = checkTreeModel;
+        this.checkTreeModel = Objects.requireNonNull(checkTreeModel);
 
         checkboxTree = new CheckboxTree(checkTreeModel.getModel()) {
             @Override
@@ -109,17 +106,19 @@ public class ExportTree extends JScrollPane {
 
     public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
         if (maxDeep > 1) {
-            for (Enumeration children = start.children(); children.hasMoreElements();) {
-                DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) children.nextElement();
-                if (!dtm.isLeaf()) {
-                    TreePath tp = new TreePath(dtm.getPath());
-                    tree.expandPath(tp);
-
-                    expandTree(tree, dtm, maxDeep - 1);
+            Enumeration<?> children = start.children();
+            while (children.hasMoreElements()) {
+                Object child = children.nextElement();
+                if (child instanceof DefaultMutableTreeNode) {
+                    DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+                    if (!dtm.isLeaf()) {
+                        TreePath tp = new TreePath(dtm.getPath());
+                        tree.expandPath(tp);
+                        expandTree(tree, dtm, maxDeep - 1);
+                    }
                 }
             }
         }
-        return;
     }
 
 }

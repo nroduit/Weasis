@@ -34,7 +34,7 @@ public class DefaultDragSequence implements Draggable {
     private Integer handlePointIndex;
 
     public DefaultDragSequence(DragGraphic graphic) {
-        this(graphic, DragGraphic.UNDEFINED);
+        this(graphic, Graphic.UNDEFINED);
     }
 
     public DefaultDragSequence(DragGraphic graphic, Integer handlePointIndex) {
@@ -65,8 +65,8 @@ public class DefaultDragSequence implements Draggable {
 
     @Override
     public void drag(MouseEventDouble evt) {
-        Double deltaX = evt.getImageX() - lastPoint.getX();
-        Double deltaY = evt.getImageY() - lastPoint.getY();
+        double deltaX = evt.getImageX() - lastPoint.getX();
+        double deltaY = evt.getImageY() - lastPoint.getY();
 
         if (MathUtil.isDifferentFromZero(deltaX) || MathUtil.isDifferentFromZero(deltaY)) {
             lastPoint.setLocation(evt.getImageCoordinates());
@@ -80,7 +80,7 @@ public class DefaultDragSequence implements Draggable {
     public Boolean completeDrag(MouseEventDouble mouseEvent) {
         if (mouseEvent != null) {
             if (!graphic.isGraphicComplete()) {
-                if (graphic.getPtsNumber() == DragGraphic.UNDEFINED && mouseEvent.getClickCount() == 2
+                if (Objects.equals(graphic.getPtsNumber(), Graphic.UNDEFINED) && mouseEvent.getClickCount() == 2
                     && !mouseEvent.isConsumed()) {
                     List<Point2D.Double> handlePointList = graphic.getPts();
                     if (!graphic.isLastPointValid()) {

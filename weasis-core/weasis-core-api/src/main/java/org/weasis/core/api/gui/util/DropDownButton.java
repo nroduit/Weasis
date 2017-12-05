@@ -16,6 +16,7 @@ import java.awt.event.ActionListener;
 
 import javax.swing.Icon;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -24,9 +25,9 @@ import javax.swing.event.PopupMenuListener;
 public abstract class DropDownButton extends JButton implements PopupMenuListener, ActionListener {
 
     private final String type;
-    private final GroupRadioMenu menuModel;
+    private final GroupPopup menuModel;
 
-    public DropDownButton(String type, Icon icon, GroupRadioMenu model) {
+    public DropDownButton(String type, Icon icon, GroupPopup model) {
         super(icon);
         this.menuModel = model;
         this.type = type;
@@ -34,11 +35,11 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
     }
 
     public DropDownButton(String type, Icon icon) {
-        this(type, icon, (GroupRadioMenu) null);
+        this(type, icon, (GroupPopup) null);
     }
 
-    public DropDownButton(String type, String text) {
-        super(new DropDownLabel(text));
+    public DropDownButton(String type, String text, JComponent parent) {
+        super(new DropDownLabel(text, parent));
         this.type = type;
         this.menuModel = null;
         init();
@@ -48,7 +49,7 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         addActionListener(this);
     }
 
-    public GroupRadioMenu getMenuModel() {
+    public GroupPopup getMenuModel() {
         return menuModel;
     }
 
@@ -57,7 +58,7 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
         Icon icon = this.getIcon();
         if (icon instanceof DropDownLabel) {
             DropDownLabel iconLabel = (DropDownLabel) icon;
-            iconLabel.setLabel(label);
+            iconLabel.setLabel(label, this);
             Insets insets = getInsets();
             iconLabel.paintIcon(this, getGraphics(), insets.left, insets.top);
             revalidate();

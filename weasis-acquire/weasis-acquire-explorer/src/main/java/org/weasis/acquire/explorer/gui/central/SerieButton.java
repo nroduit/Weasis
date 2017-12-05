@@ -17,7 +17,7 @@ import javax.swing.JToggleButton;
 
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
-public class SerieButton extends JToggleButton implements ActionListener, Comparable<SerieButton> {
+public class SerieButton extends JToggleButton implements ActionListener, SeriesDataListener, Comparable<SerieButton> {
     private static final long serialVersionUID = -2587964095510462601L;
 
     private final SeriesGroup seriesGroup;
@@ -26,6 +26,7 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
     public SerieButton(SeriesGroup seriesGroup, AcquireTabPanel panel) {
         super(seriesGroup.getDisplayName());
         this.seriesGroup = seriesGroup;
+        seriesGroup.addLayerChangeListener(this);
         this.panel = panel;
         addActionListener(this);
     }
@@ -47,8 +48,6 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
         setToolTipText(text);
     }
 
-
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -59,12 +58,15 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (getClass() != obj.getClass())
+        }
+        if (getClass() != obj.getClass()) {
             return false;
+        }
         SerieButton other = (SerieButton) obj;
         return seriesGroup.equals(other.seriesGroup);
     }
@@ -72,6 +74,11 @@ public class SerieButton extends JToggleButton implements ActionListener, Compar
     @Override
     public int compareTo(SerieButton o) {
         return getSerie().compareTo(o.getSerie());
+    }
+
+    @Override
+    public void handleSeriesChanged() {
+        setText(seriesGroup.getDisplayName());
     }
 
 }

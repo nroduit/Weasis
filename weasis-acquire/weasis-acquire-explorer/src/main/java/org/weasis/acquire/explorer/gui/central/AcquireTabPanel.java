@@ -34,6 +34,7 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.dicom.codec.TagD;
 
 @SuppressWarnings("serial")
@@ -47,12 +48,12 @@ public class AcquireTabPanel extends JPanel {
 
     private SerieButton selected;
 
-    public AcquireTabPanel() {
+    public AcquireTabPanel(JIThumbnailCache thumbCache) {
         setLayout(new BorderLayout());
         btnGrp = new ButtonGroup();
 
         serieList = new SerieButtonList();
-        imageList = new AcquireCentralImagePanel(this);
+        imageList = new AcquireCentralImagePanel(this, thumbCache);
         JPanel seriesPanel = new JPanel(new BorderLayout());
         seriesPanel.add(serieList, BorderLayout.CENTER);
         seriesPanel.add(new AcquirePublishPanel(), BorderLayout.SOUTH);
@@ -230,11 +231,19 @@ public class AcquireTabPanel extends JPanel {
         serieList.refreshGUI();
     }
 
+    public void refreshInfoGUI() {
+        imageList.refreshInfoGUI();
+    }
+
     public void moveElements(SeriesGroup seriesGroup, List<AcquireImageInfo> medias) {
         removeImages(selected.getSerie(), medias);
 
         medias.forEach(m -> m.setSeries(seriesGroup));
         updateSerie(seriesGroup, AcquireManager.findbySeries(seriesGroup));
+    }
+
+    public void updateSeriesFromGlobaTags() {
+        btnMap.keySet().forEach(g -> g.updateDicomTags());
     }
 
     public void moveElementsByDate(List<AcquireImageInfo> medias) {

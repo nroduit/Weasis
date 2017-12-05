@@ -11,26 +11,32 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
+import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.explorer.DicomFieldsView.DicomData;
 import org.weasis.dicom.explorer.Messages;
 
 public class DicomManager {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomManager.class);
 
     /** The single instance of this singleton class. */
 
     private static DicomManager instance;
     private TransferSyntax wadoTSUID;
     private boolean portableDirCache;
+    private final boolean allImageCodecs;
     private final List<DicomData> limitedDicomTags;
 
     private DicomManager() {
@@ -49,6 +55,12 @@ public class DicomManager {
             }
         }
         initRequiredDicomTags();
+
+        allImageCodecs = Arrays
+            .asList(TransferSyntax.JPEG_LOSSY_12, TransferSyntax.JPEG_LOSSLESS_57, TransferSyntax.JPEG_LOSSLESS_70,
+                TransferSyntax.JPEGLS_LOSSLESS, TransferSyntax.JPEGLS_NEAR_LOSSLESS, TransferSyntax.JPEG2000_LOSSLESS,
+                TransferSyntax.JPEG2000)
+            .stream().allMatch(t -> DicomImageUtils.hasImageReader(t.getTransferSyntaxUID()));
     }
 
     /**
@@ -59,6 +71,13 @@ public class DicomManager {
             instance = new DicomManager();
         }
         return instance;
+    }
+
+    public boolean containsImageioCodec(String tsuid) {
+        if (!allImageCodecs && tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
+            return DicomImageUtils.hasImageReader(tsuid);
+        }
+        return true;
     }
 
     private void initRequiredDicomTags() {
@@ -102,6 +121,10 @@ public class DicomManager {
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.object"), image, TagD.Level.INSTANCE)); //$NON-NLS-1$
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.plane"), imgPlane, TagD.Level.INSTANCE)); //$NON-NLS-1$
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.acqu"), imgAcq, TagD.Level.INSTANCE)); //$NON-NLS-1$
+    }
+
+    public boolean hasAllImageCodecs() {
+        return allImageCodecs;
     }
 
     public List<DicomData> getLimitedDicomTags() {

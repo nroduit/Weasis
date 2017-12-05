@@ -1,6 +1,7 @@
-<assembly xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.0 http://maven.apache.org/xsd/assembly-1.1.0.xsd">
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.0.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
+    
 	<id>portable-dist</id>
 	<formats>
 		<format>zip</format>
@@ -10,7 +11,7 @@
 		<fileSet>
 			<!-- Copy jws jars -->
 			<directory>target/tmp</directory>
-			<outputDirectory>/weasis</outputDirectory>
+			<outputDirectory>weasis</outputDirectory>
 			<includes>
 				<include>/*.jar</include>
 				<include>/*.jar.pack.gz</include>
@@ -31,24 +32,24 @@
 				<include>viewer-win32.exe</include>
 			</includes>
 			<fileMode>0755</fileMode>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-portable</directory>
-			<outputDirectory>/</outputDirectory>
+			<outputDirectory></outputDirectory>
 			<fileMode>0755</fileMode>
 			<directoryMode>0755</directoryMode>
 		</fileSet>
 		<fileSet>
 			<!-- copy resources -->
 			<directory>resources</directory>
-			<outputDirectory>/weasis/resources</outputDirectory>
+			<outputDirectory>weasis/resources</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<!-- copy OSGI framework config -->
 			<directory>etc/config</directory>
-			<outputDirectory>/weasis/conf</outputDirectory>
+			<outputDirectory>weasis/conf</outputDirectory>
 			<filtered>true</filtered>
 		</fileSet>
 	</fileSets>

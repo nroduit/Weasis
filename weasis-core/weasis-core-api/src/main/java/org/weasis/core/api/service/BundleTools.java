@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -25,9 +26,14 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.StringUtil;
 
 public class BundleTools {
     private static final Logger LOGGER = LoggerFactory.getLogger(BundleTools.class);
+
+    public static final String P_FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
 
     public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<>(3);
     public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
@@ -70,6 +76,7 @@ public class BundleTools {
     }
 
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
+    @Deprecated
     public static final WProperties LOCAL_PERSISTENCE = new WProperties();
 
     static {
@@ -81,6 +88,16 @@ public class BundleTools {
                 LOGGER.error("", e); //$NON-NLS-1$
             }
         }
+        String code = BundleTools.SYSTEM_PREFERENCES.getProperty(BundleTools.P_FORMAT_CODE);
+        if (StringUtil.hasLength(code)) {
+            Locale l = LocalUtil.textToLocale(code);
+            if (!l.equals(Locale.getDefault())) {
+                LocalUtil.setLocaleFormat(l);
+            }
+        }
+
+        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
+        ResourceUtil.setResourcePath(path);
     }
 
     private BundleTools() {

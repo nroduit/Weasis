@@ -34,4 +34,8 @@ public abstract class AbstractAcquireActionPanel extends JPanel implements Acqui
     public void setLastActionCommand(String lastActionCommand) {
         this.lastActionCommand = lastActionCommand;
     }
+
+    public void stopEditing() {
+        // Do nothing by default
+    }
 }

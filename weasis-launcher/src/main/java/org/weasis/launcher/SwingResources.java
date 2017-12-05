@@ -45,8 +45,6 @@ public class SwingResources {
     public static void loadResources(String path) {
         InputStream inStream = WeasisLauncher.class.getResourceAsStream(path);
         if (inStream != null) {
-            String version = System.getProperty("java.version"); //$NON-NLS-1$
-            boolean v6 = version.startsWith("1.6"); //$NON-NLS-1$
             Properties swingDialogs = new Properties();
             try {
                 swingDialogs.load(inStream);
@@ -75,7 +73,7 @@ public class SwingResources {
                             compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), KEY_TEXT);
                             UIManager.put(compositeKey, getTextFromProperty(text));
                             if (mnemonic != null) {
-                                if (v6 && stringKey.startsWith("ColorChooser")) { //$NON-NLS-1$
+                                if (stringKey.startsWith("ColorChooser")) { //$NON-NLS-1$
                                     compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), "NameText"); //$NON-NLS-1$
                                     UIManager.put(compositeKey, getTextFromProperty(text));
                                 }

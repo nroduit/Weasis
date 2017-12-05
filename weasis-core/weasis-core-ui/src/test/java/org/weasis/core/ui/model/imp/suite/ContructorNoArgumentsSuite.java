@@ -12,7 +12,7 @@ import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 
 public class ContructorNoArgumentsSuite extends ModelListHelper {
-    
+
     @Test
     public void testXmlModelList() throws Exception {
         GraphicModel actual = new XmlGraphicModel();
@@ -33,5 +33,5 @@ public class ContructorNoArgumentsSuite extends ModelListHelper {
         assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
 
         assertThat(actual.getLayerCount()).isEqualTo(0);
-    } 
+    }
 }

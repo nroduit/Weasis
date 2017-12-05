@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.CropOp;
@@ -45,6 +44,7 @@ import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.EscapeChars;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -71,6 +71,8 @@ import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
+    public static final String PR_APPLY = "weasis.apply.latest.pr"; //$NON-NLS-1$
+    
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
@@ -89,7 +91,7 @@ public class PRManager {
         ImageOpNode node = view.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
             List<PresetWindowLevel> presetList =
-                img.getPresetList(JMVUtils.getNULLtoTrue(node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
+                img.getPresetList(LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
             PresetWindowLevel auto = presets.remove(presets.size() - 1);
             if (!presetList.get(presetList.size() - 1).equals(auto)) {
                 // It happens when PR contains a new Modality LUT
@@ -419,6 +421,10 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
+                if(oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+                    oldPR = ActionState.NoneLabel.NONE_SERIES;
+                    view.setActionsInView(ActionW.PR_STATE.cmd(), oldPR);
+                }
                 if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
                     // Set the previous selected value, otherwise set the more recent PR by default
                     view.setPresentationState(prList.indexOf(oldPR) == -1 ? prList.get(0) : oldPR, true);

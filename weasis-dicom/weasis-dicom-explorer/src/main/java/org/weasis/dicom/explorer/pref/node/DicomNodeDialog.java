@@ -134,6 +134,7 @@ public class DicomNodeDialog extends JDialog {
         content.add(hostnameLabel, gbcHostnameLabel);
         hostnameTf = new JTextField();
         hostnameTf.setColumns(15);
+
         GridBagConstraints gbcHostnameTf = new GridBagConstraints();
         gbcHostnameTf.anchor = GridBagConstraints.WEST;
         gbcHostnameTf.insets = new Insets(0, 0, 5, 5);
@@ -178,6 +179,7 @@ public class DicomNodeDialog extends JDialog {
             content.add(lblType, gbcLblType);
 
             comboBox = new JComboBox<>(new DefaultComboBoxModel<>(AbstractDicomNode.UsageType.values()));
+            comboBox.setSelectedItem(AbstractDicomNode.UsageType.RETRIEVE);
             GridBagConstraints gbcComboBox = new GridBagConstraints();
             gbcComboBox.anchor = GridBagConstraints.LINE_START;
             gbcComboBox.insets = new Insets(0, 0, 5, 5);
@@ -185,6 +187,11 @@ public class DicomNodeDialog extends JDialog {
             gbcComboBox.gridy = 3;
             content.add(comboBox, gbcComboBox);
             this.getContentPane().add(content, BorderLayout.CENTER);
+
+            if (typeNode == AbstractDicomNode.Type.DICOM_CALLING) {
+                portTf.setValue(11113);
+                hostnameTf.setText("localhost"); //$NON-NLS-1$
+            }
         }
 
         footPanel = new JPanel();
@@ -225,7 +232,7 @@ public class DicomNodeDialog extends JDialog {
             return;
         }
 
-        UsageType usageType =  Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
+        UsageType usageType = Optional.ofNullable(comboBox).map(c -> (UsageType) c.getSelectedItem()).orElse(null);
         boolean addNode = dicomNode == null;
         if (addNode) {
             if (AbstractDicomNode.Type.PRINTER == typeNode) {

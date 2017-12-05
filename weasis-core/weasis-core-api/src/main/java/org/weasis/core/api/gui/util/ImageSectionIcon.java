@@ -65,6 +65,7 @@ public final class ImageSectionIcon implements AnimatedIconStatic {
         int dwidth = img.getIconWidth() / width;
         int nx = (this.num % dwidth) * this.width;
         int ny = (this.num / dwidth) * this.height;
-        g.drawImage(this.img.getImage(), x, y, x + this.width, y + this.height, nx, ny, nx + this.width, ny + this.height, c);
+        g.drawImage(this.img.getImage(), x, y, x + this.width, y + this.height, nx, ny, nx + this.width,
+            ny + this.height, c);
     }
 }

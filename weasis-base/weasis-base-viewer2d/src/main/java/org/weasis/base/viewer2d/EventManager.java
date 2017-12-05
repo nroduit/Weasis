@@ -34,7 +34,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -57,6 +56,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -114,8 +114,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         setAction(newLutAction());
         setAction(newFilterAction());
         setAction(newLayoutAction(
-            View2dContainer.LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.SYNCH_LIST.toArray(new SynchView[View2dContainer.SYNCH_LIST.size()])));
+            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
@@ -244,7 +244,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             this.selectedView2dContainer.setMouseActions(null);
             getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
         }
-        
+
         ImageViewerPlugin<ImageElement> oldContainer = this.selectedView2dContainer;
         this.selectedView2dContainer = selectedView2dContainer;
         if (selectedView2dContainer != null) {
@@ -314,7 +314,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 if (defaultView2d != null) {
                     ImageElement img = defaultView2d.getImage();
                     if (img != null) {
-                        boolean pixelPadding = JMVUtils.getNULLtoTrue(defaultView2d.getDisplayOpManager()
+                        boolean pixelPadding = LangUtil.getNULLtoTrue((Boolean) defaultView2d.getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
                         getAction(ActionW.WINDOW, SliderChangeListener.class)
                             .ifPresent(a -> a.setRealValue(img.getDefaultWindow(pixelPadding)));

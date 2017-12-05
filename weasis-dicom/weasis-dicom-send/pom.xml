@@ -6,14 +6,13 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>2.5.3-SNAPSHOT</version>
+		<version>2.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-dicom-send</artifactId>
 	<packaging>bundle</packaging>
 	<name>${project.artifactId}</name>
 	<description>DICOM Send</description>
-
 
 	<build>
 		<plugins>
@@ -27,6 +26,7 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>

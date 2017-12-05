@@ -28,7 +28,7 @@ import org.weasis.image.jni.NativeImageReader;
 import org.weasis.image.jni.StreamSegment;
 import org.weasis.openjpeg.internal.OpenJpegCodec;
 
-import com.sun.media.imageioimpl.common.SignedDataImageParam;
+import com.sun.media.imageioimpl.common.ExtendImageParam;
 
 class NativeJ2kImageReader extends NativeImageReader {
 
@@ -59,11 +59,14 @@ class NativeJ2kImageReader extends NativeImageReader {
             if (mlImage == null) {
                 mlImage = decoder.buildImage(iis);
             }
-            if (param instanceof SignedDataImageParam) {
-                mlImage.getImageParameters().setSignedData(((SignedDataImageParam) param).isSignedData());
+            if (param instanceof ExtendImageParam) {
+                Boolean signed = ((ExtendImageParam) param).getSignedData();
+                if (signed != null) {
+                    mlImage.getImageParameters().setSignedData(signed);
+                }
             }
 
-            StreamSegment.adaptParametersFromStream(iis, mlImage);
+            StreamSegment.adaptParametersFromStream(iis, mlImage, param);
 
             long start = System.currentTimeMillis();
             String error = decoder.decompress(mlImage, param);

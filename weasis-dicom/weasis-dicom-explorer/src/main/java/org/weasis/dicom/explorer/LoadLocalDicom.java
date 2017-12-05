@@ -42,7 +42,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
-public class LoadLocalDicom extends ExplorerTask {
+public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadLocalDicom.class);
     private final File[] files;
@@ -233,8 +233,9 @@ public class LoadLocalDicom extends ExplorerTask {
                     if (DicomModel.isSpecialModality(dicomSeries)) {
                         dicomModel.addSpecialModality(dicomSeries);
                         Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+                            .map(DicomSpecialElement.class::cast).findFirst()
+                            .ifPresent(d -> dicomModel.firePropertyChange(
+                                new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
                     }
 
                     // If Split series or special DICOM element update the explorer view and View2DContainer

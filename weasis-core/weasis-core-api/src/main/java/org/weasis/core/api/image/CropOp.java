@@ -19,8 +19,8 @@ import javax.media.jai.JAI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.util.LangUtil;
 
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
@@ -70,7 +70,7 @@ public class CropOp extends AbstractOp {
                 pb.add((float) area.width).add((float) area.height);
                 result = JAI.create("crop", pb, null); //$NON-NLS-1$
 
-                if (JMVUtils.getNULLtoFalse(params.get(P_SHIFT_TO_ORIGIN))) {
+                if (LangUtil.getNULLtoFalse((Boolean) params.get(P_SHIFT_TO_ORIGIN))) {
                     float diffw = (float) source.getMinX() - result.getMinX();
                     float diffh = (float) source.getMinY() - result.getMinY();
                     if (MathUtil.isDifferentFromZero(diffw) || MathUtil.isDifferentFromZero(diffh)) {

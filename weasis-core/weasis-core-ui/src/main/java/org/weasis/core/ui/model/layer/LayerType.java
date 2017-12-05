@@ -15,9 +15,11 @@ import org.weasis.core.ui.Messages;
 public enum LayerType {
     IMAGE(10, Messages.getString("LayerType.img"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
 
-    CROSSLINES(20, Messages.getString("LayerType.crosslines"), Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
+    CROSSLINES(20, Messages.getString("LayerType.crosslines"), Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, //$NON-NLS-1$
+                    Boolean.FALSE),
 
-    IMAGE_ANNOTATION(10_000, Messages.getString("LayerType.img_anont"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
+    IMAGE_ANNOTATION(10_000, Messages.getString("LayerType.img_anont"), Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, //$NON-NLS-1$
+                    Boolean.FALSE),
 
     ANNOTATION(31, Messages.getString("LayerType.annot"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
@@ -32,6 +34,8 @@ public enum LayerType {
     BLOB(80, Messages.getString("LayerType.obj"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
 
     POINTS(90, Messages.getString("LayerType.pts"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE), //$NON-NLS-1$
+
+    DICOM_SR(100, "DICOM SR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
 
     DICOM_PR(100, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE); //$NON-NLS-1$
 

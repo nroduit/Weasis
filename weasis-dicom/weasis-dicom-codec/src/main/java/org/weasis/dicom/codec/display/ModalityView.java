@@ -16,6 +16,8 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -108,6 +110,10 @@ public class ModalityView {
         return mdata;
     }
 
+    public static Set<Entry<Modality, ModalityInfoData>> getModalityViewEntries() {
+        return MODALITY_VIEW_MAP.entrySet();
+    }
+
     private static Modality getModdality(String name) {
         try {
             return Modality.valueOf(name);
@@ -147,15 +153,13 @@ public class ModalityView {
 
     private static void readTagDisplayByModality() {
         XMLStreamReader xmler = null;
-        InputStream stream = null;
         try {
             File file = ResourceUtil.getResource("attributes-view.xml"); //$NON-NLS-1$
             if (!file.canRead()) {
                 return;
             }
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            stream = new FileInputStream(file); // $NON-NLS-1$
-            xmler = xmlif.createXMLStreamReader(stream);
+            xmler = xmlif.createXMLStreamReader(new FileInputStream(file));
 
             while (xmler.hasNext()) {
                 switch (xmler.next()) {
@@ -175,7 +179,6 @@ public class ModalityView {
             LOGGER.error("Cannot read attributes-view.xml! ", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(xmler);
-            FileUtil.safeClose(stream);
         }
     }
 

@@ -4,16 +4,16 @@
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
-		<version>2.5.3-SNAPSHOT</version>
+		<version>2.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-imageio-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>ImageIO Codec [${project.artifactId}]</name>
+	
 	<properties>
 		<bundle.namespace>org.weasis.imageio.codec</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
 
 	<build>
@@ -35,10 +35,10 @@
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator,com.sun.media.imageioimpl.plugins.raw,com.sun.media.imageioimpl.plugins.clib,com.sun.media.imageioimpl.plugins.jpeg,com.sun.medialib.codec.jiio,com.sun.medialib.codec.jpeg,com.sun.media.imageioimpl.plugins.jpeg2000</Export-Package>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2.5</Specification-Version>
+						<Specification-Version>1.2.8</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 						<Implementation-Title>weasis.thirdparty.com.sun.media.imageio</Implementation-Title>
-						<Implementation-Version>1.2.5</Implementation-Version>
+						<Implementation-Version>1.2.8</Implementation-Version>
 						<Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
 						<Extension-Name>weasis.thirdparty.com.sun.media.imageio</Extension-Name>
 						<Sealed>true</Sealed>
@@ -47,17 +47,18 @@
 			</plugin>
 		</plugins>
 	</build>
+	
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>clibwrapper_jiio</artifactId>
-			<version>1.2-b04</version>
+			<version>${weasis.imageio.native.version}</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.5</version>
+			<version>1.2.8</version>
 		</dependency>
 	</dependencies>
 </project>

@@ -13,6 +13,7 @@ package org.weasis.acquire.explorer;
 import java.awt.BorderLayout;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import org.weasis.acquire.explorer.gui.control.ImportPanel;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
+import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -66,10 +68,11 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         super(BUTTON_NAME, TOOL_NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
         setDockableWidth(400);
 
-        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album")); //$NON-NLS-1$
+        JIThumbnailCache thumbCache = new JIThumbnailCache();
+        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album"), thumbCache); //$NON-NLS-1$
 
         browsePanel = new BrowsePanel(this);
-        acquireThumbnailListPane = new AcquireThumbnailListPane<>();
+        acquireThumbnailListPane = new AcquireThumbnailListPane<>(thumbCache);
         importPanel = new ImportPanel(acquireThumbnailListPane, centralPane);
 
         setLayout(new BorderLayout(0, 0));
@@ -77,7 +80,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         add(acquireThumbnailListPane, BorderLayout.CENTER);
         add(importPanel, BorderLayout.SOUTH);
 
-        this.acquireThumbnailListPane.loadDirectory(systemDrive.getID());
+        this.acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getID()));
 
         // Remove dropping capabilities in the central area (limit to import
         // from browse panel)
@@ -89,9 +92,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
             File dir = new File(systemDrive.getID());
             Preferences prefs =
                 BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-            if (prefs != null) {
+            if (prefs != null && dir.canRead()) {
                 Preferences p = prefs.node(PREFERENCE_NODE);
-                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getAbsolutePath());
+                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getPath());
             }
         }
     }
@@ -234,6 +237,6 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     }
 
     public void loadSystemDrive() {
-        acquireThumbnailListPane.loadDirectory(systemDrive.getID());
+        acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getID()));
     }
 }

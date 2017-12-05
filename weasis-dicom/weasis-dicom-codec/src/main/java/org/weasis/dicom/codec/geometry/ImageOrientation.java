@@ -226,6 +226,24 @@ public abstract class ImageOrientation {
             + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
     }
 
+    public static final char getImageOrientationOposite(char c) {
+        switch (c) {
+            case 'L':
+                return 'R';
+            case 'R':
+                return 'L';
+            case 'P':
+                return 'A';
+            case 'A':
+                return 'P';
+            case 'H':
+                return 'F';
+            case 'F':
+                return 'H';
+        }
+        return ' ';
+    }
+
     public static double[] computeNormalVectorOfPlan(double[] vector) {
         if (vector != null && vector.length == 6) {
             double[] norm = new double[3];

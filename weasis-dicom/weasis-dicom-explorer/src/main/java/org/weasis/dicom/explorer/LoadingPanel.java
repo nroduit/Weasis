@@ -20,7 +20,7 @@ public class LoadingPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    private final ArrayList<ExplorerTask> tasks = new ArrayList<>();
+    private final ArrayList<ExplorerTask<?, ?>> tasks = new ArrayList<>();
     private final LoadingTaskPanel globalDownloadTask = new LoadingTaskPanel(true);
 
     public LoadingPanel() {
@@ -29,7 +29,7 @@ public class LoadingPanel extends JPanel {
         this.setAlignmentY(TOP_ALIGNMENT);
     }
 
-    public boolean addTask(ExplorerTask task) {
+    public boolean addTask(ExplorerTask<?, ?> task) {
         boolean update = false;
         if (task != null && !tasks.contains(task)) {
             tasks.add(task);
@@ -48,7 +48,7 @@ public class LoadingPanel extends JPanel {
         return update;
     }
 
-    public boolean removeTask(ExplorerTask task) {
+    public boolean removeTask(ExplorerTask<?, ?> task) {
         boolean update = false;
         if (task != null) {
             tasks.remove(task);
@@ -61,18 +61,18 @@ public class LoadingPanel extends JPanel {
                 for (Component c : getComponents()) {
                     if (c instanceof LoadingTaskPanel && task.equals(((LoadingTaskPanel) c).getTask())) {
                         remove(c);
+                        task.stopProgress();
                         update = true;
                     }
                 }
             }
         }
-
         return update;
     }
 
     public int getDownloadTaskNumber() {
         int i = 0;
-        for (ExplorerTask explorerTask : tasks) {
+        for (ExplorerTask<?, ?> explorerTask : tasks) {
             if (explorerTask.isSubTask()) {
                 i++;
             }

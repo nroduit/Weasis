@@ -36,7 +36,6 @@ import javax.swing.border.EmptyBorder;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.acquire.explorer.AcquireExplorer;
-import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
@@ -96,7 +95,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
     private JPanel initPanel() {
         JPanel panel = new JPanel();
-        panel.setBorder(new EmptyBorder(0, 0, 20, 10));
+        panel.setBorder(new EmptyBorder(10, 10, 20, 15));
         panel.setLayout(new GridBagLayout());
 
         JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON); //$NON-NLS-1$
@@ -132,7 +131,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         installFocusListener(spinner);
 
         c = new GridBagConstraints();
-        c.insets = new Insets(0, 2, 0, 0);
+        c.insets = new Insets(5, 2, 0, 0);
         c.gridx = 2;
         c.gridy = 2;
         c.gridwidth = GridBagConstraints.REMAINDER;
@@ -160,6 +159,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             }
         });
         c = new GridBagConstraints();
+        c.insets = new Insets(5, 2, 0, 0);
         c.gridx = 1;
         c.gridy = 3;
         c.gridwidth = 2;
@@ -203,12 +203,13 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             if (action.equals(OPTIONS[0])) {
                 SeriesGroup serieType = null;
                 if (btnGrp.getSelection().equals(btn1.getModel())) {
-                    serieType = AcquireManager.getDefaultSeries();
+                    serieType = null;
                 } else if (btnGrp.getSelection().equals(btn2.getModel())) {
                     serieType = SeriesGroup.DATE_SERIE;
                 } else {
                     if (serieName.getText() != null && !serieName.getText().isEmpty()) {
                         serieType = new SeriesGroup(serieName.getText());
+                        serieType.setNeedUpateFromGlobaTags(true);
                     } else {
                         JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
                             Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
@@ -217,7 +218,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                     }
                 }
 
-                if (close && serieType != null) {
+                if (close) {
                     importPanel.getCentralPane().setSelectedAndGetFocus();
 
                     Integer maxRangeInMinutes = (Integer) spinner.getValue();

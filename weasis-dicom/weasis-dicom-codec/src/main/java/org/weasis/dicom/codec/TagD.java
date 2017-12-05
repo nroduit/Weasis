@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLInputFactory;
@@ -50,11 +51,11 @@ import org.dcm4che3.util.DateUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -68,7 +69,7 @@ public class TagD extends TagW {
     static final DateTimeFormatter DICOM_TIME = new DateTimeFormatterBuilder().appendValue(HOUR_OF_DAY, 2)
         .optionalStart().appendValue(MINUTE_OF_HOUR, 2).optionalStart().appendValue(SECOND_OF_MINUTE, 2)
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
-    
+
     public enum Sex {
         SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), //$NON-NLS-1$ //$NON-NLS-2$
         SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), //$NON-NLS-1$ //$NON-NLS-2$
@@ -90,12 +91,12 @@ public class TagD extends TagW {
         public String toString() {
             return displayValue;
         }
-        
+
         public static Sex getSex(String sex) {
             Sex s = Sex.SEX_OTHER;
             if (StringUtil.hasText(sex)) {
-               // Sex attribute can have the following values: M(male), F(female), or O(other)
-               return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE //$NON-NLS-1$
+                // Sex attribute can have the following values: M(male), F(female), or O(other)
+                return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE //$NON-NLS-1$
                     : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; //$NON-NLS-1$
             }
             return s;
@@ -103,11 +104,11 @@ public class TagD extends TagW {
     }
 
     public enum Level {
-        PATIENT("Patient"), 
-        STUDY("Study"), 
-        SERIES("Series"), 
-        INSTANCE("Instance"),
-        FRAME("Frame"); 
+        PATIENT("Patient"), //$NON-NLS-1$
+        STUDY("Study"), //$NON-NLS-1$
+        SERIES("Series"), //$NON-NLS-1$
+        INSTANCE("Instance"), //$NON-NLS-1$
+        FRAME("Frame"); //$NON-NLS-1$
 
         private final String tag;
 
@@ -567,10 +568,10 @@ public class TagD extends TagW {
                                 TagD t;
                                 if (VR.SQ.equals(vrVal)) {
                                     t = new TagSeq(tagID, keyword, disp, null, vrVal, vmMin, vmMax, defaultValue,
-                                        JMVUtils.getNULLtoFalse(retired));
+                                        LangUtil.getEmptytoFalse(retired));
                                 } else {
                                     t = new TagD(tagID, keyword, disp, null, vrVal, vmMin, vmMax, defaultValue,
-                                        JMVUtils.getNULLtoFalse(retired));
+                                        LangUtil.getEmptytoFalse(retired));
                                 }
                                 TagW.addTag(t);
                             } catch (Exception e) {
@@ -690,7 +691,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDate getDicomDate(String date) {
-        if (Objects.nonNull(date)) {
+        if (StringUtil.hasText(date)) {
             try {
                 if (date.length() > 8) {
                     StringBuilder buf = new StringBuilder(8);
@@ -707,7 +708,7 @@ public class TagD extends TagW {
     }
 
     public static LocalTime getDicomTime(String time) {
-        if (Objects.nonNull(time)) {
+        if (StringUtil.hasText(time)) {
             try {
                 return LocalTime.parse(time.trim(), DICOM_TIME);
             } catch (Exception e) {
@@ -729,7 +730,7 @@ public class TagD extends TagW {
     }
 
     public static LocalDateTime getDicomDateTime(TimeZone tz, String value, boolean ceil) {
-        if (Objects.nonNull(value)) {
+        if (StringUtil.hasText(value)) {
             try {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -804,7 +805,7 @@ public class TagD extends TagW {
         if (attribute != null) {
             String val = xmler.getAttributeValue(null, attribute);
             if (val != null) {
-                String[] strs = val.split(separator);
+                String[] strs = val.split(Pattern.quote(separator));
                 TemporalAccessor[] vals = new TemporalAccessor[strs.length];
                 for (int i = 0; i < strs.length; i++) {
                     if (TagType.TIME.equals(type)) {

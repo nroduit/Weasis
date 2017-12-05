@@ -62,6 +62,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.model.GraphicModel;
@@ -72,7 +73,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
-import org.weasis.dicom.explorer.pr.PrSerializer;
+import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 
 @SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -153,7 +154,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } else if (EXPORT_FORMAT[1].equals(seltected)) {
             // No option
         } else if (EXPORT_FORMAT[2].equals(seltected)) {
-            final JSlider slider = new JSlider(0, 100, StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80));
+            final JSlider slider = new JSlider(0, 100, StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 80));
 
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
@@ -281,29 +282,30 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (outputFolder != null) {
             final File exportDir = outputFolder.getCanonicalFile();
 
-            final ExplorerTask task = new ExplorerTask(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
+            final ExplorerTask<Boolean, String> task =
+                new ExplorerTask<Boolean, String>(Messages.getString("LocalExport.exporting"), false) { //$NON-NLS-1$
 
-                @Override
-                protected Boolean doInBackground() throws Exception {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-                    if (EXPORT_FORMAT[0].equals(format)) {
-                        writeDicom(this, exportDir, model, false);
-                    } else if (EXPORT_FORMAT[1].equals(format)) {
-                        writeDicom(this, exportDir, model, true);
-                    } else {
-                        writeOther(this, exportDir, model, format);
+                    @Override
+                    protected Boolean doInBackground() throws Exception {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+                        if (EXPORT_FORMAT[0].equals(format)) {
+                            writeDicom(this, exportDir, model, false);
+                        } else if (EXPORT_FORMAT[1].equals(format)) {
+                            writeDicom(this, exportDir, model, true);
+                        } else {
+                            writeOther(this, exportDir, model, format);
+                        }
+                        return true;
                     }
-                    return true;
-                }
 
-                @Override
-                protected void done() {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-                }
+                    @Override
+                    protected void done() {
+                        dicomModel.firePropertyChange(
+                            new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+                    }
 
-            };
+                };
             task.execute();
         }
     }
@@ -330,18 +332,18 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private void writeOther(ExplorerTask task, File exportDir, CheckTreeModel model, String format) {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         boolean keepNames = Boolean.parseBoolean(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString()));
-        int jpegQuality = StringUtil.getInteger(pref.getProperty(IMG_QUALITY, null), 80);
+        int jpegQuality = StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 80);
         boolean more8bits = Boolean.parseBoolean(pref.getProperty(HEIGHT_BITS, Boolean.FALSE.toString()));
 
         try {
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> seriesGph = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
                     DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
                     if (node.getUserObject() instanceof Series) {
                         MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
-                        if (JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave))) {
+                        if (LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
                             Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
                             if (series != null) {
                                 seriesGph.add((String) series.getTagValue(TagD.get(Tag.SeriesInstanceUID)));
@@ -456,7 +458,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 writer = DicomDirLoader.open(dcmdirFile);
             }
 
-            synchronized (model) {
+            synchronized (exportTree) {
                 ArrayList<String> uids = new ArrayList<>();
                 TreePath[] paths = model.getCheckingPaths();
                 for (TreePath treePath : paths) {
@@ -507,7 +509,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         }
                     } else if (node.getUserObject() instanceof Series) {
                         MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
-                        if (JMVUtils.getNULLtoFalse(s.getTagValue(TagW.ObjectToSave))) {
+                        if (LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
                             Series<?> series = (Series<?>) s.getTagValue(CheckTreeModel.SourceSeriesForPR);
                             if (series != null) {
                                 String seriesInstanceUID = UIDUtils.createUID();
@@ -557,7 +559,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 File outputFile = new File(destinationDir, keepNames ? prUid : makeFileIDs(prUid));
                 destinationDir.mkdirs();
                 Attributes prAttributes =
-                    PrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
+                    DicomPrSerializer.writePresentation(grModel, imgAttributes, outputFile, seriesInstanceUID, prUid);
                 if (prAttributes != null) {
                     try {
                         writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);

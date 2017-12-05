@@ -1,8 +1,10 @@
 package org.weasis.dicom.explorer;
+
 import java.text.Collator;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.Locale;
+import java.util.Objects;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -10,13 +12,15 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
 public class DicomSorter {
     private static final Collator collator = Collator.getInstance(Locale.getDefault());
-    public static final Comparator<Object> PATIENT_COMPARATOR = (o1, o2) -> collator.compare(o1.toString(), o2.toString());
+    public static final Comparator<Object> PATIENT_COMPARATOR =
+        (o1, o2) -> collator.compare(o1.toString(), o2.toString());
 
     public static final Comparator<Object> STUDY_COMPARATOR = new Comparator<Object>() {
 
@@ -54,9 +58,9 @@ public class DicomSorter {
                             return c;
                         }
                     }
-                    if (d1 == null && d2 != null) {
+                    if (d1 == null) {
                         // Add o1 after o2
-                        return 1;
+                        return d2 == null ? 0 : 1;
                     }
                     // Add o2 after o1
                     return -1;
@@ -79,7 +83,7 @@ public class DicomSorter {
                     return -1;
                 }
             }
-            return 0;
+            return Objects.equals(o1, o1) ? 0 : -1;
         }
     };
 
@@ -107,6 +111,14 @@ public class DicomSorter {
                     c = val1.compareTo(val2);
                     if (c != 0) {
                         return c;
+                    }
+                    Integer sval1 = TagW.getTagValue(st1, TagW.SplitSeriesNumber, Integer.class);
+                    Integer sval2 = TagW.getTagValue(st2, TagW.SplitSeriesNumber, Integer.class);
+                    if (sval1 != null && sval2 != null) {
+                        c = sval1.compareTo(sval2);
+                        if (c != 0) {
+                            return c;
+                        }
                     }
                 }
 
@@ -172,7 +184,7 @@ public class DicomSorter {
                                         }
                                     }
                                     if (c == 0 || (nb1 == null && nb2 == null)) {
-                                        return -1;
+                                        return 0;
                                     }
                                     if (nb1 == null) {
                                         return 1;
@@ -193,7 +205,7 @@ public class DicomSorter {
                         }
                         if (media2 == null) {
                             // Add o2 after o1
-                            return -1;
+                            return media1 == null ? 0 : -1;
                         }
                         return 1;
                     }
@@ -215,7 +227,7 @@ public class DicomSorter {
             if (o2 instanceof MediaSeriesGroup) {
                 return -1;
             }
-            return -1;
+            return Objects.equals(o1, o1) ? 0 : -1;
         }
     };
 

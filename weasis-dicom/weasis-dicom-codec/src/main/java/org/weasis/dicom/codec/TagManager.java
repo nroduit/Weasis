@@ -46,6 +46,15 @@ public class TagManager {
         }
     }
 
+    public boolean contains(TagW tag, Level level) {
+        if (tag == null || level == null) {
+            return false;
+        }
+
+        List<TagW> list = levelMap.get(level);
+        return list != null && list.contains(tag);
+    }
+
     public void readTags(Level level, Attributes header, Tagable tags) {
         if (level == null || header == null || tags == null) {
             return;

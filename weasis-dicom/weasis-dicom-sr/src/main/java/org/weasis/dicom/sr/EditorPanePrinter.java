@@ -89,15 +89,6 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         this.setPreferredSize(new Dimension(pageWidth * 2 + 50, PAGE_SHIFT + count * (pageHeight + PAGE_SHIFT)));
     }
 
-    @Override
-    public void paintComponent(Graphics g) {
-        super.paintComponent(g);
-
-        AffineTransform old = ((Graphics2D) g).getTransform();
-
-        ((Graphics2D) g).setTransform(old);
-    }
-
     protected void calculatePageInfo() {
         pages = new ArrayList<>();
         int startY = 0;
