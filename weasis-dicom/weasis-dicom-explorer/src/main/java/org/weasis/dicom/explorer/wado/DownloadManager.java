@@ -374,7 +374,7 @@ public class DownloadManager {
     }
 
     private static void readArcQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
-        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, "");
+        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, ""); //$NON-NLS-1$
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID =
             Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$

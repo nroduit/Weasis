@@ -159,7 +159,7 @@ public class DicomCodec implements Codec {
         UIDUtils.setRoot(weasisRootUID);
         
         // Set the default encoding (must contain ASCII)
-        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100");
+        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); //$NON-NLS-1$
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:

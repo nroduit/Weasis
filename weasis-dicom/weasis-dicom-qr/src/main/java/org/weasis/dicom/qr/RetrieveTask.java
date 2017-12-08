@@ -175,7 +175,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     }
 
                     WadoParameters wadoParameters =
-                        new WadoParameters("local", wadoURLs.get(0).toString(), false, null, null, null);
+                        new WadoParameters("local", wadoURLs.get(0).toString(), false, null, null, null); //$NON-NLS-1$
                     CFindQueryResult query = new CFindQueryResult(wadoParameters);
                     query.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);
