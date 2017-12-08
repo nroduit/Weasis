@@ -255,6 +255,7 @@ public class CheckTreeModel {
             if (desc != null) {
                 buf.append(desc);
             }
+            buf.append(" -- (").append(getChildCount()).append(" instances)");
             if (newElement) {
                 buf.append("</html>"); //$NON-NLS-1$
             }
