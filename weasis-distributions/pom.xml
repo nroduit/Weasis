@@ -14,6 +14,8 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 
 	<properties>
+	 	<build.timestamp>${maven.build.timestamp}</build.timestamp>
+   		<maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>

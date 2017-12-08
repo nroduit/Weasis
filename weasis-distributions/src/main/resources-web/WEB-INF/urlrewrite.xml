@@ -10,9 +10,36 @@
 			Any "/weasis-launcher${profile.suffix}.jar" download Request will be redirected to "weasis-launcher.jar" file
 		</note>
 
-		<from>^/weasis-launcher(.+)\.jar$</from>
-		<to type="redirect">%{context-path}/weasis-launcher.jar</to>
+		<from>^/weasis-launcher(.+)\.jar(.*)$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+		<to type="redirect">%{context-path}/weasis-launcher.jar$2</to>
 	</rule>
 
+    <rule>
+        <from>^/felix(.+)\.jar(.*)$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+		<to type="redirect">%{context-path}/felix.jar$2</to>
+    </rule>
+    <rule>
+        <from>^/substance(.+)\.jar(.*)$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+		<to type="redirect">%{context-path}/substance.jar$2</to>
+    </rule>
+    
+    <rule>
+        <from>^/AppInfo$</from>
+		<set type="response-header" name="Cache-Control">no-cache, must-revalidate</set>
+		<set type="response-header" name="Pragma">no-cache</set>
+		<set type="response-header" name="AppVersion">${app.version}</set>
+		<set type="response-header" name="FelixVersion">${felix.framework.version}</set>
+		<set type="response-header" name="SubstanceVersion">${substance.version}</set>
+		<set type="response-header" name="JavaVersion">${java-version}</set>
+		<set type="response-header" name="BuildTime">${build.timestamp}</set>
+		<set type="status">200</set>
+		<to>null</to>
+    </rule>
 </urlrewrite>
 

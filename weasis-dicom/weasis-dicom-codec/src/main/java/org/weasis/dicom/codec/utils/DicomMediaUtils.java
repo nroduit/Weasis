@@ -1573,7 +1573,7 @@ public class DicomMediaUtils {
     }
 
     public static void fillAttributes(Attributes dataset, final TagW tag, final Object val, ElementDictionary dic) {
-        if (dataset != null) {
+        if (dataset != null && tag != null) {
             TagType type = tag.getType();
             int id = tag.getId();
             String key = dic.keywordOf(id);
