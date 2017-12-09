@@ -83,7 +83,7 @@ public class DicomSorter {
                     return -1;
                 }
             }
-            return Objects.equals(o1, o1) ? 0 : -1;
+            return Objects.equals(o1, o2) ? 0 : -1;
         }
     };
 
@@ -227,7 +227,7 @@ public class DicomSorter {
             if (o2 instanceof MediaSeriesGroup) {
                 return -1;
             }
-            return Objects.equals(o1, o1) ? 0 : -1;
+            return Objects.equals(o1, o2) ? 0 : -1;
         }
     };
 
