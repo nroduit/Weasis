@@ -662,7 +662,21 @@ public class ImageProcessor {
         Imgproc.resize(srcImg, dstImg, dim, 0, 0, Imgproc.INTER_AREA);
         return dstImg;
     }
+    
+    public static boolean writeImage(Mat source, File file) {
+        if (file.exists() && !file.canWrite()) {
+            return false;
+        }
 
+        try {
+            return Imgcodecs.imwrite(file.getPath(), source);
+        } catch (OutOfMemoryError | CvException e) {
+            LOGGER.error("Writing Image", e); //$NON-NLS-1$
+            FileUtil.delete(file);
+            return false;
+        }
+    }
+    
     public static boolean writePNM(Mat source, File file, boolean addThumb) {
         if (file.exists() && !file.canWrite()) {
             return false;

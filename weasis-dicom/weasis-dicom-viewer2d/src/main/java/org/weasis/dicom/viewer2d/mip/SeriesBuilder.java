@@ -148,8 +148,10 @@ public class SeriesBuilder {
                     try {
                         File mipDir =
                             AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
-                        raw = new FileRawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
-                        raw.write(curImage);
+                        raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
+                        if(!raw.write(curImage)) {
+                            raw = null;
+                        }
                     } catch (Exception e) {
                         if (raw != null) {
                             FileUtil.delete(raw.getFile());

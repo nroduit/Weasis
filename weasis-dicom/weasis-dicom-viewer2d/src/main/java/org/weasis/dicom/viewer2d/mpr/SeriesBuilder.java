@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.IIOException;
 import javax.swing.JOptionPane;
@@ -444,7 +445,8 @@ public class SeriesBuilder {
     private static double writeBlock(FileRawImage[] newSeries, MediaSeries<DicomImageElement> series,
         Iterable<DicomImageElement> medias, ViewParameter params, final MprView view, Thread thread,
         final boolean[] abort, String seriesID, int dstHeight) throws IOException {
-
+        ImageCV[] builImgs = new ImageCV[newSeries.length];
+        
         // TODO should return the more frequent space!
         final JProgressBar bar = view.getProgressBar();
         try {
@@ -482,8 +484,9 @@ public class SeriesBuilder {
                         });
                     }
                 }
+                
                 // TODO do not open more than 512 files (Limitation to open 1024 in the same time on Ubuntu)
-                PlanarImage image = dcm.getImage();
+                PlanarImage image = dcm.getImage(null, false);
                 if (image == null) {
                     abort[0] = true;
                     throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
@@ -493,37 +496,57 @@ public class SeriesBuilder {
                         (int) (Math.abs(dcm.getRescaleY()) * image.height()));
                     image = ImageProcessor.scale(image.toImageCV(), dim, Imgproc.INTER_LINEAR);
                 }
-                writeRasterInRaw(image, newSeries, params, dstHeight);
+
+                writeRasterInRaw(image, newSeries, builImgs, params, dstHeight, index);
             }
+            
+
             return lastSpace;
         } finally {
             for (int i = 0; i < newSeries.length; i++) {
                 if (newSeries[i] != null) {
                     if (abort[0]) {
                         newSeries[i].getFile().delete();
+                    } else {
+                        newSeries[i].write(builImgs[i]);
                     }
+                    builImgs[i].release();
                 }
             }
         }
     }
 
-    private static void writeRasterInRaw(PlanarImage image, FileRawImage[] newSeries, ViewParameter params,
-        int dstHeight) throws IOException {
+    private static void writeRasterInRaw(PlanarImage image, FileRawImage[] newSeries, ImageCV[] builImgs,
+        ViewParameter params, int dstHeight, int imgIndex) throws IOException {
         ImageCV img = ImageProcessor.getRotatedImage(image.toMat(), params.rotateCvType);
         if (newSeries != null && img != null && img.height() == newSeries.length) {
+
             if (newSeries[0] == null) {
                 File dir = new File(MPR_CACHE_DIR, params.seriesUID);
                 dir.mkdirs();
                 for (int i = 0; i < newSeries.length; i++) {
-                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1)));//$NON-NLS-1$
-                    newSeries[i].writeHeader(img.type(), img.width(), dstHeight);
+                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$
+                    builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
                 }
             }
 
             for (int j = 0; j < newSeries.length; j++) {
-                newSeries[j].writeRow(img, j);
+                img.row(j).copyTo(builImgs[j].row(imgIndex - 1));
             }
         }
+
+    }
+    
+    public static void showTimeElapsed(StringBuilder buf, String prefix, int prefixAlign, long difference) {
+        long nano = difference;
+        long sec = TimeUnit.NANOSECONDS.toSeconds(nano);
+        nano -= TimeUnit.SECONDS.toNanos(sec);
+        long millis = TimeUnit.NANOSECONDS.toMillis(nano);
+        nano -= TimeUnit.MILLISECONDS.toNanos(millis);
+        long micro = TimeUnit.NANOSECONDS.toMicros(nano);
+        nano -= TimeUnit.MICROSECONDS.toNanos(micro);
+        buf.append(String.format("%" + prefixAlign + "s", prefix));
+        buf.append(String.format("%3d sec, %3d mil, %3d micro, %3d nano", sec, millis, micro, nano));
     }
 
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
