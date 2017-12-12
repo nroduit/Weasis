@@ -358,12 +358,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         }
         try {
             // FIXME use classloader.loadClass or injection
-            Class<?> cl = Class.forName(clazz);
-            JComponent component = (JComponent) cl.newInstance();
-            if (component instanceof SeriesViewerListener) {
-                eventManager.addSeriesViewerListener((SeriesViewerListener) component);
-            }
-            return component;
+            return buildInstance(Class.forName(clazz));
 
         } catch (Exception e) {
             LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$

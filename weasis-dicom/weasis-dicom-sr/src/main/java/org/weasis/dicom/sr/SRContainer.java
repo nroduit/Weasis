@@ -276,11 +276,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public JComponent createUIcomponent(String clazz) {
         try {
             // FIXME use classloader.loadClass or injection
-            Class<?> cl = Class.forName(clazz);
-            JComponent component = (JComponent) cl.newInstance();
-            if (component instanceof SeriesViewerListener) {
-                eventManager.addSeriesViewerListener((SeriesViewerListener) component);
-            }
+            JComponent component = buildInstance(Class.forName(clazz));
             if (component instanceof SRView) {
                 srview = (SRView) component;
             }
@@ -308,7 +304,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
         if (srview != null) {
             JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
             frame.setSize(500, 630);
-            DicomFieldsView view = new DicomFieldsView();
+            DicomFieldsView view = new DicomFieldsView(this);
             view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(),
                 DicomModel.getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
             JPanel panel = new JPanel();

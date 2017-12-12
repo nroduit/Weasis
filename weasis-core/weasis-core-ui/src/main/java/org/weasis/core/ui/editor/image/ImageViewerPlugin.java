@@ -28,6 +28,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -53,6 +54,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -257,6 +259,31 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         components.clear();
     }
 
+    protected JComponent buildInstance(Class<?> cl) throws Exception {
+        JComponent component;
+        if(hasSeriesViewerConstructor(cl)) {
+            component = (JComponent) cl.getConstructor(SeriesViewer.class).newInstance(this);
+        }
+        else {
+            component = (JComponent) cl.newInstance();
+        }
+        
+        if (component instanceof SeriesViewerListener) {
+            eventManager.addSeriesViewerListener((SeriesViewerListener) component);
+        }
+        return component;
+    };
+    
+    private boolean hasSeriesViewerConstructor(Class<?> clazz) {
+        for (Constructor<?> constructor : clazz.getConstructors()) {
+            Class<?>[] types = constructor.getParameterTypes();
+            if (types.length == 1 && types[0].isAssignableFrom(SeriesViewer.class)) { 
+                return true;
+            }
+        }
+        return false;
+    }
+    
     /**
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.

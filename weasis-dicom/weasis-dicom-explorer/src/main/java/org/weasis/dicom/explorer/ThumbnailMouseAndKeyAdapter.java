@@ -38,6 +38,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.DefaultMimeAppFactory;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -179,9 +180,10 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                     item5.addActionListener(e -> {
                         JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                         frame.setSize(500, 630);
-                        DicomFieldsView view = new DicomFieldsView();
-                        view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory.createSeriesViewer(null),
-                            series, series.getMedia(MEDIA_POSITION.FIRST, null, null), EVENT.SELECT));
+                        SeriesViewer<?> viewer = viewerFactory.createSeriesViewer(null);
+                        DicomFieldsView view = new DicomFieldsView(viewer);
+                        view.changingViewContentEvent(new SeriesViewerEvent(viewer, series,
+                            series.getMedia(MEDIA_POSITION.FIRST, null, null), EVENT.SELECT));
                         JPanel panel = new JPanel();
                         panel.setLayout(new BorderLayout());
                         panel.add(view);

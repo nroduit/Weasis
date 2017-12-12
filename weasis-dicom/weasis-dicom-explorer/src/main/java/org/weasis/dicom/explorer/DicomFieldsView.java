@@ -61,6 +61,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -86,13 +87,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     private MediaElement currentMedia;
     private MediaSeries<?> currentSeries;
     private boolean anonymize = false;
+    private SeriesViewer<?> viewer;
 
     private static final Highlighter.HighlightPainter searchHighlightPainter =
         new SearchHighlightPainter(new Color(255, 125, 0));
     private static final Highlighter.HighlightPainter searchResultHighlightPainter =
         new SearchHighlightPainter(Color.YELLOW);
 
-    public DicomFieldsView() {
+    public DicomFieldsView(SeriesViewer<?> viewer) {
+        this.viewer = viewer;
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -128,7 +131,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
         EVENT type = event.getEventType();
-        if (EVENT.SELECT.equals(type) || EVENT.LAYOUT.equals(type) || EVENT.ANONYM.equals(type)) {
+        if (event.getSeriesViewer() == viewer
+            && (EVENT.SELECT.equals(type) || EVENT.LAYOUT.equals(type) || EVENT.ANONYM.equals(type))) {
             currentMedia = event.getMediaElement();
             currentSeries = event.getSeries();
             if (event.getSeriesViewer() instanceof ImageViewerPlugin) {
@@ -376,7 +380,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 if (img != null) {
                     JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                     frame.setSize(500, 630);
-                    DicomFieldsView view = new DicomFieldsView();
+                    DicomFieldsView view = new DicomFieldsView(container);
                     view.changingViewContentEvent(
                         new SeriesViewerEvent(container, selView.getSeries(), img, EVENT.SELECT));
                     JPanel panel = new JPanel();
@@ -396,7 +400,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             if (dcm != null) {
                 JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
                 frame.setSize(500, 630);
-                DicomFieldsView view = new DicomFieldsView();
+                DicomFieldsView view = new DicomFieldsView(container);
                 view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
                 JPanel panel = new JPanel();
                 panel.setLayout(new BorderLayout());
