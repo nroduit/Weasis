@@ -106,7 +106,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }

@@ -27,10 +27,10 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
     private final List<CancelListener> cancelListeners;
 
     public ExplorerTask(String message, boolean interruptible) {
-        this(message, interruptible, null, false);
+        this(message, interruptible, false);
     }
 
-    public ExplorerTask(String message, boolean globalLoadingManager, CircularProgressBar bar, boolean subTask) {
+    public ExplorerTask(String message, boolean globalLoadingManager, boolean subTask) {
         this.message = message;
         this.globalLoadingManager = globalLoadingManager;
         // Trick to keep progressBar with a final modifier to be instantiated in EDT (required by substance)
