@@ -117,7 +117,6 @@ public class PatientComparator {
             }
 
             return buffer.toString();
-
         }
 
     }
