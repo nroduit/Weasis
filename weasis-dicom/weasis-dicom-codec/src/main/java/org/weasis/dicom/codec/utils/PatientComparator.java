@@ -16,12 +16,11 @@ import org.weasis.dicom.codec.TagD;
 
 public class PatientComparator {
 
-    private String birthdate;
-    private String sex;
+    private String issuerOfPatientID;
     private String patientId;
     private String name;
-    private String issuerOfPatientID;
-    private Long id;
+    private String birthdate;
+    private String sex;
 
     public PatientComparator(final Attributes item) {
         patientId = item.getString(Tag.PatientID, TagW.NO_VALUE);
@@ -29,7 +28,6 @@ public class PatientComparator {
         sex = item.getString(Tag.PatientSex, "");
         birthdate = item.getString(Tag.PatientBirthDate, "");
         issuerOfPatientID = item.getString(Tag.IssuerOfPatientID, "");
-        id = null;
     }
 
     public PatientComparator(final XMLStreamReader xmler) {
@@ -38,7 +36,6 @@ public class PatientComparator {
         name = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientName).getKeyword(), TagW.NO_VALUE);
         sex = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientSex).getKeyword(), "");
         birthdate = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientBirthDate).getKeyword(), "");
-        id = null;
     }
 
     public PatientComparator() {
@@ -49,9 +46,8 @@ public class PatientComparator {
         patientId = TagD.getTagValue(tagable, Tag.PatientID, String.class);
         issuerOfPatientID = TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class);
         name = TagD.getTagValue(tagable, Tag.PatientName, String.class);
-        sex = "";
-        birthdate = "";
-        id = null;
+        sex = TagD.getTagValue(tagable, Tag.PatientSex, String.class);
+        birthdate = TagD.getTagValue(tagable, Tag.PatientBirthDate, String.class);
         return buildPatientPseudoUID();
     }
 
@@ -65,14 +61,14 @@ public class PatientComparator {
             String[] split = property.split(",");
             for (String string : split) {
                 switch (string) {
+                    case "issuerOfPatientID":
+                        buffer.append(StringUtil.hasLength(issuerOfPatientID) ? issuerOfPatientID.trim() : "");
+                        break;
                     case "patientId":
                         buffer.append(StringUtil.hasLength(patientId) ? patientId.trim() : TagW.NO_VALUE);
                         break;
                     case "patientName":
                         buffer.append(StringUtil.hasLength(name) ? name.replace("^", " ").trim() : "");
-                        break;
-                    case "id":
-                        buffer.append(id == null ? "" : id);
                         break;
                     case "patientBirthdate":
                         buffer.append(StringUtil.hasLength(birthdate) ? birthdate.trim() : "");
@@ -80,15 +76,11 @@ public class PatientComparator {
                     case "patientSex":
                         buffer.append(StringUtil.hasLength(sex) ? sex : "");
                         break;
-                    case "issuerOfPatientID":
-                        buffer.append(StringUtil.hasLength(issuerOfPatientID) ? issuerOfPatientID.trim() : "");
-                        break;
                 }
             }
             return buffer.toString();
 
         } else {
-
             /*
          * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
          *
@@ -115,21 +107,12 @@ public class PatientComparator {
 
     }
 
-
-    public String getBirthdate() {
-        return birthdate;
+    public String getIssuerOfPatientID() {
+        return issuerOfPatientID;
     }
 
-    public void setBirthdate(String birthdate) {
-        this.birthdate = birthdate;
-    }
-
-    public String getSex() {
-        return sex;
-    }
-
-    public void setSex(String sex) {
-        this.sex = sex;
+    public void setIssuerOfPatientID(String issuerOfPatientID) {
+        this.issuerOfPatientID = issuerOfPatientID;
     }
 
     public String getPatientId() {
@@ -148,21 +131,20 @@ public class PatientComparator {
         this.name = name;
     }
 
-    public String getIssuerOfPatientID() {
-        return issuerOfPatientID;
+    public String getBirthdate() {
+        return birthdate;
     }
 
-    public void setIssuerOfPatientID(String issuerOfPatientID) {
-        this.issuerOfPatientID = issuerOfPatientID;
+    public void setBirthdate(String birthdate) {
+        this.birthdate = birthdate;
     }
 
-    public Long getId() {
-        return id;
+    public String getSex() {
+        return sex;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setSex(String sex) {
+        this.sex = sex;
     }
-
 
 }
