@@ -92,6 +92,7 @@ import org.weasis.dicom.tool.DicomListener;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
+import org.weasis.dicom.codec.utils.PatientComparator;
 
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
@@ -504,8 +505,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 LOGGER.trace("==========================================="); //$NON-NLS-1$
                 LOGGER.trace("{}", item.toString(100, 150)); //$NON-NLS-1$
 
-                String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(item.getString(Tag.PatientID),
-                    item.getString(Tag.IssuerOfPatientID), item.getString(Tag.PatientName));
+                PatientComparator patientComparator = new PatientComparator(item);
+                String patientPseudoUID = patientComparator.buildPatientPseudoUID();
                 MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
                 if (patient == null) {
                     patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID,

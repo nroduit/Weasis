@@ -52,7 +52,6 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.metadata.IIOMetadata;
 import javax.imageio.spi.ImageReaderSpi;
 import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.ImageInputStreamImpl;
 import javax.media.jai.JAI;
 import javax.media.jai.PlanarImage;
 import javax.media.jai.operator.AndConstDescriptor;
@@ -67,13 +66,10 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.codec.ImageReaderFactory;
-import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLS;
-import org.dcm4che3.imageio.codec.jpeg.PatchJPEGLSImageInputStream;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
-import org.dcm4che3.imageio.stream.SegmentedInputImageStream;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
@@ -111,6 +107,7 @@ import org.weasis.dicom.codec.utils.OverlayUtils;
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ExtendImageParam;
 import com.sun.media.jai.util.ImageUtil;
+import org.weasis.dicom.codec.utils.PatientComparator;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -550,7 +547,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // -------- Mandatory Tags --------
         // Tags for identifying group (Patient, Study, Series)
         // Global Identifier for the patient.
-        setTag(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(this));
+        PatientComparator patientComparator = new PatientComparator();
+        setTag(TagW.PatientPseudoUID, patientComparator.buildPatientPseudoUID(this));
 
         Integer instNb =
             DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, instanceID.incrementAndGet());
