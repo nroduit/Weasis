@@ -103,11 +103,11 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 
 import com.sun.media.imageio.stream.RawImageInputStream;
 import com.sun.media.imageioimpl.common.ExtendImageParam;
 import com.sun.media.jai.util.ImageUtil;
-import org.weasis.dicom.codec.utils.PatientComparator;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -547,8 +547,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // -------- Mandatory Tags --------
         // Tags for identifying group (Patient, Study, Series)
         // Global Identifier for the patient.
-        PatientComparator patientComparator = new PatientComparator();
-        setTag(TagW.PatientPseudoUID, patientComparator.buildPatientPseudoUID(this));
+        PatientComparator patientComparator = new PatientComparator(this);
+        setTag(TagW.PatientPseudoUID, patientComparator.buildPatientPseudoUID());
 
         Integer instNb =
             DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, instanceID.incrementAndGet());

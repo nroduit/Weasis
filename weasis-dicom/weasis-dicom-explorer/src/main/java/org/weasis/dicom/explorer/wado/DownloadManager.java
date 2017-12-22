@@ -468,10 +468,6 @@ public class DownloadManager {
         TagW issuerIdTag = TagD.get(Tag.IssuerOfPatientID);
         TagW nameTag = TagD.get(Tag.PatientName);
 
-        String patientID = TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE);
-        String issuerOfPatientID = TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null);
-        String name = TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE);
-
         PatientComparator patientComparator = new PatientComparator(xmler);
         String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
@@ -480,9 +476,9 @@ public class DownloadManager {
         if (patient == null) {
             patient =
                 new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
-            patient.setTag(idTag, patientID);
-            patient.setTag(nameTag, name);
-            patient.setTagNoNull(issuerIdTag, issuerOfPatientID);
+            patient.setTag(idTag, TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE));
+            patient.setTag(nameTag, TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE));
+            patient.setTagNoNull(issuerIdTag, TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null));
 
             TagW[] tags = TagD.getTagFromIDs(Tag.PatientSex, Tag.PatientBirthDate, Tag.PatientBirthTime);
             for (TagW tag : tags) {

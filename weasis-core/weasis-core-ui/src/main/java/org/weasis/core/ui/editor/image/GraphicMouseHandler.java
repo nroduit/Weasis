@@ -44,12 +44,12 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             throw new IllegalArgumentException();
         }
         this.vImg = vImg;
-        cursorSet = cursors;
+        this.cursorSet = cursors;
     }
 
     public GraphicMouseHandler(ViewCanvas<E> vImg) {
         this(vImg, new CursorSet(DefaultView2d.DEFAULT_CURSOR, DefaultView2d.MOVE_CURSOR, DefaultView2d.HAND_CURSOR,
-                DefaultView2d.EDIT_CURSOR));
+            DefaultView2d.EDIT_CURSOR));
     }
 
     public Draggable getDragSequence() {
@@ -365,11 +365,11 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         private final Cursor handCursor;
         private final Cursor editCursor;
 
-        public CursorSet(final Cursor drawing, final Cursor move, final Cursor hand, final Cursor edit) {
-            drawingCursor = drawing;
-            moveCursor = move;
-            handCursor = hand;
-            editCursor = edit;
+        public CursorSet(Cursor drawing, Cursor move, Cursor hand, Cursor edit) {
+            this.drawingCursor = Optional.ofNullable(drawing).orElse(DefaultView2d.DEFAULT_CURSOR);
+            this.moveCursor = Optional.ofNullable(move).orElse(DefaultView2d.MOVE_CURSOR);
+            this.handCursor = Optional.ofNullable(hand).orElse(DefaultView2d.HAND_CURSOR);
+            this.editCursor = Optional.ofNullable(edit).orElse(DefaultView2d.EDIT_CURSOR);
         }
 
         public Cursor getDrawingCursor() {

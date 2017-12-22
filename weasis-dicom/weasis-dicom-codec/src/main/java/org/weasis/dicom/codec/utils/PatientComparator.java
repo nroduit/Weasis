@@ -4,6 +4,8 @@
  */
 package org.weasis.dicom.codec.utils;
 
+import java.util.Optional;
+
 import javax.xml.stream.XMLStreamReader;
 import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.media.data.TagReadable;
@@ -22,33 +24,28 @@ public class PatientComparator {
     private String birthdate;
     private String sex;
 
-    public PatientComparator(final Attributes item) {
-        patientId = item.getString(Tag.PatientID, TagW.NO_VALUE);
-        name = item.getString(Tag.PatientName, TagW.NO_VALUE);
-        sex = item.getString(Tag.PatientSex, "");
-        birthdate = item.getString(Tag.PatientBirthDate, "");
-        issuerOfPatientID = item.getString(Tag.IssuerOfPatientID, "");
+    public PatientComparator(Attributes item) {
+        setPatientId(item.getString(Tag.PatientID));
+        setIssuerOfPatientID(item.getString(Tag.IssuerOfPatientID));
+        setName(item.getString(Tag.PatientName));
+        setSex(item.getString(Tag.PatientSex));
+        setBirthdate(item.getString(Tag.PatientBirthDate));
     }
 
-    public PatientComparator(final XMLStreamReader xmler) {
-        patientId = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientID).getKeyword(), TagW.NO_VALUE);
-        issuerOfPatientID = TagUtil.getTagAttribute(xmler, TagD.get(Tag.IssuerOfPatientID).getKeyword(), "");
-        name = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientName).getKeyword(), TagW.NO_VALUE);
-        sex = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientSex).getKeyword(), "");
-        birthdate = TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientBirthDate).getKeyword(), "");
+    public PatientComparator(XMLStreamReader xmler) {
+        setPatientId(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientID).getKeyword(), null));
+        setIssuerOfPatientID(TagUtil.getTagAttribute(xmler, TagD.get(Tag.IssuerOfPatientID).getKeyword(), null));
+        setName(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientName).getKeyword(), null));
+        setSex(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientSex).getKeyword(), null));
+        setBirthdate(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientBirthDate).getKeyword(), null));
     }
 
-    public PatientComparator() {
-
-    }
-
-    public String buildPatientPseudoUID(TagReadable tagable) {
-        patientId = TagD.getTagValue(tagable, Tag.PatientID, String.class);
-        issuerOfPatientID = TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class);
-        name = TagD.getTagValue(tagable, Tag.PatientName, String.class);
-        sex = TagD.getTagValue(tagable, Tag.PatientSex, String.class);
-        birthdate = TagD.getTagValue(tagable, Tag.PatientBirthDate, String.class);
-        return buildPatientPseudoUID();
+    public PatientComparator(TagReadable tagable) {
+        setPatientId(TagD.getTagValue(tagable, Tag.PatientID, String.class));
+        setIssuerOfPatientID(TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class));
+        setName(TagD.getTagValue(tagable, Tag.PatientName, String.class));
+        setSex(TagD.getTagValue(tagable, Tag.PatientSex, String.class));
+        setBirthdate(TagD.getTagValue(tagable, Tag.PatientBirthDate, String.class));
     }
 
     public String buildPatientPseudoUID() {
@@ -62,19 +59,19 @@ public class PatientComparator {
             for (String string : split) {
                 switch (string) {
                     case "issuerOfPatientID":
-                        buffer.append(StringUtil.hasLength(issuerOfPatientID) ? issuerOfPatientID.trim() : "");
+                        buffer.append(issuerOfPatientID);
                         break;
                     case "patientId":
-                        buffer.append(StringUtil.hasLength(patientId) ? patientId.trim() : TagW.NO_VALUE);
+                        buffer.append(patientId);
                         break;
                     case "patientName":
-                        buffer.append(StringUtil.hasLength(name) ? name.replace("^", " ").trim() : "");
+                        buffer.append(name);
                         break;
                     case "patientBirthdate":
-                        buffer.append(StringUtil.hasLength(birthdate) ? birthdate.trim() : "");
+                        buffer.append(birthdate);
                         break;
                     case "patientSex":
-                        buffer.append(StringUtil.hasLength(sex) ? sex : "");
+                        buffer.append(sex);
                         break;
                 }
             }
@@ -82,25 +79,21 @@ public class PatientComparator {
 
         } else {
             /*
-         * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
-         *
-         * The Image Display shall not display FrameSets for multiple patients simultaneously. Only images with exactly
-         * the same value for Patient’s ID (0010,0020) and Patient’s Name (0010,0010) shall be displayed at the same
-         * time (other Patient-level attributes may be different, empty or absent). Though it is possible that the same
-         * patient may have slightly different identifying attributes in different DICOM images performed at different
-         * sites or on different occasions, it is expected that such differences will have been reconciled prior to the
-         * images being provided to the Image Display (e.g., in the Image Manager/Archive or by the Portable Media
-         * Creator).
+             * IHE RAD TF-­‐2: 4.16.4.2.2.5.3
+             *
+             * The Image Display shall not display FrameSets for multiple patients simultaneously. Only images with
+             * exactly the same value for Patient’s ID (0010,0020) and Patient’s Name (0010,0010) shall be displayed at
+             * the same time (other Patient-level attributes may be different, empty or absent). Though it is possible
+             * that the same patient may have slightly different identifying attributes in different DICOM images
+             * performed at different sites or on different occasions, it is expected that such differences will have
+             * been reconciled prior to the images being provided to the Image Display (e.g., in the Image
+             * Manager/Archive or by the Portable Media Creator).
              */
             // Build a global identifier for the patient.
-            StringBuilder buffer = new StringBuilder(patientId == null ? TagW.NO_VALUE : patientId);
-            if (StringUtil.hasText(issuerOfPatientID)) {
-                // patientID + issuerOfPatientID => should be unique globally
-                buffer.append(issuerOfPatientID);
-            }
-            if (name != null) {
-                buffer.append(name.toUpperCase());
-            }
+            StringBuilder buffer = new StringBuilder(patientId);
+            // patientID + issuerOfPatientID => should be unique globally
+            buffer.append(issuerOfPatientID);
+            buffer.append(name);
 
             return buffer.toString();
         }
@@ -112,7 +105,7 @@ public class PatientComparator {
     }
 
     public void setIssuerOfPatientID(String issuerOfPatientID) {
-        this.issuerOfPatientID = issuerOfPatientID;
+        this.issuerOfPatientID = Optional.ofNullable(issuerOfPatientID).orElse(StringUtil.EMPTY_STRING).trim();
     }
 
     public String getPatientId() {
@@ -120,7 +113,7 @@ public class PatientComparator {
     }
 
     public void setPatientId(String patientId) {
-        this.patientId = patientId;
+        this.patientId = Optional.ofNullable(patientId).orElse(TagW.NO_VALUE).trim();
     }
 
     public String getName() {
@@ -128,7 +121,7 @@ public class PatientComparator {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = Optional.ofNullable(name).orElse(TagW.NO_VALUE).toUpperCase().trim();
     }
 
     public String getBirthdate() {
@@ -136,7 +129,7 @@ public class PatientComparator {
     }
 
     public void setBirthdate(String birthdate) {
-        this.birthdate = birthdate;
+        this.birthdate = Optional.ofNullable(birthdate).orElse(StringUtil.EMPTY_STRING).trim();
     }
 
     public String getSex() {
@@ -144,7 +137,7 @@ public class PatientComparator {
     }
 
     public void setSex(String sex) {
-        this.sex = sex;
+        this.sex = Optional.ofNullable(sex).orElse(StringUtil.EMPTY_STRING).trim();
     }
 
 }
