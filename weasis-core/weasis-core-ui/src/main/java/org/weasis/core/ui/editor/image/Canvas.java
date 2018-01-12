@@ -50,19 +50,26 @@ public interface Canvas {
 
     Map<String, Object> getActionsInView();
 
+    /**
+     * Zoom from the center of the canvas
+     * 
+     * @param viewScale
+     *            the scale factor (1.0 is the actual pixel size)
+     */
     void zoom(Double viewScale);
 
+    /**
+     * Get the image scale factor witch matches to the dimension of the view 
+     * 
+     * @return
+     */
     double getBestFitViewScale();
 
-    double viewToModelX(Double viewX);
-
-    double viewToModelY(Double viewY);
+    Point2D viewToModel(Double viewX,Double viewY);
 
     double viewToModelLength(Double viewLength);
 
-    double modelToViewX(Double modelX);
-
-    double modelToViewY(Double modelY);
+    Point2D modelToView(Double modelX, Double modelY);
 
     double modelToViewLength(Double modelLength);
 
@@ -75,5 +82,9 @@ public interface Canvas {
     GraphicModel getGraphicManager();
 
     PropertyChangeListener getGraphicsChangeHandler();
+
+    Point2D getClipViewCoordinatesOffset();
+
+    Point2D getViewCoordinatesOffset();
 
 }

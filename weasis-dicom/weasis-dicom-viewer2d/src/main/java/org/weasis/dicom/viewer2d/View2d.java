@@ -1141,7 +1141,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                     JDialog dialog = new MeasureDialog(View2d.this, list);
                     ColorLayerUI.showCenterScreen(dialog, layer);
-
                 });
                 popupMenu.add(properties);
             }

@@ -172,48 +172,29 @@ public class GraphicsPane extends JComponent implements Canvas {
 
     @Override
     public void zoom(Double viewScale) {
-        double modelOffsetXOld = viewModel.getModelOffsetX();
-        double modelOffsetYOld = viewModel.getModelOffsetY();
-        double viewScaleOld = viewModel.getViewScale();
-        double viewportWidth = getWidth() - 1.0;
-        double viewportHeight = getHeight() - 1.0;
-        double centerX = modelOffsetXOld + 0.5 * viewportWidth / viewScaleOld;
-        double centerY = modelOffsetYOld + 0.5 * viewportHeight / viewScaleOld;
-        zoom(centerX, centerY, viewScale);
-    }
-
-    public void zoom(double centerX, double centerY, double viewScale) {
-        double vScale = cropViewScale(viewScale);
-        double viewportWidth = getWidth() - 1.0;
-        double viewportHeight = getHeight() - 1.0;
-        double modelOffsetX = centerX - 0.5 * viewportWidth / vScale;
-        double modelOffsetY = centerY - 0.5 * viewportHeight / vScale;
-        getViewModel().setModelOffset(modelOffsetX, modelOffsetY, vScale);
+        getViewModel().setModelOffset(viewModel.getModelOffsetX(), viewModel.getModelOffsetY(),
+            cropViewScale(viewScale));
     }
 
     public void zoom(Rectangle2D zoomRect) {
-        double viewportWidth = getWidth() - 1.0;
-        double viewportHeight = getHeight() - 1.0;
-        zoom(zoomRect.getCenterX(), zoomRect.getCenterY(),
-            Math.min(viewportWidth / zoomRect.getWidth(), viewportHeight / zoomRect.getHeight()));
+        final Rectangle2D modelArea = viewModel.getModelArea();
+        getViewModel().setModelOffset(modelArea.getCenterX() - zoomRect.getCenterX(),
+            modelArea.getCenterY() - zoomRect.getCenterY(),
+            Math.min(getWidth() / zoomRect.getWidth(), getHeight() / zoomRect.getHeight()));
     }
 
     @Override
     public double getBestFitViewScale() {
-        double viewportWidth = getWidth() - 1.0;
-        double viewportHeight = getHeight() - 1.0;
         final Rectangle2D modelArea = viewModel.getModelArea();
-        return cropViewScale(Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight()));
+        return cropViewScale(Math.min(getWidth() / modelArea.getWidth(), getHeight() / modelArea.getHeight()));
     }
 
     @Override
-    public double viewToModelX(Double viewX) {
-        return viewModel.getAllOffsetX() + viewToModelLength(viewX);
-    }
-
-    @Override
-    public double viewToModelY(Double viewY) {
-        return viewModel.getAllOffsetY() + viewToModelLength(viewY);
+    public Point2D viewToModel(Double viewX, Double viewY) {
+        Point2D p = getViewCoordinatesOffset();
+        p.setLocation(viewX - p.getX(), viewY - p.getY());
+        inverseTransform.transform(p, p);
+        return p;
     }
 
     @Override
@@ -222,36 +203,53 @@ public class GraphicsPane extends JComponent implements Canvas {
     }
 
     @Override
-    public double modelToViewX(Double modelX) {
-        return modelToViewLength(modelX - viewModel.getAllOffsetX());
-    }
+    public Point2D modelToView(Double modelX, Double modelY) {
+        Point2D p2 = new Point2D.Double(modelX, modelY);
+        affineTransform.transform(p2, p2);
 
-    @Override
-    public double modelToViewY(Double modelY) {
-        return modelToViewLength(modelY - viewModel.getAllOffsetY());
+        Point2D p = getViewCoordinatesOffset();
+        p2.setLocation(p2.getX() + p.getX(), p2.getY() + p.getY());
+        return p2;
     }
 
     @Override
     public double modelToViewLength(Double modelLength) {
         return modelLength * viewModel.getViewScale();
     }
+    @Override
+    public Point2D getViewCoordinatesOffset() {
+        ViewModel model = getViewModel();
+        Rectangle2D modelArea = model.getModelArea();
+        double viewOffsetX = (getWidth() - modelArea.getWidth() * model.getViewScale()) * 0.5;
+        double viewOffsetY = (getHeight() - modelArea.getHeight() * model.getViewScale()) * 0.5;
+        double offsetX = viewOffsetX - model.getModelOffsetX() * model.getViewScale();
+        double offsetY = viewOffsetY - model.getModelOffsetY() * model.getViewScale();
+        return new Point2D.Double(offsetX, offsetY);
+    }
+    
+    @Override
+    public Point2D getClipViewCoordinatesOffset() {
+        Point2D p = getViewCoordinatesOffset();
+        p.setLocation(p.getX() < 0.0 ? 0.0: p.getX(), p.getY() < 0.0 ? 0.0 : p.getY());
+        return p;
+    }
 
     @Override
     public Point2D getImageCoordinatesFromMouse(Integer x, Integer y) {
-        double viewScale = getViewModel().getViewScale();
-        Point2D p2 = new Point2D.Double(x + getViewModel().getAllOffsetX() * viewScale,
-            y + getViewModel().getAllOffsetY() * viewScale);
-        inverseTransform.transform(p2, p2);
-        return p2;
+        Point2D p = getClipViewCoordinatesOffset();
+        p.setLocation(x - p.getX(), y - p.getY());
+
+        inverseTransform.transform(p, p);
+        return p;
     }
 
     @Override
     public Point getMouseCoordinatesFromImage(Double x, Double y) {
         Point2D p2 = new Point2D.Double(x, y);
         affineTransform.transform(p2, p2);
-        double viewScale = getViewModel().getViewScale();
-        return new Point((int) Math.floor(p2.getX() - getViewModel().getAllOffsetX() * viewScale + 0.5),
-            (int) Math.floor(p2.getY() - getViewModel().getAllOffsetY() * viewScale + 0.5));
+
+        Point2D p = getClipViewCoordinatesOffset();
+        return new Point((int) Math.floor(p2.getX() + p.getX() + 0.5), (int) Math.floor(p2.getY() + p.getY() + 0.5));
     }
 
     @Override
@@ -272,9 +270,9 @@ public class GraphicsPane extends JComponent implements Canvas {
     public static void repaint(Canvas canvas, Rectangle rectangle) {
         if (rectangle != null) {
             // Add the offset of the canvas
-            double viewScale = canvas.getViewModel().getViewScale();
-            int x = (int) (rectangle.x - canvas.getViewModel().getAllOffsetX() * viewScale);
-            int y = (int) (rectangle.y - canvas.getViewModel().getAllOffsetY() * viewScale);
+            Point2D p = canvas.getClipViewCoordinatesOffset();
+            int x = (int) (rectangle.x + p.getX());
+            int y = (int) (rectangle.y + p.getY());
             canvas.getJComponent().repaint(new Rectangle(x, y, rectangle.width, rectangle.height));
         }
     }

@@ -70,9 +70,21 @@ public interface ViewCanvas<E extends ImageElement>
 
     void setTileOffset(int tileOffset);
 
+    /**
+     * Center the image into the view.
+     * 
+     */
     void center();
 
-    void setCenter(Double x, Double y);
+    /**
+     * Set the offset from the center of the view. (0,0) will center the image into the view.
+     * 
+     * @param modelOffsetX
+     *            the X-offset
+     * @param modelOffsetY
+     *            the Y-offset
+     */
+    void setCenter(Double modelOffsetX, Double modelOffsetY);
 
     void moveOrigin(PanPoint point);
 

@@ -49,8 +49,8 @@ import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundleTools;
@@ -228,7 +228,7 @@ public class DicomPrint {
                 pad.y = 0.0;
             }
 
-            image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+            image.getDisplayOpManager().setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
             double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
             // Resize in best fit window
             image.zoom(scaleFactor);

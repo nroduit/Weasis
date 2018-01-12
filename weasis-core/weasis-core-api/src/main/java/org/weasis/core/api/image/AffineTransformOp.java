@@ -66,14 +66,18 @@ public class AffineTransformOp extends AbstractOp {
         Rectangle2D bound = (Rectangle2D) params.get(P_DST_BOUNDS);
 
         if (bound != null && matrix != null && !Arrays.equals(identityMatrix, matrix)) {
-            Mat mat = new Mat(2, 3, CvType.CV_64FC1);
-            mat.put(0, 0, matrix);
-            Integer interpolation = (Integer) params.get(P_INTERPOLATION);
-            if (interpolation != null && interpolation == 3) {
-                interpolation = 4;
+            if (bound.getWidth() > 0 && bound.getHeight() > 0) {
+                Mat mat = new Mat(2, 3, CvType.CV_64FC1);
+                mat.put(0, 0, matrix);
+                Integer interpolation = (Integer) params.get(P_INTERPOLATION);
+                if (interpolation != null && interpolation == 3) {
+                    interpolation = 4;
+                }
+                result = ImageProcessor.warpAffine(source.toMat(), mat, new Size(bound.getWidth(), bound.getHeight()),
+                    interpolation);
+            } else {
+                result = null;
             }
-            result =
-                ImageProcessor.warpAffine(source.toMat(), mat, new Size(bound.getWidth(), bound.getHeight()), interpolation);
         }
 
         params.put(Param.OUTPUT_IMG, result);

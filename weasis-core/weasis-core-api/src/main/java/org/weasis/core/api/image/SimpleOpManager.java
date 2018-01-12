@@ -212,7 +212,7 @@ public class SimpleOpManager implements OpManager {
     @Override
     public PlanarImage process() {
         PlanarImage source = getFirstNodeInputImage();
-        if (source != null) {
+        if (source != null && source.width() > 0) {
             for (int i = 0; i < operations.size(); i++) {
                 ImageOpNode op = operations.get(i);
                 try {

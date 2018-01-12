@@ -321,7 +321,9 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
     public void fireImageChanged() {
         if (displayImage == null) {
+            PlanarImage imgSource = disOpManager.getFirstNodeInputImage();
             disOpManager.clearNodeIOCache();
+            disOpManager.setFirstNode(imgSource);
         }
         fireLayerChanged();
     }
