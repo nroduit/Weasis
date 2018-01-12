@@ -27,6 +27,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageToolkit;
@@ -66,7 +67,7 @@ public class ImageElement extends MediaElement {
                 }
             }
         };
-
+ 
     protected boolean readable = true;
 
     protected double pixelSizeX = 1.0;
@@ -185,6 +186,18 @@ public class ImageElement extends MediaElement {
          */
         this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
         this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
+    }
+    
+    public ZoomOp getRectifyAspectRatioZoomOp() {
+        // Rectify non square pixel image in the first operation
+        if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {     
+            ZoomOp node = new ZoomOp();
+            node.setName("rectifyAspectRatio");
+            node.setParam(ZoomOp.P_RATIO_X, getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, getRescaleY());
+            return node;
+        }
+        return null;
     }
 
     public void setPixelValueUnit(String pixelValueUnit) {

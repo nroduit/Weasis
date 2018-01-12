@@ -198,10 +198,10 @@ public class DicomPrint {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
         PlanarImage img = image.getSourceImage();
-        if (img != null && originCenter != null && originZoom != null) {
+        if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
@@ -235,7 +235,7 @@ public class DicomPrint {
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenter.getX(), originCenter.getY());
+                image.setCenter(originCenterOffset.getX(), originCenterOffset.getY());
             }
         }
     }

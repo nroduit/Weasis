@@ -54,5 +54,4 @@ public interface OpManager extends OpEventListener, Copyable<OpManager> {
         }
         return false;
     }
-
 }

@@ -160,7 +160,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super(eventManager);
 
         SimpleOpManager manager = imageLayer.getDisplayOpManager();
-        // TODO clip
         manager.addImageOperationAction(new WindowAndPresetsOp());
         manager.addImageOperationAction(new FilterOp());
         manager.addImageOperationAction(new PseudoColorOp());
@@ -489,7 +488,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
         imageLayer.setPreprocessing(opManager);
-        if (opManager == null && spatialTransformation) {
+        if (opManager != null || spatialTransformation) {
             // Reset preprocessing cache
             imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
         }

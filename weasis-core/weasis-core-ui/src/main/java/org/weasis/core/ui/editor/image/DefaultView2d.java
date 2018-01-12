@@ -197,6 +197,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         this.tileOffset = 0;
 
         imageLayer = new RenderedImageLayer<>();
+        actionsInView.put(ActionW.LENS.cmd(), false);
         initActionWState();
         graphicMouseHandler = new GraphicMouseHandler<>(this);
 
@@ -228,7 +229,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img == null ? Unit.PIXEL : img.getPixelSpacingUnit());
         actionsInView.put(ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(ActionW.ZOOM.cmd(), 0.0);
-        actionsInView.put(ActionW.LENS.cmd(), false);
+
         actionsInView.put(ActionW.DRAWINGS.cmd(), true);
         actionsInView.put(LayerType.CROSSLINES.name(), true);
         actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
@@ -439,11 +440,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         closingSeries(oldsequence);
 
-        // Preserve show lens property
-        Object showLens = actionsInView.get(ActionW.LENS.cmd());
         initActionWState();
-        actionsInView.put(ActionW.LENS.cmd(), showLens);
-
         try {
             if (newSeries == null) {
                 setImage(null);
@@ -573,7 +570,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             closeLens();
         } else {
             E oldImage = imageLayer.getSourceImage();
-            if (img != null && !img.equals(oldImage)) {
+            if (!img.equals(oldImage)) {
                 updateGraphics = true;
                 actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
                 if (eventManager.getSelectedViewPane() == this) {
@@ -853,20 +850,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         Stroke oldStroke = g2d.getStroke();
         Paint oldColor = g2d.getPaint();
 
-        ImageClipBounds imgBounds = new ImageClipBounds(this);
-        Rectangle2D srcBounds = imgBounds.getClipViewImageBounds();
-        double offsetX = srcBounds.getX();
-        double offsetY = srcBounds.getY();
-
         // Paint the visible area
         // Set font size for computing shared text areas that need to be repainted in different zoom magnitudes.
         Font defaultFont = getFont();
         g2d.setFont(defaultFont);
 
-        g2d.translate(offsetX, offsetY);
+        Point2D p = getClipViewCoordinatesOffset();
+        g2d.translate(p.getX(), p.getY());
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
-        g2d.translate(-offsetX, -offsetY);
+        g2d.translate(-p.getX(), -p.getY());
 
         drawPointer(g2d);
         if (infoLayer != null) {
@@ -886,9 +879,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
-            graphicManager.draw(g2d, transform, inverseTransform,
-                new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
-                    modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
+            //TODO set clip bound
+//            double scale = viewModel.getViewScale();
+//            Rectangle2D b = new Rectangle2D.Double(viewModel.getModelOffsetX() * scale , viewModel.getModelOffsetY() * scale, getWidth(), getHeight());
+            graphicManager.draw(g2d, transform, inverseTransform, null);
         }
     }
 
@@ -935,39 +929,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         boolean flip = LangUtil.getNULLtoFalse((Boolean) actionsInView.get(ActionW.FLIP.cmd()));
         Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
 
+        affineTransform.setToScale(flip ? -viewScale : viewScale, viewScale);
         if (rotationAngle != null && rotationAngle > 0) {
-            affineTransform.setToRotation(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-            affineTransform.scale(viewScale, viewScale);
-        } else {
-            affineTransform.setToScale(viewScale, viewScale);
+            affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
         }
-
         if (flip) {
-            // Using only one allows to enable or disable flip with the rotation action
-
-            // case FlipMode.TOP_BOTTOM:
-            // at = new AffineTransform(new double[] {1.0,0.0,0.0,-1.0});
-            // at.translate(0.0, -imageHt);
-            // break;
-            // case FlipMode.LEFT_RIGHT :
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,1.0});
-            // at.translate(-imageWid, 0.0);
-            // break;
-            // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
-            // at.translate(-imageWid, -imageHt);
-            affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-rWidth, 0.0);
         }
 
         ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
         if (node != null) {
-            ImageClipBounds imgBounds = new ImageClipBounds(this);
+            Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
 
             double diffx = 0.0;
             double diffy = 0.0;
             Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth(), getHeight());
-            Rectangle2D srcBounds = imgBounds.getViewImageBounds();
+            Rectangle2D srcBounds = getImageViewBounds();
 
             Rectangle2D dstBounds;
             if (viewBounds.contains(srcBounds)) {
@@ -996,11 +973,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
             node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
             imageLayer.updateDisplayOperations();
-        } else {
-            Point offset = getImageLayer().getOffset();
-            if (offset != null) {
-                affineTransform.translate(-offset.getX(), -offset.getY());
-            }
+        }
+
+        // Keep the coordinates of the original image when cropping
+        Point offset = getImageLayer().getOffset();
+        if (offset != null) {
+            affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {

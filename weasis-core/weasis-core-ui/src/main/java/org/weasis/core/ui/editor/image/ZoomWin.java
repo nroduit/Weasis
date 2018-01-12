@@ -26,6 +26,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
 import java.util.HashMap;
@@ -146,7 +147,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     public void updateImage() {
         view2d.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
-        imageLayer.setImage(view2d.getImage(), (OpManager) view2d.getActionValue(ActionW.PREPROCESSING.cmd()));
+        imageLayer.setImage(view2d.getImage(), (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
         getViewModel().setModelArea(view2d.getViewModel().getModelArea());
         SyncType type = (SyncType) actionsInView.get(ZoomWin.FREEZE_CMD);
         if (SyncType.PARENT_PARAMETERS.equals(type)) {
@@ -201,20 +202,15 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         g2d.setBackground(backgroundColor);
         drawBackground(g2d);
 
-        ImageClipBounds imgBounds = new ImageClipBounds(this);
-        Rectangle2D srcBounds = imgBounds.getClipViewImageBounds();
-        double offsetX = srcBounds.getX();
-        double offsetY = srcBounds.getY();
-        
-        // Paint the visible area
-        g2d.translate(offsetX, offsetY);
         // Set font size according to the view size
         g2d.setFont(MeasureTool.viewSetting.getFont());
 
+        // Paint the visible area
+        Point2D p = getClipViewCoordinatesOffset();
+        g2d.translate(p.getX(), p.getY());
         imageLayer.drawImage(g2d);
         drawLayers(g2d, affineTransform, inverseTransform);
-
-        g2d.translate(-offsetX, -offsetY);
+        g2d.translate(-p.getX(), -p.getY());
 
         g2d.setClip(oldClip);
         g2d.setStroke(stroke);
@@ -228,9 +224,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
-            view2d.getGraphicManager().draw(g2d, transform, inverseTransform,
-                new Rectangle2D.Double(modelToViewLength(getViewModel().getModelOffsetX()),
-                    modelToViewLength(getViewModel().getModelOffsetY()), getWidth(), getHeight()));
+            Rectangle2D b = new Rectangle2D.Double(0.0, 0.0, getWidth(), getHeight());
+            view2d.getGraphicManager().draw(g2d, transform, inverseTransform, b);
         }
     }
 
@@ -252,39 +247,22 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         boolean flip = LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue((ActionW.FLIP.cmd())));
         Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
 
+        affineTransform.setToScale(flip ? -viewScale : viewScale, viewScale);
         if (rotationAngle != null && rotationAngle > 0) {
-            affineTransform.setToRotation(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-            affineTransform.scale(viewScale, viewScale);
-        } else {
-            affineTransform.setToScale(viewScale, viewScale);
+            affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
         }
-
         if (flip) {
-            // Using only one allows to enable or disable flip with the rotation action
-
-            // case FlipMode.TOP_BOTTOM:
-            // at = new AffineTransform(new double[] {1.0,0.0,0.0,-1.0});
-            // at.translate(0.0, -imageHt);
-            // break;
-            // case FlipMode.LEFT_RIGHT :
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,1.0});
-            // at.translate(-imageWid, 0.0);
-            // break;
-            // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
-            // at.translate(-imageWid, -imageHt);
-            affineTransform.scale(-1.0, 1.0);
             affineTransform.translate(-rWidth, 0.0);
         }
 
         ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
         if (node != null) {
-            ImageClipBounds imgBounds = new ImageClipBounds(this);
+            Rectangle2D imgBounds = affineTransform.createTransformedShape(getViewModel().getModelArea()).getBounds2D();
 
             double diffx = 0.0;
             double diffy = 0.0;
             Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth() - 2, getHeight() - 2);
-            Rectangle2D srcBounds = imgBounds.getViewImageBounds(viewBounds.getWidth(), viewBounds.getHeight());
+            Rectangle2D srcBounds = getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
 
             Rectangle2D dstBounds;
             if (viewBounds.contains(srcBounds)) {
@@ -313,11 +291,12 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
             imageLayer.updateDisplayOperations();
-        } else {
-            Point offset = view2d.getImageLayer().getOffset();
-            if (offset != null) {
-                affineTransform.translate(-offset.getX(), -offset.getY());
-            }
+        }
+        
+        // Keep the coordinates of the original image when cropping
+        Point offset = view2d.getImageLayer().getOffset();
+        if (offset != null) {
+            affineTransform.translate(-offset.getX(), -offset.getY());
         }
 
         try {
@@ -560,8 +539,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         if (cmd != null) {
             if (command.equals(ActionW.PROGRESSION.cmd())) {
                 updateImage();
-            }
-            else if (command.equals(ActionW.ROTATION.cmd()) || command.equals(ActionW.FLIP.cmd())) {
+            } else if (command.equals(ActionW.ROTATION.cmd()) || command.equals(ActionW.FLIP.cmd())) {
                 refreshZoomWin();
             }
         }

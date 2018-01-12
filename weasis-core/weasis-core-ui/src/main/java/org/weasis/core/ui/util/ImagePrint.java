@@ -182,7 +182,7 @@ public class ImagePrint implements Printable {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
         PlanarImage img = image.getSourceImage();
         if (img != null && originCenterOffset != null && originZoom != null) {
@@ -205,8 +205,8 @@ public class ImagePrint implements Printable {
             image.setSize((int) (cw + 0.5), (int) (ch + 0.5));
 
             if (printOptions.isCenter()) {
-                pad.x = placeholder.x * key.weightx * 0.5;
-                pad.y = placeholder.y * key.weighty * 0.5;
+                pad.x = (placeholder.x * key.weightx - cw) * 0.5;
+                pad.y = (placeholder.y * key.weighty- ch) * 0.5;
             } else {
                 pad.x = 0.0;
                 pad.y = 0.0;
@@ -218,7 +218,7 @@ public class ImagePrint implements Printable {
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenterOffset.getX() , originCenterOffset.getY()- canvasHeight * 0.5);
+                image.setCenter(originCenterOffset.getX() , originCenterOffset.getY());
             }
 
             int dpi = printOptions.getDpi() == null ? 150 : printOptions.getDpi().getDpi();

@@ -13,6 +13,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.util.Map;
 
@@ -86,5 +87,9 @@ public interface Canvas {
     Point2D getClipViewCoordinatesOffset();
 
     Point2D getViewCoordinatesOffset();
+
+    Rectangle2D getImageViewBounds();
+
+    Rectangle2D getImageViewBounds(double viewportWidth, double viewportHeight);
 
 }
