@@ -45,7 +45,7 @@ public class ImportPanel extends JPanel {
     private final ImageGroupPane centralPane;
 
     // TODO create ACTION object fpr import
-    // so whereEver it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION object
+    // so wherever it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION object
 
     public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
         this.centralPane = centralPane;

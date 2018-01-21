@@ -23,7 +23,7 @@ import javax.swing.Icon;
  * <li>DOWN - rotated 90 degrees
  * <li>UP (default) - rotated -90 degrees
  * <li>UPSIDE_DOWN - rotated 180 degrees
- * <li>ABOUT_CENTER - a specfic angle about its center
+ * <li>ABOUT_CENTER - a specific angle about its center
  * </ul>
  */
 public class RotatedIcon implements Icon {

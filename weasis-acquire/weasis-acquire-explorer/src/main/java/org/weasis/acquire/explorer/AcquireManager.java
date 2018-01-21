@@ -700,7 +700,7 @@ public class AcquireManager {
      * @return
      */
 
-    // TODO be carefull not to execute this method on the EDT
+    // TODO be careful not to execute this method on the EDT
     private static AcquireImageInfo getAcquireImageInfo(ImageElement image) {
         if (image == null || image.getImage() == null) {
             return null;

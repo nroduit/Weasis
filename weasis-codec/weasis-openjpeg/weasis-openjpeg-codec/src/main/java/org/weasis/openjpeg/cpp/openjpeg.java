@@ -476,7 +476,7 @@ public class openjpeg {
      * @param p_codec
      *            the jpeg2000 codec.
      * @param p_image
-     *            the decoded image previously setted by opj_read_header
+     *            the decoded image previously set by opj_read_header
      * @param p_start_x
      *            the left position of the rectangle to decode (in image coordinates).
      * @param p_end_x
@@ -537,7 +537,7 @@ public class openjpeg {
         @Cast("unsigned int") int res_factor);
 
     /**
-     * Reads a tile header. This function is compulsory and allows one to know the size of the tile thta will be
+     * Reads a tile header. This function is compulsory and allows one to know the size of the tile that will be
      * decoded. The user may need to refer to the image got by opj_read_header to understand the size being taken by the
      * tile.
      *
