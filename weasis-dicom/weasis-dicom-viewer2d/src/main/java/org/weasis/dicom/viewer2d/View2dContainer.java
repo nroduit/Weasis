@@ -140,7 +140,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 }
             }
         });
-        
+
         if (!initComponents) {
             initComponents = true;
 

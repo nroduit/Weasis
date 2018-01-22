@@ -1318,8 +1318,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     }
                     Object item = modelPatient.getSelectedItem();
                     if (item instanceof MediaSeriesGroupNode) {
-                        koOpen.setVisible(
-                            DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
+                        koOpen
+                            .setVisible(DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
                     }
                 }
             } else if (evt.getSource() instanceof SeriesViewer) {

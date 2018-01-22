@@ -49,7 +49,7 @@ public class Activator implements BundleActivator, ServiceListener {
             FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_PERSISTENCE);//$NON-NLS-1$
         }
         Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
-        AbstractInfoLayer.applyPreferences(prefs );
+        AbstractInfoLayer.applyPreferences(prefs);
         MeasureTool.viewSetting.initMonitors();
         MeasureTool.viewSetting.applyPreferences(prefs);
 

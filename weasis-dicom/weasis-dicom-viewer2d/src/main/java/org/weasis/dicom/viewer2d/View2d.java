@@ -554,7 +554,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (needToRepaint) {
             // Required to update KO bar (toggle button state)
-            if(eventManager instanceof EventManager) {
+            if (eventManager instanceof EventManager) {
                 ((EventManager) eventManager).updateKeyObjectComponentsListener(this);
             }
             repaint();
@@ -742,7 +742,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (selImage != null) {
                         // IntersectVolume: display a rectangle to show the slice thickness
-                        if(!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
+                        if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
                             // When the volume limits are outside the image, get the only the intersection
                             addCrossline(selImage, layer, slice, true);
                         }

@@ -44,26 +44,25 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
         return tags.containsKey(tag);
     }
 
-    
     @Override
     public void addMergeIdValue(Object valueID) {
-        if(!oldIds.contains(valueID)) {
+        if (!oldIds.contains(valueID)) {
             oldIds.add(valueID);
         }
     }
-    
+
     @Override
     public boolean matchIdValue(Object valueID) {
         Object v = tags.get(tagID);
-        
-        if(Objects.equals(v, valueID)) {
+
+        if (Objects.equals(v, valueID)) {
             return true;
         }
         for (Object id : oldIds) {
-            if(Objects.equals(id, valueID)) {
+            if (Objects.equals(id, valueID)) {
                 return true;
-            } 
-        }        
+            }
+        }
         return false;
     }
 

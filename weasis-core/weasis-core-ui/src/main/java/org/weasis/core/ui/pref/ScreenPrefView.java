@@ -79,7 +79,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
         panel1.add(panelList, BorderLayout.NORTH);
         panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
-        
+
         final JComboBox<String> defMonitorComboBox = new JComboBox<>();
         List<Monitor> monitors = MeasureTool.viewSetting.getMonitors();
         for (int i = 0; i < monitors.size(); i++) {
@@ -131,19 +131,19 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             panelList.add(p);
 
         }
-        
+
         int defIndex = getDefaultMonitor();
-        if(defIndex < 0 || defIndex >= defMonitorComboBox.getItemCount()) {
+        if (defIndex < 0 || defIndex >= defMonitorComboBox.getItemCount()) {
             defIndex = 0;
         }
         defMonitorComboBox.setSelectedIndex(defIndex);
         defMonitorComboBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
-                JComboBox<?> comboBox = (JComboBox<?>)e.getSource();
+                JComboBox<?> comboBox = (JComboBox<?>) e.getSource();
                 BundleTools.LOCAL_PERSISTENCE.putIntProperty("default.monitor", comboBox.getSelectedIndex()); //$NON-NLS-1$
             }
         });
-        
+
         final JPanel panel3 = new JPanel();
         panel3.setAlignmentY(Component.TOP_ALIGNMENT);
         panel3.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -153,7 +153,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         panel3.add(defMonitorComboBox);
         panelList.add(panel3);
     }
-    
+
     public static int getDefaultMonitor() {
         return BundleTools.LOCAL_PERSISTENCE.getIntProperty("default.monitor", 0); //$NON-NLS-1$
     }

@@ -7,9 +7,10 @@ package org.weasis.dicom.codec.utils;
 import java.util.Optional;
 
 import javax.xml.stream.XMLStreamReader;
+
 import org.dcm4che3.data.Attributes;
-import org.weasis.core.api.media.data.TagReadable;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;

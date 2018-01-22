@@ -627,17 +627,16 @@ public class WeasisWin {
     public void showWindow() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
-        
+
         Monitor defMonitor = Monitor.getDefaultMonitor();
         GraphicsConfiguration config;
-       
+
         if (defMonitor == null) {
-             config = ge.getDefaultScreenDevice().getDefaultConfiguration();
-        }
-        else {
+            config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        } else {
             config = defMonitor.getGraphicsConfiguration();
         }
-        
+
         Rectangle b;
         if (config != null) {
             b = config.getBounds();
@@ -650,7 +649,7 @@ public class WeasisWin {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
         LOGGER.debug("Max main screen bound: {}", b.toString()); //$NON-NLS-1$
-        
+
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
             // set a valid size, insets of screen is often non consistent
