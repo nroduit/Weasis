@@ -143,7 +143,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
             } else {
                 patient = dicomModel.getParent(study, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 
