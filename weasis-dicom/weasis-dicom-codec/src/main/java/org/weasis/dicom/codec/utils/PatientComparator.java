@@ -4,6 +4,7 @@
  */
 package org.weasis.dicom.codec.utils;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import javax.xml.stream.XMLStreamReader;
@@ -16,6 +17,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.util.DateUtil;
 
 public class PatientComparator {
 
@@ -46,7 +48,7 @@ public class PatientComparator {
         setIssuerOfPatientID(TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class));
         setName(TagD.getTagValue(tagable, Tag.PatientName, String.class));
         setSex(TagD.getTagValue(tagable, Tag.PatientSex, String.class));
-        setBirthdate(TagD.getTagValue(tagable, Tag.PatientBirthDate, String.class));
+        setBirthdate(DateUtil.formatDicomDate(TagD.getTagValue(tagable, Tag.PatientBirthDate, LocalDate.class)));
     }
 
     public String buildPatientPseudoUID() {
