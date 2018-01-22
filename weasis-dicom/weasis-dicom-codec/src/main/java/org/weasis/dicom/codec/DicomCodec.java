@@ -156,7 +156,7 @@ public class DicomCodec implements Codec {
          */
         String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
         UIDUtils.setRoot(weasisRootUID);
-        
+
         // Set the default encoding (must contain ASCII)
         SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); //$NON-NLS-1$
 

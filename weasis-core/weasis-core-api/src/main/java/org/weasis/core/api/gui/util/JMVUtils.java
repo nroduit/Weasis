@@ -141,19 +141,19 @@ public class JMVUtils {
         }
     }
 
-    public static void formatTableHeaders(JTable table, int alignement) {
+    public static void formatTableHeaders(JTable table, int alignment) {
         TableHeaderRenderer renderer = new TableHeaderRenderer();
-        renderer.setHorizontalAlignment(alignement);
+        renderer.setHorizontalAlignment(alignment);
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn col = table.getColumnModel().getColumn(i);
             col.setHeaderRenderer(renderer);
         }
     }
 
-    public static void formatTableHeaders(JTable table, int alignement, int columnSize) {
+    public static void formatTableHeaders(JTable table, int alignment, int columnSize) {
         TableHeaderRenderer renderer = new TableHeaderRenderer();
 
-        renderer.setHorizontalAlignment(alignement);
+        renderer.setHorizontalAlignment(alignment);
         for (int i = 0; i < table.getColumnCount(); i++) {
             TableColumn col = table.getColumnModel().getColumn(i);
             col.setHeaderRenderer(renderer);

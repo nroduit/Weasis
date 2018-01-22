@@ -112,7 +112,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         if (max - min == 0) {
             max += 1;
         }
-        
+
         // Adjust the value to min and max to avoid the model to change the min and the max
         int v = (value > max) ? max : ((value < min) ? min : value);
         boolean oldTrigger = triggerAction;

@@ -395,8 +395,8 @@ public class AcquireManager {
                 BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL")); //$NON-NLS-1$ //$NON-NLS-2$
 
             try {
-                WorklistDialog dialog =
-                    new WorklistDialog(UIManager.getApplicationWindow(), Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
+                WorklistDialog dialog = new WorklistDialog(UIManager.getApplicationWindow(),
+                    Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
                 LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
@@ -700,7 +700,7 @@ public class AcquireManager {
      * @return
      */
 
-    // TODO be carefull not to execute this method on the EDT
+    // TODO be careful not to execute this method on the EDT
     private static AcquireImageInfo getAcquireImageInfo(ImageElement image) {
         if (image == null || image.getImage() == null) {
             return null;

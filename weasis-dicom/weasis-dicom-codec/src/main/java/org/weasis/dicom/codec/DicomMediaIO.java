@@ -53,6 +53,7 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
+import org.dcm4che3.imageio.codec.ImageReaderFactory;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
@@ -93,6 +94,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -495,7 +497,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // -------- Mandatory Tags --------
         // Tags for identifying group (Patient, Study, Series)
         // Global Identifier for the patient.
-        setTag(TagW.PatientPseudoUID, DicomMediaUtils.buildPatientPseudoUID(this));
+        PatientComparator patientComparator = new PatientComparator(this);
+        setTag(TagW.PatientPseudoUID, patientComparator.buildPatientPseudoUID());
 
         Integer instNb =
             DicomMediaUtils.getIntegerFromDicomElement(header, Tag.InstanceNumber, instanceID.incrementAndGet());

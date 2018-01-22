@@ -123,7 +123,7 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
         String sopUID = TagD.get(Tag.ReferencedSOPInstanceUID).getKeyword();
         String sopClass = TagD.get(Tag.ReferencedSOPClassUID).getKeyword();
         String frames = TagD.get(Tag.ReferencedFrameNumber).getKeyword();
-        
+
         for (SOPInstanceReferenceAndMAC sopRef : map.values()) {
             mf.append("\n<"); //$NON-NLS-1$
             mf.append(Xml.Level.INSTANCE.getTagName());

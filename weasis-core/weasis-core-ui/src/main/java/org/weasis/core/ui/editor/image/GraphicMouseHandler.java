@@ -37,12 +37,19 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
     private ViewCanvas<E> vImg;
     private Draggable ds;
+    private CursorSet cursorSet;
 
-    public GraphicMouseHandler(ViewCanvas<E> vImg) {
+    public GraphicMouseHandler(ViewCanvas<E> vImg, CursorSet cursors) {
         if (vImg == null) {
             throw new IllegalArgumentException();
         }
         this.vImg = vImg;
+        this.cursorSet = cursors;
+    }
+
+    public GraphicMouseHandler(ViewCanvas<E> vImg) {
+        this(vImg, new CursorSet(DefaultView2d.DEFAULT_CURSOR, DefaultView2d.MOVE_CURSOR, DefaultView2d.HAND_CURSOR,
+            DefaultView2d.EDIT_CURSOR));
     }
 
     public Draggable getDragSequence() {
@@ -75,7 +82,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             }
         }
 
-        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
+        Cursor newCursor = cursorSet.getDrawingCursor();
 
         GraphicModel graphicList = vImg.getGraphicManager();
         // Avoid any dragging on selection when Shift Button is Down
@@ -93,13 +100,13 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                     if (selectedDragGraphList.size() > 1
                         && selectedDragGraphList.stream().allMatch(g -> !g.getLayer().getLocked())) {
                         ds = new BulkDragSequence(selectedDragGraphList, mouseEvt);
-                        newCursor = DefaultView2d.MOVE_CURSOR;
+                        newCursor = cursorSet.getMoveCursor();
 
                     } else if (selectedDragGraphList.size() == 1) {
 
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
                             ds = dragGraph.createDragLabelSequence();
-                            newCursor = DefaultView2d.HAND_CURSOR;
+                            newCursor = cursorSet.getHandCursor();
 
                         } else {
                             int handlePtIndex = dragGraph.getHandlePointIndex(mouseEvt);
@@ -107,22 +114,22 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                             if (handlePtIndex >= 0) {
                                 dragGraph.moveMouseOverHandlePoint(handlePtIndex, mouseEvt);
                                 ds = dragGraph.createResizeDrag(handlePtIndex);
-                                newCursor = DefaultView2d.EDIT_CURSOR;
+                                newCursor = cursorSet.getEditCursor();
 
                             } else {
                                 ds = dragGraph.createMoveDrag();
-                                newCursor = DefaultView2d.MOVE_CURSOR;
+                                newCursor = cursorSet.getMoveCursor();
                             }
                         }
                     }
                 } else {
                     if (!locked && dragGraph.isOnGraphicLabel(mouseEvt)) {
                         ds = dragGraph.createDragLabelSequence();
-                        newCursor = DefaultView2d.HAND_CURSOR;
+                        newCursor = cursorSet.getHandCursor();
 
                     } else if (!locked) {
                         ds = dragGraph.createMoveDrag();
-                        newCursor = DefaultView2d.MOVE_CURSOR;
+                        newCursor = cursorSet.getMoveCursor();
                     }
                     vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(dragGraph));
                 }
@@ -148,7 +155,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                 }
             }
         }
-        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
 
         if (ds != null) {
             ds.startDrag(mouseEvt);
@@ -235,7 +242,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
         // Throws to the tool listener the current graphic selection.
         vImg.getGraphicManager().fireGraphicsSelectionChanged(vImg.getMeasurableLayer());
 
-        Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
+        Cursor newCursor = cursorSet.getDrawingCursor();
 
         // Evaluates if mouse is on a dragging position, and changes cursor image consequently
         List<DragGraphic> selectedDragGraphList = vImg.getGraphicManager().getSelectedDragableGraphics();
@@ -248,30 +255,30 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             if (selectedDragGraphList.contains(dragGraph)) {
 
                 if (selectedDragGraphList.size() > 1) {
-                    newCursor = DefaultView2d.MOVE_CURSOR;
+                    newCursor = cursorSet.getMoveCursor();
 
                 } else if (selectedDragGraphList.size() == 1) {
                     if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                        newCursor = DefaultView2d.HAND_CURSOR;
+                        newCursor = cursorSet.getHandCursor();
 
                     } else {
                         if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                            newCursor = DefaultView2d.EDIT_CURSOR;
+                            newCursor = cursorSet.getEditCursor();
                         } else {
-                            newCursor = DefaultView2d.MOVE_CURSOR;
+                            newCursor = cursorSet.getMoveCursor();
                         }
                     }
                 }
             } else {
                 if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                    newCursor = DefaultView2d.HAND_CURSOR;
+                    newCursor = cursorSet.getHandCursor();
                 } else {
-                    newCursor = DefaultView2d.MOVE_CURSOR;
+                    newCursor = cursorSet.getMoveCursor();
                 }
             }
         }
 
-        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
+        vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
     }
 
     @Override
@@ -309,7 +316,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             ds.drag(mouseEvt);
         } else {
 
-            Cursor newCursor = DefaultView2d.DEFAULT_CURSOR;
+            Cursor newCursor = cursorSet.getDrawingCursor();
             GraphicModel graphicList = vImg.getGraphicManager();
 
             if (!mouseEvt.isShiftDown()) {
@@ -324,31 +331,61 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                     if (selectedDragGraphList.contains(dragGraph)) {
 
                         if (selectedDragGraphList.size() > 1) {
-                            newCursor = DefaultView2d.MOVE_CURSOR;
+                            newCursor = cursorSet.getMoveCursor();
 
                         } else if (selectedDragGraphList.size() == 1) {
 
                             if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                                newCursor = DefaultView2d.HAND_CURSOR;
+                                newCursor = cursorSet.getHandCursor();
 
                             } else {
                                 if (dragGraph.getHandlePointIndex(mouseEvt) >= 0) {
-                                    newCursor = DefaultView2d.EDIT_CURSOR;
+                                    newCursor = cursorSet.getEditCursor();
                                 } else {
-                                    newCursor = DefaultView2d.MOVE_CURSOR;
+                                    newCursor = cursorSet.getMoveCursor();
                                 }
                             }
                         }
                     } else {
                         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
-                            newCursor = DefaultView2d.HAND_CURSOR;
+                            newCursor = cursorSet.getHandCursor();
                         } else {
-                            newCursor = DefaultView2d.MOVE_CURSOR;
+                            newCursor = cursorSet.getMoveCursor();
                         }
                     }
                 }
             }
-            vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(DefaultView2d.DEFAULT_CURSOR));
+            vImg.getJComponent().setCursor(Optional.ofNullable(newCursor).orElse(cursorSet.getDrawingCursor()));
+        }
+    }
+
+    public static class CursorSet {
+        private final Cursor drawingCursor;
+        private final Cursor moveCursor;
+        private final Cursor handCursor;
+        private final Cursor editCursor;
+
+        public CursorSet(Cursor drawing, Cursor move, Cursor hand, Cursor edit) {
+            this.drawingCursor = Optional.ofNullable(drawing).orElse(DefaultView2d.DEFAULT_CURSOR);
+            this.moveCursor = Optional.ofNullable(move).orElse(DefaultView2d.MOVE_CURSOR);
+            this.handCursor = Optional.ofNullable(hand).orElse(DefaultView2d.HAND_CURSOR);
+            this.editCursor = Optional.ofNullable(edit).orElse(DefaultView2d.EDIT_CURSOR);
+        }
+
+        public Cursor getDrawingCursor() {
+            return drawingCursor;
+        }
+
+        public Cursor getMoveCursor() {
+            return moveCursor;
+        }
+
+        public Cursor getHandCursor() {
+            return handCursor;
+        }
+
+        public Cursor getEditCursor() {
+            return editCursor;
         }
     }
 }

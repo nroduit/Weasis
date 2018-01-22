@@ -4,11 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class LangUtil {
-    
+
     public static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
-        return iterable == null ? Collections.<T>emptyList() : iterable;
+        return iterable == null ? Collections.<T> emptyList() : iterable;
     }
-    
+
     public static boolean getNULLtoFalse(Boolean val) {
         if (val != null) {
             return val.booleanValue();

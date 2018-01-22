@@ -391,7 +391,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     @Override
     public void changingViewContentEvent(SeriesViewerEvent event) {
-        // TODO should recieved layer changes
+        // TODO should received layer changes
         EVENT e = event.getEventType();
         if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
             iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());

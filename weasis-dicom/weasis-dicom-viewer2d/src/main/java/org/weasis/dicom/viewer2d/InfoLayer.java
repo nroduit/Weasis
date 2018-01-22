@@ -83,7 +83,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         displayPreferences.put(ROTATION, false);
         displayPreferences.put(FRAME, true);
         displayPreferences.put(PIXEL, true);
-        
+
         displayPreferences.put(PRELOADING_BAR, true);
     }
 

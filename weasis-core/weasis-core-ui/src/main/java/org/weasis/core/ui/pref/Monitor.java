@@ -91,7 +91,6 @@ public class Monitor {
         }
         return null;
     }
-    
 
     public static Monitor getDefaultMonitor() {
         int defIndex = ScreenPrefView.getDefaultMonitor();

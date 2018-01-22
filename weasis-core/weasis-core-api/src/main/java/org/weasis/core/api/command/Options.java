@@ -81,7 +81,7 @@ public class Options implements Option {
         final String[] usage = { "test - test Options usage", //$NON-NLS-1$
             "  text before Usage: is displayed when usage() is called and no error has occurred.", //$NON-NLS-1$
             "  so can be used as a simple help message.", "", "Usage: testOptions [OPTION]... PATTERN [FILES]...", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            "  Output control: arbitary non-option text can be included.", "  -? --help                show help", //$NON-NLS-1$ //$NON-NLS-2$
+            "  Output control: arbitrary non-option text can be included.", "  -? --help                show help", //$NON-NLS-1$ //$NON-NLS-2$
             "  -c --count=COUNT           show COUNT lines", //$NON-NLS-1$
             "  -h --no-filename         suppress the prefixing filename on output", //$NON-NLS-1$
             "  -q --quiet, --silent     suppress all normal output", //$NON-NLS-1$

@@ -162,7 +162,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public static final Cursor DEFAULT_CURSOR = DefaultView2d.getNewCursor(Cursor.DEFAULT_CURSOR);
 
     protected final FocusHandler focusHandler = new FocusHandler();
-    protected final GraphicMouseHandler<E> graphicMouseHandler;
+    protected GraphicMouseHandler<E> graphicMouseHandler;
 
     private final PanPoint highlightedPosition = new PanPoint(State.CENTER);
     private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);

@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.LoadDicomObjects;
@@ -408,7 +409,7 @@ public class DownloadManager {
             if (TagD.Level.PATIENT.getTagName().equals(key)) {
                 MediaSeriesGroup patient = readPatient(xmler, params, wadoParameters);
                 patients.add(patient);
-            } else if (WadoParameters.TAG_HTTP_TAG.equals(key)) {
+            } else if (ArcParameters.TAG_HTTP_TAG.equals(key)) {
                 String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                 String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                 wadoParameters.addHttpTag(httpkey, httpvalue);
@@ -467,20 +468,17 @@ public class DownloadManager {
         TagW issuerIdTag = TagD.get(Tag.IssuerOfPatientID);
         TagW nameTag = TagD.get(Tag.PatientName);
 
-        String patientID = TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE);
-        String issuerOfPatientID = TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null);
-        String name = TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE);
-
-        String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(patientID, issuerOfPatientID, name);
+        PatientComparator patientComparator = new PatientComparator(xmler);
+        String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
         DicomModel model = params.getModel();
         MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient =
                 new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
-            patient.setTag(idTag, patientID);
-            patient.setTag(nameTag, name);
-            patient.setTagNoNull(issuerIdTag, issuerOfPatientID);
+            patient.setTag(idTag, TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE));
+            patient.setTag(nameTag, TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE));
+            patient.setTagNoNull(issuerIdTag, TagUtil.getTagAttribute(xmler, issuerIdTag.getKeyword(), null));
 
             TagW[] tags = TagD.getTagFromIDs(Tag.PatientSex, Tag.PatientBirthDate, Tag.PatientBirthTime);
             for (TagW tag : tags) {

@@ -216,7 +216,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         if (keyReferences != null) {
                             Reference koRef = new Reference(TagD.getTagValue(s, Tag.StudyInstanceUID, String.class),
                                 TagD.getTagValue(s, Tag.SeriesInstanceUID, String.class),
-                                ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID(), ref.getReferencedFrameNumber());
+                                ref.getReferencedSOPInstanceUID(), ref.getReferencedSOPClassUID(),
+                                ref.getReferencedFrameNumber());
                             keyReferences.addKeyObject(koRef);
                             SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
                             if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {

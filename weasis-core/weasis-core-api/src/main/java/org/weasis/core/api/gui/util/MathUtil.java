@@ -52,7 +52,7 @@ public class MathUtil {
     }
 
     public static boolean isEqual(double a, double b) {
-        // Math.copySign is imilar to Math.abs(x), but with different NaN semantics
+        // Math.copySign is similar to Math.abs(x), but with different NaN semantics
         return Math.copySign(a - b, 1.0) <= DOUBLE_EPSILON || (a == b) // infinities equal themselves
             || (Double.isNaN(a) && Double.isNaN(b));
     }

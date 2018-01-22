@@ -45,6 +45,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
@@ -123,9 +124,8 @@ public class DicomDirLoader {
     private boolean parsePatient(Attributes dcmPatient, DicomDirReader reader) {
         boolean newPatient = false;
         try {
-            String patientPseudoUID =
-                DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID, TagW.NO_VALUE),
-                    dcmPatient.getString(Tag.IssuerOfPatientID), dcmPatient.getString(Tag.PatientName, TagW.NO_VALUE));
+            PatientComparator patientComparator = new PatientComparator(dcmPatient);
+            String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             if (patient == null) {
