@@ -191,13 +191,14 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
         return layoutModel;
     }
-    
+
     public static GridBagLayoutModel buildGridBagLayoutModel(int rows, int cols, String type) {
         StringBuilder buf = new StringBuilder();
         buf.append(rows);
         buf.append("x"); //$NON-NLS-1$
         buf.append(cols);
-        return new GridBagLayoutModel(buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf.toString()), rows, cols, type);
+        return new GridBagLayoutModel(buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf.toString()), rows,
+            cols, type);
     }
 
     @Override
@@ -261,29 +262,28 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     protected JComponent buildInstance(Class<?> cl) throws Exception {
         JComponent component;
-        if(hasSeriesViewerConstructor(cl)) {
+        if (hasSeriesViewerConstructor(cl)) {
             component = (JComponent) cl.getConstructor(SeriesViewer.class).newInstance(this);
-        }
-        else {
+        } else {
             component = (JComponent) cl.newInstance();
         }
-        
+
         if (component instanceof SeriesViewerListener) {
             eventManager.addSeriesViewerListener((SeriesViewerListener) component);
         }
         return component;
     };
-    
+
     private boolean hasSeriesViewerConstructor(Class<?> clazz) {
         for (Constructor<?> constructor : clazz.getConstructors()) {
             Class<?>[] types = constructor.getParameterTypes();
-            if (types.length == 1 && types[0].isAssignableFrom(SeriesViewer.class)) { 
+            if (types.length == 1 && types[0].isAssignableFrom(SeriesViewer.class)) {
                 return true;
             }
         }
         return false;
     }
-    
+
     /**
      * Set a layout to this view panel. The layout is defined by the provided number corresponding the layout definition
      * in the property file.

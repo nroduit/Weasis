@@ -40,11 +40,11 @@ public class SeriesInstanceList {
     public boolean isEmpty() {
         return dicomInstanceMap.isEmpty();
     }
-    
+
     public int size() {
         return dicomInstanceMap.size();
     }
-    
+
     public List<SopInstance> getSortedList() {
         ArrayList<SopInstance> sopList = new ArrayList<>(dicomInstanceMap.values());
         Collections.sort(sopList);

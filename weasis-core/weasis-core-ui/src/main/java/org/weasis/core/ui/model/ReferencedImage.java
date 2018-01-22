@@ -45,9 +45,9 @@ public class ReferencedImage extends DefaultUUID {
 
     /**
      * Set a list of frames. Each value matches to the position of a MediaElement (media.getKey()).
-     * 
+     *
      * Note: to match with DICOM Instance Frame the value must be increment of one (DicomFrame = frame + 1).
-     * 
+     *
      * @param frames
      */
     public void setFrames(List<Integer> frames) {

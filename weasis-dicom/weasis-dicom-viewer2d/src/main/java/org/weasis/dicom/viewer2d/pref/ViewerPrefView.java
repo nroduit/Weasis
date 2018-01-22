@@ -120,7 +120,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbccheckBoxLevelInverse.gridx = 0;
         gbccheckBoxLevelInverse.gridy = 1;
         winLevelPanel.add(checkBoxLevelInverse, gbccheckBoxLevelInverse);
-        
+
         checkBoxApplyPR = new JCheckBox(Messages.getString("ViewerPrefView.apply_pr"), //$NON-NLS-1$
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
         GridBagConstraints gbccheckBoxapplyPR = new GridBagConstraints();

@@ -409,7 +409,7 @@ public class DownloadManager {
             if (TagD.Level.PATIENT.getTagName().equals(key)) {
                 MediaSeriesGroup patient = readPatient(xmler, params, wadoParameters);
                 patients.add(patient);
-            } else if (WadoParameters.TAG_HTTP_TAG.equals(key)) {
+            } else if (ArcParameters.TAG_HTTP_TAG.equals(key)) {
                 String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                 String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                 wadoParameters.addHttpTag(httpkey, httpvalue);
