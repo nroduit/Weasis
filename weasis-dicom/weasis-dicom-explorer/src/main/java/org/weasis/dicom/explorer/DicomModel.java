@@ -744,7 +744,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 LOGGER.info("Adding patient: {}", pt); //$NON-NLS-1$
             } else {
                 pt = getParent(st, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 

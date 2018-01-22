@@ -462,7 +462,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         }
         RawImageInputStream riis =
             new RawImageInputStream(iis, new ImageTypeSpecifier(cmodel, smodel), frameOffsets, imageDimensions);
-        // endianess is already in iis?
+        // endianness is already in iis?
         // riis.setByteOrder(bigEndian ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
         reader.setInput(riis);
         return reader;

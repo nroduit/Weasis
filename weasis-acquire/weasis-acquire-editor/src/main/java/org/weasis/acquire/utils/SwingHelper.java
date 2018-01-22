@@ -121,7 +121,7 @@ public class SwingHelper {
      * @param max
      * @param nbDiv
      * @return
-     * @sicne 2.5.0
+     * @since 2.5.0
      */
     public static JSlider newSlider(int value, int min, int max, int nbDiv) {
         JSlider slider = newSlider(value, min, max);
