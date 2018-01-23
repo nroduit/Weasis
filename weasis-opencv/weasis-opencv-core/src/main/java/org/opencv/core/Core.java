@@ -1,4 +1,3 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
@@ -14,15 +13,17 @@ import org.opencv.core.Scalar;
 import org.opencv.core.TermCriteria;
 import org.opencv.utils.Converters;
 
-public class Core {
+// C++: class Core
+//javadoc: Core
 
+public class Core {
     // these constants are wrapped inside functions to prevent inlining
-    private static String getVersion() { return "3.3.1"; }
+    private static String getVersion() { return "3.4.0-dev"; }
     private static String getNativeLibraryName() { return "opencv_java"; }
     private static int getVersionMajor() { return 3; }
-    private static int getVersionMinor() { return 3; }
-    private static int getVersionRevision() { return 1; }
-    private static String getVersionStatus() { return ""; }
+    private static int getVersionMinor() { return 4; }
+    private static int getVersionRevision() { return 0; }
+    private static String getVersionStatus() { return "-dev"; }
 
     public static final String VERSION = getVersion();
     public static final String NATIVE_LIBRARY_NAME = getNativeLibraryName();
@@ -1136,23 +1137,23 @@ public class Core {
 
 
     //
-    // C++:  void completeSymm(Mat& mtx, bool lowerToUpper = false)
+    // C++:  void completeSymm(Mat& m, bool lowerToUpper = false)
     //
 
-    //javadoc: completeSymm(mtx, lowerToUpper)
-    public static void completeSymm(Mat mtx, boolean lowerToUpper)
+    //javadoc: completeSymm(m, lowerToUpper)
+    public static void completeSymm(Mat m, boolean lowerToUpper)
     {
         
-        completeSymm_0(mtx.nativeObj, lowerToUpper);
+        completeSymm_0(m.nativeObj, lowerToUpper);
         
         return;
     }
 
-    //javadoc: completeSymm(mtx)
-    public static void completeSymm(Mat mtx)
+    //javadoc: completeSymm(m)
+    public static void completeSymm(Mat m)
     {
         
-        completeSymm_1(mtx.nativeObj);
+        completeSymm_1(m.nativeObj);
         
         return;
     }
@@ -2521,9 +2522,9 @@ public static MinMaxLocResult minMaxLoc(Mat src) {
     // C++:  void compare(Mat src1, Scalar src2, Mat& dst, int cmpop)
     private static native void compare_1(long src1_nativeObj, double src2_val0, double src2_val1, double src2_val2, double src2_val3, long dst_nativeObj, int cmpop);
 
-    // C++:  void completeSymm(Mat& mtx, bool lowerToUpper = false)
-    private static native void completeSymm_0(long mtx_nativeObj, boolean lowerToUpper);
-    private static native void completeSymm_1(long mtx_nativeObj);
+    // C++:  void completeSymm(Mat& m, bool lowerToUpper = false)
+    private static native void completeSymm_0(long m_nativeObj, boolean lowerToUpper);
+    private static native void completeSymm_1(long m_nativeObj);
 
     // C++:  void convertFp16(Mat src, Mat& dst)
     private static native void convertFp16_0(long src_nativeObj, long dst_nativeObj);

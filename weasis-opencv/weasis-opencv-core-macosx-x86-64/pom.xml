@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
 	<name>OpenCV native Mac amd64</name>
-	<version>3.3.1-dcmR3</version>
+	<version>3.4.0-dcmR1</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>

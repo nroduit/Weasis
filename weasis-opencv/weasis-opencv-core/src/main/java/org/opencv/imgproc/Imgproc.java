@@ -1,4 +1,3 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
@@ -19,7 +18,12 @@ import org.opencv.core.RotatedRect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.core.TermCriteria;
+import org.opencv.imgproc.CLAHE;
+import org.opencv.imgproc.LineSegmentDetector;
 import org.opencv.utils.Converters;
+
+// C++: class Imgproc
+//javadoc: Imgproc
 
 public class Imgproc {
 
@@ -130,6 +134,7 @@ public class Imgproc {
             INTER_CUBIC = 2,
             INTER_AREA = 3,
             INTER_LANCZOS4 = 4,
+            INTER_LINEAR_EXACT = 5,
             INTER_MAX = 7,
             WARP_FILL_OUTLIERS = 8,
             WARP_INVERSE_MAP = 16,
@@ -632,7 +637,7 @@ public class Imgproc {
     public static CLAHE createCLAHE(double clipLimit, Size tileGridSize)
     {
         
-        CLAHE retVal = new CLAHE(createCLAHE_0(clipLimit, tileGridSize.width, tileGridSize.height));
+        CLAHE retVal = CLAHE.__fromPtr__(createCLAHE_0(clipLimit, tileGridSize.width, tileGridSize.height));
         
         return retVal;
     }
@@ -641,7 +646,7 @@ public class Imgproc {
     public static CLAHE createCLAHE()
     {
         
-        CLAHE retVal = new CLAHE(createCLAHE_1());
+        CLAHE retVal = CLAHE.__fromPtr__(createCLAHE_1());
         
         return retVal;
     }
@@ -655,7 +660,7 @@ public class Imgproc {
     public static LineSegmentDetector createLineSegmentDetector(int _refine, double _scale, double _sigma_scale, double _quant, double _ang_th, double _log_eps, double _density_th, int _n_bins)
     {
         
-        LineSegmentDetector retVal = new LineSegmentDetector(createLineSegmentDetector_0(_refine, _scale, _sigma_scale, _quant, _ang_th, _log_eps, _density_th, _n_bins));
+        LineSegmentDetector retVal = LineSegmentDetector.__fromPtr__(createLineSegmentDetector_0(_refine, _scale, _sigma_scale, _quant, _ang_th, _log_eps, _density_th, _n_bins));
         
         return retVal;
     }
@@ -664,7 +669,7 @@ public class Imgproc {
     public static LineSegmentDetector createLineSegmentDetector()
     {
         
-        LineSegmentDetector retVal = new LineSegmentDetector(createLineSegmentDetector_1());
+        LineSegmentDetector retVal = LineSegmentDetector.__fromPtr__(createLineSegmentDetector_1());
         
         return retVal;
     }
@@ -816,6 +821,29 @@ public class Imgproc {
     {
         
         double retVal = contourArea_1(contour.nativeObj);
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  double getFontScaleFromHeight(int fontFace, int pixelHeight, int thickness = 1)
+    //
+
+    //javadoc: getFontScaleFromHeight(fontFace, pixelHeight, thickness)
+    public static double getFontScaleFromHeight(int fontFace, int pixelHeight, int thickness)
+    {
+        
+        double retVal = getFontScaleFromHeight_0(fontFace, pixelHeight, thickness);
+        
+        return retVal;
+    }
+
+    //javadoc: getFontScaleFromHeight(fontFace, pixelHeight)
+    public static double getFontScaleFromHeight(int fontFace, int pixelHeight)
+    {
+        
+        double retVal = getFontScaleFromHeight_1(fontFace, pixelHeight);
         
         return retVal;
     }
@@ -3190,6 +3218,10 @@ public static Size getTextSize(String text, int fontFace, double fontScale, int 
     // C++:  double contourArea(Mat contour, bool oriented = false)
     private static native double contourArea_0(long contour_nativeObj, boolean oriented);
     private static native double contourArea_1(long contour_nativeObj);
+
+    // C++:  double getFontScaleFromHeight(int fontFace, int pixelHeight, int thickness = 1)
+    private static native double getFontScaleFromHeight_0(int fontFace, int pixelHeight, int thickness);
+    private static native double getFontScaleFromHeight_1(int fontFace, int pixelHeight);
 
     // C++:  double matchShapes(Mat contour1, Mat contour2, int method, double parameter)
     private static native double matchShapes_0(long contour1_nativeObj, long contour2_nativeObj, int method, double parameter);

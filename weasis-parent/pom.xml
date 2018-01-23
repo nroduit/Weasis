@@ -33,7 +33,7 @@
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P19</dockingframes.version>
-        <weasis.opencv.native.version>3.3.1-dcmR3</weasis.opencv.native.version>
+        <weasis.opencv.native.version>3.4.0-dcmR1</weasis.opencv.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>

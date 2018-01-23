@@ -14,7 +14,6 @@ import org.opencv.core.Core;
 public class OpenCVNativeLoader implements OpenCVInterface {
 
     public void init() {
-        // System.loadLibrary("opencv_java331");
         System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
         Logger.getLogger("org.opencv.osgi").log(Level.INFO, "Successfully loaded OpenCV native library.");
     }

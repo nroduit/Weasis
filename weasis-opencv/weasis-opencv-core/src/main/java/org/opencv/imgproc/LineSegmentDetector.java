@@ -1,4 +1,3 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
@@ -10,10 +9,13 @@ import org.opencv.core.Size;
 
 // C++: class LineSegmentDetector
 //javadoc: LineSegmentDetector
+
 public class LineSegmentDetector extends Algorithm {
 
     protected LineSegmentDetector(long addr) { super(addr); }
 
+    // internal usage only
+    public static LineSegmentDetector __fromPtr__(long addr) { return new LineSegmentDetector(addr); }
 
     //
     // C++:  int compareSegments(Size size, Mat lines1, Mat lines2, Mat& _image = Mat())

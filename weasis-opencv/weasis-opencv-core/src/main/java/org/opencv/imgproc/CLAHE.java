@@ -1,4 +1,3 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
@@ -10,10 +9,13 @@ import org.opencv.core.Size;
 
 // C++: class CLAHE
 //javadoc: CLAHE
+
 public class CLAHE extends Algorithm {
 
     protected CLAHE(long addr) { super(addr); }
 
+    // internal usage only
+    public static CLAHE __fromPtr__(long addr) { return new CLAHE(addr); }
 
     //
     // C++:  Size getTilesGridSize()

@@ -1,4 +1,3 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
@@ -17,12 +16,16 @@ import org.opencv.utils.Converters;
 
 // C++: class Subdiv2D
 //javadoc: Subdiv2D
+
 public class Subdiv2D {
 
     protected final long nativeObj;
     protected Subdiv2D(long addr) { nativeObj = addr; }
 
     public long getNativeObjAddr() { return nativeObj; }
+
+    // internal usage only
+    public static Subdiv2D __fromPtr__(long addr) { return new Subdiv2D(addr); }
 
     public static final int
             PTLOC_ERROR = -2,

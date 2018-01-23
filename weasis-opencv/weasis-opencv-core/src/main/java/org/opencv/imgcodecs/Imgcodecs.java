@@ -1,16 +1,19 @@
-
 //
 // This file is auto-generated. Please don't modify it!
 //
 package org.opencv.imgcodecs;
 
+import java.lang.String;
+import java.util.ArrayList;
 import java.util.List;
-
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfByte;
 import org.opencv.core.MatOfDouble;
 import org.opencv.core.MatOfInt;
 import org.opencv.utils.Converters;
+
+// C++: class Imgcodecs
+//javadoc: Imgcodecs
 
 public class Imgcodecs {
 
@@ -36,6 +39,7 @@ public class Imgcodecs {
             CV_IMWRITE_PNG_STRATEGY_RLE = 3,
             CV_IMWRITE_PNG_STRATEGY_FIXED = 4,
             CV_IMWRITE_PXM_BINARY = 32,
+            CV_IMWRITE_EXR_TYPE = 48,
             CV_IMWRITE_WEBP_QUALITY = 64,
             CV_IMWRITE_PAM_TUPLETYPE = 128,
             CV_IMWRITE_PAM_FORMAT_NULL = 0,
@@ -69,8 +73,11 @@ public class Imgcodecs {
             IMWRITE_PNG_STRATEGY = 17,
             IMWRITE_PNG_BILEVEL = 18,
             IMWRITE_PXM_BINARY = 32,
+            IMWRITE_EXR_TYPE = (3 << 4) + 0,
             IMWRITE_WEBP_QUALITY = 64,
             IMWRITE_PAM_TUPLETYPE = 128,
+            IMWRITE_EXR_TYPE_HALF = 1,
+            IMWRITE_EXR_TYPE_FLOAT = 2,
             IMWRITE_PNG_STRATEGY_DEFAULT = 0,
             IMWRITE_PNG_STRATEGY_FILTERED = 1,
             IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY = 2,
