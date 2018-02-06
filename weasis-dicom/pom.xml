@@ -17,6 +17,7 @@
 		<module>weasis-dicom-explorer</module>
 		<module>weasis-dicom-viewer2d</module>
 		<module>weasis-dicom-sr</module>
+		<module>weasis-dicom-wave</module>
 		<module>weasis-dicom-au</module>
 		<module>weasis-dicom-send</module>
 		<module>weasis-dicom-qr</module>

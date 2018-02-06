@@ -500,7 +500,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
     public abstract boolean updateComponentsListener(ViewCanvas<E> viewCanvas);
 
-    private static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
+    public static double roundAndCropViewScale(double viewScale, double minViewScale, double maxViewScale) {
         double ratio = viewScale;
         ratio *= 1000.0;
         double v = Math.floor(ratio);
