@@ -31,7 +31,6 @@ import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.Panner;
@@ -40,6 +39,7 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *

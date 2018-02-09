@@ -17,8 +17,8 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class AffineTransformOp extends AbstractOp {
 

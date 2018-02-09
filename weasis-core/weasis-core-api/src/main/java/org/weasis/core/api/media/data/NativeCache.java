@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.weasis.opencv.data.PlanarImage;
+
 public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
 
     protected final Map<K, V> hash;

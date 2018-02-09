@@ -68,16 +68,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.cv.ImageCV;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
@@ -95,6 +91,10 @@ import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.OverlayUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -725,7 +725,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                                 byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
                                 for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
                                     overlayData[i] = OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i],
-                                        ImageProcessor.toBufferedImage(img).getRaster(), ds);
+                                        ImageConversion.toBufferedImage(img).getRaster(), ds);
                                 }
                                 File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                                 fileOut = new FileOutputStream(file);
@@ -805,11 +805,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             RenderedImage image = ImageFiler.getReadableImage(buffer);
 
             if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                image = ImageToolkit.fixSignedShortDataBuffer(image); // sh
+                image = ImageConversion.fixSignedShortDataBuffer(image); // sh
             }
 
             // TODO free memory
-            img = ImageProcessor.toMat(image);
+            img = ImageConversion.toMat(image);
             if (image.getColorModel() instanceof PaletteColorModel) {
                 img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
             }
@@ -1129,7 +1129,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         readingImage = true;
         try {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageProcessor.toBufferedImage(img).getRaster();
+            return ImageConversion.toBufferedImage(img).getRaster();
         } catch (Exception e) {
             LOGGER.error("Reading image", e);
             return null;
@@ -1143,7 +1143,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         readingImage = true;
         try {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageProcessor.toBufferedImage(img);
+            return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
             LOGGER.error("Reading image", e);
             return null;
@@ -1157,7 +1157,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         readingImage = true;
         try {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageProcessor.toBufferedImage(img);
+            return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
             LOGGER.error("Reading image", e);
             return null;

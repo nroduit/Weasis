@@ -31,10 +31,8 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.ui.model.GraphicModel;
@@ -43,6 +41,8 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.tool.Dicomizer;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class Transform2Dicom {
 

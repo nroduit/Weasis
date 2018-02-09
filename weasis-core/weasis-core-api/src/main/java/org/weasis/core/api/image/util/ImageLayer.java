@@ -15,7 +15,7 @@ import java.awt.geom.AffineTransform;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public interface ImageLayer<E extends ImageElement> extends MeasurableLayer {
 

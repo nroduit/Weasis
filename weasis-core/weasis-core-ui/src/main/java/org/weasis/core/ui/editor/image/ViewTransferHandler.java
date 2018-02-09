@@ -22,11 +22,11 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.model.ViewModel;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ImagePrint;
+import org.weasis.opencv.op.ImageConversion;
 
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
@@ -52,7 +52,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
             DefaultView2d view2DPane = (DefaultView2d) comp;
             RenderedImage imgP = createComponentImage(view2DPane);
             if (imgP != null) {
-                image = ImageToolkit.convertRenderedImage(imgP);
+                image = ImageConversion.convertRenderedImage(imgP);
                 return this;
             }
 

@@ -19,12 +19,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.MeasurableLayer;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 import org.weasis.core.ui.model.utils.bean.Measurement;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implements GraphicArea {
     private static final long serialVersionUID = -3042328664891626708L;

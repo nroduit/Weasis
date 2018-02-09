@@ -41,9 +41,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
@@ -54,6 +52,8 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.imaging.ImageProcessingException;
@@ -188,7 +188,7 @@ public class AcquireImageInfo {
                     bounds = rect.getBounds();
                 }
                 if (source != null && bounds != null && !bounds.equals(view.getViewModel().getModelArea())) {
-                    Rectangle imgBouds = ImageProcessor.getBounds(source);
+                    Rectangle imgBouds = ImageConversion.getBounds(source);
                     area = area.intersection(imgBouds);
                     if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
                         ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(bounds.width, bounds.height);

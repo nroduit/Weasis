@@ -13,8 +13,8 @@ package org.weasis.core.api.image;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class FlipOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlipOp.class);

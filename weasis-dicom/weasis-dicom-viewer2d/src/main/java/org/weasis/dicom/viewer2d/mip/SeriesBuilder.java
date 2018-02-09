@@ -32,13 +32,11 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.image.cv.FileRawImage;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
@@ -50,6 +48,8 @@ import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
+import org.weasis.opencv.data.FileRawImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class SeriesBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);

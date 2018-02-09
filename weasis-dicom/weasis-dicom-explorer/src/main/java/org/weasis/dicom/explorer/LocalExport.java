@@ -53,10 +53,8 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
@@ -72,6 +70,9 @@ import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 @SuppressWarnings("serial")
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
@@ -729,7 +730,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         if ("PALETTE COLOR".equals(pmi)) { //$NON-NLS-1$
             BufferedImage bi =
-                ImageProcessor.convertTo(ImageProcessor.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
+                            ImageConversion.convertTo(ImageConversion.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
             IndexColorModel cm = (IndexColorModel) bi.getColorModel();
             int[] lutDesc = { cm.getMapSize(), 0, 8 };
             byte[] r = new byte[lutDesc[0]];

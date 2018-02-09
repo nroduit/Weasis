@@ -15,8 +15,8 @@ import java.awt.Point;
 import java.awt.geom.AffineTransform;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *

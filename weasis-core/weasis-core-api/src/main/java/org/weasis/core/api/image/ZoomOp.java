@@ -15,8 +15,8 @@ import java.awt.Dimension;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class ZoomOp extends AbstractOp {
 

@@ -18,7 +18,7 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public interface Image2DViewer<E extends ImageElement> {
 

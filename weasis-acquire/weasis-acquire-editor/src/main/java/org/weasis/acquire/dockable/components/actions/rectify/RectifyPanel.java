@@ -39,7 +39,6 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.RotationOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -47,6 +46,7 @@ import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
+import org.weasis.opencv.op.ImageConversion;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 4041145212218086219L;
@@ -132,7 +132,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, info.getDefaultValues().isFlip());
         view.updateCanvas(false);
         view.getImageLayer().setOffset(null);
-        Rectangle area = ImageProcessor.getBounds(view.getSourceImage());
+        Rectangle area = ImageConversion.getBounds(view.getSourceImage());
         if (area != null && area.width > 1 && area.height > 1) {
             ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
             view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));

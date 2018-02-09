@@ -53,7 +53,6 @@ import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagUtil;
@@ -68,6 +67,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.opencv.data.LookupTableCV;
 
 /**
  * @author Nicolas Roduit

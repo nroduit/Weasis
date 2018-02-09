@@ -1,119 +1,224 @@
-/*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
-package org.weasis.core.api.image.util;
+package org.weasis.opencv.op;
 
+import java.awt.Graphics2D;
 import java.awt.Rectangle;
+import java.awt.Transparency;
+import java.awt.color.ColorSpace;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.ComponentSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferDouble;
+import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
-import java.awt.image.IndexColorModel;
 import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.awt.image.WritableRaster;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.List;
 
-import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.PlanarImage;
 
-/**
- * An image manipulation toolkit.
- *
- */
-public class ImageToolkit {
+public class ImageConversion {
 
-    private ImageToolkit() {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageConversion.class);
+
+    /**
+     * Converts/writes a Mat into a BufferedImage.
+     * 
+     * @param matrix
+     * 
+     * @return BufferedImage
+     */
+    public static BufferedImage toBufferedImage(Mat matrix) {
+        if (matrix == null) {
+            return null;
+        }
+
+        int cols = matrix.cols();
+        int rows = matrix.rows();
+        int type = matrix.type();
+        int elemSize = CvType.ELEM_SIZE(type);
+        int channels = CvType.channels(type);
+        int bpp = (elemSize * 8) / channels;
+
+        ColorSpace cs;
+        WritableRaster raster;
+        ComponentColorModel colorModel;
+        int dataType = convertToDataType(type);
+
+        switch (channels) {
+            case 1:
+                cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+                colorModel = new ComponentColorModel(cs, new int[] { bpp }, false, true, Transparency.OPAQUE, dataType);
+                raster = colorModel.createCompatibleWritableRaster(cols, rows);
+                break;
+            case 3:
+                cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+                colorModel = new ComponentColorModel(cs, new int[] { bpp, bpp, bpp }, false, false, Transparency.OPAQUE,
+                    dataType);
+                raster = Raster.createInterleavedRaster(dataType, cols, rows, cols * channels, channels,
+                    new int[] { 2, 1, 0 }, null);
+                break;
+            default:
+                throw new UnsupportedOperationException(
+                    "No implementation to handle " + matrix.channels() + " channels");
+        }
+
+        DataBuffer buf = raster.getDataBuffer();
+
+        if (buf instanceof DataBufferByte) {
+            matrix.get(0, 0, ((DataBufferByte) buf).getData());
+        } else if (buf instanceof DataBufferUShort) {
+            matrix.get(0, 0, ((DataBufferUShort) buf).getData());
+        } else if (buf instanceof DataBufferShort) {
+            matrix.get(0, 0, ((DataBufferShort) buf).getData());
+        } else if (buf instanceof DataBufferInt) {
+            matrix.get(0, 0, ((DataBufferInt) buf).getData());
+        } else if (buf instanceof DataBufferFloat) {
+            matrix.get(0, 0, ((DataBufferFloat) buf).getData());
+        } else if (buf instanceof DataBufferDouble) {
+            matrix.get(0, 0, ((DataBufferDouble) buf).getData());
+        }
+        return new BufferedImage(colorModel, raster, false, null);
+
+    }
+
+    public static BufferedImage toBufferedImage(PlanarImage matrix) {
+        if (matrix == null) {
+            return null;
+        }
+        return toBufferedImage(matrix.toMat());
+    }
+
+    public static int convertToDataType(int cvType) {
+        switch (CvType.depth(cvType)) {
+            case CvType.CV_8U:
+            case CvType.CV_8S:
+                return DataBuffer.TYPE_BYTE;
+            case CvType.CV_16U:
+                return DataBuffer.TYPE_USHORT;
+            case CvType.CV_16S:
+                return DataBuffer.TYPE_SHORT;
+            case CvType.CV_32S:
+                return DataBuffer.TYPE_INT;
+            case CvType.CV_32F:
+                return DataBuffer.TYPE_FLOAT;
+            case CvType.CV_64F:
+                return DataBuffer.TYPE_DOUBLE;
+            default:
+                throw new java.lang.UnsupportedOperationException("Unsupported CvType value: " + cvType);
+        }
+    }
+
+    public static ImageCV toMat(RenderedImage img) {
+        return toMat(img, null);
+    }
+
+    public static ImageCV toMat(RenderedImage img, Rectangle region) {
+        Raster raster = region == null ? img.getData() : img.getData(region);
+        DataBuffer buf = raster.getDataBuffer();
+        int[] samples = raster.getSampleModel().getSampleSize();
+        int[] offsets;
+        if (raster.getSampleModel() instanceof ComponentSampleModel) {
+            offsets = ((ComponentSampleModel) raster.getSampleModel()).getBandOffsets();
+        } else {
+            offsets = new int[samples.length];
+            for (int i = 0; i < offsets.length; i++) {
+                offsets[i] = i;
+            }
+        }
+
+        if (isBinary(raster.getSampleModel())) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+            mat.put(0, 0, getUnpackedBinaryData(raster, raster.getBounds()));
+            return mat;
+        }
+
+        if (buf instanceof DataBufferByte) {
+            if (Arrays.equals(offsets, new int[] { 0, 0, 0 })) {
+                List<Mat> mv = new ArrayList<>();
+                Mat b = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+                b.put(0, 0, ((DataBufferByte) buf).getData(2));
+                mv.add(b);
+                Mat g = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+                b.put(0, 0, ((DataBufferByte) buf).getData(1));
+                mv.add(g);
+                Mat r = new Mat(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+                b.put(0, 0, ((DataBufferByte) buf).getData(0));
+                mv.add(r);
+                ImageCV dstImg = new ImageCV();
+                Core.merge(mv, dstImg);
+                return dstImg;
+            }
+
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC(samples.length));
+            mat.put(0, 0, ((DataBufferByte) buf).getData());
+            if (Arrays.equals(offsets, new int[] { 0, 1, 2 })) {
+                ImageCV dstImg = new ImageCV();
+                Imgproc.cvtColor(mat, dstImg, Imgproc.COLOR_RGB2BGR);
+                return dstImg;
+            }
+            return mat;
+        } else if (buf instanceof DataBufferUShort) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_16UC(samples.length));
+            mat.put(0, 0, ((DataBufferUShort) buf).getData());
+            return mat;
+        } else if (buf instanceof DataBufferShort) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_16SC(samples.length));
+            mat.put(0, 0, ((DataBufferShort) buf).getData());
+            return mat;
+        } else if (buf instanceof DataBufferInt) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_32SC(samples.length));
+            mat.put(0, 0, ((DataBufferInt) buf).getData());
+            return mat;
+        } else if (buf instanceof DataBufferFloat) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_32FC(samples.length));
+            mat.put(0, 0, ((DataBufferFloat) buf).getData());
+            return mat;
+        } else if (buf instanceof DataBufferDouble) {
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_64FC(samples.length));
+            mat.put(0, 0, ((DataBufferDouble) buf).getData());
+            return mat;
+        }
+
+        return null;
+    }
+
+    public static Rectangle getBounds(PlanarImage img) {
+        return new Rectangle(0, 0, img.width(), img.height());
+    }
+
+    public static BufferedImage convertTo(RenderedImage src, int imageType) {
+        BufferedImage dst = new BufferedImage(src.getWidth(), src.getHeight(), imageType);
+        Graphics2D big = dst.createGraphics();
+        try {
+            big.drawRenderedImage(src, AffineTransform.getTranslateInstance(0.0, 0.0));
+        } finally {
+            big.dispose();
+        }
+        return dst;
     }
 
     public static boolean isBinary(SampleModel sm) {
         return sm instanceof MultiPixelPackedSampleModel && ((MultiPixelPackedSampleModel) sm).getPixelBitStride() == 1
             && sm.getNumBands() == 1;
-    }
-
-    /**
-     * Fix the issue in ComponentColorModel when signed short DataBuffer is less than 16 bit (only 16 bits is
-     * supported).
-     * 
-     * @param source
-     * @param shiftBit
-     */
-    public static void fixSignedShortDataBuffer(RenderedImage source, int shiftBit) {
-        if (source != null && source.getSampleModel().getDataType() == DataBuffer.TYPE_SHORT) {
-            Raster raster = source.getData();
-            if (raster.getDataBuffer() instanceof DataBufferShort) {
-                int limit = (1 << shiftBit) / 2;
-                short[] s = ((DataBufferShort) raster.getDataBuffer()).getData();
-                for (int i = 0; i < s.length; i++) {
-                    if (s[i] >= limit) {
-                        s[i] = (short) (s[i] - (1 << shiftBit));
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values for short data.
-     * They convert signed short to unsigned short.
-     * 
-     * @param source
-     * @return
-     */
-    public static RenderedImage fixSignedShortDataBuffer(RenderedImage source) {
-        if (source != null && source.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-            Raster raster = source.getData();
-            if (raster.getDataBuffer() instanceof DataBufferUShort) {
-                short[] s = ((DataBufferUShort) raster.getDataBuffer()).getData();
-                DataBufferShort db = new DataBufferShort(s, s.length);
-                ColorModel cm = source.getColorModel();
-                WritableRaster wr = Raster.createWritableRaster(source.getSampleModel(), db, null);
-                return new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
-            }
-        }
-        return source;
-    }
-
-    public static Rectangle getBounds(RenderedImage img) {
-        return new Rectangle(img.getMinX(), img.getMinY(), img.getWidth(), img.getHeight());
-    }
-
-    public static BufferedImage convertRenderedImage(RenderedImage img) {
-        if (img == null) {
-            return null;
-        }
-        if (img instanceof BufferedImage) {
-            return (BufferedImage) img;
-        }
-        ColorModel cm = img.getColorModel();
-        int width = img.getWidth();
-        int height = img.getHeight();
-        WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
-        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
-        Hashtable<String, Object> properties = new Hashtable<>();
-        String[] keys = img.getPropertyNames();
-        if (keys != null) {
-            for (int i = 0; i < keys.length; i++) {
-                properties.put(keys[i], img.getProperty(keys[i]));
-            }
-        }
-        BufferedImage result = new BufferedImage(cm, raster, isAlphaPremultiplied, properties);
-        img.copyData(raster);
-        return result;
     }
 
     /**
@@ -653,82 +758,47 @@ public class ImageToolkit {
     }
 
     /**
-     * Convert index color mapped image content to a full 24-bit 16-million color RGB image.
-     *
-     * @param image
-     *            the source image to convert.
-     * @return a full RGB color image as RenderedOp.
-     */
-    public static RenderedImage convertIndexColorToRGBColor(RenderedImage image) {
-        RenderedImage result = image;
-
-        // If the source image is color mapped, convert it to 3-band RGB.
-        // Note that GIF and PNG files fall into this category.
-        if (image.getColorModel() instanceof IndexColorModel) {
-            // Retrieve the IndexColorModel
-            IndexColorModel icm = (IndexColorModel) image.getColorModel();
-
-            // Cache the number of elements in each band of the colormap.
-            int mapSize = icm.getMapSize();
-
-            // Allocate an array for the lookup table data.
-            byte[][] lutData = new byte[3][mapSize];
-
-            // Load the lookup table data from the IndexColorModel.
-            icm.getReds(lutData[0]);
-            icm.getGreens(lutData[1]);
-            icm.getBlues(lutData[2]);
-
-            throw new IllegalAccessError();
-            // // Create the lookup table object.
-            // LookupTableJAI lut = new LookupTableJAI(lutData);
-            //
-            // // Replace the original image with the 3-band RGB image.
-            // result = JAI.create("lookup", image, lut); //$NON-NLS-1$
-        }
-
-        return result;
-    }
-
-    /**
-     * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
-     * parameter.
-     *
-     * @param image
+     * Bug fix: CLibImageReader and J2KImageReaderCodecLib (imageio libs) do not handle negative values for short data.
+     * They convert signed short to unsigned short.
+     * 
      * @param source
-     * @param window
-     * @param level
-     * @param pixelPadding
      * @return
      */
-    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, double window,
-        double level, boolean pixelPadding) {
-        if (image == null || source == null) {
-            return null;
+    public static RenderedImage fixSignedShortDataBuffer(RenderedImage source) {
+        if (source != null && source.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
+            Raster raster = source.getData();
+            if (raster.getDataBuffer() instanceof DataBufferUShort) {
+                short[] s = ((DataBufferUShort) raster.getDataBuffer()).getData();
+                DataBufferShort db = new DataBufferShort(s, s.length);
+                ColorModel cm = source.getColorModel();
+                WritableRaster wr = Raster.createWritableRaster(source.getSampleModel(), db, null);
+                return new BufferedImage(cm, wr, cm.isAlphaPremultiplied(), null);
+            }
         }
-
-        if (ImageProcessor.convertToDataType(source.type()) == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
-            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
-            return source;
-        }
-
-        double low = level - window / 2.0;
-        double high = level + window / 2.0;
-        // use a lookup table for rescaling
-        double range = high - low;
-        if (range < 1.0) {
-            range = 1.0;
-        }
-
-        double slope = 255.0 / range;
-        double yInt = 255.0 - slope * high;
-
-        return ImageProcessor.rescaleToByte(source.toMat(), slope, yInt);
-
+        return source;
     }
 
-    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, boolean pixelPadding) {
-        return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
-            image.getDefaultLevel(pixelPadding), true);
+    public static BufferedImage convertRenderedImage(RenderedImage img) {
+        if (img == null) {
+            return null;
+        }
+        if (img instanceof BufferedImage) {
+            return (BufferedImage) img;
+        }
+        ColorModel cm = img.getColorModel();
+        int width = img.getWidth();
+        int height = img.getHeight();
+        WritableRaster raster = cm.createCompatibleWritableRaster(width, height);
+        boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+        Hashtable<String, Object> properties = new Hashtable<>();
+        String[] keys = img.getPropertyNames();
+        if (keys != null) {
+            for (int i = 0; i < keys.length; i++) {
+                properties.put(keys[i], img.getProperty(keys[i]));
+            }
+        }
+        BufferedImage result = new BufferedImage(cm, raster, isAlphaPremultiplied, properties);
+        img.copyData(raster);
+        return result;
     }
 }

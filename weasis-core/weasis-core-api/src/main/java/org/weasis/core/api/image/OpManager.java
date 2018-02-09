@@ -13,8 +13,8 @@ package org.weasis.core.api.image;
 import java.util.List;
 
 import org.weasis.core.api.image.ImageOpNode.Param;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.Copyable;
+import org.weasis.opencv.data.PlanarImage;
 
 public interface OpManager extends OpEventListener, Copyable<OpManager> {
 

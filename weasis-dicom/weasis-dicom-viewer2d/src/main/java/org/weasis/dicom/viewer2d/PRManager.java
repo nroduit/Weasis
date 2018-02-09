@@ -41,11 +41,9 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -70,6 +68,8 @@ import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
@@ -173,7 +173,7 @@ public class PRManager {
 
             PlanarImage source = view.getSourceImage();
             if (source != null) {
-                Rectangle imgBouds = ImageProcessor.getBounds(source);
+                Rectangle imgBouds = ImageConversion.getBounds(source);
                 area = area.intersection(imgBouds);
                 if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
                     SimpleOpManager opManager =

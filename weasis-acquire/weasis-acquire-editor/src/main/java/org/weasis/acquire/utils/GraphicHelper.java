@@ -17,12 +17,12 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.imp.NonEditableGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *

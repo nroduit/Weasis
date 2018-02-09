@@ -42,11 +42,13 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 @SuppressWarnings("serial")
 public class Thumbnail extends JLabel implements Thumbnailable {
@@ -173,7 +175,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     height = thumbnail.height();
                     x += (thumbnailSize - width) / 2;
                     y += (thumbnailSize - height) / 2;
-                    g2d.drawImage(ImageProcessor.toBufferedImage(thumbnail), AffineTransform.getTranslateInstance(x, y),
+                    g2d.drawImage(ImageConversion.toBufferedImage(thumbnail), AffineTransform.getTranslateInstance(x, y),
                         null);
                 }
                 drawOverIcon(g2d, x, y, width, height);

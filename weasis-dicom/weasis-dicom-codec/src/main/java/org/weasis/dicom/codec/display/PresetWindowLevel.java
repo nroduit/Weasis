@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.LutShape.eFunction;
-import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
@@ -43,6 +42,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.opencv.data.LookupTableCV;
 
 public class PresetWindowLevel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);

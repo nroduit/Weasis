@@ -1,8 +1,7 @@
-package org.weasis.core.api.media.data;
+package org.weasis.opencv.data;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
-import org.weasis.core.api.image.cv.ImageCV;
 
 public interface PlanarImage extends ImageSize {
 
@@ -50,25 +49,32 @@ public interface PlanarImage extends ImageSize {
 
     void assignTo(Mat dstImg);
 
-    default Mat toMat() {
-        if (this instanceof Mat) {
-            return (Mat) this;
-        } else {
-            throw new IllegalAccessError("Not implemented yet");
-        }
-    }
+    Mat toMat();
 
-    default ImageCV toImageCV() {
-        if (this instanceof Mat) {
-            if (this instanceof ImageCV) {
-                return (ImageCV) this;
-            }
-            ImageCV dstImg = new ImageCV();
-            this.assignTo(dstImg);
-            return dstImg;
-        } else {
-            throw new IllegalAccessError("Not implemented yet");
-        }
-    }
+    ImageCV toImageCV();
+    
+
+    // TODO required Java 8
+
+    // default Mat toMat() {
+    // if (this instanceof Mat) {
+    // return (Mat) this;
+    // } else {
+    // throw new IllegalAccessError("Not implemented yet");
+    // }
+    // }
+    //
+    // default ImageCV toImageCV() {
+    // if (this instanceof Mat) {
+    // if (this instanceof ImageCV) {
+    // return (ImageCV) this;
+    // }
+    // ImageCV dstImg = new ImageCV();
+    // this.assignTo(dstImg);
+    // return dstImg;
+    // } else {
+    // throw new IllegalAccessError("Not implemented yet");
+    // }
+    // }
 
 }

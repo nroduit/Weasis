@@ -45,12 +45,8 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.cv.FileRawImage;
-import org.weasis.core.api.image.cv.ImageCV;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.util.FileUtil;
@@ -64,6 +60,10 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.opencv.data.FileRawImage;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class SeriesBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);

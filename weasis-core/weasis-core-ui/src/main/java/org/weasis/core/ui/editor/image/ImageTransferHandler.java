@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
     private static final long serialVersionUID = 7716040872158831560L;
@@ -70,7 +70,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
     @Override
     public Object getTransferData(DataFlavor flavor) {
         if (isDataFlavorSupported(flavor)) {
-            return ImageProcessor.toBufferedImage(disOp.process());
+            return ImageConversion.toBufferedImage(disOp.process());
         }
         return null;
     }

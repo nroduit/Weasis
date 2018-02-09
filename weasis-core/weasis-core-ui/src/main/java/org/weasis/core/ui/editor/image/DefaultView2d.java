@@ -92,7 +92,6 @@ import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
@@ -123,6 +122,7 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  * @author Nicolas Roduit, Benoit Jacquemoud

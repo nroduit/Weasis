@@ -29,18 +29,18 @@ import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 /**
  * The Class RenderedImageLayer.
@@ -225,7 +225,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         }
 
         try {
-            g2d.drawRenderedImage(ImageProcessor.toBufferedImage(displayImage),
+            g2d.drawRenderedImage(ImageConversion.toBufferedImage(displayImage),
                 AffineTransform.getTranslateInstance(0.0, 0.0));
         } catch (Exception | OutOfMemoryError e) {
             LOGGER.error("Draw rendered image", e);//$NON-NLS-1$
@@ -368,7 +368,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);
 
-        g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(rx, ry));
+        g2d.drawRenderedImage(ImageConversion.toBufferedImage(img), AffineTransform.getScaleInstance(rx, ry));
 
         g2d.setClip(clip);
     }

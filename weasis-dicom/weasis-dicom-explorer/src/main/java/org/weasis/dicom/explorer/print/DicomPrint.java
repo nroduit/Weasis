@@ -52,7 +52,6 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
@@ -60,6 +59,7 @@ import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
+import org.weasis.opencv.data.PlanarImage;
 
 public class DicomPrint {
 

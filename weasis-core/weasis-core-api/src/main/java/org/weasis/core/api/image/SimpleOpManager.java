@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.ImageOpNode.Param;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);

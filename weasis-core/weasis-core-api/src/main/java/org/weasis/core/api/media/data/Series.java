@@ -36,6 +36,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);

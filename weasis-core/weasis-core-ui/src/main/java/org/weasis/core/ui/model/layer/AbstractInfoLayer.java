@@ -25,7 +25,6 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -35,6 +34,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
+import org.weasis.opencv.data.PlanarImage;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID implements LayerAnnotation {
 

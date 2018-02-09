@@ -12,8 +12,8 @@ package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
 
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class MaskOp extends AbstractOp {
 

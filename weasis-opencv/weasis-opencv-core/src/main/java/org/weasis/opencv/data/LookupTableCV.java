@@ -1,4 +1,4 @@
-package org.weasis.core.api.image.cv;
+package org.weasis.opencv.data;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -8,6 +8,7 @@ import java.util.Objects;
 
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.weasis.opencv.op.ImageConversion;
 
 public class LookupTableCV {
 
@@ -139,7 +140,7 @@ public class LookupTableCV {
         int height = src.height();
         int cvType = src.type();
         int channels = CvType.channels(cvType);
-        int srcDataType = ImageProcessor.convertToDataType(cvType);
+        int srcDataType = ImageConversion.convertToDataType(cvType);
 
         byte[] bSrcData = null;
         short[] sSrcData = null;

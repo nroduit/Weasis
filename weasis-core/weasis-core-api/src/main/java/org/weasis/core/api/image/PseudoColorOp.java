@@ -16,13 +16,10 @@ import java.awt.image.BufferedImage;
 
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.image.cv.ImageProcessor;
-
 import org.weasis.core.api.image.op.ByteLut;
-
-import org.weasis.core.api.media.data.PlanarImage;
-
 import org.weasis.core.api.util.LangUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class PseudoColorOp extends AbstractOp {
 

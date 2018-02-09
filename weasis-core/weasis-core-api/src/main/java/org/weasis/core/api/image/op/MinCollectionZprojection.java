@@ -16,10 +16,10 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 public class MinCollectionZprojection {
 
@@ -59,7 +59,7 @@ public class MinCollectionZprojection {
     }
 
     public PlanarImage computeMinCollectionOpImage() {
-        return ImageProcessor.minStack(sources);
+        return CvUtil.minStack(sources);
     }
 
 }

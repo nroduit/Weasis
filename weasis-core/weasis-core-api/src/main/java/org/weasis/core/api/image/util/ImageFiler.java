@@ -32,7 +32,7 @@ import javax.imageio.stream.ImageOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractBufferHandler;
-import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.opencv.op.ImageConversion;
 
 /**
  * The Class ImageFiler.
@@ -115,13 +115,13 @@ public class ImageFiler extends AbstractBufferHandler {
     public static RenderedImage getReadableImage(RenderedImage source) {
         if (source != null && source.getSampleModel() != null) {
             int numBands = source.getSampleModel().getNumBands();
-            if (ImageToolkit.isBinary(source.getSampleModel())) {
-                return ImageProcessor.convertTo(source, BufferedImage.TYPE_BYTE_GRAY);
+            if (ImageConversion.isBinary(source.getSampleModel())) {
+                return ImageConversion.convertTo(source, BufferedImage.TYPE_BYTE_GRAY);
             }
 
             if (source.getColorModel() instanceof IndexColorModel || numBands == 2 || numBands > 3 || (source.getSampleModel() instanceof BandedSampleModel && numBands > 1)) {
                 int imageType = numBands >= 3 ? BufferedImage.TYPE_3BYTE_BGR : BufferedImage.TYPE_BYTE_GRAY;
-                return ImageProcessor.convertTo(source, imageType);
+                return ImageConversion.convertTo(source, imageType);
             }
         }
         return source;

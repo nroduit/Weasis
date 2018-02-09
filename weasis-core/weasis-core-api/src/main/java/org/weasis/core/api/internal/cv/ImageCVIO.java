@@ -29,8 +29,6 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.cv.FileRawImage;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
@@ -39,12 +37,15 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.opencv.data.FileRawImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class ImageCVIO implements MediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
@@ -295,7 +296,7 @@ public class ImageCVIO implements MediaReader {
             try {
                 new FileRawImage(outFile).write(img);
                 ImageProcessor.writeThumbnail(img.toMat(),
-                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")));
+                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE);
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);

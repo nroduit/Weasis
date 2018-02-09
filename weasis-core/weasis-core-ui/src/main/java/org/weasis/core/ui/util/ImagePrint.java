@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);

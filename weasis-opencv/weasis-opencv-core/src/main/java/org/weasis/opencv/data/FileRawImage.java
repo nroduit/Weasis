@@ -8,13 +8,13 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.core.api.image.cv;
+package org.weasis.opencv.data;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class FileRawImage {
     public static final int HEADER_LENGTH = 46;

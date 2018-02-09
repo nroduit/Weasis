@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.swing.ButtonGroup;
@@ -345,7 +346,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         clearAllPropertyChangeListeners();
         Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
 
-        if (view2d.getSourceImage() == null) {
+        if (Objects.isNull(view2d.getSourceImage()) ) {
             enableActions(false);
             if (view2d.getSeries() != null) {
                 // Let scrolling if only one image is corrupted in the series

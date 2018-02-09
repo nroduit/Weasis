@@ -64,7 +64,6 @@ import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.KernelData;
@@ -113,6 +112,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.opencv.op.ImageConversion;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -995,7 +995,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         ImageOpNode node = view2d.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
-            int imageDataType = ImageProcessor.convertToDataType(image.getImage().type());
+            int imageDataType = ImageConversion.convertToDataType(image.getImage().type());
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
             boolean defaultPreset = LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.DEFAULT_PRESET.cmd()));
             Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());

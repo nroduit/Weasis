@@ -26,11 +26,11 @@ import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.opencv.data.PlanarImage;
 
 public class DefaultMimeIO implements MediaReader {
 

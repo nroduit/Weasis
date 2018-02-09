@@ -17,12 +17,12 @@ import java.util.Arrays;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.cv.LookupTableCV;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.opencv.data.LookupTableCV;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 /**
  *

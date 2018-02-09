@@ -55,7 +55,6 @@ import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ZoomOp;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
@@ -63,6 +62,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 
 @SuppressWarnings("serial")

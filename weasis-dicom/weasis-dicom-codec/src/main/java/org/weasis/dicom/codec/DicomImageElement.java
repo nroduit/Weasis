@@ -28,12 +28,8 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.cv.ImageCV;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.image.cv.LookupTableCV;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
@@ -43,6 +39,11 @@ import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.LookupTableCV;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomImageElement extends ImageElement {
 
@@ -558,7 +559,7 @@ public class DicomImageElement extends ImageElement {
      */
     private void findMinMaxValues(PlanarImage img, Integer paddingValueMin, Integer paddingValueMax) {
         if (img != null) {
-            if (ImageProcessor.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE) {
+            if (ImageConversion.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
@@ -673,7 +674,7 @@ public class DicomImageElement extends ImageElement {
             maxLevel = Math.max(levelMax, getMaxValue(prTags, pixPadding));
         }
 
-        int datatype = ImageProcessor.convertToDataType(imageSource.type());
+        int datatype = ImageConversion.convertToDataType(imageSource.type());
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
             LookupTableCV modalityLookup = getModalityLookup(prTags, pixPadding, invLUT);

@@ -1,11 +1,10 @@
-package org.weasis.core.api.image.cv;
+package org.weasis.opencv.data;
 
 import org.opencv.core.Mat;
 import org.opencv.core.Range;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
-import org.weasis.core.api.media.data.PlanarImage;
 
 public class ImageCV extends Mat implements PlanarImage {
 
@@ -61,6 +60,28 @@ public class ImageCV extends Mat implements PlanarImage {
         ImageCV dstImg = new ImageCV();
         source.assignTo(dstImg);
         return dstImg;
+    }
+
+    // TODO remove for Java 8
+    public Mat toMat() {
+        if (this instanceof Mat) {
+            return this;
+        } else {
+            throw new IllegalAccessError("Not implemented yet");
+        }
+    }
+
+    public ImageCV toImageCV() {
+        if (this instanceof Mat) {
+            if (this instanceof ImageCV) {
+                return this;
+            }
+            ImageCV dstImg = new ImageCV();
+            this.assignTo(dstImg);
+            return dstImg;
+        } else {
+            throw new IllegalAccessError("Not implemented yet");
+        }
     }
 
 }

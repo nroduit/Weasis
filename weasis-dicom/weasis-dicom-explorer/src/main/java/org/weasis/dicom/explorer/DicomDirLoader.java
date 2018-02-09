@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -51,6 +50,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomDirLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirLoader.class);
