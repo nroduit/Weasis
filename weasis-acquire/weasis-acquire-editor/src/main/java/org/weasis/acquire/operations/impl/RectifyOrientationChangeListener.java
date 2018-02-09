@@ -22,7 +22,7 @@ import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.utils.GraphicHelper;
-import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
@@ -61,7 +61,7 @@ public class RectifyOrientationChangeListener extends AcquireObject implements C
 
     @Override
     public void applyNextValues() {
-        ViewCanvas<ImageElement> view = AcquireObject.getView();
+        ViewCanvas<ImageElement> view = getView();
         if (view != null) {
             AcquireImageInfo imageInfo = getImageInfo();
             int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
@@ -74,8 +74,7 @@ public class RectifyOrientationChangeListener extends AcquireObject implements C
                 GraphicHelper.newGridLayer(view);
             }
 
-            getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
-                rotation % 90 == 0 ? rotation : rotation - 360);
+            view.setActionsInView(ActionW.ROTATION.cmd(),  rotation);
         }
     }
 }

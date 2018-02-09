@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.weasis.acquire.dockable.components.actions;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -29,5 +30,5 @@ public interface AcquireAction extends ActionListener {
 
     boolean cancel();
 
-    boolean reset();
+    boolean reset(ActionEvent e);
 }

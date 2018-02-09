@@ -862,6 +862,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         g2d.translate(-p.getX(), -p.getY());
 
         drawPointer(g2d);
+        drawAffineInvariant(g2d);
         if (infoLayer != null) {
             g2d.setFont(getLayerFont());
             infoLayer.paint(g2d);
@@ -871,6 +872,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         g2d.setFont(defaultFont);
         g2d.setPaint(oldColor);
         g2d.setStroke(oldStroke);
+    }
+
+    private void drawAffineInvariant(Graphics2D g2d) {
     }
 
     protected void drawOnTop(Graphics2D g2d) {

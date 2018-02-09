@@ -11,8 +11,6 @@
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.geom.Area;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,9 +82,8 @@ public class CropRectangleGraphic extends RectangleGraphic {
             node.clearIOCache();
         }
         node.setParam(MaskOp.P_SHOW, true);
-        Rectangle area = imageInfo.getNextValues().getCropZone();
-        node.setParam(MaskOp.P_SHAPE, area == null ? null : new Area(area));
-        node.setParam(MaskOp.P_GRAY_TRANSPARENCY, 255);
+        node.setParam(MaskOp.P_SHAPE, imageInfo.getNextValues().getCropZone());
+        node.setParam(MaskOp.P_ALPHA, 0.7);
     }
 
     @Override

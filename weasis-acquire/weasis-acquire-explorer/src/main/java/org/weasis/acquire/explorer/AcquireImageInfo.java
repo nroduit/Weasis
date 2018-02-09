@@ -12,6 +12,9 @@ package org.weasis.acquire.explorer;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -38,7 +41,9 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.StringUtil;
@@ -90,11 +95,11 @@ public class AcquireImageInfo {
         this.attributes = new Attributes();
         this.preProcessOpManager = new SimpleOpManager();
         this.postProcessOpManager = new SimpleOpManager();
+        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new BrightnessOp());
         this.postProcessOpManager.addImageOperationAction(new AutoLevelsOp());
         this.postProcessOpManager.addImageOperationAction(new RotationOp());
         this.postProcessOpManager.addImageOperationAction(new FlipOp());
-        this.postProcessOpManager.addImageOperationAction(new CropOp());
         this.postProcessOpManager.addImageOperationAction(new ZoomOp());
 
         defaultValues = new AcquireImageValues();
@@ -166,14 +171,34 @@ public class AcquireImageInfo {
 
             if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
                 Rectangle area = nextValues.getCropZone();
-                postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
-                postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, true);
+                Rectangle bounds = area;
+                PlanarImage source = view.getSourceImage();
+                int rotationAngle = nextValues.getFullRotation();
+                if (rotationAngle > 0) {
+                    rotationAngle = (rotationAngle + 720) % 360;
+                    AffineTransform transform = AffineTransform.getRotateInstance(Math.toRadians(rotationAngle));
+                    Point2D pMin = new Point2D.Double(area.getMinX(), area.getMinY());
+                    Point2D pMax = new Point2D.Double(area.getMaxX(), area.getMaxY());
 
-                if (view != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
-                    ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
-                    view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-                    view.getImageLayer().setOffset(new Point(area.x, area.y));
-                    view.resetZoom();
+                    transform.transform(pMin, pMin);
+                    transform.transform(pMax, pMax);
+
+                    Rectangle2D rect = new Rectangle2D.Double();
+                    rect.setFrameFromDiagonal(pMin, pMax);
+                    bounds = rect.getBounds();
+                }
+                if (source != null && bounds != null && !bounds.equals(view.getViewModel().getModelArea())) {
+                    Rectangle imgBouds = ImageProcessor.getBounds(source);
+                    area = area.intersection(imgBouds);
+                    if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
+                        ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(bounds.width, bounds.height);
+                        view.getViewModel().setModelArea(new Rectangle(0, 0, bounds.width, bounds.height));
+                        view.getImageLayer().setOffset(new Point(area.x, area.y));
+
+                        postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
+
+                        view.resetZoom();
+                    }
                 }
             }
 
@@ -267,7 +292,7 @@ public class AcquireImageInfo {
         postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, defaultValues.getOrientation());
         postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, defaultValues.isFlip());
         postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
-        postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_SHIFT_TO_ORIGIN, null);
+
         postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_BRIGTNESS_VALUE,
             (double) defaultValues.getBrightness());
         postProcessOpManager.setParamValue(BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE,

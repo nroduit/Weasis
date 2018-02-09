@@ -58,7 +58,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 cancel();
                 break;
             case RESET:
-                reset();
+                reset(e);
                 break;
             default:
                 LOGGER.warn("Unknown command : " + e.getActionCommand()); //$NON-NLS-1$
@@ -88,13 +88,13 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     }
 
     @Override
-    public boolean reset() {
+    public boolean reset(ActionEvent e) {
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.removeLayer(getView());
         boolean dirty = imageInfo.isDirtyFromDefault();
 
         if (dirty) {
-            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel,
+            int confirm = JOptionPane.showConfirmDialog((Component) e.getSource(),
                 Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
                 "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (confirm == 0) {

@@ -30,13 +30,6 @@ public class CropOp extends AbstractOp {
      */
     public static final String P_AREA = "area"; //$NON-NLS-1$
 
-    /**
-     * Whether or not the image origin is shift after cropping.
-     *
-     * Boolean value. Default value is false (keep the original image referential).
-     */
-    public static final String P_SHIFT_TO_ORIGIN = "shift.origin"; //$NON-NLS-1$
-
     public CropOp() {
         setName(OP_NAME);
     }

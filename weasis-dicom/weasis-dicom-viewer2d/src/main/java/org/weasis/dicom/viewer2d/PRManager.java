@@ -181,13 +181,11 @@ public class PRManager {
                             .orElseGet(SimpleOpManager::new);
                     CropOp crop = new CropOp();
                     crop.setParam(CropOp.P_AREA, area);
-                    crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
                     opManager.addImageOperationAction(crop);
                     actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
                 }
             }
             actionsInView.put(ActionW.CROP.cmd(), area);
-            actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
         }
 
         if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$

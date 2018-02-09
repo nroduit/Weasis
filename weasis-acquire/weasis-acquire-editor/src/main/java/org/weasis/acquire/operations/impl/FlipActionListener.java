@@ -17,7 +17,7 @@ import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
-import org.weasis.core.api.image.FlipOp;
+import org.weasis.core.api.gui.util.ActionW;
 
 public class FlipActionListener extends AcquireObject implements ActionListener, OpValueChanged {
 
@@ -39,8 +39,6 @@ public class FlipActionListener extends AcquireObject implements ActionListener,
     @Override
     public void applyNextValues() {
         AcquireImageInfo imageInfo = getImageInfo();
-        getView().getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP,
-            imageInfo.getNextValues().isFlip());
+        getView().setActionsInView(ActionW.FLIP.cmd(), imageInfo.getNextValues().isFlip());
     }
-
 }

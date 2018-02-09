@@ -492,6 +492,27 @@ public class ImageProcessor {
         return toBufferedImage(srcImg);
     }
 
+    
+    public static ImageCV applyCropMask(Mat source, Rectangle b, double alpha) {
+        Mat srcImg = Objects.requireNonNull(source);
+        ImageCV dstImg = new ImageCV();        
+        source.copyTo(dstImg);
+        if(b.getY() > 0) {
+            Imgproc.rectangle(dstImg, new Point(0.0, 0.0), new Point(dstImg.width(), b.getMinY() ), new Scalar(0), -1);
+        }
+        if(b.getX() > 0) {
+            Imgproc.rectangle(dstImg, new Point(0.0, b.getMinY()), new Point(b.getMinX(), b.getMaxY() ), new Scalar(0), -1);
+        }
+        if(b.getX() < dstImg.width()) {
+            Imgproc.rectangle(dstImg, new Point(b.getMaxX(), b.getMinY()), new Point(dstImg.width(), b.getMaxY() ), new Scalar(0), -1);
+        }
+        if(b.getY() < dstImg.height()) {
+            Imgproc.rectangle(dstImg, new Point(0.0, b.getMaxY()), new Point(dstImg.width(), dstImg.height() ), new Scalar(0), -1);
+        }
+        Core.addWeighted(dstImg, alpha, srcImg, 1- alpha, 0.0, dstImg);
+        return dstImg;
+    }
+    
     public static ImageCV applyShutter(Mat source, Shape shape, Color color) {
         Mat srcImg = Objects.requireNonNull(source);
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);

@@ -10,9 +10,7 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.Color;
 import java.awt.Rectangle;
-import java.awt.geom.Area;
 
 import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.PlanarImage;
@@ -28,8 +26,7 @@ public class MaskOp extends AbstractOp {
      */
     public static final String P_SHOW = "show"; //$NON-NLS-1$
     public static final String P_SHAPE = "shape"; //$NON-NLS-1$
-    public static final String P_RGB_COLOR = "rgb.color"; //$NON-NLS-1$
-    public static final String P_GRAY_TRANSPARENCY = "img.transparency"; //$NON-NLS-1$
+    public static final String P_ALPHA = "img.alpha"; //$NON-NLS-1$
 
     public MaskOp() {
         setName(OP_NAME);
@@ -50,19 +47,13 @@ public class MaskOp extends AbstractOp {
         PlanarImage result = source;
 
         Boolean mask = (Boolean) params.get(P_SHOW);
-        Area area = (Area) params.get(P_SHAPE);
+        Rectangle area = (Rectangle) params.get(P_SHAPE);
 
         if (mask != null && mask && area != null
-            && !area.equals(new Area(new Rectangle(0, 0, source.width(), source.height())))) {
-            Integer transparency = (Integer) params.get(P_GRAY_TRANSPARENCY);
-            Color color = getMaskColor();
-            result = ImageProcessor.applyShutter(source.toMat(), area, color);
+            && !area.equals(new Rectangle(0, 0, source.width(), source.height()))) {
+            Double alpha = (Double) params.get(P_ALPHA);
+            result = ImageProcessor.applyCropMask(source.toMat(), area, alpha == null ? 0.7 : alpha);
         }
         params.put(Param.OUTPUT_IMG, result);
-    }
-
-    private Color getMaskColor() {
-        Color color = (Color) params.get(P_RGB_COLOR);
-        return color == null ? Color.BLACK : color;
     }
 }
