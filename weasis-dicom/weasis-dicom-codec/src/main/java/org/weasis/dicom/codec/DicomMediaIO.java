@@ -762,7 +762,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             if (extParams.getSegmentPositions() != null) {
                 int dcmFlags =
                     dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
-                if (pmi.name().startsWith("YBR")) {
+                
+                // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error made by some constructors). RGB color model doesn't make sense for lossy jpeg. 
+                // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
+                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
                     dcmFlags |= Imgcodecs.DICOM_IMREAD_YBR;
                 }
                 if (bigendian) {
