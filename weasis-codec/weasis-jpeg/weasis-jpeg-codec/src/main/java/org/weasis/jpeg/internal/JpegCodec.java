@@ -73,7 +73,7 @@ public class JpegCodec implements NativeCodec {
         String msg = null;
         StreamSegment seg = nImage.getStreamSegment();
         if (seg != null) {
-            ImageParameters params = nImage.getImageParameters();
+            JpegParameters params = (JpegParameters) nImage.getImageParameters();
             int bps = params.getBitsPerSample();
             if (bps < 1 || bps > 16) {
                 return "JPEG codec: invalid bit per sample: " + bps;
@@ -88,7 +88,9 @@ public class JpegCodec implements NativeCodec {
                 if (param instanceof ExtendImageParam) {
                     String cmd = ((ExtendImageParam) param).getYbrColorModel();
                     if(cmd != null) {
-                        ybr = cmd.startsWith("YBR");
+                        // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422
+                        // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
+                        ybr = cmd.startsWith("YBR") || (cmd.equalsIgnoreCase("RGB") && params.getMarker() == 0xffc0);
                     }
                 }
                 decomp.init(ybr);
@@ -234,7 +236,8 @@ public class JpegCodec implements NativeCodec {
         SOFSegment sof = getSOFSegment(iis);
         NativeJPEGImage img = new NativeJPEGImage();
         if (sof != null) {
-            ImageParameters params = img.getJpegParameters();
+            JpegParameters params = img.getJpegParameters();
+            params.setMarker(sof.getMarker());
             params.setWidth(sof.getSamplesPerLine());
             params.setHeight(sof.getLines());
             // Adjust tile size to image size for writer
