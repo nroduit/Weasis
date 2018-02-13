@@ -15,6 +15,7 @@ import org.weasis.image.jni.ImageParameters;
 public class JpegParameters extends ImageParameters {
 
     private int allowedLossyError;
+    private int marker;
 
     public JpegParameters() {
         super();
@@ -27,6 +28,14 @@ public class JpegParameters extends ImageParameters {
 
     public void setAllowedLossyError(int allowedLossyError) {
         this.allowedLossyError = allowedLossyError;
+    }
+
+    public int getMarker() {
+        return marker;
+    }
+
+    public void setMarker(int marker) {
+        this.marker = marker;
     }
 
     @Override
