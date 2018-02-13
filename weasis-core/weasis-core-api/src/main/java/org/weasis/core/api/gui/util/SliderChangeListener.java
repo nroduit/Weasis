@@ -99,6 +99,10 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     }
 
     public void setRealMinMaxValue(double min, double max, double value, boolean triggerChangedEvent) {
+        // Avoid to get infinity value and lock the slider
+        if (max - min == 0) {
+            max += 1;
+        }
         realMin = min;
         realMax = max;
         minMaxValueAction(toSliderValue(min), toSliderValue(max), toSliderValue(value), triggerChangedEvent);
@@ -107,10 +111,6 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     private synchronized void minMaxValueAction(int min, int max, int value, boolean trigger) {
         if (min > max) {
             throw new IllegalStateException("min > max"); //$NON-NLS-1$
-        }
-        // Avoid to get infinity value and lock the slider
-        if (max - min == 0) {
-            max += 1;
         }
 
         // Adjust the value to min and max to avoid the model to change the min and the max
