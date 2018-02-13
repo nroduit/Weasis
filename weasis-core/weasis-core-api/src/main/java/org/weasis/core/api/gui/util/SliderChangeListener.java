@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -99,6 +99,10 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     }
 
     public void setRealMinMaxValue(double min, double max, double value, boolean triggerChangedEvent) {
+        // Avoid to get infinity value and lock the slider
+        if (max - min == 0) {
+            max += 1;
+        }
         realMin = min;
         realMax = max;
         minMaxValueAction(toSliderValue(min), toSliderValue(max), toSliderValue(value), triggerChangedEvent);
@@ -107,10 +111,6 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     private synchronized void minMaxValueAction(int min, int max, int value, boolean trigger) {
         if (min > max) {
             throw new IllegalStateException("min > max"); //$NON-NLS-1$
-        }
-        // Avoid to get infinity value and lock the slider
-        if (max - min == 0) {
-            max += 1;
         }
 
         // Adjust the value to min and max to avoid the model to change the min and the max
