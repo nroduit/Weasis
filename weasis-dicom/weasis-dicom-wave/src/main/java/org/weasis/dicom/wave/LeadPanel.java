@@ -174,6 +174,10 @@ public class LeadPanel extends JPanel {
 
     public void removeAllMarkers() {
         markers.clear();
+        markerAnnotation.setStartValues(null, null);
+        markerAnnotation.setStopValues(null, null);
+        markerAnnotation.setSelectionValues(null, null, null);
+        repaint();
     }
 
     private boolean isMarkerAdapted(SignalMarker marker, Measure tool, SignalMarker.Type type) {

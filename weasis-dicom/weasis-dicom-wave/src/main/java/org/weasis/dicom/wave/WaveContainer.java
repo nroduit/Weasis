@@ -151,7 +151,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
                 InsertableUtil.getCName(WaveformToolBar.class), key, true)) {
                 TOOLBARS.add(new WaveformToolBar(20));
             }
-            
+
             PluginTool tool = null;
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(MeasureTool.class), key, true)) {
@@ -202,8 +202,8 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
                 dicomView.getDataExplorerModel().firePropertyChange(
                     new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
             }
-            
-            if(ecgview != null && !TOOLS.isEmpty() && TOOLS.get(0) instanceof MeasureAnnotationTool) {
+
+            if (ecgview != null && !TOOLS.isEmpty() && TOOLS.get(0) instanceof MeasureAnnotationTool) {
                 MeasureAnnotationTool tool = (MeasureAnnotationTool) TOOLS.get(0);
                 ecgview.setAnnotationTool(tool);
                 tool.setSeries(ecgview.getSeries());
@@ -358,7 +358,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
     public List<GridBagLayoutModel> getLayoutList() {
         return LAYOUT_LIST;
     }
-    
+
     public void setZoomRatio(double ratio) {
         if (ecgview != null) {
             ecgview.setZoomRatio(ratio);
@@ -366,7 +366,13 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
             ecgview.repaint();
         }
     }
-    
+
+    public void clearMeasurements() {
+        if (ecgview != null) {
+            ecgview.clearMeasurements();
+        }
+    }
+
     public void displayHeader() {
         if (ecgview != null) {
             JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
