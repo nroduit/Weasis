@@ -88,48 +88,56 @@ public class Imgcodecs {
             IMWRITE_PAM_FORMAT_GRAYSCALE = 2,
             IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA = 3,
             IMWRITE_PAM_FORMAT_RGB = 4,
-            IMWRITE_PAM_FORMAT_RGB_ALPHA = 5;
+            IMWRITE_PAM_FORMAT_RGB_ALPHA = 5,
+            ILV_NONE = 0,
+            ILV_LINE = 1,
+            ILV_SAMPLE = 2,
+            DICOM_IMREAD_DEFAULT = -1,
+            DICOM_IMREAD_UNSIGNED = 0,
+            DICOM_IMREAD_SIGNED = 1,
+            DICOM_IMREAD_YBR = 2,
+            DICOM_IMREAD_BIGENDIAN = 4,
+            DICOM_IMREAD_FLOAT = 16,
+            DICOM_IMREAD_RLE = 32,
+            DICOM_PARAM_IMREAD = 0,
+            DICOM_PARAM_DCM_IMREAD = 1,
+            DICOM_PARAM_WIDTH = 2,
+            DICOM_PARAM_HEIGHT = 3,
+            DICOM_PARAM_COMPRESSION = 4,
+            DICOM_PARAM_COMPONENTS = 5,
+            DICOM_PARAM_BITS_PER_SAMPLE = 6,
+            DICOM_PARAM_INTERLEAVE_MODE = 7,
+            DICOM_PARAM_BYTES_PER_LINE = 8,
+            DICOM_PARAM_ALLOWED_LOSSY_ERROR = 9,
+            DICOM_CP_UNKNOWN = 0,
+            DICOM_CP_JPG = 1,
+            DICOM_CP_JPLS = 2,
+            DICOM_CP_J2K = 3;
 
-    
-    public static final int
-        ILV_NONE = 0,
-        ILV_LINE = 1,
-        ILV_SAMPLE = 2; // Default is pixel interleave
 
-    public static final int
-        /* Default */
-        DICOM_IMREAD_DEFAULT = -1,
-        /* Unsigned data */
-        DICOM_IMREAD_UNSIGNED = 0,
-        /* Signed data */
-        DICOM_IMREAD_SIGNED = 1,
-        /* YBR color model */
-        DICOM_IMREAD_YBR = 2,
-        /* Big endian data */
-        DICOM_IMREAD_BIGENDIAN = 4,
-        /* Float type */
-        DICOM_IMREAD_FLOAT = 16,
-        /* RLE compression */
-        DICOM_IMREAD_RLE = 32;
+    //
+    // C++:  Mat dicomJpgRead(Mat buf, int dicomflags = 0, int flags = IMREAD_COLOR)
+    //
 
-    public static final int // (index for the int vector)
-        /* flags */
-        DICOM_PARAM_IMREAD = 0,
-        /* dicomflags */
-        DICOM_PARAM_DCM_IMREAD = 1,
-        /* Image width */
-        DICOM_PARAM_WIDTH = 2,
-        /* Image height */
-        DICOM_PARAM_HEIGHT = 3,
-        /* Number of components */
-        DICOM_PARAM_COMPONENTS = 4,
-        /* Bits per sample */
-        DICOM_PARAM_BITS_PER_SAMPLE = 5,
-        /* Interleave mode */
-        DICOM_PARAM_INTERLEAVE_MODE = 6;
-    
-    
-    
+    //javadoc: dicomJpgRead(buf, dicomflags, flags)
+    public static Mat dicomJpgRead(Mat buf, int dicomflags, int flags)
+    {
+        
+        Mat retVal = new Mat(dicomJpgRead_0(buf.nativeObj, dicomflags, flags));
+        
+        return retVal;
+    }
+
+    //javadoc: dicomJpgRead(buf)
+    public static Mat dicomJpgRead(Mat buf)
+    {
+        
+        Mat retVal = new Mat(dicomJpgRead_1(buf.nativeObj));
+        
+        return retVal;
+    }
+
+
     //
     // C++:  Mat dicomJpgRead(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
     //
@@ -139,7 +147,7 @@ public class Imgcodecs {
     {
         Mat segposition_mat = segposition;
         Mat seglength_mat = seglength;
-        Mat retVal = new Mat(dicomJpgRead_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
+        Mat retVal = new Mat(dicomJpgRead_2(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomflags, flags));
         
         return retVal;
     }
@@ -149,7 +157,35 @@ public class Imgcodecs {
     {
         Mat segposition_mat = segposition;
         Mat seglength_mat = seglength;
-        Mat retVal = new Mat(dicomJpgRead_1(filename, segposition_mat.nativeObj, seglength_mat.nativeObj));
+        Mat retVal = new Mat(dicomJpgRead_3(filename, segposition_mat.nativeObj, seglength_mat.nativeObj));
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  Mat dicomJpgWrite(Mat image, vector_int dicomParams, String colormodel)
+    //
+
+    //javadoc: dicomJpgWrite(image, dicomParams, colormodel)
+    public static Mat dicomJpgWrite(Mat image, MatOfInt dicomParams, String colormodel)
+    {
+        Mat dicomParams_mat = dicomParams;
+        Mat retVal = new Mat(dicomJpgWrite_0(image.nativeObj, dicomParams_mat.nativeObj, colormodel));
+        
+        return retVal;
+    }
+
+
+    //
+    // C++:  Mat dicomRawRead(Mat buf, vector_int dicomParams, String colormodel)
+    //
+
+    //javadoc: dicomRawRead(buf, dicomParams, colormodel)
+    public static Mat dicomRawRead(Mat buf, MatOfInt dicomParams, String colormodel)
+    {
+        Mat dicomParams_mat = dicomParams;
+        Mat retVal = new Mat(dicomRawRead_0(buf.nativeObj, dicomParams_mat.nativeObj, colormodel));
         
         return retVal;
     }
@@ -165,7 +201,7 @@ public class Imgcodecs {
         Mat segposition_mat = segposition;
         Mat seglength_mat = seglength;
         Mat dicomparams_mat = dicomparams;
-        Mat retVal = new Mat(dicomRawRead_0(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomparams_mat.nativeObj, colormodel));
+        Mat retVal = new Mat(dicomRawRead_1(filename, segposition_mat.nativeObj, seglength_mat.nativeObj, dicomparams_mat.nativeObj, colormodel));
         
         return retVal;
     }
@@ -282,12 +318,22 @@ public class Imgcodecs {
 
 
 
+    // C++:  Mat dicomJpgRead(Mat buf, int dicomflags = 0, int flags = IMREAD_COLOR)
+    private static native long dicomJpgRead_0(long buf_nativeObj, int dicomflags, int flags);
+    private static native long dicomJpgRead_1(long buf_nativeObj);
+
     // C++:  Mat dicomJpgRead(String filename, vector_double segposition, vector_double seglength, int dicomflags = 0, int flags = IMREAD_COLOR)
-    private static native long dicomJpgRead_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
-    private static native long dicomJpgRead_1(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj);
+    private static native long dicomJpgRead_2(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, int dicomflags, int flags);
+    private static native long dicomJpgRead_3(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj);
+
+    // C++:  Mat dicomJpgWrite(Mat image, vector_int dicomParams, String colormodel)
+    private static native long dicomJpgWrite_0(long image_nativeObj, long dicomParams_mat_nativeObj, String colormodel);
+
+    // C++:  Mat dicomRawRead(Mat buf, vector_int dicomParams, String colormodel)
+    private static native long dicomRawRead_0(long buf_nativeObj, long dicomParams_mat_nativeObj, String colormodel);
 
     // C++:  Mat dicomRawRead(String filename, vector_double segposition, vector_double seglength, vector_int dicomparams, String colormodel)
-    private static native long dicomRawRead_0(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, long dicomparams_mat_nativeObj, String colormodel);
+    private static native long dicomRawRead_1(String filename, long segposition_mat_nativeObj, long seglength_mat_nativeObj, long dicomparams_mat_nativeObj, String colormodel);
 
     // C++:  Mat imdecode(Mat buf, int flags)
     private static native long imdecode_0(long buf_nativeObj, int flags);

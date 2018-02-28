@@ -254,6 +254,20 @@ public class Core {
 
 
     //
+    // C++:  String getHardwareFeatureName(int feature)
+    //
+
+    //javadoc: getHardwareFeatureName(feature)
+    public static String getHardwareFeatureName(int feature)
+    {
+        
+        String retVal = getHardwareFeatureName_0(feature);
+        
+        return retVal;
+    }
+
+
+    //
     // C++:  String getIppVersion()
     //
 
@@ -656,6 +670,7 @@ public class Core {
     //
 
     //javadoc: getThreadNum()
+    @Deprecated
     public static int getThreadNum()
     {
         
@@ -2355,6 +2370,9 @@ public static MinMaxLocResult minMaxLoc(Mat src) {
 
     // C++:  String getBuildInformation()
     private static native String getBuildInformation_0();
+
+    // C++:  String getHardwareFeatureName(int feature)
+    private static native String getHardwareFeatureName_0(int feature);
 
     // C++:  String getIppVersion()
     private static native String getIppVersion_0();
