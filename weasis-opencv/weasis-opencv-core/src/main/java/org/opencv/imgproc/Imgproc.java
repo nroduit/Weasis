@@ -1233,6 +1233,20 @@ public class Imgproc {
 
 
     //
+    // C++:  void HoughLinesPointSet(Mat _point, Mat& _lines, int lines_max, int threshold, double min_rho, double max_rho, double rho_step, double min_theta, double max_theta, double theta_step)
+    //
+
+    //javadoc: HoughLinesPointSet(_point, _lines, lines_max, threshold, min_rho, max_rho, rho_step, min_theta, max_theta, theta_step)
+    public static void HoughLinesPointSet(Mat _point, Mat _lines, int lines_max, int threshold, double min_rho, double max_rho, double rho_step, double min_theta, double max_theta, double theta_step)
+    {
+        
+        HoughLinesPointSet_0(_point.nativeObj, _lines.nativeObj, lines_max, threshold, min_rho, max_rho, rho_step, min_theta, max_theta, theta_step);
+        
+        return;
+    }
+
+
+    //
     // C++:  void HuMoments(Moments m, Mat& hu)
     //
 
@@ -1880,6 +1894,20 @@ public class Imgproc {
     {
         
         cvtColor_1(src.nativeObj, dst.nativeObj, code);
+        
+        return;
+    }
+
+
+    //
+    // C++:  void cvtColorTwoPlane(Mat src1, Mat src2, Mat& dst, int code)
+    //
+
+    //javadoc: cvtColorTwoPlane(src1, src2, dst, code)
+    public static void cvtColorTwoPlane(Mat src1, Mat src2, Mat dst, int code)
+    {
+        
+        cvtColorTwoPlane_0(src1.nativeObj, src2.nativeObj, dst.nativeObj, code);
         
         return;
     }
@@ -3293,6 +3321,9 @@ public static Size getTextSize(String text, int fontFace, double fontScale, int 
     private static native void HoughLinesP_0(long image_nativeObj, long lines_nativeObj, double rho, double theta, int threshold, double minLineLength, double maxLineGap);
     private static native void HoughLinesP_1(long image_nativeObj, long lines_nativeObj, double rho, double theta, int threshold);
 
+    // C++:  void HoughLinesPointSet(Mat _point, Mat& _lines, int lines_max, int threshold, double min_rho, double max_rho, double rho_step, double min_theta, double max_theta, double theta_step)
+    private static native void HoughLinesPointSet_0(long _point_nativeObj, long _lines_nativeObj, int lines_max, int threshold, double min_rho, double max_rho, double rho_step, double min_theta, double max_theta, double theta_step);
+
     // C++:  void HuMoments(Moments m, Mat& hu)
     private static native void HuMoments_0(double m_m00, double m_m10, double m_m01, double m_m20, double m_m11, double m_m02, double m_m30, double m_m21, double m_m12, double m_m03, long hu_nativeObj);
 
@@ -3405,6 +3436,9 @@ public static Size getTextSize(String text, int fontFace, double fontScale, int 
     // C++:  void cvtColor(Mat src, Mat& dst, int code, int dstCn = 0)
     private static native void cvtColor_0(long src_nativeObj, long dst_nativeObj, int code, int dstCn);
     private static native void cvtColor_1(long src_nativeObj, long dst_nativeObj, int code);
+
+    // C++:  void cvtColorTwoPlane(Mat src1, Mat src2, Mat& dst, int code)
+    private static native void cvtColorTwoPlane_0(long src1_nativeObj, long src2_nativeObj, long dst_nativeObj, int code);
 
     // C++:  void demosaicing(Mat _src, Mat& _dst, int code, int dcn = 0)
     private static native void demosaicing_0(long _src_nativeObj, long _dst_nativeObj, int code, int dcn);

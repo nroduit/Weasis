@@ -142,6 +142,10 @@ public class ImageConversion {
     }
 
     public static ImageCV toMat(RenderedImage img, Rectangle region) {
+        return toMat(img, region, true);
+    }
+    
+    public static ImageCV toMat(RenderedImage img, Rectangle region, boolean toBGR) {
         Raster raster = region == null ? img.getData() : img.getData(region);
         DataBuffer buf = raster.getDataBuffer();
         int[] samples = raster.getSampleModel().getSampleSize();
@@ -180,9 +184,14 @@ public class ImageConversion {
 
             ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC(samples.length));
             mat.put(0, 0, ((DataBufferByte) buf).getData());
-            if (Arrays.equals(offsets, new int[] { 0, 1, 2 })) {
+            if (toBGR && Arrays.equals(offsets, new int[] { 0, 1, 2 })) {
                 ImageCV dstImg = new ImageCV();
                 Imgproc.cvtColor(mat, dstImg, Imgproc.COLOR_RGB2BGR);
+                return dstImg;
+            }
+            else if(!toBGR && Arrays.equals(offsets, new int[] { 2, 1, 0 })) {
+                ImageCV dstImg = new ImageCV();
+                Imgproc.cvtColor(mat, dstImg, Imgproc.COLOR_BGR2RGB);
                 return dstImg;
             }
             return mat;
