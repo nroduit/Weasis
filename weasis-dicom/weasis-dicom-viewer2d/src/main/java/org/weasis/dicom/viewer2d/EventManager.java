@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -172,9 +172,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newLutAction());
         setAction(newFilterAction());
         setAction(newSortStackAction());
-        setAction(newLayoutAction(
-            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
+        setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST
+            .toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(
+            View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(

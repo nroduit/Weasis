@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -554,7 +554,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         if (needToRepaint) {
             // Required to update KO bar (toggle button state)
-            if(eventManager instanceof EventManager) {
+            if (eventManager instanceof EventManager) {
                 ((EventManager) eventManager).updateKeyObjectComponentsListener(this);
             }
             repaint();
@@ -660,7 +660,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             // Prefer to delete by type because layer uid can change
-            graphicManager.deleteByLayerType(LayerType.DICOM_PR);
+            for (GraphicLayer layer : dcmLayers) {
+                graphicManager.deleteByLayer(layer);
+            }
             actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
         }
     }
@@ -742,7 +744,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (selImage != null) {
                         // IntersectVolume: display a rectangle to show the slice thickness
-                        if(!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
+                        if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
                             // When the volume limits are outside the image, get the only the intersection
                             addCrossline(selImage, layer, slice, true);
                         }

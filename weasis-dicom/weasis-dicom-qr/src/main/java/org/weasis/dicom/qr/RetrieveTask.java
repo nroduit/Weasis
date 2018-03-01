@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2009-2018 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.qr;
 
 import java.io.ByteArrayInputStream;
@@ -175,7 +185,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     }
 
                     WadoParameters wadoParameters =
-                        new WadoParameters("local", wadoURLs.get(0).toString(), false, null, null, null);
+                        new WadoParameters("local", wadoURLs.get(0).toString(), false, null, null, null); //$NON-NLS-1$
                     CFindQueryResult query = new CFindQueryResult(wadoParameters);
                     query.fillSeries(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(),
                         dicomQrView.getDicomModel(), studies);

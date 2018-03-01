@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -106,7 +106,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }

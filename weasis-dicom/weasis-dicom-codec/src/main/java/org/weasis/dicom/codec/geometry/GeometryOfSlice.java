@@ -13,14 +13,9 @@ import javax.vecmath.Vector3d;
  * A class to describe the spatial geometry of a single cross-sectional image slice.
  * </p>
  *
- * <p>
- * The 3D coordinate space used is the DICOM coordinate space, which is LPH+, that is, the x-axis is increasing to the
- * left hand side of the patient, the y-axis is increasing to the posterior side of the patient, and the z-axis is
- * increasing toward the head of the patient.
- * </p>
- *
- * @author dclunie
- */
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 public class GeometryOfSlice {
 
     protected double[] rowArray;

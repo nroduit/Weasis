@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -395,8 +395,8 @@ public class AcquireManager {
                 BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL")); //$NON-NLS-1$ //$NON-NLS-2$
 
             try {
-                WorklistDialog dialog =
-                    new WorklistDialog(UIManager.getApplicationWindow(), Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
+                WorklistDialog dialog = new WorklistDialog(UIManager.getApplicationWindow(),
+                    Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
                 LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
@@ -700,7 +700,7 @@ public class AcquireManager {
      * @return
      */
 
-    // TODO be carefull not to execute this method on the EDT
+    // TODO be careful not to execute this method on the EDT
     private static AcquireImageInfo getAcquireImageInfo(ImageElement image) {
         if (image == null || image.getImage() == null) {
             return null;

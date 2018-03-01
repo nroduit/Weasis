@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -72,7 +72,7 @@ public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
     public static final String PR_APPLY = "weasis.apply.latest.pr"; //$NON-NLS-1$
-    
+
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
@@ -421,7 +421,7 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-                if(oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+                if (oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
                     oldPR = ActionState.NoneLabel.NONE_SERIES;
                     view.setActionsInView(ActionW.PR_STATE.cmd(), oldPR);
                 }
