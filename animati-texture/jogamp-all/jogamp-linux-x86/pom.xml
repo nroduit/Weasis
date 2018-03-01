@@ -4,7 +4,7 @@
     <parent>
         <artifactId>jogamp-all</artifactId>
         <groupId>org.weasis.thirdparty.org.jogamp</groupId>
-        <version>2.6.1-SNAPSHOT</version>
+        <version>2.6.2</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
