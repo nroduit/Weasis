@@ -586,7 +586,7 @@
 					<plugin>
 						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.7.18</version>
+						<version>1.7.21</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
@@ -621,6 +621,7 @@
 									<jre>
 										<path>jre/windows</path>
 										<minVersion>1.8.0</minVersion>
+										<maxVersion></maxVersion>
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>768</maxHeapSize>
 										<!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit 

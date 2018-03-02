@@ -649,6 +649,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             return Boolean.TRUE;
         }
 
+        // Solves missing tmp folder problem (on Windows).
+        private File getDicomTmpDir() {
+            if (!DICOM_TMP_DIR.exists()) {
+                LOGGER.info("DICOM tmp dir not foud. Re-creating it!");
+                AppProperties.buildAccessibleTempDirectory("downloading");
+            }
+            return DICOM_TMP_DIR;
+        }
+
         /**
          * Download file.
          *
@@ -665,7 +674,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 cache = false;
             }
             if (cache) {
-                tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                tempFile = File.createTempFile("image_", ".dcm", getDicomTmpDir()); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
             // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
