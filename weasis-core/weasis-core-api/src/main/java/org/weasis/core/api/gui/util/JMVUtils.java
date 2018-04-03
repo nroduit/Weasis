@@ -95,7 +95,7 @@ public class JMVUtils {
         return true;
     }
 
-    public static void setPreferredWidth(JComponent component, int width, int minWidth) {
+    public static void setPreferredWidth(Component component, int width, int minWidth) {
         Dimension dim = component.getPreferredSize();
         dim.width = width;
         component.setPreferredSize(dim);
@@ -104,11 +104,11 @@ public class JMVUtils {
         component.setMinimumSize(dim);
     }
 
-    public static void setPreferredWidth(JComponent component, int width) {
+    public static void setPreferredWidth(Component component, int width) {
         setPreferredWidth(component, width, 50);
     }
 
-    public static void setPreferredHeight(JComponent component, int height) {
+    public static void setPreferredHeight(Component component, int height) {
         Dimension dim = component.getPreferredSize();
         dim.height = height;
         component.setPreferredSize(dim);

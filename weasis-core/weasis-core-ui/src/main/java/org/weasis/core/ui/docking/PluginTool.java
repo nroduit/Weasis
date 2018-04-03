@@ -16,6 +16,8 @@ import java.awt.Dimension;
 import javax.swing.JPanel;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.ui.editor.image.dockable.MiniTool;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -60,8 +62,6 @@ public abstract class PluginTool extends JPanel implements DockableTool {
                 changeToolWindowAnchor(event.getNewLocation());
             }
         });
-        // this.dockable.setResizeRequest(new RequestDimension(getDockableWidth(), true), false);
-
     }
 
     protected abstract void changeToolWindowAnchor(CLocation clocation);
@@ -126,6 +126,12 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         if (!dockable.isVisible()) {
             UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
             Component component = getToolComponent();
+            if(component instanceof MiniTool) {
+                JMVUtils.setPreferredWidth(component, getDockableWidth(), getDockableWidth());
+            }
+            else {
+                JMVUtils.setPreferredWidth(component, getDockableWidth()); 
+            }
             if (dockable.getFocusComponent() == component) {
                 UIManager.DOCKING_CONTROL.addDockable(dockable);
                 dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
@@ -160,6 +166,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
                 dockable.setExtendedMode(mode);
             }
             dockable.setVisible(true);
+            dockable.setResizeLocked(true);
             UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
         }
     }
