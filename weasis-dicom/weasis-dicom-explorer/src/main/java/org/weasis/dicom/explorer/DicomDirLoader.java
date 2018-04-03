@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -45,11 +44,13 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomDirLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirLoader.class);
@@ -123,9 +124,8 @@ public class DicomDirLoader {
     private boolean parsePatient(Attributes dcmPatient, DicomDirReader reader) {
         boolean newPatient = false;
         try {
-            String patientPseudoUID =
-                DicomMediaUtils.buildPatientPseudoUID(dcmPatient.getString(Tag.PatientID, TagW.NO_VALUE),
-                    dcmPatient.getString(Tag.IssuerOfPatientID), dcmPatient.getString(Tag.PatientName, TagW.NO_VALUE));
+            PatientComparator patientComparator = new PatientComparator(dcmPatient);
+            String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
             MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             if (patient == null) {

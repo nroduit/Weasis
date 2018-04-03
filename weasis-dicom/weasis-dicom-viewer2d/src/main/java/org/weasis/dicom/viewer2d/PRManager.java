@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -37,13 +37,13 @@ import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.ViewButton;
@@ -68,12 +68,14 @@ import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
     public static final String PR_APPLY = "weasis.apply.latest.pr"; //$NON-NLS-1$
-    
+
     public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
     public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
     public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
@@ -132,9 +134,8 @@ public class PRManager {
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
             if (trueSize) {
-                img.setPixelSize(prPixSize[1], prPixSize[0]);
+                changePixelSize(img, actionsInView, prPixSize);
                 img.setPixelSpacingUnit(Unit.MILLIMETER);
-                actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
                 ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
                 if (spUnitAction instanceof ComboItemListener) {
                     ((ComboItemListener) spUnitAction).setSelectedItem(Unit.MILLIMETER);
@@ -165,23 +166,26 @@ public class PRManager {
                 tlhc[1] = 0;
             }
             Rectangle area = new Rectangle();
-            area.setFrameFromDiagonal(tlhc[0], tlhc[1], brhc[0], brhc[1]);
+            double ratiox = img.getRescaleX();
+            double ratioy = img.getRescaleY();
+            area.setFrameFromDiagonal(getDisplayLength(tlhc[0], ratiox), getDisplayLength(tlhc[1], ratioy),
+                getDisplayLength(brhc[0], ratiox), getDisplayLength(brhc[1], ratioy));
+
             PlanarImage source = view.getSourceImage();
             if (source != null) {
-                area = area.intersection(ImageProcessor.getBounds(source));
-                if (area.width > 1 && area.height > 1 && !area.equals(view.getViewModel().getModelArea())) {
+                Rectangle imgBouds = ImageConversion.getBounds(source);
+                area = area.intersection(imgBouds);
+                if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
                     SimpleOpManager opManager =
                         Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
                             .orElseGet(SimpleOpManager::new);
                     CropOp crop = new CropOp();
                     crop.setParam(CropOp.P_AREA, area);
-                    crop.setParam(CropOp.P_SHIFT_TO_ORIGIN, true);
                     opManager.addImageOperationAction(crop);
                     actionsInView.put(ActionW.PREPROCESSING.cmd(), opManager);
                 }
             }
             actionsInView.put(ActionW.CROP.cmd(), area);
-            actionsInView.put(CropOp.P_SHIFT_TO_ORIGIN, true);
         }
 
         if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
@@ -195,20 +199,42 @@ public class PRManager {
         }
     }
 
+    private static int getDisplayLength(int length, double ratio) {
+        return (int) Math.ceil(length * ratio - 0.5);
+    }
+
     private static void applyAspectRatio(DicomImageElement img, Map<String, Object> actionsInView, double[] aspects) {
-        double[] prevPixSize = img.getDisplayPixelSize();
-        if (MathUtil.isDifferent(aspects[0], aspects[1]) || MathUtil.isDifferent(prevPixSize[0], prevPixSize[1])) {
+        if (MathUtil.isDifferent(aspects[0], aspects[1])) {
             // set the aspects to the pixel size of the image to stretch the image rendering (square pixel)
             double[] pixelsize;
             if (aspects[1] < aspects[0]) {
-                pixelsize = new double[] { 1.0, aspects[0] / aspects[1] };
+                pixelsize = new double[] { aspects[0] / aspects[1], 1.0 };
             } else {
-                pixelsize = new double[] { aspects[1] / aspects[0], 1.0 };
+                pixelsize = new double[] { 1.0, aspects[1] / aspects[0] };
             }
-            img.setPixelSize(pixelsize[0], pixelsize[1]);
+            changePixelSize(img, actionsInView, pixelsize);
             img.setPixelSpacingUnit(Unit.PIXEL);
-            actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
             // TODO update graphics
+        }
+    }
+
+    private static void changePixelSize(DicomImageElement img, Map<String, Object> actionsInView, double[] prPixSize) {
+        img.setPixelSize(prPixSize[1], prPixSize[0]);
+        actionsInView.put(PRManager.TAG_CHANGE_PIX_CONFIG, true);
+
+        ZoomOp node = img.getRectifyAspectRatioZoomOp();
+        if (node != null) {
+            SimpleOpManager process = new SimpleOpManager();
+            process.addImageOperationAction(node);
+            OpManager preprocessing = (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
+            if (preprocessing != null) {
+                for (ImageOpNode op : preprocessing.getOperations()) {
+                    if (!node.getName().equals(op.getName())) {
+                        process.addImageOperationAction(op);
+                    }
+                }
+            }
+            actionsInView.put(ActionW.PREPROCESSING.cmd(), process);
         }
     }
 
@@ -249,16 +275,16 @@ public class PRManager {
                  * Apply spatial transformations (rotation, flip) AFTER when graphics are in PIXEL mode and BEFORE when
                  * graphics are in DISPLAY mode.
                  */
-                int rotation = (Integer) actionsInView.getOrDefault(ActionW.ROTATION.cmd(), 0);
-                boolean flip = (Boolean) actionsInView.getOrDefault(ActionW.FLIP.cmd(), false);
+                int rotation = (Integer) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_ROTATION, 0);
+                boolean flip = (Boolean) actionsInView.getOrDefault(PresentationStateReader.TAG_PR_FLIP, false);
                 Rectangle area = (Rectangle) actionsInView.get(ActionW.CROP.cmd());
                 Rectangle2D modelArea = view.getViewModel().getModelArea();
                 double width = area == null ? modelArea.getWidth() : area.getWidth();
                 double height = area == null ? modelArea.getHeight() : area.getHeight();
-                double offsetx = area == null ? 0.0 : area.getX() / area.getWidth();
-                double offsety = area == null ? 0.0 : area.getY() / area.getHeight();
                 AffineTransform inverse = null;
                 if (rotation != 0 || flip) {
+                    double offsetx = area == null ? 0.0 : area.getX() / area.getWidth();
+                    double offsety = area == null ? 0.0 : area.getY() / area.getHeight();
                     // Create inverse transformation for display coordinates (will convert in real coordinates)
                     inverse = AffineTransform.getTranslateInstance(offsetx, offsety);
                     if (flip) {
@@ -333,7 +359,7 @@ public class PRManager {
                                 rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
                                     bottomRight[1] - topLeft[1]);
                                 if (isDisp) {
-                                    rect.setFrame(rect.getX() * width, rect.getY() * height, rect.getWidth() * width,
+                                    rect.setRect(rect.getX() * width, rect.getY() * height, rect.getWidth() * width,
                                         rect.getHeight() * height);
                                     if (inverse != null) {
                                         float[] dstPt1 = new float[2];
@@ -421,7 +447,7 @@ public class PRManager {
                     key instanceof Integer ? (Integer) key + 1 : null);
             if (!prList.isEmpty()) {
                 Object oldPR = view.getActionValue(ActionW.PR_STATE.cmd());
-                if(oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
+                if (oldPR == null && !view.getEventManager().getOptions().getBooleanProperty(PR_APPLY, false)) {
                     oldPR = ActionState.NoneLabel.NONE_SERIES;
                     view.setActionsInView(ActionW.PR_STATE.cmd(), oldPR);
                 }

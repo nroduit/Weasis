@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -74,7 +74,6 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
@@ -142,6 +141,7 @@ import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.opencv.data.PlanarImage;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final long serialVersionUID = 8334123827855840782L;
@@ -160,7 +160,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         super(eventManager);
 
         SimpleOpManager manager = imageLayer.getDisplayOpManager();
-        // TODO clip
         manager.addImageOperationAction(new WindowAndPresetsOp());
         manager.addImageOperationAction(new FilterOp());
         manager.addImageOperationAction(new PseudoColorOp());
@@ -489,7 +488,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
         imageLayer.setPreprocessing(opManager);
-        if (opManager == null && spatialTransformation) {
+        if (opManager != null || spatialTransformation) {
             // Reset preprocessing cache
             imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
         }
@@ -653,7 +652,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         List<GraphicLayer> dcmLayers = (List<GraphicLayer>) actionsInView.get(PRManager.TAG_DICOM_LAYERS);
         if (dcmLayers != null) {
             // Prefer to delete by type because layer uid can change
-            graphicManager.deleteByLayerType(LayerType.DICOM_PR);
+            for (GraphicLayer layer : dcmLayers) {
+                graphicManager.deleteByLayer(layer);
+            }
             actionsInView.remove(PRManager.TAG_DICOM_LAYERS);
         }
     }
@@ -735,7 +736,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     }
                     if (selImage != null) {
                         // IntersectVolume: display a rectangle to show the slice thickness
-                        if(!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
+                        if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
                             // When the volume limits are outside the image, get the only the intersection
                             addCrossline(selImage, layer, slice, true);
                         }
@@ -1141,7 +1142,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                     JDialog dialog = new MeasureDialog(View2d.this, list);
                     ColorLayerUI.showCenterScreen(dialog, layer);
-
                 });
                 popupMenu.add(properties);
             }

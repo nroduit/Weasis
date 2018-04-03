@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -26,12 +26,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.ThumbnailList;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.cv.ImageProcessor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class JIThumbnailCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JIThumbnailCache.class);
@@ -161,7 +162,7 @@ public final class JIThumbnailCache {
                 return;
             }
 
-            final BufferedImage tIcon = ImageProcessor
+            final BufferedImage tIcon = ImageConversion
                 .toBufferedImage((PlanarImage) ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
             // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -58,10 +58,10 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 cancel();
                 break;
             case RESET:
-                reset();
+                reset(e);
                 break;
             default:
-                LOGGER.warn("Unkown command : " + e.getActionCommand()); //$NON-NLS-1$
+                LOGGER.warn("Unknown command : " + e.getActionCommand()); //$NON-NLS-1$
                 break;
         }
     }
@@ -88,13 +88,13 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     }
 
     @Override
-    public boolean reset() {
+    public boolean reset(ActionEvent e) {
         AcquireImageInfo imageInfo = getImageInfo();
         imageInfo.removeLayer(getView());
         boolean dirty = imageInfo.isDirtyFromDefault();
 
         if (dirty) {
-            int confirm = JOptionPane.showConfirmDialog((Component) centralPanel,
+            int confirm = JOptionPane.showConfirmDialog((Component) e.getSource(),
                 Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
                 "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (confirm == 0) {

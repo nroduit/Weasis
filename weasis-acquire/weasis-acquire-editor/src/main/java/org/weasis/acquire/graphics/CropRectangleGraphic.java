@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -11,8 +11,6 @@
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.geom.Area;
 import java.util.Collections;
 import java.util.List;
 
@@ -84,9 +82,8 @@ public class CropRectangleGraphic extends RectangleGraphic {
             node.clearIOCache();
         }
         node.setParam(MaskOp.P_SHOW, true);
-        Rectangle area = imageInfo.getNextValues().getCropZone();
-        node.setParam(MaskOp.P_SHAPE, area == null ? null : new Area(area));
-        node.setParam(MaskOp.P_GRAY_TRANSPARENCY, 255);
+        node.setParam(MaskOp.P_SHAPE, imageInfo.getNextValues().getCropZone());
+        node.setParam(MaskOp.P_ALPHA, 0.7);
     }
 
     @Override

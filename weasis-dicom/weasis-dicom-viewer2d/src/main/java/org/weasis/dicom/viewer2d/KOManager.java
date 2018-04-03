@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -369,8 +369,8 @@ public final class KOManager {
                     selectedKO = (KOSpecialElement) actionValue;
 
                     // test if current ko_selection action in view do still exist
-                    Collection<KOSpecialElement> koElements = view2D.getSeries() != null
-                        ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
+                    Collection<KOSpecialElement> koElements =
+                        view2D.getSeries() != null ? DicomModel.getKoSpecialElements(view2D.getSeries()) : null;
                     if (koElements != null && koElements.contains(selectedKO) == false) {
                         selectedKO = null;
                         newSelectedKO = ActionState.NoneLabel.NONE;

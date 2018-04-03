@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -12,9 +12,9 @@ package org.weasis.acquire.dockable.components.actions.rectify;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.geom.Rectangle2D;
+import java.awt.Point;
+import java.awt.Rectangle;
 import java.util.Objects;
-import java.util.Optional;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -45,6 +45,8 @@ import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
+import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
+import org.weasis.opencv.op.ImageConversion;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
     private static final long serialVersionUID = 4041145212218086219L;
@@ -63,7 +65,6 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         this.rectifyAction = Objects.requireNonNull(rectifyAction);
         setLayout(new BorderLayout());
         orientationPanel = new OrientationSliderComponent(this);
-        orientationPanel.setVisible(false); // TODO need improvement
         rotate90btn = new Rotate90Button(rectifyAction);
         rotate270btn = new Rotate270Button(rectifyAction);
         flipActionListener = new FlipActionListener(rectifyAction);
@@ -79,6 +80,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         btnContent.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 0));
         btnContent.add(rotate90btn);
         btnContent.add(rotate270btn);
+        btnContent.setBorder(BorderFactory.createEmptyBorder(15, 0, 5, 0));
 
         panel.add(orientationPanel);
         panel.add(btnContent);
@@ -130,6 +132,12 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         info.getPostProcessOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, info.getDefaultValues().isFlip());
         view.updateCanvas(false);
         view.getImageLayer().setOffset(null);
+        Rectangle area = ImageConversion.getBounds(view.getSourceImage());
+        if (area != null && area.width > 1 && area.height > 1) {
+            ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
+            view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+            view.getImageLayer().setOffset(new Point(area.x, area.y));
+        }
         view.resetZoom();
 
         view.getEventManager().getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
@@ -153,9 +161,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
         flipActionListener.applyNextValues();
         listener.applyNextValues();
 
-        Rectangle2D area =
-            Optional.ofNullable((Rectangle2D) next.getCropZone()).orElse(view.getViewModel().getModelArea());
-        next.setCropZone(RectifyAction.adaptToinitCropArea(area));
+        next.setCropZone(next.getCropZone());
         rectifyAction.updateCropGraphic();
 
         info.applyPreProcess(view);

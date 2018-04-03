@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -27,11 +27,13 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class ImageElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
@@ -66,7 +68,7 @@ public class ImageElement extends MediaElement {
                 }
             }
         };
-
+ 
     protected boolean readable = true;
 
     protected double pixelSizeX = 1.0;
@@ -92,7 +94,7 @@ public class ImageElement extends MediaElement {
 
         if (img != null && !isImageAvailable()) {
 
-            if (ImageProcessor.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE && exclude8bitImage) {
+            if (ImageConversion.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE && exclude8bitImage) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
@@ -185,6 +187,18 @@ public class ImageElement extends MediaElement {
          */
         this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
         this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
+    }
+    
+    public ZoomOp getRectifyAspectRatioZoomOp() {
+        // Rectify non square pixel image in the first operation
+        if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {     
+            ZoomOp node = new ZoomOp();
+            node.setName("rectifyAspectRatio");
+            node.setParam(ZoomOp.P_RATIO_X, getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, getRescaleY());
+            return node;
+        }
+        return null;
     }
 
     public void setPixelValueUnit(String pixelValueUnit) {
@@ -285,7 +299,49 @@ public class ImageElement extends MediaElement {
         window = (window == null) ? getDefaultWindow(pixelPadding) : window;
         level = (level == null) ? getDefaultLevel(pixelPadding) : level;
 
-        return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+        return getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+    }
+    
+    /**
+     * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
+     * parameter.
+     *
+     * @param image
+     * @param source
+     * @param window
+     * @param level
+     * @param pixelPadding
+     * @return
+     */
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, double window,
+        double level, boolean pixelPadding) {
+        if (image == null || source == null) {
+            return null;
+        }
+
+        if (ImageConversion.convertToDataType(source.type()) == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
+            return source;
+        }
+
+        double low = level - window / 2.0;
+        double high = level + window / 2.0;
+        // use a lookup table for rescaling
+        double range = high - low;
+        if (range < 1.0) {
+            range = 1.0;
+        }
+
+        double slope = 255.0 / range;
+        double yInt = 255.0 - slope * high;
+
+        return ImageProcessor.rescaleToByte(source.toMat(), slope, yInt);
+
+    }
+
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, boolean pixelPadding) {
+        return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
+            image.getDefaultLevel(pixelPadding), true);
     }
 
     /**

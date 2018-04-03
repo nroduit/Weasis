@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -36,9 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
@@ -182,10 +182,10 @@ public class ImagePrint implements Printable {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
         PlanarImage img = image.getSourceImage();
-        if (img != null && originCenter != null && originZoom != null) {
+        if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
@@ -206,7 +206,7 @@ public class ImagePrint implements Printable {
 
             if (printOptions.isCenter()) {
                 pad.x = (placeholder.x * key.weightx - cw) * 0.5;
-                pad.y = (placeholder.y * key.weighty - ch) * 0.5;
+                pad.y = (placeholder.y * key.weighty- ch) * 0.5;
             } else {
                 pad.x = 0.0;
                 pad.y = 0.0;
@@ -218,7 +218,7 @@ public class ImagePrint implements Printable {
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenter.getX(), originCenter.getY());
+                image.setCenter(originCenterOffset.getX() , originCenterOffset.getY());
             }
 
             int dpi = printOptions.getDpi() == null ? 150 : printOptions.getDpi().getDpi();

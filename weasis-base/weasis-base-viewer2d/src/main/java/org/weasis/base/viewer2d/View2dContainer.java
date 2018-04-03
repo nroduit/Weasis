@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -75,7 +75,6 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.ui.util.Toolbar;
 
-
 public class View2dContainer extends ImageViewerPlugin<ImageElement> implements PropertyChangeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -84,8 +83,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     public static final List<SynchView> DEFAULT_SYNCH_LIST =
         Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
     // Unmodifiable list of the default layout elements
-    public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST = Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1,
-        VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x2);
+    public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
+        Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x2);
 
     // Static tools shared by all the View2dContainer instances, tools are registered when a container is selected
     // Do not initialize tools in a static block (order initialization issue with eventManager), use instead a lazy
@@ -105,8 +104,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             @Override
             public void componentResized(ComponentEvent e) {
-                ImageViewerPlugin<ImageElement> container =
-                    EventManager.getInstance().getSelectedView2dContainer();
+                ImageViewerPlugin<ImageElement> container = EventManager.getInstance().getSelectedView2dContainer();
                 if (container == View2dContainer.this) {
                     Optional<ComboItemListener> layoutAction =
                         EventManager.getInstance().getAction(ActionW.LAYOUT, ComboItemListener.class);
@@ -114,7 +112,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 }
             }
         });
-        
+
         if (!initComponents) {
             initComponents = true;
 
@@ -358,12 +356,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         }
         try {
             // FIXME use classloader.loadClass or injection
-            Class<?> cl = Class.forName(clazz);
-            JComponent component = (JComponent) cl.newInstance();
-            if (component instanceof SeriesViewerListener) {
-                eventManager.addSeriesViewerListener((SeriesViewerListener) component);
-            }
-            return component;
+            return buildInstance(Class.forName(clazz));
 
         } catch (Exception e) {
             LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$

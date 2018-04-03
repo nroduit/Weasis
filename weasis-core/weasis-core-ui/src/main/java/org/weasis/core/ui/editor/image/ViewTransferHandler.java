@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -22,11 +22,11 @@ import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
 import org.weasis.core.api.gui.model.ViewModel;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.ui.util.ImagePrint;
+import org.weasis.opencv.op.ImageConversion;
 
 public class ViewTransferHandler extends TransferHandler implements Transferable {
 
@@ -52,7 +52,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
             DefaultView2d view2DPane = (DefaultView2d) comp;
             RenderedImage imgP = createComponentImage(view2DPane);
             if (imgP != null) {
-                image = ImageToolkit.convertRenderedImage(imgP);
+                image = ImageConversion.convertRenderedImage(imgP);
                 return this;
             }
 
@@ -99,7 +99,6 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
                 viewModel.setModelArea(originViewModel.getModelArea());
                 viewModel.setModelOffset(originViewModel.getModelOffsetX(), originViewModel.getModelOffsetY(),
                     originViewModel.getViewScale());
-                viewModel.setRotationOffset(originViewModel.getRotationOffsetX(), originViewModel.getRotationOffsetY());
                 exportImage.setBounds(canvas.getX(), canvas.getY(), canvas.getWidth(), canvas.getHeight());
                 boolean wasBuffered = ImagePrint.disableDoubleBuffering(exportImage);
                 exportImage.zoom(originViewModel.getViewScale());

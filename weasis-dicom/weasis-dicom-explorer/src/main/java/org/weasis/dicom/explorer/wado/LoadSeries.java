@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -106,7 +106,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -649,6 +649,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             return Boolean.TRUE;
         }
 
+        // Solves missing tmp folder problem (on Windows).
+        private File getDicomTmpDir() {
+            if (!DICOM_TMP_DIR.exists()) {
+                LOGGER.info("DICOM tmp dir not foud. Re-creating it!");
+                AppProperties.buildAccessibleTempDirectory("downloading");
+            }
+            return DICOM_TMP_DIR;
+        }
+
         /**
          * Download file.
          *
@@ -665,7 +674,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 cache = false;
             }
             if (cache) {
-                tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                tempFile = File.createTempFile("image_", ".dcm", getDicomTmpDir()); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
             // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see

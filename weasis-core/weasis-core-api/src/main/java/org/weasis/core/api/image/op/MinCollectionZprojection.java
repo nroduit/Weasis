@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -16,10 +16,10 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.cv.ImageProcessor;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 public class MinCollectionZprojection {
 
@@ -59,7 +59,7 @@ public class MinCollectionZprojection {
     }
 
     public PlanarImage computeMinCollectionOpImage() {
-        return ImageProcessor.minStack(sources);
+        return CvUtil.minStack(sources);
     }
 
 }

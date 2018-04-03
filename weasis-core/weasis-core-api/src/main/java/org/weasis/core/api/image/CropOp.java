@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -15,8 +15,8 @@ import java.awt.Rectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.cv.ImageProcessor;
-import org.weasis.core.api.media.data.PlanarImage;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
@@ -29,13 +29,6 @@ public class CropOp extends AbstractOp {
      * java.awt.Rectangle value.
      */
     public static final String P_AREA = "area"; //$NON-NLS-1$
-
-    /**
-     * Whether or not the image origin is shift after cropping.
-     *
-     * Boolean value. Default value is false (keep the original image referential).
-     */
-    public static final String P_SHIFT_TO_ORIGIN = "shift.origin"; //$NON-NLS-1$
 
     public CropOp() {
         setName(OP_NAME);

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -12,8 +12,8 @@ package org.weasis.acquire.dockable.components.actions.rectify;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Optional;
@@ -25,12 +25,12 @@ import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.graphics.CropRectangleGraphic;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.Panner;
@@ -39,6 +39,7 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *
@@ -89,9 +90,7 @@ public class RectifyAction extends AbstractAcquireAction {
     }
 
     private static Rectangle2D adaptToValidateCropArea(ViewCanvas<ImageElement> view, Rectangle2D area) {
-        AffineTransform transform = AffineTransform.getScaleInstance(1.0, 1.0);
-        buildAffineTransform(transform, view.getDisplayOpManager(), view.getViewModel().getModelArea(),
-            view.getImageLayer().getOffset());
+        AffineTransform transform = view.getAffineTransform();
         Point2D pMin = new Point2D.Double(area.getMinX(), area.getMinY());
         Point2D pMax = new Point2D.Double(area.getMaxX(), area.getMaxY());
         transform.transform(pMin, pMin);
@@ -107,17 +106,13 @@ public class RectifyAction extends AbstractAcquireAction {
             return null;
         }
         ViewCanvas<ImageElement> view = getView();
-        AffineTransform transform = AffineTransform.getScaleInstance(1.0, 1.0);
-        buildAffineTransform(transform, view.getDisplayOpManager(), view.getViewModel().getModelArea(), null);
+        AffineTransform transform = view.getInverseTransform();
+
         Point2D pMin = new Point2D.Double(area.getMinX(), area.getMinY());
         Point2D pMax = new Point2D.Double(area.getMaxX(), area.getMaxY());
-        try {
-            transform = transform.createInverse();
-            transform.transform(pMin, pMin);
-            transform.transform(pMax, pMax);
-        } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transformation", e); //$NON-NLS-1$
-        }
+
+        transform.transform(pMin, pMin);
+        transform.transform(pMax, pMax);
 
         Rectangle2D rect = new Rectangle2D.Double();
         rect.setFrameFromDiagonal(pMin, pMax);
@@ -129,7 +124,7 @@ public class RectifyAction extends AbstractAcquireAction {
         boolean flip = LangUtil.getNULLtoFalse((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP));
         Integer rotationAngle = (Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
 
-        if (rotationAngle != null && rotationAngle != 0) {
+        if (rotationAngle != null && rotationAngle > 0) {
             rotationAngle = (rotationAngle + 720) % 360;
             if (flip) {
                 rotationAngle = 360 - rotationAngle;
@@ -137,19 +132,6 @@ public class RectifyAction extends AbstractAcquireAction {
             transform.rotate(Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0, modelArea.getHeight() / 2.0);
         }
         if (flip) {
-            // Using only one allows to enable or disable flip with the rotation action
-
-            // case FlipMode.TOP_BOTTOM:
-            // at = new AffineTransform(new double[] {1.0,0.0,0.0,-1.0});
-            // at.translate(0.0, -imageHt);
-            // break;
-            // case FlipMode.LEFT_RIGHT :
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,1.0});
-            // at.translate(-imageWid, 0.0);
-            // break;
-            // case FlipMode.TOP_BOTTOM_LEFT_RIGHT:
-            // at = new AffineTransform(new double[] {-1.0,0.0,0.0,-1.0});
-            // at.translate(-imageWid, -imageHt);
             transform.scale(-1.0, 1.0);
             transform.translate(-modelArea.getWidth(), 0.0);
         }
@@ -176,9 +158,9 @@ public class RectifyAction extends AbstractAcquireAction {
             imageInfo.getCurrentValues().setCropZone(null); // Force dirty value, rotation is always apply in post
                                                             // process
             imageInfo.getNextValues()
-                .setCropZone(adaptToValidateCropArea(view, currentCropArea.getShape().getBounds()).getBounds());
-            view.getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, 0);
-            view.getDisplayOpManager().setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, false);
+                .setCropZone(currentCropArea.getShape().getBounds());
+            view.setActionsInView(ActionW.ROTATION.cmd(), 0);
+            view.setActionsInView(ActionW.FLIP.cmd(), false);
             imageInfo.applyPostProcess(view);
             view.getImage().setTag(TagW.ThumbnailPath, null);
             Panner<?> panner = view.getPanner();
@@ -189,8 +171,8 @@ public class RectifyAction extends AbstractAcquireAction {
     }
 
     @Override
-    public boolean reset() {
-        boolean doReset = super.reset();
+    public boolean reset(ActionEvent e) {
+        boolean doReset = super.reset(e);
         updateCropGraphic();
         return doReset;
     }
