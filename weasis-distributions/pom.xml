@@ -14,8 +14,8 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 
 	<properties>
-	 	<build.timestamp>${maven.build.timestamp}</build.timestamp>
-   		<maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
+		<build.timestamp>${maven.build.timestamp}</build.timestamp>
+		<maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
@@ -26,7 +26,7 @@
 		<windowsName>weasis-native</windowsName>
 	</properties>
 
-    <!-- Override for getting snapshot -->
+	<!-- Override for getting snapshot -->
 	<repositories>
 		<repository>
 			<id>central</id>
@@ -66,6 +66,79 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>urlrewrite-regex-version-properties</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>regex-properties</goal>
+						</goals>
+
+						<configuration>
+							<regexPropertySettings>
+								<regexPropertySetting>
+									<name>regex.app.version</name>
+									<value>${app.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>regex.felix.framework.version</name>
+									<value>${felix.framework.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>regex.substance.version</name>
+									<value>${substance.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+							</regexPropertySettings>
+						</configuration>
+					</execution>
+					<execution>
+						<id>urlrewrite-jnlp-version-properties</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>regex-properties</goal>
+						</goals>
+
+						<configuration>
+							<regexPropertySettings>
+								<regexPropertySetting>
+									<name>jnlp.app.version</name>
+									<value>${app.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>jnlp.felix.framework.version</name>
+									<value>${felix.framework.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>jnlp.substance.version</name>
+									<value>${substance.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+							</regexPropertySettings>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
