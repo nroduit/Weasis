@@ -531,6 +531,46 @@
 				<version>1.8</version>
 				<executions>
 					<execution>
+						<id>enable-JNLP-version-based-download-protocol</id>
+						<phase>validate</phase>
+
+						<configuration>
+							<exportAntProperties>true</exportAntProperties>
+
+							<!-- @note :properties in ant are immutable, then following assignments will only take place if prop is not yet set. -->
+							<target>
+								<condition property="is.app.version.snapshot">
+									<contains string="${app.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.app.version.download.enable" value="false">
+									<isset property="is.app.version.snapshot" />
+								</condition>
+								<property name="jnlp.app.version.download.enable" value="true" />
+
+								<condition property="is.felix.framework.version.snapshot">
+									<contains string="${felix.framework.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.felix.framework.version.download.enable" value="false">
+									<isset property="is.felix.framework.version.snapshot" />
+								</condition>
+								<property name="jnlp.felix.framework.version.download.enable" value="true" />
+
+								<condition property="is.substance.version.snapshot">
+									<contains string="${substance.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.substance.version.download.enable" value="false">
+									<isset property="is.substance.version.snapshot" />
+								</condition>
+								<property name="jnlp.substance.version.download.enable" value="true" />
+							</target>
+
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+
+					<execution>
 						<id>add-trusted-library-attribute</id>
 						<phase>process-resources</phase>
 						<configuration>
