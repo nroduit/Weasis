@@ -186,7 +186,7 @@ public class PresentationStateReader implements Tagable {
                 b >>= 8;
             }
         } else {
-            r = g = b = pGray >> 8;
+            r = g = b = pGray > 255 ? pGray >> 8 : pGray;
         }
         r &= 0xFF;
         g &= 0xFF;
