@@ -297,21 +297,21 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             if (ww != null && wl != null) {
                 int stepWindow = (int) (ww / separation);
                 int firstlevel = (int) (wl - stepWindow * 2.0);
-                String str = Integer.toString(firstlevel); // $NON-NLS-1$
+                String str = Integer.toString(firstlevel + separation * stepWindow); // $NON-NLS-1$
                 AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
                     y + midfontHeight);
                 for (int i = 1; i < separation; i++) {
                     float posY = y + i * step;
                     line.setLine(x - 5f, posY, x - 1f, posY);
                     g2.draw(line);
-                    str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
+                    str = Integer.toString(firstlevel + (separation - i) * stepWindow); // $NON-NLS-1$
                     AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
                         posY + midfontHeight);
                 }
 
                 line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
                 g2.draw(line);
-                str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
+                str = Integer.toString(firstlevel); // $NON-NLS-1$
                 AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
                     y + length + midfontHeight);
                 rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
@@ -319,8 +319,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             }
 
             for (int k = 0; k < length; k++) {
+                int l = (int)length -1 - k;
                 // Convert BGR LUT to RBG color
-                g2.setPaint(new Color(table[2][k] & 0xff, table[1][k] & 0xff, table[0][k] & 0xff));
+                g2.setPaint(new Color(table[2][l] & 0xff, table[1][l] & 0xff, table[0][l] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }
