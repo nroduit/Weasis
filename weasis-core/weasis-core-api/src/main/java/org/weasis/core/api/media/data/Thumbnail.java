@@ -330,11 +330,15 @@ public class Thumbnail extends JLabel implements Thumbnailable {
             loading.set(false);
         }
     }
+    
+    protected void removeImageFromCache() {
+        // Unload image from memory
+        mCache.remove(this);
+    }
 
     @Override
     public void dispose() {
-        // Unload image from memory
-        mCache.remove(this);
+        removeImageFromCache();
 
         if (thumbnailPath != null && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())) {
             FileUtil.delete(thumbnailPath);
