@@ -23,7 +23,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TreeMap;
 
-import javax.media.jai.LookupTableJAI;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -43,6 +42,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.opencv.data.LookupTableCV;
 
 public class PresetWindowLevel {
     private static final Logger LOGGER = LoggerFactory.getLogger(PresetWindowLevel.class);
@@ -188,7 +188,7 @@ public class PresetWindowLevel {
             }
         }
 
-        LookupTableJAI[] voiLUTsData = (LookupTableJAI[]) tagable.getTagValue(TagW.VOILUTsData);
+        LookupTableCV[] voiLUTsData = (LookupTableCV[]) tagable.getTagValue(TagW.VOILUTsData);
         String[] voiLUTsExplanation = (String[]) tagable.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
@@ -237,7 +237,7 @@ public class PresetWindowLevel {
         return presetList;
     }
 
-    public static PresetWindowLevel buildPresetFromLutData(LookupTableJAI voiLUTsData, DicomImageElement image,
+    public static PresetWindowLevel buildPresetFromLutData(LookupTableCV voiLUTsData, DicomImageElement image,
         TagReadable tagable, boolean pixelPadding, String explanation) {
         if (voiLUTsData == null || explanation == null) {
             return null;

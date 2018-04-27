@@ -447,7 +447,7 @@
 0	beshort		0xffd8		image/jpeg
 
 # PC bitmaps (OS/2, Windoze BMP files)  (Greg Roelofs, newt@uchicago.edu)
-0	string		BM		image/x-ms-bmp
+0	string		BM		image/bmp
 #>14	byte		12		(OS/2 1.x format)
 #>14	byte		64		(OS/2 2.x format)
 #>14	byte		40		(Windows 3.x format)

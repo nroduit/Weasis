@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -63,6 +62,7 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 
 @SuppressWarnings("serial")
@@ -357,11 +357,7 @@ public class AcquirePublishDialog extends JDialog {
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
-
-            int width = img.getWidth();
-            int height = img.getHeight();
-
-            return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
+            return img.width() > Resolution.ULTRA_HD.maxSize || img.height() > Resolution.ULTRA_HD.maxSize;
         };
     }
 

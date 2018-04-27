@@ -58,13 +58,11 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
@@ -114,6 +112,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.opencv.op.ImageConversion;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -912,9 +911,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         getAction(ActionW.FILTER, ComboItemListener.class).ifPresent(
             a -> a.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
         getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(
-            a -> a.setSliderValue((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE), false));
+            a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
         getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(
-            a -> a.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP)));
+            a -> a.setSelectedWithoutTriggerAction(LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
 
         getAction(ActionW.ZOOM, SliderChangeListener.class)
             .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
@@ -996,7 +995,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         ImageOpNode node = view2d.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
-            int imageDataType = image.getImage().getSampleModel().getDataType();
+            int imageDataType = ImageConversion.convertToDataType(image.getImage().type());
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
             boolean defaultPreset = LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.DEFAULT_PRESET.cmd()));
             Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());

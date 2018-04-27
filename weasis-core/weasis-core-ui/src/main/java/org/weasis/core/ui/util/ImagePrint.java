@@ -18,7 +18,6 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -39,6 +38,7 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
@@ -182,16 +182,16 @@ public class ImagePrint implements Printable {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        RenderedImage img = image.getSourceImage();
-        if (img != null && originCenter != null && originZoom != null) {
+        PlanarImage img = image.getSourceImage();
+        if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
             if (bestfit || originSize == null) {
-                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                canvasWidth = img.width() * image.getImage().getRescaleX();
+                canvasHeight = img.height() * image.getImage().getRescaleY();
             } else {
                 canvasWidth = originSize.getWidth() / originZoom;
                 canvasHeight = originSize.getHeight() / originZoom;
@@ -206,7 +206,7 @@ public class ImagePrint implements Printable {
 
             if (printOptions.isCenter()) {
                 pad.x = (placeholder.x * key.weightx - cw) * 0.5;
-                pad.y = (placeholder.y * key.weighty - ch) * 0.5;
+                pad.y = (placeholder.y * key.weighty- ch) * 0.5;
             } else {
                 pad.x = 0.0;
                 pad.y = 0.0;
@@ -218,7 +218,7 @@ public class ImagePrint implements Printable {
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenter.getX(), originCenter.getY());
+                image.setCenter(originCenterOffset.getX() , originCenterOffset.getY());
             }
 
             int dpi = printOptions.getDpi() == null ? 150 : printOptions.getDpi().getDpi();

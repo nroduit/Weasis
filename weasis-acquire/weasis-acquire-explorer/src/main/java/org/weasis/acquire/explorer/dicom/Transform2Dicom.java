@@ -18,13 +18,12 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.TranslateDescriptor;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.MatOfInt;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
@@ -32,7 +31,6 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -43,6 +41,8 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.tool.Dicomizer;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class Transform2Dicom {
 
@@ -81,16 +81,19 @@ public final class Transform2Dicom {
             imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
             PlanarImage transformedImage = imageElement.getImage(opManager, false);
-            Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-            Integer rotationAngle = Optional
-                .ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
-            rotationAngle = rotationAngle % 360;
-            if (area != null && rotationAngle != 0 && rotationAngle != 180) {
-                transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
-                    (float) -area.getY(), null, null);
-            }
+            
+            // TODO should be handled in the transformation
+            // Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
+            // Integer rotationAngle = Optional
+            // .ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE)).orElse(0);
+            // rotationAngle = rotationAngle % 360;
+            // if (area != null && rotationAngle != 0 && rotationAngle != 180) {
+            // transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
+            // (float) -area.getY(), null, null);
+            // }
 
-            if (!ImageFiler.writeJPG(imgFile, transformedImage, 0.8f)) {
+            MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+            if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
                 // out of memory ??
                 imgFile.delete();
                 LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName()); //$NON-NLS-1$

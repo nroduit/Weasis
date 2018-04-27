@@ -172,19 +172,19 @@ public class MipPopup {
                 scrollListerner = e -> {
                     JSliderW slider = (JSliderW) e.getSource();
                     getThickness(sliderThickness);
-                    if (!slider.getValueIsAdjusting()) {
+               //     if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(ActionW.SCROLL_SERIES.cmd(), slider.getValue());
                         MipView.buildMip(MipDialog.this, view, false);
-                    }
+               //     }
                 };
                 frameSlider.addChangeListener(scrollListerner);
                 sliderThickness.addChangeListener(e -> {
                     JSliderW slider = (JSliderW) e.getSource();
                     getThickness(slider);
-                    if (!slider.getValueIsAdjusting()) {
+                //    if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(MipView.MIP_THICKNESS.cmd(), slider.getValue());
                         MipView.buildMip(MipDialog.this, view, false);
-                    }
+                 //   }
                 });
             }
             JPanel panel = new JPanel();

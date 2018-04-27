@@ -19,7 +19,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
@@ -141,7 +140,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         }
         if (getDisplayPreferences(ROTATION)) {
             AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
                 + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;

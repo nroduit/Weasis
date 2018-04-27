@@ -367,11 +367,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (StringUtil.hasText(wadoTsuid)) {
-                        // Ensure the client has the decoder. Otherwise ask uncompressed syntax
-                        if (!DicomManager.getInstance().containsImageioCodec(wadoTsuid)) {
-                            wadoTsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
-                        }
-
                         request.append("&transferSyntax="); //$NON-NLS-1$
                         request.append(wadoTsuid);
                         if (transcoding.getTransferSyntaxUID() != null) {
@@ -750,15 +745,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
             int[] overrideList = Optional.ofNullable(wado).map(WadoParameters::getOverrideDicomTagIDList).orElse(null);
 
-            boolean readTsuid =
-                DicomManager.getInstance().hasAllImageCodecs() ? false : getUrl().contains("?requestType=WADO"); //$NON-NLS-1$
             int bytesTransferred;
             if (overrideList == null) {
                 bytesTransferred =
-                    FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile);
+                    FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile);
             } else {
                 bytesTransferred =
-                    writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile, overrideList);
+                    writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile, overrideList);
             }
 
             if (bytesTransferred == Integer.MIN_VALUE) {

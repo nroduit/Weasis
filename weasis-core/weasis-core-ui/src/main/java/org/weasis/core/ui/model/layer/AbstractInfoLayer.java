@@ -25,8 +25,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 
-import javax.media.jai.PlanarImage;
-
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -46,6 +44,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
+import org.weasis.opencv.data.PlanarImage;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID implements LayerAnnotation {
 
@@ -321,7 +320,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
             for (int k = 0; k < length; k++) {
                 int l = (int)length -1 - k;
-                g2.setPaint(new Color(table[0][l] & 0xff, table[1][l] & 0xff, table[2][l] & 0xff));
+                // Convert BGR LUT to RBG color
+                g2.setPaint(new Color(table[2][l] & 0xff, table[1][l] & 0xff, table[0][l] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }
@@ -338,8 +338,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
         double scale = image.getPixelSize() / zoomFactor;
-        double scaleSizex = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.getHeight() / 2.0));
+        double scaleSizex =
+            ajustShowScale(scale, (int) Math.min(zoomFactor * source.width() * image.getRescaleX(), bound.width / 2.0));
+
         if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
@@ -407,7 +408,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         }
 
         double scaleSizeY = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
+            (int) Math.min(zoomFactor * source.height() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };

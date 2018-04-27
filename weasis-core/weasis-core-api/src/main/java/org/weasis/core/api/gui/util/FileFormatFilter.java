@@ -12,21 +12,21 @@ package org.weasis.core.api.gui.util;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
 import org.weasis.core.api.Messages;
-
-import com.sun.media.jai.codec.ImageCodec;
 
 /**
  * The Class FileFormatFilter.
@@ -156,12 +156,7 @@ public class FileFormatFilter extends FileFilter {
 
     public static void setImageDecodeFilters(JFileChooser chooser) {
         // Get the current available codecs from ImageIO.
-        Enumeration<?> codecs = ImageCodec.getCodecs();
-        ArrayList<String> namesList = new ArrayList<>(20);
-        ImageCodec ic;
-        for (; codecs.hasMoreElements(); namesList.add(ic.getFormatName())) {
-            ic = (ImageCodec) codecs.nextElement();
-        }
+        List<String> namesList = Arrays.asList(ImageIO.getReaderFormatNames());
         Collections.sort(namesList);
         Iterator<String> it = namesList.iterator();
         String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$

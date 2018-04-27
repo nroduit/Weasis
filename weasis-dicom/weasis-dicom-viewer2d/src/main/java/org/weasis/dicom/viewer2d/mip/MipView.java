@@ -27,6 +27,7 @@ import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
@@ -36,6 +37,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -104,6 +106,7 @@ public class MipView extends View2d {
         final MipProcess t = process;
         if (t != null) {
             process = null;
+            t.taskMonitor.setAborting(true);
             // Close won't stop the process immediately
             t.taskMonitor.close();
             t.interrupt();
@@ -116,6 +119,8 @@ public class MipView extends View2d {
         this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
         setMip(null);
+        File mipDir = AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip");
+        FileUtil.deleteDirectoryContents(mipDir, 1, 0);
 
         ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
         container.setSelectedAndGetFocus();
@@ -155,38 +160,33 @@ public class MipView extends View2d {
                         AuditLog.logError(LOGGER, t, "Mip renderding error"); //$NON-NLS-1$
                     } finally {
                         // Following actions need to be executed in EDT thread
-                        GuiExecutor.instance().execute(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                try {
-                                    if (dicoms.size() == 1) {
-                                        view.setMip(dicoms.get(0));
-                                    } else if (dicoms.size() > 1) {
-                                        DicomImageElement dcm = dicoms.get(0);
-                                        Series s =
-                                            new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
-                                        s.addAll(dicoms);
-                                        ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
-                                        DataExplorerModel model =
-                                            (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
-                                        if (model instanceof DicomModel) {
-                                            DicomModel dicomModel = (DicomModel) model;
-                                            MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
-                                            if (study != null) {
-                                                s.setTag(TagW.ExplorerModel, dicomModel);
-                                                dicomModel.addHierarchyNode(study, s);
-                                                dicomModel.firePropertyChange(new ObservableEvent(
-                                                    ObservableEvent.BasicAction.ADD, dicomModel, null, s));
-                                            }
-
-                                            View2dFactory factory = new View2dFactory();
-                                            ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
+                        GuiExecutor.instance().execute(() -> {
+                            try {
+                                if (dicoms.size() == 1) {
+                                    view.setMip(dicoms.get(0));
+                                } else if (dicoms.size() > 1) {
+                                    DicomImageElement dcm = dicoms.get(0);
+                                    Series s =
+                                        new DicomSeries(TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
+                                    s.addAll(dicoms);
+                                    ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
+                                    DataExplorerModel model = (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
+                                    if (model instanceof DicomModel) {
+                                        DicomModel dicomModel = (DicomModel) model;
+                                        MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
+                                        if (study != null) {
+                                            s.setTag(TagW.ExplorerModel, dicomModel);
+                                            dicomModel.addHierarchyNode(study, s);
+                                            dicomModel.firePropertyChange(new ObservableEvent(
+                                                ObservableEvent.BasicAction.ADD, dicomModel, null, s));
                                         }
+
+                                        View2dFactory factory = new View2dFactory();
+                                        ViewerPluginBuilder.openSequenceInPlugin(factory, s, model, false, false);
                                     }
-                                } finally {
-                                    taskMonitor.close();
                                 }
+                            } finally {
+                                taskMonitor.close();
                             }
                         });
                     }
@@ -214,6 +214,7 @@ public class MipView extends View2d {
             }
             // Close stream
             oldImage.dispose();
+            oldImage.removeImageFromCache();
             // Delete file in cache
             File file = oldImage.getFile();
             if (file != null) {
@@ -224,12 +225,11 @@ public class MipView extends View2d {
 
     static class MipProcess extends Thread {
         final TaskMonitor taskMonitor;
-
+        
         public MipProcess(String name, TaskMonitor taskMonitor) {
             super(name);
             this.taskMonitor = Objects.requireNonNull(taskMonitor);
         }
-
     }
 
 }

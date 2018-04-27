@@ -25,7 +25,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -64,16 +63,14 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -144,6 +141,7 @@ import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
+import org.weasis.opencv.data.PlanarImage;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
     private static final long serialVersionUID = 8334123827855840782L;
@@ -168,9 +166,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         manager.addImageOperationAction(new ShutterOp());
         manager.addImageOperationAction(new OverlayOp());
         // Zoom and Rotation must be the last operations for the lens
-        manager.addImageOperationAction(new ZoomOp());
-        manager.addImageOperationAction(new RotationOp());
-        manager.addImageOperationAction(new FlipOp());
+        manager.addImageOperationAction(new AffineTransformOp());
 
         infoLayer = new InfoLayer(this);
         oldSize = new Dimension(0, 0);
@@ -258,7 +254,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             return;
         }
 
-        RenderedImage dispImage = imageLayer.getDisplayImage();
+        PlanarImage dispImage = imageLayer.getDisplayImage();
         OpManager disOp = imageLayer.getDisplayOpManager();
         final String name = evt.getPropertyName();
         if (name.equals(ActionW.SYNCH.cmd())) {
@@ -457,6 +453,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
             // Restore zoom
             actionsInView.remove(PRManager.TAG_PR_ZOOM);
+            actionsInView.remove(PresentationStateReader.TAG_PR_ROTATION);
+            actionsInView.remove(PresentationStateReader.TAG_PR_FLIP);
 
             // Reset crop
             updateCanvas(false);
@@ -490,21 +488,15 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
         SimpleOpManager opManager = (SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd());
         imageLayer.setPreprocessing(opManager);
-        if (opManager == null && spatialTransformation) {
+        if (opManager != null || spatialTransformation) {
             // Reset preprocessing cache
             imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
         }
 
         if (pr != null) {
             imageLayer.fireOpEvent(new ImageOpEvent(ImageOpEvent.OpEvent.ApplyPR, series, m, actionsInView));
-            ImageOpNode rotation = imageLayer.getDisplayOpManager().getNode(RotationOp.OP_NAME);
-            if (rotation != null) {
-                rotation.setParam(RotationOp.P_ROTATE, actionsInView.get(ActionW.ROTATION.cmd()));
-            }
-            ImageOpNode flip = imageLayer.getDisplayOpManager().getNode(FlipOp.OP_NAME);
-            if (flip != null) {
-                flip.setParam(FlipOp.P_FLIP, actionsInView.get(ActionW.FLIP.cmd()));
-            }
+            actionsInView.put(ActionW.ROTATION.cmd(), actionsInView.get(PresentationStateReader.TAG_PR_ROTATION));
+            actionsInView.put(ActionW.FLIP.cmd(), actionsInView.get(PresentationStateReader.TAG_PR_FLIP));
         }
 
         Double zoom = (Double) actionsInView.get(PRManager.TAG_PR_ZOOM);
@@ -906,11 +898,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     pts2.add(new Point2D.Double(dimensions.y, p.getY()));
                     addCrosshairLine(layer, pts2, color2, centerPt);
 
-                    RenderedImage dispImg = image.getImage();
+                    PlanarImage dispImg = image.getImage();
                     if (dispImg != null) {
-                        Rectangle2D rect = new Rectangle2D.Double(dispImg.getMinX() * image.getRescaleX(),
-                            dispImg.getMinY() * image.getRescaleY(), dispImg.getWidth() * image.getRescaleX(),
-                            dispImg.getHeight() * image.getRescaleY());
+                        Rectangle2D rect = new Rectangle2D.Double(0, 0, dispImg.width() * image.getRescaleX(),
+                            dispImg.height() * image.getRescaleY());
                         addRectangle(layer, rect, axial ? Color.RED : sagittal ? Color.BLUE : Color.GREEN);
                     }
                 }
@@ -1151,7 +1142,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                     JDialog dialog = new MeasureDialog(View2d.this, list);
                     ColorLayerUI.showCenterScreen(dialog, layer);
-
                 });
                 popupMenu.add(properties);
             }

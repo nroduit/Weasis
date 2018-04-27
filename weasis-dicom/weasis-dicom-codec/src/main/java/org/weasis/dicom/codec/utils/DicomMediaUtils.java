@@ -36,7 +36,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-import javax.media.jai.LookupTableJAI;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
@@ -68,6 +67,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.opencv.data.LookupTableCV;
 
 /**
  * @author Nicolas Roduit
@@ -191,12 +191,12 @@ public class DicomMediaUtils {
      * @see - Dicom Standard 2011 - PS 3.3 § C.11 LOOK UP TABLES AND PRESENTATION STATES
      */
 
-    public static LookupTableJAI createLut(Attributes dicomLutObject) {
+    public static LookupTableCV createLut(Attributes dicomLutObject) {
         if (dicomLutObject == null || dicomLutObject.isEmpty()) {
             return null;
         }
 
-        LookupTableJAI lookupTable = null;
+        LookupTableCV lookupTable = null;
 
         // Three values of the LUT Descriptor describe the format of the LUT Data in the corresponding Data Element
         int[] descriptor = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTDescriptor, null);
@@ -239,11 +239,11 @@ public class DicomMediaUtils {
                     }
 
                     dataLength = bDataNew.length;
-                    lookupTable = new LookupTableJAI(bDataNew, offset);
+                    lookupTable = new LookupTableCV(bDataNew, offset);
 
                 } else {
                     dataLength = bData.length;
-                    lookupTable = new LookupTableJAI(bData, offset); // LUT entry value range should be [0,255]
+                    lookupTable = new LookupTableCV(bData, offset); // LUT entry value range should be [0,255]
                 }
             } else if (numBits <= 16) { // LUT Data should be stored in 16 bits allocated format
                 // LUT Data contains the LUT entry values, assuming data is always unsigned data
@@ -260,11 +260,11 @@ public class DicomMediaUtils {
                         bDataNew[i] = (byte) ((sData[i] & 0xffff) * maxOut / maxIn);
                     }
                     dataLength = bDataNew.length;
-                    lookupTable = new LookupTableJAI(bDataNew, offset);
+                    lookupTable = new LookupTableCV(bDataNew, offset);
                 } else {
                     // LUT Data contains the LUT entry values, assuming data is always unsigned data
                     dataLength = sData.length;
-                    lookupTable = new LookupTableJAI(sData, offset, true);
+                    lookupTable = new LookupTableCV(sData, offset, true);
 
                 }
             } else {
@@ -944,7 +944,7 @@ public class DicomMediaUtils {
             // alternative views may be presented. (@see Dicom Standard 2011 - PS 3.3 § C.11.2 VOI LUT Module)
 
             if (voiLUTSequence != null && !voiLUTSequence.isEmpty()) {
-                LookupTableJAI[] voiLUTsData = new LookupTableJAI[voiLUTSequence.size()];
+                LookupTableCV[] voiLUTsData = new LookupTableCV[voiLUTSequence.size()];
                 String[] voiLUTsExplanation = new String[voiLUTsData.length];
 
                 for (int i = 0; i < voiLUTsData.length; i++) {
@@ -1136,7 +1136,7 @@ public class DicomMediaUtils {
         Attributes pr = new Attributes(dicomSourceAttribute, patientStudyAttributes);
 
         // TODO implement other ColorSoftcopyPresentationStateStorageSOPClass...
-        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorageSOPClass);
+        pr.setString(Tag.SOPClassUID, VR.UI, UID.GrayscaleSoftcopyPresentationStateStorage);
         pr.setString(Tag.SOPInstanceUID, VR.UI,
             StringUtil.hasText(sopInstanceUID) ? sopInstanceUID : UIDUtils.createUID());
         Date now = new Date();

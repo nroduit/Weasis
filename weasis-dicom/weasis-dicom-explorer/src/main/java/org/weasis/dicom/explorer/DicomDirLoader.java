@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
@@ -44,7 +43,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
@@ -52,6 +50,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomDirLoader {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirLoader.class);
@@ -253,7 +252,7 @@ public class DicomDirLoader {
                     if (thumbnailPath != null) {
                         int width = iconInstance.getInt(Tag.Columns, 0);
                         int height = iconInstance.getInt(Tag.Rows, 0);
-                        if (width != 0 && height != 0) {
+                        if (width != 0 && height != 0) {          
                             WritableRaster raster =
                                 Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
                             raster.setDataElements(0, 0, width, height, pixelData);
@@ -261,8 +260,7 @@ public class DicomDirLoader {
                                 .fromString(iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2")); //$NON-NLS-1$
                             BufferedImage thumbnail = new BufferedImage(
                                 pmi.createColorModel(8, DataBuffer.TYPE_BYTE, iconInstance), raster, false, null);
-                            if (ImageFiler.writeJPG(thumbnailPath,
-                                DicomImageUtils.getRGBImageFromPaletteColorModel(thumbnail, iconInstance), 0.75f)) {
+                            if (ImageProcessor.writeImage(thumbnail, thumbnailPath)) {
                                 return thumbnailPath.getPath();
                             }
                         }

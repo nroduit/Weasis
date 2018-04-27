@@ -191,6 +191,7 @@ public class SeriesThumbnail extends Thumbnail
         if (update) {
             Object media = series.getMedia(mediaPosition, null, null);
             this.thumbnailSize = thumbnailSize;
+            removeImageFromCache();
             buildThumbnail((MediaElement) media, series.getTagValue(TagW.ExplorerModel) != null, null);
         }
     }

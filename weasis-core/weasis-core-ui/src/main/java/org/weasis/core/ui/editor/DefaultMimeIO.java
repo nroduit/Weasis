@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import javax.media.jai.PlanarImage;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
@@ -32,6 +30,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.opencv.data.PlanarImage;
 
 public class DefaultMimeIO implements MediaReader {
 

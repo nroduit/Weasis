@@ -10,16 +10,11 @@
  *******************************************************************************/
 package org.weasis.core.api.image;
 
-import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
-
-import javax.media.jai.JAI;
-import javax.media.jai.operator.TransposeDescriptor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.image.util.ImageToolkit;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class FlipOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlipOp.class);
@@ -48,16 +43,12 @@ public class FlipOp extends AbstractOp {
 
     @Override
     public void process() throws Exception {
-        RenderedImage source = (RenderedImage) params.get(Param.INPUT_IMG);
-        RenderedImage result = source;
+        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+        PlanarImage result = source;
         Boolean flip = (Boolean) params.get(P_FLIP);
 
         if (flip != null && flip) {
-            // use Transpose operation
-            ParameterBlock param = new ParameterBlock();
-            param.addSource(source);
-            param.add(TransposeDescriptor.FLIP_HORIZONTAL);
-            result = JAI.create("transpose", param, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
+            result = ImageProcessor.flip(source.toMat(), 1); // 1) means flipping around y-axis
         }
 
         params.put(Param.OUTPUT_IMG, result);

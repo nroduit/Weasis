@@ -12,6 +12,7 @@ package org.weasis.core.ui.model.utils.imp;
 
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
@@ -24,38 +25,45 @@ import org.weasis.core.api.gui.util.MathUtil;
  */
 public class DefaultViewModel implements ViewModel {
 
+    public static final double SCALE_MAX = 12.0;
+    public static final double SCALE_MIN = 1.0 / SCALE_MAX;
+    
     /**
-     * The x-offset in model coordinates of the upper left view pixel
+     * The X-offset in model coordinates of the center view pixel
      */
     private double modelOffsetX;
+    
     /**
-     * The y-offset in model coordinates of the upper left view pixel
+     * The Y-offset in model coordinates of the center view pixel
      */
     private double modelOffsetY;
+    
     /**
      * The current view scale
      */
     private double viewScale;
+    
     /**
-     * The maximum view scale. Minimum is given as 1.0 / viewScaleMax.
+     * The maximum view scale. The max value is given by SCALE_MAX.
      */
     private double viewScaleMax;
-    private double viewScaleMin;
-    public static final double SCALE_MIN = 1.0 / 12.0;
-    public static final double SCALE_MAX = 12.0;
+    
     /**
-     * This view model's area. Enables scrolling with scroll bars.
+     * The minimum view scale. The min value is given as 1.0 / SCALE_MAX.
+     */
+    private double viewScaleMin;
+
+    /**
+     * This model's area of the image in pixel.
      */
     private Rectangle2D modelArea;
-    /**
-     * The list of change listeners
-     */
-    private final ArrayList<ViewModelChangeListener> viewModelChangeListenerList;
+    
+    private final List<ViewModelChangeListener> viewModelChangeListenerList;
     private boolean enableViewModelChangeListeners;
 
     public DefaultViewModel(double viewScaleMin, double viewScaleMax) {
-        this.modelOffsetX = 0;
-        this.modelOffsetY = 0;
+        this.modelOffsetX = 0.0;
+        this.modelOffsetY = 0.0;
         this.viewScale = 1.0;
         this.viewScaleMin = viewScaleMin;
         this.viewScaleMax = viewScaleMax;

@@ -20,7 +20,6 @@ import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -87,7 +86,7 @@ public class DicomCodec implements Codec {
         }
     };
 
-    private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
+    // private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
     // private final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
     // private final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
@@ -166,7 +165,7 @@ public class DicomCodec implements Codec {
         // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        ImageioUtil.registerServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.registerServiceProvider(rleImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
 
         ConfigurationAdmin confAdmin =
@@ -193,7 +192,7 @@ public class DicomCodec implements Codec {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
-        ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
     }
 
