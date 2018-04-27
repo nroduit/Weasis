@@ -11,13 +11,12 @@
 	<artifactId>weasis-dicom-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Codec [${project.artifactId}]</name>
-	
+
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<dcm4che.version>5.13.0</dcm4che.version>
 		<weasis-dicom-tools.version>5.13.0</weasis-dicom-tools.version>
 	</properties>
-	
+
 	<repositories>
 		<repository>
 			<snapshots>
@@ -28,7 +27,7 @@
 			<url>http://www.dcm4che.org/maven2</url>
 		</repository>
 	</repositories>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -50,11 +49,15 @@
 		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-tools</artifactId>
-			<version>${dcm4che.version}</version>
+			<version>${weasis-dicom-tools.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.weasis.core</groupId>
 					<artifactId>weasis-core-util</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>org.dcm4che</groupId>
+					<artifactId>dcm4che-imageio-opencv</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
@@ -65,11 +68,6 @@
 					<artifactId>junit</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-dict</artifactId>
-			<version>${dcm4che.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.imageio</groupId>
