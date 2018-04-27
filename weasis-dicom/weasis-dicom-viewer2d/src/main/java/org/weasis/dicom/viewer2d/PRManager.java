@@ -48,6 +48,7 @@ import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
@@ -313,12 +314,17 @@ public class PRManager {
                     layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
                     layers.add(layer);
 
-                    Color rgb = PresentationStateReader.getRGBColor(
-                        glm.getInt(Tag.GraphicLayerRecommendedDisplayGrayscaleValue, 255),
-                        CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
-                            Tag.GraphicLayerRecommendedDisplayCIELabValue, null)),
-                        DicomMediaUtils.getIntAyrrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayRGBValue,
-                            null));
+                    Integer grayVal = DicomMediaUtils.getIntegerFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
+                    float[] colorLab = CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
+                        Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
+                    int[] colorRgb = DicomMediaUtils.getIntAyrrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayRGBValue,
+                        null);
+                    if(colorRgb == null && colorLab == null && grayVal == null) {
+                        Color c = Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
+                        colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
+                    }
+                    
+                    Color rgb = PresentationStateReader.getRGBColor(grayVal == null ? 255 : grayVal,colorLab, colorRgb);
 
                     Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
 
@@ -356,8 +362,17 @@ public class PRManager {
                             float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
                             if (topLeft != null && bottomRight != null) {
-                                rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
-                                    bottomRight[1] - topLeft[1]);
+                                if(topLeft[0] > bottomRight[0]) {
+                                    float b = topLeft[0];
+                                    topLeft[0] = bottomRight[0];
+                                    bottomRight[0] = b;
+                                }
+                                if(topLeft[1] > bottomRight[1]) {
+                                    float b = topLeft[1];
+                                    topLeft[1] = bottomRight[1];
+                                    bottomRight[1] = b;
+                                }
+                                rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
                                 if (isDisp) {
                                     rect.setRect(rect.getX() * width, rect.getY() * height, rect.getWidth() * width,
                                         rect.getHeight() * height);

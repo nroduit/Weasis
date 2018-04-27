@@ -11,13 +11,12 @@
 	<artifactId>weasis-dicom-codec</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Codec [${project.artifactId}]</name>
-	
+
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<dcm4che.version>5.10.5</dcm4che.version>
-		<weasis-dicom-tools.version>1.2.2</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.13.0</weasis-dicom-tools.version>
 	</properties>
-	
+
 	<repositories>
 		<repository>
 			<snapshots>
@@ -28,7 +27,7 @@
 			<url>http://www.dcm4che.org/maven2</url>
 		</repository>
 	</repositories>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -48,31 +47,6 @@
 	</build>
 	<dependencies>
 		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-core</artifactId>
-			<version>${dcm4che.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-dict</artifactId>
-			<version>${dcm4che.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-image</artifactId>
-			<version>${dcm4che.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-imageio</artifactId>
-			<version>${dcm4che.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.dcm4che</groupId>
-			<artifactId>dcm4che-net</artifactId>
-			<version>${dcm4che.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.weasis</groupId>
 			<artifactId>weasis-dicom-tools</artifactId>
 			<version>${weasis-dicom-tools.version}</version>
@@ -83,23 +57,11 @@
 				</exclusion>
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-core</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-net</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-imageio</artifactId>
+					<artifactId>dcm4che-imageio-opencv</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.dcm4che</groupId>
 					<artifactId>dcm4che-imageio-rle</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-image</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>junit</groupId>

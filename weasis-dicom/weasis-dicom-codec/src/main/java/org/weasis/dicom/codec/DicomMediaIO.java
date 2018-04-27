@@ -817,18 +817,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(orinigal.get().getAbsolutePath(), positions, lengths,
                     dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
 
-
-//                Mat buf = getMatBuffer(extParams);
-//                if (rawData) {
-//                    MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
-//                        TagD.getTagValue(this, Tag.Columns, Integer.class),
-//                        TagD.getTagValue(this, Tag.Rows, Integer.class),
-//                        TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
-//                        banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
-//
-//                    return ImageCV.toImageCV(Imgcodecs.dicomRawRead(buf, dicomparams, pmi.name()));
-//                }
-//                return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(buf, dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
+                // Mat buf = getMatBuffer(extParams);
+                // if (rawData) {
+                // MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
+                // TagD.getTagValue(this, Tag.Columns, Integer.class),
+                // TagD.getTagValue(this, Tag.Rows, Integer.class),
+                // TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
+                // banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
+                //
+                // return ImageCV.toImageCV(Imgcodecs.dicomRawRead(buf, dicomparams, pmi.name()));
+                // }
+                // return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(buf, dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
             }
         }
         return null;
@@ -1125,7 +1124,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                             for (int i = 1; i < nbFragments; i++) {
                                 BulkData bulkData = (BulkData) pixeldataFragments.get(i);
                                 ImageInputStream stream = new org.dcm4che3.imageio.stream.SegmentedInputImageStream(
-                                    srcStream, new long[] { bulkData.offset() }, new int[] { bulkData.length() });
+                                    srcStream, bulkData.offset(), bulkData.length(), false);
                                 if (jpeg2000 ? decodeJpeg2000(stream) : decodeJpeg(stream)) {
                                     fragmentsPositions.add(i);
                                 }
