@@ -335,15 +335,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     if (c != null && c.length >= 1) {
                         pixelInfo.setChannelNames(getChannelNames(image));
                     }
-                } catch (OutOfMemoryError e) {
-                    LOGGER.error("Get pixel value", e);//$NON-NLS-1$
-                    // when image tile is not available anymore (file stream closed)
-                    System.gc();
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException et) {
-                    }
-
                 } catch (Exception e) {
                     LOGGER.error("Get pixel value", e);//$NON-NLS-1$
                 }

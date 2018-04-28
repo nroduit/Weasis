@@ -753,21 +753,22 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     private static Mat getMatBuffer(ExtendSegmentedInputImageStream extParams) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r");
+        try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) {
 
-        Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
-        Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
-        long[] pos = extParams.getSegmentPositions();
-        int offset = 0;
-        for (int i = 0; i < pos.length; i++) {
-            int len = (int) extParams.getSegmentLengths()[i];
-            byte[] b = new byte[len];
-            raf.seek(pos[i]);
-            raf.read(b);
-            buf.put(0, offset, b);
-            offset += len;
+            Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
+            Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
+            long[] pos = extParams.getSegmentPositions();
+            int offset = 0;
+            for (int i = 0; i < pos.length; i++) {
+                int len = (int) extParams.getSegmentLengths()[i];
+                byte[] b = new byte[len];
+                raf.seek(pos[i]);
+                raf.read(b);
+                buf.put(0, offset, b);
+                offset += len;
+            }
+            return buf;
         }
-        return buf;
     }
 
     private PlanarImage getUncacheImage(MediaElement media, int frame) throws IOException {

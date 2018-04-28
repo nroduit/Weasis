@@ -12,6 +12,8 @@ package org.weasis.core.ui.model.utils.algo;
 
 import java.util.List;
 
+import org.weasis.core.api.gui.util.MathUtil;
+
 /**
  * The Class ChainPoint.
  *
@@ -117,9 +119,11 @@ public class ChainPoint implements Comparable<ChainPoint> {
          * R = mean(xy) / sqrt( mean(x²) * (mean(y²) - mean(y)²) )
          */
         double[] val = new double[3];
-        val[0] = meanxy / meanx2; // slope
-        if (Double.isNaN(val[0])) {
+        if (meanx2 == 0.0 || MathUtil.isEqualToZero(meanx2)) {
             val[0] = 0.0;
+        }
+        else {
+            val[0] = meanxy / meanx2; // slope
         }
         val[1] = meany - meanx * val[0]; // y0 or b
         val[2] = meanxy / Math.sqrt(meanx2 * (meany2 - meany * meany)); // R

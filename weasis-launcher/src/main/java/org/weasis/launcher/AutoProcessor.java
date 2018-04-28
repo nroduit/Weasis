@@ -505,22 +505,21 @@ public class AutoProcessor {
         if (pack) {
             final URL url = new URL(location + PACK200_COMPRESSION);
             final PipedInputStream in = new PipedInputStream();
-            final PipedOutputStream out = new PipedOutputStream(in);
-            Thread t = new Thread(() -> {
-                try (JarOutputStream jarStream = new JarOutputStream(out);
-                                GZIPInputStream gzStream =
-                                    new GZIPInputStream(FileUtil.getAdaptedConnection(url).getInputStream());) {
-                    Unpacker unpacker = Pack200.newUnpacker();
-                    unpacker.unpack(gzStream, jarStream);
-                } catch (Exception e1) {
-                    System.err.println("Cannot install pack bundle: " + url); //$NON-NLS-1$
-                    e1.printStackTrace();
-                }
-            });
-            t.start();
-
-            return context.installBundle(location, in);
-
+            try (final PipedOutputStream out = new PipedOutputStream(in)) {
+                Thread t = new Thread(() -> {
+                    try (JarOutputStream jarStream = new JarOutputStream(out);
+                                    GZIPInputStream gzStream =
+                                        new GZIPInputStream(FileUtil.getAdaptedConnection(url).getInputStream())) {
+                        Unpacker unpacker = Pack200.newUnpacker();
+                        unpacker.unpack(gzStream, jarStream);
+                    } catch (Exception e1) {
+                        System.err.println("Cannot install pack bundle: " + url); //$NON-NLS-1$
+                        e1.printStackTrace();
+                    }
+                });
+                t.start();
+                return context.installBundle(location, in);
+            }
         }
         return context.installBundle(location,
             FileUtil.getAdaptedConnection(new URI(location).toURL()).getInputStream());

@@ -363,7 +363,7 @@ public class WeasisLauncher {
 
         int exitStatus = 0;
         try {
-            final String goshArgs = System.getProperty("gosh.args", serverProp.get("gosh.args")); //$NON-NLS-1$ //$NON-NLS-2$
+            final String goshArgs = System.getProperty("gosh.args", serverProp.getOrDefault("gosh.args", "")); //$NON-NLS-1$ //$NON-NLS-2$
             serverProp.put("gosh.args", "--nointeractive --noshutdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
             // Now create an instance of the framework with our configuration properties.
@@ -388,23 +388,7 @@ public class WeasisLauncher {
             loader.close();
             loader = null;
 
-            SwingUtilities.invokeLater(() -> {
-                m_tracker.open();
-                Object commandSession = getCommandSession(m_tracker.getService());
-                if (commandSession != null) {
-                    // Start telnet after all other bundles. This will ensure that all the plugins commands are
-                    // activated once telnet is available
-                    initCommandSession(commandSession, goshArgs);
-
-                    // execute the commands from main argv
-                    for (StringBuilder command : commandList) {
-                        commandSession_execute(commandSession, command);
-                    }
-                    commandSession_close(commandSession);
-                }
-
-                m_tracker.close();
-            });
+            executeCommands(commandList, goshArgs);
 
             String mainUI = serverProp.getOrDefault("weasis.main.ui", ""); //$NON-NLS-1$ //$NON-NLS-2$
             mainUI = mainUI.trim();
@@ -441,6 +425,35 @@ public class WeasisLauncher {
         } finally {
             Runtime.getRuntime().halt(exitStatus);
         }
+    }
+
+    protected static void executeCommands(List<StringBuilder> commandList, String goshArgs) {
+        SwingUtilities.invokeLater(() -> {
+            m_tracker.open();
+
+            // Do not close streams. Workaround for stackoverflow issue when using System.in
+            Object commandSession =
+                getCommandSession(m_tracker.getService(), new Object[] { new FileInputStream(FileDescriptor.in),
+                    new FileOutputStream(FileDescriptor.out), new FileOutputStream(FileDescriptor.err) });
+            if (commandSession != null) {
+                if (goshArgs == null) {
+                    // Set the main window visible and to the front
+                    commandSession_execute(commandSession, "weasis:ui -v"); //$NON-NLS-1$
+                } else {
+                    // Start telnet after all other bundles. This will ensure that all the plugins commands are
+                    // activated once telnet is available
+                    initCommandSession(commandSession, goshArgs);
+                }
+
+                // execute the commands from main argv
+                for (StringBuilder command : commandList) {
+                    commandSession_execute(commandSession, command);
+                }
+                commandSession_close(commandSession);
+            }
+
+            m_tracker.close();
+        });
     }
 
     private static void resetBundleCache() {
@@ -622,16 +635,11 @@ public class WeasisLauncher {
         return list;
     }
 
-    public static Object getCommandSession(Object commandProcessor) {
+    public static Object getCommandSession(Object commandProcessor, Object[] arguments) {
         if (commandProcessor == null) {
             return null;
         }
         Class<?>[] parameterTypes = new Class[] { InputStream.class, OutputStream.class, OutputStream.class };
-
-        // Close stream is not handled but this is a workaround for stackoverflow issue when using System.in...
-        Object[] arguments = new Object[] { new FileInputStream(FileDescriptor.in),
-            new FileOutputStream(FileDescriptor.out), new FileOutputStream(FileDescriptor.err) };
-
         try {
             Method nameMethod = commandProcessor.getClass().getMethod("createSession", parameterTypes); //$NON-NLS-1$
             Object commandSession = nameMethod.invoke(commandProcessor, arguments);
@@ -688,7 +696,7 @@ public class WeasisLauncher {
             Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
             nameMethod.invoke(commandSession, arguments);
         } catch (InterruptedException e) {
-            // Do not print
+            Thread.currentThread().interrupt();
         } catch (Exception e) {
             e.printStackTrace();
         }

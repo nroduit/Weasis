@@ -12,6 +12,7 @@ package org.weasis.core.api.image;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -24,6 +25,21 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
 public class CvUtil {
+    
+    private CvUtil() {
+    }
+    
+    public static  void runGarbageCollectorAndWait(long ms) {
+        System.gc();
+        System.runFinalization();
+        System.gc();
+        System.runFinalization();
+        try {
+            TimeUnit.MILLISECONDS.sleep(ms);
+        } catch (InterruptedException et) {
+            Thread.currentThread().interrupt();
+        }
+    }
     
     public static ImageCV filter(Mat source, KernelData kernel) {
         Objects.requireNonNull(kernel);

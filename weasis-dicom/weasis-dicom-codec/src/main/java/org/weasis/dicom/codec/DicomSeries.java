@@ -23,6 +23,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
@@ -244,13 +245,7 @@ public class DicomSeries extends Series<DicomImageElement> {
             this.preloading = preloading;
         }
 
-        private static void freeMemory() {
-            System.gc();
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ex) {
-            }
-        }
+
 
         private static long evaluateImageSize(DicomImageElement image) {
             Integer allocated = TagD.getTagValue(image, Tag.BitsAllocated, Integer.class);
@@ -273,7 +268,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                         img.getImage();
                     } catch (OutOfMemoryError e) {
                         LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
-                        freeMemory();
+                        CvUtil.runGarbageCollectorAndWait(50);
                         return;
                     }
                     long stop = System.currentTimeMillis();
@@ -300,7 +295,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                 long heapFreeSize = Runtime.getRuntime().freeMemory();
                 if (imgSize > heapSize / 3) {
                     if (imgSize > heapFreeSize) {
-                        freeMemory();
+                        CvUtil.runGarbageCollectorAndWait(50);
                     }
                     double val = (double) heapFreeSize / imgSize;
                     int ajustSize = (int) (size * val) / 2;
@@ -317,7 +312,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     }
                 } else {
                     if (imgSize > heapFreeSize) {
-                        freeMemory();
+                        CvUtil.runGarbageCollectorAndWait(50);
                     }
                     for (DicomImageElement img : imageList) {
                         loadArrays(img, model);

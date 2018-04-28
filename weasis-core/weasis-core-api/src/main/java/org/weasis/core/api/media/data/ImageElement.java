@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.ZoomOp;
@@ -38,16 +39,6 @@ import org.weasis.opencv.op.ImageProcessor;
 public class ImageElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
 
-    /*
-     * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
-     * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
-     *
-     * Try multi-thread reading with new native decoders
-     *
-     * public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime()
-     * .availableProcessors() / 2));
-     */
-    // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
     private static final NativeCache<ImageElement, PlanarImage> mCache =
@@ -362,19 +353,11 @@ public class ImageElement extends MediaElement {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
-            /*
-             * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
-             * Extrema)
-             */
             LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
+            
             mCache.expungeStaleEntries();
-            System.gc();
-            System.gc();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException et) {
-                // Do nothing
-            }
+            CvUtil.runGarbageCollectorAndWait(100);
+
             return getCacheImage(startImageLoading(), manager, findMinMax);
         }
     }

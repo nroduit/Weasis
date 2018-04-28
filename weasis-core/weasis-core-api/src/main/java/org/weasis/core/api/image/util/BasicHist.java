@@ -169,9 +169,15 @@ public class BasicHist {
             double variance = m2 / (stat[0] - 1); // variance
             stat[6] = Math.sqrt(variance);
             if (bins.length > 3 && variance > 10E-20) {
-                stat[7] = (stat[0] * stat[7]) / ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
-                stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
-                    / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                double val = ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
+                if (val == 0.0) {
+                    stat[7] = 0.0;
+                    stat[8] = 0.0;
+                } else {
+                    stat[7] = (stat[0] * stat[7]) / val;
+                    stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
+                        / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                }
             } else {
                 stat[7] = 0.0;
                 stat[8] = 0.0;
