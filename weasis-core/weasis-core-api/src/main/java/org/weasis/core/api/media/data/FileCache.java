@@ -51,8 +51,7 @@ public class FileCache {
         if (transformedFile != null) {
             return transformedFile;
         }
-        Optional<File> f = getOriginalFile();
-        return f.isPresent() ? f.get() : null;
+        return  getOriginalFile().orElse(null);
     }
 
     public File getOriginalTempFile() {

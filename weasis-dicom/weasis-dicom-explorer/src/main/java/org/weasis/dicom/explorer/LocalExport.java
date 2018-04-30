@@ -379,7 +379,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             }
                         } else {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
-                                img.getFileCache().getOriginalFile());
+                                img.getFileCache().getOriginalFile().orElse(null));
                         }
 
                         // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
@@ -479,7 +479,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (img.saveToFile(destinationFile)) {
                             writeInDicomDir(writer, img, node, iuid, destinationFile);
                         } else {
-                            LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile()); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
                         }
                     } else if (node.getUserObject() instanceof MediaElement) {
                         MediaElement dcm = (MediaElement) node.getUserObject();
@@ -621,7 +621,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (writer != null) {
             if (!(img.getMediaReader() instanceof DcmMediaReader)
                 || ((DcmMediaReader) img.getMediaReader()).getDicomObject() == null) {
-                LOGGER.error("Cannot export DICOM file: ", img.getFileCache().getOriginalFile()); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM file: ", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
                 return false;
             }
             return writeInDicomDir(writer, ((DcmMediaReader) img.getMediaReader()).getDicomObject(), node, iuid,

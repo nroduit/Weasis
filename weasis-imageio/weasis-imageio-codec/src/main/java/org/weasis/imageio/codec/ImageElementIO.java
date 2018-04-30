@@ -94,11 +94,11 @@ public class ImageElementIO implements MediaReader {
                     cache.setTransformedFile(file);
                     imgCachePath = null;
                 } else {
-                    file = cache.getOriginalFile().get();
+                    file = cache.getOriginalFile().orElse(null);
                 }
             }
         } else {
-            file = cache.getOriginalFile().get();
+            file = cache.getOriginalFile().orElse(null);
         }
 
         if (file != null) {

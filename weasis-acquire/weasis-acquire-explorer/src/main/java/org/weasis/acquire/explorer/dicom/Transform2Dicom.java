@@ -75,8 +75,7 @@ public final class Transform2Dicom {
         String sopInstanceUID = Objects.requireNonNull((String) imageElement.getTagValue(TagD.getUID(Level.INSTANCE)));
 
         // Transform to JPEG
-        Optional<File> origFile = imageElement.getFileCache().getOriginalFile();
-        File imgFile = origFile.isPresent() ? origFile.get() : null;
+        File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
         if (imgFile == null || !imageElement.getMimeType().contains("jpeg") //$NON-NLS-1$
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 

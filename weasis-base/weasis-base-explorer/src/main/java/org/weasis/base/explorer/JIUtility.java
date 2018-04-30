@@ -13,7 +13,6 @@ package org.weasis.base.explorer;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 import javax.swing.Icon;
 import javax.swing.filechooser.FileSystemView;
@@ -56,8 +55,7 @@ public final class JIUtility {
     }
 
     public static Icon getSystemIcon(final MediaElement dObj) {
-        Optional<File> optional = dObj.getFileCache().getOriginalFile();
-        return getSystemIcon(optional.isPresent() ? optional.get() : null);
+        return getSystemIcon(dObj.getFileCache().getOriginalFile().orElse(null));
     }
 
     public static Icon getSystemIcon(final File f) {
