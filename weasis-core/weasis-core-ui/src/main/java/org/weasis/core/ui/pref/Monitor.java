@@ -70,7 +70,7 @@ public class Monitor {
                 // Let time to maximize window
                 Thread.sleep(500);
             } catch (InterruptedException e1) {
-                // Do noting
+                Thread.currentThread().interrupt();
             }
 
             fullscreenBounds = frame.getBounds();

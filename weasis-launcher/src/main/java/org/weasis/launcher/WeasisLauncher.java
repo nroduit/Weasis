@@ -795,6 +795,10 @@ public class WeasisLauncher {
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
+        
+        if(props == null) {
+            throw new IllegalStateException("Cannot load weasis config!");
+        }
 
         // Only required for dev purposes (running the app in IDE)
         String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$

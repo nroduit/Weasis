@@ -150,10 +150,7 @@ public final class FileUtil {
 
     private static boolean deleteFile(File fileOrDirectory) {
         try {
-            if (!fileOrDirectory.delete()) {
-                LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
-                return false;
-            }
+            Files.delete(fileOrDirectory.toPath());
         } catch (Exception e) {
             LOGGER.error("Cannot delete", e); //$NON-NLS-1$
             return false;
@@ -198,7 +195,7 @@ public final class FileUtil {
             }
         }
         if (deleteRoot) {
-            rootDir.delete();
+            deleteFile(rootDir);
         }
     }
 

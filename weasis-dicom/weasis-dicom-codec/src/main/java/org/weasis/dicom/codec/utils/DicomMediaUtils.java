@@ -655,7 +655,7 @@ public class DicomMediaUtils {
                     DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.CenterOfCircularShutter, null);
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
                     Ellipse2D ellipse = new Ellipse2D.Double();
-                    int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
+                    double radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
                     // Thanks DICOM for reversing x,y by row,column
                     ellipse.setFrameFromCenter(centerOfCircularShutter[1], centerOfCircularShutter[0],
                         centerOfCircularShutter[1] + radius, centerOfCircularShutter[0] + radius);
@@ -1093,11 +1093,11 @@ public class DicomMediaUtils {
                                     }
                                     if (scanDate != null) {
                                         injectDateTime = TagUtil.dateTime(scanDate, injectTime);
-                                        time = scanDateTime - injectDateTime.getTime();
+                                        time = (double) scanDateTime - injectDateTime.getTime();
                                     }
 
                                 } else {
-                                    time = scanDateTime - injectDateTime.getTime();
+                                    time = (double) scanDateTime - injectDateTime.getTime();
                                 }
                                 // Exclude negative value (case over midnight)
                                 if (time > 0) {

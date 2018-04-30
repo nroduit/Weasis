@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -88,11 +89,13 @@ public class ImageCVIO implements MediaReader {
                     cache.setTransformedFile(file);
                     imgCachePath = null;
                 } else {
-                    file = cache.getOriginalFile().get();
+                    Optional<File> f = cache.getOriginalFile();
+                    file = f.isPresent() ? f.get() : null;
                 }
             }
         } else {
-            file = cache.getOriginalFile().get();
+            Optional<File> f = cache.getOriginalFile();
+            file = f.isPresent() ? f.get() : null;
         }
 
         if (file != null) {
@@ -170,9 +173,12 @@ public class ImageCVIO implements MediaReader {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (this) {
-                        for (MediaElement img : medias) {
-                            return img.getMimeType();
+                    if (!medias.isEmpty()) {
+                        synchronized (this) {
+                            MediaElement img = medias.get(0);
+                            if (img != null) {
+                                return img.getMimeType();
+                            }
                         }
                     }
                     return null;

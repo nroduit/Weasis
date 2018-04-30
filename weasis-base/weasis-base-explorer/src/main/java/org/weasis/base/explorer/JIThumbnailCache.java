@@ -69,8 +69,8 @@ public final class JIThumbnailCache {
                 r = runnable;
             }
         }
-        if (r != null) {
-            queue.remove(r);
+        if (r != null && !queue.remove(r)) {
+            LOGGER.error("Cannot remove thumbnail from the queue"); //$NON-NLS-1$
         }
     }
 

@@ -704,6 +704,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             LOGGER.error("Running cmd", e1); //$NON-NLS-1$
         } catch (InterruptedException e2) {
             LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
+            Thread.currentThread().interrupt();
         }
     }
 

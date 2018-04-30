@@ -638,6 +638,7 @@ public class DicomImageUtils {
                             }
                         }
                     }
+                    break;
                     default:
                         illegalOpcode(op, i - 2);
                 }

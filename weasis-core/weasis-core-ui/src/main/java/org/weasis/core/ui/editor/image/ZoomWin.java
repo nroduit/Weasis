@@ -317,7 +317,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     @Override
     public void setSize(int width, int height) {
-        shape.setFrame(borderOffset, borderOffset, width - borderOffset, height - borderOffset);
+        shape.setFrame(borderOffset, borderOffset, width - (double) borderOffset, height - (double) borderOffset);
         super.setSize(width + borderOffset, height + borderOffset);
     }
 

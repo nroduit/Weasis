@@ -84,7 +84,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.error_msg"); //$NON-NLS-1$
             float y = midy;
-            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
                 y, Color.RED);
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
@@ -92,7 +92,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         AbstractGraphicLabel.paintColorFontOutline(g2, str,
-                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
+                            midx - g2.getFontMetrics().stringWidth(str) / 2.0F, y, Color.RED);
                     }
                 }
             }

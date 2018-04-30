@@ -92,6 +92,7 @@ public class AcquirePublishPanel extends JPanel {
                     }
                 } catch (InterruptedException e) {
                     LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
+                    Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
                     LOGGER.error("Retrieving task", e); //$NON-NLS-1$
                 }

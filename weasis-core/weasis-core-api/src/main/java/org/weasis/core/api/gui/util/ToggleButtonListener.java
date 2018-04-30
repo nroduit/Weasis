@@ -70,7 +70,7 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
         }
     }
 
-    public boolean isSelected() {
+    public synchronized boolean isSelected() {
         return model.isSelected();
     }
 

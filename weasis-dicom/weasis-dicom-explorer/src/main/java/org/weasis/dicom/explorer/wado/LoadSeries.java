@@ -400,6 +400,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             dicomSeries.setTag(DOWNLOAD_START_TIME, System.currentTimeMillis());
             imageDownloader.invokeAll(tasks);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         imageDownloader.shutdown();

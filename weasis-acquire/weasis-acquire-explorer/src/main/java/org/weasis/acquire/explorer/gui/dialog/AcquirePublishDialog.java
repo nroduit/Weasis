@@ -62,8 +62,8 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.opencv.data.PlanarImage;
 
 @SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
@@ -309,6 +309,7 @@ public class AcquirePublishDialog extends JDialog {
                             exportDirDicom = dicomizeTask.get();
                         } catch (InterruptedException doNothing) {
                             LOGGER.warn("Dicomizing task Interruption"); //$NON-NLS-1$
+                            Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
                             LOGGER.error("Dicomizing task", e); //$NON-NLS-1$
                         }

@@ -65,15 +65,16 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     public static final int DEFAULT_SIZE = 112;
     public static final int MAX_SIZE = 256;
 
-    private static final NativeCache<Thumbnail, PlanarImage> mCache = new NativeCache<Thumbnail, PlanarImage>(30_000_000) {
+    private static final NativeCache<Thumbnail, PlanarImage> mCache =
+        new NativeCache<Thumbnail, PlanarImage>(30_000_000) {
 
-        @Override
-        protected void afterEntryRemove(Thumbnail key, PlanarImage img) {
-            if(img != null){
-                img.release();
+            @Override
+            protected void afterEntryRemove(Thumbnail key, PlanarImage img) {
+                if (img != null) {
+                    img.release();
+                }
             }
-        }
-    };
+        };
 
     protected volatile boolean readable = true;
     protected volatile AtomicBoolean loading = new AtomicBoolean(false);
@@ -175,8 +176,8 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     height = thumbnail.height();
                     x += (thumbnailSize - width) / 2;
                     y += (thumbnailSize - height) / 2;
-                    g2d.drawImage(ImageConversion.toBufferedImage(thumbnail), AffineTransform.getTranslateInstance(x, y),
-                        null);
+                    g2d.drawImage(ImageConversion.toBufferedImage(thumbnail),
+                        AffineTransform.getTranslateInstance(x, y), null);
                 }
                 drawOverIcon(g2d, x, y, width, height);
             }
@@ -202,7 +203,6 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     public File getThumbnailPath() {
         return thumbnailPath;
     }
-
 
     protected synchronized PlanarImage getImage(final MediaElement media, final boolean keepMediaCache,
         final OpManager opManager) {
@@ -254,13 +254,15 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     if (imgPl != null) {
                         PlanarImage img = image.getRenderedImage(imgPl);
                         final PlanarImage thumb = createThumbnail(img);
-                        try {
-                            file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                        } catch (IOException e) {
-                            LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
+                        if (thumb != null) {
+                            try {
+                                file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            } catch (IOException e) {
+                                LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
+                            }
                         }
                         try {
-                            if (file != null) {
+                            if (thumb != null && file != null) {
                                 MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
                                 if (ImageProcessor.writeImage(thumb.toMat(), file, map)) {
                                     /*
@@ -330,7 +332,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
             loading.set(false);
         }
     }
-    
+
     protected void removeImageFromCache() {
         // Unload image from memory
         mCache.remove(this);

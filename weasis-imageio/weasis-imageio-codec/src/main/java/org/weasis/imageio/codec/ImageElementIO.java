@@ -191,9 +191,12 @@ public class ImageElementIO implements MediaReader {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (this) {
-                        for (MediaElement img : medias) {
-                            return img.getMimeType();
+                    if (!medias.isEmpty()) {
+                        synchronized (this) {
+                            MediaElement img = medias.get(0);
+                            if (img != null) {
+                                return img.getMimeType();
+                            }
                         }
                     }
                     return null;
