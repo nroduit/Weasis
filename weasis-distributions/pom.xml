@@ -606,8 +606,8 @@
 					<plugin>
 						<!-- normalize jar before signing -->
 						<groupId>org.weasis.maven</groupId>
-						<artifactId>maven-pack200-plugin</artifactId>
-						<version>1.0.3</version>
+						<artifactId>build-pack200-plugin</artifactId>
+						<version>1.0.4</version>
 						<executions>
 							<execution>
 								<id>sign</id>

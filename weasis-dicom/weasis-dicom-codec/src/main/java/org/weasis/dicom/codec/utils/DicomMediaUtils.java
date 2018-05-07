@@ -351,22 +351,25 @@ public class DicomMediaUtils {
         return val;
     }
 
-    public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeIfNull) {
-        return getPatientAgeInPeriod(dicom, tag, null, null, computeIfNull);
+    public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeOnlyIfNull) {
+        return getPatientAgeInPeriod(dicom, tag, null, null, computeOnlyIfNull);
     }
 
     public static String getPatientAgeInPeriod(Attributes dicom, int tag, String privateCreatorID, String defaultValue,
-        boolean computeIfNull) {
+        boolean computeOnlyIfNull) {
         if (dicom == null) {
             return defaultValue;
         }
-        String s = dicom.getString(privateCreatorID, tag, defaultValue);
-        if (StringUtil.hasText(s) || !computeIfNull) {
-            return s;
+
+        if (computeOnlyIfNull) {
+            String s = dicom.getString(privateCreatorID, tag, defaultValue);
+            if (StringUtil.hasText(s)) {
+                return s;
+            }
         }
 
-        Date date = getDate(dicom, new int[] { Tag.ContentDate, Tag.AcquisitionDate, Tag.DateOfSecondaryCapture,
-            Tag.SeriesDate, Tag.StudyDate });
+        Date date = getDate(dicom, Tag.ContentDate, Tag.AcquisitionDate, Tag.DateOfSecondaryCapture, Tag.SeriesDate,
+            Tag.StudyDate);
 
         if (date != null) {
             Date bithdate = dicom.getDate(Tag.PatientBirthDate);
