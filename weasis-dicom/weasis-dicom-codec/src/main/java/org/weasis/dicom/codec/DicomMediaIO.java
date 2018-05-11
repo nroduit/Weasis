@@ -128,7 +128,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // -------- End of Mandatory Tags --------
         tagManager.addTag(Tag.PatientBirthDate, Level.PATIENT);
         tagManager.addTag(Tag.PatientBirthTime, Level.PATIENT);
-        tagManager.addTag(Tag.PatientAge, Level.PATIENT);
+        tagManager.addTag(Tag.PatientAge, Level.SERIES); // needs to be updated for each series if computed
         tagManager.addTag(Tag.PatientSex, Level.PATIENT);
         tagManager.addTag(Tag.IssuerOfPatientID, Level.PATIENT);
         tagManager.addTag(Tag.PatientWeight, Level.PATIENT);

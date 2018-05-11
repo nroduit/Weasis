@@ -579,8 +579,6 @@ public class DicomMediaUtils {
         // Patient Group
         if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             DicomMediaIO.tagManager.readTags(Level.PATIENT, header, group);
-            // Build patient age if not present
-            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
         }
         // Study Group
         else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
@@ -589,6 +587,8 @@ public class DicomMediaUtils {
         // Series Group
         else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
             DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
+            // Build patient age if not present
+            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
         }
     }
 
