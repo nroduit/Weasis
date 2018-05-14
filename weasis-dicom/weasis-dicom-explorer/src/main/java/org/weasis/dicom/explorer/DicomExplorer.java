@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -736,7 +737,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     thumb = createThumbnail(series, model, thumbnailSize);
                     series.setTag(TagW.Thumbnail, thumb);
                 }
-                this.add(thumb);
+                Optional.ofNullable(thumb).ifPresent(this::add);
             }
             this.setAlignmentX(LEFT_ALIGNMENT);
             this.setAlignmentY(TOP_ALIGNMENT);
