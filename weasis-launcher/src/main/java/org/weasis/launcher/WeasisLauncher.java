@@ -363,7 +363,7 @@ public class WeasisLauncher {
 
         int exitStatus = 0;
         try {
-            final String goshArgs = System.getProperty("gosh.args", serverProp.getOrDefault("gosh.args", "")); //$NON-NLS-1$ //$NON-NLS-2$
+            final String goshArgs = System.getProperty("gosh.args", serverProp.getOrDefault("gosh.args", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             serverProp.put("gosh.args", "--nointeractive --noshutdown"); //$NON-NLS-1$ //$NON-NLS-2$
 
             // Now create an instance of the framework with our configuration properties.
@@ -797,7 +797,7 @@ public class WeasisLauncher {
         }
         
         if(props == null) {
-            throw new IllegalStateException("Cannot load weasis config!");
+            throw new IllegalStateException("Cannot load weasis config!"); //$NON-NLS-1$
         }
 
         // Only required for dev purposes (running the app in IDE)

@@ -171,7 +171,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
         AudioData audioData = getAudioData(media);
         if (audioData == null) {
-            throw new IllegalStateException("Cannot build an AudioInputStream");
+            throw new IllegalStateException("Cannot build an AudioInputStream"); //$NON-NLS-1$
         }
 
         try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(), audioData.audioFormat,

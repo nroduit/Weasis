@@ -184,7 +184,7 @@ public class ImageElement extends MediaElement {
         // Rectify non square pixel image in the first operation
         if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {     
             ZoomOp node = new ZoomOp();
-            node.setName("rectifyAspectRatio");
+            node.setName("rectifyAspectRatio"); //$NON-NLS-1$
             node.setParam(ZoomOp.P_RATIO_X, getRescaleX());
             node.setParam(ZoomOp.P_RATIO_Y, getRescaleY());
             return node;

@@ -113,9 +113,9 @@ public class ImageCVIO implements MediaReader {
 
     private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
         PlanarImage img = null;
-        if (file.getPath().endsWith(".wcv")) {
+        if (file.getPath().endsWith(".wcv")) { //$NON-NLS-1$
             img = new FileRawImage(file).read();
-        } else if (mimeType.startsWith("image")) {
+        } else if (mimeType.startsWith("image")) { //$NON-NLS-1$
             img = ImageProcessor.readImageWithCvException(file);
         }
 
@@ -299,11 +299,11 @@ public class ImageCVIO implements MediaReader {
             try {
                 new FileRawImage(outFile).write(img);
                 ImageProcessor.writeThumbnail(img.toMat(),
-                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE);
+                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE); //$NON-NLS-1$
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);
-                LOGGER.error("Uncompress temporary image", e);
+                LOGGER.error("Uncompress temporary image", e); //$NON-NLS-1$
             }
         }
         return null;

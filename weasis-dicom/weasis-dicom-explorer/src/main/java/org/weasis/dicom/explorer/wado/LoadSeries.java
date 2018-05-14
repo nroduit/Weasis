@@ -653,8 +653,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         // Solves missing tmp folder problem (on Windows).
         private File getDicomTmpDir() {
             if (!DICOM_TMP_DIR.exists()) {
-                LOGGER.info("DICOM tmp dir not foud. Re-creating it!");
-                AppProperties.buildAccessibleTempDirectory("downloading");
+                LOGGER.info("DICOM tmp dir not foud. Re-creating it!"); //$NON-NLS-1$
+                AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
             }
             return DICOM_TMP_DIR;
         }

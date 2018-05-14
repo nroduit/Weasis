@@ -347,9 +347,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image != null) {
             int channels = CvType.channels(image.type());
             if (channels == 3) {
-                return new String[] { "Blue", "Green", "Red" };
+                return new String[] { Messages.getString("DefaultView2d.blue"), Messages.getString("DefaultView2d.green"), Messages.getString("DefaultView2d.red") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             } else if (channels == 1) {
-                return new String[] { "Gray" };
+                return new String[] { Messages.getString("DefaultView2d.gray") }; //$NON-NLS-1$
             }
         }
         return null;
@@ -595,7 +595,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         for (int i = 0; i < elements.length; i++) {
                             elements[i] = Integer.toString(bpp);
                         }
-                        String pixSize = String.join(",", elements);
+                        String pixSize = String.join(",", elements); //$NON-NLS-1$
 
                         AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
                             new Object[] { image.width(), image.height(), pixSize });

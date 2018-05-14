@@ -753,7 +753,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     private static Mat getMatBuffer(ExtendSegmentedInputImageStream extParams) throws IOException {
-        try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) {
+        try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) { //$NON-NLS-1$
 
             Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
             Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
@@ -787,7 +787,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error made by some
                 // constructors). RGB color model doesn't make sense for lossy jpeg.
                 // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
-                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name())
+                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
                     && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
                     dcmFlags |= Imgcodecs.DICOM_IMREAD_YBR;
                 }
@@ -1120,7 +1120,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 } else {
                     // Multi-frames where each frames can have multiple fragments.
                     if (fragmentsPositions.isEmpty()) {
-                        boolean jpeg2000 = tsuid.startsWith("1.2.840.10008.1.2.4.9");
+                        boolean jpeg2000 = tsuid.startsWith("1.2.840.10008.1.2.4.9"); //$NON-NLS-1$
                         try (ImageInputStream srcStream = ImageIO.createImageInputStream(new File(uri))) {
                             for (int i = 1; i < nbFragments; i++) {
                                 BulkData bulkData = (BulkData) pixeldataFragments.get(i);
@@ -1166,7 +1166,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img).getRaster();
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1180,7 +1180,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1194,7 +1194,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1381,7 +1381,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         this.pixeldataFragments = (Fragments) pixdata;
                         bigendian = pixeldataFragments.bigEndian();
                         if (bigendian) {
-                            LOGGER.error("Big endian fragments?");
+                            LOGGER.error("Big endian fragments?"); //$NON-NLS-1$
                         }
                     }
                 }

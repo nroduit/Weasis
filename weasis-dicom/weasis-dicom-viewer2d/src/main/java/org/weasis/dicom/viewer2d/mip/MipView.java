@@ -119,7 +119,7 @@ public class MipView extends View2d {
         this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
         setMip(null);
-        File mipDir = AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip");
+        File mipDir = AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
         FileUtil.deleteDirectoryContents(mipDir, 1, 0);
 
         ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
@@ -143,8 +143,8 @@ public class MipView extends View2d {
             return;
         }
 
-        TaskMonitor taskMonitor = new TaskMonitor(dialog == null ? view : dialog, // $NON-NLS-1$
-            Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1);
+        TaskMonitor taskMonitor = new TaskMonitor(dialog == null ? view : dialog,
+            Messages.getString("MipView.monitoring_proc"), Messages.getString("MipView.init"), 0, 2 * extend + 1); //$NON-NLS-1$//$NON-NLS-2$
         Runnable runnable = () -> {
             final List<DicomImageElement> dicoms = new ArrayList<>();
             try {
@@ -189,7 +189,7 @@ public class MipView extends View2d {
             }
         };
 
-        view.process = new MipProcess(runnable, Messages.getString("MipView.build"), taskMonitor);
+        view.process = new MipProcess(runnable, Messages.getString("MipView.build"), taskMonitor); //$NON-NLS-1$
         view.process.start();
 
     }

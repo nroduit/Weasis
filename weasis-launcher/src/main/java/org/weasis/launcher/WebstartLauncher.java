@@ -33,7 +33,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 (SingleInstanceService) ServiceManager.lookup("javax.jnlp.SingleInstanceService"); //$NON-NLS-1$
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException e) {
-            LOGGER.log(Level.SEVERE, "Unable to get SingleInstanceService", e);
+            LOGGER.log(Level.SEVERE, "Unable to get SingleInstanceService", e); //$NON-NLS-1$
         }
 
         // Workaround for Java Web Start issue http://forums.oracle.com/forums/thread.jspa?threadID=2148703&tstart=15

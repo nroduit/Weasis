@@ -118,7 +118,7 @@ public class ImageElementIO implements MediaReader {
     }
 
     private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
-        if (file.getPath().endsWith(".wcv")) {
+        if (file.getPath().endsWith(".wcv")) { //$NON-NLS-1$
             return new FileRawImage(file).read();
         }
 
@@ -320,11 +320,11 @@ public class ImageElementIO implements MediaReader {
             try {
                 new FileRawImage(outFile).write(img);
                 ImageProcessor.writeThumbnail(img.toMat(),
-                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE);
+                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE); //$NON-NLS-1$
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);
-                LOGGER.error("Uncompress temporary image", e);
+                LOGGER.error("Uncompress temporary image", e); //$NON-NLS-1$
             }
         }
         return null;
