@@ -5,7 +5,7 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>3.0.1-SNAPSHOT</version>
+	<version>3.0.1</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
@@ -355,24 +355,6 @@
 				<groupId>org.apache.felix</groupId>
 				<artifactId>org.apache.felix.configadmin</artifactId>
 				<version>${felix.configadmin.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-linux-x86</artifactId>
-				<version>${jai.native.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-linux-x86-64</artifactId>
-				<version>${jai.native.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-windows-x86</artifactId>
-				<version>${jai.native.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
