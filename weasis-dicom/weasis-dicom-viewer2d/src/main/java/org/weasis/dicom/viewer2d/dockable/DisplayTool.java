@@ -385,8 +385,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     @Override
     protected void changeToolWindowAnchor(CLocation clocation) {
-        // TODO Auto-generated method stub
-
+        // Do nothing
     }
 
     @Override

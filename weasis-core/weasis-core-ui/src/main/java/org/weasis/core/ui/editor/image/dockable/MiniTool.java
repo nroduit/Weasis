@@ -43,7 +43,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 5);
         // TODO display a button to minimize or do not display the tab
         dockable.setTitleShown(false);
-        setDockableWidth(40);
+        setDockableWidth(32);
         currentAction = getActions()[0];
         slider = createSlider(currentAction, vertical);
         jbInit();

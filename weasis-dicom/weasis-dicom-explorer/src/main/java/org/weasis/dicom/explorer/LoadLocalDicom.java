@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
@@ -177,7 +178,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);
-                    t.repaint();
+                    Optional.ofNullable(t).ifPresent(v -> v.repaint());
                 }
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {

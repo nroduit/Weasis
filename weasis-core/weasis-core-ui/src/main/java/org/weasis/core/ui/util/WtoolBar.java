@@ -114,7 +114,7 @@ public class WtoolBar extends JPanel implements Toolbar {
         }
         super.add(button);
         if (substanceLaf) {
-            button.putClientProperty("substancelaf.componentFlat", Boolean.TRUE); //$NON-NLS-1$
+            button.putClientProperty("substancelaf.internal.FlatLook", Boolean.TRUE); //$NON-NLS-1$
         } else {
             configureButton(button);
             installMouseHandler(button);
