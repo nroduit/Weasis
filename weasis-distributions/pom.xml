@@ -684,6 +684,10 @@
 									<includes>
 										<include>**/*.jar</include>
 									</includes>
+									<excludes>
+										<!-- exclude .original.jar files that will be excluded from final packaging -->
+										<exclude>bundle/*.original.jar</exclude>
+									</excludes>
 								</configuration>
 							</execution>
 						</executions>
