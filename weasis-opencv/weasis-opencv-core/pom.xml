@@ -87,7 +87,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.2-SNAPSHOT</version>
 				<executions>
 					<execution>
 						<id>bind-sources</id>

@@ -21,19 +21,19 @@
 		<felix.framework.version>5.6.10</felix.framework.version>
 		<substance.version>8.0.2</substance.version>
 
-		<felix.gogo.version>1.0.10</felix.gogo.version>
+		<felix.gogo.version>1.0.12</felix.gogo.version>
 		<felix.gogo.shell.version>1.0.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.0.2</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-		<felix.configadmin.version>1.8.16</felix.configadmin.version>
+		<felix.configadmin.version>1.9.2</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.0.14</felix.scr.version>
-		<felix.metatype.version>1.1.6</felix.metatype.version>
+		<felix.scr.version>2.1.0</felix.scr.version>
+		<felix.metatype.version>1.2.0</felix.metatype.version>
 
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P20a</dockingframes.version>
-        <weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
+		<weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>
@@ -167,7 +167,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
-					<version>3.0.2</version>
+					<version>3.1.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
@@ -183,6 +183,11 @@
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>build-helper-maven-plugin</artifactId>
 					<version>3.0.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.0.1</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -234,7 +239,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.0.2-SNAPSHOT</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
@@ -374,7 +378,7 @@
 			<dependency>
 				<groupId>org.assertj</groupId>
 				<artifactId>assertj-core</artifactId>
-				<version>3.9.1</version>
+				<version>3.10.0</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
