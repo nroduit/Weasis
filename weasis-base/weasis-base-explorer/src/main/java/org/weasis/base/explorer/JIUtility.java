@@ -55,7 +55,7 @@ public final class JIUtility {
     }
 
     public static Icon getSystemIcon(final MediaElement dObj) {
-        return getSystemIcon(dObj.getFileCache().getOriginalFile().get());
+        return getSystemIcon(dObj.getFileCache().getOriginalFile().orElse(null));
     }
 
     public static Icon getSystemIcon(final File f) {

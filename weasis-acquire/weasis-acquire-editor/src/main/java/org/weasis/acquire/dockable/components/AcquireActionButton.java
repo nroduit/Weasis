@@ -44,7 +44,7 @@ public class AcquireActionButton extends JButton {
     }
 
     public void setAcquireAction(AcquireAction action) {
-        Optional.ofNullable(this.action).ifPresent(a -> removeActionListener(a));
+        Optional.ofNullable(this.action).ifPresent(this::removeActionListener);
         this.action = action;
         addActionListener(this.action);
     }

@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -97,18 +97,6 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.configadmin</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib-linux-x86</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib-linux-x86-64</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib-windows-x86</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>

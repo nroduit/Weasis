@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
+import java.awt.image.RenderedImage;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-
-import javax.media.jai.PlanarImage;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -24,6 +23,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
@@ -245,13 +245,7 @@ public class DicomSeries extends Series<DicomImageElement> {
             this.preloading = preloading;
         }
 
-        private static void freeMemory() {
-            System.gc();
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException ex) {
-            }
-        }
+
 
         private static long evaluateImageSize(DicomImageElement image) {
             Integer allocated = TagD.getTagValue(image, Tag.BitsAllocated, Integer.class);
@@ -270,23 +264,12 @@ public class DicomSeries extends Series<DicomImageElement> {
                 Boolean cache = (Boolean) img.getTagValue(TagW.ImageCache);
                 if (cache == null || !cache) {
                     long start = System.currentTimeMillis();
-                    PlanarImage i = img.getImage();
-                    if (i != null) {
-                        int tymin = i.getMinTileY();
-                        int tymax = i.getMaxTileY();
-                        int txmin = i.getMinTileX();
-                        int txmax = i.getMaxTileX();
-                        for (int tj = tymin; tj <= tymax; tj++) {
-                            for (int ti = txmin; ti <= txmax; ti++) {
-                                try {
-                                    i.getTile(ti, tj);
-                                } catch (OutOfMemoryError e) {
-                                    LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
-                                    freeMemory();
-                                    return;
-                                }
-                            }
-                        }
+                    try {
+                        img.getImage();
+                    } catch (OutOfMemoryError e) {
+                        LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
+                        CvUtil.runGarbageCollectorAndWait(50);
+                        return;
                     }
                     long stop = System.currentTimeMillis();
                     LOGGER.debug("Reading time: {} ms of image: {}", stop - start, img); //$NON-NLS-1$
@@ -306,12 +289,13 @@ public class DicomSeries extends Series<DicomImageElement> {
                 if (model == null || index < 0 || index >= size) {
                     return;
                 }
+                // TODO need to be changed with openCV
                 long imgSize = evaluateImageSize(imageList.get(index)) * size + 5000;
                 long heapSize = Runtime.getRuntime().totalMemory();
                 long heapFreeSize = Runtime.getRuntime().freeMemory();
                 if (imgSize > heapSize / 3) {
                     if (imgSize > heapFreeSize) {
-                        freeMemory();
+                        CvUtil.runGarbageCollectorAndWait(50);
                     }
                     double val = (double) heapFreeSize / imgSize;
                     int ajustSize = (int) (size * val) / 2;
@@ -328,7 +312,7 @@ public class DicomSeries extends Series<DicomImageElement> {
                     }
                 } else {
                     if (imgSize > heapFreeSize) {
-                        freeMemory();
+                        CvUtil.runGarbageCollectorAndWait(50);
                     }
                     for (DicomImageElement img : imageList) {
                         loadArrays(img, model);

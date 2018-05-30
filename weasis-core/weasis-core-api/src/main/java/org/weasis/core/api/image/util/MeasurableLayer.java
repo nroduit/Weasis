@@ -12,10 +12,10 @@ package org.weasis.core.api.image.util;
 
 import java.awt.Point;
 import java.awt.geom.AffineTransform;
-import java.awt.image.RenderedImage;
 
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *
@@ -43,6 +43,6 @@ public interface MeasurableLayer {
      *
      * @return the source image for display
      */
-    RenderedImage getSourceRenderedImage();
+    PlanarImage getSourceRenderedImage();
 
 }

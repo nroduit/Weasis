@@ -648,7 +648,7 @@ public class WeasisWin {
         } else {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
-        LOGGER.debug("Max main screen bound: {}", b.toString()); //$NON-NLS-1$
+        LOGGER.debug("Max main screen bound: {}", b); //$NON-NLS-1$
 
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
@@ -1207,7 +1207,9 @@ public class WeasisWin {
                         robot.mousePress(InputEvent.BUTTON1_MASK);
                         robot.mouseRelease(InputEvent.BUTTON1_MASK);
                     } catch (AWTException e1) {
+                        // DO nothing
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     } finally {
                         app.setAlwaysOnTop(false);
                     }

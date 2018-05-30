@@ -217,7 +217,7 @@ public class WeasisLoader {
                 displayOnScreen();
             });
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
         } catch (InvocationTargetException e) {
             e.printStackTrace();
         }

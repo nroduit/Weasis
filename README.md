@@ -1,8 +1,9 @@
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0) [![Build Status](https://travis-ci.org/nroduit/Weasis.svg?branch=master)](https://travis-ci.org/nroduit/Weasis)   
+[![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=ncloc)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=security_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.weasis%3Aweasis-framework)    
+
+Weasis is a free medical DICOM viewer used in healthcare by hospitals, health networks, multicenter research trials, and patients.
+
 ![Weasis](weasis-distributions/resources/images/about.png)
-
-The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches are 2.0.x and 1.2.x (both require Java 6+).
-
-[![CircleCI](https://circleci.com/gh/nroduit/Weasis.svg?style=svg&circle-token=000f0e7422ddff1a5351499010c9075f18e55522)](https://circleci.com/gh/nroduit/Weasis) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/50bdcb5275a84a9186a8e5d9d9d1b81d)](https://www.codacy.com/app/nicolas.roduit/Weasis?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nroduit/Weasis&amp;utm_campaign=Badge_Grade)
 
 [General information](https://nroduit.github.io)
 
@@ -12,69 +13,63 @@ The master branch contains Weasis 2.5.x (requires Java 8+) and the old branches 
 
 [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
 
-[Issue Tracker](http://www.dcm4che.org/jira/browse/WEA)
+[Issue Tracker](https://dcm4che.atlassian.net/projects/WEA)
 
 
-### New features in Weasis 2.5 ###
-* Embedded new codecs compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
+## New features in Weasis 3.0 ##
+* Replace JAI with OpenCV (increase performance for all the image processing functions)
+* Embedded new codecs within OpenCV compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
 	* jpeg-baseline, jpeg-extended and jpeg-lossless (IJG 6b)   
-	* jpeg-ls (CharLS 1.1.0)   
-	* jpeg2000 codecs (OpegJPEG 2.1.2)   
-* Allows to order the codecs by priority with a unique configuration for all the systems
+	* jpeg-ls (CharLS 2.0)   
+	* jpeg2000 codecs (OpegJPEG 2.3)    
+	* DICOM raw (RLE, YBR\_FULL, and YBR\_FULL\_422)
 * Supports multi-frame and multiple fragments at the same time
-* DICOM send module (DICOM node configuration at the server side and/or locally)
-* Export DICOM KO build in Weasis
-* Export measurements and graphics into a DICOM PR or xml file
-* DICOMIZER module
-* Configuration in resources for series splitting rules and for displaying DICOM Attributes on the image
-* Allows in preferences to adapt the stacktrace limit of the logger
-* Exporting non DICOM files will allow to extract files from DICOM encapsulated document and DICOM video
-* Minimal annotations mode available in Display tool
-* Reading Presentation State improvement for overlay and shutter
-* Apply Presentation LUT sequence
-* Read DICOM image containing float or double data
-* Requires Java 8
-* See [JIRA Release Note](http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=11282)
+* DICOM ECG Viewer
+* See [JIRA Release Note](http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=12280)
 
-### General Features: ###
+## General Features ##
 * Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))
-* Web based distribution ([embedded in a web page](https://github.com/nroduit/weasis-jnlp-distributions) or launch from an external window)
-* Desktop portable distribution (Windows, Mac OS X and Linux)
+* Web-based distribution (Java Webstart)
+* Desktop portable distribution (Windows, Mac OS X, and Linux)
 * Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
-* Can be configured with very low memory footprint. Do not require recent hardware.
-* [Multi-language support](https://www.transifex.com/projects/p/weasis/)
-* [Configuration of preferences](http://www.dcm4che.org/confluence/display/WEA/Weasis+Preferences) on server-side and client-side
-* [API for building custom plug-ins](http://www.dcm4che.org/confluence/display/WEA/How+to+build+and+install+a+plug-in)
+* Can be configured with very low memory footprint. Do not require modern hardware.
+* [Multi-language support](https://nroduit.github.io/en/getting-started/translating/)
+* [Configuration of preferences](https://nroduit.github.io/en/basics/customize/preferences/) on server-side and client-side
+* [API for building custom plug-ins](https://nroduit.github.io/en/basics/customize/build-plugins/)
+* DICOM Send (storeSCU and STOW RS)
+* DICOM Query/Retrieve (C-GET, C-MOVE and WADO)
+* Dicomizer module (allow importing standard images and convert them in DICOM)
 
-### Viewer Features: ###
-* Display all kinds of DICOM files (including multiframe, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS and AU)
-* Viewer for common image formats (TIFF, BMP, FlashPiX, GIF, JPEG, PNG, and PNM)
+## Viewer Features ##
+![screenshot](https://user-images.githubusercontent.com/993975/39397039-2180c178-4af9-11e8-9c72-2c1e9aa16eae.jpg)    
+* Display all kinds of DICOM files (including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS, AU, RT and ECG)
+* Viewer for common image formats (TIFF, BMP, GIF, JPEG, PNG, RAS, HDR, and PNM)
 * Image manipulation (pan, zoom, windowing, presets, rotation, flip, scroll, crosshair, filtering...)
-* Optimal performance for handling large images since there is no need to load the whole image data in memory at once (Uncompressed images, tiled TIFF, tiled jpeg2000 and tiled FlashPiX).
 * Layouts for comparing series or studies
 * Advanced series synchronization options
 * Display Presentation States (GSPS) and Key Object Selection
-* Create key images (Key Object Selection object)
-* Support of Modality LUTs, VOI LUTs Presentation LUTs (even non-linear)
-* Support of several screens, full-screen mode.
+* Create key images (Key Object Selection object) by selection
+* Support of Modality LUTs, VOI LUTs, and Presentation LUTs (even non-linear)
+* Support of several screens and full-screen mode
 * Multiplanar reconstructions and Maximum Intensity Projection
 * Display Structured Reports
 * Display cross-lines
 * Measurement and annotation tools
-* Region statistics of pixels (Min, Max, Mean, StDev, Skewness, Kurtosis)
+* Region statistics of pixels (Min, Max, Mean, StDev)
 * SUV measurement
-* Save measurements and annotations in DICOM PR or xml file
+* Save measurements and annotations in DICOM PR or XML file
 * Import CD/DVD and local DICOM files
 * Export DICOM with several options (DICOMDIR, ZIP, ISO image file with Weasis, TIFF, JPEG, PNG...)
 * Magnifier glass
 * Native and DICOM printing
+* Read DICOM image containing float or double data (Parametric Map)
+* DICOM ECG Viewer
 
-## Build weasis ##
+
+# Build Weasis #
+
+The master branch contains Weasis 3.x.x (requires Java 8+) and the old branches are 2.5.x, 2.0.x (Java 6+) and 1.2.x (Java 6+).
 
 Prerequisites: JDK 8 and Maven 3
 
-See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source)
-
-The snapshot version may require to build first other snapshot dependencies:   
-1. [weasis-dicom-tools](https://github.com/nroduit/weasis-dicom-tools) run "mvn clean install"
-1. In weasis root directory, run "mvn clean install"
+See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source).

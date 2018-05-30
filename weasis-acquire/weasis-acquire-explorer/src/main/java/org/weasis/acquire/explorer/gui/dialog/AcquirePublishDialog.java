@@ -24,7 +24,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -64,6 +63,7 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.opencv.data.PlanarImage;
 
 @SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
@@ -309,6 +309,7 @@ public class AcquirePublishDialog extends JDialog {
                             exportDirDicom = dicomizeTask.get();
                         } catch (InterruptedException doNothing) {
                             LOGGER.warn("Dicomizing task Interruption"); //$NON-NLS-1$
+                            Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
                             LOGGER.error("Dicomizing task", e); //$NON-NLS-1$
                         }
@@ -357,11 +358,7 @@ public class AcquirePublishDialog extends JDialog {
     private Predicate<AcquireImageInfo> oversizedImages() {
         return acqImg -> {
             PlanarImage img = acqImg.getImage().getImage(acqImg.getPostProcessOpManager());
-
-            int width = img.getWidth();
-            int height = img.getHeight();
-
-            return width > Resolution.ULTRA_HD.maxSize || height > Resolution.ULTRA_HD.maxSize;
+            return img.width() > Resolution.ULTRA_HD.maxSize || img.height() > Resolution.ULTRA_HD.maxSize;
         };
     }
 

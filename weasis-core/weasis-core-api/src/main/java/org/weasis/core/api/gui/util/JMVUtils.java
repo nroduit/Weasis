@@ -27,7 +27,6 @@ import java.net.URL;
 import java.text.ParseException;
 import java.util.Objects;
 
-import javax.media.jai.PlanarImage;
 import javax.swing.AbstractAction;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -94,35 +93,6 @@ public class JMVUtils {
             return ((Boolean) val).booleanValue();
         }
         return true;
-    }
-
-    public static int getNumberOfInvolvedTiles(PlanarImage img, Rectangle bound) {
-        int maxTileIndexX = img.getMinTileX() + img.getNumXTiles();
-        int maxTileIndexY = img.getMinTileY() + img.getNumYTiles();
-        int nbTiles = 0;
-        // Loop over tiles within the clipping region
-        for (int tj = img.getMinTileY(); tj < maxTileIndexY; tj++) {
-            for (int ti = img.getMinTileX(); ti < maxTileIndexX; ti++) {
-                if (bound == null || bound.intersects(img.getTileRect(ti, tj))) {
-                    nbTiles++;
-                }
-            }
-        }
-        return nbTiles;
-    }
-
-    public static int getNumberOfInvolvedTilesOnXaxis(PlanarImage img, Rectangle area) {
-        int maxTileIndexX = img.getMinTileX() + img.getNumXTiles();
-        int nbTiles = 0;
-        Rectangle bound = area.getBounds();
-        bound.y = img.tileYToY(img.getMinTileY());
-        // Loop over tiles within the clipping region
-        for (int ti = img.getMinTileX(), tj = img.getMinTileY(); ti < maxTileIndexX; ti++) {
-            if (bound.intersects(img.getTileRect(ti, tj))) {
-                nbTiles++;
-            }
-        }
-        return nbTiles;
     }
 
     public static void setPreferredWidth(Component component, int width, int minWidth) {

@@ -169,8 +169,13 @@ public class AuView extends JPanel implements SeriesViewerListener {
     // Create a SoundPlayer component for the specified file.
     private void showPlayer(final DicomSpecialElement media)
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+        AudioData audioData = getAudioData(media);
+        if (audioData == null) {
+            throw new IllegalStateException("Cannot build an AudioInputStream"); //$NON-NLS-1$
+        }
 
-        try (AudioInputStream audioStream = getAudioInputStream(media)) {
+        try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(), audioData.audioFormat,
+            audioData.bulkData.length() / audioData.audioFormat.getFrameSize())) {
             DataLine.Info info = new DataLine.Info(Clip.class, audioStream.getFormat());
             clip = (Clip) AudioSystem.getLine(info);
             clip.open(audioStream);
@@ -228,8 +233,8 @@ public class AuView extends JPanel implements SeriesViewerListener {
     }
 
     private void saveAudioFile(DicomSpecialElement media) {
-        AudioInputStream stream = getAudioInputStream(media);
-        if (stream != null) {
+        AudioData audioData = getAudioData(media);
+        if (audioData != null) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
@@ -245,11 +250,12 @@ public class AuView extends JPanel implements SeriesViewerListener {
                     String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); //$NON-NLS-1$ //$NON-NLS-2$
                     String filename = file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
 
-                    try {
+                    try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(),
+                        audioData.audioFormat, audioData.bulkData.length() / audioData.audioFormat.getFrameSize())) {
                         if (".wav".equals(extension)) { //$NON-NLS-1$
-                            AudioSystem.write(stream, AudioFileFormat.Type.WAVE, new File(filename));
+                            AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, new File(filename));
                         } else {
-                            AudioSystem.write(stream, AudioFileFormat.Type.AU, new File(filename));
+                            AudioSystem.write(audioStream, AudioFileFormat.Type.AU, new File(filename));
                         }
                     } catch (IOException ex) {
                         LOGGER.error("Cannot save audio file!", ex); //$NON-NLS-1$
@@ -296,7 +302,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         }
         audioPosition = position;
 
-        clip.setMicrosecondPosition(position * 1000);
+        clip.setMicrosecondPosition(position * 1000L);
 
         progress.setValue(position); // in case skip( ) is called from outside
     }
@@ -369,7 +375,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         return s;
     }
 
-    protected AudioInputStream getAudioInputStream(DicomSpecialElement media) {
+    protected AudioData getAudioData(DicomSpecialElement media) {
         if (media instanceof DicomAudioElement) {
             DicomMediaIO dicomImageLoader = media.getMediaReader();
             Attributes attributes = dicomImageLoader.getDicomObject().getNestedDataset(Tag.WaveformSequence);
@@ -378,7 +384,6 @@ public class AuView extends JPanel implements SeriesViewerListener {
                 Object data = attributes.getValue(Tag.WaveformData, holder);
                 if (data instanceof BulkData) {
                     BulkData bulkData = (BulkData) data;
-
                     try {
                         int numChannels = attributes.getInt(Tag.NumberOfWaveformChannels, 0);
                         double sampleRate = attributes.getDouble(Tag.SamplingFrequency, 0.0);
@@ -407,9 +412,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
                                 attributes.bigEndian());
                         }
-
-                        return new AudioInputStream(bulkData.openStream(), audioFormat,
-                            bulkData.length() / audioFormat.getFrameSize());
+                        return new AudioData(bulkData, audioFormat);
                     } catch (Exception e) {
                         LOGGER.error("Get audio stream", e); //$NON-NLS-1$
                     }
@@ -417,6 +420,16 @@ public class AuView extends JPanel implements SeriesViewerListener {
             }
         }
         return null;
+    }
+
+    static class AudioData {
+        final BulkData bulkData;
+        final AudioFormat audioFormat;
+
+        public AudioData(BulkData bulkData, AudioFormat audioFormat) {
+            this.bulkData = bulkData;
+            this.audioFormat = audioFormat;
+        }
     }
 
     public static void playSound(AudioInputStream audioStream, AudioFormat audioFormat) {

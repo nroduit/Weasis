@@ -95,8 +95,8 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     public RectangleGraphic buildGraphic(Rectangle2D rectangle) throws InvalidShapeException {
-        Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!")); //$NON-NLS-1$
-        setHandlePointList(rectangle);
+        Rectangle2D r = Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!")); //$NON-NLS-1$
+        setHandlePointList(r);
         prepareShape();
         return this;
     }

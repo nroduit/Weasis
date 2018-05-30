@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -27,8 +27,10 @@
 			<artifactId>org.apache.felix.gogo.runtime</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib</artifactId>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

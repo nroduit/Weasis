@@ -464,6 +464,9 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 cy += (p1.getY() + p2.getY()) * tmp;
             }
             area /= 2.0;
+            if(area == 0.0 || MathUtil.isEqualToZero(area)) {
+                return null;
+            }
             cx /= (6.0 * area);
             cy /= (6.0 * area);
 

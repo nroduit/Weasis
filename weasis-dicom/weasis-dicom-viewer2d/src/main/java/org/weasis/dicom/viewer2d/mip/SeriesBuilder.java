@@ -10,30 +10,20 @@
  *******************************************************************************/
 package org.weasis.dicom.viewer2d.mip;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.DataBufferShort;
-import java.awt.image.DataBufferUShort;
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
-import javax.media.jai.PlanarImage;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.ActionState;
@@ -45,7 +35,6 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
 import org.weasis.core.api.image.op.MinCollectionZprojection;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
@@ -56,12 +45,15 @@ import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.Messages;
-import org.weasis.dicom.viewer2d.RawImage;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
+import org.weasis.opencv.data.FileRawImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class SeriesBuilder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
+
     public static final File MPR_CACHE_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
 
@@ -72,7 +64,7 @@ public class SeriesBuilder {
         final MediaSeries<DicomImageElement> series, List<DicomImageElement> dicoms, Type mipType, Integer extend,
         boolean fullSeries) {
 
-        PlanarImage curImage = null;
+        PlanarImage curImage;
         if (series != null) {
 
             SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORTSTACK.cmd());
@@ -152,29 +144,33 @@ public class SeriesBuilder {
                 if (curImage != null) {
 
                     DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
-                    RawImage raw = null;
+                    FileRawImage raw = null;
                     try {
                         File mipDir =
                             AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
-                        raw = new RawImage(File.createTempFile("mip_", ".raw", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
-                        writeRasterInRaw(curImage.getAsBufferedImage(), raw.getOutputStream());
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    } finally {
-                        if (raw != null) {
-                            raw.disposeOutputStream();
+                        raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
+                        if(!raw.write(curImage)) {
+                            raw = null;
                         }
+                    } catch (Exception e) {
+                        if (raw != null) {
+                            FileUtil.delete(raw.getFile());
+                        }
+                        if (taskMonitor.isAborting()) {
+                            throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
+                        }
+                        LOGGER.error("Writing MIP", e); //$NON-NLS-1$
                     }
                     if (raw == null) {
                         return;
                     }
-                    RawImageIO rawIO = new RawImageIO(raw.getFile().toURI(), null);
+                    RawImageIO rawIO = new RawImageIO(raw, null);
                     rawIO.setBaseAttributes(cpTags);
 
                     // Tags with same values for all the Series
                     rawIO.setTag(TagD.get(Tag.TransferSyntaxUID), UID.ImplicitVRLittleEndian);
-                    rawIO.setTag(TagD.get(Tag.Columns), curImage.getWidth());
-                    rawIO.setTag(TagD.get(Tag.Rows), curImage.getHeight());
+                    rawIO.setTag(TagD.get(Tag.Columns), curImage.width());
+                    rawIO.setTag(TagD.get(Tag.Rows), curImage.height());
                     rawIO.setTag(TagD.get(Tag.BitsAllocated), imgRef.getBitsAllocated());
                     rawIO.setTag(TagD.get(Tag.BitsStored), imgRef.getBitsStored());
 
@@ -225,7 +221,7 @@ public class SeriesBuilder {
 
                     dicoms.add(dicom);
 
-                    if (taskMonitor.isCanceled()) {
+                    if (taskMonitor.isAborting()) {
                         throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                     }
                     final int progress = index - minImg;
@@ -265,13 +261,6 @@ public class SeriesBuilder {
         return 1.0;
     }
 
-    public static PlanarImage arithmeticOperation(String operation, PlanarImage img1, PlanarImage img2) {
-        ParameterBlockJAI pb2 = new ParameterBlockJAI(operation);
-        pb2.addSource(img1);
-        pb2.addSource(img2);
-        return JAI.create(operation, pb2, ImageToolkit.NOCACHE_HINT);
-    }
-
     public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources,
         final TaskMonitor taskMonitor) {
         if (Type.MIN.equals(mipType)) {
@@ -286,31 +275,4 @@ public class SeriesBuilder {
         return op.computeMaxCollectionOpImage();
     }
 
-    static void writeRasterInRaw(BufferedImage image, OutputStream out) throws IOException {
-        if (out != null && image != null) {
-            DataBuffer dataBuffer = image.getRaster().getDataBuffer();
-            byte[] bytesOut = null;
-            if (dataBuffer instanceof DataBufferByte) {
-                bytesOut = ((DataBufferByte) dataBuffer).getData();
-            } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-                short[] data = dataBuffer instanceof DataBufferShort ? ((DataBufferShort) dataBuffer).getData()
-                    : ((DataBufferUShort) dataBuffer).getData();
-                bytesOut = new byte[data.length * 2];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 2] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                }
-            } else if (dataBuffer instanceof DataBufferInt) {
-                int[] data = ((DataBufferInt) dataBuffer).getData();
-                bytesOut = new byte[data.length * 4];
-                for (int i = 0; i < data.length; i++) {
-                    bytesOut[i * 4] = (byte) (data[i] & 0xFF);
-                    bytesOut[i * 4 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-                    bytesOut[i * 4 + 2] = (byte) ((data[i] >>> 16) & 0xFF);
-                    bytesOut[i * 4 + 3] = (byte) ((data[i] >>> 24) & 0xFF);
-                }
-            }
-            out.write(bytesOut);
-        }
-    }
 }

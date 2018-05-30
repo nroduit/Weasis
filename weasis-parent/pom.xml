@@ -5,7 +5,7 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>2.6.3</version>
+	<version>3.0.1</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
@@ -33,11 +33,7 @@
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P20a</dockingframes.version>
-		<jai.version>1.1.4-b07</jai.version>
-		<jai.native.version>1.1.4-b03</jai.native.version>
-		<weasis.imageio.native.version>1.2-b04</weasis.imageio.native.version>
-		<weasis.jpeg.native.version>2.0.0-6b</weasis.jpeg.native.version>
-		<weasis.openjpeg.native.version>2.2.0</weasis.openjpeg.native.version>
+        <weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 		
@@ -296,12 +292,6 @@
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib</artifactId>
-				<version>${jai.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
 				<groupId>org.weasis.thirdparty</groupId>
 				<artifactId>docking-frames</artifactId>
 				<version>${dockingframes.version}</version>
@@ -367,24 +357,6 @@
 				<groupId>org.apache.felix</groupId>
 				<artifactId>org.apache.felix.configadmin</artifactId>
 				<version>${felix.configadmin.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-linux-x86</artifactId>
-				<version>${jai.native.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-linux-x86-64</artifactId>
-				<version>${jai.native.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-				<artifactId>jai-lib-windows-x86</artifactId>
-				<version>${jai.native.version}</version>
 				<scope>provided</scope>
 			</dependency>
 			<dependency>

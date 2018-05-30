@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-imageio-parent</artifactId>
 		<groupId>org.weasis.imageio</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../weasis-imageio-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -30,15 +30,16 @@
 						<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except 
 							any containing 'impl' or 'internal' -->
 						<!-- <_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents> -->
-			
+
 						<!-- Do not add com.sun.media.jai => problem to initialize JAI class -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator,com.sun.media.imageioimpl.plugins.raw,com.sun.media.imageioimpl.plugins.clib,com.sun.media.imageioimpl.plugins.jpeg,com.sun.medialib.codec.jiio,com.sun.medialib.codec.jpeg,com.sun.media.imageioimpl.plugins.jpeg2000</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,!com.sun.media.jai.util.*,!com.sun.media.jai.operator.*,!com.sun.media.jai.imageioimpl.*,com.sun.**,jj2000.**</Export-Package>
+						<Embed-Dependency>*;scope=compile;inline=com.sun.media.imageio.**|com.sun.media.imageioimpl.**|com.sun.medialib.**|jj2000.**</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>
-						<Specification-Version>1.2.8</Specification-Version>
+						<Specification-Version>1.3.0</Specification-Version>
 						<Specification-Vendor>Sun Microsystems, Inc.</Specification-Vendor>
 						<Implementation-Title>weasis.thirdparty.com.sun.media.imageio</Implementation-Title>
-						<Implementation-Version>1.2.8</Implementation-Version>
+						<Implementation-Version>1.3.0</Implementation-Version>
 						<Implementation-Vendor>Sun Microsystems, Inc.</Implementation-Vendor>
 						<Extension-Name>weasis.thirdparty.com.sun.media.imageio</Extension-Name>
 						<Sealed>true</Sealed>
@@ -50,15 +51,15 @@
 	
 	<dependencies>
 		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>clibwrapper_jiio</artifactId>
-			<version>${weasis.imageio.native.version}</version>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
 		</dependency>
-
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>jai_imageio</artifactId>
-			<version>1.2.8</version>
+			<version>1.3.0</version>
 		</dependency>
 	</dependencies>
 </project>

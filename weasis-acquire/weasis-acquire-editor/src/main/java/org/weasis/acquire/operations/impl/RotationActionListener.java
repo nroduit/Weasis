@@ -18,7 +18,7 @@ import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.utils.GraphicHelper;
-import org.weasis.core.api.image.RotationOp;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
@@ -47,7 +47,7 @@ public class RotationActionListener extends AcquireObject implements ActionListe
     @Override
     public void applyNextValues() {
 
-        ViewCanvas<ImageElement> view = AcquireObject.getView();
+        ViewCanvas<ImageElement> view = getView();
         if (view != null) {
             AcquireImageInfo imageInfo = getImageInfo();
             int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
@@ -57,11 +57,10 @@ public class RotationActionListener extends AcquireObject implements ActionListe
                 graphicManager.getModels().removeIf(g -> g.getLayer().getType() == cropGraphic.getLayerType());
             }
             if (rotation % 90 != 0) {
-                GraphicHelper.newGridLayer(getView());
+                GraphicHelper.newGridLayer(view);
             }
 
-            getView().getDisplayOpManager().setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE,
-                rotation % 90 == 0 ? rotation : rotation - 360);
+            view.setActionsInView(ActionW.ROTATION.cmd(),  rotation);
         }
     }
 }

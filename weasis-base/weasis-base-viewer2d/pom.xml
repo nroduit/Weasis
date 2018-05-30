@@ -4,18 +4,18 @@
 	<parent>
 		<artifactId>weasis-base-parent</artifactId>
 		<groupId>org.weasis.base</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../weasis-base-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-base-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>Image Viewer [${project.artifactId}]</name>
-	
+
 	<properties>
 		<bundle.namespace>org.weasis.base.viewer2d</bundle.namespace>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -33,4 +33,13 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 </project>

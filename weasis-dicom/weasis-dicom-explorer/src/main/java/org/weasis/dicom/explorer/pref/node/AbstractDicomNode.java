@@ -238,8 +238,8 @@ public abstract class AbstractDicomNode {
         UsageType usage) {
         if (prefs.canRead()) {
             XMLStreamReader xmler = null;
-            XMLInputFactory factory = XMLInputFactory.newInstance();
             try {
+                XMLInputFactory factory = XMLInputFactory.newInstance();
                 xmler = factory.createXMLStreamReader(new FileInputStream(prefs));
                 int eventType;
                 while (xmler.hasNext()) {

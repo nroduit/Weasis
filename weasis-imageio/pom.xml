@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,8 +14,5 @@
 	<modules>
 		<module>weasis-imageio-parent</module>
 		<module>weasis-imageio-codec</module>
-		<module>weasis-imageio-codec-windows-x86</module>
-		<module>weasis-imageio-codec-linux-x86</module>
-		<module>weasis-imageio-codec-linux-x86-64</module>
 	</modules>
 </project>

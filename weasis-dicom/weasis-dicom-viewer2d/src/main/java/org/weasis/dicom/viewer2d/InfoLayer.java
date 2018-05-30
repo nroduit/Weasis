@@ -28,9 +28,7 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -135,13 +133,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
                 y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
+                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
                     y, Color.RED);
             }
 
@@ -151,7 +149,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         AbstractGraphicLabel.paintColorFontOutline(g2, str,
-                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
+                            midx - g2.getFontMetrics().stringWidth(str) / 2F, y, Color.RED);
                     }
                 }
             }
@@ -207,7 +205,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 float y = midy;
                 String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
                 AbstractGraphicLabel.paintColorFontOutline(g2, message,
-                    midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
+                    midx - g2.getFontMetrics().stringWidth(message) / 2F, y, Color.RED);
             }
         }
 
@@ -267,7 +265,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
         if (getDisplayPreferences(ROTATION) && hideMin) {
             AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
                 + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;
@@ -371,7 +369,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         AbstractGraphicLabel.paintFontOutline(g2, str,
-                                            bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                            bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
                                         drawY -= fontHeight;
                                     }
                                     break;
@@ -413,7 +411,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
                 Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
 
-                Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+                Integer rotationAngle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
                 if (rotationAngle != null && rotationAngle != 0) {
                     double rad = Math.toRadians(rotationAngle);
                     double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
@@ -429,7 +427,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     }
                 }
 
-                if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                if (LangUtil.getNULLtoFalse((Boolean) view2DPane.getActionValue((ActionW.FLIP.cmd())))) {
                     vr.x = -vr.x;
                     vr.y = -vr.y;
                     vr.z = -vr.z;
@@ -440,10 +438,10 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
             } else {
                 String[] po = TagD.getTagValue(image, Tag.PatientOrientation, String[].class);
-                Integer rotationAngle = (Integer) disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE);
+                Integer rotationAngle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
                 if (po != null && po.length == 2 && (rotationAngle == null || rotationAngle == 0)) {
                     // Do not display if there is a transformation
-                    if (LangUtil.getNULLtoFalse((Boolean) disOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP))) {
+                    if (LangUtil.getNULLtoFalse((Boolean) view2DPane.getActionValue((ActionW.FLIP.cmd())))) {
                         colLeft = po[0];
                     } else {
                         StringBuilder buf = new StringBuilder();

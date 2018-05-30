@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-base-parent</artifactId>
 		<groupId>org.weasis.base</groupId>
-		<version>2.6.3</version>
+		<version>3.0.1</version>
 		<relativePath>../weasis-base-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -24,4 +24,12 @@
 			</plugin>
 		</plugins>
 	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 </project>
