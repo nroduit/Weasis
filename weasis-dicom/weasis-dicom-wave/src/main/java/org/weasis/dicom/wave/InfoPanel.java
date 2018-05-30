@@ -44,12 +44,12 @@ class InfoPanel extends JPanel {
     private JLabel miliVolt = new JLabel();
     private JLabel seconds = new JLabel();
 
-    public InfoPanel() {
+    public InfoPanel(double zoomRatio) {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
 
         SliderChangeListener sliderListener =
-            new SliderChangeListener(ActionW.ZOOM, 1.0, DefaultViewModel.SCALE_MAX, 1.0, true, 0.1, 100) {
+            new SliderChangeListener(ActionW.ZOOM, 1.0, DefaultViewModel.SCALE_MAX, zoomRatio, true, 0.1, 100) {
 
                 @Override
                 public void stateChanged(BoundedRangeModel model) {
