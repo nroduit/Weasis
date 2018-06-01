@@ -23,7 +23,7 @@
 		<module>weasis-base</module>
 		<module>weasis-acquire</module>
 		<module>weasis-dicom</module>
-		<!-- <module>animati-texture</module> -->
+		<module>animati-texture</module>
 		<module>weasis-launcher</module>
 	</modules>
 </project>

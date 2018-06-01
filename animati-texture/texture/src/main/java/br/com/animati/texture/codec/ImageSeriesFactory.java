@@ -1,8 +1,6 @@
 /*
- * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
-
 package br.com.animati.texture.codec;
 
 import java.awt.image.BufferedImage;
@@ -21,9 +19,6 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import javax.media.jai.LookupTableJAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.LookupDescriptor;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.vecmath.Vector3d;
@@ -41,6 +36,10 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.data.ImageCV;
+import org.weasis.opencv.data.LookupTableCV;
+import org.weasis.opencv.op.ImageConversion;
 
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.ImageSeriesSliceAddedListener;
@@ -375,8 +374,8 @@ public class ImageSeriesFactory {
                     ImageElement imgElement = (ImageElement) next;
                     final PlanarImage image = imgElement.getImage();
                     if (imgElement.isReadable() && image != null) {
-                        dims[0] = image.getWidth();
-                        dims[1] = image.getHeight();
+                        dims[0] = image.width();
+                        dims[1] = image.height();
                         foundDims = true;
                     }
                 } else {
@@ -574,41 +573,31 @@ public class ImageSeriesFactory {
 
         final PlanarImage image = dicomElement.getImage();
 
-        // Just to log pixel size: can drop after it gets stable.
-        ColorModel colorModel = image.getColorModel();
-        int pixelSize = -1;
-        if (colorModel != null) {
-            // // just for debug
-            pixelSize = colorModel.getPixelSize();
-        }
-
         // Modality LUT
-        final LookupTableJAI modalityLookup = dicomElement.getModalityLookup(null, true);
+        final LookupTableCV modalityLookup = dicomElement.getModalityLookup(null, true);
 
         boolean hasModalityLUT = false;
         PlanarImage imageMLUT;
         if (modalityLookup == null) {
-            imageMLUT = image;
+            imageMLUT = image.toImageCV();
         } else {
-            imageMLUT = LookupDescriptor.create(image, modalityLookup, null);
+            imageMLUT = modalityLookup.lookup(image.toMat());
             hasModalityLUT = true;
         }
 
-        // TODO colorModel bug?
-        // BUG fix: for some images the color model is null.
-        // Creating 8 bits gray model layout fixes this issue.
-        // image = LookupDescriptor.create(image, voiLookup, LayoutUtil.createGrayRenderedImage());
         String dataBufferType = "";
-        if (imageMLUT.getColorModel() == null) {
-            dataBufferType = putBytesInImageSeries(place, image.getAsBufferedImage(), seriesToLoad);
-        } else {
-            dataBufferType = putBytesInImageSeries(place, imageMLUT.getAsBufferedImage(), seriesToLoad);
-        }
+        BufferedImage toBufferedImage = ImageConversion.toBufferedImage(ImageCV.toMat(imageMLUT));
 
-        // Log info:
-        String colorTransformInfo = "Modality LUT: " + hasModalityLUT + " / ColorModel: " + true + "PixelSize = "
-            + pixelSize + " / DataBufferType: " + dataBufferType;
+        // ColorModel (for debug)
+        ColorModel colorModel = toBufferedImage.getColorModel();
+
+        dataBufferType = putBytesInImageSeries(place, toBufferedImage, seriesToLoad);
+
+        //Log info:
+        String colorTransformInfo = "Modality LUT: " + hasModalityLUT  + " / ColorModel: " + colorModel
+                + " / DataBufferType: " + dataBufferType;
         return colorTransformInfo;
+
     }
 
     private static void updateOrientationTag(TextureDicomSeries seriesToLoad, DicomImageElement elmt) {
