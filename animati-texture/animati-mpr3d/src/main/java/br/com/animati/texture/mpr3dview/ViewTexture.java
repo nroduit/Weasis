@@ -136,6 +136,7 @@ import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  *
@@ -308,8 +309,8 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         }
         if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER && highlightedPosition.isHighlightedPosition()) {
             // Display the position on the center of the pixel (constant position even with a high zoom factor)
-            drawPointer(g, modelToViewX(highlightedPosition.getX() + 0.5),
-                modelToViewY(highlightedPosition.getY() + 0.5));
+            Point2D modelToView = modelToView(highlightedPosition.getX() + 0.5, highlightedPosition.getY() + 0.5);
+            drawPointer(g, modelToView.getX(), modelToView.getY());
         }
     }
 
@@ -1727,13 +1728,12 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public void setSeries(MediaSeries<DicomImageElement> newSeries, DicomImageElement selectedMedia) {
-        // TODO Auto-generated method stub
+        // Do nothing.
 
     }
 
     @Override
     public ImageLayer<DicomImageElement> getImageLayer() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -1749,13 +1749,11 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
 
     @Override
     public DicomImageElement getImage() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public RenderedImage getSourceImage() {
-        // TODO Auto-generated method stub
+    public PlanarImage getSourceImage() {
         return null;
     }
 

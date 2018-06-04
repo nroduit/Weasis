@@ -59,9 +59,11 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-			<artifactId>jai-lib</artifactId>
-		</dependency>
+                    <groupId>org.weasis.opencv</groupId>
+                    <artifactId>weasis-opencv-core</artifactId>
+                    <version>${project.version}</version>
+                    <scope>provided</scope>
+                </dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>vecmath</artifactId>

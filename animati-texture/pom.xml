@@ -15,7 +15,7 @@
 	<modules>
 		<module>jogamp-all</module>
 		<module>texture</module>
-		<!-- <module>animati-mpr3d</module> -->
+		<module>animati-mpr3d</module>
 	</modules>
 
 

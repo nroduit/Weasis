@@ -57,6 +57,8 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     /** Class logger. */
     private static final Logger LOGGER = LoggerFactory.getLogger(CanvasTexure.class);
 
+    private static final double ROUNDING_FACTOR = 0.5;
+
     protected GraphicModel graphicManager;
     protected ViewModel viewModel;
     protected final LayerModelHandler layerModelHandler;
@@ -212,14 +214,14 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
 
     @Override
-    public double viewToModelX(Double viewX) {
-        return viewModel.getModelOffsetX() + viewToModelLength(viewX);
+    public Point2D viewToModel(final Double viewX, final Double viewY) {
+        // Used for mouse-centered zoom
+        Point2D p = getViewCoordinatesOffset();
+        p.setLocation(viewX - p.getX(), viewY - p.getY());
+        getInverseTransform().transform(p, p);
+        return p;
     }
 
-    @Override
-    public double viewToModelY(Double viewY) {
-        return viewModel.getModelOffsetY() + viewToModelLength(viewY);
-    }
 
     @Override
     public double viewToModelLength(Double viewLength) {
@@ -227,14 +229,16 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
 
     @Override
-    public double modelToViewX(Double modelX) {
-        return modelToViewLength(modelX - viewModel.getModelOffsetX());
+    public Point2D modelToView(final Double modelX, final Double modelY) {
+        // Probably not used!
+        Point2D p2 = new Point2D.Double(modelX, modelY);
+        getAffineTransform().transform(p2, p2);
+
+        Point2D p = getViewCoordinatesOffset();
+        p2.setLocation(p2.getX() + p.getX(), p2.getY() + p.getY());
+        return p2;
     }
 
-    @Override
-    public double modelToViewY(Double modelY) {
-        return modelToViewLength(modelY - viewModel.getModelOffsetY());
-    }
 
     @Override
     public double modelToViewLength(Double modelLength) {
@@ -242,28 +246,31 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
     }
     @Override
     public Point2D getImageCoordinatesFromMouse(Integer x, Integer y) {
-        double viewScale = getViewModel().getViewScale();
-        Point2D p2 = new Point2D.Double(x + getViewModel().getModelOffsetX() * viewScale,
-            y + getViewModel().getModelOffsetY() * viewScale);
-        inverseTransform.transform(p2, p2);
-        return p2;
+        Point2D p = getClipViewCoordinatesOffset();
+        p.setLocation(x - p.getX(), y - p.getY());
+
+        getInverseTransform().transform(p, p);
+        return p;
     }
 
     public Point3d getOriginalSystemCoordinatesFromMouse(int x, int y) {
         Point2i position = new Point2i(x, y);
         Vector3d coordinatesTexture = getTextureCoordinatesForPosition(position);
         Vector3d imageSize = getParentImageSeries().getImageSize();
-        return textureToOriginalSystemCoordinates(coordinatesTexture, imageSize);
+        Point3d osc = textureToOriginalSystemCoordinates(coordinatesTexture, imageSize);
+        return osc;
     }
 
     @Override
     public Point getMouseCoordinatesFromImage(Double x, Double y) {
         // not realy ImageCoordenates... see: Wikipage 'Coordinate Systems'
         Point2D p2 = new Point2D.Double(x, y);
-        affineTransform.transform(p2, p2);
-        double viewScale = getViewModel().getViewScale();
-        return new Point((int) Math.floor(p2.getX() - getViewModel().getModelOffsetX() * viewScale + 0.5),
-            (int) Math.floor(p2.getY() - getViewModel().getModelOffsetY() * viewScale + 0.5));
+        getAffineTransform().transform(p2, p2);
+
+        Point2D p = getClipViewCoordinatesOffset();
+        return new Point((int) Math.floor(p2.getX() + p.getX() + ROUNDING_FACTOR),
+                (int) Math.floor(p2.getY() + p.getY() + ROUNDING_FACTOR));
+
     }
 
     /**
@@ -287,9 +294,12 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
      * @return Position on image`s coordinates System.
      */
     public Point3d textureToOriginalSystemCoordinates(final Vector3d coordinatesTexture, final Vector3d imageSize) {
-        Point3d p3 = new Point3d((Math.round(coordinatesTexture.x * imageSize.x)),
-            (Math.round(coordinatesTexture.y * imageSize.y)), (Math.round((coordinatesTexture.z * imageSize.z) + 1)));
+        Point3d p3 = new Point3d(
+                Math.round(coordinatesTexture.x * imageSize.x),
+                Math.round(coordinatesTexture.y * imageSize.y),
+                Math.round(coordinatesTexture.z * imageSize.z + 1));
         return p3;
+
     }
 
     public boolean hasContent() {
@@ -327,6 +337,31 @@ public class CanvasTexure extends TextureImageCanvas implements Canvas {
 
         return imageRect;
     }
+
+    @Override
+    public Point2D getClipViewCoordinatesOffset() {
+        Point2D p = getViewCoordinatesOffset();
+        p.setLocation(p.getX() < 0.0 ? 0.0 : p.getX(), p.getY() < 0.0 ? 0.0 : p.getY());
+        return p;
+    }
+
+    @Override
+    public Point2D getViewCoordinatesOffset() {
+        Rectangle2D b = getImageViewBounds(getWidth(), getHeight());
+        return new Point2D.Double(b.getX(), b.getY());
+    }
+
+
+    @Override
+    public Rectangle2D getImageViewBounds() {
+        return getImageViewBounds(getWidth(), getHeight());
+    }
+
+    @Override
+    public Rectangle2D getImageViewBounds(double viewportWidth, double viewportHeight) {
+        return getUnrotatedImageRect();
+    }
+
 
     /**
      * Uses DefaultViewModel to reuse the Listener system, but all the information came from the TextureImageCanvas

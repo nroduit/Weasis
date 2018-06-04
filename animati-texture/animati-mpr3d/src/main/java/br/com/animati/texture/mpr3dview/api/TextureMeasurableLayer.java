@@ -1,6 +1,5 @@
 /*
- * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda.
- * (http://www.animati.com.br)
+ * @copyright Copyright (c) 2012 Animati Sistemas de Informática Ltda. (http://www.animati.com.br)
  */
 package br.com.animati.texture.mpr3dview.api;
 
@@ -23,12 +22,17 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.vecmath.Vector2d;
-
+import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.opencv.op.ImageConversion;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.Graphic;
 
 import br.com.animati.texture.mpr3dview.View3DFactory;
@@ -37,6 +41,7 @@ import br.com.animati.texturedicom.TextureData;
 import br.com.animati.texturedicom.rendering.RenderHelper;
 import br.com.animati.texturedicom.rendering.RenderResult;
 import br.com.animati.texturedicom.rendering.RenderResultListener;
+import org.weasis.dicom.codec.TagD;
 
 /**
  *
@@ -45,16 +50,23 @@ import br.com.animati.texturedicom.rendering.RenderResultListener;
  */
 public class TextureMeasurableLayer implements MeasurableLayer {
 
-    private ViewTexture owner;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ViewTexture.class);
+
+    private final ViewTexture owner;
 
     private RenderedImage renderedAsSource;
     private volatile boolean dirty = true;
 
-    // Just for debug
+    //Just for debug
     private BufferedImage bufferedImage;
     private volatile boolean bufferedDirty;
 
-    public TextureMeasurableLayer(ViewTexture parent) {
+    /**
+     * Creates a measurable layer for the given view.
+     *
+     * @param parent Parent view.
+     */
+    public TextureMeasurableLayer(final ViewTexture parent) {
         owner = parent;
     }
 
@@ -98,9 +110,18 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     }
 
     @Override
-    public Object getSourceTagValue(TagW tagW) {
+    public Object getSourceTagValue(final TagW tagW) {
         if (hasContent()) {
             Object tagValue = owner.getSeriesObject().getTagValue(tagW);
+            // Special case RescaleIntercept (#3743)
+            if (TagD.get(Tag.RescaleIntercept).equals(tagW)) {
+                if (TextureData.Format.UnsignedShort.equals(owner.getSeriesObject().getTextureData().getFormat())
+                        && tagValue != null) {
+                    return tagValue;
+                } else {
+                    return 0.0d;
+                }
+            }
             if (tagValue == null) {
                 tagValue = owner.getSeriesObject().getTagValue(tagW, 0);
             }
@@ -118,35 +139,43 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     }
 
     @Override
-    public RenderedImage getSourceRenderedImage() {
+    public PlanarImage getSourceRenderedImage() {
         if (dirty) {
             startRendering(true);
         }
 
         if (View3DFactory.showMeasurementsOnFrame) {
-            if (bufferedDirty) {
-                startRendering(false);
-            } else {
-                List<Graphic> list = owner.getGraphicManager().getAllGraphics();
-                if (bufferedImage != null) {
-                    showOnFrame(deepCopy(bufferedImage), getShapeTransform(), list);
+            GuiExecutor.instance().execute(new Runnable() {
+                @Override
+                public void run() {
+                    if (bufferedDirty) {
+                        startRendering(false);
+                    } else {
+                        List<Graphic> list = owner.getGraphicManager().getAllGraphics();
+                        if (bufferedImage != null) {
+                            showOnFrame(deepCopy(bufferedImage), getShapeTransform(), list);
+                        }
+                    }
                 }
-            }
+            });
         }
 
-        return renderedAsSource;
+        if (renderedAsSource == null) {
+            return null;
+        }
+        return ImageConversion.toMat(renderedAsSource);
     }
 
     /**
      * Used for DEBUG.
      *
-     * @param image
-     * @param transform
-     * @param mShape
+     * @param image Image to show.
+     * @param transform Transform to print graphics layer.
+     * @param mShape List of graphics.
      */
-    public void showOnFrame(final BufferedImage image, AffineTransform transform, List<Graphic> mShape) {
+    public void showOnFrame(final BufferedImage image, final AffineTransform transform, final List<Graphic> mShape) {
 
-        Graphics2D graphics = image.createGraphics();
+        Graphics2D graphics = (Graphics2D) image.createGraphics();
         graphics.setStroke(new BasicStroke(2));
         graphics.setPaint(Color.yellow);
         for (Graphic shape : mShape) {
@@ -158,7 +187,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
         JPanel display = new JPanel() {
             @Override
-            public void paintComponent(Graphics g) {
+            public void paintComponent(final Graphics g) {
                 ((Graphics2D) g).drawImage(image, null, null);
             }
         };
@@ -171,7 +200,13 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
     }
 
-    public static BufferedImage deepCopy(BufferedImage bi) {
+    /**
+     * Makes a copy of a Buffered image.
+     *
+     * @param bi Image to copy.
+     * @return Copy of image.
+     */
+    public static BufferedImage deepCopy(final BufferedImage bi) {
         ColorModel cm = bi.getColorModel();
         boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
         WritableRaster raster = bi.copyData(bi.getRaster().createCompatibleWritableRaster());
@@ -193,7 +228,7 @@ public class TextureMeasurableLayer implements MeasurableLayer {
 
         RenderHelper helper = new RenderHelper(owner, new RenderResultListener() {
             @Override
-            public void onRenderResultReceived(RenderResult renderResult) {
+            public void onRenderResultReceived(final RenderResult renderResult) {
                 try {
                     if (renderAsRaw) {
                         ByteBuffer asByteBuffer = renderResult.asByteBuffer();
@@ -216,13 +251,13 @@ public class TextureMeasurableLayer implements MeasurableLayer {
                     }
 
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    LOGGER.error("Error when receiving rendered result from texture. ", ex);
                 }
 
             }
         }, renderAsRaw);
 
-        helper.getParametersCanvas().setSize(bounds.width, bounds.height);
+        helper.getParametersCanvas().setBounds(bounds);
 
         helper.getParametersCanvas().setImageOffset(new Vector2d(0, 0));
         helper.getParametersCanvas().setRotationOffset(0);
@@ -252,4 +287,5 @@ public class TextureMeasurableLayer implements MeasurableLayer {
     public void setOffset(final Point p) {
         // Offset for measurement serialization: not used here.
     }
+
 }
