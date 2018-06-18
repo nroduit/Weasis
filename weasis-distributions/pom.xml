@@ -246,6 +246,12 @@
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
+									<groupId>org.glassfish</groupId>
+									<artifactId>javax.json</artifactId>
+									<version>${javax.json.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>docking-frames</artifactId>
 									<version>${dockingframes.version}</version>
@@ -275,7 +281,7 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								
+
 								<!-- ===================================== -->
 								<!-- Weasis OpenCV bundles -->
 								<!-- ===================================== -->
@@ -401,7 +407,7 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								
+
 								<!-- ===================================== -->
 								<!-- Weasis Acquisition bundles -->
 								<!-- ===================================== -->
@@ -516,9 +522,11 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${project.build.directory}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+									classpath="${project.build.directory}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>

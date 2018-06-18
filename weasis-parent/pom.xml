@@ -34,6 +34,7 @@
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P20a</dockingframes.version>
 		<weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
+		<javax.json.version>1.0.4</javax.json.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 	</properties>
@@ -360,6 +361,11 @@
 				<artifactId>org.apache.felix.configadmin</artifactId>
 				<version>${felix.configadmin.version}</version>
 				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.glassfish</groupId>
+				<artifactId>javax.json</artifactId>
+				<version>${javax.json.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.weasis.thirdparty.com.sun.media</groupId>

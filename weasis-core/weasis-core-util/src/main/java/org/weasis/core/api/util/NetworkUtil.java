@@ -14,8 +14,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,5 +82,15 @@ public class NetworkUtil {
                 }
             }
         }
+    }
+
+    public static String buildHttpParamsString(Map<String, String> params) {
+        return params.entrySet().stream().map(e -> {
+            try {
+                return URLEncoder.encode(e.getKey(), "UTF-8") + "=" + URLEncoder.encode(e.getValue(), "UTF-8");
+            } catch (UnsupportedEncodingException e1) {
+                throw new IllegalArgumentException(e1);
+            }
+        }).collect(Collectors.joining("&"));
     }
 }

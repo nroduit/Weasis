@@ -138,12 +138,16 @@ public final class FileUtil {
     }
 
     public static void getAllFilesInDirectory(File directory, List<File> files) {
+        getAllFilesInDirectory(directory, files, true);
+    }
+    
+    public static void getAllFilesInDirectory(File directory, List<File> files, boolean recursive) {
         File[] fList = directory.listFiles();
         for (File f : fList) {
             if (f.isFile()) {
                 files.add(f);
-            } else if (f.isDirectory()) {
-                getAllFilesInDirectory(f, files);
+            } else if (recursive && f.isDirectory()) {
+                getAllFilesInDirectory(f, files, recursive);
             }
         }
     }
