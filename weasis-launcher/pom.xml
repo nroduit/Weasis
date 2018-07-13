@@ -33,7 +33,6 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
 				<executions>
 					<execution>
 						<id>add-resource</id>
@@ -60,12 +59,12 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
-			<version>5.6.10</version>
+			<version>${felix.framework.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>substance</artifactId>
-			<version>8.0.2</version>
+			<version>${substance.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
