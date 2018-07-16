@@ -26,6 +26,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 
 import org.dcm4che3.data.Tag;
@@ -236,12 +237,17 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                     // setSelectedView(view2ds.get(0));
 
                 } catch (Exception ex) {
-                    LOGGER.error("Exception ao formar texture para o MPR! " + ex);
-                    ex.printStackTrace();
-                    // Ends up here if:
-                    // Bad Video card driver.
-                    // Video card memory full.
-                    throw ex; // Expected to be javax.media.opengl.GLException
+                    LOGGER.error("Error when buildin the textures ", ex);
+                    if (ex instanceof IllegalArgumentException) {
+                        JOptionPane.showMessageDialog(UIManager.getApplicationWindow(), ex.getMessage(), null,  JOptionPane.ERROR_MESSAGE);
+                    } else {
+                        // TODO should catch only driver issue
+                        // Ends up here if:
+                        // Bad Video card driver.
+                        // Video card memory full.
+                        throw ex; // Expected to be javax.media.opengl.GLException
+                    }
+
                 }
             } else {
                 showErrorMessage();
@@ -600,8 +606,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
-                TOOLBARS.add(new ViewerToolBar<>(eventManager,
-                    eventManager.getMouseActions().getActiveButtons(), BundleTools.SYSTEM_PREFERENCES, 10));
+                TOOLBARS.add(new ViewerToolBar<>(eventManager, eventManager.getMouseActions().getActiveButtons(),
+                    BundleTools.SYSTEM_PREFERENCES, 10));
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(MeasureToolBar.class), key, true)) {

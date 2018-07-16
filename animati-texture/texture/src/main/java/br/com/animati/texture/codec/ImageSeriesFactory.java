@@ -35,10 +35,11 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
+import org.weasis.dicom.codec.utils.LutParameters;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
 import br.com.animati.texturedicom.ImageSeries;
@@ -319,25 +320,25 @@ public class ImageSeriesFactory {
         // and this would make impossible to use the same window/level values
         // for the hole series.
 
-        Double interceptVal = TagD.getTagValue(elmt, Tag.RescaleIntercept, Double.class);
-        Double actualIntercept = TagD.getTagValue(imSeries, Tag.RescaleIntercept, Double.class);
-        if (interceptVal != null) {
-            if (actualIntercept == null) {
-                imSeries.setTag(TagD.get(Tag.RescaleIntercept), interceptVal);
-            } else if (!interceptVal.equals(actualIntercept)) {
-                sendError(ErrorCode.err500, imSeries);
-            }
-        }
-
-        Double slopeVal = TagD.getTagValue(elmt, Tag.RescaleSlope, Double.class);
-        Double actualSlope = TagD.getTagValue(imSeries, Tag.RescaleSlope, Double.class);
-        if (slopeVal != null) {
-            if (actualSlope == null) {
-                imSeries.setTag(TagD.get(Tag.RescaleSlope), slopeVal);
-            } else if (!slopeVal.equals(actualSlope)) {
-                sendError(ErrorCode.err500, imSeries);
-            }
-        }
+//        Double interceptVal = TagD.getTagValue(elmt, Tag.RescaleIntercept, Double.class);
+//        Double actualIntercept = TagD.getTagValue(imSeries, Tag.RescaleIntercept, Double.class);
+//        if (interceptVal != null) {
+//            if (actualIntercept == null) {
+//                imSeries.setTag(TagD.get(Tag.RescaleIntercept), interceptVal);
+//            } else if (!interceptVal.equals(actualIntercept)) {
+//                sendError(ErrorCode.err500, imSeries);
+//            }
+//        }
+//
+//        Double slopeVal = TagD.getTagValue(elmt, Tag.RescaleSlope, Double.class);
+//        Double actualSlope = TagD.getTagValue(imSeries, Tag.RescaleSlope, Double.class);
+//        if (slopeVal != null) {
+//            if (actualSlope == null) {
+//                imSeries.setTag(TagD.get(Tag.RescaleSlope), slopeVal);
+//            } else if (!slopeVal.equals(actualSlope)) {
+//                sendError(ErrorCode.err500, imSeries);
+//            }
+//        }
     }
 
     private static void sendError(ErrorCode error, TextureDicomSeries imSeries) {
@@ -345,7 +346,7 @@ public class ImageSeriesFactory {
         imSeries.interruptFactory();
 
         fireProperyChange(imSeries, TEXTURE_ERROR, ex);
-        LOGGER.warn("Code: " + ex.getErrorCode() + " - " + ex.getLogMessage());
+        LOGGER.error("Error code: {} - {}", ex.getErrorCode() , ex.getLogMessage());
     }
 
     /**
@@ -412,26 +413,31 @@ public class ImageSeriesFactory {
 
         Object media = origin.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
 
-        if (media instanceof ImageElement) {
-            ImageElement imgElement = (ImageElement) media;
-            Integer tagValue = TagD.getTagValue(imgElement, Tag.PixelRepresentation, Integer.class);
-            if (tagValue != null && tagValue == 1) {
-                return TextureData.Format.SignedShort;
+        if (media instanceof DicomImageElement) {
+            DicomImageElement imgElement = (DicomImageElement) media;
+            final LookupTableCV mLUTSeq = (LookupTableCV) imgElement.getTagValue(TagW.ModalityLUTData);
+            LutParameters lutparams = imgElement.getLutParameters(null, true, mLUTSeq, false);
+
+            int bitsOutput = lutparams == null ? imgElement.getBitsStored():lutparams.getBitsOutput() ;
+            boolean isSigned = lutparams == null ? imgElement.isPixelRepresentationSigned():lutparams.isOutputSigned();
+
+            if (bitsOutput > 8 && bitsOutput <= 16) {
+                return isSigned ? TextureData.Format.SignedShort : TextureData.Format.UnsignedShort;
             }
-            tagValue = TagD.getTagValue(imgElement, Tag.SamplesPerPixel, Integer.class);
-            if (tagValue != null && tagValue > 1) {
-                // Color images has "Samples Per Pixel" equal to 3
-                if (tagValue == 3) {
-                    return TextureData.Format.RGB8;
+
+            if (lutparams.getBitsOutput() <= 8) {
+                Integer tagValue = TagD.getTagValue(imgElement, Tag.SamplesPerPixel, Integer.class);
+                if (tagValue != null && tagValue > 1) {
+                    // Color images has "Samples Per Pixel" equal to 3
+                    if (tagValue == 3) {
+                        return TextureData.Format.RGB8;
+                    }
+                    return null;
                 }
-                return null;
-            }
-            tagValue = TagD.getTagValue(imgElement, Tag.BitsAllocated, Integer.class);
-            if (tagValue != null && tagValue == 8) {
                 return TextureData.Format.Byte;
             }
         }
-        return TextureData.Format.UnsignedShort;
+        return null;
     }
 
     /**
@@ -742,7 +748,7 @@ public class ImageSeriesFactory {
         String info = putElementInImageSeries(element, seriesToLoad, place);
 
         updateOrientationTag(seriesToLoad, element);
-        LOGGER.debug("Series.size: " + seriesToLoad.getSeries().size(null) + " / Loaded: " + place + ": " + info);
+        LOGGER.debug("Series.size: {} / Loaded: {}: {}", seriesToLoad.getSeries().size(null), place, info);
     }
 
     private static class LoadOneImageThread extends SwingWorker<Void, Void> {
@@ -776,10 +782,10 @@ public class ImageSeriesFactory {
             try {
                 get();
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
+                LOGGER.error("Interruption when loading series", ex);
+                Thread.currentThread().interrupt();
             } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause();
-                LOGGER.debug("done with error: " + ex + " cause: " + cause);
+                LOGGER.error("Error when loading series", ex);
             }
         }
     }
@@ -821,11 +827,12 @@ public class ImageSeriesFactory {
             // mas nao dá para usar Object media = series.getMedia(place, null, comparator);
             // enquanto wado nao acabou!
 
-            for (int place = 0; place < series.size(null); place++) {
+            int seriesSize = series.size(null);
+            for (int place = 0; place < seriesSize; place++) {
                 if (pleaseCancel) {
                     return null;
                 }
-                if (series.size(null) > seriesToLoad.getSliceCount()) {
+                if (seriesSize > seriesToLoad.getSliceCount()) {
                     throw new IllegalAccessException("Has changed! ");
                 }
                 Object media = series.getMedia(place, null, comparator);
@@ -854,7 +861,7 @@ public class ImageSeriesFactory {
                             if (place == 1) { // is second
                                 Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
                                 seriesToLoad.setDimensionMultiplier(vector);
-                            } else if (place == series.size(null) - 1) { // is last
+                            } else if (place == seriesSize - 1) { // is last
                                 zSpacing = seriesToLoad.getMostCommonSpacing();
                                 Vector3d vector = getNormalizedVector(pixSpacing[0], pixSpacing[1], Math.abs(zSpacing));
                                 seriesToLoad.setDimensionMultiplier(vector);
@@ -937,20 +944,15 @@ public class ImageSeriesFactory {
             try {
                 get();
             } catch (InterruptedException ex) {
-                ex.printStackTrace();
                 seriesToLoad.setFactoryDone(true);
                 seriesToLoad.setFactorySW(null);
                 seriesToLoad.textureLogInfo.writeText("done by: " + ex);
+                Thread.currentThread().interrupt();
             } catch (ExecutionException ex) {
-                Throwable cause = ex.getCause();
                 seriesToLoad.setFactoryDone(true);
                 seriesToLoad.setFactorySW(null);
-                seriesToLoad.textureLogInfo.writeText("done with error: " + ex + " cause: " + cause);
-                if (cause != null) {
-                    cause.printStackTrace();
-                } else {
-                    ex.printStackTrace();
-                }
+                seriesToLoad.textureLogInfo.writeText("done with error: " + ex.getMessage());
+                LOGGER.error("Error when loading series", ex);
             }
         }
     }

@@ -36,7 +36,6 @@ import java.awt.geom.Line2D;
 import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -121,6 +120,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
+import org.weasis.opencv.data.PlanarImage;
 
 import br.com.animati.texture.codec.ImageSeriesFactory;
 import br.com.animati.texture.codec.StaticHelpers;
@@ -136,7 +136,6 @@ import br.com.animati.texturedicom.ControlAxes;
 import br.com.animati.texturedicom.ImageSeries;
 import br.com.animati.texturedicom.TextureImageCanvas;
 import br.com.animati.texturedicom.cl.CLConvolution;
-import org.weasis.opencv.data.PlanarImage;
 
 /**
  *
@@ -793,8 +792,7 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
                 seriesObject.dispose();
                 seriesObject.discardTexture();
             } catch (Exception ex) {
-                LOGGER.info("Failed creating texture: " + ex.getMessage());
-                ex.printStackTrace();
+                LOGGER.error("Failed creating texture: ", ex);
             }
         }
     }
