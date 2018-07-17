@@ -81,9 +81,8 @@ public class TextureToolbar extends WtoolBar {
             @Override
             public void actionPerformed(ActionEvent e) {
                 ImageViewerPlugin container = GUIManager.getInstance().getSelectedView2dContainer();
-                ViewCanvas view = container.getSelectedImagePane();
-                if (view instanceof ViewTexture) {
-                    ((ViewTexture) view).refreshTexture();
+                if (container instanceof View3DContainer) {
+                    ((View3DContainer) container).refreshTexture();
                 }
             }
         });

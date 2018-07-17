@@ -239,7 +239,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
                 } catch (Exception ex) {
                     LOGGER.error("Error when buildin the textures ", ex);
                     if (ex instanceof IllegalArgumentException) {
-                        JOptionPane.showMessageDialog(UIManager.getApplicationWindow(), ex.getMessage(), null,  JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(UIManager.getApplicationWindow(), ex.getMessage(), null,
+                                JOptionPane.ERROR_MESSAGE);
                     } else {
                         // TODO should catch only driver issue
                         // Ends up here if:
@@ -259,6 +260,56 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement> implem
         }
 
         setPluginName(TagD.getTagValue(series, Tag.PatientName, String.class));
+        setSelected(true);
+    }
+
+    public void refreshTexture() {
+        TextureDicomSeries series = null;
+        if (view2ds.size() > 0 && view2ds.get(0) instanceof ViewTexture) {
+            series = ((ViewTexture) view2ds.get(0)).getSeriesObject();
+        }
+        if (series == null) {
+            return;
+        }
+        try {
+            ImageSeriesFactory factory = new ImageSeriesFactory();
+            Comparator seriesSorter = series.getSeriesSorter();
+            try {
+                TextureDicomSeries imSeries = factory.createImageSeries(series.getSeries(), seriesSorter, true);
+                controlAxes = new ControlAxes(imSeries);
+                double[] op = imSeries.getOriginalSeriesOrientationPatient();
+                setControlAxesBaseOrientation(imSeries.getSeries(), op);
+
+                for (ViewCanvas<DicomImageElement> view : view2ds) {
+                    if (view instanceof ViewTexture) {
+                        ViewTexture vt = (ViewTexture) view;
+                        vt.setSeries(imSeries);
+                        vt.applyProfile(vt.getViewType(), controlAxes);
+                        // BugFix:
+                        vt.forceResize();
+                    } else {
+                        LOGGER.error("No ViewTextures...");
+                    }
+                }
+            } catch (Exception ex) {
+                LOGGER.error("Error when buildin the textures ", ex);
+                if (ex instanceof IllegalArgumentException) {
+                    JOptionPane.showMessageDialog(UIManager.getApplicationWindow(), ex.getMessage(), null,
+                            JOptionPane.ERROR_MESSAGE);
+                } else {
+                    // TODO should catch only driver issue
+                    // Ends up here if:
+                    // Bad Video card driver.
+                    // Video card memory full.
+                    throw ex; // Expected to be javax.media.opengl.GLException
+                }
+            }
+        } catch (Exception ex) {
+            close();
+            showErrorMessage();
+            return;
+        }
+
         setSelected(true);
     }
 
