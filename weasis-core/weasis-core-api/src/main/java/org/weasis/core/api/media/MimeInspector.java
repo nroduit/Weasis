@@ -147,7 +147,7 @@ public class MimeInspector {
 
         // Get the file extension
         String fileName = file.getName();
-        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
+        int lastPos = fileName.lastIndexOf('.'); //$NON-NLS-1$
         String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
 
         // Get Mime Type form the extension if the length > 0 and < 5
@@ -243,7 +243,7 @@ public class MimeInspector {
         if (mimeType == null) {
             return ""; //$NON-NLS-1$
         }
-        int offset = mimeType.indexOf("/"); //$NON-NLS-1$
+        int offset = mimeType.indexOf('/'); //$NON-NLS-1$
         if (offset == -1) {
             return mimeType;
         } else {
@@ -256,7 +256,7 @@ public class MimeInspector {
         if (mimeType == null) {
             return ""; //$NON-NLS-1$
         }
-        int offset = mimeType.indexOf("/"); //$NON-NLS-1$
+        int offset = mimeType.indexOf('/'); //$NON-NLS-1$
         if (offset == -1) {
             return mimeType;
         } else {
@@ -267,7 +267,7 @@ public class MimeInspector {
     // Utility method that gets the extension of a file from its name if it has one
     public static String getFileExtension(String fileName) {
         int lastPos;
-        if (fileName == null || (lastPos = fileName.lastIndexOf(".")) < 0) { //$NON-NLS-1$
+        if (fileName == null || (lastPos = fileName.lastIndexOf('.')) < 0) { //$NON-NLS-1$
             return null;
         }
         String extension = fileName.substring(lastPos + 1);
