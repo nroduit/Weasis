@@ -396,32 +396,6 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
     }
 
     /**
-     * Correct the level value by rescale factors and the transformation made to the values to fit the video-card range.
-     *
-     * Still not tested for SignedShort with RescaleSlope not 1.
-     *
-     * @param level
-     *            Level value as shown to the user.
-     * @return the corrected level to be applied to this series.
-     */
-    public int getCorrectedValueForLevel(int level) {
-        Double slopeVal = TagD.getTagValue(this, Tag.RescaleSlope, Double.class);
-        final double slope = slopeVal == null ? 1.0f : slopeVal.doubleValue();
-
-        Double interceptVal = TagD.getTagValue(this, Tag.RescaleIntercept, Double.class);
-        if (interceptVal == null) {
-            interceptVal = 0.0;
-        }
-        double intercept = 0.0;
-        if (TextureData.Format.UnsignedShort.equals(getTextureData().getFormat())) {
-            intercept = (windowingMinInValue - (interceptVal / slope));
-        }
-
-        double lev = (level / slope) + intercept;
-        return (int) Math.round(lev);
-    }
-
-    /**
      * Correct the level value by rescale-slope to fit the video-card range.
      *
      * Still not tested for SignedShort with RescaleSlope not 1.

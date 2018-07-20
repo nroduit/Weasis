@@ -61,11 +61,13 @@ import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.PRManager;
 import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 
@@ -119,9 +121,10 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
         setAction(newLutAction());
         setAction(newFilterAction());
         setAction(newSortStackAction());
-        setAction(newLayoutAction(
-            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
+        setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST
+            .toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(
+            View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
@@ -229,7 +232,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                updatePreset(getActionW().cmd(), model.getValue());
+                updatePreset(getActionW().cmd(), toModelValue(model.getValue()));
             }
         };
     }
@@ -240,7 +243,7 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
             @Override
             public void stateChanged(BoundedRangeModel model) {
-                updatePreset(getActionW().cmd(), model.getValue());
+                updatePreset(getActionW().cmd(), toModelValue(model.getValue()));
             }
         };
     }
@@ -580,22 +583,39 @@ public class GUIManager extends ImageViewerEventManager<DicomImageElement> {
 
         TextureDicomSeries series = view2d.getSeriesObject();
         if (series != null) {
-            int fullDynamicWidth = series.windowingMaxInValue - series.windowingMinInValue;
+            PresetWindowLevel preset = (PresetWindowLevel) view2d.getActionValue(ActionW.PRESET.cmd());
+            boolean pixelPadding = true;
+            PresentationStateReader prReader =
+                (PresentationStateReader) view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
 
-            getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealMinMaxValue(1, fullDynamicWidth, view2d.windowingWindow, false));
-            getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealMinMaxValue(series.windowingMinInValue, series.windowingMaxInValue,
-                    view2d.windowingLevel, false));
+            Double windowValue = (double) view2d.windowingWindow;
+            Double levelValue = (double) view2d.windowingLevel;
+
+            Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW, SliderChangeListener.class);
+            Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL, SliderChangeListener.class);
+            if (windowAction.isPresent() && levelAction.isPresent()) {
+                double minLevel = levelValue - windowValue / 2.0;
+                double maxLevel = levelValue + windowValue / 2.0;
+                double window = series.windowingMaxInValue - series.windowingMinInValue;
+
+                windowAction.get().setRealMinMaxValue(1.0, window, windowValue, false);
+                levelAction.get().setRealMinMaxValue(minLevel, maxLevel, levelValue, false);
+            }
+
+            List<PresetWindowLevel> presetList = series.getPresetList(pixelPadding, false);
+            if (prReader != null) {
+                List<PresetWindowLevel> prPresets =
+                    (List<PresetWindowLevel>) view2d.getActionValue(PRManager.PR_PRESETS);
+                if (prPresets != null && !prPresets.isEmpty()) {
+                    presetList = prPresets;
+                }
+            }
 
             Optional<ComboItemListener> presetAction = getAction(ActionW.PRESET, ComboItemListener.class);
-            List<PresetWindowLevel> presetList = series.getPresetList(true, false);
-            if (presetList != null) {
-                presetAction.ifPresent(
-                    a -> a.setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray()));
+            if (presetAction.isPresent()) {
+                presetAction.get().setDataListWithoutTriggerAction(presetList == null ? null : presetList.toArray());
+                presetAction.get().setSelectedItemWithoutTriggerAction(preset);
             }
-            presetAction
-                .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(view2d.getActionValue(ActionW.PRESET.cmd())));
         }
     }
 
