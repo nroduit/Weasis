@@ -49,25 +49,25 @@ public class HaPrefsPage extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        // TODO: resetoDefault
+        // Do nothing
     }
 
     @Override
     public void closeAdditionalWindow() {
-        // Empty
+        // Do nothing
     }
 
     private void saveHa(boolean selected) {
-        View3DFactory.localConfiguration.put(View3DFactory.HA_PROP_NAME, selected);
+        View3DFactory.localConfiguration.putBooleanProperty(View3DFactory.HA_PROP_NAME, selected);
         if (selected) {
             // Set that flag to false, so we will try again to create context,
             // as the user is asking to activate HA.
-            View3DFactory.localConfiguration.put(View3DFactory.CRASH_FLAG, false);
+            View3DFactory.localConfiguration.putBooleanProperty(View3DFactory.CRASH_FLAG, false);
         }
     }
 
     private void saveCL(boolean selected) {
-        View3DFactory.localConfiguration.put(View3DFactory.CL_PROP_NAME, selected);
+        View3DFactory.localConfiguration.putBooleanProperty(View3DFactory.CL_PROP_NAME, selected);
     }
 
     private JPanel buildHAPanel() {

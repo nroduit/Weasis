@@ -11,7 +11,6 @@ import java.io.StringWriter;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import javax.swing.Action;
 import javax.swing.Icon;
@@ -28,11 +27,12 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -60,12 +60,13 @@ public class View3DFactory implements SeriesViewerFactory {
 
     public static final String NAME = "MPR 3D";
     public static final ImageIcon ICON = new ImageIcon(View3DContainer.class.getResource("/icon/16x16/mpr3d.png"));
-    
+
     public static String SORT_OPT = "animatitexture.sortOpt";
     public static String CONFIG_HARDWARE = "Video card: Not detected!";
     public static String LOG_MESSAGE;
     public static String TRACE;
 
+    public static final String CONFIG_FILENAME = "config-3d.properties";
     /**
      * Hardware acceleration config name.
      */
@@ -87,8 +88,9 @@ public class View3DFactory implements SeriesViewerFactory {
     private static boolean useHardwareAcceleration = true;
     private static boolean useOpenCL = true;
     private static boolean sortOpt = false;
+    private static boolean validLicense = true;
 
-    static final Properties localConfiguration = new Properties();
+    static final WProperties localConfiguration = new WProperties();
 
     @Override
     public Icon getIcon() {
@@ -217,21 +219,20 @@ public class View3DFactory implements SeriesViewerFactory {
     }
 
     public static void showHANotAvailableMsg(Component parent) {
-        JOptionPane.showMessageDialog(parent, Messages.getString("View3DFactory.error.HANotAvailable"));
+        String msg = validLicense ? Messages.getString("View3DFactory.error.HANotAvailable") : "The 3D plugin license is not valid!";
+        JOptionPane.showMessageDialog(parent, msg);
     }
-    
-    
-    
+
     private void checkFor3dSupport() {
         if (useHardwareAcceleration) {
-            localConfiguration.put(CRASH_FLAG, true);
+            localConfiguration.putBooleanProperty(CRASH_FLAG, true);
 
             Threading.invoke(false, () -> {
                 support3D();
             }, null);
         }
     }
-    
+
     private void support3D() {
         try {
             long startTime = System.currentTimeMillis();
@@ -241,8 +242,9 @@ public class View3DFactory implements SeriesViewerFactory {
             if (ImageSeries.getGPUDefinition() != null) {
                 CONFIG_HARDWARE = ImageSeries.getGPUDefinition().toString();
             }
-            localConfiguration.put(CRASH_FLAG, false);
-            LOGGER.info("{} 3D Support is active. Time of checking: {}  seconds.", AuditLog.MARKER_PERF, (System.currentTimeMillis() - startTime) / 1000D);
+            localConfiguration.putBooleanProperty(CRASH_FLAG, false);
+            LOGGER.info("{} 3D Support is active. Time of checking: {}  seconds.", AuditLog.MARKER_PERF,
+                (System.currentTimeMillis() - startTime) / 1000D);
         } catch (Exception ex) {
             LOG_MESSAGE = "Cant get context: " + ex.getMessage();
             LOGGER.info("Cant get context: " + ex.getMessage());
@@ -254,9 +256,13 @@ public class View3DFactory implements SeriesViewerFactory {
             ex.printStackTrace(pw);
             TRACE = sw.toString();
 
-            // Set acceleration to false and save it to props
             useHardwareAcceleration = false;
-            localConfiguration.put(HA_PROP_NAME, useHardwareAcceleration);
+            if ("Unauthorized access".equals(ex.getMessage())) {
+                validLicense = false;
+            } else {
+                // Set acceleration to false and save it to props
+                localConfiguration.putBooleanProperty(HA_PROP_NAME, useHardwareAcceleration);
+            }
 
             if (TRACE == null) {
                 TRACE = "Stack trace: null";
@@ -277,7 +283,6 @@ public class View3DFactory implements SeriesViewerFactory {
         return sortOpt;
     }
 
-
     // ================================================================================
     // OSGI service implementation
     // ================================================================================
@@ -288,22 +293,27 @@ public class View3DFactory implements SeriesViewerFactory {
         // Must be done very early:
         System.setProperty("jogl.1thread", "worker");
 
-        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context.getBundleContext()), "config-3d.properties"), //$NON-NLS-1$
+        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context.getBundleContext()), CONFIG_FILENAME), // $NON-NLS-1$
             localConfiguration);
 
-        sortOpt = JMVUtils.getNULLtoFalse(localConfiguration.get(SORT_OPT));
-        useHardwareAcceleration = JMVUtils.getNULLtoTrue(localConfiguration.get(HA_PROP_NAME));
-        useOpenCL = JMVUtils.getNULLtoTrue(localConfiguration.get(CL_PROP_NAME));
-        boolean hasCrashed = JMVUtils.getNULLtoFalse(localConfiguration.get(CRASH_FLAG));
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.force.3d", false)) { //$NON-NLS-1$
+            localConfiguration.putBooleanProperty(CRASH_FLAG, false);
+            localConfiguration.putBooleanProperty(HA_PROP_NAME, true);
+            localConfiguration.putBooleanProperty(CL_PROP_NAME, true);
+        }
+
+        sortOpt = localConfiguration.getBooleanProperty(SORT_OPT, false);
+        useHardwareAcceleration = localConfiguration.getBooleanProperty(HA_PROP_NAME, true);
+        useOpenCL = localConfiguration.getBooleanProperty(CL_PROP_NAME, true);
+        boolean hasCrashed = localConfiguration.getBooleanProperty(CRASH_FLAG, false);
         if (hasCrashed) {
             TRACE = "Has crashed before.";
         }
-        
-        // TODO disable for testing
+
         if (hasCrashed && useHardwareAcceleration) {
             LOGGER.info("Turning H Acceleration OFF, because has cashed before.");
             useHardwareAcceleration = false;
-            localConfiguration.put(HA_PROP_NAME, useHardwareAcceleration);
+            localConfiguration.putBooleanProperty(HA_PROP_NAME, useHardwareAcceleration);
             useOpenCL = false;
         }
 
@@ -319,5 +329,7 @@ public class View3DFactory implements SeriesViewerFactory {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info(" Mpr 3D View [Animati] is deactivated"); //$NON-NLS-1$
+        FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context.getBundleContext()), CONFIG_FILENAME), // $NON-NLS-1$
+            localConfiguration, null);
     }
 }
