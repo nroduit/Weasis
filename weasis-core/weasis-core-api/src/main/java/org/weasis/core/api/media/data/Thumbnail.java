@@ -129,9 +129,6 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                 } else if (mime.startsWith("video")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.video"); //$NON-NLS-1$
                     icon = MimeInspector.videoIcon;
-                } else if (mime.startsWith("audio")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
-                    icon = MimeInspector.audioIcon;
                 } else if (mime.equals("sr/dicom")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.dicom_sr"); //$NON-NLS-1$
                     icon = MimeInspector.textIcon;
@@ -144,6 +141,12 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                 } else if (mime.equals("application/pdf")) { //$NON-NLS-1$
                     type = Messages.getString("Thumbnail.pdf"); //$NON-NLS-1$
                     icon = MimeInspector.pdfIcon;
+                } else if (mime.equals("wf/dicom")) { //$NON-NLS-1$
+                    type = "ECG";
+                    icon = MimeInspector.ecgIcon;
+                } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { //$NON-NLS-1$
+                    type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
+                    icon = MimeInspector.audioIcon;
                 } else {
                     type = mime;
                 }

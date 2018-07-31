@@ -51,11 +51,8 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
         if (comp instanceof DefaultView2d) {
             DefaultView2d view2DPane = (DefaultView2d) comp;
             RenderedImage imgP = createComponentImage(view2DPane);
-            if (imgP != null) {
-                image = ImageConversion.convertRenderedImage(imgP);
-                return this;
-            }
-
+            image = ImageConversion.convertRenderedImage(imgP);
+            return this;
         }
         return null;
     }
@@ -86,7 +83,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
 
     private static RenderedImage createComponentImage(DefaultView2d canvas) {
         BufferedImage img = new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_BGR);
-        ExportImage<ImageElement> exportImage = new ExportImage<ImageElement>(canvas);
+        ExportImage<ImageElement> exportImage = new ExportImage<>(canvas);
         try {
             exportImage.getInfoLayer().setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, true);
             exportImage.getInfoLayer().setBorder(3);

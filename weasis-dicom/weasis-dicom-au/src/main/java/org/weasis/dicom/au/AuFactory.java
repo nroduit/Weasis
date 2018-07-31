@@ -13,14 +13,13 @@ package org.weasis.dicom.au;
 import java.util.Map;
 
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -32,11 +31,10 @@ import org.weasis.dicom.explorer.DicomModel;
 public class AuFactory implements SeriesViewerFactory {
 
     public static final String NAME = "DICOM AU"; //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MediaElement.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
 
     @Override
     public Icon getIcon() {
-        return ICON;
+        return MimeInspector.audioIcon;
     }
 
     @Override

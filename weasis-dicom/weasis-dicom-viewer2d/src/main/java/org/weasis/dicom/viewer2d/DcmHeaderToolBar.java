@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
@@ -35,18 +32,11 @@ public class DcmHeaderToolBar extends WtoolBar {
         final JButton metaButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
         metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
-        metaButton.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer());
-            }
-        });
+        metaButton.addActionListener(e -> DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer()));
         add(metaButton);
         ActionState headerAction = EventManager.getInstance().getAction(ActionW.SHOW_HEADER);
         if (headerAction != null) {
             headerAction.registerActionState(metaButton);
         }
     }
-
 }

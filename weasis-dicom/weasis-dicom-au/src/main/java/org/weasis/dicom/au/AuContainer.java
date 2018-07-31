@@ -29,13 +29,13 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -46,6 +46,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ImportExportToolBar;
 
 @SuppressWarnings("serial")
 public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -110,7 +111,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     public AuContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, AuFactory.ICON, null);
+        super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, MimeInspector.audioIcon, null);
         setSynchView(SynchView.NONE);
         if (!initComponents) {
             initComponents = true;
@@ -120,6 +121,11 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportExportToolBar.class), key, true)) {
+                TOOLBARS.add(new ImportExportToolBar(5));
+            }
+            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(AuToolBar.class), key, true)) {
                 TOOLBARS.add(new AuToolBar(10));

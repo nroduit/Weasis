@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.wave;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.print.PageFormat;
@@ -29,11 +28,9 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -43,8 +40,8 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -52,8 +49,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -71,6 +66,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ImportExportToolBar;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 
 public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -137,7 +133,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
     }
 
     public WaveContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(ECG_EVENT_MANAGER, layoutModel, uid, WaveFactory.NAME, WaveFactory.ICON, null);
+        super(ECG_EVENT_MANAGER, layoutModel, uid, WaveFactory.NAME, MimeInspector.ecgIcon, null);
         setSynchView(SynchView.NONE);
         if (!INI_COMPONENTS) {
             INI_COMPONENTS = true;
@@ -147,6 +143,11 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportExportToolBar.class), key, true)) {
+                TOOLBARS.add(new ImportExportToolBar(5));
+            }
+            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(WaveformToolBar.class), key, true)) {
                 TOOLBARS.add(new WaveformToolBar(20));
@@ -374,18 +375,9 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
     }
 
     public void displayHeader() {
-        if (ecgview != null) {
-            JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-            frame.setSize(500, 630);
-            DicomFieldsView view = new DicomFieldsView(this);
-            view.changingViewContentEvent(new SeriesViewerEvent(this, ecgview.getSeries(),
-                DicomModel.getFirstSpecialElement(ecgview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
-            JPanel panel = new JPanel();
-            panel.setLayout(new BorderLayout());
-            panel.add(view);
-            frame.getContentPane().add(panel);
-            frame.setAlwaysOnTop(true);
-            JMVUtils.showCenterScreen(frame, ecgview);
+        if (ecgview != null) { 
+            DicomSpecialElement dcm =  DicomModel.getFirstSpecialElement(ecgview.getSeries(), DicomSpecialElement.class);
+            DicomFieldsView.showHeaderDialog(this,  ecgview.getSeries(), dcm);
         }
     }
 

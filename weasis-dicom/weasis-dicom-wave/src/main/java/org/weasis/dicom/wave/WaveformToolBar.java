@@ -13,6 +13,7 @@ package org.weasis.dicom.wave;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -36,8 +37,8 @@ public class WaveformToolBar extends WtoolBar {
         add(printButton);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png"))); //$NON-NLS-1$
-        metaButton.setToolTipText("Open DICOM Information"); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
+        metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
             if (container instanceof WaveContainer) {

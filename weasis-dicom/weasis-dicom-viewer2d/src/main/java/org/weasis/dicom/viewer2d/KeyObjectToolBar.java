@@ -252,7 +252,7 @@ public class KeyObjectToolBar extends WtoolBar {
                     LOGGER.info("Create new KeyObject"); //$NON-NLS-1$
 
                 } else if (selectedValue.equals(copyBtn)) {
-                    LOGGER.info("Copy selected KeyObject: {}" + list.getSelectedValue()); //$NON-NLS-1$
+                    LOGGER.info("Copy selected KeyObject: {}", list.getSelectedValue()); //$NON-NLS-1$
                     newDicomKO = KOManager.createNewDicomKeyObject(list.getSelectedValue(), selectedView2dContainer);
                 }
 
@@ -298,9 +298,6 @@ public class KeyObjectToolBar extends WtoolBar {
             }
         });
     }
-
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     class ToggleSelectionModel extends DefaultListSelectionModel {
         private boolean gestureStarted = false;

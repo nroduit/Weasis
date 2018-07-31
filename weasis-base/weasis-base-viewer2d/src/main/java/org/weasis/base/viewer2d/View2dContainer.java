@@ -49,6 +49,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -98,7 +99,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
+        super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, MimeInspector.imageIcon, null);
         setSynchView(SynchView.DEFAULT_STACK);
         addComponentListener(new ComponentAdapter() {
 
