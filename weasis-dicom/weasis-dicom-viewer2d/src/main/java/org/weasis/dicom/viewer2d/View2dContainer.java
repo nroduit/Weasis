@@ -95,7 +95,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.ImportExportToolBar;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
@@ -155,8 +156,16 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             String key = "enable"; //$NON-NLS-1$
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
-                InsertableUtil.getCName(ImportExportToolBar.class), key, true)) {
-                TOOLBARS.add(new ImportExportToolBar(5));
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ExportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ExportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
             }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {

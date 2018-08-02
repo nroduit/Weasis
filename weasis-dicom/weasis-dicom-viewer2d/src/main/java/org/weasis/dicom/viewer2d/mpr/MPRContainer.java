@@ -80,7 +80,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.ImportExportToolBar;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -164,14 +165,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
-            Optional<Toolbar> importBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportExportToolBar).findFirst();
-            if(importBar.isPresent()) {
-                TOOLBARS.add(importBar.get());
-            }
+            Optional<Toolbar> importBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportToolBar).findFirst();
+            importBar.ifPresent(TOOLBARS::add);
+            Optional<Toolbar> exportBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ExportToolBar).findFirst();
+            exportBar.ifPresent(TOOLBARS::add);
             Optional<Toolbar> viewBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ViewerToolBar).findFirst();
-            if(viewBar.isPresent()) {
-                TOOLBARS.add(viewBar.get());
-            }
+            viewBar.ifPresent(TOOLBARS::add);
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));

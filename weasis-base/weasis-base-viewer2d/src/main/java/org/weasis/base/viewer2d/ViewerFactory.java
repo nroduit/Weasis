@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -53,8 +54,9 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
 
-    private static final DefaultAction preferencesAction =
-        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction); //$NON-NLS-1$
+    private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"), //$NON-NLS-1$
+        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")),
+        ViewerFactory::getOpenImageAction);
 
     public ViewerFactory() {
         super();
@@ -178,13 +180,13 @@ public class ViewerFactory implements SeriesViewerFactory {
         return true;
     }
 
-    private static void getOpenImageAction(ActionEvent e) {
+    static void getOpenImageAction(ActionEvent e) {
         String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
-        // TODO add format from plugins
+
         FileFormatFilter.setImageDecodeFilters(fileChooser);
         File[] selectedFiles;
         if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION

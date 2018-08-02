@@ -242,6 +242,10 @@ public class WeasisWin {
         return rootPaneContainer;
     }
 
+    public ToolBarContainer getToolbarContainer() {
+        return toolbarContainer;
+    }
+
     public boolean closeWindow() {
         if (busy) {
             // TODO add a message, Please wait or kill
@@ -574,7 +578,7 @@ public class WeasisWin {
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
         if (plugin == null) {
-            toolbarContainer.registerToolBar(null);
+            toolbarContainer.registerToolBar(UIManager.EXPLORER_PLUGIN_TOOLBARS);
             List<DockableTool> oldTool = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
             if (oldTool != null) {
                 for (DockableTool p : oldTool) {
@@ -680,11 +684,13 @@ public class WeasisWin {
         }
 
         final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
-        webMenuItem.addActionListener(e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); //$NON-NLS-1$
+        webMenuItem.addActionListener(
+            e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); //$NON-NLS-1$
         helpMenuItem.add(webMenuItem);
 
         final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online")); //$NON-NLS-1$
-        websiteMenuItem.addActionListener(e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); //$NON-NLS-1$
+        websiteMenuItem.addActionListener(
+            e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); //$NON-NLS-1$
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
             new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
@@ -697,7 +703,7 @@ public class WeasisWin {
         menuBar.add(helpMenuItem);
         return menuBar;
     }
-    
+
     private void openBrowser(Component c, String ref) {
         try {
             URL url = new URL(ref);
@@ -926,7 +932,8 @@ public class WeasisWin {
         DefaultAction preferencesAction =
             new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), //$NON-NLS-1$
                 prefAction);
-        preferencesAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
+        preferencesAction.putValue(Action.ACCELERATOR_KEY,
+            KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
         menuFile.add(new JMenuItem(preferencesAction));
 
         menuFile.add(new JSeparator());

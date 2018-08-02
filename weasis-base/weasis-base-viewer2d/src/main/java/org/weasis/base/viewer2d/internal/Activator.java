@@ -25,6 +25,7 @@ import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.base.viewer2d.ImportToolBar;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
@@ -48,6 +49,9 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void start(final BundleContext bundleContext) throws Exception {
         registerExistingComponents(bundleContext);
+        
+        // Instantiate UI components in EDT (necessary with Substance Theme)
+        GuiExecutor.instance().execute(() ->  UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(3)));
 
         // Add listener for getting new service events
         try {
@@ -64,6 +68,7 @@ public class Activator implements BundleActivator, ServiceListener {
         if (!BundlePreferences.isNullStaticFieldValue(EventManager.class, "instance")) { //$NON-NLS-1$
             EventManager.getInstance().savePreferences(bundleContext);
         }
+        UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(b -> b instanceof ImportToolBar);
         UIManager.closeSeriesViewerType(View2dContainer.class);
     }
 
