@@ -5,7 +5,7 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>3.0.1</version>
+	<version>3.0.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
@@ -18,26 +18,35 @@
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 
 		<app.version>${project.version}</app.version>
-		<felix.framework.version>5.6.10</felix.framework.version>
+		<javaws.version>1.6.0-17</javaws.version>
+		<felix.framework.version>6.0.0</felix.framework.version>
 		<substance.version>8.0.2</substance.version>
 
-		<felix.gogo.version>1.0.10</felix.gogo.version>
-		<felix.gogo.shell.version>1.0.0</felix.gogo.shell.version>
+		<osgi.cmpn.version>7.0.0</osgi.cmpn.version>
+		
+		<felix.gogo.version>1.1.0</felix.gogo.version>
+		<felix.gogo.shell.version>1.1.0</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.0.2</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-		<felix.configadmin.version>1.8.16</felix.configadmin.version>
+		<felix.configadmin.version>1.9.2</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.0.14</felix.scr.version>
-		<felix.metatype.version>1.1.6</felix.metatype.version>
+		<felix.scr.version>2.1.0</felix.scr.version>
+		<felix.metatype.version>1.2.0</felix.metatype.version>
+		<felix.scr.annotations.version>1.12.0</felix.scr.annotations.version>
 
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P20a</dockingframes.version>
-        <weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
+		<weasis.opencv.native.version>3.4.0-dcmR3</weasis.opencv.native.version>
+		<javax.json.version>1.0.4</javax.json.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 		
 		<jogamp.version>2.3.2</jogamp.version>
+
+		<assertj.version>3.10.0</assertj.version>
+		<powermock.version>1.7.0</powermock.version>
+		<bean-matchers.version>0.11</bean-matchers.version>
 	</properties>
 
 	<licenses>
@@ -101,7 +110,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>3.5.0</version>
+					<version>3.5.1</version>
 					<extensions>true</extensions>
 					<configuration>
 						<obrRepository>${settings.localRepository}/repository.xml</obrRepository>
@@ -169,7 +178,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
-					<version>3.0.2</version>
+					<version>3.1.1</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>
@@ -185,6 +194,11 @@
 					<groupId>org.codehaus.mojo</groupId>
 					<artifactId>build-helper-maven-plugin</artifactId>
 					<version>3.0.0</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>3.0.1</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -236,7 +250,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.0.1</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
@@ -302,7 +315,7 @@
 			<dependency>
 				<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 				<artifactId>javaws</artifactId>
-				<version>1.6.0-17</version>
+				<version>${javaws.version}</version>
 				<type>jar</type>
 				<scope>provided</scope>
 			</dependency>
@@ -360,6 +373,11 @@
 				<scope>provided</scope>
 			</dependency>
 			<dependency>
+				<groupId>org.glassfish</groupId>
+				<artifactId>javax.json</artifactId>
+				<version>${javax.json.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 				<artifactId>vecmath</artifactId>
 				<version>${com.sun.media.j3d.version}</version>
@@ -376,25 +394,25 @@
 			<dependency>
 				<groupId>org.assertj</groupId>
 				<artifactId>assertj-core</artifactId>
-				<version>3.9.1</version>
+				<version>${assertj.version}</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.powermock</groupId>
 				<artifactId>powermock-module-junit4</artifactId>
-				<version>1.7.0</version>
+				<version>${powermock.version}</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.powermock</groupId>
 				<artifactId>powermock-api-mockito2</artifactId>
-				<version>1.7.0</version>
+				<version>${powermock.version}</version>
 				<scope>test</scope>
 			</dependency>
 			<dependency>
 				<groupId>com.google.code.bean-matchers</groupId>
 				<artifactId>bean-matchers</artifactId>
-				<version>0.11</version>
+				<version>${bean-matchers.version}</version>
 				<scope>test</scope>
 			</dependency>
 		</dependencies>
@@ -412,19 +430,19 @@
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>osgi.core</artifactId>
-			<version>6.0.0</version>
+			<version>${osgi.cmpn.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.osgi</groupId>
 			<artifactId>osgi.cmpn</artifactId>
-			<version>6.0.0</version>
+			<version>${osgi.cmpn.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
-			<version>1.12.0</version>
+			<version>${felix.scr.annotations.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

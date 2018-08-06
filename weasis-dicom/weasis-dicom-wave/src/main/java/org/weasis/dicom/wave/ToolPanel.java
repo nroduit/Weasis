@@ -40,6 +40,15 @@ class ToolPanel extends JPanel {
             }
             return DecFormater.oneDecimal(value) + " mm/s";
         }
+        
+        public static Speed fromValue(double value) {
+            for (Speed s : values()) {
+                if (s.getValue() == value) {
+                    return s;
+                }
+            }
+            return AUTO;
+        }
     }
 
     public enum Amplitude {
@@ -62,6 +71,15 @@ class ToolPanel extends JPanel {
             }
             return String.format("%d mm/mV", value);
         }
+
+        public static Amplitude fromValue(int value) {
+            for (Amplitude a : values()) {
+                if (a.getValue() == value) {
+                    return a;
+                }
+            }
+            return AUTO;
+        }
     }
 
     private WaveView view;
@@ -79,17 +97,17 @@ class ToolPanel extends JPanel {
 
         JComboBox<Speed> speed = new JComboBox<>(Speed.values());
         speed.addActionListener(e -> view.setSpeed(((Speed) speed.getSelectedItem()).getValue()));
-        speed.setSelectedItem(WaveLayoutManager.AUTO_SPEED);
+        speed.setSelectedItem(Speed.fromValue(view.getSpeed()));
         speed.setFocusable(false);
         this.add(speed);
 
         JComboBox<Amplitude> amplitude = new JComboBox<>(Amplitude.values());
         amplitude.addActionListener(e -> view.setAmplitude(((Amplitude) amplitude.getSelectedItem()).getValue()));
-        amplitude.setSelectedItem(WaveLayoutManager.AUTO_AMPLITUDE);
+        amplitude.setSelectedItem(Amplitude.fromValue(view.getAmplitude()));
         amplitude.setFocusable(false);
         this.add(amplitude);
         
-        if (view.getChannelNumber() == 12) {
+        if (view.getChannelNumber() >= 12) {
             addDisplayFormatComponent();
         }
     }
@@ -97,11 +115,11 @@ class ToolPanel extends JPanel {
     private void addDisplayFormatComponent() {
         formatLabel = new JLabel("Display format" + StringUtil.COLON);
         this.add(formatLabel);
-        
+
         formatCombo = new JComboBox<>(Format.values());
         formatCombo.setFocusable(false);
-        formatCombo
-            .addActionListener(e -> view.setFormat((Format) formatCombo.getSelectedItem()));
+        formatCombo.setSelectedItem(view.getCurrentFormat());
+        formatCombo.addActionListener(e -> view.setFormat((Format) formatCombo.getSelectedItem()));
         this.add(formatCombo);
     }
 }

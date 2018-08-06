@@ -64,7 +64,7 @@ public class ImageElementIO implements MediaReader {
 
     private final FileCache fileCache;
     private final Codec codec;
-    private ImageElement image = null;
+    private volatile ImageElement image = null;
 
     public ImageElementIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);
@@ -154,7 +154,7 @@ public class ImageElementIO implements MediaReader {
 
     @Override
     public void reset() {
-
+        // Do nothing
     }
 
     @Override
@@ -169,11 +169,7 @@ public class ImageElementIO implements MediaReader {
 
     @Override
     public MediaElement[] getMediaElement() {
-        MediaElement element = getSingleImage();
-        if (element != null) {
-            return new MediaElement[] { element };
-        }
-        return null;
+        return new MediaElement[] { getSingleImage() };
     }
 
     @Override
@@ -247,8 +243,7 @@ public class ImageElementIO implements MediaReader {
 
     @Override
     public void close() {
-        // TODO Auto-generated method stub
-
+        // Do nothing
     }
 
     @Override

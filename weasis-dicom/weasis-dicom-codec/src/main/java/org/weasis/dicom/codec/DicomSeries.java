@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.awt.image.RenderedImage;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;

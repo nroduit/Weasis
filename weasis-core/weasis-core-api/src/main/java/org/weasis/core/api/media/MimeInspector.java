@@ -53,8 +53,8 @@ public class MimeInspector {
     public static final Icon videoIcon =
         new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
     public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); //$NON-NLS-1$
-    public static final Icon dicomVideo = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom-video.png")); //$NON-NLS-1$
     public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); //$NON-NLS-1$
+    public static final Icon ecgIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/ecg.png")); //$NON-NLS-1$    
 
     private static final Properties mimeTypes = new Properties();
     private static final ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
@@ -147,7 +147,7 @@ public class MimeInspector {
 
         // Get the file extension
         String fileName = file.getName();
-        int lastPos = fileName.lastIndexOf("."); //$NON-NLS-1$
+        int lastPos = fileName.lastIndexOf('.'); 
         String extension = lastPos > 0 ? fileName.substring(lastPos + 1).trim() : null;
 
         // Get Mime Type form the extension if the length > 0 and < 5
@@ -243,7 +243,7 @@ public class MimeInspector {
         if (mimeType == null) {
             return ""; //$NON-NLS-1$
         }
-        int offset = mimeType.indexOf("/"); //$NON-NLS-1$
+        int offset = mimeType.indexOf('/'); 
         if (offset == -1) {
             return mimeType;
         } else {
@@ -256,7 +256,7 @@ public class MimeInspector {
         if (mimeType == null) {
             return ""; //$NON-NLS-1$
         }
-        int offset = mimeType.indexOf("/"); //$NON-NLS-1$
+        int offset = mimeType.indexOf('/'); 
         if (offset == -1) {
             return mimeType;
         } else {
@@ -267,7 +267,7 @@ public class MimeInspector {
     // Utility method that gets the extension of a file from its name if it has one
     public static String getFileExtension(String fileName) {
         int lastPos;
-        if (fileName == null || (lastPos = fileName.lastIndexOf(".")) < 0) { //$NON-NLS-1$
+        if (fileName == null || (lastPos = fileName.lastIndexOf('.')) < 0) { 
             return null;
         }
         String extension = fileName.substring(lastPos + 1);

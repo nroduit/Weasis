@@ -20,7 +20,6 @@ import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -53,7 +52,6 @@ public class ViewerFactory implements SeriesViewerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
 
     private static final DefaultAction preferencesAction =
         new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction); //$NON-NLS-1$
@@ -64,7 +62,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public Icon getIcon() {
-        return ICON;
+        return MimeInspector.imageIcon;
     }
 
     @Override

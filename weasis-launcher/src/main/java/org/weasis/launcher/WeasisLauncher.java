@@ -674,6 +674,9 @@ public class WeasisLauncher {
                             // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
                             commandSession_execute(args[0], "gogo.option.noglob=on"); //$NON-NLS-1$
                         }
+                    } else if (listenerMethod.equals("equals")) { //$NON-NLS-1$
+                        // Only add once in the set of listeners
+                        return proxy.getClass().isAssignableFrom((args[0].getClass()));
                     }
                     return null;
                 }
@@ -795,8 +798,8 @@ public class WeasisLauncher {
             // Extended properties, add or override existing properties
             props = readProperties(propURI, props);
         }
-        
-        if(props == null) {
+
+        if (props == null) {
             throw new IllegalStateException("Cannot load weasis config!"); //$NON-NLS-1$
         }
 

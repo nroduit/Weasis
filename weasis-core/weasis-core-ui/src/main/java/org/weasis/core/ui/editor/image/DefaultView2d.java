@@ -1431,7 +1431,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         List<Action> list = new ArrayList<>();
 
         AbstractAction exportToClipboardAction =
-            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), event -> { //$NON-NLS-1$
+            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")), event -> { //$NON-NLS-1$
                 final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
                 imageTransferHandler.exportToClipboard(DefaultView2d.this,
                     Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
@@ -1450,9 +1450,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
         return list;
     }
-
-    @Override
-    public abstract void enableMouseAndKeyListener(MouseActions mouseActions);
 
     public static final AffineTransform getAffineTransform(MouseEvent mouseevent) {
         if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {

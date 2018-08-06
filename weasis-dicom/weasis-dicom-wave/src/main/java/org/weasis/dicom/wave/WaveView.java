@@ -134,7 +134,6 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
         annotationTool.updateMeasuredItems(list);
     }
-    
 
     public void clearMeasurements() {
         if (waveLayoutManager != null) {
@@ -232,6 +231,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     }
 
     private void displayECG(DicomSpecialElement media) throws Exception {
+        removeAll();
         DicomMediaIO dicomImageLoader = media.getMediaReader();
         Attributes attributes = dicomImageLoader.getDicomObject();
         if (attributes != null) {
@@ -260,22 +260,27 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
-            this.waveLayoutManager = new WaveLayoutManager(this, Format.DEFAULT);
+            double speed = waveLayoutManager == null ? WaveLayoutManager.AUTO_SPEED : waveLayoutManager.getSpeed();
+            int amplitude = waveLayoutManager == null ? WaveLayoutManager.AUTO_AMPLITUDE : waveLayoutManager.getAmplitude();
+
+            this.waveLayoutManager = new WaveLayoutManager(this, currentFormat, speed, amplitude);
             this.cpane = new JPanel(waveLayoutManager);
             JPanel channelwrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
             channelwrap.add(cpane);
             this.scrollPane.setViewportView(channelwrap);
 
+            addChannelPanels();
+            if (getChannelNumber() < 12) {
+                this.currentFormat = Format.DEFAULT;
+            }
+            setFormat(currentFormat);
+
             // Panel which includes the Buttons for zooming
             this.tools = new ToolPanel(this);
             this.tools.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
             this.tools.setPreferredSize(new Dimension(getWidth(), 30));
-
             // Panel with information about the channel the mouse cursor is over
-            this.infoPanel = new InfoPanel();
-
-            addChannelPanels();
-            setFormat(currentFormat);
+            this.infoPanel = new InfoPanel(zoomRatio);
 
             JPanel wrap = new JPanel(new BorderLayout());
             wrap.add(tools, BorderLayout.NORTH);
@@ -290,7 +295,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 }
             });
         }
-
+        updateMarkersTable();
+        annotationTool.readAnnotations(attributes);
     }
 
     private void readWaveformData(DicomSpecialElement media, Attributes dcm) throws Exception {
@@ -443,6 +449,20 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
     public Format getCurrentFormat() {
         return currentFormat;
+    }
+
+    public double getSpeed() {
+        if (waveLayoutManager != null) {
+            return waveLayoutManager.getSpeed();
+        }
+        return WaveLayoutManager.AUTO_SPEED;
+    }
+
+    public int getAmplitude() {
+        if (waveLayoutManager != null) {
+            return waveLayoutManager.getAmplitude();
+        }
+        return WaveLayoutManager.AUTO_AMPLITUDE;
     }
 
     public InfoPanel getInfoPanel() {

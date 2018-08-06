@@ -51,7 +51,6 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -68,7 +67,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -91,7 +89,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.util.ArrayListComboBoxModel;
-import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.WrapLayout;
@@ -159,8 +156,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt")); //$NON-NLS-1$
     private boolean verticalLayout = true;
 
-    private final JButton btnExport;
-    private final JButton btnImport;
     private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
 
     public DicomExplorer() {
@@ -176,29 +171,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         this.selectionList = new SeriesSelectionModel(patientContainer);
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
-
-        this.btnImport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-                DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-                dialog.showPage(BUTTON_NAME);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            } else {
-                JOptionPane.showMessageDialog((Component) event.getSource(),
-                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
-            }
-        }));
-        this.btnExport = new JButton(new DefaultAction(BUTTON_NAME, event -> {
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(DicomExplorer.this);
-                DicomExport dialog = new DicomExport(SwingUtilities.getWindowAncestor(DicomExplorer.this), model);
-                dialog.showPage(BUTTON_NAME);
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            } else {
-                JOptionPane.showMessageDialog((Component) event.getSource(),
-                    Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
-            }
-        }));
         changeToolWindowAnchor(getDockable().getBaseLocation());
 
     }
@@ -910,11 +882,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             flowLayout.setAlignment(FlowLayout.LEFT);
             panel2.add(panel3, gbcpanel3);
 
-            btnImport.setText(Messages.getString("DicomExplorer.import"));//$NON-NLS-1$
-            panel3.add(btnImport);
-            btnExport.setText(Messages.getString("DicomExplorer.export"));//$NON-NLS-1$
-            panel3.add(btnExport);
-
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1
@@ -1429,61 +1396,22 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        return Arrays.asList(btnExport.getAction());
+        return Arrays.asList(ImportExportToolBar.buildExportAction(this, model, BUTTON_NAME));
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
-        actions.add(btnImport.getAction());
+        actions.add(ImportExportToolBar.buildImportAction(this, model, BUTTON_NAME));
         DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
             new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
-            event -> openImportDialogAction(Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
+            event -> ImportExportToolBar.openImportDialogAction(this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
         actions.add(importCDAction);
         return actions;
-    }
-
-    private void openImportDialogAction(String actionName) {
-        File file = DicomDirImport.getDcmDirFromMedia();
-        if (file == null) {
-            int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(this),
-                "Cannot find DICOMDIR on media device, do you want to import manually?", //$NON-NLS-1$
-                actionName, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-            if (response == JOptionPane.YES_OPTION) {
-                ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(this);
-                DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(this), model);
-                dialog.showPage(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
-                ColorLayerUI.showCenterScreen(dialog, layer);
-            }
-        } else {
-            List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
-            if (loadSeries != null && !loadSeries.isEmpty()) {
-                DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model));
-            } else {
-                LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
-
-                int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(this),
-                    Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
-                    actionName, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-                if (response == JOptionPane.YES_OPTION) {
-                    ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(this);
-                    DicomImport dialog = new DicomImport(SwingUtilities.getWindowAncestor(this), model);
-                    dialog.showPage(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
-                    AbstractItemDialogPage page = dialog.getCurrentPage();
-                    if (page instanceof LocalImport) {
-                        ((LocalImport) page).setImportPath(file.getParent());
-                    }
-                    ColorLayerUI.showCenterScreen(dialog, layer);
-                }
-            }
-        }
     }
 
     @Override
     public boolean canImportFiles() {
         return true;
     }
-
 }
