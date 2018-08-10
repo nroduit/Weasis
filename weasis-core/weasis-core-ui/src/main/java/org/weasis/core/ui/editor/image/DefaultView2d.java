@@ -77,6 +77,7 @@ import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
@@ -1279,6 +1280,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         } else if (e.getModifiers() == 0 && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
             eventManager.fireSeriesViewerListeners(
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
+            // Counterclockwise
+            eventManager.getAction(ActionW.ROTATION, SliderChangeListener.class)
+                .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
+            // Clockwise
+            eventManager.getAction(ActionW.ROTATION, SliderChangeListener.class)
+                .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
+            // Flip horizontal
+            ActionState flipAction = eventManager.getAction(ActionW.FLIP);
+            if (flipAction instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) flipAction).setSelected(!((ToggleButtonListener) flipAction).isSelected());
+            }
         } else {
             Optional<ActionW> action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
             if (action.isPresent()) {
