@@ -360,8 +360,10 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
                     } else if (presCount == 2) {
                         preset.setKeyCode(KeyEvent.VK_2);
                     }
-                    presetList.add(preset);
-                    presCount++;
+                    if (!presetList.contains(preset)) {
+                        presetList.add(preset);
+                        presCount++;
+                    }
                 }
             }
         }
@@ -372,6 +374,8 @@ public class TextureDicomSeries<E extends ImageElement> extends ImageSeries impl
         PresetWindowLevel autoLevel =
             new PresetWindowLevel(org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full"),
                 getFullDynamicWidth(pixelPadding), getFullDynamicCenter(pixelPadding), defaultLutShape);
+        // Set O shortcut for auto levels
+        autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);
 
         // Arbitrary Presets by Modality

@@ -72,6 +72,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -407,7 +408,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         desc.append('_').append(DecFormater.twoDecimal(rotation.z));
         return desc.toString();
     }
-
 
     private void propertyChange(final SynchEvent synch) {
         SynchData synchData = (SynchData) actionsInView.get(ActionW.SYNCH_LINK.cmd());
@@ -1133,21 +1133,6 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
         measurableLayer.setDirty(true);
     }
 
-    private void rotateImage(int angle) {
-        Object actionValue = getActionValue(ActionW.ROTATION.cmd());
-        if (actionValue instanceof Integer) {
-            Integer actual = (Integer) actionValue;
-            if (ViewType.SAGITTAL.equals(getViewType())) {
-                actual = actual + 90;
-            }
-            if (angle > 0) {
-                setRotation((actual + angle) % 360);
-            } else {
-                setRotation((actual + angle + 360) % 360);
-            }
-        }
-    }
-
     @Override
     public void registerDefaultListeners() {
         addFocusListener(this);
@@ -1258,18 +1243,20 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
             // Liga/desliga informacoes do paciente.
             eventManager.fireSeriesViewerListeners(
                 new SeriesViewerEvent(eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
-        } else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_H) {
-            // Flip horizontal
-            Object actionValue = getActionValue(ActionW.FLIP.cmd());
-            boolean val = JMVUtils.getNULLtoFalse(actionValue);
-            setActionsInView(ActionW.FLIP.cmd(), !val);
-            repaint();
         } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
-            // Rotaciona para a esquerda
-            rotateImage(90);
+            // Counterclockwise
+            eventManager.getAction(ActionW.ROTATION, SliderChangeListener.class)
+                .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
         } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
-            // Rotaciona para a esquerda
-            rotateImage(-90);
+            // Clockwise
+            eventManager.getAction(ActionW.ROTATION, SliderChangeListener.class)
+                .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
+        } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
+            // Flip horizontal
+            ActionState flipAction = eventManager.getAction(ActionW.FLIP);
+            if (flipAction instanceof ToggleButtonListener) {
+                ((ToggleButtonListener) flipAction).setSelected(!((ToggleButtonListener) flipAction).isSelected());
+            }
         } else {
             Optional<ActionW> action = eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
             if (action.isPresent()) {
@@ -1340,32 +1327,76 @@ public class ViewTexture extends CanvasTexure implements ViewCanvas<DicomImageEl
     }
 
     public class Cross3dListener extends MouseActionAdapter implements ActionState {
+        private volatile MouseActionAdapter win = null;
+        private volatile MouseActionAdapter lev = null;
+
         @Override
-        public void mousePressed(final MouseEvent evt) {
-            if (!evt.isConsumed() && (evt.getModifiersEx() & getButtonMaskEx()) != 0) {
-                mouseDragReset(evt.getPoint());
+        public void mousePressed(final MouseEvent e) {
+            int buttonMask = getButtonMaskEx();
+            int modifier = e.getModifiersEx();
+            if (!e.isConsumed() && (modifier & buttonMask) != 0) {
+                int mask = InputEvent.CTRL_DOWN_MASK;
+                if ((modifier & mask) == mask) {
+                    setCursor(ActionW.WINLEVEL.getCursor());
+                    win = getAction(ActionW.WINDOW);
+                    if (win != null) {
+                        win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);
+                        win.setMoveOnX(true);
+                        win.mousePressed(e);
+                    }
+                    lev = getAction(ActionW.LEVEL);
+                    if (lev != null) {
+                        lev.setButtonMaskEx(lev.getButtonMaskEx() | buttonMask);
+                        lev.setInverse(true);
+                        lev.mousePressed(e);
+                    }
+                } else {
+                    win = null;
+                    lev = null;
+                    mouseDragReset(e.getPoint());
+                }
             }
         }
 
         @Override
         public void mouseEntered(MouseEvent e) {
-            onMouseMoved(e.getPoint());
+            move(e);
         }
 
         @Override
         public void mouseExited(MouseEvent e) {
-            onMouseMoved(e.getPoint());
+            move(e);
         }
 
         @Override
         public void mouseMoved(MouseEvent e) {
-            onMouseMoved(e.getPoint());
+            move(e);
+        }
+        
+        private void move(MouseEvent e) {
+            int mask = InputEvent.CTRL_DOWN_MASK;
+            if ((e.getModifiersEx() & mask) == mask) {
+                setCursor(ActionW.WINLEVEL.getCursor());
+            }
+            else {
+                onMouseMoved(e.getPoint());
+            }
         }
 
         @Override
         public void mouseDragged(MouseEvent e) {
-            if (!e.isConsumed() && (e.getModifiersEx() & getButtonMaskEx()) != 0) {
-                onMouseDragged(e.getPoint());
+            int buttonMask = getButtonMaskEx();
+            int modifier = e.getModifiersEx();
+            if (!e.isConsumed() && (modifier & buttonMask) != 0) {
+                if (win != null) {
+                    setCursor(ActionW.WINLEVEL.getCursor());
+                    win.mouseDragged(e);
+                    if (lev != null) {
+                        lev.mouseDragged(e);
+                    }
+                } else {
+                    onMouseDragged(e.getPoint());
+                }
             }
         }
 
