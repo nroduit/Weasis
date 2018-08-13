@@ -233,6 +233,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
                     if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
                         if (cChild.getFocusComponent() instanceof SeriesViewer) {
                             ((SeriesViewer) cChild.getFocusComponent()).close();
+                            if(cChild.getFocusComponent() instanceof ViewerPlugin) {
+                                ((ViewerPlugin) cChild.getFocusComponent()).handleFocusAfterClosing();
+                            }
                         } else {
                             cChild.setVisible(false);
                         }

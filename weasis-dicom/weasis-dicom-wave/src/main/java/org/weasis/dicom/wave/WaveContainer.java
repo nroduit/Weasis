@@ -21,6 +21,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -66,7 +67,8 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.ImportExportToolBar;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 
 public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -144,10 +146,18 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
             String key = "enable"; //$NON-NLS-1$
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
-                InsertableUtil.getCName(ImportExportToolBar.class), key, true)) {
-                TOOLBARS.add(new ImportExportToolBar(5));
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
             }
-            
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ExportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ExportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(WaveformToolBar.class), key, true)) {
                 TOOLBARS.add(new WaveformToolBar(20));
@@ -375,9 +385,9 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
     }
 
     public void displayHeader() {
-        if (ecgview != null) { 
-            DicomSpecialElement dcm =  DicomModel.getFirstSpecialElement(ecgview.getSeries(), DicomSpecialElement.class);
-            DicomFieldsView.showHeaderDialog(this,  ecgview.getSeries(), dcm);
+        if (ecgview != null) {
+            DicomSpecialElement dcm = DicomModel.getFirstSpecialElement(ecgview.getSeries(), DicomSpecialElement.class);
+            DicomFieldsView.showHeaderDialog(this, ecgview.getSeries(), dcm);
         }
     }
 

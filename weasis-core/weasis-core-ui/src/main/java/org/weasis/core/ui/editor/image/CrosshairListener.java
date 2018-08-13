@@ -27,6 +27,8 @@ import org.weasis.core.api.service.AuditLog;
 
 public abstract class CrosshairListener extends MouseActionAdapter implements ActionState, KeyListener {
 
+    private volatile MouseActionAdapter win = null;
+    private volatile MouseActionAdapter lev = null;
     private final BasicActionState basicState;
     private final boolean triggerAction = true;
     private Point pickPoint;
@@ -113,11 +115,32 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     public void mousePressed(MouseEvent e) {
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
-            if ((e.getModifiersEx() & buttonMask) != 0) {
+            int modifier = e.getModifiersEx();
+            if (!e.isConsumed() && (modifier & buttonMask) != 0) {
                 ViewCanvas<?> panner = getViewCanvas(e);
-                if (Objects.nonNull(panner)) {
-                    pickPoint = e.getPoint();
-                    setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+                int mask = InputEvent.CTRL_DOWN_MASK;
+                if ((modifier & mask) == mask && Objects.nonNull(panner)) {
+                    panner.getJComponent().setCursor(ActionW.WINLEVEL.getCursor());
+                    win = (MouseActionAdapter) panner.getEventManager().getAction(ActionW.WINDOW);
+                    if (win != null) {
+                        win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);
+                        win.setMoveOnX(true);
+                        win.mousePressed(e);
+                    }
+                    lev = (MouseActionAdapter) panner.getEventManager().getAction(ActionW.LEVEL);
+                    if (lev != null) {
+                        lev.setButtonMaskEx(lev.getButtonMaskEx() | buttonMask);
+                        lev.setInverse(true);
+                        lev.mousePressed(e);
+                    }
+                } else {
+                    win = null;
+                    lev = null;
+                    
+                    if (Objects.nonNull(panner)) {
+                        pickPoint = e.getPoint();
+                        setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+                    }
                 }
             }
         }
@@ -127,10 +150,16 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     public void mouseDragged(MouseEvent e) {
         if (basicState.isActionEnabled()) {
             int buttonMask = getButtonMaskEx();
-            if ((e.getModifiersEx() & buttonMask) != 0) {
+            if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
                 ViewCanvas<?> panner = getViewCanvas(e);
-                if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
-                    setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
+                if (win != null && Objects.nonNull(panner)) {
+                    panner.getJComponent().setCursor(ActionW.WINLEVEL.getCursor());
+                    win.mouseDragged(e);
+                    if (lev != null) {
+                        lev.mouseDragged(e);
+                    }
+                } else if (Objects.nonNull(panner) && Objects.nonNull(pickPoint)) {
+                        setPoint(panner.getImageCoordinatesFromMouse(e.getX(), e.getY()));
                 }
             }
         }
@@ -138,12 +167,13 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (basicState.isActionEnabled()) {
-            int buttonMask = getButtonMask();
-            if ((e.getModifiers() & buttonMask) != 0) {
-                ViewCanvas<?> panner = getViewCanvas(e);
-                Optional.ofNullable(panner).ifPresent(p -> p.getJComponent().repaint());
-            }
+        if(win != null || lev != null) {
+            win = null;
+            lev = null;
+        }
+        if (basicState.isActionEnabled() && !e.isConsumed() && (e.getModifiers() & getButtonMask()) != 0) {
+            ViewCanvas<?> panner = getViewCanvas(e);
+            Optional.ofNullable(panner).ifPresent(p -> p.getJComponent().repaint());
         }
     }
 

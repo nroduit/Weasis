@@ -846,25 +846,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public void resetDisplay() {
-        reset(ResetTools.All);
+        reset(ResetTools.ALL);
     }
 
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
-        if (ResetTools.All.equals(action)) {
+        if (ResetTools.ALL.equals(action)) {
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
-        } else if (ResetTools.Zoom.equals(action)) {
+        } else if (ResetTools.ZOOM.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
 
-        } else if (ResetTools.Rotation.equals(action)) {
+        } else if (ResetTools.ROTATION.equals(action)) {
             getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
-        } else if (ResetTools.WindowLevel.equals(action)) {
+        } else if (ResetTools.WL.equals(action)) {
             getAction(ActionW.PRESET, ComboItemListener.class).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
-        } else if (ResetTools.Pan.equals(action)) {
+        } else if (ResetTools.PAN.equals(action)) {
             if (selectedView2dContainer != null) {
                 ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
@@ -910,10 +910,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE)));
         getAction(ActionW.FILTER, ComboItemListener.class).ifPresent(
             a -> a.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
-        getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(
-            a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
-        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(
-            a -> a.setSelectedWithoutTriggerAction(LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
+        getAction(ActionW.ROTATION, SliderChangeListener.class)
+            .ifPresent(a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
+        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(a -> a.setSelectedWithoutTriggerAction(
+            LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
 
         getAction(ActionW.ZOOM, SliderChangeListener.class)
             .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
@@ -1313,6 +1313,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
+                    if (ResetTools.ALL.equals(action)) {
+                        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,  0));
+                    }
                     item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
@@ -1385,10 +1388,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 270) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
@@ -1400,8 +1405,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP, ToggleButtonListener.class);
                     if (flipAction.isPresent()) {
                         menu.add(new JSeparator());
-                        menu.add(flipAction.get()
-                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+                        menuItem = flipAction.get()
+                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h")); //$NON-NLS-1$
+                        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
+                        menu.add(menuItem);
                     }
                 }
             }
@@ -1731,18 +1738,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         GuiExecutor.instance().execute(() -> {
             if (opt.isSet("all")) { //$NON-NLS-1$
-                reset(ResetTools.All);
+                reset(ResetTools.ALL);
             } else {
                 for (String command : args) {
                     try {
                         if (ActionW.WINLEVEL.cmd().equals(command)) {
-                            reset(ResetTools.WindowLevel);
+                            reset(ResetTools.WL);
                         } else if (ActionW.ZOOM.cmd().equals(command)) {
-                            reset(ResetTools.Zoom);
+                            reset(ResetTools.ZOOM);
                         } else if (ActionW.PAN.cmd().equals(command)) {
-                            reset(ResetTools.Pan);
+                            reset(ResetTools.PAN);
                         } else if (ActionW.ROTATION.cmd().equals(command)) {
-                            reset(ResetTools.Rotation);
+                            reset(ResetTools.ROTATION);
                         } else {
                             LOGGER.warn("Reset command not found: {}", command); //$NON-NLS-1$
                         }

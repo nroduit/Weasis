@@ -214,8 +214,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         if (triggerAction && ajusting) {
             stateChanged(model);
             AuditLog.LOGGER.info("action:{} val:{} min:{} max:{}", //$NON-NLS-1$
-                new Object[] { basicState.getActionW().cmd(), model.getValue(), model.getMinimum(),
-                    model.getMaximum() });
+                basicState.getActionW().cmd(), model.getValue(), model.getMinimum(), model.getMaximum());
         }
 
         for (Object c : basicState.getComponents()) {

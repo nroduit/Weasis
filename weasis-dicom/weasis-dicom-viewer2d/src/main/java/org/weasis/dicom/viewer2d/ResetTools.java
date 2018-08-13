@@ -11,15 +11,15 @@
 package org.weasis.dicom.viewer2d;
 
 public enum ResetTools {
-    All(Messages.getString("ResetTools.all")), //$NON-NLS-1$
+    ALL(Messages.getString("ResetTools.all")), //$NON-NLS-1$
 
-    WindowLevel(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
+    WL(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
 
-    Zoom(Messages.getString("ViewerPrefView.zoom")), //$NON-NLS-1$
+    ZOOM(Messages.getString("ViewerPrefView.zoom")), //$NON-NLS-1$
 
-    Rotation(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
+    ROTATION(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
 
-    Pan(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
+    PAN(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
 
     private final String name;
 

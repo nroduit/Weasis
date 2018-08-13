@@ -1396,16 +1396,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     @Override
     public List<Action> getOpenExportDialogAction() {
-        return Arrays.asList(ImportExportToolBar.buildExportAction(this, model, BUTTON_NAME));
+        return Arrays.asList(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
     }
 
     @Override
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
-        actions.add(ImportExportToolBar.buildImportAction(this, model, BUTTON_NAME));
+        actions.add(ImportToolBar.buildImportAction(this, model, BUTTON_NAME));
         DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
             new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
-            event -> ImportExportToolBar.openImportDialogAction(this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
+            event -> ImportToolBar.openImportDicomCdAction(this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
         actions.add(importCDAction);
         return actions;
     }
