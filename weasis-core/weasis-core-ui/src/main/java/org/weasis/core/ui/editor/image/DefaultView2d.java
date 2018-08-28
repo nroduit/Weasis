@@ -740,8 +740,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         // Only apply when the panel size is not zero.
         if (getWidth() != 0 && getHeight() != 0) {
             getViewModel().setModelOffset(modelOffsetX, modelOffsetY);
-            Optional.ofNullable(panner).ifPresent(p -> p.updateImageSize());
-            Optional.ofNullable(lens).ifPresent(l -> l.updateZoom());
+            Optional.ofNullable(panner).ifPresent(Panner<E>::updateImageSize);
+            Optional.ofNullable(lens).ifPresent(ZoomWin<E>::updateZoom);
             updateAffineTransform();
         }
     }

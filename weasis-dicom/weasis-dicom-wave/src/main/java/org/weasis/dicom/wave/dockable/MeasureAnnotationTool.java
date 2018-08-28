@@ -68,8 +68,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     private final JPanel tableTagContainer = new JPanel();
     private JTable jtableTag;
 
-    private List<DragGraphic> selectedGraphic;
-
     public MeasureAnnotationTool() {
         super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
         this.rootPane = new JScrollPane();
