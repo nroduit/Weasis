@@ -802,11 +802,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (media instanceof DicomSpecialElement) {
                     List<DicomSpecialElement> specialElementList =
                         (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
-
+                    String rMime = dicomReader.getMimeType();
                     if (specialElementList == null) {
                         specialElementList = new CopyOnWriteArrayList<>();
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-                    } else if ("SR".equals(TagD.getTagValue(dicomReader, Tag.Modality))) { //$NON-NLS-1$
+                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<>();

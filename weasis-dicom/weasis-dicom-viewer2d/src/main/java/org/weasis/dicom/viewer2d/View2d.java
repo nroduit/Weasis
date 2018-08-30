@@ -919,7 +919,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (pts.size() == 2) {
                     LineWithGapGraphic line = new LineWithGapGraphic();
                     line.setCenterGap(center);
-                    line.setGapSize(75);
+                    line.setGapSize(50);
                     graphic = line.buildGraphic(pts);
                 } else {
                     graphic = new PolygonGraphic().buildGraphic(pts);
