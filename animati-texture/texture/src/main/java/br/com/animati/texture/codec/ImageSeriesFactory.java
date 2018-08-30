@@ -425,7 +425,7 @@ public class ImageSeriesFactory {
                 return isSigned ? TextureData.Format.SignedShort : TextureData.Format.UnsignedShort;
             }
 
-            if (lutparams.getBitsOutput() <= 8) {
+            if (bitsOutput <= 8) {
                 Integer tagValue = TagD.getTagValue(imgElement, Tag.SamplesPerPixel, Integer.class);
                 if (tagValue != null && tagValue > 1) {
                     // Color images has "Samples Per Pixel" equal to 3

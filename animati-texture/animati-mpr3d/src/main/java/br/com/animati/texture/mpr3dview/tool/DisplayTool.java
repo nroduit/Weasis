@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -253,9 +254,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private void initLayers(ViewCanvas<?> view) {
-        initPathSelection(getTreePath(drawings), JMVUtils.getNULLtoTrue(view.getActionValue(ActionW.DRAWINGS.cmd())));
+        initPathSelection(getTreePath(drawings),
+            LangUtil.getNULLtoTrue((Boolean) view.getActionValue(ActionW.DRAWINGS.cmd())));
         initPathSelection(getTreePath(crosslines),
-            JMVUtils.getNULLtoTrue(view.getActionValue(LayerType.CROSSLINES.name())));
+            LangUtil.getNULLtoTrue((Boolean) view.getActionValue(LayerType.CROSSLINES.name())));
     }
 
     private static TreePath getTreePath(TreeNode node) {
