@@ -25,6 +25,7 @@ import java.awt.image.MultiPixelPackedSampleModel;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.io.File;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -529,11 +530,12 @@ public class ImageProcessor {
                 Size dim = new Size((int) (scale * source.width()), (int) (scale * source.height()));
                 Mat thumbnail = new Mat();
                 Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
-                return Imgcodecs.imwrite(file.getPath(), thumbnail);
+                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+                return Imgcodecs.imwrite(file.getPath(), thumbnail, map);
             }
             return false;
         } catch (OutOfMemoryError | CvException e) {
-            LOGGER.error("Writing PNM", e); //$NON-NLS-1$
+            LOGGER.error("Writing thumbnail", e); //$NON-NLS-1$
             delete(file);
             return false;
         }
@@ -615,10 +617,7 @@ public class ImageProcessor {
     
     private static boolean deleteFile(File fileOrDirectory) {
         try {
-            if (!fileOrDirectory.delete()) {
-                LOGGER.warn("Cannot delete {}", fileOrDirectory.getPath()); //$NON-NLS-1$
-                return false;
-            }
+            Files.delete(fileOrDirectory.toPath());
         } catch (Exception e) {
             LOGGER.error("Cannot delete", e); //$NON-NLS-1$
             return false;

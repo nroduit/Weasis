@@ -8,10 +8,11 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.imageio.codec;
+package org.weasis.core.api.image.cv;
 
 import java.awt.image.RenderedImage;
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
 import java.nio.file.Files;
@@ -28,13 +29,17 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.ImageFiler;
+import org.weasis.core.api.internal.cv.NativeOpenCVCodec;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
@@ -53,20 +58,20 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
-public class ImageElementIO implements MediaReader {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImageElementIO.class);
+public class ImageCVIO implements MediaReader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
 
     public static final File CACHE_UNCOMPRESSED_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); //$NON-NLS-1$
 
-    protected final URI uri;
-    protected final String mimeType;
+    private final URI uri;
+    private final String mimeType;
 
     private final FileCache fileCache;
     private final Codec codec;
     private volatile ImageElement image = null;
 
-    public ImageElementIO(URI media, String mimeType, Codec codec) {
+    public ImageCVIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);
         this.fileCache = new FileCache(this);
         if (mimeType == null) {
@@ -105,7 +110,8 @@ public class ImageElementIO implements MediaReader {
             PlanarImage img = readImage(file, imgCachePath == null);
 
             if (imgCachePath != null) {
-                File rawFile = uncompress(imgCachePath, img);
+
+                File rawFile = uncompress(imgCachePath, img, media);
                 if (rawFile != null) {
                     file = rawFile;
                 }
@@ -118,10 +124,27 @@ public class ImageElementIO implements MediaReader {
     }
 
     private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
+        PlanarImage img = null;
         if (file.getPath().endsWith(".wcv")) { //$NON-NLS-1$
-            return new FileRawImage(file).read();
+            img = new FileRawImage(file).read();
+        } else if (codec instanceof NativeOpenCVCodec) {
+            img = ImageProcessor.readImageWithCvException(file);
+            if (img == null) {
+                // Try ImageIO
+                img = readImageIOImage(file);
+            }
+        } else {
+            img = readImageIOImage(file);
         }
 
+        if (img != null && image != null) {
+            image.setTag(TagW.ImageWidth, img.width());
+            image.setTag(TagW.ImageHeight, img.height());
+        }
+        return img;
+    }
+
+    private PlanarImage readImageIOImage(File file) throws IOException {
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
             LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
@@ -141,9 +164,6 @@ public class ImageElementIO implements MediaReader {
 
         // to avoid problem with alpha channel and png encoded in 24 and 32 bits
         bi = ImageFiler.getReadableImage(bi);
-
-        image.setTag(TagW.ImageWidth, bi.getWidth());
-        image.setTag(TagW.ImageHeight, bi.getHeight());
         return ImageConversion.toMat(bi);
     }
 
@@ -169,7 +189,11 @@ public class ImageElementIO implements MediaReader {
 
     @Override
     public MediaElement[] getMediaElement() {
-        return new MediaElement[] { getSingleImage() };
+        MediaElement element = getSingleImage();
+        if (element != null) {
+            return new MediaElement[] { element };
+        }
+        return null;
     }
 
     @Override
@@ -202,7 +226,7 @@ public class ImageElementIO implements MediaReader {
                 public void addMedia(MediaElement media) {
                     if (media instanceof ImageElement) {
                         this.add(media);
-                        DataExplorerModel model = (DataExplorerModel) this.getTagValue(TagW.ExplorerModel);
+                        DataExplorerModel model = (DataExplorerModel) getTagValue(TagW.ExplorerModel);
                         if (model != null) {
                             model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                                 new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));
@@ -305,7 +329,7 @@ public class ImageElementIO implements MediaReader {
         return fileCache;
     }
 
-    private File uncompress(Path imgCachePath, PlanarImage img) {
+    private File uncompress(Path imgCachePath, PlanarImage img, MediaElement media) {
         /*
          * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
          */
@@ -314,7 +338,34 @@ public class ImageElementIO implements MediaReader {
             File outFile = imgCachePath.toFile();
             try {
                 new FileRawImage(outFile).write(img);
-                ImageProcessor.writeThumbnail(img.toMat(),
+                PlanarImage img8 = img;
+                if (CvType.depth(img.type()) > CvType.CV_8S && media instanceof ImageElement) {
+                    ImageElement imgElement = ((ImageElement) media);
+                    Map<String, Object> params = null;
+                    if (!imgElement.isImageAvailable()) {
+                        // Ensure to load image before calling the default preset that requires pixel min and max
+                        params = new HashMap<>(2);
+                        double min = 0;
+                        double max = 65536;
+                        double[] val = ImageProcessor.findMinMaxValues(img.toMat());
+                        if (val != null && val.length == 2) {
+                            min = val[0];
+                            max = val[1];
+                        }
+
+                        // Handle special case when min and max are equal, ex. black image
+                        // + 1 to max enables to display the correct value
+                        if (MathUtil.isEqual(min, max)) {
+                            max += 1.0;
+                        }
+                        
+                        params.put(ActionW.WINDOW.cmd(), max -min);
+                        params.put(ActionW.LEVEL.cmd(), min + (max -min) / 2.0 );
+                    } 
+                    img8 = imgElement.getRenderedImage(img, params);
+                    
+                }
+                ImageProcessor.writeThumbnail(img8.toMat(),
                     new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE); //$NON-NLS-1$
                 return outFile;
             } catch (Exception e) {
