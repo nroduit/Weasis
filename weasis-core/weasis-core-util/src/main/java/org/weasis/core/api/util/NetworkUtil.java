@@ -87,10 +87,10 @@ public class NetworkUtil {
     public static String buildHttpParamsString(Map<String, String> params) {
         return params.entrySet().stream().map(e -> {
             try {
-                return URLEncoder.encode(e.getKey(), "UTF-8") + "=" + URLEncoder.encode(e.getValue(), "UTF-8");
+                return URLEncoder.encode(e.getKey(), "UTF-8") + "=" + URLEncoder.encode(e.getValue(), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             } catch (UnsupportedEncodingException e1) {
                 throw new IllegalArgumentException(e1);
             }
-        }).collect(Collectors.joining("&"));
+        }).collect(Collectors.joining("&")); //$NON-NLS-1$
     }
 }

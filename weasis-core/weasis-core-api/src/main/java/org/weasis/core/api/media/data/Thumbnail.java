@@ -142,9 +142,9 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     type = Messages.getString("Thumbnail.pdf"); //$NON-NLS-1$
                     icon = MimeInspector.pdfIcon;
                 } else if (mime.equals("wf/dicom")) { //$NON-NLS-1$
-                    type = "ECG";
+                    type = "ECG"; //$NON-NLS-1$
                     icon = MimeInspector.ecgIcon;
-                } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { //$NON-NLS-1$
+                } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { //$NON-NLS-1$ //$NON-NLS-2$
                     type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
                     icon = MimeInspector.audioIcon;
                 } else {
