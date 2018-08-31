@@ -4,14 +4,14 @@
 	<parent>
 		<artifactId>weasis-opencv-parent</artifactId>
 		<groupId>org.weasis.opencv</groupId>
-		<version>3.0.2-SNAPSHOT</version>
+		<version>3.0.2-rc1</version>
 		<relativePath>../weasis-opencv-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
 	<name>OpenCV native Mac amd64</name>
-	<version>3.4.0-dcmR3</version>
+	<version>4.0.0-dcmR1</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>

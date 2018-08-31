@@ -36,9 +36,9 @@ class ToolPanel extends JPanel {
         @Override
         public String toString() {
             if (this == AUTO) {
-                return "auto mm/s";
+                return "auto mm/s"; //$NON-NLS-1$
             }
-            return DecFormater.oneDecimal(value) + " mm/s";
+            return DecFormater.oneDecimal(value) + " mm/s"; //$NON-NLS-1$
         }
         
         public static Speed fromValue(double value) {
@@ -67,9 +67,9 @@ class ToolPanel extends JPanel {
         @Override
         public String toString() {
             if (this == AUTO) {
-                return "auto mm/mV";
+                return "auto mm/mV"; //$NON-NLS-1$
             }
-            return String.format("%d mm/mV", value);
+            return String.format("%d mm/mV", value); //$NON-NLS-1$
         }
 
         public static Amplitude fromValue(int value) {
@@ -92,7 +92,7 @@ class ToolPanel extends JPanel {
     }
 
     private void init() {
-        JLabel zoomLabel = new JLabel("Zoom");
+        JLabel zoomLabel = new JLabel(Messages.getString("ToolPanel.zoom")); //$NON-NLS-1$
         this.add(zoomLabel);
 
         JComboBox<Speed> speed = new JComboBox<>(Speed.values());
@@ -113,7 +113,7 @@ class ToolPanel extends JPanel {
     }
 
     private void addDisplayFormatComponent() {
-        formatLabel = new JLabel("Display format" + StringUtil.COLON);
+        formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON); //$NON-NLS-1$
         this.add(formatLabel);
 
         formatCombo = new JComboBox<>(Format.values());

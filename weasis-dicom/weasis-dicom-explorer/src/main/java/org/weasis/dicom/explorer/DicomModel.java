@@ -806,7 +806,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (specialElementList == null) {
                         specialElementList = new CopyOnWriteArrayList<>();
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$
+                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$ //$NON-NLS-2$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<>();

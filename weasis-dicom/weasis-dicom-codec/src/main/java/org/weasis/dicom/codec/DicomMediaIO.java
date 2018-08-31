@@ -17,6 +17,7 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -60,6 +61,7 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.util.StreamUtils;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -781,6 +783,15 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
 
             if (extParams.getSegmentPositions() != null) {
+                
+//                FileInputStream in = new FileInputStream(extParams.getFile());
+//                File outFile = new File(AppProperties.FILE_CACHE_DIR,
+//                    fileCache.getFinalFile().getName() + "-" + frame + ".j2k");
+//                FileOutputStream out = new FileOutputStream(outFile);
+//                StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
+//                StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
+                
+                
                 int dcmFlags =
                     dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
 
@@ -812,10 +823,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         TagD.getTagValue(this, Tag.Rows, Integer.class), 0,
                         TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
                         banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
-                    return ImageCV.toImageCV(Imgcodecs.dicomRawRead(orinigal.get().getAbsolutePath(), positions,
+                    return ImageCV.toImageCV(Imgcodecs.dicomRawFileRead(orinigal.get().getAbsolutePath(), positions,
                         lengths, dicomparams, pmi.name()));
                 }
-                return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(orinigal.get().getAbsolutePath(), positions, lengths,
+                return ImageCV.toImageCV(Imgcodecs.dicomJpgFileRead(orinigal.get().getAbsolutePath(), positions, lengths,
                     dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
 
                 // Mat buf = getMatBuffer(extParams);
@@ -1069,17 +1080,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     private boolean isRLELossless() {
         return dis == null ? false : dis.getTransferSyntax().equals(UID.RLELossless);
-    }
-
-    private ExtendSegmentedInputImageStream iisOfFrame(int frameIndex) throws IOException {
-        // // Extract compressed file
-        // if (!fileCache.isElementInMemory()) {
-        // String extension = "." + Optional.ofNullable(decompressor)
-        // .map(d -> d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
-        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex), new File(AppProperties.FILE_CACHE_DIR,
-        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension));
-        // }
-        return buildSegmentedImageInputStream(frameIndex);
     }
 
     private ExtendSegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex) throws IOException {

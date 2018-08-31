@@ -179,6 +179,11 @@ public class WeasisWinListener implements MainWindowListener {
                 } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
                     mainWindow.setSelectedPlugin(null);
                 }
+            } else if (event.getSource() instanceof DataExplorerView
+                && ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
+                if (mainWindow.getSelectedPlugin() == null) {
+                    mainWindow.setSelectedPlugin(null);
+                }
             }
         }
     }
@@ -218,13 +223,14 @@ public class WeasisWinListener implements MainWindowListener {
                 Optional.ofNullable(explorer.getDataExplorerModel())
                     .ifPresent(e -> e.removePropertyChangeListener(this));
                 UIManager.EXPLORER_PLUGINS.remove(explorer);
-                
-                //Update toolbar
+
+                // Update toolbar
                 List<Toolbar> tb = mainWindow.getToolbarContainer().getRegisteredToolBars();
                 tb.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
                 mainWindow.getToolbarContainer().registerToolBar(tb);
-                UIManager.VIEWER_PLUGINS.forEach(v -> v.getToolBar().removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
-                
+                UIManager.VIEWER_PLUGINS
+                    .forEach(v -> v.getToolBar().removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
+
                 explorer.dispose();
                 LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
             }

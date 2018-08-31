@@ -288,7 +288,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e);
+                LOGGER.error("Checking view type", e); //$NON-NLS-1$
             }
         }
         return false;
@@ -312,7 +312,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement> implemen
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e);
+            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
         }
         return null;
     }

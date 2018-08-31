@@ -362,7 +362,7 @@ public final class FileUtil {
         } catch (InterruptedIOException e) {
             FileUtil.delete(outFile);
             // Specific for SeriesProgressMonitor
-            LOGGER.error("Interruption when writing image", e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Interruption when writing image {}", e.getMessage()); //$NON-NLS-1$
             return e.bytesTransferred;
         } catch (IOException e) {
             FileUtil.delete(outFile);

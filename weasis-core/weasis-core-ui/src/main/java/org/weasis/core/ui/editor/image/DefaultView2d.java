@@ -875,9 +875,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
-            //TODO set clip bound
-//            double scale = viewModel.getViewScale();
-//            Rectangle2D b = new Rectangle2D.Double(viewModel.getModelOffsetX() * scale , viewModel.getModelOffsetY() * scale, getWidth(), getHeight());
             graphicManager.draw(g2d, transform, inverseTransform, null);
         }
     }
@@ -1446,7 +1443,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         List<Action> list = new ArrayList<>();
 
         AbstractAction exportToClipboardAction =
-            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")), event -> { //$NON-NLS-1$
+            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")), event -> { //$NON-NLS-1$ //$NON-NLS-2$
                 final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
                 imageTransferHandler.exportToClipboard(DefaultView2d.this,
                     Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
