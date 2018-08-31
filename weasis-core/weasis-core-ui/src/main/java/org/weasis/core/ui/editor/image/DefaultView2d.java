@@ -875,9 +875,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     @Override
     public void drawLayers(Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
         if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
-            //TODO set clip bound
-//            double scale = viewModel.getViewScale();
-//            Rectangle2D b = new Rectangle2D.Double(viewModel.getModelOffsetX() * scale , viewModel.getModelOffsetY() * scale, getWidth(), getHeight());
             graphicManager.draw(g2d, transform, inverseTransform, null);
         }
     }
