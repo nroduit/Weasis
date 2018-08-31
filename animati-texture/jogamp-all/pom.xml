@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>animati-texture</artifactId>
 		<groupId>br.com.animati</groupId>
-		<version>3.0.2-SNAPSHOT</version>
+		<version>3.0.2-rc1</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
