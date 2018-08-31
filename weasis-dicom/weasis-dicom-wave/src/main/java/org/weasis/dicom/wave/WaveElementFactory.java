@@ -19,7 +19,7 @@ public class WaveElementFactory implements DicomSpecialElementFactory {
 
     public static final String SERIES_WAVEFORM_MIMETYPE = "wf/dicom"; //$NON-NLS-1$
 
-    private static final String[] modalities = { "ECG", "HD" }; //$NON-NLS-1$
+    private static final String[] modalities = { "ECG", "HD" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     @Override
     public String getSeriesMimeType() {

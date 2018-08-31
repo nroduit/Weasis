@@ -34,7 +34,7 @@ public class ImportToolBar extends WtoolBar {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportToolBar.class);
 
     public ImportToolBar(int index, DicomExplorer explorer) {
-        super("DICOM Import Bar", index);
+        super(Messages.getString("ImportToolBar.dcm_import_bar"), index); //$NON-NLS-1$
         setAttachedInsertable(explorer);
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
@@ -42,7 +42,7 @@ public class ImportToolBar extends WtoolBar {
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
             final JButton btnImport =
                 new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png"))); //$NON-NLS-1$
-            btnImport.setToolTipText("Import DICOM");
+            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm")); //$NON-NLS-1$
             btnImport.addActionListener(
                 e -> showAction(ImportToolBar.this, model, Messages.getString("LocalImport.local_dev"), false) //$NON-NLS-1$
             );
@@ -52,9 +52,9 @@ public class ImportToolBar extends WtoolBar {
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
             final JButton btnImport =
                 new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import-cd.png"))); //$NON-NLS-1$
-            btnImport.setToolTipText("Import DICOM CD");
+            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd")); //$NON-NLS-1$
             btnImport.addActionListener(
-                e -> openImportDicomCdAction(ImportToolBar.this, model, Messages.getString("DicomExplorer.dcmCD"))); // $NON-NLS-1$
+                e -> openImportDicomCdAction(ImportToolBar.this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
             add(btnImport);
         }
     }
@@ -63,7 +63,7 @@ public class ImportToolBar extends WtoolBar {
         File file = DicomDirImport.getDcmDirFromMedia();
         if (file == null) {
             int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(parent),
-                "Cannot find DICOMDIR on media device, do you want to import manually?", actionName,
+                Messages.getString("ImportToolBar.import_cd_question"), actionName, //$NON-NLS-1$
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
@@ -103,7 +103,7 @@ public class ImportToolBar extends WtoolBar {
 
     public static DefaultAction buildImportAction(Component parent, DicomModel model, String actionName) {
         return new DefaultAction(actionName,
-            new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")), event -> {
+            new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")), event -> { //$NON-NLS-1$
                 if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
                     showAction(parent, model, Messages.getString("LocalImport.local_dev"), false); //$NON-NLS-1$
                 } else {

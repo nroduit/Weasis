@@ -55,7 +55,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
 
     private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"), //$NON-NLS-1$
-        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")),
+        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")), //$NON-NLS-1$
         ViewerFactory::getOpenImageAction);
 
     public ViewerFactory() {

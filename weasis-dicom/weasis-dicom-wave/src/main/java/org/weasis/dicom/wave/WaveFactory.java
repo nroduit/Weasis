@@ -31,7 +31,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class WaveFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "DICOM Waveform";
+    public static final String NAME = "DICOM Waveform"; //$NON-NLS-1$
 
     public WaveFactory() {
         super();

@@ -111,22 +111,22 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
                     String leadName = m.getLead().toString();
                     list.add(
-                        new Object[] { leadName, "Start Time", InfoPanel.secondFormatter.format(m.getStartSeconds()) });
+                        new Object[] { leadName, Messages.getString("WaveView.start_time"), InfoPanel.secondFormatter.format(m.getStartSeconds()) }); //$NON-NLS-1$
                     list.add(
-                        new Object[] { leadName, "Start Value", InfoPanel.mVFormatter.format(m.getStartMiliVolt()) });
+                        new Object[] { leadName, Messages.getString("WaveView.start_val"), InfoPanel.mVFormatter.format(m.getStartMiliVolt()) }); //$NON-NLS-1$
 
                     if (m.getStopSeconds() != null) {
-                        list.add(new Object[] { leadName, "Stop Time",
+                        list.add(new Object[] { leadName, Messages.getString("WaveView.stop_time"), //$NON-NLS-1$
                             InfoPanel.secondFormatter.format(m.getStopSeconds()) });
                         list.add(
-                            new Object[] { leadName, "Stop Value", InfoPanel.mVFormatter.format(m.getStopMiliVolt()) });
+                            new Object[] { leadName, Messages.getString("WaveView.stop_val"), InfoPanel.mVFormatter.format(m.getStopMiliVolt()) }); //$NON-NLS-1$
                     }
                     if (m.getDuration() != null) {
                         list.add(
-                            new Object[] { leadName, "Duration", InfoPanel.secondFormatter.format(m.getDuration()) });
-                        list.add(new Object[] { leadName, "Difference", InfoPanel.mVFormatter.format(m.getDiffmV()) });
+                            new Object[] { leadName, Messages.getString("WaveView.duration"), InfoPanel.secondFormatter.format(m.getDuration()) }); //$NON-NLS-1$
+                        list.add(new Object[] { leadName, Messages.getString("WaveView.diff"), InfoPanel.mVFormatter.format(m.getDiffmV()) }); //$NON-NLS-1$
                         list.add(
-                            new Object[] { leadName, "Amplitude", InfoPanel.mVFormatter.format(m.getAmplitude()) });
+                            new Object[] { leadName, Messages.getString("WaveView.amplitude"), InfoPanel.mVFormatter.format(m.getAmplitude()) }); //$NON-NLS-1$
                     }
                 }
             }
@@ -178,7 +178,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 series.setSelected(true, null);
                 displayECG(s);
             } catch (Exception e) {
-                LOGGER.error("Cannot display Waveform", e);
+                LOGGER.error("Cannot display Waveform", e); //$NON-NLS-1$
             }
         }
 
@@ -309,11 +309,11 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StreamUtils.skipFully(in, bulkData.offset());
                 StreamUtils.copy(in, array, bulkData.length());
             } catch (Exception e) {
-                LOGGER.error("Reading Waveform data");
+                LOGGER.error("Reading Waveform data"); //$NON-NLS-1$
                 return;
             }
         } else {
-            throw new Exception("Cannot read Waveform data");
+            throw new Exception("Cannot read Waveform data"); //$NON-NLS-1$
         }
 
         int bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(dcm, Tag.WaveformBitsAllocated, 0);
@@ -336,7 +336,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             DataBufferByte dataBuffer = new DataBufferByte(byteData, byteData.length, 0);
             waveData = new WaveByteData(dataBuffer, channelNumber, sampleNumber);
         } else {
-            throw new Exception("Unexpected bitsAllocated value: " + bitsAllocated);
+            throw new Exception("Unexpected bitsAllocated value: " + bitsAllocated); //$NON-NLS-1$
         }
     }
 
@@ -348,7 +348,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
             if (Lead.II == channel.getLead()) {
                 LeadPanel rhythm = new LeadPanel(this, waveData, new ChannelDefinition(channel, Lead.RYTHM.toString()));
-                cpane.add("rythm", rhythm);
+                cpane.add("rythm", rhythm); //$NON-NLS-1$
             }
         }
     }
@@ -504,7 +504,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             DicomSpecialElement dcm = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
             if (dcm != null && patient != null && study != null) {
                 g2.setColor(Color.black);
-                g2.setFont(new Font("SanSerif", Font.PLAIN, 9));
+                g2.setFont(new Font("SanSerif", Font.PLAIN, 9)); //$NON-NLS-1$
                 float fontHeight = FontTools.getAccurateFontHeight(g2);
                 float drawY = fontHeight;
                 TagW patNameTag = TagD.get(Tag.PatientName);
@@ -512,7 +512,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StringBuilder studyDate =
                     new StringBuilder(new TagView(TagD.getTagFromIDs(Tag.AcquisitionDate, Tag.ContentDate,
                         Tag.DateOfSecondaryCapture, Tag.SeriesDate, Tag.StudyDate)).getFormattedText(false, dcm));
-                studyDate.append(" - ");
+                studyDate.append(" - "); //$NON-NLS-1$
                 studyDate.append(new TagView(TagD.getTagFromIDs(Tag.AcquisitionTime, Tag.ContentTime,
                     Tag.TimeOfSecondaryCapture, Tag.SeriesTime, Tag.StudyTime)).getFormattedText(false, dcm));
                 g2.drawString(studyDate.toString(), midWidth, drawY);
@@ -522,16 +522,16 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StringBuilder birthDate =
                     new StringBuilder(patBirthTag.getFormattedTagValue(patient.getTagValue(patBirthTag), null));
                 TagW patSexTag = TagD.get(Tag.PatientSex);
-                birthDate.append(" - ");
+                birthDate.append(" - "); //$NON-NLS-1$
                 birthDate.append(patSexTag.getFormattedTagValue(patient.getTagValue(patSexTag), null));
                 g2.drawString(birthDate.toString(), 0, drawY);
                 TagW studyDesTag = TagD.get(Tag.StudyDescription);
-                g2.drawString(studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), midWidth,
+                g2.drawString(studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), midWidth, //$NON-NLS-1$
                     drawY);
                 drawY += fontHeight;
 
                 TagW patIDTag = TagD.get(Tag.PatientID);
-                g2.drawString(patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), 0, drawY);
+                g2.drawString(patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), 0, drawY); //$NON-NLS-1$
                 TagW studyAcNbTag = TagD.get(Tag.AccessionNumber);
                 g2.drawString(studyAcNbTag.getFormattedTagValue(study.getTagValue(studyAcNbTag), null), midWidth,
                     drawY);

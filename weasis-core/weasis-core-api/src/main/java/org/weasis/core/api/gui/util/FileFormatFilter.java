@@ -148,7 +148,7 @@ public class FileFormatFilter extends FileFilter {
         List<String> namesList = BundleTools.CODEC_PLUGINS.stream().flatMap(c -> Arrays.asList(c.getReaderExtensions()).stream())
             .distinct().sorted().collect(Collectors.toList());
         // Remove DICOM extensions
-        namesList.removeAll(Arrays.asList("dcm", "dic", "dicm", "dicom"));
+        namesList.removeAll(Arrays.asList("dcm", "dic", "dicm", "dicom")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         Iterator<String> it = namesList.iterator();
         String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$
         ArrayList<String> names = new ArrayList<>();

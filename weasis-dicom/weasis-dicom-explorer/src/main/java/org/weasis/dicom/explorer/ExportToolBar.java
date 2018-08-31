@@ -23,7 +23,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ExportToolBar extends WtoolBar {
 
     public ExportToolBar(int index, DicomExplorer explorer) {
-        super("DICOM Export Bar", index);
+        super(Messages.getString("ExportToolBar.dcm_export_bar"), index); //$NON-NLS-1$
         setAttachedInsertable(explorer);
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
@@ -31,16 +31,16 @@ public class ExportToolBar extends WtoolBar {
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
             final JButton btnExport =
                 new JButton(new ImageIcon(ExportToolBar.class.getResource("/icon/32x32/dcm-export.png"))); //$NON-NLS-1$
-            btnExport.setToolTipText("Export DICOM");
+            btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm")); //$NON-NLS-1$
             btnExport.addActionListener(e -> ImportToolBar.showAction(ExportToolBar.this, model,
-                Messages.getString("LocalExport.local_dev"), true)); // $NON-NLS-1$
+                Messages.getString("LocalExport.local_dev"), true)); //$NON-NLS-1$
             add(btnExport);
         }
     }
 
     public static DefaultAction buildExportAction(Component parent, DicomModel model, String actionName) {
         return new DefaultAction(actionName,
-            new ImageIcon(ExportToolBar.class.getResource("/icon/16x16/dcm-export.png")), event -> {
+            new ImageIcon(ExportToolBar.class.getResource("/icon/16x16/dcm-export.png")), event -> { //$NON-NLS-1$
                 if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
                     ImportToolBar.showAction(parent, model, Messages.getString("LocalExport.local_dev"), true); //$NON-NLS-1$
                 } else {
