@@ -105,5 +105,33 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>tilecachetool</artifactId>
 		</dependency>
+		
+	    <dependency>
+	      <groupId>com.google.apis</groupId>
+	      <artifactId>google-api-services-oauth2</artifactId>
+	      <version>v2-rev141-1.25.0</version>
+	    </dependency>
+	    <dependency>
+	      <groupId>com.google.http-client</groupId>
+	      <artifactId>google-http-client-jackson2</artifactId>
+	      <version>1.25.0</version>
+	    </dependency>
+	    <dependency>
+	      <groupId>com.google.oauth-client</groupId>
+	      <artifactId>google-oauth-client-jetty</artifactId>
+	      <version>1.25.0</version>
+	    </dependency>
+		<dependency>
+		    <groupId>com.google.api-client</groupId>
+		    <artifactId>google-api-client</artifactId>
+		    <version>1.25.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.google.apis</groupId>
+		    <artifactId>google-api-services-cloudresourcemanager</artifactId>
+		    <version>v1-rev502-1.25.0</version>
+		</dependency>
+	    
+		
 	</dependencies>
 </project>
