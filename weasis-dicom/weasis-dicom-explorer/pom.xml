@@ -25,9 +25,20 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<Embed-Dependency>
+							*;scope=compile|runtime;inline=true
+						</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Import-Package>
+							com.google.errorprone.*;resolution:=optional,
+							javax.mail.*;resolution:=optional,
+							sun.misc;resolution:=optional,
+							com.sun.jdmk.comm;resolution:=optional,*
+						</Import-Package>
 					</instructions>
 				</configuration>
 			</plugin>
@@ -52,6 +63,13 @@
 			<artifactId>weasis-dicom-codec</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- FOR GOOGLE DEMO -->
+		<dependency>
+			<groupId>com.codeminders</groupId>
+			<artifactId>google-demo-service</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

@@ -105,5 +105,11 @@
 			<groupId>org.weasis.thirdparty</groupId>
 			<artifactId>tilecachetool</artifactId>
 		</dependency>
+		<!-- FOR GOOGLE DEMO -->		
+		<dependency>
+			<groupId>com.codeminders</groupId>
+			<artifactId>google-demo-service</artifactId>
+			<version>${com.codeminders.demo.version}</version>
+		</dependency>
 	</dependencies>
 </project>

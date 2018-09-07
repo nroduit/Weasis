@@ -51,6 +51,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -98,6 +99,9 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
+import com.codeminders.demo.GoogleAPIClient;
+import com.codeminders.demo.GoogleAPIClientFactory;
+
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 
@@ -125,7 +129,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     private final SeriesSelectionModel selectionList;
 
     private final DicomModel model;
+    private final GoogleAPIClient googleAPIClient;
 
+    private final ArrayListComboBoxModel<Object> modelProject =
+            new ArrayListComboBoxModel<>(DicomSorter.PATIENT_COMPARATOR);
     private final ArrayListComboBoxModel<Object> modelPatient =
         new ArrayListComboBoxModel<>(DicomSorter.PATIENT_COMPARATOR);
     private final ArrayListComboBoxModel<Object> modelStudy =
@@ -158,6 +165,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
 
+    private final JComboBox<?> googleProjectCombobox = new JComboBox<>(modelProject);
+    
     public DicomExplorer() {
         this(null);
     }
@@ -172,7 +181,16 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         thumnailView.getVerticalScrollBar().setUnitIncrement(16);
         thumnailView.setViewportView(patientContainer);
         changeToolWindowAnchor(getDockable().getBaseLocation());
-
+    	googleAPIClient = GoogleAPIClientFactory.getInstance().createGoogleClient();
+        initGoogleAddon();
+    }
+    
+    private void initGoogleAddon() {
+    	try {
+    		googleAPIClient.fetchProjects().forEach(modelProject::addElement);
+    	} catch(Exception e) {
+    		JOptionPane.showMessageDialog(null, "Error fetching Google projects: " + e.getMessage());
+    	}
     }
 
     public SeriesSelectionModel getSelectionList() {
@@ -768,6 +786,21 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panel.setLayout(gridBagLayout);
             panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
+            
+            final GridBagConstraints gridBagConstraints5 = new GridBagConstraints();
+            gridBagConstraints5.insets = new Insets(0, 2, 5, 0);
+            gridBagConstraints5.anchor = GridBagConstraints.WEST;
+            gridBagConstraints5.weightx = 1.0;
+            gridBagConstraints5.gridx = 1;
+            gridBagConstraints5.gridy = 0;
+            panel.add(googleProjectCombobox, gridBagConstraints5);
+            googleProjectCombobox.setFont(FontTools.getFont11());
+            JMVUtils.setPreferredWidth(googleProjectCombobox, 145, 145);
+            googleProjectCombobox.updateUI();
+            googleProjectCombobox.addItemListener(patientChangeListener);
+            JMVUtils.addTooltipToComboList(googleProjectCombobox);
+
+            
             final JLabel label = new JLabel(PATIENT_ICON);
             final GridBagConstraints gridBagConstraints = new GridBagConstraints();
             gridBagConstraints.insets = new Insets(0, 0, 5, 5);
@@ -779,7 +812,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints1.insets = new Insets(0, 2, 5, 0);
             gridBagConstraints1.anchor = GridBagConstraints.WEST;
             gridBagConstraints1.weightx = 1.0;
-            gridBagConstraints1.gridy = 0;
+            gridBagConstraints1.gridy = 1;
             gridBagConstraints1.gridx = 1;
             panel.add(patientCombobox, gridBagConstraints1);
             patientCombobox.setMaximumRowCount(15);
@@ -794,7 +827,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints3.anchor = GridBagConstraints.WEST;
             gridBagConstraints3.insets = new Insets(2, 2, 5, 0);
             gridBagConstraints3.gridx = 1;
-            gridBagConstraints3.gridy = 1;
+            gridBagConstraints3.gridy = 2;
 
             panel.add(studyCombobox, gridBagConstraints3);
             studyCombobox.setMaximumRowCount(15);
@@ -812,7 +845,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             gridBagConstraints4.anchor = GridBagConstraints.WEST;
             gridBagConstraints4.insets = new Insets(2, 2, 5, 0);
             gridBagConstraints4.gridx = 1;
-            gridBagConstraints4.gridy = 2;
+            gridBagConstraints4.gridy = 3;
 
             panel.add(koOpen, gridBagConstraints4);
             koOpen.addActionListener(e -> {
@@ -854,7 +887,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 GridBagConstraints gbcbtnMoreOptions = new GridBagConstraints();
                 gbcbtnMoreOptions.anchor = GridBagConstraints.EAST;
                 gbcbtnMoreOptions.gridx = 1;
-                gbcbtnMoreOptions.gridy = 3;
+                gbcbtnMoreOptions.gridy = 4;
                 btnMoreOptions.setFont(FontTools.getFont10());
                 btnMoreOptions.addActionListener(e -> {
                     if (btnMoreOptions.isSelected()) {

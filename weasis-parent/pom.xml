@@ -45,6 +45,7 @@
 		<assertj.version>3.10.0</assertj.version>
 		<powermock.version>1.7.0</powermock.version>
 		<bean-matchers.version>0.11</bean-matchers.version>
+		<com.codeminders.demo.version>0.0.1-SNAPSHOT</com.codeminders.demo.version>
 	</properties>
 
 	<licenses>
@@ -442,6 +443,6 @@
 			<artifactId>org.apache.felix.scr.annotations</artifactId>
 			<version>${felix.scr.annotations.version}</version>
 			<scope>provided</scope>
-		</dependency>
+		</dependency>		
 	</dependencies>
 </project>

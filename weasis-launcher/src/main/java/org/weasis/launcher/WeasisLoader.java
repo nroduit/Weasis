@@ -31,12 +31,16 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
 import org.weasis.launcher.applet.WeasisFrame;
+
+import com.codeminders.demo.GoogleAPIClient;
+import com.codeminders.demo.GoogleAPIClientFactory;
 
 public class WeasisLoader {
 
@@ -58,11 +62,13 @@ public class WeasisLoader {
     private final File resPath;
     private final WeasisFrame mainFrame;
     private final Properties localProperties;
+    private final GoogleAPIClient auth;
 
     public WeasisLoader(File resPath, WeasisFrame mainFrame, Properties localProperties) {
         this.resPath = resPath;
         this.mainFrame = mainFrame;
         this.localProperties = localProperties;
+		auth = GoogleAPIClientFactory.getInstance().createGoogleClient();
     }
 
     public void writeLabel(String text) {
@@ -215,6 +221,15 @@ public class WeasisLoader {
                     initGUI();
                 }
                 displayOnScreen();
+            });
+            EventQueue.invokeAndWait(() -> {
+                try {
+                	auth.signIn();
+                } catch (Exception e) {
+                	JOptionPane.showMessageDialog(null, "Error in Google Sign In: " + e.getMessage());
+                	close();
+                	e.printStackTrace();
+                }
             });
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
