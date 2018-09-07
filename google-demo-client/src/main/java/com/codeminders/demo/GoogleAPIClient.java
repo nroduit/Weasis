@@ -1,4 +1,4 @@
-package org.weasis.launcher;
+package com.codeminders.demo;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -59,6 +59,11 @@ public class GoogleAPIClient {
 	/** Instance of Google Cloud Resource Manager */
 	private static CloudResourceManager cloudResourceManager;
 
+	private boolean isSignedIn = false;
+	
+	protected GoogleAPIClient() {
+	}
+	
 	private static Credential authorize() throws Exception {
 		// load client secrets
 		clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
@@ -77,29 +82,29 @@ public class GoogleAPIClient {
 	}
 
 	public void signIn() throws Exception{
-		httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-		dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
-		// authorization
-		Credential credential = authorize();
-		// set up global Oauth2 instance
-		oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME)
-				.build();
-		
-		cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
-				.build();
-		
-		// run commands
-		tokenInfo(credential.getAccessToken());
-		userInfo();
-		
-		
-		fetchProjects().forEach(System.out::println);
+		if (!isSignedIn) {
+			httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+			dataStoreFactory = new FileDataStoreFactory(DATA_STORE_DIR);
+			// authorization
+			Credential credential = authorize();
+			// set up global Oauth2 instance
+			oauth2 = new Oauth2.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME)
+					.build();
+			
+			cloudResourceManager = new CloudResourceManager.Builder(httpTransport, JSON_FACTORY, credential)
+					.build();
+			
+			// run commands
+			tokenInfo(credential.getAccessToken());
+			userInfo();
+			isSignedIn = true;
+		}
 	}
 
 	private static void tokenInfo(String accessToken) throws IOException {
 		System.out.println("Validating token");
 		Tokeninfo tokeninfo = oauth2.tokeninfo().setAccessToken(accessToken).execute();
-		System.out.println(tokeninfo.toPrettyString());
+		System.out.println(tokeninfo.toString());
 		if (!tokeninfo.getAudience().equals(clientSecrets.getDetails().getClientId())) {
 			System.err.println("ERROR: audience does not match our client ID!");
 		}
@@ -108,11 +113,12 @@ public class GoogleAPIClient {
 	private static void userInfo() throws IOException {
 		System.out.println("Obtaining User Profile Information");
 		Userinfoplus userinfo = oauth2.userinfo().get().execute();
-		System.out.println(userinfo.toPrettyString());
+		System.out.println(userinfo.toString());
 	}
 	
-	public List<String> fetchProjects() throws IOException {
-		List<String> result = new ArrayList<>();
+	public List<String> fetchProjects() throws Exception {
+		signIn();
+		List<String> result = new ArrayList<String>();
 		CloudResourceManager.Projects.List request = cloudResourceManager.projects().list();
 	    ListProjectsResponse response;
 	    do {

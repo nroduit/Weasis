@@ -39,6 +39,9 @@ import javax.swing.SwingConstants;
 import org.osgi.framework.BundleContext;
 import org.weasis.launcher.applet.WeasisFrame;
 
+import com.codeminders.demo.GoogleAPIClient;
+import com.codeminders.demo.GoogleAPIClientFactory;
+
 public class WeasisLoader {
 
     public enum LoadingMessageType {
@@ -65,7 +68,7 @@ public class WeasisLoader {
         this.resPath = resPath;
         this.mainFrame = mainFrame;
         this.localProperties = localProperties;
-        auth = new GoogleAPIClient();
+		auth = GoogleAPIClientFactory.getInstance().createGoogleClient();
     }
 
     public void writeLabel(String text) {
@@ -210,7 +213,7 @@ public class WeasisLoader {
     public boolean isClosed() {
         return container == null;
     }
-    
+
     public void open() {
         try {
             EventQueue.invokeAndWait(() -> {
