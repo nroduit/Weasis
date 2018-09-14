@@ -1381,8 +1381,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         SeriesThumbnail result = null;
         try {
             result = future.get();
-        } catch (InterruptedException | ExecutionException e) {
-            LOGGER.error("Building Series thumbnail", e); //$NON-NLS-1$
+        } catch (InterruptedException e) {
+            LOGGER.warn("Building Series thumbnail task Interruption"); //$NON-NLS-1$
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException e) {
+            LOGGER.error("Building Series thumbnail task", e); //$NON-NLS-1$
         }
         return result;
     }

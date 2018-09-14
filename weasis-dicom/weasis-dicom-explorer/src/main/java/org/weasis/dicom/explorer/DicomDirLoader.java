@@ -78,14 +78,13 @@ public class DicomDirLoader {
     public List<LoadSeries> readDicomDir() {
         Attributes dcmPatient = null;
         MediaSeriesGroup patient = null;
-        int pat = 0;
 
         try (DicomDirReader reader = new DicomDirReader(dcmDirFile)) {
             dcmPatient = findFirstRootDirectoryRecordInUse(reader);
 
             while (dcmPatient != null) {
                 if (RecordType.PATIENT.name().equals(dcmPatient.getString(Tag.DirectoryRecordType))) {
-                    parsePatient(dcmPatient, reader);
+                    patient = parsePatient(dcmPatient, reader);
                 }
                 dcmPatient = findNextSiblingRecord(dcmPatient, reader);
             }
@@ -93,19 +92,15 @@ public class DicomDirLoader {
             LOGGER.error("Cannot read DICOMDIR !", e); //$NON-NLS-1$
         }
 
-        if (pat == 1) {
+        if (patient != null) {
             // In case of the patient already exists, select it
             final MediaSeriesGroup uniquePatient = patient;
-            GuiExecutor.instance().execute(new Runnable() {
-
-                @Override
-                public void run() {
-                    synchronized (UIManager.VIEWER_PLUGINS) {
-                        for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
-                            if (uniquePatient.equals(p.getGroupID())) {
-                                p.setSelectedAndGetFocus();
-                                break;
-                            }
+            GuiExecutor.instance().execute(() -> {
+                synchronized (UIManager.VIEWER_PLUGINS) {
+                    for (final ViewerPlugin p : UIManager.VIEWER_PLUGINS) {
+                        if (uniquePatient.equals(p.getGroupID())) {
+                            p.setSelectedAndGetFocus();
+                            break;
                         }
                     }
                 }
@@ -121,25 +116,24 @@ public class DicomDirLoader {
         return seriesList;
     }
 
-    private boolean parsePatient(Attributes dcmPatient, DicomDirReader reader) {
-        boolean newPatient = false;
+    private MediaSeriesGroup parsePatient(Attributes dcmPatient, DicomDirReader reader) {
+        MediaSeriesGroup patient = null;
         try {
             PatientComparator patientComparator = new PatientComparator(dcmPatient);
             String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
-            MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
+            patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
             if (patient == null) {
                 patient = new MediaSeriesGroupNode(TagD.getUID(Level.PATIENT), patientPseudoUID,
                     DicomModel.patient.getTagView());
                 DicomMediaUtils.writeMetaData(patient, dcmPatient);
                 dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-                newPatient = true;
             }
             parseStudy(patient, dcmPatient, reader);
         } catch (Exception e) {
             LOGGER.error("Cannot read DICOMDIR !", e); //$NON-NLS-1$
         }
-        return newPatient;
+        return patient;
     }
 
     private void parseStudy(MediaSeriesGroup patient, Attributes dcmPatient, DicomDirReader reader) {
