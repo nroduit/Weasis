@@ -3,7 +3,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>3.0.2</version>
+		<version>3.0.3-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
