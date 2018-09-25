@@ -39,3 +39,15 @@ hs_err*.log
 /index.xml*
 /bin/
 /src/
+
+# OSx generated files
+.DS_Store
+Thumbs.db
+
+# Ignore TEMPORARY folders
+_*/
+
+# Ignore runnable script
+*.command
+*.bat
+*.sh
