@@ -39,11 +39,6 @@ import org.osgi.framework.BundleContext;
 import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLoader {
-
-    public enum LoadingMessageType {
-        No, Disclaimer, NewVersion
-    };
-
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
     public static final String FRM_TITLE =
