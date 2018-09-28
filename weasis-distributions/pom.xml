@@ -288,7 +288,7 @@
 								<artifactItem>
 									<groupId>org.weasis.opencv</groupId>
 									<artifactId>weasis-opencv-core</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>

@@ -40,7 +40,7 @@
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.org.opencv</groupId>
 									<artifactId>opencv</artifactId>
-									<version>4.0.0-dcmR1</version>
+									<version>${weasis.opencv.native.version}</version>
 									<classifier>sources</classifier>
 								</artifactItem>
 							</artifactItems>
