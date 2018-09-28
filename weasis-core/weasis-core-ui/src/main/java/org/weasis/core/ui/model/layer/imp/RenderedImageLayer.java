@@ -23,6 +23,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.AffineTransformOp;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpEventListener;
@@ -227,8 +228,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         try {
             g2d.drawRenderedImage(ImageConversion.toBufferedImage(displayImage),
                 AffineTransform.getTranslateInstance(0.0, 0.0));
-        } catch (Exception | OutOfMemoryError e) {
-            LOGGER.error("Draw rendered image", e);//$NON-NLS-1$
+        } catch (Exception e) {
+            LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
             if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
                 // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data
                 // immediately)
@@ -237,15 +238,11 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
                 }
                 disOpManager.setFirstNode(getSourceRenderedImage());
                 updateDisplayOperations();
-            } else if (e instanceof OutOfMemoryError) {
-                // When outOfMemory exception or when tiles are not available anymore (file stream closed)
-                System.gc();
-                try {
-                    // Let garbage collection
-                    Thread.sleep(100);
-                } catch (InterruptedException et) {
-                }
             }
+        }
+        catch (OutOfMemoryError e) {
+            LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
+            CvUtil.runGarbageCollectorAndWait(100);
         }
         g2d.setClip(clip);
 

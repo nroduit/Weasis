@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -79,6 +80,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -162,7 +165,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
+            Optional<Toolbar> importBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportToolBar).findFirst();
+            importBar.ifPresent(TOOLBARS::add);
+            Optional<Toolbar> exportBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ExportToolBar).findFirst();
+            exportBar.ifPresent(TOOLBARS::add);
+            Optional<Toolbar> viewBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ViewerToolBar).findFirst();
+            viewBar.ifPresent(TOOLBARS::add);
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));

@@ -191,11 +191,11 @@ public class LookupTableCV {
         if (lkpDataType == DataBuffer.TYPE_BYTE) {
             boolean scrByte = srcDataType == DataBuffer.TYPE_BYTE;
             byte[] bDstData = scrByte && channels >= lkbBands ? bSrcData : new byte[width * height * lkbBands];
-            if (scrByte) {
+            if (scrByte && bSrcData != null) {
                 lookup(bSrcData, bDstData, tblOffsets, bTblData);
-            } else if (srcDataType == DataBuffer.TYPE_USHORT) {
+            } else if (srcDataType == DataBuffer.TYPE_USHORT && sSrcData != null && bDstData != null) {
                 lookupU(sSrcData, bDstData, tblOffsets, bTblData);
-            } else if (srcDataType == DataBuffer.TYPE_SHORT) {
+            } else if (srcDataType == DataBuffer.TYPE_SHORT && sSrcData != null && bDstData != null) {
                 lookup(sSrcData, bDstData, tblOffsets, bTblData);
             } else {
                 throw new IllegalArgumentException("Not supported LUT conversion from source dataType " + srcDataType);

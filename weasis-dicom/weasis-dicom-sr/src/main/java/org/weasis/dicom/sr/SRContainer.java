@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.weasis.dicom.sr;
 
-import java.awt.BorderLayout;
 import java.awt.Insets;
 import java.awt.event.KeyEvent;
 import java.awt.print.PageFormat;
@@ -22,17 +21,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.Action;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
@@ -42,16 +40,14 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -66,6 +62,8 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 
 public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
@@ -134,7 +132,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     public SRContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, SRFactory.ICON, null);
+        super(SR_EVENT_MANAGER, layoutModel, uid, SRFactory.NAME, MimeInspector.textIcon, null);
         setSynchView(SynchView.NONE);
         if (!initComponents) {
             initComponents = true;
@@ -144,6 +142,19 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ExportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ExportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(SrToolBar.class), key, true)) {
                 TOOLBARS.add(new SrToolBar(10));
@@ -301,17 +312,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     void displayHeader() {
         if (srview != null) {
-            JFrame frame = new JFrame(org.weasis.dicom.explorer.Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-            frame.setSize(500, 630);
-            DicomFieldsView view = new DicomFieldsView(this);
-            view.changingViewContentEvent(new SeriesViewerEvent(this, srview.getSeries(),
-                DicomModel.getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class), EVENT.SELECT));
-            JPanel panel = new JPanel();
-            panel.setLayout(new BorderLayout());
-            panel.add(view);
-            frame.getContentPane().add(panel);
-            frame.setAlwaysOnTop(true);
-            JMVUtils.showCenterScreen(frame, srview);
+            DicomSpecialElement dcm =  DicomModel.getFirstSpecialElement(srview.getSeries(), DicomSpecialElement.class);
+            DicomFieldsView.showHeaderDialog(this,  srview.getSeries(), dcm);
         }
     }
 

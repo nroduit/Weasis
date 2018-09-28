@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import javax.imageio.IIOException;
 import javax.swing.JOptionPane;
@@ -525,7 +524,7 @@ public class SeriesBuilder {
                 File dir = new File(MPR_CACHE_DIR, params.seriesUID);
                 dir.mkdirs();
                 for (int i = 0; i < newSeries.length; i++) {
-                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$
+                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$ //$NON-NLS-2$
                     builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
                 }
             }
@@ -537,18 +536,6 @@ public class SeriesBuilder {
 
     }
     
-    public static void showTimeElapsed(StringBuilder buf, String prefix, int prefixAlign, long difference) {
-        long nano = difference;
-        long sec = TimeUnit.NANOSECONDS.toSeconds(nano);
-        nano -= TimeUnit.SECONDS.toNanos(sec);
-        long millis = TimeUnit.NANOSECONDS.toMillis(nano);
-        nano -= TimeUnit.MILLISECONDS.toNanos(millis);
-        long micro = TimeUnit.NANOSECONDS.toMicros(nano);
-        nano -= TimeUnit.MICROSECONDS.toNanos(micro);
-        buf.append(String.format("%" + prefixAlign + "s", prefix));
-        buf.append(String.format("%3d sec, %3d mil, %3d micro, %3d nano", sec, millis, micro, nano));
-    }
-
     private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
         axis.normalize();
         vDst.x = axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))

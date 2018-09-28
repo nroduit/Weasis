@@ -5,7 +5,7 @@
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
 		<!-- Remove "-SNAPSHOT" for release -->
-		<version>3.0.1-SNAPSHOT</version>
+		<version>3.0.3-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -246,6 +246,12 @@
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
+									<groupId>org.glassfish</groupId>
+									<artifactId>javax.json</artifactId>
+									<version>${javax.json.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>docking-frames</artifactId>
 									<version>${dockingframes.version}</version>
@@ -275,14 +281,14 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								
+
 								<!-- ===================================== -->
 								<!-- Weasis OpenCV bundles -->
 								<!-- ===================================== -->
 								<artifactItem>
 									<groupId>org.weasis.opencv</groupId>
 									<artifactId>weasis-opencv-core</artifactId>
-									<version>${project.version}</version>
+									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
@@ -406,7 +412,7 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								
+
 								<!-- ===================================== -->
 								<!-- Weasis Acquisition bundles -->
 								<!-- ===================================== -->
@@ -521,9 +527,11 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${project.build.directory}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+									classpath="${project.build.directory}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -611,8 +619,8 @@
 					<plugin>
 						<!-- normalize jar before signing -->
 						<groupId>org.weasis.maven</groupId>
-						<artifactId>maven-pack200-plugin</artifactId>
-						<version>1.0.3</version>
+						<artifactId>build-pack200-plugin</artifactId>
+						<version>1.0.4</version>
 						<executions>
 							<execution>
 								<id>sign</id>
@@ -697,6 +705,10 @@
 									<includes>
 										<include>**/*.jar</include>
 									</includes>
+									<excludes>
+										<!-- exclude .original.jar files that will be excluded from final packaging -->
+										<exclude>bundle/*.original.jar</exclude>
+									</excludes>
 								</configuration>
 							</execution>
 						</executions>
@@ -775,7 +787,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-dependency-plugin</artifactId>
-						<version>3.0.1</version>
 						<executions>
 							<execution>
 								<id>unpack-i18njar</id>

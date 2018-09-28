@@ -46,7 +46,7 @@ public class DicomCodec implements Codec {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomCodec.class);
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
-    public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String[] FILE_EXTENSIONS = { "dcm", "dic", "dicm", "dicom" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
     private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$

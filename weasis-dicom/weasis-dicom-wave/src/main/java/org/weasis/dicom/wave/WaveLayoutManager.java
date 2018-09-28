@@ -38,11 +38,11 @@ public class WaveLayoutManager implements LayoutManager {
     private double speed;
     private int amplitude;
 
-    public WaveLayoutManager(WaveView view, Format format) {
+    public WaveLayoutManager(WaveView view, Format format, double speed, int amplitude) {
         this.view = view;
         this.components = new LinkedHashMap<>();
-        this.speed = DEFAULT_SPEED;
-        this.amplitude = DEFAULT_AMPLITUDE;
+        this.speed = speed;
+        this.amplitude = amplitude;
         this.layout = new StandardWaveLayout();
         setWaveFormat(format);
     }
@@ -61,6 +61,14 @@ public class WaveLayoutManager implements LayoutManager {
 
     public List<LeadPanel> getSortedComponents() {
         return layout.getSortedComponents(format, components);
+    }
+
+    public double getSpeed() {
+        return speed;
+    }
+
+    public int getAmplitude() {
+        return amplitude;
     }
 
     @Override

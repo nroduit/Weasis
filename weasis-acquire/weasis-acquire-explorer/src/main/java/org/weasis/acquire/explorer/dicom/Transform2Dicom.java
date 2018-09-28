@@ -35,6 +35,7 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -74,7 +75,7 @@ public final class Transform2Dicom {
         String sopInstanceUID = Objects.requireNonNull((String) imageElement.getTagValue(TagD.getUID(Level.INSTANCE)));
 
         // Transform to JPEG
-        File imgFile = imageElement.getFileCache().getOriginalFile().get();
+        File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
         if (imgFile == null || !imageElement.getMimeType().contains("jpeg") //$NON-NLS-1$
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 
@@ -95,7 +96,7 @@ public final class Transform2Dicom {
             MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
             if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
                 // out of memory ??
-                imgFile.delete();
+                FileUtil.delete(imgFile);
                 LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName()); //$NON-NLS-1$
                 return false;
             }

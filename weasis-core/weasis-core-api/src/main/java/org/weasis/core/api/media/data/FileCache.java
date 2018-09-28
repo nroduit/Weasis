@@ -51,7 +51,7 @@ public class FileCache {
         if (transformedFile != null) {
             return transformedFile;
         }
-        return getOriginalFile().get();
+        return  getOriginalFile().orElse(null);
     }
 
     public File getOriginalTempFile() {

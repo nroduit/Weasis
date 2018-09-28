@@ -22,7 +22,7 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class AffineTransformOp extends AbstractOp {
 
-    public static final String OP_NAME = "Warp Affine";
+    public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op"); //$NON-NLS-1$
 
     public static final String[] INTERPOLATIONS =
         { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), //$NON-NLS-1$ //$NON-NLS-2$

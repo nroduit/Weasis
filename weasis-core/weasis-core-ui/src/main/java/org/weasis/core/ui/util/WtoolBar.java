@@ -26,6 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
+import org.weasis.core.api.gui.Insertable;
+
 @SuppressWarnings("serial")
 public class WtoolBar extends JPanel implements Toolbar {
 
@@ -37,6 +39,8 @@ public class WtoolBar extends JPanel implements Toolbar {
     private boolean rolloverBorderPainted = true;
     private boolean rolloverContentAreaFilled = true;
     private boolean useCustomUI = true;
+
+    private Insertable attachedInsertable;
 
     private transient MouseListener buttonMouseHandler = new MouseAdapter() {
 
@@ -87,6 +91,14 @@ public class WtoolBar extends JPanel implements Toolbar {
     @Override
     public void setComponentPosition(int position) {
         this.barPosition = position;
+    }
+
+    public Insertable getAttachedInsertable() {
+        return attachedInsertable;
+    }
+
+    public void setAttachedInsertable(Insertable attachedInsertable) {
+        this.attachedInsertable = attachedInsertable;
     }
 
     public void addSeparator(Dimension dim) {

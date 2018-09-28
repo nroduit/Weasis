@@ -267,7 +267,7 @@ public class PresetWindowLevel {
             maxValueLookup = maxAllocatedValue;
         }
 
-        double fullDynamicWidth = maxValueLookup - minValueLookup;
+        double fullDynamicWidth = (double) maxValueLookup - minValueLookup;
         double fullDynamicCenter = minValueLookup + fullDynamicWidth / 2f;
 
         LutShape newLutShape = new LutShape(voiLUTsData, explanation);

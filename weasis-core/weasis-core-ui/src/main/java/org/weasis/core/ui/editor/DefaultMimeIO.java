@@ -89,9 +89,12 @@ public class DefaultMimeIO implements MediaReader {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (this) {
-                        for (MediaElement m : medias) {
-                            return m.getMimeType();
+                    if (!medias.isEmpty()) {
+                        synchronized (this) {
+                            MediaElement img = medias.get(0);
+                            if (img != null) {
+                                return img.getMimeType();
+                            }
                         }
                     }
                     return null;

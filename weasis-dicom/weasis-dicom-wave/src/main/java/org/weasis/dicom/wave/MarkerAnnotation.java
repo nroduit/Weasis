@@ -13,8 +13,8 @@ package org.weasis.dicom.wave;
 import java.text.DecimalFormat;
 
 public class MarkerAnnotation {
-    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s");
-    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV");
+    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s"); //$NON-NLS-1$
+    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV"); //$NON-NLS-1$
 
     private final Lead lead;
 

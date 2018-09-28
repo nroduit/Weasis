@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
@@ -49,7 +50,6 @@ import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -61,6 +61,7 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -376,20 +377,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (container != null) {
             ViewCanvas<?> selView = container.getSelectedImagePane();
             if (selView != null) {
-                ImageElement img = selView.getImage();
-                if (img != null) {
-                    JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-                    frame.setSize(500, 630);
-                    DicomFieldsView view = new DicomFieldsView(container);
-                    view.changingViewContentEvent(
-                        new SeriesViewerEvent(container, selView.getSeries(), img, EVENT.SELECT));
-                    JPanel panel = new JPanel();
-                    panel.setLayout(new BorderLayout());
-                    panel.add(view);
-                    frame.getContentPane().add(panel);
-                    frame.setAlwaysOnTop(true);
-                    JMVUtils.showCenterScreen(frame, container);
-                }
+                showHeaderDialog(container, selView.getSeries(), selView.getImage());
             }
         }
     }
@@ -397,18 +385,26 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     public static void displayHeaderForSpecialElement(ViewerPlugin<?> container, Series<?> series) {
         if (container != null && series != null) {
             DicomSpecialElement dcm = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
-            if (dcm != null) {
-                JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-                frame.setSize(500, 630);
-                DicomFieldsView view = new DicomFieldsView(container);
-                view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
-                JPanel panel = new JPanel();
-                panel.setLayout(new BorderLayout());
-                panel.add(view);
-                frame.getContentPane().add(panel);
-                frame.setAlwaysOnTop(true);
-                JMVUtils.showCenterScreen(frame, container);
-            }
+            showHeaderDialog(container, series, dcm);
+        }
+    }
+
+    public static void showHeaderDialog(SeriesViewer<?> container, MediaSeries<? extends MediaElement> series,
+        MediaElement dcm) {
+        if (container != null && series != null && dcm != null) {
+            JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+            frame.setSize(500, 630);
+            DicomFieldsView view = new DicomFieldsView(container);
+            view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
+            JPanel panel = new JPanel();
+            panel.setLayout(new BorderLayout());
+            panel.add(view);
+            frame.getContentPane().add(panel);
+            frame.setAlwaysOnTop(true);
+            frame.setIconImage(
+                new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")).getImage()); //$NON-NLS-1$
+            Component c = container instanceof Component ? (Component) container : UIManager.MAIN_AREA.getComponent();
+            JMVUtils.showCenterScreen(frame, c);
         }
     }
 

@@ -21,6 +21,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.Toolbar;
 
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
@@ -36,6 +37,8 @@ public class UIManager {
         Collections.synchronizedList(new ArrayList<ViewerPlugin<?>>());
     public static final List<DataExplorerView> EXPLORER_PLUGINS =
         Collections.synchronizedList(new ArrayList<DataExplorerView>());
+    public static final List<Toolbar> EXPLORER_PLUGIN_TOOLBARS =
+                    Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES =
         Collections.synchronizedList(new ArrayList<SeriesViewerFactory>());
 

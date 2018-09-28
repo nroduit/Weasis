@@ -23,14 +23,14 @@ public final class DataBufferUtils {
     /**
      * Priority ordered array of DataBufferFloat class names.
      */
-    private static final String[] FLOAT_CLASS_NAMES = { "java.awt.image.DataBufferFloat",
-        "javax.media.jai.DataBufferFloat", "com.sun.media.jai.codecimpl.util.DataBufferFloat" };
+    private static final String[] FLOAT_CLASS_NAMES = { "java.awt.image.DataBufferFloat", //$NON-NLS-1$
+        "javax.media.jai.DataBufferFloat", "com.sun.media.jai.codecimpl.util.DataBufferFloat" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * Priority ordered array of DataBufferDouble class names.
      */
-    private static final String[] DOUBLE_CLASS_NAMES = { "java.awt.image.DataBufferDouble",
-        "javax.media.jai.DataBufferDouble", "com.sun.media.jai.codecimpl.util.DataBufferDouble" };
+    private static final String[] DOUBLE_CLASS_NAMES = { "java.awt.image.DataBufferDouble", //$NON-NLS-1$
+        "javax.media.jai.DataBufferDouble", "com.sun.media.jai.codecimpl.util.DataBufferDouble" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * Classes to be used for DB float and double.
@@ -63,7 +63,7 @@ public final class DataBufferUtils {
                 classNames = DOUBLE_CLASS_NAMES;
                 break;
             default:
-                throw new IllegalArgumentException("dataType == " + dataType + "!");
+                throw new IllegalArgumentException("dataType == " + dataType + "!"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         // Initialize the return value.
@@ -87,7 +87,7 @@ public final class DataBufferUtils {
         // Throw an exception if no class was found.
         if (dataBufferClass == null) {
             throw new RuntimeException(
-                "dataBufferClass not found: " + (dataType == DataBuffer.TYPE_FLOAT ? "DataBufferFloat" : "DataBufferDouble"));
+                "dataBufferClass not found: " + (dataType == DataBuffer.TYPE_FLOAT ? "DataBufferFloat" : "DataBufferDouble")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
         return dataBufferClass;
@@ -108,7 +108,7 @@ public final class DataBufferUtils {
                 dbClass = doubleClass;
                 break;
             default:
-                throw new IllegalArgumentException("dataType == " + dataType + "!");
+                throw new IllegalArgumentException("dataType == " + dataType + "!"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         DataBuffer dataBuffer = null;
@@ -116,7 +116,7 @@ public final class DataBufferUtils {
             Constructor constructor = dbClass.getConstructor(paramTypes);
             dataBuffer = (DataBuffer) constructor.newInstance(paramValues);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot create dataBuffer");
+            throw new RuntimeException("Cannot create dataBuffer"); //$NON-NLS-1$
         }
 
         return dataBuffer;
@@ -129,7 +129,7 @@ public final class DataBufferUtils {
     private static final Object invokeDataBufferMethod(DataBuffer dataBuffer, String methodName, Class[] paramTypes,
         Object[] paramValues) {
         if (dataBuffer == null) {
-            throw new IllegalArgumentException("dataBuffer == null!");
+            throw new IllegalArgumentException("dataBuffer == null!"); //$NON-NLS-1$
         }
 
         Class dbClass = dataBuffer.getClass();
@@ -139,7 +139,7 @@ public final class DataBufferUtils {
             Method method = dbClass.getMethod(methodName, paramTypes);
             returnValue = method.invoke(dataBuffer, paramValues);
         } catch (Exception e) {
-            throw new RuntimeException("Error when invoking" + " \"" + methodName + "\".");
+            throw new RuntimeException("Error when invoking" + " \"" + methodName + "\"."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
         return returnValue;
@@ -176,15 +176,15 @@ public final class DataBufferUtils {
     }
 
     public static final float[][] getBankDataFloat(DataBuffer dataBuffer) {
-        return (float[][]) invokeDataBufferMethod(dataBuffer, "getBankData", null, null);
+        return (float[][]) invokeDataBufferMethod(dataBuffer, "getBankData", null, null); //$NON-NLS-1$
     }
 
     public static final float[] getDataFloat(DataBuffer dataBuffer) {
-        return (float[]) invokeDataBufferMethod(dataBuffer, "getData", null, null);
+        return (float[]) invokeDataBufferMethod(dataBuffer, "getData", null, null); //$NON-NLS-1$
     }
 
     public static final float[] getDataFloat(DataBuffer dataBuffer, int bank) {
-        return (float[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class },
+        return (float[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class }, //$NON-NLS-1$
             new Object[] { new Integer(bank) });
     }
 
@@ -219,15 +219,15 @@ public final class DataBufferUtils {
     }
 
     public static final double[][] getBankDataDouble(DataBuffer dataBuffer) {
-        return (double[][]) invokeDataBufferMethod(dataBuffer, "getBankData", null, null);
+        return (double[][]) invokeDataBufferMethod(dataBuffer, "getBankData", null, null); //$NON-NLS-1$
     }
 
     public static final double[] getDataDouble(DataBuffer dataBuffer) {
-        return (double[]) invokeDataBufferMethod(dataBuffer, "getData", null, null);
+        return (double[]) invokeDataBufferMethod(dataBuffer, "getData", null, null); //$NON-NLS-1$
     }
 
     public static final double[] getDataDouble(DataBuffer dataBuffer, int bank) {
-        return (double[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class },
+        return (double[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class }, //$NON-NLS-1$
             new Object[] { new Integer(bank) });
     }
 }

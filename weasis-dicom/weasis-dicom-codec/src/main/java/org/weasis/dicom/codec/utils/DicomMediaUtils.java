@@ -351,22 +351,25 @@ public class DicomMediaUtils {
         return val;
     }
 
-    public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeIfNull) {
-        return getPatientAgeInPeriod(dicom, tag, null, null, computeIfNull);
+    public static String getPatientAgeInPeriod(Attributes dicom, int tag, boolean computeOnlyIfNull) {
+        return getPatientAgeInPeriod(dicom, tag, null, null, computeOnlyIfNull);
     }
 
     public static String getPatientAgeInPeriod(Attributes dicom, int tag, String privateCreatorID, String defaultValue,
-        boolean computeIfNull) {
+        boolean computeOnlyIfNull) {
         if (dicom == null) {
             return defaultValue;
         }
-        String s = dicom.getString(privateCreatorID, tag, defaultValue);
-        if (StringUtil.hasText(s) || !computeIfNull) {
-            return s;
+
+        if (computeOnlyIfNull) {
+            String s = dicom.getString(privateCreatorID, tag, defaultValue);
+            if (StringUtil.hasText(s)) {
+                return s;
+            }
         }
 
-        Date date = getDate(dicom, new int[] { Tag.ContentDate, Tag.AcquisitionDate, Tag.DateOfSecondaryCapture,
-            Tag.SeriesDate, Tag.StudyDate });
+        Date date = getDate(dicom, Tag.ContentDate, Tag.AcquisitionDate, Tag.DateOfSecondaryCapture, Tag.SeriesDate,
+            Tag.StudyDate);
 
         if (date != null) {
             Date bithdate = dicom.getDate(Tag.PatientBirthDate);
@@ -576,8 +579,6 @@ public class DicomMediaUtils {
         // Patient Group
         if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             DicomMediaIO.tagManager.readTags(Level.PATIENT, header, group);
-            // Build patient age if not present
-            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
         }
         // Study Group
         else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
@@ -586,6 +587,8 @@ public class DicomMediaUtils {
         // Series Group
         else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
             DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
+            // Build patient age if not present
+            group.setTagNoNull(TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
         }
     }
 
@@ -655,7 +658,7 @@ public class DicomMediaUtils {
                     DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.CenterOfCircularShutter, null);
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
                     Ellipse2D ellipse = new Ellipse2D.Double();
-                    int radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
+                    double radius = getIntegerFromDicomElement(dcmObject, Tag.RadiusOfCircularShutter, 0);
                     // Thanks DICOM for reversing x,y by row,column
                     ellipse.setFrameFromCenter(centerOfCircularShutter[1], centerOfCircularShutter[0],
                         centerOfCircularShutter[1] + radius, centerOfCircularShutter[0] + radius);
@@ -1093,11 +1096,11 @@ public class DicomMediaUtils {
                                     }
                                     if (scanDate != null) {
                                         injectDateTime = TagUtil.dateTime(scanDate, injectTime);
-                                        time = scanDateTime - injectDateTime.getTime();
+                                        time = (double) scanDateTime - injectDateTime.getTime();
                                     }
 
                                 } else {
-                                    time = scanDateTime - injectDateTime.getTime();
+                                    time = (double) scanDateTime - injectDateTime.getTime();
                                 }
                                 // Exclude negative value (case over midnight)
                                 if (time > 0) {

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -772,7 +773,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (t == null) {
             t = DicomExplorer.createThumbnail(dicomSeries, this, Thumbnail.DEFAULT_SIZE);
             dicomSeries.setTag(TagW.Thumbnail, t);
-            t.repaint();
+            Optional.ofNullable(t).ifPresent(v -> v.repaint());
         }
         firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, this, null, dicomSeries));
     }
@@ -801,11 +802,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (media instanceof DicomSpecialElement) {
                     List<DicomSpecialElement> specialElementList =
                         (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
-
+                    String rMime = dicomReader.getMimeType();
                     if (specialElementList == null) {
                         specialElementList = new CopyOnWriteArrayList<>();
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-                    } else if ("SR".equals(TagD.getTagValue(dicomReader, Tag.Modality))) { //$NON-NLS-1$
+                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$ //$NON-NLS-2$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<>();

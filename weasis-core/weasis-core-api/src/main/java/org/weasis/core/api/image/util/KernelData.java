@@ -209,7 +209,7 @@ public class KernelData implements Serializable {
         }
 
         // Normalize
-        float invsum = 1.0F / sum;
+        float invsum = sum == 0.0F ? 1.0F : 1.0F / sum;
         for (int i = 0; i < diameter; i++) {
             gaussianData[i] *= invsum;
         }
@@ -264,6 +264,10 @@ public class KernelData implements Serializable {
             }
 
         }
+        
+        if(scale == 0.0F) {
+            scale = 1.0F;
+        }
         for (int i = 0; i < gaussKernel.length; i++) {
             gaussKernel[i] /= scale;
         }
@@ -286,6 +290,9 @@ public class KernelData implements Serializable {
 
         }
 
+        if(scale == 0.0F) {
+            scale = 1.0F;
+        }
         for (int i = 0; i < gaussKernel.length; i++) {
             gaussKernel[i] /= scale;
         }

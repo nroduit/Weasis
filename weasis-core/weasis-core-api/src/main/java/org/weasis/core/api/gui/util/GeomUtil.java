@@ -544,6 +544,9 @@ public final class GeomUtil {
 
         double rotSignum = Math.signum(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(ptB, ptO, ptA)));
         Point2D ptI3 = GeomUtil.getPerpendicularPointFromLine(ptO, ptA, ptI1, rotSignum * cornerSize);
+        if(ptI3 == null) {
+            return null;
+        }
 
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 3);
         path.moveTo(ptI1.getX(), ptI1.getY());
@@ -559,7 +562,10 @@ public final class GeomUtil {
         }
         Point2D ptI2 = GeomUtil.getColinearPointWithLength(ptO, ptB, length);
         Point2D ptI3 = GeomUtil.getPerpendicularPointFromLine(ptO, ptB, ptI2, width / 2.0);
-
+        if(ptI3 == null) {
+            return null;
+        }
+        
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 5);
         path.moveTo(ptI2.getX(), ptI2.getY());
         path.lineTo(ptI3.getX(), ptI3.getY());

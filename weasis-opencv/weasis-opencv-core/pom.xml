@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-opencv-parent</artifactId>
 		<groupId>org.weasis.opencv</groupId>
-		<version>3.0.1-SNAPSHOT</version>
+		<version>3.0.3-SNAPSHOT</version>
 		<relativePath>../weasis-opencv-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -40,7 +40,7 @@
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.org.opencv</groupId>
 									<artifactId>opencv</artifactId>
-									<version>3.4.0-dcmR3</version>
+									<version>${weasis.opencv.native.version}</version>
 									<classifier>sources</classifier>
 								</artifactItem>
 							</artifactItems>
@@ -56,7 +56,6 @@
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>build-helper-maven-plugin</artifactId>
-				<version>3.0.0</version>
 				<executions>
 					<execution>
 						<phase>generate-sources</phase>
@@ -88,7 +87,6 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
 				<executions>
 					<execution>
 						<id>bind-sources</id>

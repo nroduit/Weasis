@@ -67,7 +67,7 @@ public class DicomManager {
     private void initRequiredDicomTags() {
         TagView[] patient = { new TagView(TagD.get(Tag.PatientName)), new TagView(TagD.get(Tag.PatientID)),
             new TagView(TagD.get(Tag.IssuerOfPatientID)), new TagView(TagD.get(Tag.PatientSex)),
-            new TagView(TagD.get(Tag.PatientBirthDate)), new TagView(TagD.get(Tag.PatientAge)) };
+            new TagView(TagD.get(Tag.PatientBirthDate)) };
 
         final TagView[] station = { new TagView(TagD.get(Tag.Manufacturer)),
             new TagView(TagD.get(Tag.ManufacturerModelName)), new TagView(TagD.get(Tag.StationName)) };

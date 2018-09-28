@@ -39,7 +39,7 @@ public class PresentationStateReader implements Tagable {
     public static final int PRIVATE_CREATOR_TAG = 0x71070070;
     public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
     public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //$NON-NLS-1$
-    
+
     public static final String TAG_PR_ROTATION = "pr.rotation"; //$NON-NLS-1$
     public static final String TAG_PR_FLIP = "pr.flip"; //$NON-NLS-1$
 
@@ -171,14 +171,10 @@ public class PresentationStateReader implements Tagable {
     public static Color getRGBColor(int pGray, float[] labColour, int[] rgbColour) {
         int r, g, b;
         if (labColour != null) {
-            if (LAB == null) {
-                r = g = b = (int) (labColour[0] * 2.55f);
-            } else {
-                float[] rgb = LAB.toRGB(labColour);
-                r = (int) (rgb[0] * 255);
-                g = (int) (rgb[1] * 255);
-                b = (int) (rgb[2] * 255);
-            }
+            float[] rgb = LAB.toRGB(labColour);
+            r = (int) (rgb[0] * 255);
+            g = (int) (rgb[1] * 255);
+            b = (int) (rgb[2] * 255);
         } else if (rgbColour != null) {
             r = rgbColour[0];
             g = rgbColour[1];

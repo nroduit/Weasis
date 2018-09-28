@@ -52,6 +52,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.wave.Messages;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
@@ -67,8 +68,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
     private final JPanel tableTagContainer = new JPanel();
     private JTable jtableTag;
-
-    private List<DragGraphic> selectedGraphic;
 
     public MeasureAnnotationTool() {
         super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
@@ -177,7 +176,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
             for (int i = 0; i < labels.length; i++) {
                 labels[i] = list.get(i);
             }
-            String[] headers = { "Tag", "Value" };
+            String[] headers = { Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") }; //$NON-NLS-1$ //$NON-NLS-2$
             jtableTag.setModel(new SimpleTableModel(headers, labels));
             jtableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
             createTableHeaders(jtableTag);
@@ -202,7 +201,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
             for (int i = 0; i < labels.length; i++) {
                 labels[i] = list.get(i);
             }
-            String[] headers = { "Lead", "Tag", "Value" };
+            String[] headers = { Messages.getString("MeasureAnnotationTool.lead"), Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             jtableMarker.setModel(new SimpleTableModel(headers, labels));
             jtableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
             createTableHeaders(jtableMarker);
@@ -238,8 +237,8 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                 Attributes item = ctxSeq.get(i);
 
                 try {
-                    String value = "";
-                    if ("NUMERIC".equalsIgnoreCase(item.getString(Tag.ValueType))) {
+                    String value = ""; //$NON-NLS-1$
+                    if ("NUMERIC".equalsIgnoreCase(item.getString(Tag.ValueType))) { //$NON-NLS-1$
                         value = item.getString(Tag.NumericValue);
                     } else {
                         Optional<Attributes> cdSeq =
@@ -272,31 +271,31 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
         if (!chDefSeq.isEmpty()) {
             Attributes item = chDefSeq.get(0);
             double filterLow = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
-            addValueToModel(list, TagD.get(Tag.FilterLowFrequency), filterLow + " Hz");
+            addValueToModel(list, TagD.get(Tag.FilterLowFrequency), filterLow + " Hz"); //$NON-NLS-1$
             double filterHigh = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
-            addValueToModel(list, TagD.get(Tag.FilterHighFrequency), filterHigh + " Hz");
+            addValueToModel(list, TagD.get(Tag.FilterHighFrequency), filterHigh + " Hz"); //$NON-NLS-1$
             double notchFilter = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
-            addValueToModel(list, TagD.get(Tag.NotchFilterFrequency), notchFilter + " Hz");
+            addValueToModel(list, TagD.get(Tag.NotchFilterFrequency), notchFilter + " Hz"); //$NON-NLS-1$
 
             for (int i = 1; i < chDefSeq.size(); i++) {
                 item = chDefSeq.get(i);
                 String title = item.getNestedDataset(Tag.ChannelSourceSequence).getString(Tag.CodeMeaning);
                 double low = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterLowFrequency, 0.0);
                 if (low != filterLow) {
-                    addValueToModel(list, title + " - " + TagD.get(Tag.FilterLowFrequency).getDisplayedName(),
-                        low + " Hz");
+                    addValueToModel(list, title + " - " + TagD.get(Tag.FilterLowFrequency).getDisplayedName(), //$NON-NLS-1$
+                        low + " Hz"); //$NON-NLS-1$
                 }
 
                 double high = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.FilterHighFrequency, 0.0);
                 if (high != filterHigh) {
-                    addValueToModel(list, title + " - " + TagD.get(Tag.FilterHighFrequency).getDisplayedName(),
-                        high + " Hz");
+                    addValueToModel(list, title + " - " + TagD.get(Tag.FilterHighFrequency).getDisplayedName(), //$NON-NLS-1$
+                        high + " Hz"); //$NON-NLS-1$
                 }
 
                 double notch = DicomMediaUtils.getDoubleFromDicomElement(item, Tag.NotchFilterFrequency, 0.0);
                 if (notch != notchFilter) {
-                    addValueToModel(list, title + " - " + TagD.get(Tag.NotchFilterFrequency).getDisplayedName(),
-                        notch + " Hz");
+                    addValueToModel(list, title + " - " + TagD.get(Tag.NotchFilterFrequency).getDisplayedName(), //$NON-NLS-1$
+                        notch + " Hz"); //$NON-NLS-1$
                 }
             }
         }
@@ -311,7 +310,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                 try {
                     String text = item.getString(Tag.UnformattedTextValue);
                     if (StringUtil.hasText(text)) {
-                        addValueToModel(list, "Text", text);
+                        addValueToModel(list, "Text", text); //$NON-NLS-1$
                         continue;
                     }
                     Optional<Attributes> mSeq =
@@ -320,12 +319,12 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                         String name = item.getNestedDataset(Tag.ConceptNameCodeSequence).getString(Tag.CodeMeaning);
                         String value = item.getString(Tag.NumericValue);
                         String unit = mSeq.get().getString(Tag.CodeValue);
-                        addValueToModel(list, name, value + " " + unit);
-                    } else if ("POINT".equals(item.getString(Tag.TemporalRangeType))) {
+                        addValueToModel(list, name, value + " " + unit); //$NON-NLS-1$
+                    } else if ("POINT".equals(item.getString(Tag.TemporalRangeType))) { //$NON-NLS-1$
                         String name = item.getNestedDataset(Tag.ConceptNameCodeSequence).getString(Tag.CodeMeaning);
                         String value = item.getString(Tag.ReferencedSamplePositions);
                         String unit = item.getString(Tag.TemporalRangeType);
-                        addValueToModel(list, name, value + " " + unit);
+                        addValueToModel(list, name, value + " " + unit); //$NON-NLS-1$
                     }
 
                 } catch (Exception e) {

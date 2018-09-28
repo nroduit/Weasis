@@ -69,8 +69,8 @@ public final class JIThumbnailCache {
                 r = runnable;
             }
         }
-        if (r != null) {
-            queue.remove(r);
+        if (r != null && !queue.remove(r)) {
+            LOGGER.error("Cannot remove thumbnail from the queue"); //$NON-NLS-1$
         }
     }
 
@@ -147,8 +147,8 @@ public final class JIThumbnailCache {
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
-            if (file != null && file.getName().endsWith(".wcv")) {
-                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
+            if (file != null && file.getName().endsWith(".wcv")) { //$NON-NLS-1$
+                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg")); //$NON-NLS-1$
                 if (thumbFile.canRead()) {
                     img = ImageProcessor.readImage(thumbFile);
                 }

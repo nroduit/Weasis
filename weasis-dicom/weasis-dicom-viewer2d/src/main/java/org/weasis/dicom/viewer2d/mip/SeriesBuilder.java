@@ -159,7 +159,7 @@ public class SeriesBuilder {
                         if (taskMonitor.isAborting()) {
                             throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                         }
-                        LOGGER.error("Writing MIP", e);
+                        LOGGER.error("Writing MIP", e); //$NON-NLS-1$
                     }
                     if (raw == null) {
                         return;

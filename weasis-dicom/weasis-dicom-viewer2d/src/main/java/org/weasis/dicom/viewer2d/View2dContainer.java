@@ -58,6 +58,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -94,6 +95,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
@@ -121,7 +124,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     private static volatile boolean initComponents = false;
 
     public View2dContainer() {
-        this(VIEWS_1x1, null, View2dFactory.NAME, View2dFactory.ICON, null);
+        this(VIEWS_1x1, null, View2dFactory.NAME, MimeInspector.dicomIcon, null);
     }
 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid, String pluginName, Icon icon, String tooltips) {
@@ -152,6 +155,18 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ExportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ExportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
                 TOOLBARS.add(new ViewerToolBar<>(evtMg, evtMg.getMouseActions().getActiveButtons(),
@@ -660,7 +675,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         return actions;
     }
 
-    private static void exportTosirix(Component parent, String AppName, String cmd) {
+    private static void exportTosirix(Component parent, String appName, String cmd) {
         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (baseDir != null) {
             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
@@ -680,7 +695,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
             }
         }
-        LOGGER.info("Execute cmd:" + cmd); //$NON-NLS-1$
+        LOGGER.info("Execute cmd: {}", cmd); //$NON-NLS-1$
         try {
             Process p = Runtime.getRuntime().exec(cmd);
             BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
@@ -696,7 +711,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             if (val != 0) {
                 JOptionPane.showMessageDialog(parent,
                     String.format(Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
-                        AppName),
+                        appName),
                     Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             }
 
@@ -704,6 +719,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             LOGGER.error("Running cmd", e1); //$NON-NLS-1$
         } catch (InterruptedException e2) {
             LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
+            Thread.currentThread().interrupt();
         }
     }
 

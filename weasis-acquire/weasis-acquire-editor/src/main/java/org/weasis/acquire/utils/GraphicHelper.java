@@ -56,8 +56,8 @@ public class GraphicHelper {
 
         double diagonal = Math.sqrt(Math.pow(width, 2) + Math.pow(width, 2));
 
-        double hOffset = diagonal - width / 2;
-        double vOffset = diagonal - height / 2;
+        double hOffset = diagonal - width / 2.0;
+        double vOffset = diagonal - height / 2.0;
 
         // New start point
         int x0 = (int) (0 - hOffset);

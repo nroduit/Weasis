@@ -49,6 +49,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -59,6 +60,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -98,7 +100,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     }
 
     public View2dContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, ViewerFactory.ICON, null);
+        super(EventManager.getInstance(), layoutModel, uid, ViewerFactory.NAME, MimeInspector.imageIcon, null);
         setSynchView(SynchView.DEFAULT_STACK);
         addComponentListener(new ComponentAdapter() {
 
@@ -124,6 +126,12 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ViewerToolBar.class), key, true)) {
                 TOOLBARS.add(new ViewerToolBar<>(evtMg, evtMg.getMouseActions().getActiveButtons(),

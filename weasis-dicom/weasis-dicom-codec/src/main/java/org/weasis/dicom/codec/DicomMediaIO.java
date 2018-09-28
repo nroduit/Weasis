@@ -17,6 +17,7 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -60,6 +61,7 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.util.StreamUtils;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
@@ -128,7 +130,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         // -------- End of Mandatory Tags --------
         tagManager.addTag(Tag.PatientBirthDate, Level.PATIENT);
         tagManager.addTag(Tag.PatientBirthTime, Level.PATIENT);
-        tagManager.addTag(Tag.PatientAge, Level.PATIENT);
+        tagManager.addTag(Tag.PatientAge, Level.SERIES); // needs to be updated for each series if computed
         tagManager.addTag(Tag.PatientSex, Level.PATIENT);
         tagManager.addTag(Tag.IssuerOfPatientID, Level.PATIENT);
         tagManager.addTag(Tag.PatientWeight, Level.PATIENT);
@@ -753,21 +755,22 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     private static Mat getMatBuffer(ExtendSegmentedInputImageStream extParams) throws IOException {
-        RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r");
+        try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) { //$NON-NLS-1$
 
-        Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
-        Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
-        long[] pos = extParams.getSegmentPositions();
-        int offset = 0;
-        for (int i = 0; i < pos.length; i++) {
-            int len = (int) extParams.getSegmentLengths()[i];
-            byte[] b = new byte[len];
-            raf.seek(pos[i]);
-            raf.read(b);
-            buf.put(0, offset, b);
-            offset += len;
+            Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
+            Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
+            long[] pos = extParams.getSegmentPositions();
+            int offset = 0;
+            for (int i = 0; i < pos.length; i++) {
+                int len = (int) extParams.getSegmentLengths()[i];
+                byte[] b = new byte[len];
+                raf.seek(pos[i]);
+                raf.read(b);
+                buf.put(0, offset, b);
+                offset += len;
+            }
+            return buf;
         }
-        return buf;
     }
 
     private PlanarImage getUncacheImage(MediaElement media, int frame) throws IOException {
@@ -780,13 +783,22 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
 
             if (extParams.getSegmentPositions() != null) {
+                
+//                FileInputStream in = new FileInputStream(extParams.getFile());
+//                File outFile = new File(AppProperties.FILE_CACHE_DIR,
+//                    fileCache.getFinalFile().getName() + "-" + frame + ".j2k");
+//                FileOutputStream out = new FileOutputStream(outFile);
+//                StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
+//                StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
+                
+                
                 int dcmFlags =
                     dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
 
                 // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error made by some
                 // constructors). RGB color model doesn't make sense for lossy jpeg.
                 // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
-                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name())
+                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
                     && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
                     dcmFlags |= Imgcodecs.DICOM_IMREAD_YBR;
                 }
@@ -811,10 +823,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         TagD.getTagValue(this, Tag.Rows, Integer.class), 0,
                         TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
                         banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
-                    return ImageCV.toImageCV(Imgcodecs.dicomRawRead(orinigal.get().getAbsolutePath(), positions,
+                    return ImageCV.toImageCV(Imgcodecs.dicomRawFileRead(orinigal.get().getAbsolutePath(), positions,
                         lengths, dicomparams, pmi.name()));
                 }
-                return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(orinigal.get().getAbsolutePath(), positions, lengths,
+                return ImageCV.toImageCV(Imgcodecs.dicomJpgFileRead(orinigal.get().getAbsolutePath(), positions, lengths,
                     dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
 
                 // Mat buf = getMatBuffer(extParams);
@@ -1070,17 +1082,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return dis == null ? false : dis.getTransferSyntax().equals(UID.RLELossless);
     }
 
-    private ExtendSegmentedInputImageStream iisOfFrame(int frameIndex) throws IOException {
-        // // Extract compressed file
-        // if (!fileCache.isElementInMemory()) {
-        // String extension = "." + Optional.ofNullable(decompressor)
-        // .map(d -> d.getOriginatingProvider().getFileSuffixes()[0]).orElse("raw");
-        // FileUtil.writeFile(buildSegmentedImageInputStream(frameIndex), new File(AppProperties.FILE_CACHE_DIR,
-        // fileCache.getFinalFile().getName() + "-" + frameIndex + extension));
-        // }
-        return buildSegmentedImageInputStream(frameIndex);
-    }
-
     private ExtendSegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex) throws IOException {
         long[] offsets;
         int[] length;
@@ -1119,7 +1120,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 } else {
                     // Multi-frames where each frames can have multiple fragments.
                     if (fragmentsPositions.isEmpty()) {
-                        boolean jpeg2000 = tsuid.startsWith("1.2.840.10008.1.2.4.9");
+                        boolean jpeg2000 = tsuid.startsWith("1.2.840.10008.1.2.4.9"); //$NON-NLS-1$
                         try (ImageInputStream srcStream = ImageIO.createImageInputStream(new File(uri))) {
                             for (int i = 1; i < nbFragments; i++) {
                                 BulkData bulkData = (BulkData) pixeldataFragments.get(i);
@@ -1165,7 +1166,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img).getRaster();
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1179,7 +1180,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1193,7 +1194,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
             return ImageConversion.toBufferedImage(img);
         } catch (Exception e) {
-            LOGGER.error("Reading image", e);
+            LOGGER.error("Reading image", e); //$NON-NLS-1$
             return null;
         } finally {
             readingImage = false;
@@ -1380,7 +1381,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                         this.pixeldataFragments = (Fragments) pixdata;
                         bigendian = pixeldataFragments.bigEndian();
                         if (bigendian) {
-                            LOGGER.error("Big endian fragments?");
+                            LOGGER.error("Big endian fragments?"); //$NON-NLS-1$
                         }
                     }
                 }

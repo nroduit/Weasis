@@ -13,7 +13,7 @@ package org.weasis.dicom.wave;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-import org.weasis.core.ui.Messages;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.util.WtoolBar;
@@ -26,7 +26,6 @@ public class WaveformToolBar extends WtoolBar {
 
         final JButton printButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$
-        printButton.setToolTipText(Messages.getString("SRContainer.print_layout")); //$NON-NLS-1$
         printButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
             if (container instanceof WaveContainer) {
@@ -36,8 +35,8 @@ public class WaveformToolBar extends WtoolBar {
         add(printButton);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/text-x-generic.png"))); //$NON-NLS-1$
-        metaButton.setToolTipText("Open DICOM Information"); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
+        metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
             if (container instanceof WaveContainer) {
@@ -46,7 +45,7 @@ public class WaveformToolBar extends WtoolBar {
         });
         add(metaButton);
 
-        jButtondelete.setToolTipText("Delete all the measurements");
+        jButtondelete.setToolTipText(Messages.getString("WaveformToolBar.delete")); //$NON-NLS-1$
         jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png"))); //$NON-NLS-1$
         jButtondelete.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();

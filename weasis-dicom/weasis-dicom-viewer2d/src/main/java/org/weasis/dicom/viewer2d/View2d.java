@@ -97,6 +97,7 @@ import org.weasis.core.ui.editor.image.SynchData.Mode;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -471,7 +472,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             setActionsInView(ActionW.KO_SELECTION.cmd(), ko);
             setActionsInView(ActionW.FILTERED_SERIES.cmd(), filter);
             // Set the image spatial unit
-            setActionsInView(ActionW.SPATIAL_UNIT.cmd(), m.getPixelSpacingUnit());
+            if (m != null) {
+                setActionsInView(ActionW.SPATIAL_UNIT.cmd(), m.getPixelSpacingUnit());
+            }
             disOp.setParamValue(WindowOp.OP_NAME, ActionW.PRESET.cmd(), preset);
             resetZoom();
             resetPan();
@@ -916,7 +919,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 if (pts.size() == 2) {
                     LineWithGapGraphic line = new LineWithGapGraphic();
                     line.setCenterGap(center);
-                    line.setGapSize(75);
+                    line.setGapSize(50);
                     graphic = line.buildGraphic(pts);
                 } else {
                     graphic = new PolygonGraphic().buildGraphic(pts);
@@ -1336,10 +1339,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (dicomView != null) {
                 selList = ((DicomExplorer) dicomView).getSelectionList();
             }
-            View2dContainer selPlugin = (View2dContainer) UIManager.VIEWER_PLUGINS.stream()
+            Optional<ViewerPlugin<?>> pluginOp = UIManager.VIEWER_PLUGINS.stream()
                 .filter(p -> p instanceof View2dContainer && ((View2dContainer) p).isContainingView(View2d.this))
-                .findFirst().get();
-
+                .findFirst();
+            if(!pluginOp.isPresent()) {
+                return false;
+            }
+            
+            View2dContainer selPlugin = (View2dContainer) pluginOp.get();
             Series seq;
             try {
                 seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);

@@ -21,7 +21,6 @@ import java.util.Map;
 
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
@@ -61,7 +60,6 @@ public class View2dFactory implements SeriesViewerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 
     public static final String NAME = Messages.getString("View2dFactory.title"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/dicom.png")); //$NON-NLS-1$
 
     private static final DefaultAction preferencesAction =
         new DefaultAction(Messages.getString("OpenDicomAction.title"), View2dFactory::getOpenImageAction); //$NON-NLS-1$
@@ -72,7 +70,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
     @Override
     public Icon getIcon() {
-        return ICON;
+        return MimeInspector.dicomIcon;
     }
 
     @Override

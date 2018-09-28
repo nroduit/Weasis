@@ -133,13 +133,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
                 y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2,
+                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
                     y, Color.RED);
             }
 
@@ -149,7 +149,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         AbstractGraphicLabel.paintColorFontOutline(g2, str,
-                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
+                            midx - g2.getFontMetrics().stringWidth(str) / 2F, y, Color.RED);
                     }
                 }
             }
@@ -205,7 +205,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 float y = midy;
                 String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
                 AbstractGraphicLabel.paintColorFontOutline(g2, message,
-                    midx - g2.getFontMetrics().stringWidth(message) / 2, y, Color.RED);
+                    midx - g2.getFontMetrics().stringWidth(message) / 2F, y, Color.RED);
             }
         }
 
@@ -369,7 +369,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                                     String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                                     if (StringUtil.hasText(str)) {
                                         AbstractGraphicLabel.paintFontOutline(g2, str,
-                                            bound.width - g2.getFontMetrics().stringWidth(str) - border, drawY);
+                                            bound.width - g2.getFontMetrics().stringWidth(str) - (float) border, drawY);
                                         drawY -= fontHeight;
                                     }
                                     break;

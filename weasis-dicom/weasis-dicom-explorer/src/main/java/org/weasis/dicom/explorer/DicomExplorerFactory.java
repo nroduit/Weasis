@@ -17,7 +17,10 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
+import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
 @org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class, immediate = false)
 public class DicomExplorerFactory implements DataExplorerViewFactory {
@@ -32,6 +35,10 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         if (explorer == null) {
             explorer = new DicomExplorer(model);
             model.addPropertyChangeListener(explorer);
+            UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(5, explorer));
+            UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ExportToolBar(7, explorer));
+            ViewerPluginBuilder.DefaultDataModel.firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.NULL_SELECTION, explorer, null, null));
         }
         return explorer;
     }
@@ -50,6 +57,7 @@ public class DicomExplorerFactory implements DataExplorerViewFactory {
         if (explorer != null) {
             DataExplorerModel dataModel = explorer.getDataExplorerModel();
             dataModel.removePropertyChangeListener(explorer);
+            UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(b -> b.getComponent().getAttachedInsertable() == explorer);
         }
     }
 }
