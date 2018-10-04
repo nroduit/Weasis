@@ -92,6 +92,9 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
     @Override
     public E getElementAt(final int index) {
+        if(listModel.isEmpty()) {
+            return null;
+        }
         return listModel.getElementAt(index);
     }
 
