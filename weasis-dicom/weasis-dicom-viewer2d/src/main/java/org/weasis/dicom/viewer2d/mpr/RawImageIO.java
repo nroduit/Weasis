@@ -91,7 +91,8 @@ public class RawImageIO implements DcmMediaReader {
         DicomOutputStream out = null;
         try {
             File file = imageCV.getFile();
-            BulkData bdl = new BulkData(file.toURI().toString(), FileRawImage.HEADER_LENGTH, (int) file.length(), false);
+            BulkData bdl = new BulkData(file.toURI().toString(), FileRawImage.HEADER_LENGTH,
+                (int) file.length() - FileRawImage.HEADER_LENGTH, false);
             dcm.setValue(Tag.PixelData, VR.OW, bdl);
             File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
             out = new DicomOutputStream(tmpFile);
@@ -239,7 +240,7 @@ public class RawImageIO implements DcmMediaReader {
 
             long[] frameOffsets = new long[frames];
             int frameLen = h.getWidth() * h.getHeight() * h.getSamplesPerPixel() * (h.getBitsPerSample() >> 3);
-            
+
             frameOffsets[0] = pixelDataPos;
             for (int i = 1; i < frameOffsets.length; i++) {
                 frameOffsets[i] = frameOffsets[i - 1] + frameLen;
