@@ -1,0 +1,6 @@
+since-tag=3.0.2
+bug-labels=Type: Bug
+enhancement-labels=Type: Enhancement,Type: Feature,Type: Security
+issue-line-labels=Priority: Critical,Priority: High,Priority: Low,Priority: Medium,Type: Feature,Type: Security
+exclude-labels=duplicate,question,invalid,wontfix,Type: Help Needed,Type: Idea,Type: Question,Status: Invalid,Status: Wontfix
+
