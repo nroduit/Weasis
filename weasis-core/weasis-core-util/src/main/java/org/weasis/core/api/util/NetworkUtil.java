@@ -11,11 +11,16 @@
 package org.weasis.core.api.util;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
@@ -28,6 +33,24 @@ public class NetworkUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtil.class);
 
     private NetworkUtil() {
+    }
+
+    public static URI getURI(String pathOrUri) throws MalformedURLException, URISyntaxException {
+        URI uri = null;
+        if (!pathOrUri.startsWith("http")) { //$NON-NLS-1$
+            try {
+                File file = new File(pathOrUri);
+                if (file.canRead()) {
+                    uri = file.toURI();
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+        if (uri == null) {
+            uri = new URL(pathOrUri).toURI();
+        }
+        return uri;
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
