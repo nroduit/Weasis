@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -106,7 +106,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -126,7 +126,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
         boolean writeInCache) {
-        super(Messages.getString("DicomExplorer.loading"), writeInCache, null, true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
         }
@@ -367,11 +367,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (StringUtil.hasText(wadoTsuid)) {
-                        // Ensure the client has the decoder. Otherwise ask uncompressed syntax
-                        if (!DicomManager.getInstance().containsImageioCodec(wadoTsuid)) {
-                            wadoTsuid = TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID();
-                        }
-
                         request.append("&transferSyntax="); //$NON-NLS-1$
                         request.append(wadoTsuid);
                         if (transcoding.getTransferSyntaxUID() != null) {
@@ -405,6 +400,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             dicomSeries.setTag(DOWNLOAD_START_TIME, System.currentTimeMillis());
             imageDownloader.invokeAll(tasks);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
 
         imageDownloader.shutdown();
@@ -476,6 +472,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                             Thumbnail.THUMBNAIL_CACHE_DIR);
                         FileUtil.writeStreamWithIOException(
                             new URL(wadoParameters.getBaseURL() + thumURL).openConnection(), outFile);
+                        if(outFile.length() == 0) {
+                            throw new IllegalStateException("Thumbnail file is empty");
+                        }
                         file = outFile;
                     } catch (Exception e) {
                         LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
@@ -548,6 +547,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
+        if(outFile.length() == 0) {
+            throw new IllegalStateException("Thumbnail file is empty");
+        }
         return outFile;
     }
 
@@ -654,6 +656,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             return Boolean.TRUE;
         }
 
+        // Solves missing tmp folder problem (on Windows).
+        private File getDicomTmpDir() {
+            if (!DICOM_TMP_DIR.exists()) {
+                LOGGER.info("DICOM tmp dir not foud. Re-creating it!"); //$NON-NLS-1$
+                AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
+            }
+            return DICOM_TMP_DIR;
+        }
+
         /**
          * Download file.
          *
@@ -662,74 +673,76 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
          * @throws URISyntaxException
          */
         private boolean process() throws IOException, URISyntaxException {
-            File tempFile = null;
-            InputStream stream = NetworkUtil.getUrlInputStream(urlConnection);
-
             boolean cache = true;
-            if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
-                cache = false;
-            }
-            if (cache) {
-                tempFile = File.createTempFile("image_", ".dcm", DICOM_TMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-
-            // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee, see
-            // http://www.dcm4che.org/jira/browse/DCMEE-421
-            progressBar.setIndeterminate(progressBar.getMaximum() < 3);
-
+            File tempFile = null;
             DicomMediaIO dicomReader = null;
-            if (dicomSeries != null) {
-                if (cache) {
-                    LOGGER.debug("Start to download DICOM instance {} to {}.", getUrl(), tempFile.getName()); //$NON-NLS-1$
-                    int bytesTransferred = downloadInFileCache(stream, tempFile);
-                    if (bytesTransferred == -1) {
-                        LOGGER.info("End of downloading {} ", getUrl()); //$NON-NLS-1$
-                    } else if (bytesTransferred >= 0) {
-                        return false;
-                    }
 
-                    File renameFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, tempFile.getName());
-                    if (tempFile.renameTo(renameFile)) {
-                        tempFile = renameFile;
-                    }
-                } else {
-                    tempFile = new File(urlConnection.getURL().toURI());
+            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection)) {
+
+                if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
+                    cache = false;
                 }
-                // Ensure the stream is closed if image is not written in cache
-                FileUtil.safeClose(stream);
+                if (cache) {
+                    tempFile = File.createTempFile("image_", ".dcm", getDicomTmpDir()); //$NON-NLS-1$ //$NON-NLS-2$
+                }
 
-                dicomReader = new DicomMediaIO(tempFile);
-                if (dicomReader.isReadableDicom() && dicomSeries.size(null) == 0) {
-                    // Override the group (patient, study and series) by the dicom fields except the UID of the group
-                    MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-                    dicomReader.writeMetaData(patient);
-                    MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-                    dicomReader.writeMetaData(study);
-                    dicomReader.writeMetaData(dicomSeries);
-                    GuiExecutor.instance().invokeAndWait(() -> {
-                        Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                        if (thumb != null) {
-                            thumb.repaint();
+                // Cannot resume with WADO because the stream is modified on the fly by the wado server. In dcm4chee,
+                // see
+                // http://www.dcm4che.org/jira/browse/DCMEE-421
+                progressBar.setIndeterminate(progressBar.getMaximum() < 3);
+
+                if (dicomSeries != null) {
+                    if (cache) {
+                        LOGGER.debug("Start to download DICOM instance {} to {}.", getUrl(), tempFile.getName()); //$NON-NLS-1$
+                        int bytesTransferred = downloadInFileCache(stream, tempFile);
+                        if (bytesTransferred == -1) {
+                            LOGGER.info("End of downloading {} ", getUrl()); //$NON-NLS-1$
+                        } else if (bytesTransferred >= 0) {
+                            return false;
                         }
-                        dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT,
-                            dicomModel, null, dicomSeries));
-                    });
+
+                        File renameFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, tempFile.getName());
+                        if (tempFile.renameTo(renameFile)) {
+                            tempFile = renameFile;
+                        }
+                    } else {
+                        tempFile = new File(urlConnection.getURL().toURI());
+                    }
+                    // Ensure the stream is closed if image is not written in cache
+                    FileUtil.safeClose(stream);
+
+                    dicomReader = new DicomMediaIO(tempFile);
+                    if (dicomReader.isReadableDicom() && dicomSeries.size(null) == 0) {
+                        // Override the group (patient, study and series) by the dicom fields except the UID of the
+                        // group
+                        MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+                        dicomReader.writeMetaData(patient);
+                        MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+                        dicomReader.writeMetaData(study);
+                        dicomReader.writeMetaData(dicomSeries);
+                        GuiExecutor.instance().invokeAndWait(() -> {
+                            Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+                            if (thumb != null) {
+                                thumb.repaint();
+                            }
+                            dicomModel.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT,
+                                dicomModel, null, dicomSeries));
+                        });
+                    }
                 }
             }
 
             // Change status to complete if this point was reached because downloading has finished.
             if (status == Status.DOWNLOADING) {
                 status = Status.COMPLETE;
-                if (tempFile != null) {
-                    if (dicomSeries != null && dicomReader.isReadableDicom()) {
-                        if (cache) {
-                            dicomReader.getFileCache().setOriginalTempFile(tempFile);
-                        }
-                        final DicomMediaIO reader = dicomReader;
-                        // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
-                        // before reaching done() of SwingWorker
-                        GuiExecutor.instance().invokeAndWait(() -> updateUI(reader));
+                if (tempFile != null && dicomSeries != null && dicomReader.isReadableDicom()) {
+                    if (cache) {
+                        dicomReader.getFileCache().setOriginalTempFile(tempFile);
                     }
+                    final DicomMediaIO reader = dicomReader;
+                    // Necessary to wait the runnable because the dicomSeries must be added to the dicomModel
+                    // before reaching done() of SwingWorker
+                    GuiExecutor.instance().invokeAndWait(() -> updateUI(reader));
                 }
             }
             // Increment progress bar in EDT and repaint when downloaded
@@ -741,15 +754,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
             int[] overrideList = Optional.ofNullable(wado).map(WadoParameters::getOverrideDicomTagIDList).orElse(null);
 
-            boolean readTsuid =
-                DicomManager.getInstance().hasAllImageCodecs() ? false : getUrl().contains("?requestType=WADO"); //$NON-NLS-1$
             int bytesTransferred;
             if (overrideList == null) {
                 bytesTransferred =
-                    FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile);
+                    FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile);
             } else {
                 bytesTransferred =
-                    writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, readTsuid), tempFile, overrideList);
+                    writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile, overrideList);
             }
 
             if (bytesTransferred == Integer.MIN_VALUE) {

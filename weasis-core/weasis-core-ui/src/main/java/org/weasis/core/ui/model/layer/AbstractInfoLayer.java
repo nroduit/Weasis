@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2009-2018 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.core.ui.model.layer;
 
 import java.awt.BasicStroke;
@@ -14,8 +24,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-
-import javax.media.jai.PlanarImage;
 
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.ActionW;
@@ -36,6 +44,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
+import org.weasis.opencv.data.PlanarImage;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID implements LayerAnnotation {
 
@@ -288,21 +297,21 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             if (ww != null && wl != null) {
                 int stepWindow = (int) (ww / separation);
                 int firstlevel = (int) (wl - stepWindow * 2.0);
-                String str = Integer.toString(firstlevel); // $NON-NLS-1$
+                String str = Integer.toString(firstlevel + separation * stepWindow); // $NON-NLS-1$
                 AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
                     y + midfontHeight);
                 for (int i = 1; i < separation; i++) {
                     float posY = y + i * step;
                     line.setLine(x - 5f, posY, x - 1f, posY);
                     g2.draw(line);
-                    str = Integer.toString(firstlevel + i * stepWindow); // $NON-NLS-1$
+                    str = Integer.toString(firstlevel + (separation - i) * stepWindow); // $NON-NLS-1$
                     AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
                         posY + midfontHeight);
                 }
 
                 line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
                 g2.draw(line);
-                str = Integer.toString(firstlevel + 4 * stepWindow); // $NON-NLS-1$
+                str = Integer.toString(firstlevel); // $NON-NLS-1$
                 AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
                     y + length + midfontHeight);
                 rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
@@ -310,7 +319,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             }
 
             for (int k = 0; k < length; k++) {
-                g2.setPaint(new Color(table[2][k] & 0xff, table[1][k] & 0xff, table[0][k] & 0xff));
+                int l = (int)length -1 - k;
+                // Convert BGR LUT to RBG color
+                g2.setPaint(new Color(table[2][l] & 0xff, table[1][l] & 0xff, table[0][l] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }
@@ -327,8 +338,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         double zoomFactor = view2DPane.getViewModel().getViewScale();
 
         double scale = image.getPixelSize() / zoomFactor;
-        double scaleSizex = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getWidth() * image.getRescaleX(), bound.getHeight() / 2.0));
+        double scaleSizex =
+            ajustShowScale(scale, (int) Math.min(zoomFactor * source.width() * image.getRescaleX(), bound.width / 2.0));
+
         if (showBottomScale && scaleSizex > 50.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };
             String str = ajustLengthDisplay(scaleSizex * scale, unit);
@@ -396,7 +408,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         }
 
         double scaleSizeY = ajustShowScale(scale,
-            (int) Math.min(zoomFactor * source.getHeight() * image.getRescaleY(), bound.height / 2.0));
+            (int) Math.min(zoomFactor * source.height() * image.getRescaleY(), bound.height / 2.0));
 
         if (scaleSizeY > 30.0d) {
             Unit[] unit = { image.getPixelSpacingUnit() };

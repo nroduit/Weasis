@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
@@ -143,7 +144,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
             } else {
                 patient = dicomModel.getParent(study, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 
@@ -177,7 +178,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);
-                    t.repaint();
+                    Optional.ofNullable(t).ifPresent(v -> v.repaint());
                 }
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {

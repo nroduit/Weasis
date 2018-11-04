@@ -1,10 +1,10 @@
 package org.weasis.dicom.send;
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -12,16 +12,10 @@ package org.weasis.dicom.send;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.ComboBoxModel;
@@ -71,15 +65,14 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.web.StowRS;
+import org.weasis.dicom.web.StowRS.ContentType;
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
     private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
-    private static final String STOW_BOUNDARY = "mimeTypeBoundary"; //$NON-NLS-1$
-    private static final String STOW_SEG = "--"; //$NON-NLS-1$
-    private static final String RETURN = "\r\n"; //$NON-NLS-1$
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
@@ -217,7 +210,14 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                         getTitle(), JOptionPane.ERROR_MESSAGE));
                 }
             } else if (selectedItem instanceof DicomWebNode) {
-                postDicom((DicomWebNode) selectedItem, files);
+                DicomWebNode destination = (DicomWebNode) selectedItem;
+                try (StowRS stowRS = new StowRS(destination.getUrl().toString(), ContentType.DICOM)) {
+                    stowRS.uploadDicom(files, true);
+                } catch (Exception e) {
+                    LOGGER.error("StowRS error: {}", e.getMessage()); //$NON-NLS-1$
+                    GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree, e.getMessage(),
+                        getTitle(), JOptionPane.ERROR_MESSAGE));
+                }
             }
         } finally {
             FileUtil.recursiveDelete(exportDir);
@@ -285,71 +285,4 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             }
         }
     }
-
-    private static void postDicom(DicomWebNode destination, List<String> files) {
-        HttpURLConnection httpPost = null;
-        try {
-            httpPost = (HttpURLConnection) destination.getUrl().openConnection();
-            httpPost.setDoOutput(true);
-            httpPost.setDoInput(true);
-            httpPost.setRequestMethod("POST"); //$NON-NLS-1$
-            httpPost.setRequestProperty("Content-Type", //$NON-NLS-1$
-                "multipart/related; type=application/dicom; boundary=" + STOW_BOUNDARY); //$NON-NLS-1$
-            httpPost.setUseCaches(false);
-
-            DataOutputStream out = new DataOutputStream(httpPost.getOutputStream());
-            for (String entry : files) {
-                File file = new File(entry);
-                if (file.isDirectory()) {
-                    List<File> fileList = new ArrayList<>();
-                    FileUtil.getAllFilesInDirectory(file, fileList);
-                    for (File f : fileList) {
-                        postDicomStream(f, out);
-                    }
-                } else {
-                    postDicomStream(file, out);
-                }
-            }
-            // Final part segment
-            out.writeBytes(RETURN);
-            out.writeBytes(STOW_SEG);
-            out.writeBytes(STOW_BOUNDARY);
-            out.writeBytes(STOW_SEG);
-            out.flush();
-            out.close();
-            String response = httpPost.getResponseMessage();
-            LOGGER.info("STOWRS: server response: {}", response); //$NON-NLS-1$
-        } catch (Exception e) {
-            LOGGER.error("STOWRS: error when posting data", e); //$NON-NLS-1$
-        } finally {
-            Optional.ofNullable(httpPost).ifPresent(HttpURLConnection::disconnect);
-        }
-
-    }
-
-    private static void postDicomStream(File file, DataOutputStream out) throws IOException {
-        // Segment for a part
-        out.writeBytes(RETURN);
-        out.writeBytes(STOW_SEG);
-        out.writeBytes(STOW_BOUNDARY);
-        out.writeBytes(RETURN);
-        out.writeBytes("Content-Type: application/dicom\r\n\r\n"); //$NON-NLS-1$
-
-        // write dicom binary file
-        writeStream(new FileInputStream(file), out);
-    }
-
-    private static void writeStream(InputStream inputStream, OutputStream out) throws IOException {
-        try {
-            byte[] buf = new byte[FileUtil.FILE_BUFFER];
-            int offset;
-            while ((offset = inputStream.read(buf)) > 0) {
-                out.write(buf, 0, offset);
-            }
-            out.flush();
-        } finally {
-            FileUtil.safeClose(inputStream);
-        }
-    }
-
 }

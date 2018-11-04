@@ -1,4 +1,4 @@
-# This file can override the default negociation of C-GET used in the Weasis DICOM Query/Retrieve module
+# This file can override the default negotiation of C-GET used in the Weasis DICOM Query/Retrieve module
 # To make it active, rename this file into "store-tcs.properties"
 # Storage Transfer Capabilities for most common SOP Classes and Transfer Syntaxes
 #

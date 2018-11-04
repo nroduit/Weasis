@@ -40,5 +40,9 @@
 		<key>selectedTabView</key>
 		<string>event log</string>
 	</dict>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
 </dict>
 </plist>

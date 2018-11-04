@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -13,9 +13,8 @@ package org.weasis.core.api.image;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.jai.LookupTableJAI;
-
 import org.weasis.core.api.Messages;
+import org.weasis.opencv.data.LookupTableCV;
 
 /**
  * @author btja
@@ -54,6 +53,7 @@ public final class LutShape {
 
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
     public static final List<LutShape> DEFAULT_FACTORY_FUNCTIONS;
 
     static {
@@ -66,6 +66,7 @@ public final class LutShape {
         DEFAULT_FACTORY_FUNCTIONS.add(LutShape.LOG_INV);
     }
 
+
     // //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
@@ -74,9 +75,9 @@ public final class LutShape {
      */
     protected final eFunction function;
     protected final String explanantion;
-    protected final LookupTableJAI lookup;
+    protected final LookupTableCV lookup;
 
-    public LutShape(LookupTableJAI lookup, String explanantion) {
+    public LutShape(LookupTableCV lookup, String explanantion) {
         if (lookup == null) {
             throw new IllegalArgumentException();
         }
@@ -104,7 +105,7 @@ public final class LutShape {
         return function;
     }
 
-    public LookupTableJAI getLookup() {
+    public LookupTableCV getLookup() {
         return lookup;
     }
 

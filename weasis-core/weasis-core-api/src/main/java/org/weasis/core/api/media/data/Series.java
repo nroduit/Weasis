@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -12,7 +12,6 @@ package org.weasis.core.api.media.data;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.image.RenderedImage;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
@@ -37,6 +36,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNode implements MediaSeries<E> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);
@@ -334,13 +334,13 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
-            RenderedImage img = image.getImage();
+            PlanarImage img = image.getImage();
             if (img != null) {
                 toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
                 toolTips.append(StringUtil.COLON_AND_SPACE);
-                toolTips.append(img.getWidth());
+                toolTips.append(img.width());
                 toolTips.append('x');
-                toolTips.append(img.getHeight());
+                toolTips.append(img.height());
             }
         }
         toolTips.append("</html>"); //$NON-NLS-1$

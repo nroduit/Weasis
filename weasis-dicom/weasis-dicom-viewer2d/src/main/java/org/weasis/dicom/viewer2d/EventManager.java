@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -58,13 +58,11 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
@@ -114,6 +112,7 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.opencv.op.ImageConversion;
 
 /**
  * The event processing center for this application. This class responses for loading data sets, processing the events
@@ -172,9 +171,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         setAction(newLutAction());
         setAction(newFilterAction());
         setAction(newSortStackAction());
-        setAction(newLayoutAction(
-            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
+        setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST
+            .toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(
+            View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
@@ -846,25 +846,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
     @Override
     public void resetDisplay() {
-        reset(ResetTools.All);
+        reset(ResetTools.ALL);
     }
 
     public void reset(ResetTools action) {
         AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
-        if (ResetTools.All.equals(action)) {
+        if (ResetTools.ALL.equals(action)) {
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
-        } else if (ResetTools.Zoom.equals(action)) {
+        } else if (ResetTools.ZOOM.equals(action)) {
             // Pass the value 0.0 (convention: default value according the zoom type) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
 
-        } else if (ResetTools.Rotation.equals(action)) {
+        } else if (ResetTools.ROTATION.equals(action)) {
             getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
-        } else if (ResetTools.WindowLevel.equals(action)) {
+        } else if (ResetTools.WL.equals(action)) {
             getAction(ActionW.PRESET, ComboItemListener.class).ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
-        } else if (ResetTools.Pan.equals(action)) {
+        } else if (ResetTools.PAN.equals(action)) {
             if (selectedView2dContainer != null) {
                 ViewCanvas viewPane = selectedView2dContainer.getSelectedImagePane();
                 if (viewPane != null) {
@@ -910,10 +910,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE)));
         getAction(ActionW.FILTER, ComboItemListener.class).ifPresent(
             a -> a.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
-        getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(
-            a -> a.setSliderValue((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE), false));
-        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(
-            a -> a.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP)));
+        getAction(ActionW.ROTATION, SliderChangeListener.class)
+            .ifPresent(a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
+        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(a -> a.setSelectedWithoutTriggerAction(
+            LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
 
         getAction(ActionW.ZOOM, SliderChangeListener.class)
             .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
@@ -995,7 +995,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         ImageOpNode node = view2d.getDisplayOpManager().getNode(WindowOp.OP_NAME);
         if (node != null) {
-            int imageDataType = image.getImage().getSampleModel().getDataType();
+            int imageDataType = ImageConversion.convertToDataType(image.getImage().type());
             PresetWindowLevel preset = (PresetWindowLevel) node.getParam(ActionW.PRESET.cmd());
             boolean defaultPreset = LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.DEFAULT_PRESET.cmd()));
             Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
@@ -1313,6 +1313,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
+                    if (ResetTools.ALL.equals(action)) {
+                        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,  0));
+                    }
                     item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
@@ -1385,10 +1388,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
-                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
+                        e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 270) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
@@ -1400,8 +1405,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP, ToggleButtonListener.class);
                     if (flipAction.isPresent()) {
                         menu.add(new JSeparator());
-                        menu.add(flipAction.get()
-                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+                        menuItem = flipAction.get()
+                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h")); //$NON-NLS-1$
+                        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
+                        menu.add(menuItem);
                     }
                 }
             }
@@ -1731,18 +1738,18 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
         GuiExecutor.instance().execute(() -> {
             if (opt.isSet("all")) { //$NON-NLS-1$
-                reset(ResetTools.All);
+                reset(ResetTools.ALL);
             } else {
                 for (String command : args) {
                     try {
                         if (ActionW.WINLEVEL.cmd().equals(command)) {
-                            reset(ResetTools.WindowLevel);
+                            reset(ResetTools.WL);
                         } else if (ActionW.ZOOM.cmd().equals(command)) {
-                            reset(ResetTools.Zoom);
+                            reset(ResetTools.ZOOM);
                         } else if (ActionW.PAN.cmd().equals(command)) {
-                            reset(ResetTools.Pan);
+                            reset(ResetTools.PAN);
                         } else if (ActionW.ROTATION.cmd().equals(command)) {
-                            reset(ResetTools.Rotation);
+                            reset(ResetTools.ROTATION);
                         } else {
                             LOGGER.warn("Reset command not found: {}", command); //$NON-NLS-1$
                         }

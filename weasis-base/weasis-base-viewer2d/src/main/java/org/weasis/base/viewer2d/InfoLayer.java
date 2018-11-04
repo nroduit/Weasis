@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -19,7 +19,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.image.OpManager;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
@@ -85,7 +84,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.error_msg"); //$NON-NLS-1$
             float y = midy;
-            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2,
+            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
                 y, Color.RED);
             String[] desc = image.getMediaReader().getReaderDescription();
             if (desc != null) {
@@ -93,7 +92,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
                     if (StringUtil.hasText(str)) {
                         y += fontHeight;
                         AbstractGraphicLabel.paintColorFontOutline(g2, str,
-                            midx - g2.getFontMetrics().stringWidth(str) / 2, y, Color.RED);
+                            midx - g2.getFontMetrics().stringWidth(str) / 2.0F, y, Color.RED);
                     }
                 }
             }
@@ -141,7 +140,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         }
         if (getDisplayPreferences(ROTATION)) {
             AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                + disOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE) + " " //$NON-NLS-1$
+                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
                 + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
                 border, drawY);
             drawY -= fontHeight;

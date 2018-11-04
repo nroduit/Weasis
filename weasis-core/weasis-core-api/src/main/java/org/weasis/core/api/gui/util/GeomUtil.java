@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -544,6 +544,9 @@ public final class GeomUtil {
 
         double rotSignum = Math.signum(GeomUtil.getSmallestRotationAngleDeg(GeomUtil.getAngleDeg(ptB, ptO, ptA)));
         Point2D ptI3 = GeomUtil.getPerpendicularPointFromLine(ptO, ptA, ptI1, rotSignum * cornerSize);
+        if(ptI3 == null) {
+            return null;
+        }
 
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 3);
         path.moveTo(ptI1.getX(), ptI1.getY());
@@ -559,7 +562,10 @@ public final class GeomUtil {
         }
         Point2D ptI2 = GeomUtil.getColinearPointWithLength(ptO, ptB, length);
         Point2D ptI3 = GeomUtil.getPerpendicularPointFromLine(ptO, ptB, ptI2, width / 2.0);
-
+        if(ptI3 == null) {
+            return null;
+        }
+        
         Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, 5);
         path.moveTo(ptI2.getX(), ptI2.getY());
         path.lineTo(ptI3.getX(), ptI3.getY());

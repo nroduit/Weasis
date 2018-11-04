@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -106,15 +106,6 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             }
             // (0x0002, 0x0010) Transfer Syntax UID
             if (element == 0x0010 && vl != 0 && byteOffset + vl < b.length) {
-                String tsuid = new String(b, byteOffset, vl);
-                if (!DicomManager.getInstance().containsImageioCodec(tsuid)) {
-                    InterruptedIOException exc =
-                        new InterruptedIOException("No image decoder found for the syntax " + tsuid); //$NON-NLS-1$
-                    exc.bytesTransferred = Integer.MIN_VALUE;
-                    progress.series.setFileSize(progress.series.getFileSize() - progress.nread);
-                    progress.nread = 0;
-                    throw exc;
-                }
                 break;
             }
             byteOffset += vl;

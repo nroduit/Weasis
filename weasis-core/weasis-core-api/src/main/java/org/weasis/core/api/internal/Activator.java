@@ -1,25 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
 package org.weasis.core.api.internal;
 
-import java.awt.RenderingHints;
 import java.io.File;
 import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
-
-import javax.media.jai.JAI;
-import javax.media.jai.OperationRegistry;
-import javax.media.jai.RecyclingTileFactory;
-import javax.media.jai.TileScheduler;
 
 import org.apache.felix.prefs.BackingStore;
 import org.osgi.framework.BundleActivator;
@@ -33,15 +27,6 @@ import org.osgi.service.cm.ConfigurationAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.op.FormatBinaryDescriptor;
-import org.weasis.core.api.image.op.ImageStatistics2Descriptor;
-import org.weasis.core.api.image.op.ImageStatisticsDescriptor;
-import org.weasis.core.api.image.op.NotBinaryDescriptor;
-import org.weasis.core.api.image.op.RectifySignedShortDataDescriptor;
-import org.weasis.core.api.image.op.RectifyUShortToShortDataDescriptor;
-import org.weasis.core.api.image.op.ShutterDescriptor;
-import org.weasis.core.api.image.op.ThresholdToBinDescriptor;
-import org.weasis.core.api.image.util.JAIUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
@@ -59,36 +44,6 @@ public class Activator implements BundleActivator, ServiceListener {
         }
 
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
-
-        JAI jai = JAIUtil.getJAI();
-        OperationRegistry or = jai.getOperationRegistry();
-
-        jai.setImagingListener((String message, Throwable thrown, Object where, boolean isRetryable) -> {
-            LOGGER.error("JAI Error in {}: {}", where, message, thrown); //$NON-NLS-1$
-            return false;
-        });
-        JAIUtil.registerOp(or, new FormatBinaryDescriptor());
-        JAIUtil.registerOp(or, new NotBinaryDescriptor());
-        JAIUtil.registerOp(or, new ImageStatisticsDescriptor());
-        JAIUtil.registerOp(or, new ImageStatistics2Descriptor());
-        JAIUtil.registerOp(or, new ShutterDescriptor());
-        JAIUtil.registerOp(or, new ThresholdToBinDescriptor());
-        JAIUtil.registerOp(or, new RectifySignedShortDataDescriptor());
-        JAIUtil.registerOp(or, new RectifyUShortToShortDataDescriptor());
-
-        // Set 1/4 of the total memory for TileCache
-        jai.getTileCache().setMemoryCapacity(Runtime.getRuntime().maxMemory() / 4);
-
-        RecyclingTileFactory recyclingTileFactory = new RecyclingTileFactory();
-        RenderingHints rh = jai.getRenderingHints();
-        rh.put(JAI.KEY_TILE_FACTORY, recyclingTileFactory);
-        rh.put(JAI.KEY_TILE_RECYCLER, recyclingTileFactory);
-        rh.put(JAI.KEY_CACHED_TILE_RECYCLING_ENABLED, Boolean.TRUE);
-        jai.setRenderingHints(rh);
-        TileScheduler scheduler = jai.getTileScheduler();
-        int nbThread = Math.max(2, Runtime.getRuntime().availableProcessors() - 1);
-        scheduler.setParallelism(nbThread);
-        scheduler.setPrefetchParallelism(nbThread - 1);
 
         // Trick for avoiding 403 error when downloading from some web sites
         System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"); //$NON-NLS-1$ //$NON-NLS-2$

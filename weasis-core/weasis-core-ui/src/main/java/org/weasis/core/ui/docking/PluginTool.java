@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -16,6 +16,8 @@ import java.awt.Dimension;
 import javax.swing.JPanel;
 
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.ui.editor.image.dockable.MiniTool;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
@@ -60,8 +62,6 @@ public abstract class PluginTool extends JPanel implements DockableTool {
                 changeToolWindowAnchor(event.getNewLocation());
             }
         });
-        // this.dockable.setResizeRequest(new RequestDimension(getDockableWidth(), true), false);
-
     }
 
     protected abstract void changeToolWindowAnchor(CLocation clocation);
@@ -126,6 +126,12 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         if (!dockable.isVisible()) {
             UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
             Component component = getToolComponent();
+            if(component instanceof MiniTool) {
+                JMVUtils.setPreferredWidth(component, getDockableWidth(), getDockableWidth());
+            }
+            else {
+                JMVUtils.setPreferredWidth(component, getDockableWidth()); 
+            }
             if (dockable.getFocusComponent() == component) {
                 UIManager.DOCKING_CONTROL.addDockable(dockable);
                 dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
@@ -160,6 +166,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
                 dockable.setExtendedMode(mode);
             }
             dockable.setVisible(true);
+            dockable.setResizeLocked(true);
             UIManager.DOCKING_CONTROL.removeVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
         }
     }

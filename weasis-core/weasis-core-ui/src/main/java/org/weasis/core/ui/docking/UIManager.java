@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -21,6 +21,7 @@ import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.util.Toolbar;
 
 import bibliothek.gui.dock.common.CContentArea;
 import bibliothek.gui.dock.common.CControl;
@@ -36,6 +37,8 @@ public class UIManager {
         Collections.synchronizedList(new ArrayList<ViewerPlugin<?>>());
     public static final List<DataExplorerView> EXPLORER_PLUGINS =
         Collections.synchronizedList(new ArrayList<DataExplorerView>());
+    public static final List<Toolbar> EXPLORER_PLUGIN_TOOLBARS =
+                    Collections.synchronizedList(new ArrayList<Toolbar>());
     public static final List<SeriesViewerFactory> SERIES_VIEWER_FACTORIES =
         Collections.synchronizedList(new ArrayList<SeriesViewerFactory>());
 

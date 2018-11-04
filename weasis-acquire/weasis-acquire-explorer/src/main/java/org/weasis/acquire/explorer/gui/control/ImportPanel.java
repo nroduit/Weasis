@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -45,7 +45,7 @@ public class ImportPanel extends JPanel {
     private final ImageGroupPane centralPane;
 
     // TODO create ACTION object fpr import
-    // so whereEver it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION object
+    // so wherever it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION object
 
     public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
         this.centralPane = centralPane;

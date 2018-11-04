@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -18,8 +18,8 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.RenderedImage;
 import java.awt.print.PageFormat;
+import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -29,6 +29,10 @@ import java.util.Map.Entry;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.MediaPrintableArea;
+import javax.print.attribute.standard.MediaSize;
+import javax.print.attribute.standard.MediaSizeName;
+import javax.print.attribute.standard.OrientationRequested;
 import javax.swing.JComponent;
 import javax.swing.JOptionPane;
 
@@ -39,9 +43,12 @@ import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ExportImage;
+import org.weasis.opencv.data.PlanarImage;
 
 public class ImagePrint implements Printable {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImagePrint.class);
+
+    private static final double POINTS_PER_INCH = 72.0;
 
     private Point printLoc;
     private PrintOptions printOptions;
@@ -61,10 +68,37 @@ public class ImagePrint implements Printable {
         return printLoc;
     }
 
+    private static OrientationRequested mapOrientation(final int orientation) {
+        switch (orientation) {
+            case PageFormat.LANDSCAPE:
+                return OrientationRequested.LANDSCAPE;
+            case PageFormat.REVERSE_LANDSCAPE:
+                return OrientationRequested.REVERSE_LANDSCAPE;
+            case PageFormat.PORTRAIT:
+                return OrientationRequested.PORTRAIT;
+            default:
+                throw new IllegalArgumentException("The given value is no valid PageFormat orientation.");
+        }
+    }
+
     public void print() {
-        PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
         PrinterJob pj = PrinterJob.getPrinterJob();
         pj.setPrintable(this);
+        PrintRequestAttributeSet aset = new HashPrintRequestAttributeSet();
+        PageFormat pf = pj.getPageFormat(aset);
+        Paper paper = pf.getPaper();
+        
+        // Change the default margins
+        final MediaSizeName media = MediaSize.findMedia((float) (paper.getWidth() / POINTS_PER_INCH),
+            (float) (paper.getHeight() / POINTS_PER_INCH), MediaPrintableArea.INCH);
+        aset.add(media);
+        MediaSize mediaSize = MediaSize.getMediaSizeForName(media); 
+        MediaPrintableArea printableArea = new MediaPrintableArea(0.25f, 0.25f,
+            mediaSize.getX(MediaSize.INCH)-0.5f,
+            mediaSize.getY(MediaSize.INCH)-0.5f,
+            MediaPrintableArea.INCH);
+        aset.add(printableArea);
+        aset.add(mapOrientation(pf.getOrientation()));
 
         // Get page format from the printer
         if (pj.printDialog(aset)) {
@@ -182,16 +216,16 @@ public class ImagePrint implements Printable {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        RenderedImage img = image.getSourceImage();
-        if (img != null && originCenter != null && originZoom != null) {
+        PlanarImage img = image.getSourceImage();
+        if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
             if (bestfit || originSize == null) {
-                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                canvasWidth = img.width() * image.getImage().getRescaleX();
+                canvasHeight = img.height() * image.getImage().getRescaleY();
             } else {
                 canvasWidth = originSize.getWidth() / originZoom;
                 canvasHeight = originSize.getHeight() / originZoom;
@@ -218,7 +252,7 @@ public class ImagePrint implements Printable {
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenter.getX(), originCenter.getY());
+                image.setCenter(originCenterOffset.getX(), originCenterOffset.getY());
             }
 
             int dpi = printOptions.getDpi() == null ? 150 : printOptions.getDpi().getDpi();

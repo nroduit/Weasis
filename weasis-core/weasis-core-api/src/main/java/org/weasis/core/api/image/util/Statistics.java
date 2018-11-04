@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -359,6 +359,9 @@ public class Statistics {
             for (int y = by; y <= ey; y++, k++) {
                 tmp += img[y];
             }
+            if(k == 0) {
+                k = 1;
+            }
             result[i] = tmp / k;
         }
         return result;
@@ -465,37 +468,4 @@ public class Statistics {
         }
         return coef;
     }
-
-    public static double[] regression2(final double[] x, final double[] y) {
-        double sumX = x[0];
-        double sumXX = 0d;
-        double sumY = y[0];
-        double sumYY = 0d;
-        double sumXY = 0d;
-
-        double xbar = x[0];
-        double ybar = y[0];
-
-        for (int i = 1; i < x.length; i++) {
-            double dx = x[i] - xbar;
-            double dy = y[i] - ybar;
-            sumXX += dx * dx * i / (i + 1.0);
-            sumYY += dy * dy * i / (i + 1.0);
-            sumXY += dx * dy * i / (i + 1.0);
-            xbar += dx / (i + 1.0);
-            ybar += dy / (i + 1.0);
-            sumX += x[i];
-            sumY += y[i];
-        }
-
-        double[] val = new double[3];
-        val[0] = sumXY / sumXX; // slope
-        if (Math.abs(sumXX) < 10 * Double.MIN_VALUE) {
-            val[0] = Double.NaN;
-        }
-        val[1] = (sumY - val[0] * sumX) / (x.length); // y0 or b
-        val[2] = Math.sqrt((sumYY - (sumYY - sumXY * sumXY / sumXX)) / sumYY); // R
-        return val;
-    }
-
 }

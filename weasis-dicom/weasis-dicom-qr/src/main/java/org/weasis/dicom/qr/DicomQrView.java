@@ -1,10 +1,10 @@
 package org.weasis.dicom.qr;
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -75,6 +75,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
+import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ImportDicom;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -107,7 +108,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         BEFORE_YESTERDAY(Messages.getString("DicomQrView.day_before_yest"), LocalDate.now().minusDays(2)), //$NON-NLS-1$
 
         CUR_WEEK(Messages.getString("DicomQrView.this_week"), //$NON-NLS-1$
-                        LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1), LocalDate.now()),
+                        LocalDate.now().with(WeekFields.of(LocalUtil.getLocaleFormat()).dayOfWeek(), 1),
+                        LocalDate.now()),
 
         CUR_MONTH(Messages.getString("DicomQrView.this_month"), //$NON-NLS-1$
                         LocalDate.now().with(TemporalAdjusters.firstDayOfMonth()), LocalDate.now()),
@@ -504,8 +506,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 LOGGER.trace("==========================================="); //$NON-NLS-1$
                 LOGGER.trace("{}", item.toString(100, 150)); //$NON-NLS-1$
 
-                String patientPseudoUID = DicomMediaUtils.buildPatientPseudoUID(item.getString(Tag.PatientID),
-                    item.getString(Tag.IssuerOfPatientID), item.getString(Tag.PatientName));
+                PatientComparator patientComparator = new PatientComparator(item);
+                String patientPseudoUID = patientComparator.buildPatientPseudoUID();
                 MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
                 if (patient == null) {
                     patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID,

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -744,7 +745,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 LOGGER.info("Adding patient: {}", pt); //$NON-NLS-1$
             } else {
                 pt = getParent(st, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsitent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
             }
         }
 
@@ -772,7 +773,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (t == null) {
             t = DicomExplorer.createThumbnail(dicomSeries, this, Thumbnail.DEFAULT_SIZE);
             dicomSeries.setTag(TagW.Thumbnail, t);
-            t.repaint();
+            Optional.ofNullable(t).ifPresent(v -> v.repaint());
         }
         firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, this, null, dicomSeries));
     }
@@ -801,11 +802,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 if (media instanceof DicomSpecialElement) {
                     List<DicomSpecialElement> specialElementList =
                         (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
-
+                    String rMime = dicomReader.getMimeType();
                     if (specialElementList == null) {
                         specialElementList = new CopyOnWriteArrayList<>();
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-                    } else if ("SR".equals(TagD.getTagValue(dicomReader, Tag.Modality))) { //$NON-NLS-1$
+                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$ //$NON-NLS-2$
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<>();
@@ -945,6 +946,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:get ([-l PATH]... [-r URI]... [-p] [-i DATA]... [-w URI]...)", //$NON-NLS-1$
             "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
+            "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-1$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
             "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
@@ -952,11 +954,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> largs = opt.getList("local"); //$NON-NLS-1$
         final List<String> rargs = opt.getList("remote"); //$NON-NLS-1$
+        final List<String> zargs = opt.getList("zip"); //$NON-NLS-1$
         final List<String> iargs = opt.getList("iwado"); //$NON-NLS-1$
         final List<String> wargs = opt.getList("wado"); //$NON-NLS-1$
 
         if (opt.isSet("help") //$NON-NLS-1$
-            || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
+            || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && zargs.isEmpty()  && !opt.isSet("portable"))) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -964,12 +967,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-            getCommand(opt, largs, rargs, iargs, wargs);
+            getCommand(opt, largs, rargs, iargs, wargs, zargs);
         });
     }
 
     private void getCommand(Option opt, List<String> largs, List<String> rargs, List<String> iargs,
-        List<String> wargs) {
+        List<String> wargs,  List<String> zargs) {
         // start importing local dicom series list
         if (opt.isSet("local")) { //$NON-NLS-1$
             File[] files = new File[largs.size()];
@@ -986,6 +989,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // build WADO series list to download
         if (opt.isSet("wado")) { //$NON-NLS-1$
             LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
+        }
+        
+        if (opt.isSet("zip")) { //$NON-NLS-1$
+            for (String zip : zargs) {
+                DicomZipImport.loadDicomZip(zip, DicomModel.this);
+            }
         }
 
         if (opt.isSet("iwado")) { //$NON-NLS-1$

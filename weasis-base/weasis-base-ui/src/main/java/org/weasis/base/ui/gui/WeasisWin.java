@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -240,6 +240,10 @@ public class WeasisWin {
 
     public RootPaneContainer getRootPaneContainer() {
         return rootPaneContainer;
+    }
+
+    public ToolBarContainer getToolbarContainer() {
+        return toolbarContainer;
     }
 
     public boolean closeWindow() {
@@ -574,7 +578,7 @@ public class WeasisWin {
 
     public synchronized void setSelectedPlugin(ViewerPlugin plugin) {
         if (plugin == null) {
-            toolbarContainer.registerToolBar(null);
+            toolbarContainer.registerToolBar(UIManager.EXPLORER_PLUGIN_TOOLBARS);
             List<DockableTool> oldTool = selectedPlugin == null ? null : selectedPlugin.getToolPanel();
             if (oldTool != null) {
                 for (DockableTool p : oldTool) {
@@ -627,17 +631,16 @@ public class WeasisWin {
     public void showWindow() throws Exception {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         Toolkit kit = Toolkit.getDefaultToolkit();
-        
+
         Monitor defMonitor = Monitor.getDefaultMonitor();
         GraphicsConfiguration config;
-       
+
         if (defMonitor == null) {
-             config = ge.getDefaultScreenDevice().getDefaultConfiguration();
-        }
-        else {
+            config = ge.getDefaultScreenDevice().getDefaultConfiguration();
+        } else {
             config = defMonitor.getGraphicsConfiguration();
         }
-        
+
         Rectangle b;
         if (config != null) {
             b = config.getBounds();
@@ -649,8 +652,8 @@ public class WeasisWin {
         } else {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
-        LOGGER.debug("Max main screen bound: {}", b.toString()); //$NON-NLS-1$
-        
+        LOGGER.debug("Max main screen bound: {}", b); //$NON-NLS-1$
+
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
             // set a valid size, insets of screen is often non consistent
@@ -676,36 +679,18 @@ public class WeasisWin {
         final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
         if (helpURL != null) {
             final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide")); //$NON-NLS-1$
-            helpContentMenuItem.addActionListener(e -> {
-                try {
-                    JMVUtils.openInDefaultBrowser(helpContentMenuItem, new URL(helpURL));
-                } catch (MalformedURLException e1) {
-                    LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
-                }
-            });
+            helpContentMenuItem.addActionListener(e -> openBrowser(helpContentMenuItem, helpURL));
             helpMenuItem.add(helpContentMenuItem);
         }
 
         final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
-        webMenuItem.addActionListener(e -> {
-            try {
-                URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")); //$NON-NLS-1$
-                JMVUtils.openInDefaultBrowser(webMenuItem, url);
-            } catch (MalformedURLException e1) {
-                LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
-            }
-        });
+        webMenuItem.addActionListener(
+            e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); //$NON-NLS-1$
         helpMenuItem.add(webMenuItem);
 
         final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online")); //$NON-NLS-1$
-        websiteMenuItem.addActionListener(e -> {
-            try {
-                URL url = new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")); //$NON-NLS-1$
-                JMVUtils.openInDefaultBrowser(websiteMenuItem, url);
-            } catch (MalformedURLException e1) {
-                LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
-            }
-        });
+        websiteMenuItem.addActionListener(
+            e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); //$NON-NLS-1$
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
             new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
@@ -717,6 +702,15 @@ public class WeasisWin {
         helpMenuItem.add(aboutMenuItem);
         menuBar.add(helpMenuItem);
         return menuBar;
+    }
+
+    private void openBrowser(Component c, String ref) {
+        try {
+            URL url = new URL(ref);
+            JMVUtils.openInDefaultBrowser(c, url);
+        } catch (MalformedURLException e) {
+            LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
+        }
     }
 
     private void buildToolBarSubMenu(final JMenu toolBarMenu) {
@@ -938,7 +932,8 @@ public class WeasisWin {
         DefaultAction preferencesAction =
             new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), //$NON-NLS-1$
                 prefAction);
-        preferencesAction.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_MASK));
+        preferencesAction.putValue(Action.ACCELERATOR_KEY,
+            KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
         menuFile.add(new JMenuItem(preferencesAction));
 
         menuFile.add(new JSeparator());
@@ -1208,7 +1203,9 @@ public class WeasisWin {
                         robot.mousePress(InputEvent.BUTTON1_MASK);
                         robot.mouseRelease(InputEvent.BUTTON1_MASK);
                     } catch (AWTException e1) {
+                        // DO nothing
                     } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     } finally {
                         app.setAlwaysOnTop(false);
                     }

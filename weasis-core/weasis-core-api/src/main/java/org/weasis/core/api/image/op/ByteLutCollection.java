@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -216,9 +216,10 @@ public class ByteLutCollection {
 
             String[] line = scan.nextLine().split("\\s+"); //$NON-NLS-1$
             if (line.length == 3) {
-                lut[0][lineIndex] = (byte) Integer.parseInt(line[0]);
+                // Convert rgb to bgr
+                lut[2][lineIndex] = (byte) Integer.parseInt(line[0]);
                 lut[1][lineIndex] = (byte) Integer.parseInt(line[1]);
-                lut[2][lineIndex] = (byte) Integer.parseInt(line[2]);
+                lut[0][lineIndex] = (byte) Integer.parseInt(line[2]);
             }
 
             lineIndex++;

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -19,83 +19,85 @@ import java.awt.geom.Rectangle2D;
 public interface ViewModel {
 
     /**
-     * Gets the X-offset in model coordinates of the upper left view pixel
-     *
-     * @return the X-offset in model coordinates of the upper left view pixel
+     * Gets the X-offset from the center model coordinates (image center) to the view center.
+     * 
+     * @return the X-offset.
      */
     double getModelOffsetX();
 
     /**
-     * Gets the Y-offset in model coordinates of the upper left view pixel
+     * Gets the Y-offset from the center model coordinates (image center) to the view center.
      *
-     * @return the y-offset in model coordinates of the upper left view pixel
+     * @return the Y-offset
      */
     double getModelOffsetY();
 
     /**
-     * Sets the offset in model coordinates of the upper left view pixel
+     * Sets the offset from the center model coordinates (image center) to the view center.
+     * 
+     * With (0.0,0.0) the image will be on the center of the view. Negative values will shift the image on the bottom
+     * right.
      *
      * @param modelOffsetX
-     *            the x-offset in model coordinates of the upper left view pixel
+     *            the X-offset
      * @param modelOffsetY
-     *            the y-offset in model coordinates of the upper left view pixel
+     *            the Y-offset
      */
     void setModelOffset(double modelOffsetX, double modelOffsetY);
 
     /**
-     * Gets the view scale.
+     * Gets the view scale factor.
      *
-     * @return the current view scale
+     * @return the current view scale factor
      */
     double getViewScale();
 
     /**
-     * Sets the view scale.
+     * Sets the view scale factor.
      *
      * @param viewScale
-     *            the new view scale
+     *            the new view scale factor
      */
     void setViewScale(double viewScale);
 
     /**
-     * Gets the maximum view scale. Minimum view scale is defined by <code>1.0 / getViewScaleMax().doubleValue()</code>.
+     * Gets the minimum view scale factor. The min value is defined by <code>1.0 / DefaultViewModel.SCALE_MAX</code>.
      *
-     * @return the maximum view scale, if the maximum view scale is not specified, <code>null</code> is returned
+     * @return the minimum view scale factor
      */
     double getViewScaleMin();
 
     /**
-     * Sets the maximum view scale. Minimum view scale is defined by <code>1.0 / getViewScaleMax().doubleValue()</code>.
+     * Sets the minimum view scale factor. The min value is defined by <code>1.0 / DefaultViewModel.SCALE_MAX</code>.
      *
-     * @param viewScaleMax
-     *            the maximum view scale, or <code>null</code> if a maximum view scale shall not be specified
+     * @param viewScaleMin
+     *            the minimum view scale factor
      */
     void setViewScaleMin(double viewScaleMin);
 
     /**
-     * Gets the maximum view scale. Minimum view scale is defined by <code>1.0 / getViewScaleMax().doubleValue()</code>.
+     * Gets the maximum view scale factor. The max value is defined by <code>DefaultViewModel.SCALE_MAX</code>.
      *
-     * @return the maximum view scale, if the maximum view scale is not specified, <code>null</code> is returned
+     * @return the maximum view scale factor
      */
     double getViewScaleMax();
 
     /**
-     * Sets the maximum view scale. Minimum view scale is defined by <code>1.0 / getViewScaleMax().doubleValue()</code>.
+     * Sets the maximum view scale factor. The max value is defined by <code>DefaultViewModel.SCALE_MAX</code>.
      *
      * @param viewScaleMax
-     *            the maximum view scale, or <code>null</code> if a maximum view scale shall not be specified
+     *            the maximum view scale factor
      */
     void setViewScaleMax(double viewScaleMax);
 
     /**
-     * This method sets all view properties of this model with a single method call. The method results in a single
-     * change event being generated. This is convenient when you need to adjust all the model data simultaneously and do
-     * not want individual change events to occur.
-     *
+     * Sets the offset from the center model coordinates (image center) to the view center. This method is convenient
+     * when you need to adjust all the model data simultaneously and do not want individual change events to occur.
+     * 
      * @param modelOffsetX
-     *            the x-offset in model coordinates of the upper left view pixel
+     *            the X-offset
      * @param modelOffsetY
-     *            the y-offset in model coordinates of the upper left view pixel
+     *            the Y-offset
      * @param viewScale
      *            the new view scale
      * @see #setModelOffset
@@ -104,25 +106,22 @@ public interface ViewModel {
     void setModelOffset(double modelOffsetX, double modelOffsetY, double viewScale);
 
     /**
-     * Gets the model area of this view model. The model area enables a viewport to specify scrolling limits and to
-     * perform a "zoom all" operation.
+     * Gets the model area of this view model (image size).
      *
      * @return the model area rectangle, must not be null
      */
     Rectangle2D getModelArea();
 
     /**
-     * Sets the model area of this view model. The model area enables a viewport to specify scrolling limits and to
-     * perform a "zoom all" operation.
-     *
+     * Sets the model area of this view model (image size).
+     * 
      * @param r
      *            the model area rectangle, must not be null
      */
     void setModelArea(Rectangle2D r);
 
     /**
-     * Gets the array of all view model change listeners. An empty array is returned for the case that no listeners have
-     * been added so far.
+     * Gets the array of all view model change listeners.
      *
      * @return the array of all view model change listeners, never null
      */
@@ -140,7 +139,8 @@ public interface ViewModel {
      * Removes an existing view model change listener from this view model.
      *
      * @param l
-     *            the listener, ignored if it does not exists or if it is null
+     *            the listener, ignored if it does not exist or if it is null
      */
     void removeViewModelChangeListener(ViewModelChangeListener l);
+
 }

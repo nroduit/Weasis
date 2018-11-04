@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -102,7 +102,7 @@ public class StringUtil {
         }
         return EMPTY_INT_ARRAY;
     }
-
+    
     public static Integer getInteger(String val) {
         if (StringUtil.hasText(val)) {
             try {
@@ -113,6 +113,7 @@ public class StringUtil {
         }
         return null;
     }
+
 
     public static int getInt(String val) {
         if (StringUtil.hasText(val)) {
@@ -129,12 +130,23 @@ public class StringUtil {
         int result = defaultValue;
         if (value != null) {
             try {
-                return Integer.parseInt(value);
+                return Integer.parseInt(value.trim());
             } catch (NumberFormatException e) {
                 LOGGER.warn("Cannot parse {} to int", value); //$NON-NLS-1$
             }
         }
         return result;
+    }
+    
+    public static Double getDouble(String val) {
+        if (StringUtil.hasText(val)) {
+            try {
+                return Double.parseDouble(val.trim());
+            } catch (NumberFormatException e) {
+                LOGGER.warn("Cannot parse {} to Double", val); //$NON-NLS-1$
+            }
+        }
+        return null;
     }
 
     public static String splitCamelCaseString(String s) {

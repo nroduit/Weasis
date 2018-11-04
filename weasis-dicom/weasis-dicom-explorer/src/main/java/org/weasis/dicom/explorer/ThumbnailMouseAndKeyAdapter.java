@@ -1,6 +1,15 @@
+/*******************************************************************************
+ * Copyright (c) 2009-2018 Weasis Team and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v2.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v20.html
+ *
+ * Contributors:
+ *     Nicolas Roduit - initial API and implementation
+ *******************************************************************************/
 package org.weasis.dicom.explorer;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
@@ -18,10 +27,8 @@ import java.util.Map;
 import java.util.Objects;
 
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
@@ -38,8 +45,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.DefaultMimeAppFactory;
-import org.weasis.core.ui.editor.SeriesViewerEvent;
-import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
+import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.codec.DicomSeries;
@@ -177,16 +183,9 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 if (viewerFactory instanceof MimeSystemAppFactory) {
                     final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
                     item5.addActionListener(e -> {
-                        JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
-                        frame.setSize(500, 630);
-                        DicomFieldsView view = new DicomFieldsView();
-                        view.changingViewContentEvent(new SeriesViewerEvent(viewerFactory.createSeriesViewer(null),
-                            series, series.getMedia(MEDIA_POSITION.FIRST, null, null), EVENT.SELECT));
-                        JPanel panel = new JPanel();
-                        panel.setLayout(new BorderLayout());
-                        panel.add(view);
-                        frame.getContentPane().add(panel);
-                        frame.setVisible(true);
+                        SeriesViewer<?> viewer = viewerFactory.createSeriesViewer(null);
+                        MediaElement dcm =  series.getMedia(MEDIA_POSITION.FIRST, null, null);
+                        DicomFieldsView.showHeaderDialog(viewer,  series, dcm);
                     });
                     popupMenu.add(item5);
                 }

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -12,21 +12,19 @@ package org.weasis.core.api.gui.util;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 import javax.swing.JFileChooser;
 import javax.swing.filechooser.FileFilter;
 
 import org.weasis.core.api.Messages;
-
-import com.sun.media.jai.codec.ImageCodec;
+import org.weasis.core.api.service.BundleTools;
 
 /**
  * The Class FileFormatFilter.
@@ -40,15 +38,6 @@ public class FileFormatFilter extends FileFilter {
     private String fFullDescription;
     private String fDefaultExtension;
     private boolean fUseExtensionsInDescription;
-    protected static Map<String, String> sExtToCodec;
-
-    static {
-        // extension alternatives : more than one is separated by comma
-        sExtToCodec = new HashMap<>();
-        sExtToCodec.put("jpg,jpe", "jpeg"); //$NON-NLS-1$ //$NON-NLS-2$
-        sExtToCodec.put("tif", "tiff"); //$NON-NLS-1$ //$NON-NLS-2$
-        sExtToCodec.put("pbm,ppm,pgm", "pnm"); //$NON-NLS-1$ //$NON-NLS-2$
-    }
 
     public FileFormatFilter(String extension, String description) {
         fExtensions = new TreeMap<>();
@@ -155,14 +144,11 @@ public class FileFormatFilter extends FileFilter {
     }
 
     public static void setImageDecodeFilters(JFileChooser chooser) {
-        // Get the current available codecs from ImageIO.
-        Enumeration<?> codecs = ImageCodec.getCodecs();
-        ArrayList<String> namesList = new ArrayList<>(20);
-        ImageCodec ic;
-        for (; codecs.hasMoreElements(); namesList.add(ic.getFormatName())) {
-            ic = (ImageCodec) codecs.nextElement();
-        }
-        Collections.sort(namesList);
+        // Get the current available codecs.
+        List<String> namesList = BundleTools.CODEC_PLUGINS.stream().flatMap(c -> Arrays.asList(c.getReaderExtensions()).stream())
+            .distinct().sorted().collect(Collectors.toList());
+        // Remove DICOM extensions
+        namesList.removeAll(Arrays.asList("dcm", "dic", "dicm", "dicom")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         Iterator<String> it = namesList.iterator();
         String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$
         ArrayList<String> names = new ArrayList<>();
@@ -172,17 +158,6 @@ public class FileFormatFilter extends FileFilter {
             }
             String name = it.next();
             names.add(name);
-            String altExt = getAlternateExtension(name);
-            if (altExt != null) {
-                if (altExt.indexOf(",") != -1) { //$NON-NLS-1$
-                    String[] tab = altExt.split(","); //$NON-NLS-1$
-                    for (int i = 0; i < tab.length; i++) {
-                        names.add(tab[i]);
-                    }
-                } else {
-                    names.add(altExt);
-                }
-            }
         } while (true);
 
         FileFormatFilter allfilter = new FileFormatFilter(names.toArray(new String[names.size()]), desc);
@@ -196,35 +171,12 @@ public class FileFormatFilter extends FileFilter {
             String name = it.next();
             desc = name.toUpperCase();
             FileFormatFilter filter = new FileFormatFilter(name, desc);
-            String altExt = getAlternateExtension(name);
-            if (altExt != null) {
-                if (altExt.indexOf(",") != -1) { //$NON-NLS-1$
-                    String[] tab = altExt.split(","); //$NON-NLS-1$
-                    for (int i = 0; i < tab.length; i++) {
-                        filter.addExtension(tab[i]);
-                    }
-                } else {
-                    filter.addExtension(altExt);
-                }
-            }
             chooser.addChoosableFileFilter(filter);
         } while (true);
         // Add All filter
         chooser.setAcceptAllFileFilterUsed(true);
         // Set default selected filter
         chooser.setFileFilter(allfilter);
-    }
-
-    public static String getAlternateExtension(String codecName) {
-        Set<Entry<String, String>> maps = sExtToCodec.entrySet();
-        for (Iterator<Entry<String, String>> it = maps.iterator(); it.hasNext();) {
-            Entry<String, String> me = it.next();
-            String value = me.getValue();
-            if (value.equals(codecName)) {
-                return me.getKey();
-            }
-        }
-        return null;
     }
 
     public void setFFullDescription(String fFullDescription) {

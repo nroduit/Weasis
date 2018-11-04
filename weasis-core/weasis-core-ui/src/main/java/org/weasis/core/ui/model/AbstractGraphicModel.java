@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -579,7 +579,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         Rectangle2D viewClip) {
         // Get the visible view in real coordinates, note only Sun g2d return consistent clip area with offset
         Shape area = inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
-        Rectangle2D bound = area.getBounds2D();
+        Rectangle2D bound = area == null ? null : area.getBounds2D();
 
         g2d.translate(0.5, 0.5);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);

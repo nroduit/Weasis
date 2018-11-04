@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -60,7 +60,8 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
          * @param seriesInstanceUID
          * @param sopInstanceUID
          * @param sopClassUID
-         * @param frames the list of DICOM Instance Number
+         * @param frames
+         *            the list of DICOM Instance Number
          */
         public Reference(String studyInstanceUID, String seriesInstanceUID, String sopInstanceUID, String sopClassUID,
             int[] frames) {
@@ -116,7 +117,7 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
         }
         label = buf.toString();
     }
-    
+
     protected String getLabelWithoutPrefix() {
         Attributes dicom = ((DicomMediaIO) mediaIO).getDicomObject();
         Attributes item = dicom.getNestedDataset(Tag.ContentSequence);
@@ -475,7 +476,8 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
                 }
                 String sopInstanceUID = TagD.getTagValue(dicom, Tag.SOPInstanceUID, String.class);
                 Integer frame = TagD.getTagValue(dicom, Tag.InstanceNumber, Integer.class);
-                return isSopuidInReferencedSeriesSequence(getReferencedSOPInstanceUIDObject(seriesInstanceUID), sopInstanceUID, frame);
+                return isSopuidInReferencedSeriesSequence(getReferencedSOPInstanceUIDObject(seriesInstanceUID),
+                    sopInstanceUID, frame);
 
             }
         };

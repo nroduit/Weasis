@@ -5,7 +5,7 @@
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
 		<!-- Remove "-SNAPSHOT" for release -->
-		<version>2.6.1-SNAPSHOT</version>
+		<version>3.0.3-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,6 +14,8 @@
 	<name>Weasis Distributions (WEB, portable, standalone)</name>
 
 	<properties>
+		<build.timestamp>${maven.build.timestamp}</build.timestamp>
+		<maven.build.timestamp.format>yyyy-MM-dd HH:mm</maven.build.timestamp.format>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- dollar property to avoid replacing some variables when filtering resources files (ex. ${user.home} in config.properties) -->
 		<dollar>$</dollar>
@@ -24,7 +26,7 @@
 		<windowsName>weasis-native</windowsName>
 	</properties>
 
-    <!-- Override for getting snapshot -->
+	<!-- Override for getting snapshot -->
 	<repositories>
 		<repository>
 			<id>central</id>
@@ -64,6 +66,79 @@
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>urlrewrite-regex-version-properties</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>regex-properties</goal>
+						</goals>
+
+						<configuration>
+							<regexPropertySettings>
+								<regexPropertySetting>
+									<name>regex.app.version</name>
+									<value>${app.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>regex.felix.framework.version</name>
+									<value>${felix.framework.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>regex.substance.version</name>
+									<value>${substance.version}</value>
+									<regex>[\.]</regex>
+									<replacement>\\.</replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+							</regexPropertySettings>
+						</configuration>
+					</execution>
+					<execution>
+						<id>urlrewrite-jnlp-version-properties</id>
+						<phase>validate</phase>
+						<goals>
+							<goal>regex-properties</goal>
+						</goals>
+
+						<configuration>
+							<regexPropertySettings>
+								<regexPropertySetting>
+									<name>jnlp.app.version</name>
+									<value>${app.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>jnlp.felix.framework.version</name>
+									<value>${felix.framework.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+								<regexPropertySetting>
+									<name>jnlp.substance.version</name>
+									<value>${substance.version}</value>
+									<regex>^.+-SNAPSHOT$</regex>
+									<replacement></replacement>
+									<failIfNoMatch>false</failIfNoMatch>
+								</regexPropertySetting>
+							</regexPropertySettings>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -171,36 +246,18 @@
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
+									<groupId>org.glassfish</groupId>
+									<artifactId>javax.json</artifactId>
+									<version>${javax.json.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
 									<groupId>org.weasis.thirdparty</groupId>
 									<artifactId>docking-frames</artifactId>
 									<version>${dockingframes.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 									<!-- Workaround to get a snapshot name without timestamp (download from nexus) -->
 									<destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib</artifactId>
-									<version>${jai.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-linux-x86</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-linux-x86-64</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
-									<artifactId>jai-lib-windows-x86</artifactId>
-									<version>${jai.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
@@ -225,6 +282,46 @@
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 
+								<!-- ===================================== -->
+								<!-- Weasis OpenCV bundles -->
+								<!-- ===================================== -->
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core</artifactId>
+									<version>${app.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-linux-x86</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-linux-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-windows-x86</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.opencv</groupId>
+									<artifactId>weasis-opencv-core-windows-x86-64</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
+
 
 								<!-- ===================================== -->
 								<!-- Weasis Imageio bundles -->
@@ -235,106 +332,7 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageio</groupId>
-									<artifactId>weasis-imageio-codec-linux-x86</artifactId>
-									<version>${weasis.imageio.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageio</groupId>
-									<artifactId>weasis-imageio-codec-linux-x86-64</artifactId>
-									<version>${weasis.imageio.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.imageio</groupId>
-									<artifactId>weasis-imageio-codec-windows-x86</artifactId>
-									<version>${weasis.imageio.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
 
-								<!-- ===================================== -->
-								<!-- Weasis Codec bundles -->
-								<!-- ===================================== -->
-								<artifactItem>
-									<groupId>org.weasis</groupId>
-									<artifactId>weasis-image-jni</artifactId>
-									<version>${app.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec</artifactId>
-									<version>${app.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec-linux-x86</artifactId>
-									<version>${weasis.jpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec-linux-x86-64</artifactId>
-									<version>${weasis.jpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec-macosx-x86-64</artifactId>
-									<version>${weasis.jpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec-windows-x86</artifactId>
-									<version>${weasis.jpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.jpeg</groupId>
-									<artifactId>weasis-jpeg-codec-windows-x86-64</artifactId>
-									<version>${weasis.jpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec</artifactId>
-									<version>${app.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec-linux-x86</artifactId>
-									<version>${weasis.openjpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec-linux-x86-64</artifactId>
-									<version>${weasis.openjpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec-macosx-x86-64</artifactId>
-									<version>${weasis.openjpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec-windows-x86</artifactId>
-									<version>${weasis.openjpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
-								<artifactItem>
-									<groupId>org.weasis.openjpeg</groupId>
-									<artifactId>weasis-openjpeg-codec-windows-x86-64</artifactId>
-									<version>${weasis.openjpeg.native.version}</version>
-									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
-								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis Base bundles -->
@@ -403,6 +401,12 @@
 									<version>${app.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
+								<artifactItem>
+									<groupId>org.weasis.dicom</groupId>
+									<artifactId>weasis-dicom-wave</artifactId>
+									<version>${app.version}</version>
+									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
+								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Weasis Acquisition bundles -->
@@ -456,6 +460,46 @@
 				<version>1.8</version>
 				<executions>
 					<execution>
+						<id>enable-JNLP-version-based-download-protocol</id>
+						<phase>validate</phase>
+
+						<configuration>
+							<exportAntProperties>true</exportAntProperties>
+
+							<!-- @note :properties in ant are immutable, then following assignments will only take place if prop is not yet set. -->
+							<target>
+								<condition property="is.app.version.snapshot">
+									<contains string="${app.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.app.version.download.enable" value="false">
+									<isset property="is.app.version.snapshot" />
+								</condition>
+								<property name="jnlp.app.version.download.enable" value="true" />
+
+								<condition property="is.felix.framework.version.snapshot">
+									<contains string="${felix.framework.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.felix.framework.version.download.enable" value="false">
+									<isset property="is.felix.framework.version.snapshot" />
+								</condition>
+								<property name="jnlp.felix.framework.version.download.enable" value="true" />
+
+								<condition property="is.substance.version.snapshot">
+									<contains string="${substance.version}" substring="SNAPSHOT" />
+								</condition>
+								<condition property="jnlp.substance.version.download.enable" value="false">
+									<isset property="is.substance.version.snapshot" />
+								</condition>
+								<property name="jnlp.substance.version.download.enable" value="true" />
+							</target>
+
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+
+					<execution>
 						<id>add-trusted-library-attribute</id>
 						<phase>process-resources</phase>
 						<configuration>
@@ -478,9 +522,11 @@
 						<configuration>
 							<target>
 								<!-- Bindex Task helps to generate the repository.xml -->
-								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask" classpath="${project.build.directory}/lib/bindex.jar" />
+								<taskdef name="bindex" classname="org.osgi.impl.bundle.bindex.ant.BindexTask"
+									classpath="${project.build.directory}/lib/bindex.jar" />
 								<bindex repositoryfile="${tmp.bundle.dir}/repository.xml" description="Weasis Bundle Repository"
-									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}" name="Weasis Bundle Repository">
+									licenseurl="http://www.eclipse.org/legal/epl-v10.html" quiet="true" root="${tmp.bundle.dir}"
+									name="Weasis Bundle Repository">
 									<fileset dir="${tmp.bundle.dir}" includes="*.jar" />
 								</bindex>
 							</target>
@@ -568,8 +614,8 @@
 					<plugin>
 						<!-- normalize jar before signing -->
 						<groupId>org.weasis.maven</groupId>
-						<artifactId>maven-pack200-plugin</artifactId>
-						<version>1.0.3</version>
+						<artifactId>build-pack200-plugin</artifactId>
+						<version>1.0.4</version>
 						<executions>
 							<execution>
 								<id>sign</id>
@@ -646,6 +692,10 @@
 									<includes>
 										<include>**/*.jar</include>
 									</includes>
+									<excludes>
+										<!-- exclude .original.jar files that will be excluded from final packaging -->
+										<exclude>bundle/*.original.jar</exclude>
+									</excludes>
 								</configuration>
 							</execution>
 						</executions>
@@ -667,7 +717,7 @@
 					<plugin>
 						<groupId>com.akathist.maven.plugins.launch4j</groupId>
 						<artifactId>launch4j-maven-plugin</artifactId>
-						<version>1.7.18</version>
+						<version>1.7.21</version>
 						<executions>
 							<execution>
 								<id>l4j-clui</id>
@@ -702,6 +752,7 @@
 									<jre>
 										<path>jre/windows</path>
 										<minVersion>1.8.0</minVersion>
+										<maxVersion></maxVersion>
 										<initialHeapSize>64</initialHeapSize>
 										<maxHeapSize>768</maxHeapSize>
 										<!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit 
@@ -723,7 +774,6 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-dependency-plugin</artifactId>
-						<version>3.0.1</version>
 						<executions>
 							<execution>
 								<id>unpack-i18njar</id>

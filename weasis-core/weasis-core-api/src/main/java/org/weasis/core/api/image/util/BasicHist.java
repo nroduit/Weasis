@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -169,9 +169,15 @@ public class BasicHist {
             double variance = m2 / (stat[0] - 1); // variance
             stat[6] = Math.sqrt(variance);
             if (bins.length > 3 && variance > 10E-20) {
-                stat[7] = (stat[0] * stat[7]) / ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
-                stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
-                    / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                double val = ((stat[0] - 1) * (stat[0] - 2) * stat[6] * variance);
+                if (val == 0.0) {
+                    stat[7] = 0.0;
+                    stat[8] = 0.0;
+                } else {
+                    stat[7] = (stat[0] * stat[7]) / val;
+                    stat[8] = (stat[0] * (stat[0] + 1) * stat[8] - 3 * m2 * m2 * (stat[0] - 1))
+                        / ((stat[0] - 1) * (stat[0] - 2) * (stat[0] - 3) * variance * variance);
+                }
             } else {
                 stat[7] = 0.0;
                 stat[8] = 0.0;

@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -11,7 +11,6 @@
 package org.weasis.base.explorer;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.RenderedImage;
 import java.io.File;
 import java.net.URI;
 import java.util.Collections;
@@ -23,9 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.SubsampleAverageDescriptor;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.ThumbnailList;
@@ -33,8 +29,10 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public final class JIThumbnailCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(JIThumbnailCache.class);
@@ -71,15 +69,14 @@ public final class JIThumbnailCache {
                 r = runnable;
             }
         }
-        if (r != null) {
-            queue.remove(r);
+        if (r != null && !queue.remove(r)) {
+            LOGGER.error("Cannot remove thumbnail from the queue"); //$NON-NLS-1$
         }
     }
 
     public ThumbnailIcon getThumbnailFor(final ImageElement diskObject,
         final ThumbnailList<? extends MediaElement> aThumbnailList, final int index) {
         try {
-
             final ThumbnailIcon jiIcon = this.cachedThumbnails.get(diskObject.getMediaURI());
             if (jiIcon != null) {
                 return jiIcon;
@@ -146,12 +143,15 @@ public final class JIThumbnailCache {
 
         @Override
         public void run() {
-            RenderedImage img = null;
+            PlanarImage img = null;
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
-            if (file != null) {
-                img = ImageFiler.getThumbnailInTiff(file);
+            if (file != null && file.getName().endsWith(".wcv")) { //$NON-NLS-1$
+                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg")); //$NON-NLS-1$
+                if (thumbFile.canRead()) {
+                    img = ImageProcessor.readImage(thumbFile);
+                }
             }
 
             if (img == null) {
@@ -162,14 +162,8 @@ public final class JIThumbnailCache {
                 return;
             }
 
-            final double scale = Math.min(ThumbnailRenderer.ICON_DIM.height / (double) img.getHeight(),
-                ThumbnailRenderer.ICON_DIM.width / (double) img.getWidth());
-
-            final BufferedImage tIcon =
-                scale <= 1.0
-                    ? scale > 0.005 ? SubsampleAverageDescriptor
-                        .create(img, scale, scale, Thumbnail.DownScaleQualityHints).getAsBufferedImage() : null
-                    : PlanarImage.wrapRenderedImage(img).getAsBufferedImage();
+            final BufferedImage tIcon = ImageConversion
+                .toBufferedImage((PlanarImage) ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
             // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
             diskObject.removeImageFromCache();

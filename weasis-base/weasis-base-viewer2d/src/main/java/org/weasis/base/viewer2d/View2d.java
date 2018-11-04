@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -46,13 +46,11 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -94,9 +92,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         manager.addImageOperationAction(new FilterOp());
         manager.addImageOperationAction(new PseudoColorOp());
         // Zoom and Rotation must be the last operations for the lens
-        manager.addImageOperationAction(new ZoomOp());
-        manager.addImageOperationAction(new RotationOp());
-        manager.addImageOperationAction(new FlipOp());
+        manager.addImageOperationAction(new AffineTransformOp());
 
         infoLayer = new InfoLayer(this);
         oldSize = new Dimension(0, 0);
@@ -243,7 +239,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         return eventManager.getAction(actionKey.get(), MouseActionAdapter.class).orElse(null);
     }
 
-    private void resetMouseAdapter() {
+    protected void resetMouseAdapter() {
         for (ActionState adapter : eventManager.getAllActionValues()) {
             if (adapter instanceof MouseActionAdapter) {
                 ((MouseActionAdapter) adapter).setButtonMaskEx(0);
@@ -254,7 +250,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         graphicMouseHandler.setButtonMaskEx(0);
     }
 
-    private MouseActionAdapter getAction(ActionW action) {
+    protected MouseActionAdapter getAction(ActionW action) {
         ActionState a = eventManager.getAction(action);
         if (a instanceof MouseActionAdapter) {
             return (MouseActionAdapter) a;
@@ -279,12 +275,10 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
         if (selected != null) {
-
-            JPopupMenu popupMenu = new JPopupMenu();
+            final JPopupMenu popupMenu = new JPopupMenu();
             TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
             popupMenu.add(itemTitle);
             popupMenu.addSeparator();
-
             boolean graphicComplete = true;
             if (selected.size() == 1) {
                 final Graphic graph = selected.get(0);
@@ -375,10 +369,10 @@ public class View2d extends DefaultView2d<ImageElement> {
 
                     final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.calib")); //$NON-NLS-1$
                     calibMenu.addActionListener(e -> {
-                        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         String title = Messages.getString("View2d.man_calib"); //$NON-NLS-1$
                         CalibrationView calibrationDialog =
                             new CalibrationView((LineGraphic) graph, View2d.this, false);
+                        ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
                             title, JOptionPane.OK_CANCEL_OPTION);
                         if (layer != null) {

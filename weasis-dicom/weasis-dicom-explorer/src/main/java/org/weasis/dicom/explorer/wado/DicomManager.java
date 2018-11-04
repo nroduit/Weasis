@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -11,7 +11,6 @@
 package org.weasis.dicom.explorer.wado;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.dcm4che3.data.Tag;
@@ -24,7 +23,6 @@ import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.explorer.DicomFieldsView.DicomData;
 import org.weasis.dicom.explorer.Messages;
 
@@ -36,7 +34,6 @@ public class DicomManager {
     private static DicomManager instance;
     private TransferSyntax wadoTSUID;
     private boolean portableDirCache;
-    private final boolean allImageCodecs;
     private final List<DicomData> limitedDicomTags;
 
     private DicomManager() {
@@ -55,12 +52,6 @@ public class DicomManager {
             }
         }
         initRequiredDicomTags();
-
-        allImageCodecs = Arrays
-            .asList(TransferSyntax.JPEG_LOSSY_12, TransferSyntax.JPEG_LOSSLESS_57, TransferSyntax.JPEG_LOSSLESS_70,
-                TransferSyntax.JPEGLS_LOSSLESS, TransferSyntax.JPEGLS_NEAR_LOSSLESS, TransferSyntax.JPEG2000_LOSSLESS,
-                TransferSyntax.JPEG2000)
-            .stream().allMatch(t -> DicomImageUtils.hasImageReader(t.getTransferSyntaxUID()));
     }
 
     /**
@@ -73,17 +64,10 @@ public class DicomManager {
         return instance;
     }
 
-    public boolean containsImageioCodec(String tsuid) {
-        if (!allImageCodecs && tsuid != null && tsuid.startsWith("1.2.840.10008.1.2.4.")) { //$NON-NLS-1$
-            return DicomImageUtils.hasImageReader(tsuid);
-        }
-        return true;
-    }
-
     private void initRequiredDicomTags() {
         TagView[] patient = { new TagView(TagD.get(Tag.PatientName)), new TagView(TagD.get(Tag.PatientID)),
             new TagView(TagD.get(Tag.IssuerOfPatientID)), new TagView(TagD.get(Tag.PatientSex)),
-            new TagView(TagD.get(Tag.PatientBirthDate)), new TagView(TagD.get(Tag.PatientAge)) };
+            new TagView(TagD.get(Tag.PatientBirthDate)) };
 
         final TagView[] station = { new TagView(TagD.get(Tag.Manufacturer)),
             new TagView(TagD.get(Tag.ManufacturerModelName)), new TagView(TagD.get(Tag.StationName)) };
@@ -121,10 +105,6 @@ public class DicomManager {
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.object"), image, TagD.Level.INSTANCE)); //$NON-NLS-1$
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.plane"), imgPlane, TagD.Level.INSTANCE)); //$NON-NLS-1$
         limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.acqu"), imgAcq, TagD.Level.INSTANCE)); //$NON-NLS-1$
-    }
-
-    public boolean hasAllImageCodecs() {
-        return allImageCodecs;
     }
 
     public List<DicomData> getLimitedDicomTags() {

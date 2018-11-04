@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -16,6 +16,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import javax.swing.JComponent;
 import javax.swing.JMenu;
@@ -29,13 +30,13 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.GridBagLayoutModel;
+import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.SynchView;
@@ -46,6 +47,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 
 @SuppressWarnings("serial")
 public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements PropertyChangeListener {
@@ -110,7 +113,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     }
 
     public AuContainer(GridBagLayoutModel layoutModel, String uid) {
-        super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, AuFactory.ICON, null);
+        super(AU_EVENT_MANAGER, layoutModel, uid, AuFactory.NAME, MimeInspector.audioIcon, null);
         setSynchView(SynchView.NONE);
         if (!initComponents) {
             initComponents = true;
@@ -120,6 +123,19 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             String componentName = InsertableUtil.getCName(this.getClass());
             String key = "enable"; //$NON-NLS-1$
 
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ImportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ImportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
+                InsertableUtil.getCName(ExportToolBar.class), key, true)) {
+                Optional<Toolbar> b =
+                    UIManager.EXPLORER_PLUGIN_TOOLBARS.stream().filter(t -> t instanceof ExportToolBar).findFirst();
+                b.ifPresent(TOOLBARS::add);
+            }
+            
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(AuToolBar.class), key, true)) {
                 TOOLBARS.add(new AuToolBar(10));
@@ -238,11 +254,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     public JComponent createUIcomponent(String clazz) {
         try {
             // FIXME use classloader.loadClass or injection
-            Class<?> cl = Class.forName(clazz);
-            JComponent component = (JComponent) cl.newInstance();
-            if (component instanceof SeriesViewerListener) {
-                eventManager.addSeriesViewerListener((SeriesViewerListener) component);
-            }
+            JComponent component = buildInstance(Class.forName(clazz));
             if (component instanceof AuView) {
                 auview = (AuView) component;
             }

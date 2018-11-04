@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -11,27 +11,18 @@
 package org.weasis.dicom.codec.utils;
 
 import java.awt.image.DataBuffer;
-import java.awt.image.RenderedImage;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.media.jai.LookupTableJAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.operator.LookupDescriptor;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.image.PaletteColorModel;
-import org.dcm4che3.imageio.codec.ImageReaderFactory;
-import org.dcm4che3.imageio.codec.ImageReaderFactory.ImageReaderParam;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.opencv.data.LookupTableCV;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageProcessor;
 
 /**
  *
@@ -44,13 +35,9 @@ public class DicomImageUtils {
     private DicomImageUtils() {
     }
 
-    public static PlanarImage getRGBImageFromPaletteColorModel(RenderedImage source, Attributes ds) {
-        if (source == null) {
-            return null;
-        }
-
+    public static PlanarImage getRGBImageFromPaletteColorModel(PlanarImage source, Attributes ds) {
         // Convert images with PaletteColorModel to RGB model
-        if (source.getColorModel() instanceof PaletteColorModel && ds != null) {
+        if (ds != null) {
             int[] rDesc = DicomImageUtils.lutDescriptor(ds, Tag.RedPaletteColorLookupTableDescriptor);
             int[] gDesc = DicomImageUtils.lutDescriptor(ds, Tag.GreenPaletteColorLookupTableDescriptor);
             int[] bDesc = DicomImageUtils.lutDescriptor(ds, Tag.BluePaletteColorLookupTableDescriptor);
@@ -60,12 +47,11 @@ public class DicomImageUtils {
                 Tag.SegmentedGreenPaletteColorLookupTableData);
             byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
                 Tag.SegmentedBluePaletteColorLookupTableData);
-            LookupTableJAI lut = new LookupTableJAI(new byte[][] { r, g, b });
 
             // Replace the original image with the RGB image.
-            return LookupDescriptor.create(source, lut, null);
+            return ImageProcessor.applyLUT(source.toMat(), new byte[][] { b, g, r });
         }
-        return PlanarImage.wrapRenderedImage(source);
+        return source;
     }
 
     /**
@@ -90,7 +76,7 @@ public class DicomImageUtils {
      * @return a LookupTableJAI for data between minValue and maxValue according to all given parameters <br>
      */
 
-    public static LookupTableJAI createWindowLevelLut(LutShape lutShape, double window, double level, int minValue,
+    public static LookupTableCV createWindowLevelLut(LutShape lutShape, double window, double level, int minValue,
         int maxValue, int bitsStored, boolean isSigned, boolean inverse) {
 
         if (lutShape == null) {
@@ -136,8 +122,8 @@ public class DicomImageUtils {
                 maxOutValue, inverse);
         }
 
-        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, minInValue) : //
-            new LookupTableJAI((short[]) outLut, minInValue, isSigned);
+        return (outLut instanceof byte[]) ? new LookupTableCV((byte[]) outLut, minInValue) : //
+            new LookupTableCV((short[]) outLut, minInValue, isSigned);
     }
 
     /**
@@ -145,19 +131,19 @@ public class DicomImageUtils {
      *         Note that isSigned is relevant for both input and output values
      */
 
-    public static LookupTableJAI createRescaleRampLut(LutParameters params) {
+    public static LookupTableCV createRescaleRampLut(LutParameters params) {
         return createRescaleRampLut(params.getIntercept(), params.getSlope(), params.getBitsStored(), params.isSigned(),
             params.isOutputSigned(), params.getBitsOutput());
     }
 
-    public static LookupTableJAI createRescaleRampLut(double intercept, double slope, int bitsStored, boolean isSigned,
+    public static LookupTableCV createRescaleRampLut(double intercept, double slope, int bitsStored, boolean isSigned,
         boolean outputSigned, int bitsOutput) {
 
         return createRescaleRampLut(intercept, slope, Integer.MIN_VALUE, Integer.MAX_VALUE, bitsStored, isSigned, false,
             outputSigned, bitsOutput);
     }
 
-    public static LookupTableJAI createRescaleRampLut(double intercept, double slope, int minValue, int maxValue,
+    public static LookupTableCV createRescaleRampLut(double intercept, double slope, int minValue, int maxValue,
         int bitsStored, boolean isSigned, boolean inverse, boolean outputSigned, int bitsOutput) {
 
         int stored = (bitsStored > 16) ? 16 : ((bitsStored < 1) ? 1 : bitsStored);
@@ -189,8 +175,8 @@ public class DicomImageUtils {
             }
         }
 
-        return (outLut instanceof byte[]) ? new LookupTableJAI((byte[]) outLut, minInValue) : //
-            new LookupTableJAI((short[]) outLut, minInValue, !outputSigned);
+        return (outLut instanceof byte[]) ? new LookupTableCV((byte[]) outLut, minInValue) : //
+            new LookupTableCV((short[]) outLut, minInValue, !outputSigned);
     }
 
     /**
@@ -223,7 +209,7 @@ public class DicomImageUtils {
      *
      *
      */
-    public static void applyPixelPaddingToModalityLUT(LookupTableJAI modalityLookup, LutParameters lutparams) {
+    public static void applyPixelPaddingToModalityLUT(LookupTableCV modalityLookup, LutParameters lutparams) {
         if (modalityLookup != null && lutparams.isApplyPadding() && lutparams.getPaddingMinValue() != null
             && modalityLookup.getDataType() <= DataBuffer.TYPE_SHORT) {
 
@@ -454,7 +440,7 @@ public class DicomImageUtils {
         }
     }
 
-    private static Object getLutDataArray(LookupTableJAI lookup) {
+    private static Object getLutDataArray(LookupTableCV lookup) {
         Object lutDataArray = null;
         if (lookup != null) {
             if (lookup.getDataType() == DataBuffer.TYPE_BYTE) {
@@ -479,7 +465,7 @@ public class DicomImageUtils {
      * @return a normalized LookupTableJAI based upon given lutSequence <br>
      */
 
-    private static void setWindowLevelSequenceLut(double width, double center, LookupTableJAI lookupSequence,
+    private static void setWindowLevelSequenceLut(double width, double center, LookupTableCV lookupSequence,
         int minInValue, int maxInValue, Object outLut, int minOutValue, int maxOutValue, boolean inverse) {
 
         final Object inLutDataArray = getLutDataArray(lookupSequence);
@@ -547,32 +533,9 @@ public class DicomImageUtils {
         }
     }
 
-    public static boolean hasImageReader(String tsuid) {
-        ImageReaderFactory factory = ImageReaderFactory.getDefault();
-        if (factory != null) {
-            List<ImageReaderParam> list = factory.get(tsuid);
-            if (list != null) {
-                synchronized (list) {
-                    for (Iterator<ImageReaderParam> it = list.iterator(); it.hasNext();) {
-                        ImageReaderParam imageParam = it.next();
-                        String cl = imageParam.className;
-                        Iterator<ImageReader> iter = ImageIO.getImageReadersByFormatName(imageParam.formatName);
-                        while (iter.hasNext()) {
-                            ImageReader reader = iter.next();
-                            if (cl == null || reader.getClass().getName().equals(cl)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     public static double pixel2rescale(TagReadable tagable, double pixelValue) {
         if (tagable != null) {
-            LookupTableJAI lookup = (LookupTableJAI) tagable.getTagValue(TagW.ModalityLUTData);
+            LookupTableCV lookup = (LookupTableCV) tagable.getTagValue(TagW.ModalityLUTData);
             if (lookup != null) {
                 if (pixelValue >= lookup.getOffset() && pixelValue <= lookup.getOffset() + lookup.getNumEntries() - 1) {
                     return lookup.lookup(0, (int) pixelValue);
@@ -675,6 +638,7 @@ public class DicomImageUtils {
                             }
                         }
                     }
+                    break;
                     default:
                         illegalOpcode(op, i - 2);
                 }

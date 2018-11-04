@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -37,7 +37,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
         super(action, min, max, value);
         this.time = time;
-        speedModel = new SpinnerNumberModel(speed, 1, 60, 1);
+        speedModel = new SpinnerNumberModel(speed, 1, 200, 1);
         speedModel.addChangeListener(e -> setSpeed((Integer) ((SpinnerNumberModel) e.getSource()).getValue()));
     }
 

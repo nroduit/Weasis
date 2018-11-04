@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -70,9 +70,21 @@ public interface ViewCanvas<E extends ImageElement>
 
     void setTileOffset(int tileOffset);
 
+    /**
+     * Center the image into the view.
+     * 
+     */
     void center();
 
-    void setCenter(Double x, Double y);
+    /**
+     * Set the offset from the center of the view. (0,0) will center the image into the view.
+     * 
+     * @param modelOffsetX
+     *            the X-offset
+     * @param modelOffsetY
+     *            the Y-offset
+     */
+    void setCenter(Double modelOffsetX, Double modelOffsetY);
 
     void moveOrigin(PanPoint point);
 

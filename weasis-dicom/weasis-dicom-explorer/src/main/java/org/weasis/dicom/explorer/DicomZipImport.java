@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -13,6 +13,8 @@ package org.weasis.dicom.explorer;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -27,6 +29,8 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.NetworkUtil;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -113,7 +117,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 try {
                     FileUtil.unzip(file, dir);
                 } catch (IOException e) {
-                    LOGGER.error("", e); //$NON-NLS-1$
+                    LOGGER.error("unzipping", e); //$NON-NLS-1$
                 }
                 File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
                 if (dicomdir.canRead()) {
@@ -132,4 +136,25 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         }
     }
 
+    public static void loadDicomZip(String uri, DicomModel dicomModel) {
+        if (StringUtil.hasText(uri)) {
+            InputStream stream = null;
+            File tempFile = null;
+            try {
+                URI u = new URI(uri);
+                if (u.toString().startsWith("file:")) { //$NON-NLS-1$
+                    tempFile = new File(u.getPath());
+                } else {
+                    tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                    stream = NetworkUtil.getUrlInputStream(u.toURL().openConnection());
+                    FileUtil.writeStreamWithIOException(stream, tempFile);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Loading DICOM Zip", e); //$NON-NLS-1$
+            } finally {
+                FileUtil.safeClose(stream);
+            }
+            loadDicomZip(tempFile, dicomModel);
+        }
+    }
 }

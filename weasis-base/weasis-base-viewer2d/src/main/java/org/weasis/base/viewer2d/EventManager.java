@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -15,6 +15,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.swing.ButtonGroup;
@@ -23,6 +24,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JSeparator;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import org.osgi.framework.BundleContext;
@@ -39,12 +41,10 @@ import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
@@ -113,9 +113,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
         setAction(newLutAction());
         setAction(newFilterAction());
-        setAction(newLayoutAction(
-            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
-        setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
+        setAction(newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST
+            .toArray(new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
+        setAction(newSynchAction(
+            View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
         getAction(ActionW.SYNCH, ComboItemListener.class)
             .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
         setAction(newMeasurementAction(
@@ -346,7 +347,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         clearAllPropertyChangeListeners();
         Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
 
-        if (view2d.getSourceImage() == null) {
+        if (Objects.isNull(view2d.getSourceImage())) {
             enableActions(false);
             if (view2d.getSeries() != null) {
                 // Let scrolling if only one image is corrupted in the series
@@ -399,10 +400,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             (Boolean) dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE)));
         getAction(ActionW.FILTER, ComboItemListener.class).ifPresent(
             a -> a.setSelectedItemWithoutTriggerAction(dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
-        getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(
-            a -> a.setSliderValue((Integer) dispOp.getParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE), false));
-        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(
-            a -> a.setSelectedWithoutTriggerAction((Boolean) dispOp.getParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP)));
+        getAction(ActionW.ROTATION, SliderChangeListener.class)
+            .ifPresent(a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
+        getAction(ActionW.FLIP, ToggleButtonListener.class).ifPresent(a -> a.setSelectedWithoutTriggerAction(
+            LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
 
         getAction(ActionW.ZOOM, SliderChangeListener.class)
             .ifPresent(a -> a.setRealValue(Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
@@ -494,6 +495,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (menu.isEnabled()) {
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
+                    if (ResetTools.ALL.equals(action)) {
+                        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,  0));
+                    }
                     item.addActionListener(e -> reset(action));
                     menu.add(item);
                     group.add(item);
@@ -536,10 +540,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
                     menu.add(menuItem);
                     menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                    menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
@@ -551,8 +557,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP, ToggleButtonListener.class);
                     if (flipAction.isPresent()) {
                         menu.add(new JSeparator());
-                        menu.add(flipAction.get()
-                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"))); //$NON-NLS-1$
+                        menuItem = flipAction.get()
+                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h")); //$NON-NLS-1$
+                        menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
+                        menu.add(menuItem);
                     }
                 }
             }

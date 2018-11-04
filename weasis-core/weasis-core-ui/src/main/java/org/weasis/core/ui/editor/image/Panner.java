@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -14,13 +14,12 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 
 import javax.swing.event.MouseInputAdapter;
 
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -33,20 +32,19 @@ import org.weasis.core.api.media.data.Thumbnail;
  */
 public final class Panner<E extends ImageElement> extends Thumbnail {
 
-    private MouseClickHandler mouseClickHandler = new MouseClickHandler();
-    private PopUpMenuOnThumb popup = null;
+    private final MouseClickHandler mouseClickHandler = new MouseClickHandler();
 
     private final DefaultView2d<E> view;
-    private Rectangle slider;
-    private Rectangle panArea;
+    private final Rectangle2D slider;
+    private final Rectangle2D panArea;
     private boolean updatingImageDisplay;
 
     public Panner(DefaultView2d<E> view) {
         super(156);
         this.view = view;
-        setForeground(JMVUtils.TREE_SELECTION_BACKROUND);
-        slider = new Rectangle(0, 0, 0, 0);
-        panArea = new Rectangle(0, 0, 0, 0);
+        setForeground(Color.RED);
+        this.slider = new Rectangle2D.Double();
+        this.panArea = new Rectangle2D.Double();
     }
 
     @Override
@@ -57,8 +55,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
     @Override
     public void registerListeners() {
         super.registerListeners();
-        popup = new PopUpMenuOnThumb(this);
-        popup.setInvoker(this);
         addMouseListener(mouseClickHandler);
         addMouseMotionListener(mouseClickHandler);
     }
@@ -73,19 +69,13 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         return updatingImageDisplay;
     }
 
-    public void setSlider(Rectangle slider) {
-        Rectangle oldSlider = this.slider;
-        this.slider = new Rectangle(slider);
-        firePropertyChange("slider", oldSlider, this.slider); //$NON-NLS-1$
-    }
-
     private void updateImageDisplay() {
         if (view != null) {
             final Rectangle2D ma = view.getViewModel().getModelArea();
-            double mpX = ma.getX() + (slider.getX() - panArea.getX()) * ma.getWidth() / panArea.getWidth();
-            double mpY = ma.getY() + (slider.getY() - panArea.getY()) * ma.getHeight() / panArea.getHeight();
+            double mpX = (slider.getCenterX() - panArea.getCenterX()) * ma.getWidth() / panArea.getWidth();
+            double mpY = (slider.getCenterY() - panArea.getCenterY()) * ma.getHeight() / panArea.getHeight();
             updatingImageDisplay = true;
-            view.setOrigin(mpX, mpY);
+            view.setCenter(mpX, mpY);
             updatingImageDisplay = false;
         }
     }
@@ -96,7 +86,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
             if (img != null) {
                 thumbnailPath = null;
                 readable = true;
-                buildThumbnail(img, false, view.getImageLayer().getPreprocessing());
+                // Keep image in cache (do not release the current image after building thumbnail)
+                buildThumbnail(img, true, view.getImageLayer().getPreprocessing());
                 updateImageSize();
             }
         }
@@ -116,13 +107,15 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
                 imageWidth = (int) Math.round(imageHeight * modelRatio);
             }
             if (imageWidth > 0 && imageHeight > 0) {
-                panArea.setRect(0, 0, imageWidth, imageHeight);
+                double x = 0.0;
+                double y = 0.0;
                 if (imageWidth < getWidth()) {
-                    panArea.x = (getWidth() - imageWidth) / 2;
+                    x = (getWidth() - imageWidth) * 0.5;
                 }
                 if (imageHeight < getHeight()) {
-                    panArea.y = (getHeight() - imageHeight) / 2;
+                    y = (getHeight() - imageHeight) * 0.5;
                 }
+                panArea.setRect(x, y, imageWidth, imageHeight);
                 updateSlider();
             }
         }
@@ -134,20 +127,24 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         }
         final Rectangle2D ma = view.getViewModel().getModelArea();
         final double vs = view.getViewModel().getViewScale();
-        int width = view.getWidth() - 1;
-        int height = view.getHeight() - 1;
-        final Rectangle2D va = new Rectangle2D.Double(view.getViewModel().getModelOffsetX(),
-            view.getViewModel().getModelOffsetY(), width / vs, height / vs);
-        slider.x = panArea.x + (int) Math.round(panArea.width * (va.getX() - ma.getX()) / ma.getWidth());
-        slider.y = panArea.y + (int) Math.round(panArea.height * (va.getY() - ma.getY()) / ma.getHeight());
-        slider.width = (int) Math.round(panArea.width * va.getWidth() / ma.getWidth());
-        slider.height = (int) Math.round(panArea.height * va.getHeight() / ma.getHeight());
+
+        double x = panArea.getX()
+            + panArea.getWidth() * (view.getViewModel().getModelOffsetX() + ma.getWidth() * 0.5) / ma.getWidth()
+            - slider.getWidth() * 0.5;
+        double y = panArea.getY()
+            + panArea.getHeight() * (view.getViewModel().getModelOffsetY() + ma.getHeight() * 0.5) / ma.getHeight()
+            - slider.getHeight() * 0.5;
+        double w = panArea.getWidth() * view.getWidth() / (ma.getWidth() * vs);
+        double h = panArea.getHeight() * view.getHeight() / (ma.getHeight() * vs);
+        slider.setFrame(x, y, w, h);
         repaint();
     }
 
     public void moveToOrigin() {
         if (view != null) {
-            view.setOrigin(0d, 0d);
+            Rectangle2D area = view.getViewModel().getModelArea();
+            view.setCenter((view.viewToModelLength((double) view.getWidth()) - area.getWidth()) * 0.5,
+                (view.viewToModelLength((double) view.getHeight()) - area.getHeight()) * 0.5);
         }
     }
 
@@ -157,46 +154,33 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         }
     }
 
-    public void moveSlider(int x, int y) {
-        if (view != null) {
-            view.moveOrigin(x * 10, y * 10);
-        }
-    }
-
     @Override
     protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
         g2d.setColor(new Color(getForeground().getRed(), getForeground().getGreen(), getForeground().getBlue(), 40));
-        g2d.fillRect(slider.x, slider.y, slider.width, slider.height);
+        g2d.fill(slider);
         g2d.setColor(getForeground());
-        g2d.draw3DRect(slider.x - 1, slider.y - 1, slider.width + 2, slider.height + 2, true);
-        g2d.draw3DRect(slider.x, slider.y, slider.width, slider.height, false);
-
+        g2d.draw(slider);
     }
 
     class MouseClickHandler extends MouseInputAdapter {
 
         private Point pickPoint;
-        private Point sliderPoint;
+        private Point2D sliderPoint;
 
         @Override
         public void mousePressed(MouseEvent e) {
             pickPoint = e.getPoint();
             if (!slider.contains(pickPoint)) {
-                slider.x = pickPoint.x - slider.width / 2;
-                slider.y = pickPoint.y - slider.height / 2;
+                slider.setFrame(pickPoint.x - slider.getWidth() * 0.5, pickPoint.y - slider.getHeight() * 0.5,
+                    slider.getWidth(), slider.getHeight());
                 repaint();
             }
-            sliderPoint = slider.getLocation();
-            if (e.isPopupTrigger()) {
-                popup.show(e.getComponent(), e.getX(), e.getY());
-            }
+            sliderPoint = new Point2D.Double(slider.getX(), slider.getY());
+            updateImageDisplay();
         }
 
         @Override
         public void mouseReleased(MouseEvent mouseevent) {
-            if (mouseevent.isPopupTrigger()) {
-                popup.show(mouseevent.getComponent(), mouseevent.getX(), mouseevent.getY());
-            }
             updateImageDisplay();
             repaint();
         }
@@ -204,8 +188,8 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
         @Override
         public void mouseDragged(MouseEvent e) {
             if (pickPoint != null) {
-                slider.x = sliderPoint.x + (e.getX() - pickPoint.x);
-                slider.y = sliderPoint.y + (e.getY() - pickPoint.y);
+                slider.setFrame(sliderPoint.getX() + (e.getX() - pickPoint.x),
+                    sliderPoint.getY() + (e.getY() - pickPoint.y), slider.getWidth(), slider.getHeight());
                 updateImageDisplay();
                 repaint();
             }

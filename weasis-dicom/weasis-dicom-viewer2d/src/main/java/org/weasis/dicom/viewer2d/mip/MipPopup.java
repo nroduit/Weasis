@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -172,19 +172,19 @@ public class MipPopup {
                 scrollListerner = e -> {
                     JSliderW slider = (JSliderW) e.getSource();
                     getThickness(sliderThickness);
-                    if (!slider.getValueIsAdjusting()) {
+               //     if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(ActionW.SCROLL_SERIES.cmd(), slider.getValue());
                         MipView.buildMip(MipDialog.this, view, false);
-                    }
+               //     }
                 };
                 frameSlider.addChangeListener(scrollListerner);
                 sliderThickness.addChangeListener(e -> {
                     JSliderW slider = (JSliderW) e.getSource();
                     getThickness(slider);
-                    if (!slider.getValueIsAdjusting()) {
+                //    if (!slider.getValueIsAdjusting()) {
                         view.setActionsInView(MipView.MIP_THICKNESS.cmd(), slider.getValue());
                         MipView.buildMip(MipDialog.this, view, false);
-                    }
+                 //   }
                 });
             }
             JPanel panel = new JPanel();

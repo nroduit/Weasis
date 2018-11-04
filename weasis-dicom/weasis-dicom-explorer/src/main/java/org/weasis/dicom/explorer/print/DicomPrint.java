@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -28,7 +28,6 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.image.DataBufferUShort;
-import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.IOException;
 import java.util.Iterator;
@@ -50,8 +49,8 @@ import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
-import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
@@ -60,6 +59,7 @@ import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
+import org.weasis.opencv.data.PlanarImage;
 
 public class DicomPrint {
 
@@ -198,16 +198,16 @@ public class DicomPrint {
         }
 
         Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenter = (Point2D) image.getActionValue("origin.center"); //$NON-NLS-1$
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
         Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
-        RenderedImage img = image.getSourceImage();
-        if (img != null && originCenter != null && originZoom != null) {
+        PlanarImage img = image.getSourceImage();
+        if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
             double canvasWidth;
             double canvasHeight;
             if (bestfit || originSize == null) {
-                canvasWidth = img.getWidth() * image.getImage().getRescaleX();
-                canvasHeight = img.getHeight() * image.getImage().getRescaleY();
+                canvasWidth = img.width() * image.getImage().getRescaleX();
+                canvasHeight = img.height() * image.getImage().getRescaleY();
             } else {
                 canvasWidth = originSize.getWidth() / originZoom;
                 canvasHeight = originSize.getHeight() / originZoom;
@@ -228,14 +228,14 @@ public class DicomPrint {
                 pad.y = 0.0;
             }
 
-            image.getDisplayOpManager().setParamValue(ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, interpolation);
+            image.getDisplayOpManager().setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, interpolation);
             double scaleFactor = Math.min(cw / canvasWidth, ch / canvasHeight);
             // Resize in best fit window
             image.zoom(scaleFactor);
             if (bestfit) {
                 image.center();
             } else {
-                image.setCenter(originCenter.getX(), originCenter.getY());
+                image.setCenter(originCenterOffset.getX(), originCenterOffset.getY());
             }
         }
     }

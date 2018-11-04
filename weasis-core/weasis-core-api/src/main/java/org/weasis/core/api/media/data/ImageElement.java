@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -14,61 +14,52 @@ import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
-import java.awt.image.renderable.ParameterBlock;
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-import javax.media.jai.JAI;
-import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
-import org.weasis.core.api.image.util.ImageToolkit;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.ImageProcessor;
 
 public class ImageElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
 
-    /*
-     * Imageio issue with native library in multi-thread environment (to avoid JVM crash let only one simultaneous
-     * thread) (https://java.net/jira/browse/JAI_IMAGEIO_CORE-126)
-     *
-     * Try multi-thread reading with new native decoders
-     *
-     * public static final ExecutorService IMAGE_LOADER = Executors.newFixedThreadPool(Math.max(1, Runtime.getRuntime()
-     * .availableProcessors() / 2));
-     */
-    // TODO evaluate the difference, keep one thread with sun decoder. (seems to hangs on shutdown)
     public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
 
-    private static final SoftHashMap<ImageElement, PlanarImage> mCache = new SoftHashMap<ImageElement, PlanarImage>() {
+    private static final NativeCache<ImageElement, PlanarImage> mCache =
+        new NativeCache<ImageElement, PlanarImage>(Runtime.getRuntime().maxMemory() / 2) {
 
-        @Override
-        public void removeElement(Reference<? extends PlanarImage> soft) {
-            ImageElement key = reverseLookup.remove(soft);
-            if (key != null) {
-                hash.remove(key);
-                MediaReader reader = key.getMediaReader();
-                key.setTag(TagW.ImageCache, false);
-                if (reader != null) {
-                    // Close the image stream
-                    reader.close();
+            @Override
+            protected void afterEntryRemove(ImageElement key, PlanarImage img) {
+                if (key != null) {
+                    key.setTag(TagW.ImageCache, false);
+                    MediaReader reader = key.getMediaReader();
+                    if (reader != null) {
+                        // Close the image stream
+                        reader.close();
+                    }
+                }
+                if (img != null) {
+                    img.release();
                 }
             }
-        }
-    };
+        };
+ 
     protected boolean readable = true;
 
     protected double pixelSizeX = 1.0;
@@ -84,34 +75,26 @@ public class ImageElement extends MediaElement {
         super(mediaIO, key);
     }
 
-    protected void findMinMaxValues(RenderedImage img, boolean exclude8bitImage) throws OutOfMemoryError {
+    public static int getNumberOfImagesInCache() {
+        return mCache.size();
+    }
+
+    protected void findMinMaxValues(PlanarImage img, boolean exclude8bitImage) throws OutOfMemoryError {
         // This function can be called several times from the inner class Load.
         // Do not compute min and max it has already be done
 
         if (img != null && !isImageAvailable()) {
 
-            int datatype = img.getSampleModel().getDataType();
-            if (datatype == DataBuffer.TYPE_BYTE && exclude8bitImage) {
+            if (ImageConversion.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE && exclude8bitImage) {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-
-                ParameterBlock pb = new ParameterBlock();
-                pb.addSource(img);
-                // ImageToolkit.NOCACHE_HINT to ensure this image won't be stored in tile cache
-                RenderedOp dst = JAI.create("extrema", pb, ImageToolkit.NOCACHE_HINT); //$NON-NLS-1$
-
-                double[][] extrema = (double[][]) dst.getProperty("extrema"); //$NON-NLS-1$
-                double min = Double.MAX_VALUE;
-                double max = -Double.MAX_VALUE;
-                int numBands = dst.getSampleModel().getNumBands();
-
-                for (int i = 0; i < numBands; i++) {
-                    min = Math.min(min, extrema[0][i]);
-                    max = Math.max(max, extrema[1][i]);
+                double[] val = ImageProcessor.findMinMaxValues(img.toMat());
+                if (val != null && val.length == 2) {
+                    this.minPixelValue = val[0];
+                    this.maxPixelValue = val[1];
                 }
-                this.minPixelValue = min;
-                this.maxPixelValue = max;
+
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value
                 if (this.minPixelValue.equals(this.maxPixelValue)) {
@@ -196,6 +179,18 @@ public class ImageElement extends MediaElement {
         this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
         this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
     }
+    
+    public ZoomOp getRectifyAspectRatioZoomOp() {
+        // Rectify non square pixel image in the first operation
+        if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {     
+            ZoomOp node = new ZoomOp();
+            node.setName("rectifyAspectRatio"); //$NON-NLS-1$
+            node.setParam(ZoomOp.P_RATIO_X, getRescaleX());
+            node.setParam(ZoomOp.P_RATIO_Y, getRescaleY());
+            return node;
+        }
+        return null;
+    }
 
     public void setPixelValueUnit(String pixelValueUnit) {
         this.pixelValueUnit = pixelValueUnit;
@@ -240,20 +235,14 @@ public class ImageElement extends MediaElement {
 
     public void removeImageFromCache() {
         mCache.remove(this);
-        MediaReader reader = this.getMediaReader();
-        this.setTag(TagW.ImageCache, false);
-        if (reader != null) {
-            // Close the image stream
-            reader.close();
-        }
     }
 
     public boolean hasSameSize(ImageElement image) {
         if (image != null) {
             PlanarImage img = getImage();
             PlanarImage img2 = image.getImage();
-            if (img != null && img2 != null && getRescaleWidth(img.getWidth()) == image.getRescaleWidth(img2.getWidth())
-                && getRescaleHeight(img.getHeight()) == image.getRescaleHeight(img2.getHeight())) {
+            if (img != null && img2 != null && getRescaleWidth(img.width()) == image.getRescaleWidth(img2.width())
+                && getRescaleHeight(img.height()) == image.getRescaleHeight(img2.height())) {
                 return true;
             }
         }
@@ -272,7 +261,7 @@ public class ImageElement extends MediaElement {
         return mediaIO.getImageFragment(this);
     }
 
-    public RenderedImage getRenderedImage(final RenderedImage imageSource) {
+    public PlanarImage getRenderedImage(final PlanarImage imageSource) {
         return getRenderedImage(imageSource, null);
     }
 
@@ -288,7 +277,7 @@ public class ImageElement extends MediaElement {
      *            considered
      * @return
      */
-    public RenderedImage getRenderedImage(final RenderedImage imageSource, Map<String, Object> params) {
+    public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
         if (imageSource == null) {
             return null;
         }
@@ -301,7 +290,49 @@ public class ImageElement extends MediaElement {
         window = (window == null) ? getDefaultWindow(pixelPadding) : window;
         level = (level == null) ? getDefaultLevel(pixelPadding) : level;
 
-        return ImageToolkit.getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+        return getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
+    }
+    
+    /**
+     * Apply window/level to the image source. Note: this method cannot be used with a DicomImageElement as image
+     * parameter.
+     *
+     * @param image
+     * @param source
+     * @param window
+     * @param level
+     * @param pixelPadding
+     * @return
+     */
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, double window,
+        double level, boolean pixelPadding) {
+        if (image == null || source == null) {
+            return null;
+        }
+
+        if (ImageConversion.convertToDataType(source.type()) == DataBuffer.TYPE_BYTE && MathUtil.isEqual(window, 255.0)
+            && (MathUtil.isEqual(level, 127.5) || MathUtil.isEqual(level, 127.0))) {
+            return source;
+        }
+
+        double low = level - window / 2.0;
+        double high = level + window / 2.0;
+        // use a lookup table for rescaling
+        double range = high - low;
+        if (range < 1.0) {
+            range = 1.0;
+        }
+
+        double slope = 255.0 / range;
+        double yInt = 255.0 - slope * high;
+
+        return ImageProcessor.rescaleToByte(source.toMat(), slope, yInt);
+
+    }
+
+    public static PlanarImage getDefaultRenderedImage(ImageElement image, PlanarImage source, boolean pixelPadding) {
+        return getDefaultRenderedImage(image, source, image.getDefaultWindow(pixelPadding),
+            image.getDefaultLevel(pixelPadding), true);
     }
 
     /**
@@ -322,19 +353,11 @@ public class ImageElement extends MediaElement {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
-            /*
-             * Appends when loading a big image without tiling, the memory left is not enough for the renderedop (like
-             * Extrema)
-             */
             LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
+            
             mCache.expungeStaleEntries();
-            System.gc();
-            System.gc();
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException et) {
-                // Do nothing
-            }
+            CvUtil.runGarbageCollectorAndWait(100);
+
             return getCacheImage(startImageLoading(), manager, findMinMax);
         }
     }
@@ -350,14 +373,14 @@ public class ImageElement extends MediaElement {
             }
         }
         if (manager != null && cacheImage != null) {
-            RenderedImage img = manager.getLastNodeOutputImage();
+            PlanarImage img = manager.getLastNodeOutputImage();
             if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
                 manager.setFirstNode(cacheImage);
                 img = manager.process();
             }
 
             if (img != null) {
-                return PlanarImage.wrapRenderedImage(img);
+                return img;
             }
         }
         return cacheImage;
@@ -392,10 +415,12 @@ public class ImageElement extends MediaElement {
                 }
             }
             if (img != null) {
-                readable = true;
-                mCache.put(this, img);
-                cacheImage = img;
-                this.setTag(TagW.ImageCache, true);
+                readable = img.width() > 0;
+                if (readable) {
+                    mCache.put(this, img);
+                    cacheImage = img;
+                    this.setTag(TagW.ImageCache, true);
+                }
             }
             setAsLoaded();
         }

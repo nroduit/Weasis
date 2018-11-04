@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.swing.Action;
 import javax.swing.ImageIcon;
@@ -57,7 +58,6 @@ import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -80,6 +80,8 @@ import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.ExportToolBar;
+import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -163,7 +165,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
 
             EventManager evtMg = EventManager.getInstance();
-            TOOLBARS.add(View2dContainer.TOOLBARS.get(0));
+            Optional<Toolbar> importBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportToolBar).findFirst();
+            importBar.ifPresent(TOOLBARS::add);
+            Optional<Toolbar> exportBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ExportToolBar).findFirst();
+            exportBar.ifPresent(TOOLBARS::add);
+            Optional<Toolbar> viewBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ViewerToolBar).findFirst();
+            viewBar.ifPresent(TOOLBARS::add);
             TOOLBARS.add(new MeasureToolBar(evtMg, 11));
             TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
             TOOLBARS.add(new RotationToolBar(evtMg, 30));
@@ -375,12 +382,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
         try {
             // FIXME use classloader.loadClass or injection
-            Class<?> cl = Class.forName(clazz);
-            JComponent component = (JComponent) cl.newInstance();
-            if (component instanceof SeriesViewerListener) {
-                eventManager.addSeriesViewerListener((SeriesViewerListener) component);
-            }
-            return component;
+            return buildInstance(Class.forName(clazz));
 
         } catch (Exception e) {
             LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$

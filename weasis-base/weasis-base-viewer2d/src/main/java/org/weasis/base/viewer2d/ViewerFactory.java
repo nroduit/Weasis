@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -53,10 +53,10 @@ public class ViewerFactory implements SeriesViewerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
     public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/image-x-generic.png")); //$NON-NLS-1$
 
-    private static final DefaultAction preferencesAction =
-        new DefaultAction(Messages.getString("OpenImageAction.img"), ViewerFactory::getOpenImageAction); //$NON-NLS-1$
+    private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"), //$NON-NLS-1$
+        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")), //$NON-NLS-1$
+        ViewerFactory::getOpenImageAction);
 
     public ViewerFactory() {
         super();
@@ -64,7 +64,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public Icon getIcon() {
-        return ICON;
+        return MimeInspector.imageIcon;
     }
 
     @Override
@@ -180,13 +180,13 @@ public class ViewerFactory implements SeriesViewerFactory {
         return true;
     }
 
-    private static void getOpenImageAction(ActionEvent e) {
+    static void getOpenImageAction(ActionEvent e) {
         String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
-        // TODO add format from plugins
+
         FileFormatFilter.setImageDecodeFilters(fileChooser);
         File[] selectedFiles;
         if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION

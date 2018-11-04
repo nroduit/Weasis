@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -18,8 +18,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 
-import javax.media.jai.PlanarImage;
-
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.MimeInspector;
@@ -32,6 +30,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.opencv.data.PlanarImage;
 
 public class DefaultMimeIO implements MediaReader {
 
@@ -90,9 +89,12 @@ public class DefaultMimeIO implements MediaReader {
 
                 @Override
                 public String getMimeType() {
-                    synchronized (this) {
-                        for (MediaElement m : medias) {
-                            return m.getMimeType();
+                    if (!medias.isEmpty()) {
+                        synchronized (this) {
+                            MediaElement img = medias.get(0);
+                            if (img != null) {
+                                return img.getMimeType();
+                            }
                         }
                     }
                     return null;

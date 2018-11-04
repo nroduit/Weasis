@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -11,11 +11,15 @@
 package org.weasis.core.ui.util;
 
 import java.awt.FlowLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
@@ -28,6 +32,7 @@ public class ToolBarContainer extends JPanel {
     public ToolBarContainer() {
         setOpaque(false);
         setLayout(new WrapLayout(FlowLayout.LEADING, 2, 2));
+        addMouseListener(new PopClickListener());
     }
 
     /**
@@ -82,7 +87,7 @@ public class ToolBarContainer extends JPanel {
             repaint();
         }
     }
-
+    
     private void unregisterAll() {
         bars.clear();
         removeAll();
@@ -98,4 +103,38 @@ public class ToolBarContainer extends JPanel {
         return new ArrayList<>(bars);
     }
 
+    class PopClickListener extends MouseAdapter {
+        @Override
+        public void mousePressed(MouseEvent e) {
+            if (e.isPopupTrigger())
+                doPop(e);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (e.isPopupTrigger())
+                doPop(e);
+        }
+
+        private void doPop(MouseEvent e) {
+            PopUpToolbars menu = new PopUpToolbars();
+            menu.show(e.getComponent(), e.getX(), e.getY());
+        }
+    }
+
+    class PopUpToolbars extends JPopupMenu {
+        public PopUpToolbars() {
+            for (final Toolbar bar : getRegisteredToolBars()) {
+                if (!Insertable.Type.EMPTY.equals(bar.getType())) {
+                    JCheckBoxMenuItem item = new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
+                    item.addActionListener(e -> {
+                        if (e.getSource() instanceof JCheckBoxMenuItem) {
+                            displayToolbar(bar.getComponent(), ((JCheckBoxMenuItem) e.getSource()).isSelected());
+                        }
+                    });
+                    add(item);
+                }
+            }
+        }
+    }
 }

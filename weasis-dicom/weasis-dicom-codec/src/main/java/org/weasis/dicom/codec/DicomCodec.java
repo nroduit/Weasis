@@ -1,9 +1,9 @@
 /*******************************************************************************
- * Copyright (c) 2016 Weasis Team and others.
+ * Copyright (c) 2009-2018 Weasis Team and others.
  * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
+ * are made available under the terms of the Eclipse Public License v2.0
  * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * http://www.eclipse.org/legal/epl-v20.html
  *
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
@@ -20,7 +20,6 @@ import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -47,7 +46,7 @@ public class DicomCodec implements Codec {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomCodec.class);
 
     public static final String NAME = "dcm4che"; //$NON-NLS-1$
-    public static final String[] FILE_EXTENSIONS = { "dcm", "dicm" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String[] FILE_EXTENSIONS = { "dcm", "dic", "dicm", "dicom" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
     private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
     private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
@@ -87,7 +86,7 @@ public class DicomCodec implements Codec {
         }
     };
 
-    private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
+    // private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
     // private final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
     // private final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
 
@@ -157,16 +156,16 @@ public class DicomCodec implements Codec {
          */
         String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
         UIDUtils.setRoot(weasisRootUID);
-        
+
         // Set the default encoding (must contain ASCII)
-        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100");
+        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); //$NON-NLS-1$
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
         // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageReaderSpi
         // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        ImageioUtil.registerServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.registerServiceProvider(rleImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
 
         ConfigurationAdmin confAdmin =
@@ -193,7 +192,7 @@ public class DicomCodec implements Codec {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
-        ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
+        // ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
     }
 
