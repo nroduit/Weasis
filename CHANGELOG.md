@@ -1,17 +1,20 @@
 # Changelog
 
-## [3.0.3](https://github.com/nroduit/weasis/tree/3.0.3) (2018-10-28)
+## [3.0.3](https://github.com/nroduit/weasis/tree/3.0.3) (2018-11-07)
 
 [Full Changelog](https://github.com/nroduit/weasis/compare/3.0.2...3.0.3)
 
 **Implemented enhancements:**
 
+- Read SCOORD with a reference to an image \(DICOM SR\) [\#41](https://github.com/nroduit/Weasis/issues/41)
+- Update to weasis-dicom-tools 5.14.1 [\#40](https://github.com/nroduit/Weasis/issues/40)
 - Reduce default margins for standard print [\#35](https://github.com/nroduit/Weasis/issues/35) [[Priority: Low](https://github.com/nroduit/Weasis/labels/Priority:%20Low)]
 
 **Fixed bugs:**
 
 - In Crosshair mode releasing Ctrl do not deactivate W/L \(issue only on Windows\) [\#37](https://github.com/nroduit/Weasis/issues/37) [[Priority: Medium](https://github.com/nroduit/Weasis/labels/Priority:%20Medium)]
 - Native decoders only work with recent Linux distributions [\#36](https://github.com/nroduit/Weasis/issues/36) [[Priority: High](https://github.com/nroduit/Weasis/labels/Priority:%20High)]
+- TransferSyntaxUID is duplicated when saving generated DICOM files [\#34](https://github.com/nroduit/Weasis/issues/34) [[Priority: High](https://github.com/nroduit/Weasis/labels/Priority:%20High)]
 - Weasis 3.0.2 not exporting MPR reformats [\#33](https://github.com/nroduit/Weasis/issues/33) [[Priority: Medium](https://github.com/nroduit/Weasis/labels/Priority:%20Medium)]
 
 ## [3.0.2](https://github.com/nroduit/weasis/tree/3.0.2) (2018-09-17)
