@@ -302,11 +302,7 @@ public class SRReader {
         if (item == null) {
             return null;
         }
-        SRImageReference imgRef = map.get(level);
-        if (imgRef == null) {
-            imgRef = new SRImageReference(level);
-            map.put(level, imgRef);
-        }
+        SRImageReference imgRef = map.computeIfAbsent(level, k ->  new SRImageReference(level));
         if (imgRef.getSopInstanceReference() == null) {
             imgRef.setSopInstanceReference(new SOPInstanceReference(item));
         }

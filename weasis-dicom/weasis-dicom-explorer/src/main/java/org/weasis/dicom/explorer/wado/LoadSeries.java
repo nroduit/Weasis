@@ -473,7 +473,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                         FileUtil.writeStreamWithIOException(
                             new URL(wadoParameters.getBaseURL() + thumURL).openConnection(), outFile);
                         if(outFile.length() == 0) {
-                            throw new IllegalStateException("Thumbnail file is empty");
+                            throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
                         }
                         file = outFile;
                     } catch (Exception e) {
@@ -548,7 +548,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
         if(outFile.length() == 0) {
-            throw new IllegalStateException("Thumbnail file is empty");
+            throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
         }
         return outFile;
     }
