@@ -259,7 +259,7 @@ public class DownloadManager {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
 
             String path = uri.getPath();
-            URLConnection urlConnection = uri.toURL().openConnection();
+            URLConnection urlConnection = NetworkUtil.openConnection(uri.toURL());
 
             if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
                 for (Iterator<Entry<String, String>> iter =

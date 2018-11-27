@@ -24,6 +24,7 @@ import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.NetworkUtil;
 
 // TODO required to change the static ref
 //@org.osgi.service.component.annotations.Component(immediate = false, property = {
@@ -40,7 +41,7 @@ public class FileModel extends AbstractFileModel {
         try {
             outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
             LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
-            FileUtil.writeStreamWithIOException(new URL(url).openConnection(), outFile);
+            FileUtil.writeStreamWithIOException(NetworkUtil.openConnection( new URL(url)), outFile);
         } catch (IOException e) {
             LOGGER.error("Dowloading image", e); //$NON-NLS-1$
             return null;

@@ -409,7 +409,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     private static URLConnection initConnection(URL url, WadoParameters wadoParameters) throws IOException {
         // If there is a proxy, it should be already configured
-        URLConnection urlConnection = url.openConnection();
+        URLConnection urlConnection = NetworkUtil.openConnection(url);
         // Set http login (no protection, only convert in base64)
         if (wadoParameters.getWebLogin() != null) {
             urlConnection.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
@@ -470,8 +470,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     try {
                         File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
                             Thumbnail.THUMBNAIL_CACHE_DIR);
-                        FileUtil.writeStreamWithIOException(
-                            new URL(wadoParameters.getBaseURL() + thumURL).openConnection(), outFile);
+                        FileUtil.writeStreamWithIOException(NetworkUtil.openConnection(new URL(wadoParameters.getBaseURL() + thumURL)), outFile);
                         if(outFile.length() == 0) {
                             throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
                         }

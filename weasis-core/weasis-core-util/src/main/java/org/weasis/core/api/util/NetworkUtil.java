@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 public class NetworkUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtil.class);
+    
+    private static final int MAX_REDIRECTS = 3;
 
     private NetworkUtil() {
     }
@@ -54,7 +56,8 @@ public class NetworkUtil {
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
-        return getUrlInputStream(urlConnection, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000));
+        return getUrlInputStream(urlConnection, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000),
+            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000));
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection, int connectTimeout, int readTimeout)
@@ -86,6 +89,20 @@ public class NetworkUtil {
         } catch (IOException e) {
             throw new StreamIOException(e);
         }
+    }
+
+    public static URLConnection openConnection(URL url) throws IOException {
+        URLConnection urlConnection = url.openConnection();
+        String redirect = urlConnection.getHeaderField("Location");
+        for (int i = 0; i < MAX_REDIRECTS; i++) {
+            if (redirect != null) {
+                urlConnection = new URL(redirect).openConnection();
+                redirect = urlConnection.getHeaderField("Location");
+            } else {
+                break;
+            }
+        }
+        return urlConnection;
     }
 
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {

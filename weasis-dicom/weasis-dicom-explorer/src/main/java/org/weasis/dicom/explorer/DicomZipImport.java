@@ -146,7 +146,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                     tempFile = new File(u.getPath());
                 } else {
                     tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    stream = NetworkUtil.getUrlInputStream(u.toURL().openConnection());
+                    stream = NetworkUtil.getUrlInputStream(NetworkUtil.openConnection(u.toURL()));
                     FileUtil.writeStreamWithIOException(stream, tempFile);
                 }
             } catch (Exception e) {
