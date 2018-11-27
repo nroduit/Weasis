@@ -54,7 +54,7 @@ public class NetworkUtil {
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
-        return getUrlInputStream(urlConnection, 5000, 7000);
+        return getUrlInputStream(urlConnection, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 7000));
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection, int connectTimeout, int readTimeout)
