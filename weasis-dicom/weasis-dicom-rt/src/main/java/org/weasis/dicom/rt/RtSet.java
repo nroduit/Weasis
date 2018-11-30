@@ -417,26 +417,22 @@ public class RtSet {
                 // Dose Reference Point Coordinates
             }
 
-            // When fractionation group sequence is defined get prescribed dose from there (in cGy unit)
+            // When fraction group sequence is defined get prescribed dose from there (in cGy unit)
             if (MathUtil.isEqualToZero(plan.getRxDose())) {
-                for (Attributes fractionGroup : dcmItems.getSequence(Tag.FractionGroupSequence)) {
-                    Integer fx =
-                        DicomMediaUtils.getIntegerFromDicomElement(fractionGroup, Tag.NumberOfFractionsPlanned, null);
-                    if (fx != null) {
-                        for (Attributes beam : fractionGroup.getSequence(Tag.ReferencedBeamSequence)) {
+                Attributes fractionGroup = dcmItems.getNestedDataset(Tag.FractionGroupSequence);
+                Integer fx =
+                    DicomMediaUtils.getIntegerFromDicomElement(fractionGroup, Tag.NumberOfFractionsPlanned, null);
+                if (fx != null) {
+                    for (Attributes beam : fractionGroup.getSequence(Tag.ReferencedBeamSequence)) {
 
-                            if (beam.contains(Tag.BeamDose) && beam.containsValue(Tag.BeamDose)) {
-                                Double rxDose = plan.getRxDose();
-                                Double beamDose = DicomMediaUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
-                                if (beamDose != null && rxDose != null) {
-                                    plan.setRxDose(rxDose + (beamDose * fx * 100));
-                                }
+                        if (beam.contains(Tag.BeamDose) && beam.containsValue(Tag.BeamDose)) {
+                            Double rxDose = plan.getRxDose();
+                            Double beamDose = DicomMediaUtils.getDoubleFromDicomElement(beam, Tag.BeamDose, null);
+                            if (beamDose != null && rxDose != null) {
+                                plan.setRxDose(rxDose + (beamDose * fx * 100));
                             }
                         }
                     }
-
-                    // Only first one
-                    break;
                 }
             }
 
@@ -960,11 +956,11 @@ public class RtSet {
         volume /= 1000;
 
         // Rescale the histogram to reflect the total volume
-        double sumHistogram = 0;
+        double sumHistogram = 0.0;
         for (int i = 0; i < histogram.rows(); i++) {
             sumHistogram += histogram.get(i, 0)[0];
         }
-        Scalar scalar = new Scalar(volume / sumHistogram);
+        Scalar scalar = new Scalar(volume / (sumHistogram == 0.0 ? 1.0 : sumHistogram));
         multiply(histogram, scalar, histogram);
 
         // TODO: Remove the zero bins from the end of histogram
