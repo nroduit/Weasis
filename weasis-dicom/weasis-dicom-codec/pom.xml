@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>3.0.3-SNAPSHOT</version>
+		<version>3.1.0-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -14,7 +14,7 @@
 
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<weasis-dicom-tools.version>5.13.3</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.14.1</weasis-dicom-tools.version>
 	</properties>
 
 	<repositories>
@@ -39,6 +39,8 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
+						<!--  Required by dcm4che when building a new DICOM object  -->
+						<Implementation-Version>${weasis-dicom-tools.version}</Implementation-Version>
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,org.weasis.dicom.*,org.dcm4che3.*</Export-Package>
 					</instructions>
 				</configuration>

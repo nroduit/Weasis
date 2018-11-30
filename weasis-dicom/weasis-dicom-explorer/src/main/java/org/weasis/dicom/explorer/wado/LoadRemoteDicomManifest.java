@@ -34,6 +34,7 @@ import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -83,7 +84,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
             loadSeriesList.remove(loadSeries);
         }
 
-        if (DownloadManager.TASKS.isEmpty() || DownloadManager.TASKS.stream().allMatch(l -> l.isStopped())) {
+        if (DownloadManager.TASKS.isEmpty() || DownloadManager.TASKS.stream().allMatch(LoadSeries::isStopped)) {
             if (!loadSeriesList.isEmpty() && tryDownloadingAgain(null)) {
                 LOGGER.info("Try downloading ({}) the missing elements", retryNb.get()); //$NON-NLS-1$
                 List<LoadSeries> oldList = new ArrayList<>(loadSeriesList);
@@ -165,23 +166,8 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     }
 
     private void downloadManifest(Iterator<String> iter) throws DownloadException {
-        URI uri = null;
         try {
-            String path = iter.next();
-            if (!path.startsWith("http")) { //$NON-NLS-1$
-                try {
-                    File file = new File(path);
-                    if (file.canRead()) {
-                        uri = file.toURI();
-                    }
-                } catch (Exception e) {
-                    // Do nothing
-                }
-            }
-            if (uri == null) {
-                uri = new URL(path).toURI();
-            }
-
+            URI uri = NetworkUtil.getURI(iter.next());
             Collection<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
             iter.remove();
 

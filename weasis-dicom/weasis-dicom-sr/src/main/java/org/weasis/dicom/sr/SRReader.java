@@ -189,23 +189,13 @@ public class SRReader {
                 return;
             } else if ("IMAGE".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
-                Attributes item = c.getAttributes().getNestedDataset(Tag.ReferencedSOPSequence);
-                if (item != null) {
-                    SRImageReference imgRef = map.get(level);
-                    if (imgRef == null) {
-                        imgRef = new SRImageReference(level);
-                        map.put(level, imgRef);
-                    }
-                    if (imgRef.getSopInstanceReference() == null) {
-                        imgRef.setSopInstanceReference(new SOPInstanceReference(item));
-                    }
-
+                SRImageReference imgRef = getReferencedImage(map, level, c.getAttributes());
+                if (imgRef != null) {
                     html.append("<a href=\"http://"); //$NON-NLS-1$
                     html.append(level);
                     html.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
                     html.append(Messages.getString("SRReader.show_img")); //$NON-NLS-1$
                     html.append("</a>"); //$NON-NLS-1$
-
                 }
             } else if ("DATETIME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
@@ -240,13 +230,19 @@ public class SRReader {
                     for (Attributes attributes : sc) {
                         SRDocumentContent c2 = new SRDocumentContent(attributes);
                         String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
-                        if (id != null) {
-                            SRImageReference imgRef = map.get(id);
+                        SRImageReference imgRef = null;
+                        if (id == null) {
+                            imgRef = getReferencedImage(map, level, attributes);
+                            id = level;
+                        } else {
+                            imgRef = map.get(id);
                             if (imgRef == null) {
                                 imgRef = new SRImageReference(id);
                                 map.put(id, imgRef);
                             }
+                        }
 
+                        if (imgRef != null) {
                             try {
                                 Graphic graphic = PrGraphicUtil.buildGraphic(graphicsItems, Color.MAGENTA, false, 1, 1,
                                     false, null, true);
@@ -298,6 +294,19 @@ public class SRReader {
             }
 
         }
+    }
+
+    private static SRImageReference getReferencedImage(Map<String, SRImageReference> map, String level,
+        Attributes attributes) {
+        Attributes item = attributes.getNestedDataset(Tag.ReferencedSOPSequence);
+        if (item == null) {
+            return null;
+        }
+        SRImageReference imgRef = map.computeIfAbsent(level, k ->  new SRImageReference(level));
+        if (imgRef.getSopInstanceReference() == null) {
+            imgRef.setSopInstanceReference(new SOPInstanceReference(item));
+        }
+        return imgRef;
     }
 
     private static String getReferencedContentItemIdentifier(int[] refs) {

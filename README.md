@@ -5,29 +5,20 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 
 ![Weasis](weasis-distributions/resources/images/about.png)
 
-[General information](https://nroduit.github.io)
+* [General information](https://nroduit.github.io)
+* [Live Demo with different datasets](https://nroduit.github.io/en/demo)
+* [Download binary releases](http://sourceforge.net/projects/dcm4che/files/Weasis)
+* [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
 
-[Live Demo with different datasets](https://nroduit.github.io/en/demo)
+# Build Weasis
 
-[Download binary releases](http://sourceforge.net/projects/dcm4che/files/Weasis)
+The master branch contains Weasis 3.x.x (requires Java 8+) and the old branches are 2.5.x, 2.0.x (Java 6+) and 1.2.x (Java 6+).
 
-[How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
+See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
 
-[Issue Tracker](https://dcm4che.atlassian.net/projects/WEA)
+# [Release History](CHANGELOG.md)
 
-
-## New features in Weasis 3.0 ##
-* Replace JAI with OpenCV (increase performance for all the image processing functions)
-* Embedded new codecs within OpenCV compiled for Windows 32/64-bit, Linux x86 32/64-bit and Mac OS X 64-bit.    
-	* jpeg-baseline, jpeg-extended and jpeg-lossless (IJG 6b)   
-	* jpeg-ls (CharLS 2.0)   
-	* jpeg2000 codecs (OpegJPEG 2.3)    
-	* DICOM raw (RLE, YBR\_FULL, and YBR\_FULL\_422)
-* Supports multi-frame and multiple fragments at the same time
-* DICOM ECG Viewer
-* See [JIRA Release Note](http://www.dcm4che.org/jira/secure/ReleaseNote.jspa?projectId=10090&version=12280)
-
-## General Features ##
+# General Features
 * Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))
 * Web-based distribution (Java Webstart)
 * Desktop portable distribution (Windows, Mac OS X, and Linux)
@@ -40,7 +31,7 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 * DICOM Query/Retrieve (C-GET, C-MOVE and WADO)
 * Dicomizer module (allow importing standard images and convert them in DICOM)
 
-## Viewer Features ##
+# Viewer Features
 ![screenshot](https://user-images.githubusercontent.com/993975/39397039-2180c178-4af9-11e8-9c72-2c1e9aa16eae.jpg)    
 * Display all kinds of DICOM files (including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS, AU, RT and ECG)
 * Viewer for common image formats (TIFF, BMP, GIF, JPEG, PNG, RAS, HDR, and PNM)
@@ -64,12 +55,3 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 * Native and DICOM printing
 * Read DICOM image containing float or double data (Parametric Map)
 * DICOM ECG Viewer
-
-
-# Build Weasis #
-
-The master branch contains Weasis 3.x.x (requires Java 8+) and the old branches are 2.5.x, 2.0.x (Java 6+) and 1.2.x (Java 6+).
-
-Prerequisites: JDK 8 and Maven 3
-
-See the instructions [here](http://www.dcm4che.org/confluence/display/WEA/Building+Weasis+from+source).

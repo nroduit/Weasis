@@ -77,7 +77,7 @@ public class ImagePrint implements Printable {
             case PageFormat.PORTRAIT:
                 return OrientationRequested.PORTRAIT;
             default:
-                throw new IllegalArgumentException("The given value is no valid PageFormat orientation.");
+                throw new IllegalArgumentException("The given value is no valid PageFormat orientation."); //$NON-NLS-1$
         }
     }
 

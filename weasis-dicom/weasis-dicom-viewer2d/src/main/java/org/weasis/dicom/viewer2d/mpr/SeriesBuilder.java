@@ -29,7 +29,6 @@ import javax.vecmath.Vector3d;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.opencv.core.Core;
@@ -371,7 +370,6 @@ public class SeriesBuilder {
             rawIO.setBaseAttributes(cpTags);
 
             // Tags with same values for all the Series
-            rawIO.setTag(TagD.get(Tag.TransferSyntaxUID), UID.ImplicitVRLittleEndian);
             rawIO.setTag(TagD.get(Tag.Columns), dim.width);
             rawIO.setTag(TagD.get(Tag.Rows), dim.height);
             rawIO.setTag(TagD.get(Tag.SliceThickness), origPixSize);

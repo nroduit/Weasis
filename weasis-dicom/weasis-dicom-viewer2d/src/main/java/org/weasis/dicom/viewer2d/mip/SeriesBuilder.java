@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
@@ -168,7 +167,6 @@ public class SeriesBuilder {
                     rawIO.setBaseAttributes(cpTags);
 
                     // Tags with same values for all the Series
-                    rawIO.setTag(TagD.get(Tag.TransferSyntaxUID), UID.ImplicitVRLittleEndian);
                     rawIO.setTag(TagD.get(Tag.Columns), curImage.width());
                     rawIO.setTag(TagD.get(Tag.Rows), curImage.height());
                     rawIO.setTag(TagD.get(Tag.BitsAllocated), imgRef.getBitsAllocated());

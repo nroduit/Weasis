@@ -946,6 +946,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:get ([-l PATH]... [-r URI]... [-p] [-i DATA]... [-w URI]...)", //$NON-NLS-1$
             "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
+            "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-1$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
             "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
@@ -953,11 +954,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> largs = opt.getList("local"); //$NON-NLS-1$
         final List<String> rargs = opt.getList("remote"); //$NON-NLS-1$
+        final List<String> zargs = opt.getList("zip"); //$NON-NLS-1$
         final List<String> iargs = opt.getList("iwado"); //$NON-NLS-1$
         final List<String> wargs = opt.getList("wado"); //$NON-NLS-1$
 
         if (opt.isSet("help") //$NON-NLS-1$
-            || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && !opt.isSet("portable"))) { //$NON-NLS-1$
+            || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && zargs.isEmpty()  && !opt.isSet("portable"))) { //$NON-NLS-1$
             opt.usage();
             return;
         }
@@ -965,12 +967,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
-            getCommand(opt, largs, rargs, iargs, wargs);
+            getCommand(opt, largs, rargs, iargs, wargs, zargs);
         });
     }
 
     private void getCommand(Option opt, List<String> largs, List<String> rargs, List<String> iargs,
-        List<String> wargs) {
+        List<String> wargs,  List<String> zargs) {
         // start importing local dicom series list
         if (opt.isSet("local")) { //$NON-NLS-1$
             File[] files = new File[largs.size()];
@@ -987,6 +989,12 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // build WADO series list to download
         if (opt.isSet("wado")) { //$NON-NLS-1$
             LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
+        }
+        
+        if (opt.isSet("zip")) { //$NON-NLS-1$
+            for (String zip : zargs) {
+                DicomZipImport.loadDicomZip(zip, DicomModel.this);
+            }
         }
 
         if (opt.isSet("iwado")) { //$NON-NLS-1$
