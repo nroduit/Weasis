@@ -835,7 +835,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         setLabel(labels, view2d, pos);
 
         // update MeasureTool on the fly without calling again getMeasurements
-        if (!isMultiSelection && view2d != null) {
+        if (selectedGraphics.size() == 1 && this.equals(selectedGraphics.get(0)) && view2d != null) {
             for (GraphicSelectionListener gfxListener : view2d.getGraphicManager().getGraphicSelectionListeners()) {
                 gfxListener.updateMeasuredItems(measList);
             }

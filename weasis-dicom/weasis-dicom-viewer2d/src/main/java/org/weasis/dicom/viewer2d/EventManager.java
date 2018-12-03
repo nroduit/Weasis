@@ -951,14 +951,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         updateAllListeners(selectedView2dContainer,
             synchAtction == null ? SynchView.NONE : (SynchView) synchAtction.getSelectedItem());
 
-        List<DockableTool> tools = selectedView2dContainer.getToolPanel();
-        synchronized (tools) {
-            for (DockableTool p : tools) {
-                if (p instanceof GraphicSelectionListener) {
-                    view2d.getGraphicManager().addGraphicSelectionListener((GraphicSelectionListener) p);
-                }
-            }
-        }
+        view2d.updateGraphicSelectionListener(selectedView2dContainer);
         return true;
     }
 

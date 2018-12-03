@@ -101,6 +101,7 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.Messages;
+import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -110,6 +111,7 @@ import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -614,6 +616,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     img.setTag(TagW.PresentationModel, modelList);
                 }
                 setGraphicManager(modelList);
+                updateGraphicSelectionListener(eventManager.getSelectedView2dContainer());
             }
 
             if (panner != null) {
@@ -622,6 +625,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             if (lens != null) {
                 lens.updateImage();
                 lens.updateZoom();
+            }
+        }
+    }
+    
+    @Override
+    public void updateGraphicSelectionListener(ImageViewerPlugin<E> viewerPlugin) {
+        if (viewerPlugin != null) {
+            List<DockableTool> tools = viewerPlugin.getToolPanel();
+            synchronized (tools) {
+                for (DockableTool p : tools) {
+                    if (p instanceof GraphicSelectionListener) {
+                        graphicManager.addGraphicSelectionListener((GraphicSelectionListener) p);
+                    }
+                }
             }
         }
     }
