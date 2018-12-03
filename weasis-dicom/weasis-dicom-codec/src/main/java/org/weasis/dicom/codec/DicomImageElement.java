@@ -203,6 +203,11 @@ public class DicomImageElement extends ImageElement {
     public String toString() {
         return TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
     }
+    
+    @Override
+    public DcmMediaReader getMediaReader() {
+        return (DcmMediaReader) super.getMediaReader();
+    }
 
     public double getRescaleIntercept(TagReadable tagable) {
         Double prIntercept = TagD.getTagValue(tagable, Tag.RescaleIntercept, Double.class);

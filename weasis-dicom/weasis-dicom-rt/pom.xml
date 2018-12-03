@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>weasis-dicom-parent</artifactId>
+		<groupId>org.weasis.dicom</groupId>
+		<version>3.1.0-SNAPSHOT</version>
+		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>weasis-dicom-rt</artifactId>
+	<packaging>bundle</packaging>
+	<name>Weasis DICOM-RT Tool panel [${project.artifactId}]</name>
+	<properties>
+		<bundle.namespace>org.weasis.dicom.rt</bundle.namespace>
+		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<!--<configuration>-->
+					<!--<instructions>-->
+						<!--&lt;!&ndash; Force to import jaxb binding classes &ndash;&gt;-->
+						<!--<Import-Package>com.sun.xml.internal.bind,*</Import-Package>-->
+						<!--<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>-->
+						<!--<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.*</Export-Package>-->
+					<!--</instructions>-->
+				<!--</configuration>-->
+			</plugin>
+		</plugins>
+	</build>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-api</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-ui</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-codec</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-explorer</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-viewer2d</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>vecmath</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-math3</artifactId>
+			<version>3.6.1</version>
+		</dependency>
+	</dependencies>
+</project>

@@ -21,5 +21,6 @@
 		<module>weasis-dicom-au</module>
 		<module>weasis-dicom-send</module>
 		<module>weasis-dicom-qr</module>
+		<module>weasis-dicom-rt</module>
 	</modules>
 </project>
