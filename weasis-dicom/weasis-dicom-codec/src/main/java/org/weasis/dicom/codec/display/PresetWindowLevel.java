@@ -98,6 +98,10 @@ public class PresetWindowLevel {
     public LutShape getShape() {
         return shape;
     }
+    
+    public boolean isAutoLevel() {
+        return keyCode == KeyEvent.VK_0;
+    }
 
     @Override
     public String toString() {
@@ -226,8 +230,8 @@ public class PresetWindowLevel {
         autoLevel.setKeyCode(KeyEvent.VK_0);
         presetList.add(autoLevel);
 
-        // Exclude Secondary Capture CT
-        if (image.getBitsStored() > 8) {
+        // Exclude Secondary Capture CT and when PR preset
+        if (image.getBitsStored() > 8 && !"[PR]".equals(type)) {
             List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
             if (modPresets != null) {
                 presetList.addAll(modPresets);

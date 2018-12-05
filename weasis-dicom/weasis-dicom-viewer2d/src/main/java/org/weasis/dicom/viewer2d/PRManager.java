@@ -61,7 +61,6 @@ import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
@@ -96,11 +95,16 @@ public class PRManager {
         if (node != null) {
             List<PresetWindowLevel> presetList =
                 img.getPresetList(LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd())));
-            PresetWindowLevel auto = presets.remove(presets.size() - 1);
-            if (!presetList.get(presetList.size() - 1).equals(auto)) {
-                // It happens when PR contains a new Modality LUT
-                String name = Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
-                presets.add(new PresetWindowLevel(name + " [PR]", auto.getWindow(), auto.getLevel(), auto.getShape())); //$NON-NLS-1$
+            PresetWindowLevel autoPR = getAutoLevelPreset(presets);
+            if (autoPR != null) {
+                presets.remove(autoPR);
+                PresetWindowLevel autoImg = getAutoLevelPreset(presetList);
+                if (!autoPR.equals(autoImg)) {
+                    // It happens when PR contains a new Modality LUT
+                    String name = org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
+                    presets.add(new PresetWindowLevel(name + " [PR]", autoPR.getWindow(), autoPR.getLevel(), //$NON-NLS-1$
+                        autoPR.getShape()));
+                }
             }
             presets.addAll(presetList);
         }
@@ -122,6 +126,15 @@ public class PRManager {
         if (layers != null) {
             view.setActionsInView(PRManager.TAG_DICOM_LAYERS, layers);
         }
+    }
+
+    private static PresetWindowLevel getAutoLevelPreset(List<PresetWindowLevel> presets) {
+        for (PresetWindowLevel presetWindowLevel : presets) {
+            if (presetWindowLevel.isAutoLevel()) {
+                return presetWindowLevel;
+            }
+        }
+        return null;
     }
 
     private static void applyPixelSpacing(ViewCanvas<DicomImageElement> view, PresentationStateReader reader,
@@ -314,17 +327,19 @@ public class PRManager {
                     layer.setLevel(310 + glm.getInt(Tag.GraphicLayerOrder, 0));
                     layers.add(layer);
 
-                    Integer grayVal = DicomMediaUtils.getIntegerFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
+                    Integer grayVal = DicomMediaUtils.getIntegerFromDicomElement(glm,
+                        Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
                     float[] colorLab = CIELab.convertToFloatLab(DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
                         Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
-                    int[] colorRgb = DicomMediaUtils.getIntAyrrayFromDicomElement(glm, Tag.GraphicLayerRecommendedDisplayRGBValue,
-                        null);
-                    if(colorRgb == null && colorLab == null && grayVal == null) {
+                    int[] colorRgb = DicomMediaUtils.getIntAyrrayFromDicomElement(glm,
+                        Tag.GraphicLayerRecommendedDisplayRGBValue, null);
+                    if (colorRgb == null && colorLab == null && grayVal == null) {
                         Color c = Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
-                        colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
+                        colorRgb = new int[] { c.getRed(), c.getGreen(), c.getBlue() };
                     }
-                    
-                    Color rgb = PresentationStateReader.getRGBColor(grayVal == null ? 255 : grayVal,colorLab, colorRgb);
+
+                    Color rgb =
+                        PresentationStateReader.getRGBColor(grayVal == null ? 255 : grayVal, colorLab, colorRgb);
 
                     Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
 
@@ -362,17 +377,18 @@ public class PRManager {
                             float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
                             if (topLeft != null && bottomRight != null) {
-                                if(topLeft[0] > bottomRight[0]) {
+                                if (topLeft[0] > bottomRight[0]) {
                                     float b = topLeft[0];
                                     topLeft[0] = bottomRight[0];
                                     bottomRight[0] = b;
                                 }
-                                if(topLeft[1] > bottomRight[1]) {
+                                if (topLeft[1] > bottomRight[1]) {
                                     float b = topLeft[1];
                                     topLeft[1] = bottomRight[1];
                                     bottomRight[1] = b;
                                 }
-                                rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1]);
+                                rect = new Rectangle2D.Double(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0],
+                                    bottomRight[1] - topLeft[1]);
                                 if (isDisp) {
                                     rect.setRect(rect.getX() * width, rect.getY() * height, rect.getWidth() * width,
                                         rect.getHeight() * height);
