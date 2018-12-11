@@ -29,6 +29,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -347,10 +348,10 @@ public class ImageCVIO implements MediaReader {
                         params = new HashMap<>(2);
                         double min = 0;
                         double max = 65536;
-                        double[] val = ImageProcessor.findMinMaxValues(img.toMat());
-                        if (val != null && val.length == 2) {
-                            min = val[0];
-                            max = val[1];
+                        MinMaxLocResult val = ImageProcessor.findMinMaxValues(img.toMat());
+                        if (val != null) {
+                            min = val.minVal;
+                            max = val.maxVal;
                         }
 
                         // Handle special case when min and max are equal, ex. black image

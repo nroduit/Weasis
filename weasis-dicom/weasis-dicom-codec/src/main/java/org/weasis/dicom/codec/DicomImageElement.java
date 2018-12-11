@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.dcm4che3.data.Tag;
-import org.opencv.core.Mat;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -568,10 +568,10 @@ public class DicomImageElement extends ImageElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(img.toMat(), paddingValueMin, paddingValueMax);
-                if (val != null && val.length == 2) {
-                    this.minPixelValue = val[0];
-                    this.maxPixelValue = val[1];
+                MinMaxLocResult val = ImageProcessor.findMinMaxValues(img.toMat(), paddingValueMin, paddingValueMax);
+                if (val != null) {
+                    this.minPixelValue = val.minVal;
+                    this.maxPixelValue = val.maxVal;
                 }
                 // Handle special case when min and max are equal, ex. black image
                 // + 1 to max enables to display the correct value

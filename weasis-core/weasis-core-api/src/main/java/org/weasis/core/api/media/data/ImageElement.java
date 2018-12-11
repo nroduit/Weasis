@@ -21,6 +21,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
+import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -89,10 +90,10 @@ public class ImageElement extends MediaElement {
                 this.minPixelValue = 0.0;
                 this.maxPixelValue = 255.0;
             } else {
-                double[] val = ImageProcessor.findMinMaxValues(img.toMat());
-                if (val != null && val.length == 2) {
-                    this.minPixelValue = val[0];
-                    this.maxPixelValue = val[1];
+                MinMaxLocResult val = ImageProcessor.findMinMaxValues(img.toMat());
+                if (val != null) {
+                    this.minPixelValue = val.minVal;
+                    this.maxPixelValue = val.maxVal;
                 }
 
                 // Handle special case when min and max are equal, ex. black image

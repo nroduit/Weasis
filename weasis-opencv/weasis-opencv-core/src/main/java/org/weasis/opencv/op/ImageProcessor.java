@@ -167,12 +167,13 @@ public class ImageProcessor {
     }
 
     public static double[][] meanStdDev(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
+        Objects.requireNonNull(source);
         Rectangle b = new Rectangle(0,0, source.width(), source.height()).intersection(shape.getBounds());
         if(b.getWidth() < 1 || b.getHeight() < 1) {
             return null;
         }
 
-        Mat srcImg = Objects.requireNonNull(source).submat(new Rect(b.x, b.y, b.width, b.height));
+        Mat srcImg = source.submat(new Rect(b.x, b.y, b.width, b.height));
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
         List<MatOfPoint> pts = transformShapeToContour(shape, false);
         Imgproc.fillPoly(mask, pts, new Scalar(255));
@@ -212,6 +213,32 @@ public class ImageProcessor {
         val[3] = stddev.toArray();
 
         return val;
+    }
+    
+    public static MinMaxLocResult minMaxLoc(Mat srcImg, Mat mask) {
+        List<Mat> channels = new ArrayList<>(Objects.requireNonNull(srcImg).channels());
+        if (srcImg.channels() > 1) {
+            Core.split(srcImg, channels);
+        } else {
+            channels.add(srcImg);
+        }
+
+        MinMaxLocResult result = new MinMaxLocResult();
+        result.minVal = Double.MAX_VALUE;
+        result.maxVal = -Double.MAX_VALUE;
+
+        for (int i = 0; i < channels.size(); i++) {
+            MinMaxLocResult minMax = Core.minMaxLoc(channels.get(i), mask);
+            result.minVal = Math.min(result.minVal , minMax.minVal);
+            if(result.minVal == minMax.minVal) {
+                result.minLoc = minMax.minLoc; 
+            }
+            result.maxVal = Math.max(result.maxVal , minMax.maxVal);
+            if(result.maxVal == minMax.maxVal) {
+                result.maxLoc = minMax.maxLoc; 
+            }
+        }
+        return result;
     }
 
     private static void exludePaddingValue(Mat src, Mat mask, int paddingValue, int paddingLimit) {
@@ -436,23 +463,16 @@ public class ImageProcessor {
      * @param paddingValueMax
      * @return
      */
-    public static double[] findMinMaxValues(Mat source) {
-        double[] extrema = null;
+    public static MinMaxLocResult findMinMaxValues(Mat source) {
         if (source != null) {
-            Mat srcImg = Objects.requireNonNull(source);
-            MinMaxLocResult minMax = Core.minMaxLoc(srcImg);
-            extrema = new double[2];
-            extrema[0] = minMax.minVal;
-            extrema[1] = minMax.maxVal;
+            return minMaxLoc(source, null);
         }
-        return extrema;
+        return null;
     }
 
-    public static double[] findMinMaxValues(Mat source, Integer paddingValue, Integer paddingLimit) {
-        double[] extrema = null;
+    public static MinMaxLocResult findMinMaxValues(Mat source, Integer paddingValue, Integer paddingLimit) {
         if (source != null) {
-            Mat srcImg = Objects.requireNonNull(source);
-            Mat mask = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(0));
+            Mat mask = new Mat(source.size(), CvType.CV_8UC1, new Scalar(0));
             if (paddingValue != null) {
                 if (paddingLimit == null) {
                     paddingLimit = paddingValue;
@@ -461,14 +481,11 @@ public class ImageProcessor {
                     paddingValue = paddingLimit;
                     paddingLimit = temp;
                 }
-                exludePaddingValue(srcImg, mask, paddingValue, paddingLimit);
+                exludePaddingValue(source, mask, paddingValue, paddingLimit);
             }
-            MinMaxLocResult minMax = Core.minMaxLoc(srcImg, mask);
-            extrema = new double[2];
-            extrema[0] = minMax.minVal;
-            extrema[1] = minMax.maxVal;
+            return minMaxLoc(source, mask);
         }
-        return extrema;
+        return null;
     }
 
     public static ImageCV buildThumbnail(PlanarImage source, Dimension iconDim, boolean keepRatio) {
