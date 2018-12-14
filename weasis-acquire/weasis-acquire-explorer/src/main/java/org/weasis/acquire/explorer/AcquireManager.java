@@ -659,7 +659,7 @@ public class AcquireManager {
 
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-            try (InputStream inputStream = NetworkUtil.getUrlInputStream(NetworkUtil.openConnection(url))) {
+            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection(), BundleTools.SESSION_TAGS_FILE)) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int length;

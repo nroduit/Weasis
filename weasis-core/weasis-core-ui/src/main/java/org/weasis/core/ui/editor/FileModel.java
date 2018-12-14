@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.List;
 
@@ -23,6 +24,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 
@@ -41,7 +43,9 @@ public class FileModel extends AbstractFileModel {
         try {
             outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
             LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
-            FileUtil.writeStreamWithIOException(NetworkUtil.openConnection( new URL(url)), outFile);
+            InputStream httpCon =
+                NetworkUtil.getUrlInputStream(new URL(url).openConnection(), BundleTools.SESSION_TAGS_FILE);
+            FileUtil.writeStreamWithIOException(httpCon, outFile);
         } catch (IOException e) {
             LOGGER.error("Dowloading image", e); //$NON-NLS-1$
             return null;

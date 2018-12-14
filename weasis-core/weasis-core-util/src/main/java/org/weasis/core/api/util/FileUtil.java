@@ -20,7 +20,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.net.SocketTimeoutException;
 import java.net.URI;
-import java.net.URLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
@@ -265,31 +264,6 @@ public final class FileUtil {
             }
         }
         return false;
-    }
-
-    /**
-     * Write URL content into a file
-     *
-     * @param urlConnection
-     * @param outFile
-     * @throws StreamIOException
-     */
-    public static void writeStreamWithIOException(URLConnection urlConnection, File outFile) throws StreamIOException {
-        try (InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection);
-                        FileOutputStream outputStream = new FileOutputStream(outFile)) {
-            byte[] buf = new byte[FILE_BUFFER];
-            int offset;
-            while ((offset = urlInputStream.read(buf)) > 0) {
-                outputStream.write(buf, 0, offset);
-            }
-            outputStream.flush();
-        } catch (StreamIOException e) {
-            FileUtil.delete(outFile);
-            throw e;
-        } catch (IOException e) {
-            FileUtil.delete(outFile);
-            throw new StreamIOException(e);
-        }
     }
 
     /**

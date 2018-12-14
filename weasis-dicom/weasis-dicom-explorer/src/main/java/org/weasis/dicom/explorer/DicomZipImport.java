@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -146,7 +147,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                     tempFile = new File(u.getPath());
                 } else {
                     tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                    stream = NetworkUtil.getUrlInputStream(NetworkUtil.openConnection(u.toURL()));
+                    stream = NetworkUtil.getUrlInputStream(u.toURL().openConnection(), BundleTools.SESSION_TAGS_FILE);
                     FileUtil.writeStreamWithIOException(stream, tempFile);
                 }
             } catch (Exception e) {

@@ -25,7 +25,9 @@ import java.net.URLConnection;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +56,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
@@ -382,7 +385,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     request.append(instance.getDirectDownloadFile());
                 }
                 request.append(wado.getAdditionnalParameters());
-                urlConnection = initConnection(new URL(request.toString()), wado);
+                urlConnection = new URL(request.toString()).openConnection();
             } catch (MalformedURLException e) {
                 LOGGER.error("Invalid URL", e); //$NON-NLS-1$
                 continue;
@@ -392,7 +395,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 continue;
             }
             LOGGER.debug("Download DICOM instance {} index {}.", urlConnection, k); //$NON-NLS-1$
-            Download ref = new Download(urlConnection);
+            Download ref = new Download(urlConnection, wado);
             tasks.add(ref);
         }
 
@@ -407,19 +410,25 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return true;
     }
 
-    private static URLConnection initConnection(URL url, WadoParameters wadoParameters) throws IOException {
-        // If there is a proxy, it should be already configured
-        URLConnection urlConnection = NetworkUtil.openConnection(url);
-        // Set http login (no protection, only convert in base64)
-        if (wadoParameters.getWebLogin() != null) {
-            urlConnection.setRequestProperty("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        if (!wadoParameters.getHttpTaglist().isEmpty()) {
-            for (HttpTag tag : wadoParameters.getHttpTaglist()) {
-                urlConnection.setRequestProperty(tag.getKey(), tag.getValue());
+    private static Map<String, String> getHttpTags(WadoParameters wadoParameters) {
+        boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
+        boolean hasWadoTags = wadoParameters != null && wadoParameters.getHttpTaglist() != null;
+        boolean hasWadoLogin = wadoParameters != null && wadoParameters.getWebLogin() != null;
+
+        if (hasWadoTags || hasWadoLogin || hasBundleTags) {
+            HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+            if (hasWadoTags) {
+                for (HttpTag tag : wadoParameters.getHttpTaglist()) {
+                    map.put(tag.getKey(), tag.getValue());
+                }
             }
+            if (hasWadoLogin) {
+                // Set http login (no protection, only convert in base64)
+                map.put("Authorization", "Basic " + wadoParameters.getWebLogin());
+            }
+            return map;
         }
-        return urlConnection;
+        return null;
     }
 
     public void startDownloadImageReference(final WadoParameters wadoParameters) {
@@ -470,8 +479,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     try {
                         File outFile = File.createTempFile("tumb_", FileUtil.getExtension(thumURL), //$NON-NLS-1$
                             Thumbnail.THUMBNAIL_CACHE_DIR);
-                        FileUtil.writeStreamWithIOException(NetworkUtil.openConnection(new URL(wadoParameters.getBaseURL() + thumURL)), outFile);
-                        if(outFile.length() == 0) {
+                        InputStream httpCon = NetworkUtil.getUrlInputStream(
+                            new URL(wadoParameters.getBaseURL() + thumURL).openConnection(),
+                            getHttpTags(wadoParameters));
+                        FileUtil.writeStreamWithIOException(httpCon, outFile);
+                        if (outFile.length() == 0) {
                             throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
                         }
                         file = outFile;
@@ -542,11 +554,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
-        URLConnection httpCon = initConnection(url, wadoParameters);
+        InputStream httpCon = NetworkUtil.getUrlInputStream(url.openConnection(), getHttpTags(wadoParameters));
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
-        if(outFile.length() == 0) {
+        if (outFile.length() == 0) {
             throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
         }
         return outFile;
@@ -592,10 +604,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     class Download implements Callable<Boolean> {
 
         private final URLConnection urlConnection; // download URL
+        private final WadoParameters wado;
         private Status status; // current status of download
 
-        public Download(URLConnection urlConnection) {
+        public Download(URLConnection urlConnection, WadoParameters wado) {
             this.urlConnection = urlConnection;
+            this.wado = wado;
             this.status = Status.DOWNLOADING;
         }
 
@@ -636,8 +650,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
             }
 
-            final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-            return NetworkUtil.getUrlInputStream(initConnection(new URL(buffer.toString()), wado));
+            return NetworkUtil.getUrlInputStream(new URL(buffer.toString()).openConnection(), getHttpTags(wado));
         }
 
         @Override
@@ -676,7 +689,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             File tempFile = null;
             DicomMediaIO dicomReader = null;
 
-            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection)) {
+            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection, getHttpTags(wado))) {
 
                 if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
                     cache = false;

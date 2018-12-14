@@ -21,11 +21,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -259,19 +257,12 @@ public class DownloadManager {
             XMLInputFactory xmlif = XMLInputFactory.newInstance();
 
             String path = uri.getPath();
-            URLConnection urlConnection = NetworkUtil.openConnection(uri.toURL());
-
-            if (BundleTools.SESSION_TAGS_MANIFEST.size() > 0) {
-                for (Iterator<Entry<String, String>> iter =
-                    BundleTools.SESSION_TAGS_MANIFEST.entrySet().iterator(); iter.hasNext();) {
-                    Entry<String, String> element = iter.next();
-                    urlConnection.setRequestProperty(element.getKey(), element.getValue());
-                }
-            }
+            
+            URLConnection urlConnection = uri.toURL().openConnection();
             urlConnection.setUseCaches(false);
 
             LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
-            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection,  StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
+            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,  StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
@@ -413,7 +404,7 @@ public class DownloadManager {
                 String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                 String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                 wadoParameters.addHttpTag(httpkey, httpvalue);
-                // <Message> tag
+            // <Message> tag
             } else if ("Message".equals(key)) { //$NON-NLS-1$
                 final String title = TagUtil.getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                 final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
