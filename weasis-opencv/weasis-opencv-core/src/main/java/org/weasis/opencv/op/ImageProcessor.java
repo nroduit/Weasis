@@ -547,7 +547,7 @@ public class ImageProcessor {
                 Size dim = new Size((int) (scale * source.width()), (int) (scale * source.height()));
                 Mat thumbnail = new Mat();
                 Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
-                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+                MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 return Imgcodecs.imwrite(file.getPath(), thumbnail, map);
             }
             return false;
