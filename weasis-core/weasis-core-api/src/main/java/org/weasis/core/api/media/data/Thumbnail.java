@@ -266,7 +266,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                         }
                         try {
                             if (thumb != null && file != null) {
-                                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+                                MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                                 if (ImageProcessor.writeImage(thumb.toMat(), file, map)) {
                                     /*
                                      * Write the thumbnail in temp folder, better than getting the thumbnail directly

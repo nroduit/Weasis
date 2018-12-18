@@ -93,7 +93,7 @@ public final class Transform2Dicom {
             // (float) -area.getY(), null, null);
             // }
 
-            MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, 80);
+            MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
             if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
                 // out of memory ??
                 FileUtil.delete(imgFile);

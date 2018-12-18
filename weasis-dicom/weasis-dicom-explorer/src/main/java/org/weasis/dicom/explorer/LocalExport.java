@@ -371,7 +371,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             if (EXPORT_FORMAT[3].equals(format)) {
                                 ImageProcessor.writePNG(image.toMat(), destinationFile);
                             } else {
-                                MatOfInt map = new MatOfInt(Imgcodecs.CV_IMWRITE_JPEG_QUALITY, jpegQuality);
+                                MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, jpegQuality);
                                 ImageProcessor.writeImage(image.toMat(), destinationFile, map);
                             }
                             if (seriesGph.contains(img.getTagValue(TagD.get(Tag.SeriesInstanceUID)))) {
