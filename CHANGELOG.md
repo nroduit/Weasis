@@ -1,5 +1,28 @@
 # Changelog
 
+## [3.0.4](https://github.com/nroduit/weasis/tree/3.0.4) (2018-12-20)
+
+[Full Changelog](https://github.com/nroduit/weasis/compare/3.0.3...3.0.4)
+
+**Implemented enhancements:**
+
+- Allows configuring HTTP timeout of WADO through properties [\#50](https://github.com/nroduit/Weasis/issues/50)
+- Cannot display color image with 16-bit per channel [\#49](https://github.com/nroduit/Weasis/issues/49)
+- Http redirection not supported when downloading images [\#46](https://github.com/nroduit/Weasis/issues/46) [[Priority: Low](https://github.com/nroduit/Weasis/labels/Priority:%20Low)]
+- HTTP read timeout when downloading manifest or images [\#45](https://github.com/nroduit/Weasis/issues/45)
+
+**Fixed bugs:**
+
+- Duplicate presets with DICOM PR and CT [\#48](https://github.com/nroduit/Weasis/issues/48)
+- Selected graphic does not get updated [\#44](https://github.com/nroduit/Weasis/issues/44) [[Priority: High](https://github.com/nroduit/Weasis/labels/Priority:%20High)]
+
+**Merged pull requests:**
+
+- Extend GUI for plan/dose selection [\#24](https://github.com/nroduit/Weasis/pull/24) ([toskrip](https://github.com/toskrip))
+- Fix isodose rendering [\#23](https://github.com/nroduit/Weasis/pull/23) ([toskrip](https://github.com/toskrip))
+- Fix plan initialisation and isodose rendering [\#22](https://github.com/nroduit/Weasis/pull/22) ([toskrip](https://github.com/toskrip))
+- Dicom rt plugin [\#21](https://github.com/nroduit/Weasis/pull/21) ([toskrip](https://github.com/toskrip))
+
 ## [3.0.3](https://github.com/nroduit/weasis/tree/3.0.3) (2018-11-07)
 
 [Full Changelog](https://github.com/nroduit/weasis/compare/3.0.2...3.0.3)
