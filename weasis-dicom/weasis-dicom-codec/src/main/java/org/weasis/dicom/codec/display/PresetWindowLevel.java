@@ -231,7 +231,7 @@ public class PresetWindowLevel {
         presetList.add(autoLevel);
 
         // Exclude Secondary Capture CT and when PR preset
-        if (image.getBitsStored() > 8 && !"[PR]".equals(type)) {
+        if (image.getBitsStored() > 8 && !"[PR]".equals(type)) { //$NON-NLS-1$
             List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
             if (modPresets != null) {
                 presetList.addAll(modPresets);

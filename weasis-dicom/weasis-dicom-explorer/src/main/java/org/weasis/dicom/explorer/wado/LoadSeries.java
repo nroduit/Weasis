@@ -424,7 +424,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             }
             if (hasWadoLogin) {
                 // Set http login (no protection, only convert in base64)
-                map.put("Authorization", "Basic " + wadoParameters.getWebLogin());
+                map.put("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
             }
             return map;
         }

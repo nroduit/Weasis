@@ -62,8 +62,8 @@ public class NetworkUtil {
     }
     
     public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers) throws StreamIOException {
-        return getUrlInputStream(urlConnection,headers, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000),
-            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000));
+        return getUrlInputStream(urlConnection,headers, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
+            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000)); //$NON-NLS-1$
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers, int connectTimeout, int readTimeout)
@@ -109,19 +109,19 @@ public class NetworkUtil {
     }
 
     public static InputStream getRedirectionStream(URLConnection urlConnection, Map<String, String> headers) throws IOException {
-        String redirect = urlConnection.getHeaderField("Location");
+        String redirect = urlConnection.getHeaderField("Location"); //$NON-NLS-1$
         for (int i = 0; i < MAX_REDIRECTS; i++) {
             if (redirect != null) {
-                String cookies = urlConnection.getHeaderField("Set-Cookie");
+                String cookies = urlConnection.getHeaderField("Set-Cookie"); //$NON-NLS-1$
                 urlConnection = new URL(redirect).openConnection();
-                urlConnection.setRequestProperty("Cookie", cookies);
+                urlConnection.setRequestProperty("Cookie", cookies); //$NON-NLS-1$
                 if (headers != null && headers.size() > 0) {
                     for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                         Entry<String, String> element = iter.next();
                         urlConnection.addRequestProperty(element.getKey(), element.getValue());
                     }
                 }
-                redirect = urlConnection.getHeaderField("Location");
+                redirect = urlConnection.getHeaderField("Location"); //$NON-NLS-1$
             } else {
                 break;
             }

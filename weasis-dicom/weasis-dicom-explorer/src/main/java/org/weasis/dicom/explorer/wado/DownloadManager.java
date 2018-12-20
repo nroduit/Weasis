@@ -262,7 +262,7 @@ public class DownloadManager {
             urlConnection.setUseCaches(false);
 
             LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
-            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,  StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
+            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,  StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$ //$NON-NLS-2$
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
