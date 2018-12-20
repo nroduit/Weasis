@@ -74,7 +74,8 @@ public class RtSet {
 
     private int structureFillTransparency = 115;
     private int isoFillTransparency = 70;
-    private boolean forceRecalculateDvh = false;
+    boolean forceRecalculateDvh = false;
+    private  Random rand = new Random();
 
     public RtSet(String frameOfReferenceUID, List<MediaElement> rtElements) {
         this.frameOfReferenceUID = Objects.requireNonNull(frameOfReferenceUID);
@@ -263,7 +264,6 @@ public class RtSet {
                     rgb = new int[] { Integer.parseInt(valColors[0]), Integer.parseInt(valColors[1]),
                         Integer.parseInt(valColors[2]) };
                 } else {
-                    Random rand = new Random();
                     rgb = new int[] { rand.nextInt(255), rand.nextInt(255), rand.nextInt(255) };
                 }
 
