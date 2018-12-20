@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<version>3.0.4</version>
+		<relativePath>../../weasis-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.weasis.dicom</groupId>
+	<artifactId>weasis-dicom-parent</artifactId>
+	<packaging>pom</packaging>
+	<name>Parent of DICOM Plug-ins [${project.artifactId}]</name>
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-api</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.command</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.gogo.runtime</artifactId>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<version>3.0.4</version>
+		<relativePath>../weasis-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.weasis.acquire</groupId>
+	<artifactId>weasis-acquire</artifactId>
+	<packaging>pom</packaging>
+	<name>Default Plug-ins [${project.artifactId}]</name>
+	<modules>
+		<module>weasis-acquire-explorer</module>
+		<module>weasis-acquire-editor</module>
+	</modules>
+</project>

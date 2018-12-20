@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-dicom-parent</artifactId>
+		<groupId>org.weasis.dicom</groupId>
+		<version>3.0.4</version>
+		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-dicom-viewer2d</artifactId>
+	<packaging>bundle</packaging>
+	<name>2D DICOM Viewer [${project.artifactId}]</name>
+	
+	<properties>
+		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
+	</properties>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.opencv</groupId>
+			<artifactId>weasis-opencv-core</artifactId>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-explorer</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-ui</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-codec</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.imageio</groupId>
+			<artifactId>weasis-imageio-codec</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<artifactId>vecmath</artifactId>
+		</dependency>
+	</dependencies>
+</project>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<version>3.0.4</version>
+		<relativePath>weasis-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-framework</artifactId>
+	<packaging>pom</packaging>
+	<name>${project.artifactId}</name>
+	<scm>
+		<connection>scm:git:git@github.com:nroduit/Weasis.git</connection>
+		<developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git</developerConnection>
+		<url>https://github.com/nroduit/Weasis</url>
+	</scm>
+	<modules>
+		<module>weasis-parent</module>
+		<module>weasis-opencv</module>
+		<module>weasis-core</module>
+		<module>weasis-imageio</module>
+		<module>weasis-base</module>
+		<module>weasis-acquire</module>
+		<module>weasis-dicom</module>
+		<module>weasis-launcher</module>
+	</modules>
+</project>

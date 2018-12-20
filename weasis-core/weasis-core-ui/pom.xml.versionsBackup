@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<parent>
+		<artifactId>weasis-core-parent</artifactId>
+		<groupId>org.weasis.core</groupId>
+		<version>3.0.4</version>
+		<relativePath>../weasis-core-parent/pom.xml</relativePath>
+	</parent>
+	<modelVersion>4.0.0</modelVersion>
+	<artifactId>weasis-core-ui</artifactId>
+	<packaging>bundle</packaging>
+	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
+	
+	<properties>
+		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
+	</properties>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<!-- Force to import jaxb binding classes -->
+						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
+						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<!-- add for Xchart: ,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.* -->
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.*</Export-Package>
+						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
+						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<profiles>
+		<profile>
+			<id>java9</id>
+			<activation>
+				<jdk>[9,)</jdk>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<argLine>--add-modules=java.xml.bind</argLine>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>it.cnr.imaa.essi</groupId>
+			<artifactId>lablib-checkboxtree</artifactId>
+			<version>3.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.swinglabs</groupId>
+			<artifactId>jxlayer</artifactId>
+			<version>3.0.4</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.lgooddatepicker</groupId>
+			<artifactId>LGoodDatePicker</artifactId>
+			<version>10.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.knowm.xchart</groupId>
+			<artifactId>xchart</artifactId>
+			<version>3.5.0</version>
+		</dependency>
+
+		<!-- FOR TESTS -->
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-module-junit4</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.powermock</groupId>
+			<artifactId>powermock-api-mockito2</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.google.code.bean-matchers</groupId>
+			<artifactId>bean-matchers</artifactId>
+		</dependency>
+	</dependencies>
+</project>

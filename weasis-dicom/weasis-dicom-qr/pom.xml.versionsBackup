@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<artifactId>weasis-dicom-parent</artifactId>
+		<groupId>org.weasis.dicom</groupId>
+		<version>3.0.4</version>
+		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+	</parent>
+	<artifactId>weasis-dicom-qr</artifactId>
+	<packaging>bundle</packaging>
+	<name>${project.artifactId}</name>
+	<description>DICOM Query/Retrieve</description>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-scr-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Embed-Dependency>*;scope=compile;inline=true,weasis-distributions;scope=runtime;inline=false</Embed-Dependency>
+						<Embed-StripVersion>true</Embed-StripVersion>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-api</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-ui</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-codec</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.dicom</groupId>
+			<artifactId>weasis-dicom-explorer</artifactId>
+			<version>${project.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+</project>
