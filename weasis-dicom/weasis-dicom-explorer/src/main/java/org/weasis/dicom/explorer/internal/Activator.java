@@ -41,11 +41,13 @@ public class Activator implements BundleActivator {
             IMPORT_EXPORT_PERSISTENCE, null);
         // Save preferences
         DicomManager.getInstance().savePreferences();
+        
+        DicomModel.LOADING_EXECUTOR.shutdownNow();
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (explorer instanceof DicomExplorer) {
             DicomExplorer dexp = (DicomExplorer) explorer;
             // Remove image in viewers, in image cache and close the image stream
             ((DicomModel) dexp.getDataExplorerModel()).dispose();
-        }
+        }  
     }
 }

@@ -246,7 +246,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         toolTips.append("<br>"); //$NON-NLS-1$
         toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(FileUtil.formatSize(item.getLength()));
+        toolTips.append(FileUtil.humanReadableByte(item.getLength(), false));
         toolTips.append("<br>"); //$NON-NLS-1$
 
         toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$

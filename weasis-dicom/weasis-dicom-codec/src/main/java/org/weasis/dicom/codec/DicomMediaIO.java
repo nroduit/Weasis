@@ -17,7 +17,6 @@ import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
 import java.awt.image.SampleModel;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutput;
@@ -49,6 +48,7 @@ import javax.imageio.stream.ImageInputStream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Implementation;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -61,8 +61,8 @@ import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
-import org.dcm4che3.util.StreamUtils;
 import org.dcm4che3.io.DicomOutputStream;
+import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfDouble;
@@ -1021,18 +1021,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        String[] desc = new String[3];
-        // TODO add version
+        String[] desc = new String[5];
         desc[0] = "DICOM Codec: " + DicomCodec.NAME; //$NON-NLS-1$
-        if (compressedData) {
-            // desc[1] = "Image Reader Class: " + decompressor.getClass().getName(); //$NON-NLS-1$
-            // try {
-            // desc[2] = "Image Format: " + decompressor.getFormatName(); //$NON-NLS-1$
-            // } catch (IOException e) {
-            // desc[2] = "Image Format: unknown"; //$NON-NLS-1$
-            // }
-        }
-
+        desc[1] = "Version: " + Implementation.getVersionName(); //$NON-NLS-1$
+        desc[2] = "Image Codec: OpenCV imgcodecs";
+        desc[3] = "Version: " + Core.VERSION;
+        desc[4] = "Supports all the DICOM compression types";
         return desc;
     }
 

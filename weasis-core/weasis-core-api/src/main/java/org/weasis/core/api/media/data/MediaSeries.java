@@ -74,5 +74,5 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
     int getNearestImageIndex(double location, int offset, Filter<E> filter, Comparator<E> sort);
 
-    double getFileSize();
+    long getFileSize();
 }

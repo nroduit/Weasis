@@ -43,7 +43,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
         return loader == null || loader.isStopped();
     }
 
-    protected void updateSeriesProgression(double addSize) {
+    protected void updateSeriesProgression(long addSize) {
         series.setFileSize(series.getFileSize() + addSize);
         GuiExecutor.instance().execute(() -> {
             Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
@@ -65,7 +65,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
         int c = in.read();
         if (c >= 0) {
             nread++;
-            updateSeriesProgression(1.0);
+            updateSeriesProgression(1);
         }
 
         return c;

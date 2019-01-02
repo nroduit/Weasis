@@ -343,7 +343,7 @@ public class SeriesThumbnail extends Thumbnail
             final JProgressBar bar = progressBar;
             if (bar != null) {
                 if (series.getFileSize() > 0.0) {
-                    g2d.drawString(FileUtil.formatSize(series.getFileSize()), x + 2, hbleft - 12);
+                    g2d.drawString(FileUtil.humanReadableByte(series.getFileSize(), false), x + 2, hbleft - 12);
                 }
                 if (bar.isVisible()) {
                     // Draw in the bottom right corner of thumbnail

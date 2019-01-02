@@ -189,7 +189,7 @@ public class RawImageIO implements DcmMediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "Raw Image Decoder" }; //$NON-NLS-1$
+        return new String[] { "File Raw Image Decoder from OpenCV" }; //$NON-NLS-1$
     }
 
     @Override

@@ -29,6 +29,7 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
 
+import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -278,7 +279,7 @@ public class ImageCVIO implements MediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "Image Codec: " + codec.getCodecName() }; //$NON-NLS-1$
+        return new String[] { "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION, "Supports the common types of image files (JPEG, TIFF, PNG...)" }; //$NON-NLS-1$
     }
 
     public ImageReader getDefaultReader(String mimeType) {

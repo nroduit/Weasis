@@ -99,7 +99,7 @@ public class DicomSeries extends Series<DicomImageElement> {
         if (getFileSize() > 0.0) {
             toolTips.append(Messages.getString("DicomSeries.size")); //$NON-NLS-1$
             toolTips.append(StringUtil.COLON_AND_SPACE);
-            toolTips.append(FileUtil.formatSize(getFileSize()));
+            toolTips.append(FileUtil.humanReadableByte(getFileSize(), false));
             toolTips.append("<br>"); //$NON-NLS-1$
         }
         toolTips.append("</html>"); //$NON-NLS-1$

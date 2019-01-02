@@ -90,7 +90,12 @@ public class Activator implements BundleActivator, ServiceListener {
         GuiExecutor.instance().execute(() -> {
             ServiceReference<?> service = event.getServiceReference();
             BundleContext context = AppProperties.getBundleContext(service);
-            SeriesViewerFactory viewerFactory = (SeriesViewerFactory) context.getService(service);
+            SeriesViewerFactory viewerFactory = null;
+            try {
+                viewerFactory = (SeriesViewerFactory) context.getService(service);
+            } catch (Exception e) {
+                LOGGER.info("Cannot get service of {}", service.getBundle()); //$NON-NLS-1$
+            }
             if (viewerFactory != null) {
                 if (event.getType() == ServiceEvent.REGISTERED) {
                     registerSeriesViewerFactory(viewerFactory);
