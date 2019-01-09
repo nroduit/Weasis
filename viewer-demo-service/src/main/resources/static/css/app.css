@@ -1,0 +1,47 @@
+body { 
+    background: black;
+}
+
+.panel-heading {
+	background: rgb(125,171,85);
+	color: rgb(222,222,222);
+	font-weight: 550;
+}
+
+.header-text-body {
+	background: rgb(66,66,66);
+	color: rgb(222,222,222);
+}
+
+.black-control {
+	background-color: rgb(0,0,0);
+	color: rgb(222,222,222);
+	border: 0;
+}
+
+.search-icon {
+	width: 55px;
+}
+
+
+
+[ng\:cloak],
+[ng-cloak],
+.ng-cloak {
+    display: none !important;
+}
+
+.margin-top-5 {
+    margin-top: 10px;
+}
+
+.margin-3 {
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.p-img {
+    height: 25px;
+    width: 25px;
+    border-radius: 75%;
+}

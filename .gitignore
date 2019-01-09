@@ -40,3 +40,6 @@ hs_err*.log
 # Mac temporary folders
 _*/
 
+
+
+/demo-server/src/main/resources/public/weasis/*
