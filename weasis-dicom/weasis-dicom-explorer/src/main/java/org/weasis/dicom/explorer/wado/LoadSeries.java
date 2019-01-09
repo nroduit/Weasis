@@ -411,7 +411,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return true;
     }
 
-    private static Map<String, String> getHttpTags(WadoParameters wadoParameters) {
+    private static Map<String, String> getHttpTags(WadoParameters wadoParameters, String token) {
         boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
         boolean hasWadoTags = wadoParameters != null && wadoParameters.getHttpTaglist() != null;
         boolean hasWadoLogin = wadoParameters != null && wadoParameters.getWebLogin() != null;
@@ -426,6 +426,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (hasWadoLogin) {
                 // Set http login (no protection, only convert in base64)
                 map.put("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            if (token != null) {
+                map.put("Authorization", "Bearer " + token);
             }
             return map;
         }
@@ -482,7 +485,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                             Thumbnail.THUMBNAIL_CACHE_DIR);
                         InputStream httpCon = NetworkUtil.getUrlInputStream(
                             new URL(wadoParameters.getBaseURL() + thumURL).openConnection(),
-                            getHttpTags(wadoParameters));
+                            getHttpTags(wadoParameters, dicomModel.googleToken));
                         FileUtil.writeStreamWithIOException(httpCon, outFile);
                         if (outFile.length() == 0) {
                             throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
@@ -555,7 +558,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
-        InputStream httpCon = NetworkUtil.getUrlInputStream(url.openConnection(), getHttpTags(wadoParameters));
+        InputStream httpCon = NetworkUtil.getUrlInputStream(url.openConnection(), getHttpTags(wadoParameters, dicomModel.googleToken));
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon, outFile);
@@ -651,7 +654,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
             }
 
-            return NetworkUtil.getUrlInputStream(new URL(buffer.toString()).openConnection(), getHttpTags(wado));
+            return NetworkUtil.getUrlInputStream(new URL(buffer.toString()).openConnection(), getHttpTags(wado, dicomModel.googleToken));
         }
 
         @Override
@@ -690,7 +693,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             File tempFile = null;
             DicomMediaIO dicomReader = null;
 
-            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection, getHttpTags(wado))) {
+            try (InputStream stream = NetworkUtil.getUrlInputStream(urlConnection, getHttpTags(wado, dicomModel.googleToken))) {
 
                 if (!writeInCache && getUrl().startsWith("file:")) { //$NON-NLS-1$
                     cache = false;
