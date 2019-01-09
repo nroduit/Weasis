@@ -24,12 +24,20 @@
 				<configuration>
 					<instructions>
 						<!-- Force to import jaxb binding classes -->
-						<Import-Package>com.sun.xml.internal.bind,*</Import-Package>
+						<Import-Package>
+							com.sun.xml.internal.bind,
+							com.google.errorprone.*;resolution:=optional,
+							javax.mail.*;resolution:=optional,
+							sun.misc;resolution:=optional,
+							com.sun.jdmk.comm;resolution:=optional,
+							!com.fasterxml.*,!com.codeminders.*,*
+						</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<!-- add for Xchart: ,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.* -->
 						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.*</Export-Package>
 						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
-						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
+						<Embed-Dependency>*;scope=compile|runtime;inline=true</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
 					</instructions>
 				</configuration>
 			</plugin>
@@ -104,6 +112,13 @@
 		<dependency>
 			<groupId>com.google.code.bean-matchers</groupId>
 			<artifactId>bean-matchers</artifactId>
+		</dependency>
+
+		<!-- FOR GOOGLE DEMO -->
+		<dependency>
+			<groupId>com.codeminders</groupId>
+			<artifactId>google-demo-service</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

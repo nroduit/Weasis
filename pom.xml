@@ -16,6 +16,7 @@
 		<url>https://github.com/nroduit/Weasis</url>
 	</scm>
 	<modules>
+		<module>google-demo-client</module>
 		<module>weasis-parent</module>
 		<module>weasis-opencv</module>
 		<module>weasis-core</module>

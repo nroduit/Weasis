@@ -260,6 +260,10 @@ public class WeasisLauncher {
                     System.setProperty(vmarg[0], Util.substVars(vmarg[1], vmarg[0], null, null));
                 }
             }
+
+            if (argv[i].equals("-c") && argv.length > i + 1) {
+                System.setProperty("google.client.secret", argv[i + 1]);
+            }
         }
 
         final List<StringBuilder> commandList = splitCommand(argv);
@@ -618,7 +622,10 @@ public class WeasisLauncher {
             if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
                 StringBuilder command = new StringBuilder(args[i].substring(1));
                 // look for parameters
-                while (i + 1 < length && !args[i + 1].startsWith("$") && !args[i + 1].startsWith("-VMP")) { //$NON-NLS-1$ //$NON-NLS-2$
+                while (i + 1 < length
+                        && !args[i + 1].startsWith("$")
+                        && !args[i + 1].startsWith("-VMP")
+                        && !args[i + 1].startsWith("-c")) { //$NON-NLS-1$ //$NON-NLS-2$
                     i++;
                     command.append(" "); //$NON-NLS-1$
                     if (args[i].indexOf(" ") != -1) { //$NON-NLS-1$

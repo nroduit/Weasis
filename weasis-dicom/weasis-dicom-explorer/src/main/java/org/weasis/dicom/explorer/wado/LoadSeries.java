@@ -85,6 +85,7 @@ import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import com.codeminders.demo.GoogleAuthStub;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 

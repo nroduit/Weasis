@@ -68,10 +68,7 @@ fi
 userParameters=()
 for var in "$@"
 do
-if [[ $var == \$* ]]
-then
   userParameters+=("$var")
-fi
 done
 echo user arguments: ${userParameters[@]}
 
@@ -79,6 +76,6 @@ echo user arguments: ${userParameters[@]}
 curPath=$(dirname "$(readlink -f "$0")")
 echo "Weasis launcher directory: $curPath"
 
-cps="$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar"
+cps="$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar:$curPath/weasis/google-demo.jar"
 
 $JAVACMD $DEFAULT_JVM_OPTIONS"$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}

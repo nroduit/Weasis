@@ -177,6 +177,13 @@
 									<outputDirectory>${tmp.dir}</outputDirectory>
 									<destFileName>substance.jar</destFileName>
 								</artifactItem>
+								<artifactItem>
+									<groupId>com.codeminders</groupId>
+									<artifactId>google-demo-service-jar-with-dependencies</artifactId>
+									<version>0.0.1-SNAPSHOT</version>
+									<outputDirectory>${tmp.dir}</outputDirectory>
+									<destFileName>google-demo.jar</destFileName>
+								</artifactItem>
 
 								<!-- ===================================== -->
 								<!-- Felix bundles -->

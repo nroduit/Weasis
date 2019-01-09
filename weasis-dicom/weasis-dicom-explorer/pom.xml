@@ -25,9 +25,21 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
+				<extensions>true</extensions>
 				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
+						<Embed-Dependency>
+							*;scope=compile|runtime;inline=true
+						</Embed-Dependency>
+						<Embed-Transitive>true</Embed-Transitive>
+						<Import-Package>
+							com.google.errorprone.*;resolution:=optional,
+							javax.mail.*;resolution:=optional,
+							sun.misc;resolution:=optional,
+							com.sun.jdmk.comm;resolution:=optional,
+                            !com.fasterxml.*,!com.codeminders.*,*
+						</Import-Package>
 					</instructions>
 				</configuration>
 			</plugin>
@@ -35,6 +47,21 @@
 	</build>
 	
 	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-annotations</artifactId>
+			<version>2.9.6</version>
+		</dependency>
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
 			<artifactId>weasis-opencv-core</artifactId>
@@ -52,6 +79,13 @@
 			<artifactId>weasis-dicom-codec</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
+		</dependency>
+
+		<!-- FOR GOOGLE DEMO -->
+		<dependency>
+			<groupId>com.codeminders</groupId>
+			<artifactId>google-demo-service</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 </project>

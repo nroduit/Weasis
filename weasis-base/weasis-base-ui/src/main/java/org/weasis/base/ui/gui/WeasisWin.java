@@ -335,7 +335,7 @@ public class WeasisWin {
 
         // control.setDefaultLocation(UIManager.BASE_AREA.
         // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
-        rootPaneContainer.getContentPane().add(UIManager.BASE_AREA, BorderLayout.CENTER);
+        rootPaneContainer.getContentPane().add(UIManager.getOrCreateRootComponent(), BorderLayout.CENTER);
         // Allow to drop series into the empty main area
         UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
         UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));

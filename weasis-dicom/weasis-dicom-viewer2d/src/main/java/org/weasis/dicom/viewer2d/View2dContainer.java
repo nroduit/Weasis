@@ -343,6 +343,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     @Override
     public void close() {
+        UIManager.goBackToTable();
         View2dFactory.closeSeriesViewer(this);
         super.close();
     }

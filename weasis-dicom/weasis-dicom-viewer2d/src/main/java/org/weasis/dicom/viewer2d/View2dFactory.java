@@ -125,6 +125,8 @@ public class View2dFactory implements SeriesViewerFactory {
             }
         }
 
+        UIManager.showViewer();
+
         return instance;
 
     }

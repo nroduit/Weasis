@@ -1334,6 +1334,16 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             }
 
             iis.seek(0L);
+
+            // -----------------------------------------
+            // FIXME
+            // Google api returns some junk data in the beginning of dcm file
+            // We are skipping all non zero bytes from the start to not fail DicomInputStream
+            iis.mark();
+            while (iis.read() != 0x00) {iis.mark();}
+            iis.reset();
+            //-----------------------------------------
+
             dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
             dis.setIncludeBulkData(IncludeBulkData.URI);
             dis.setBulkDataDescriptor(DicomCodec.BULKDATA_DESCRIPTOR);

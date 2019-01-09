@@ -11,10 +11,12 @@
 package org.weasis.core.ui.docking;
 
 import java.awt.Window;
+import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -28,6 +30,7 @@ import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CWorkingArea;
 import bibliothek.gui.dock.common.event.CVetoFocusListener;
 import bibliothek.gui.dock.common.intern.CDockable;
+import com.codeminders.demo.ui.MainPanel;
 
 public class UIManager {
 
@@ -63,6 +66,34 @@ public class UIManager {
 
     private UIManager() {
     }
+
+    private static MainPanel panel;
+
+    public static Component getOrCreateRootComponent() {
+        if (panel == null) {
+            synchronized (UIManager.class) {
+                if (panel == null) {
+                    panel = new MainPanel(UIManager.BASE_AREA);
+                }
+            }
+        }
+        return panel;
+    }
+
+    public static void goBackToTable() {
+        getOrCreateRootComponent();
+        panel.showExplorer();
+    }
+
+    public static void subscribeOnViewSelected(BiConsumer<String, String> consumer) {
+        getOrCreateRootComponent();
+        panel.addViewSelectedListener(consumer.andThen((a, b) -> panel.showLoadIndicator()));
+    }
+
+    public static void showViewer() {
+        panel.showViewer();
+    }
+
 
     public static Window getApplicationWindow() {
         return WinUtil.getParentWindow(UIManager.BASE_AREA);

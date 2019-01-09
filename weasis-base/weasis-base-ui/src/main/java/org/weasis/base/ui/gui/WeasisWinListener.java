@@ -239,12 +239,13 @@ public class WeasisWinListener implements MainWindowListener {
 
     void registerDataExplorer(DataExplorerView explorer) {
         if (explorer != null && !UIManager.EXPLORER_PLUGINS.contains(explorer)) {
-            UIManager.EXPLORER_PLUGINS.add(explorer);
+//      GOOGLE DEMO: Hiding explorer plugin since we use custom table explorer
+//            UIManager.EXPLORER_PLUGINS.add(explorer);
             Optional.ofNullable(explorer.getDataExplorerModel()).ifPresent(e -> e.addPropertyChangeListener(this));
-            if (explorer instanceof DockableTool) {
-                final DockableTool dockable = (DockableTool) explorer;
-                dockable.showDockable();
-            }
+//            if (explorer instanceof DockableTool) {
+//                final DockableTool dockable = (DockableTool) explorer;
+//                dockable.showDockable();
+//            }
             LOGGER.info("Register data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
         }
     }
