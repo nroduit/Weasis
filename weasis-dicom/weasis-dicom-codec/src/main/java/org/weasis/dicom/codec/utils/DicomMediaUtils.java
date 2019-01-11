@@ -926,7 +926,7 @@ public class DicomMediaUtils {
                             || "PT".equals(modality))) { //$NON-NLS-1$
                         int windowLevelDefaultCount = (ww.length == wc.length) ? ww.length : 0;
                         for (int i = 0; i < windowLevelDefaultCount; i++) {
-                            ww[i] = (ww[i] - ri) / rs;
+                            ww[i] = ww[i] / rs;
                             wc[i] = (wc[i] - ri) / rs;
                         }
                     }
