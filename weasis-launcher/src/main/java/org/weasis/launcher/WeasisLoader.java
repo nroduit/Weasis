@@ -217,15 +217,6 @@ public class WeasisLoader {
                 }
                 displayOnScreen();
             });
-            EventQueue.invokeAndWait(() -> {
-                try {
-                	auth.signIn();
-                } catch (Exception e) {
-                	JOptionPane.showMessageDialog(null, "Error in Google Sign In: " + e.getMessage());
-                	close();
-                	e.printStackTrace();
-                }
-            });
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (InvocationTargetException e) {

@@ -105,7 +105,10 @@ public class GoogleAPIClient {
 		}
 
 		String url = System.getProperty("weasis.codebase.url");
-		return new URL(url + "/client_secrets.json").openStream();
+		if (url != null) {
+			return new URL(url + "/client_secrets.json").openStream();
+		}
+		return GoogleAPIClient.class.getResource("/client_secrets.json").openStream();
 	}
 
 	public String getAccessToken() {
@@ -151,8 +154,20 @@ public class GoogleAPIClient {
 		}
 	}
 
-	public void clearSignIn() {
+	public void signOut() {
+		clearSignIn();
+		isSignedIn = false;
+	}
+	
+	private void clearSignIn() {
 		deleteDir(DATA_STORE_DIR);
+	}
+	
+	public boolean isAuthorized() {
+		if (DATA_STORE_DIR.exists()) {
+			return true;
+		}
+		return false;
 	}
 
 	private void deleteDir(File file) {

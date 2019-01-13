@@ -92,7 +92,11 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
             view.setAccountNumber(model.getAccessionNumber().getFirstValue().orElse(""));
         }
         if (model.getStudyDate() != null) {
-            view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DATE_FORMAT)).orElse(null));
+        	try {
+        		view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DATE_FORMAT)).orElse(null));
+        	} catch(Exception e) {
+        		view.setStudyDate(model.getStudyDate().getFirstValue().map(s -> LocalDate.parse(s, DateTimeFormatter.ofPattern("yyyy.MM.dd"))).orElse(null));
+        	}
         }
         if (model.getStudyTime() != null) {
             view.setStudyTime(model.getStudyTime().getFirstValue().map(s -> LocalTime.parse(s, TIME_FORMAT)).orElse(null));
@@ -117,8 +121,9 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
     }
 
     private String formatQuery(StudyQuery query) {
+    	String allItems = "?includefield=all";
         if (query == null) {
-            return "";
+            return allItems;
         }
 
         List<String> parameters = new ArrayList<>();
@@ -146,7 +151,7 @@ public class LoadStudiesTask extends AbstractDicomSelectorTask<List<StudyView>> 
         }
 
         if (parameters.isEmpty()) {
-            return "";
+            return allItems;
         } else {
             return "?" + join(parameters, "&");
         }
