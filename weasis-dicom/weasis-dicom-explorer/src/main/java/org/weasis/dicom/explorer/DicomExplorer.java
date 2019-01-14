@@ -97,12 +97,6 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.wado.LoadSeries;
-import org.weasis.dicom.explorer.google.GoogleCloudDicomStoreFetcher;
-
-import com.codeminders.demo.GoogleAPIClient;
-import com.codeminders.demo.GoogleAPIClientFactory;
-import com.codeminders.demo.Location;
-import com.codeminders.demo.ProjectDescriptor;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
@@ -119,9 +113,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
     public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
     public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$ //$NON-NLS-1$
-
-    private static final String CHOOSE_DATASET = "Choose DataSet";
-    private static final String CHOOSE_DICOMSTORE = "Choose Dicomstore";
 
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
