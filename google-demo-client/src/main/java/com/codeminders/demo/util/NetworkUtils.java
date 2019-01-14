@@ -13,7 +13,7 @@ public class NetworkUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtils.class);
 
     public static InputStream getUrlInputStream(URLConnection urlConnection) {
-        return getUrlInputStream(urlConnection, 5000, 7000);
+        return getUrlInputStream(urlConnection, 45_000, 120_000);
     }
 
     public static InputStream getUrlInputStream(URLConnection urlConnection, int connectTimeout, int readTimeout) {
