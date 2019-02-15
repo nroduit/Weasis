@@ -14,6 +14,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +168,9 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public List<Action> getOpenActions() {
+        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { //$NON-NLS-1$
+            return Collections.emptyList();
+        }
         return Arrays.asList(preferencesAction);
     }
 
