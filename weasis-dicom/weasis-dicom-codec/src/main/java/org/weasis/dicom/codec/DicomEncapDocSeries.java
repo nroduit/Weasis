@@ -29,6 +29,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.StringUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
 
@@ -56,9 +57,9 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
             String extension = ".tmp"; //$NON-NLS-1$
             Attributes ds = dicomImageLoader.getDicomObject();
             String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
-            List<String> extensions = MimeInspector.getExtensions(mime);
-            if (!extensions.isEmpty()) {
-                extension = "." + extensions.get(0); //$NON-NLS-1$
+            String ext = MimeInspector.getExtensions(mime);
+            if (StringUtil.hasText(extension)) {
+                extension = "." + ext; //$NON-NLS-1$
             }
             // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
             Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
