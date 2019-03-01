@@ -38,8 +38,19 @@
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-portable</directory>
 			<outputDirectory></outputDirectory>
+			<excludes>
+				<exclude>**/*.plist</exclude>
+			</excludes>
 			<fileMode>0755</fileMode>
 			<directoryMode>0755</directoryMode>
+		</fileSet>
+		<fileSet>
+			<directory>src/main/resources-portable</directory>
+			<outputDirectory></outputDirectory>
+			<includes>
+				<include>**/*.plist</include>
+			</includes>
+			<filtered>true</filtered>
 		</fileSet>
 		<fileSet>
 			<!-- copy resources -->

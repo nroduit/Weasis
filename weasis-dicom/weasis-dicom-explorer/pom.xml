@@ -4,18 +4,18 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>3.1.0-SNAPSHOT</version>
+		<version>3.5.0-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-explorer</artifactId>
 	<packaging>bundle</packaging>
 	<name>DICOM Data Explorer [${project.artifactId}]</name>
-	
+
 	<properties>
 		<bundle.namespace>org.weasis.dicom.explorer</bundle.namespace>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -27,13 +27,15 @@
 				<artifactId>maven-bundle-plugin</artifactId>
 				<configuration>
 					<instructions>
+						<!-- Force to import jaxb binding classes (supports jaxb inside or outside jdk) -->
+						<Import-Package>javax.xml.bind;version=!,*</Import-Package>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 					</instructions>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.opencv</groupId>
@@ -46,6 +48,10 @@
 			<artifactId>weasis-core-ui</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>jaxb-osgi</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>

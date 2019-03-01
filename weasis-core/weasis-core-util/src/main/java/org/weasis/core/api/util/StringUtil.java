@@ -102,7 +102,7 @@ public class StringUtil {
         }
         return EMPTY_INT_ARRAY;
     }
-    
+
     public static Integer getInteger(String val) {
         if (StringUtil.hasText(val)) {
             try {
@@ -113,7 +113,6 @@ public class StringUtil {
         }
         return null;
     }
-
 
     public static int getInt(String val) {
         if (StringUtil.hasText(val)) {
@@ -137,7 +136,7 @@ public class StringUtil {
         }
         return result;
     }
-    
+
     public static Double getDouble(String val) {
         if (StringUtil.hasText(val)) {
             try {
@@ -199,15 +198,29 @@ public class StringUtil {
      * @param s
      * @return the list of words or part with quotes
      */
-    public static List<String> splitStringExceptQuotes(String s) {
+    public static List<String> splitSpaceExceptInQuotes(String s) {
         if (s == null) {
             return Collections.emptyList();
         }
         List<String> matchList = new ArrayList<>();
-        Pattern patternSpaceExceptQuotes = Pattern.compile("[^\\s\"']+|\"[^\"]*\"|'[^']*'"); //$NON-NLS-1$
-        Matcher regexMatcher = patternSpaceExceptQuotes.matcher(s);
-        while (regexMatcher.find()) {
-            matchList.add(regexMatcher.group());
+        Pattern patternSpaceExceptQuotes = Pattern.compile("'[^']*'|\"[^\"]*\"|( )"); //$NON-NLS-1$
+        Matcher m = patternSpaceExceptQuotes.matcher(s);
+        StringBuffer b = new StringBuffer();
+        while (m.find()) {
+            if (m.group(1) == null) {
+                m.appendReplacement(b, m.group(0));
+                String arg = b.toString();
+                b.setLength(0);
+                if (StringUtil.hasText(arg)) {
+                    matchList.add(arg);
+                }
+            }
+        }
+        b.setLength(0);
+        m.appendTail(b);
+        String arg = b.toString();
+        if (StringUtil.hasText(arg)) {
+            matchList.add(arg);
         }
         return matchList;
     }

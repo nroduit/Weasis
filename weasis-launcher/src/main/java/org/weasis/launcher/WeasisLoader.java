@@ -1,13 +1,15 @@
 /*******************************************************************************
- * Copyright (c) 2009-2018 Weasis Team and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
- *
+ * Copyright (C) 2009-2018 Weasis Team and others
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
+ ******************************************************************************/
 package org.weasis.launcher;
 
 import java.awt.BorderLayout;
@@ -25,20 +27,24 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
 
 import org.osgi.framework.BundleContext;
-import org.weasis.launcher.applet.WeasisFrame;
 
 public class WeasisLoader {
+
+    private static final Logger LOGGER = Logger.getLogger(WeasisLoader.class.getName());
+
+    public static final String P_DIALOG = "Dialog"; //$NON-NLS-1$
     public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
     public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
     public static final String FRM_TITLE =
@@ -47,17 +53,15 @@ public class WeasisLoader {
 
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
-    private volatile javax.swing.JProgressBar downloadProgress;
+    private javax.swing.JProgressBar downloadProgress;
     private Container container;
 
     private final File resPath;
-    private final WeasisFrame mainFrame;
-    private final Properties localProperties;
+    private final WeasisMainFrame mainFrame;
 
-    public WeasisLoader(File resPath, WeasisFrame mainFrame, Properties localProperties) {
+    public WeasisLoader(File resPath, WeasisMainFrame mainFrame) {
         this.resPath = resPath;
         this.mainFrame = mainFrame;
-        this.localProperties = localProperties;
     }
 
     public void writeLabel(String text) {
@@ -69,30 +73,24 @@ public class WeasisLoader {
      */
     public void initGUI() {
         loadingLabel = new javax.swing.JLabel();
-        loadingLabel.setFont(new Font("Dialog", Font.PLAIN, 10)); //$NON-NLS-1$
+        loadingLabel.setFont(new Font(P_DIALOG, Font.PLAIN, 10)); // $NON-NLS-1$
         downloadProgress = new javax.swing.JProgressBar();
-        Font font = new Font("Dialog", Font.PLAIN, 12); //$NON-NLS-1$
+        Font font = new Font(P_DIALOG, Font.PLAIN, 12); // $NON-NLS-1$
         downloadProgress.setFont(font);
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
 
         RootPaneContainer frame = mainFrame.getRootPaneContainer();
 
-        if (frame == null || frame instanceof JFrame) {
-            Window win = new Window((Frame) frame);
-            win.addWindowListener(new java.awt.event.WindowAdapter() {
+        Window win = new Window((Frame) frame);
+        win.addWindowListener(new java.awt.event.WindowAdapter() {
 
-                @Override
-                public void windowClosing(java.awt.event.WindowEvent evt) {
-                    closing();
-                }
-            });
-            container = win;
-        } else {
-            JPanel splashScreenPanel = new JPanel(new BorderLayout());
-            frame.getContentPane().add(splashScreenPanel, BorderLayout.CENTER);
-            container = splashScreenPanel;
-        }
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                closing();
+            }
+        });
+        container = win;
 
         loadingLabel.setText(LBL_LOADING);
         loadingLabel.setFocusable(false);
@@ -117,7 +115,7 @@ public class WeasisLoader {
 
                 @Override
                 public void paintIcon(Component c, Graphics g, int x, int y) {
-
+                    // Do nothing
                 }
 
                 @Override
@@ -135,7 +133,7 @@ public class WeasisLoader {
         }
 
         JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
-        imagePane.setFont(new Font("Dialog", Font.BOLD, 16)); //$NON-NLS-1$
+        imagePane.setFont(new Font(P_DIALOG, Font.BOLD, 16)); // $NON-NLS-1$
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
         imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
         imagePane.setFocusable(false);
@@ -162,12 +160,8 @@ public class WeasisLoader {
 
     }
 
-    public WeasisFrame getMainFrame() {
+    public WeasisMainFrame getMainFrame() {
         return mainFrame;
-    }
-
-    public Properties getLocalProperties() {
-        return localProperties;
     }
 
     /*
@@ -214,7 +208,7 @@ public class WeasisLoader {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (InvocationTargetException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Display splashscreen", e); //$NON-NLS-1$
         }
     }
 
@@ -247,7 +241,7 @@ public class WeasisLoader {
 
                 container.setLocation(x, y);
             } catch (Exception e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Set splashscreen location", e); //$NON-NLS-1$
             }
             container.setVisible(true);
         }

@@ -4,8 +4,12 @@
 <dict>
 	<key>CFBundleName</key>
 	<string>Weasis</string>
+	<key>CFBundleDisplayName</key>
+	<string>Weasis</string>
 	<key>CFBundleVersion</key>
-	<string>1.0</string>
+	<string>${app.version}</string>
+	<key>CFBundleShortVersionString</key>
+	<string>${app.version}</string>
 	<key>CFBundleAllowMixedLocalizations</key>
 	<string>true</string>
 	<key>CFBundleExecutable</key>
@@ -20,5 +24,13 @@
 	<string>6.0</string>
 	<key>CFBundleIconFile</key>
 	<string>logo-button</string>
+	<key>CFBundleSupportedPlatforms</key>
+	<array>
+		<string>MacOSX</string>
+	</array>
+	<key>CFBundleIdentifier</key>
+	<string>org.weasis.Weasis</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>10.9</string>
 </dict>
 </plist>

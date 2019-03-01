@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-opencv-parent</artifactId>
 		<groupId>org.weasis.opencv</groupId>
-		<version>3.1.0-SNAPSHOT</version>
+		<version>3.5.0-SNAPSHOT</version>
 		<relativePath>../weasis-opencv-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -12,19 +12,15 @@
 	<packaging>bundle</packaging>
 	<name>OpenCV Java Wrapper [${project.artifactId}]</name>
 	<properties>
+		<java-version>1.7</java-version>
+		<!-- required by maven-bundle-plugin 4 -->
+		<jdk-version>1.8</jdk-version>
+		<enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
 		<bundle.namespace>org.opencv</bundle.namespace>
 	</properties>
 
 	<build>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>

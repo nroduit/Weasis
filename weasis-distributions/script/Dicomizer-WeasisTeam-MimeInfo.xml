@@ -1,0 +1,4 @@
+<?xml version="1.0"?>
+<mime-info xmlns='http://www.freedesktop.org/standards/shared-mime-info'>
+  <mime-type type='x-scheme-handler/weasis-dicomizer;' />
+</mime-info>

@@ -34,7 +34,7 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
     protected Graphic g1, g2, g3, g4;
 
     protected void consoleDisplay(Object object) throws JAXBException {
-        context = JAXBContext.newInstance(object.getClass());
+        context =  XmlSerializer.getJaxbContext(object.getClass());
         marshaller = context.createMarshaller();
 
         // output pretty printed
@@ -44,7 +44,7 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
 
     protected String serialize(Object object) throws JAXBException {
         StringWriter sw = new StringWriter();
-        context = JAXBContext.newInstance(object.getClass());
+        context =  XmlSerializer.getJaxbContext(object.getClass());
         marshaller = context.createMarshaller();
 
         marshaller.marshal(object, sw);

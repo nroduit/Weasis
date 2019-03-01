@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.9.4
+Created-By: Apache Maven 3.6.0
+Built-By: virtual
+Build-Jdk: 11.0.1
+Permissions: all-permissions
+Application-Name: Weasis
+Trusted-Library: true
+Codebase: *
+Application-Library-Allowable-Codebase: *
+Caller-Allowable-Codebase: *
+

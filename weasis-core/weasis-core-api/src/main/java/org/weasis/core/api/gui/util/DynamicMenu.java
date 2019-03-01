@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.weasis.core.api.gui.util;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.swing.Action;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
@@ -37,18 +40,28 @@ public abstract class DynamicMenu extends JMenu {
 
     public abstract void popupMenuWillBecomeVisible();
 
-    public void popupMenuWillBecomeInvisible() {
-        removeAll();
-    }
+	public void popupMenuWillBecomeInvisible() {
+	    // Wait the action performed of JMenuItem (Bug on Mac menu bar)
+		TimerTask task = new TimerTask() {
+
+			@Override
+			public void run() {
+				removeAll();
+			}
+		};
+		Timer timer = new Timer();
+		timer.schedule(task, 250);
+	}
 
     public void popupMenuCanceled() {
     }
 
     public void addPopupMenuListener() {
         // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
-        if (AppProperties.isMacNativeLookAndFeel()) {
+        if ("true".equals(System.getProperty("apple.laf.useScreenMenuBar", "false"))) {
             this.addChangeListener(e -> {
                 if (DynamicMenu.this.isSelected()) {
+                	DynamicMenu.this.removeAll();
                     DynamicMenu.this.popupMenuWillBecomeVisible();
                 } else {
                     DynamicMenu.this.popupMenuWillBecomeInvisible();

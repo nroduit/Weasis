@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.swing.ImageIcon;
 
@@ -23,7 +24,7 @@ import org.slf4j.LoggerFactory;
 public class ResourceUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(ResourceUtil.class);
 
-    private static volatile String path = StringUtil.EMPTY_STRING;
+    private static AtomicReference<String> path = new AtomicReference<>(StringUtil.EMPTY_STRING);
 
     private ResourceUtil() {
     }
@@ -87,11 +88,11 @@ public class ResourceUtil {
         if (!StringUtil.hasText(path)) {
             throw new IllegalArgumentException("No value for property: weasis.resources.path"); //$NON-NLS-1$
         }
-        ResourceUtil.path = path;
+        ResourceUtil.path.set(path);
     }
 
     private static String getResourcePath() {
-        return path;
+        return path.get();
     }
 
     public static File getResource(String filename) {

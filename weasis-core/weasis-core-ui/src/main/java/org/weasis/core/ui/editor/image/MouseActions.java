@@ -134,17 +134,6 @@ public class MouseActions {
         AuditLog.LOGGER.info("mouse:{} action:{}", type, action); //$NON-NLS-1$
     }
 
-    public static void loadPreferences(Preferences prefs, boolean defaultValue) {
-        if (prefs != null) {
-            Preferences p = prefs.node(MouseActions.PREFERENCE_NODE);
-            p.put(P_MOUSE_LEFT, defaultValue ? ActionW.WINLEVEL.cmd() : p.get(P_MOUSE_LEFT, ActionW.WINLEVEL.cmd()));
-            p.put(P_MOUSE_MIDDLE, defaultValue ? ActionW.PAN.cmd() : p.get(P_MOUSE_MIDDLE, ActionW.PAN.cmd()));
-            p.put(P_MOUSE_RIGHT,
-                defaultValue ? ActionW.CONTEXTMENU.cmd() : p.get(P_MOUSE_RIGHT, ActionW.CONTEXTMENU.cmd()));
-            p.put(P_MOUSE_WHEEL, defaultValue ? ActionW.ZOOM.cmd() : p.get(P_MOUSE_WHEEL, ActionW.ZOOM.cmd()));
-        }
-    }
-
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(MouseActions.PREFERENCE_NODE);

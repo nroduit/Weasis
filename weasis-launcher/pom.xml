@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>3.1.0-SNAPSHOT</version>
+		<version>3.5.0-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -16,8 +16,8 @@
 
 	<licenses>
 		<license>
-			<name>Eclipse Public License v1.0</name>
-			<url>http://www.eclipse.org/legal/epl-v10.html</url>
+			<name>Eclipse Public License v2.0</name>
+			<url>http://www.eclipse.org/legal/epl-v20.html</url>
 			<distribution>repo</distribution>
 		</license>
 		<license>
@@ -62,14 +62,14 @@
 			<version>${felix.framework.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>substance</artifactId>
+			<groupId>org.pushing-pixels</groupId>
+			<artifactId>radiance-substance-all</artifactId>
 			<version>${substance.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 			<artifactId>javaws</artifactId>
-		</dependency>
+		</dependency>		
 
 		<!-- Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher) -->
 		<!-- No direct dependency should be made with weasis-launcher -->
@@ -100,10 +100,6 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 			<artifactId>vecmath</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>tilecachetool</artifactId>
 		</dependency>
 	</dependencies>
 </project>

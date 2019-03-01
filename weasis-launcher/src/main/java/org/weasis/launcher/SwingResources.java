@@ -1,23 +1,29 @@
 /*******************************************************************************
- * Copyright (c) 2009-2018 Weasis Team and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
- *
+ * Copyright (C) 2009-2018 Weasis Team and others
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
+ ******************************************************************************/
 package org.weasis.launcher;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.UIManager;
 
 public class SwingResources {
-
+    
+    private static final Logger LOGGER = Logger.getLogger(SwingResources.class.getName());
+    
     static final String AND_MNEMONIC = "AndMnemonic"; //$NON-NLS-1$
     static final String TITLE_SUFFIX = ".titleAndMnemonic"; //$NON-NLS-1$
     static final String TEXT_SUFFIX = ".textAndMnemonic"; //$NON-NLS-1$
@@ -27,7 +33,10 @@ public class SwingResources {
     static final String KEY_TEXT = "Text"; //$NON-NLS-1$
 
     static final String KEY_TITLE = "Title"; //$NON-NLS-1$
-
+    
+    private SwingResources() {
+    }
+    
     /**
      * <code>TextAndMnemonicHashMap</code> stores swing resource strings. Many of strings can have a mnemonic. For
      * example: FileChooser.saveButton.textAndMnemonic=&Save For this case method get returns "Save" for the key
@@ -49,7 +58,7 @@ public class SwingResources {
             try {
                 swingDialogs.load(inStream);
             } catch (IOException e) {
-                System.err.println("Cannot read swing translations: " + e); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "Cannot read swing translations", e); //$NON-NLS-1$
             } finally {
                 FileUtil.safeClose(inStream);
             }

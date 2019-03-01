@@ -58,6 +58,7 @@ import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicLayer;
+import org.weasis.core.ui.serialize.XmlSerializer;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PresentationStateReader;
@@ -136,7 +137,7 @@ public class DicomPrSerializer {
 
     private static void writePrivateTags(GraphicModel model, Attributes attributes) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+            JAXBContext jaxbContext = XmlSerializer.getJaxbContext(model.getClass());
             Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             jaxbMarshaller.marshal(model, outputStream);
@@ -145,7 +146,7 @@ public class DicomPrSerializer {
                 PresentationStateReader.PR_MODEL_ID);
             attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
                 GzipManager.gzipCompressToByte(outputStream.toByteArray()));
-        } catch (Exception e) {
+        } catch (Exception | NoClassDefFoundError e) {
             LOGGER.error("Cannot save xml: ", e); //$NON-NLS-1$
         }
     }

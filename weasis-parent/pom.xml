@@ -5,13 +5,14 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>3.1.0-SNAPSHOT</version>
+	<version>3.5.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
 	<properties>
 		<java-version>1.8</java-version>
-		<enforcer.jdk-version>[${java-version},)</enforcer.jdk-version>
+		<jdk-version>9</jdk-version>
+		<enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
 		<enforcer.maven-version>[3.0.5,)</enforcer.maven-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -19,31 +20,32 @@
 
 		<app.version>${project.version}</app.version>
 		<javaws.version>1.6.0-17</javaws.version>
-		<felix.framework.version>6.0.1</felix.framework.version>
-		<substance.version>8.0.2</substance.version>
+		<felix.framework.version>6.0.2</felix.framework.version>
+		<substance.version>1.9.1</substance.version>
 
 		<osgi.cmpn.version>7.0.0</osgi.cmpn.version>
-		
-		<felix.gogo.version>1.1.0</felix.gogo.version>
-		<felix.gogo.shell.version>1.1.0</felix.gogo.shell.version>
-		<felix.gogo.command.version>1.0.2</felix.gogo.command.version>
+
+		<felix.gogo.version>1.1.2</felix.gogo.version>
+		<felix.gogo.shell.version>1.1.2</felix.gogo.shell.version>
+		<felix.gogo.command.version>1.1.0</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-		<felix.configadmin.version>1.9.6</felix.configadmin.version>
+		<felix.configadmin.version>1.9.10</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.1.8</felix.scr.version>
+		<felix.scr.version>2.1.14</felix.scr.version>
 		<felix.metatype.version>1.2.2</felix.metatype.version>
 		<felix.scr.annotations.version>1.12.0</felix.scr.annotations.version>
 
 		<slf4j.version>1.7.25</slf4j.version>
-		<sling.commons.log.version>3.0.2-r3</sling.commons.log.version>
+		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.2-P20c</dockingframes.version>
 		<weasis.opencv.native.version>4.0.0-dcmR3</weasis.opencv.native.version>
 		<javax.json.version>1.0.4</javax.json.version>
+		<jaxb.osgi.version>2.3.1-r1</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
-		
+
 		<assertj.version>3.11.1</assertj.version>
-		<powermock.version>1.7.4</powermock.version>
+		<powermock.version>2.0.0</powermock.version>
 		<bean-matchers.version>0.11</bean-matchers.version>
 	</properties>
 
@@ -108,10 +110,10 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>4.0.0</version>
+					<version>4.1.0</version>
 					<extensions>true</extensions>
 					<configuration>
-						<obrRepository>${settings.localRepository}/repository.xml</obrRepository>
+						<obrRepository>NONE</obrRepository>
 						<instructions>
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
@@ -119,7 +121,7 @@
 							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except 
 								any containing 'impl' or 'internal' -->
 							<_removeheaders>
-								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Build-Jdk,Created-By
+								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Created-By
 							</_removeheaders>
 							<_nouses>true</_nouses>
 							<Embed-Dependency>*;scope=compile;inline=true</Embed-Dependency>
@@ -215,10 +217,9 @@
 								<requireMavenVersion>
 									<version>${enforcer.maven-version}</version>
 								</requireMavenVersion>
-								<!-- Bug in maven-enforcer for jdk 9 -->
-								<!-- <requireJavaVersion> -->
-								<!-- <version>${enforcer.jdk-version}</version> -->
-								<!-- </requireJavaVersion> -->
+								<requireJavaVersion>
+									<version>${enforcer.jdk-version}</version>
+								</requireJavaVersion>
 							</rules>
 						</configuration>
 					</execution>
@@ -374,17 +375,18 @@
 				<groupId>org.glassfish</groupId>
 				<artifactId>javax.json</artifactId>
 				<version>${javax.json.version}</version>
+				<scope>provided</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.weasis.thirdparty</groupId>
+				<artifactId>jaxb-osgi</artifactId>
+				<version>${jaxb.osgi.version}</version>
+				<scope>provided</scope>
 			</dependency>
 			<dependency>
 				<groupId>org.weasis.thirdparty.com.sun.media</groupId>
 				<artifactId>vecmath</artifactId>
 				<version>${com.sun.media.j3d.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.weasis.thirdparty</groupId>
-				<artifactId>tilecachetool</artifactId>
-				<version>${tilecachetool.version}</version>
 				<scope>provided</scope>
 			</dependency>
 

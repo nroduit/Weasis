@@ -14,6 +14,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -30,13 +31,15 @@ import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 
+import com.sun.xml.bind.v2.ContextFactory;
+
 public class XmlSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSerializer.class);
 
     public static GraphicModel readPresentationModel(File gpxFile) {
         if (gpxFile.canRead()) {
             try {
-                JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+                JAXBContext jaxbContext = getJaxbContext(XmlGraphicModel.class);
                 Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
                 GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(gpxFile);
                 int length = model.getModels().size();
@@ -58,7 +61,7 @@ public class XmlSerializer {
             File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml"); //$NON-NLS-1$
 
             try {
-                JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+                JAXBContext jaxbContext = getJaxbContext(model.getClass());
                 Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
 
                 // output pretty printed
@@ -80,7 +83,7 @@ public class XmlSerializer {
     public static void writePresentation(GraphicModel model, Writer writer) {
         if (model != null && model.hasSerializableGraphics()) {
             try {
-                JAXBContext jaxbContext = JAXBContext.newInstance(model.getClass());
+                JAXBContext jaxbContext = getJaxbContext(model.getClass());
                 Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
                 // Remove the xml header tag
                 jaxbMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
@@ -93,7 +96,7 @@ public class XmlSerializer {
 
     public static GraphicModel readPresentation(XMLStreamReader xmler) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+            JAXBContext jaxbContext = getJaxbContext(XmlGraphicModel.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             JAXBElement<XmlGraphicModel> unmarshalledObj =
                 jaxbUnmarshaller.unmarshal(new NoNamespaceStreamReaderDelegate(xmler), XmlGraphicModel.class);
@@ -113,7 +116,7 @@ public class XmlSerializer {
 
     @SuppressWarnings("unchecked")
     public static <T> T deserialize(Reader reader, Class<T> clazz) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(clazz);
+        JAXBContext context = getJaxbContext(clazz);
         Unmarshaller unmarshaller = context.createUnmarshaller();
 
         return (T) unmarshaller.unmarshal(reader);
@@ -121,7 +124,7 @@ public class XmlSerializer {
 
     public static GraphicModel buildPresentationModel(byte[] gzipData) {
         try {
-            JAXBContext jaxbContext = JAXBContext.newInstance(XmlGraphicModel.class);
+            JAXBContext jaxbContext = getJaxbContext(XmlGraphicModel.class);
             Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
             ByteArrayInputStream inputStream = new ByteArrayInputStream(GzipManager.gzipUncompressToByte(gzipData));
             GraphicModel model = (GraphicModel) jaxbUnmarshaller.unmarshal(inputStream);
@@ -135,5 +138,16 @@ public class XmlSerializer {
             LOGGER.error("Cannot load xml graphic model: ", e); //$NON-NLS-1$
         }
         return null;
+    }
+
+    public static JAXBContext getJaxbContext(Class<?>... clazz) throws JAXBException {
+        return getJaxbContext(null, clazz);
+    }
+
+    public static JAXBContext getJaxbContext(Map<String, Object> properties, Class<?>... clazz) throws JAXBException {
+        if("1.8".equals(System.getProperty("java.specification.version"))){
+            return JAXBContext.newInstance(clazz, properties);
+        }
+        return ContextFactory.createContext(clazz, properties);
     }
 }

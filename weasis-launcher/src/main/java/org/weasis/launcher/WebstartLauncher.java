@@ -1,13 +1,15 @@
 /*******************************************************************************
- * Copyright (c) 2009-2018 Weasis Team and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v2.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v20.html
- *
+ * Copyright (C) 2009-2018 Weasis Team and others
+ * 
+ * This program and the accompanying materials are made
+ * available under the terms of the Eclipse Public License 2.0
+ * which is available at https://www.eclipse.org/legal/epl-2.0/
+ * 
+ * SPDX-License-Identifier: EPL-2.0
+ * 
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
+ ******************************************************************************/
 package org.weasis.launcher;
 
 import java.util.ArrayList;
@@ -22,6 +24,7 @@ import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
 
+@Deprecated
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
     private static final Logger LOGGER = Logger.getLogger(WebstartLauncher.class.getName());
 
@@ -58,6 +61,10 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         }
     }
 
+    public WebstartLauncher() {
+        super(new ConfigData());
+    }
+
     @Override
     public void newActivation(final String[] argv) {
         synchronized (this) {
@@ -76,16 +83,18 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
                 }
             }
         }
-        if (m_tracker != null && argv.length > 0) {
-            executeCommands(splitCommand(argv), null);
+        if (mTracker != null) {
+            ConfigData data = new ConfigData(argv);
+            executeCommands(data.getArguments(), null);
         }
     }
 
-    public static void launch(String[] argv) throws Exception {
-        WeasisLauncher.launch(argv);
-    }
-
     public static void main(String[] argv) throws Exception {
-        launch(argv);
+        setJnlpSystemProperties();
+        instance.configData.init(argv);
+        // Remove the prefix "jnlp.weasis" of JNLP Properties
+        // Workaround for having a fully trusted application with JWS,
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
+        instance.launch(Type.JWS);
     }
 }

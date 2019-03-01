@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -60,14 +61,44 @@ public class NetworkUtil {
     public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
         return getUrlInputStream(urlConnection, null);
     }
-    
-    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers) throws StreamIOException {
-        return getUrlInputStream(urlConnection,headers, StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
+
+    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers)
+        throws StreamIOException {
+        return getUrlInputStream(urlConnection, headers,
+            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
             StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000)); //$NON-NLS-1$
     }
 
-    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers, int connectTimeout, int readTimeout)
+    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers,
+        int connectTimeout, int readTimeout) throws StreamIOException {
+        prepareConnection(urlConnection, headers, connectTimeout, readTimeout, false);
+        try {
+            return urlConnection.getInputStream();
+        } catch (IOException e) {
+            throw new StreamIOException(e);
+        }
+
+    }
+
+    public static OutputStream getUrlOutputStream(URLConnection urlConnection, Map<String, String> headers)
         throws StreamIOException {
+        return getUrlOutputStream(urlConnection, headers,
+            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
+            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000)); //$NON-NLS-1$
+    }
+
+    public static OutputStream getUrlOutputStream(URLConnection urlConnection, Map<String, String> headers,
+        int connectTimeout, int readTimeout) throws StreamIOException {
+        prepareConnection(urlConnection, headers, connectTimeout, readTimeout, true);
+        try {
+            return urlConnection.getOutputStream();
+        } catch (IOException e) {
+            throw new StreamIOException(e);
+        }
+    }
+
+    private static void prepareConnection(URLConnection urlConnection, Map<String, String> headers, int connectTimeout,
+        int readTimeout, boolean post) throws StreamIOException {
         if (headers != null && headers.size() > 0) {
             for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                 Entry<String, String> element = iter.next();
@@ -76,23 +107,32 @@ public class NetworkUtil {
         }
         urlConnection.setConnectTimeout(connectTimeout);
         urlConnection.setReadTimeout(readTimeout);
+        urlConnection.setDoInput(true);
+        if (post) {
+            urlConnection.setDoOutput(true);
+        }
         if (urlConnection instanceof HttpURLConnection) {
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
             try {
-                int code = httpURLConnection.getResponseCode();
-                if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                    if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
-                        || code == HttpURLConnection.HTTP_SEE_OTHER) {
-                        return getRedirectionStream(httpURLConnection, headers);
-                    }
+                if (post) {
+                    httpURLConnection.setRequestMethod("POST"); //$NON-NLS-1$
+                } else {
+                    int code = httpURLConnection.getResponseCode();
+                    if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
+                        if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
+                            || code == HttpURLConnection.HTTP_SEE_OTHER) {
+                            applyRedirectionStream(httpURLConnection, headers);
+                            return;
+                        }
 
-                    LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
+                        LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
 
-                    // Following is only intended LOG more info about Http Server Error
-                    if (LOGGER.isTraceEnabled()) {
-                        writeErrorResponse(httpURLConnection);
+                        // Following is only intended LOG more info about Http Server Error
+                        if (LOGGER.isTraceEnabled()) {
+                            writeErrorResponse(httpURLConnection);
+                        }
+                        throw new StreamIOException(httpURLConnection.getResponseMessage());
                     }
-                    throw new StreamIOException(httpURLConnection.getResponseMessage());
                 }
             } catch (StreamIOException e) {
                 throw e;
@@ -101,14 +141,10 @@ public class NetworkUtil {
                 throw new StreamIOException(e);
             }
         }
-        try {
-            return urlConnection.getInputStream();
-        } catch (IOException e) {
-            throw new StreamIOException(e);
-        }
     }
 
-    public static InputStream getRedirectionStream(URLConnection urlConnection, Map<String, String> headers) throws IOException {
+    public static void applyRedirectionStream(URLConnection urlConnection, Map<String, String> headers)
+        throws IOException {
         String redirect = urlConnection.getHeaderField("Location"); //$NON-NLS-1$
         for (int i = 0; i < MAX_REDIRECTS; i++) {
             if (redirect != null) {
@@ -126,7 +162,6 @@ public class NetworkUtil {
                 break;
             }
         }
-        return urlConnection.getInputStream();
     }
 
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
