@@ -23,8 +23,8 @@ import org.weasis.core.api.service.AuditLog;
 
 public abstract class CrosshairListener extends MouseActionAdapter implements ActionState, KeyListener {
 
-    private volatile MouseActionAdapter win = null;
-    private volatile MouseActionAdapter lev = null;
+    private MouseActionAdapter win = null;
+    private MouseActionAdapter lev = null;
     private final BasicActionState basicState;
     private final boolean triggerAction = true;
     private Point pickPoint;

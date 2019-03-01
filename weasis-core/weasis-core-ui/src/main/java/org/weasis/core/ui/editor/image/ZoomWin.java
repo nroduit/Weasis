@@ -261,7 +261,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
             double diffx = 0.0;
             double diffy = 0.0;
-            Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth() - 2, getHeight() - 2);
+            Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth() - 2.0, getHeight() - 2.0);
             Rectangle2D srcBounds = getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
 
             Rectangle2D dstBounds;

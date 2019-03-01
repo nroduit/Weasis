@@ -86,7 +86,6 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
@@ -1260,7 +1259,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         for (int i = 0; i < wheelListeners.length; i++) {
             this.removeMouseWheelListener(wheelListeners[i]);
         }
-        Optional.ofNullable(lens).ifPresent(l -> l.disableMouseAndKeyListener());
+        Optional.ofNullable(lens).ifPresent(ZoomWin<E>::disableMouseAndKeyListener);
     }
 
     @Override

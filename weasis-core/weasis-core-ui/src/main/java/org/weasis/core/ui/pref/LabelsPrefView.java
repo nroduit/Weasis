@@ -146,7 +146,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     public void resetoDefaultValues() {
         MeasureToolBar.measureGraphicList.forEach(g -> {
             List<Measurement> list = g.getMeasurementList();
-            Optional.ofNullable(list).ifPresent(l -> l.forEach(m -> m.resetToGraphicLabelValue()));
+            Optional.ofNullable(list).ifPresent(l -> l.forEach(Measurement::resetToGraphicLabelValue));
         });
 
         selectTool((Graphic) comboBoxTool.getSelectedItem());

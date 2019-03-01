@@ -200,7 +200,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         footPanel.add(printButton);
 
         printButton.setText(Messages.getString("DicomPrintDialog.print")); //$NON-NLS-1$
-        printButton.addActionListener(evt -> printButtonActionPerformed(evt));
+        printButton.addActionListener(this::printButtonActionPerformed);
 
         getRootPane().setDefaultButton(printButton);
         cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel")); //$NON-NLS-1$

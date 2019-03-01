@@ -20,7 +20,7 @@ import org.weasis.core.api.media.data.Series;
 public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
 
     private volatile boolean wadoRequest;
-    private volatile byte[] header;
+    private byte[] header;
 
     public DicomSeriesProgressMonitor(final Series series, InputStream in, boolean wadoRequest) {
         super(series, in);

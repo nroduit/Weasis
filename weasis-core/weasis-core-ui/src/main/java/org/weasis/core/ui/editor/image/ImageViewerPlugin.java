@@ -465,8 +465,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         List<DragGraphic> selGraphics = defaultView2d.getGraphicManager().getSelectedDragableGraphics();
 
         // Check if there is at least one graphic not complete (numer of pts == UNDEFINED)
-        if (selGraphics.stream().filter(g -> Objects.equals(g.getPtsNumber(), Graphic.UNDEFINED)).findFirst()
-            .isPresent()) {
+        if (selGraphics.stream().anyMatch(g -> Objects.equals(g.getPtsNumber(), Graphic.UNDEFINED))) {
             return;
         }
 

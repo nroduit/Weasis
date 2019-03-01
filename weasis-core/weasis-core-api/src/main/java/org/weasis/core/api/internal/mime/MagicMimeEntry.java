@@ -282,7 +282,7 @@ public class MagicMimeEntry {
         if (STRING_TYPE == type) {
             int len;
             // Lets check if its a between test
-            int index = typeStr.indexOf(">"); //$NON-NLS-1$
+            int index = typeStr.indexOf('>');
             if (index != -1) {
                 len = Integer.parseInt(typeStr.substring(index + 1, typeStr.length() - 1));
                 isBetween = true;

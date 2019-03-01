@@ -71,7 +71,7 @@ public class ImageCVIO implements MediaReader {
 
     private final FileCache fileCache;
     private final Codec codec;
-    private volatile ImageElement image = null;
+    private ImageElement image = null;
 
     public ImageCVIO(URI media, String mimeType, Codec codec) {
         this.uri = Objects.requireNonNull(media);

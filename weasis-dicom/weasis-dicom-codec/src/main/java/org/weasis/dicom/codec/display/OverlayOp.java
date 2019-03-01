@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Optional;
 
 import org.dcm4che3.data.Tag;
-import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -31,7 +30,6 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.OverlayUtils;
-import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 

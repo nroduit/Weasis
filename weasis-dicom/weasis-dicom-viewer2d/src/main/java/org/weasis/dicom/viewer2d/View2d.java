@@ -1158,7 +1158,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         TitleMenuItem itemTitle =
             new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
         popupMenu.add(itemTitle);
-        popupMenu.setLabel(MouseActions.LEFT);
+        popupMenu.setLabel(MouseActions.T_LEFT);
         String action = eventManager.getMouseActions().getLeft();
         ButtonGroup groupButtons = new ButtonGroup();
         int count = popupMenu.getComponentCount();
@@ -1169,7 +1169,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 ActionListener leftButtonAction = event -> {
                     if (event.getSource() instanceof JRadioButtonMenuItem) {
                         JRadioButtonMenuItem item = (JRadioButtonMenuItem) event.getSource();
-                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
+                        toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
                     }
                 };
 

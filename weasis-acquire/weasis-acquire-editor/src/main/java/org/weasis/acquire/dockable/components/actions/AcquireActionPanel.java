@@ -34,9 +34,9 @@ public interface AcquireActionPanel {
                 if (toolBar != null) {
                     setLastActionCommand(null);
                     MouseActions mouseActions = EventManager.getInstance().getMouseActions();
-                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                    mouseActions.setAction(MouseActions.T_LEFT, cmd);
                     container.setMouseActions(mouseActions);
-                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                    toolBar.changeButtonState(MouseActions.T_LEFT, cmd);
                 }
             }
         }

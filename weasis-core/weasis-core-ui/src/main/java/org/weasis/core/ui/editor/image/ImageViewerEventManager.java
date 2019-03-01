@@ -73,7 +73,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     protected final HashMap<ActionW, ActionState> actions = new HashMap<>();
 
     protected volatile boolean enabledAction = true;
-    protected volatile ImageViewerPlugin<E> selectedView2dContainer;
+    protected ImageViewerPlugin<E> selectedView2dContainer;
 
     public ImageViewerEventManager() {
         super();
@@ -614,10 +614,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             ViewerToolBar<E> toolBar = view.getViewerToolBar();
             if (toolBar != null) {
                 MouseActions mActions = getMouseActions();
-                if (!command.equals(mActions.getAction(MouseActions.LEFT))) {
-                    mActions.setAction(MouseActions.LEFT, command);
+                if (!command.equals(mActions.getAction(MouseActions.T_LEFT))) {
+                    mActions.setAction(MouseActions.T_LEFT, command);
                     view.setMouseActions(mActions);
-                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                    toolBar.changeButtonState(MouseActions.T_LEFT, command);
                 }
             }
         }
@@ -755,9 +755,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                             final ViewerToolBar<?> toolBar = view.getViewerToolBar();
                             if (toolBar != null) {
                                 if (!toolBar.isCommandActive(cmd)) {
-                                    mouseActions.setAction(MouseActions.LEFT, cmd);
+                                    mouseActions.setAction(MouseActions.T_LEFT, cmd);
                                     view.setMouseActions(mouseActions);
-                                    toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                                    toolBar.changeButtonState(MouseActions.T_LEFT, cmd);
                                 }
                             }
                         }

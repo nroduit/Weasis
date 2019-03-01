@@ -58,7 +58,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     }
 
     private static List<ImageElement> toImageElement(List<AcquireImageInfo> list) {
-        return list.stream().map(e -> e.getImage())
+        return list.stream().map(AcquireImageInfo::getImage)
             .sorted(Comparator.comparing(i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i)))
             .collect(Collectors.toList());
 

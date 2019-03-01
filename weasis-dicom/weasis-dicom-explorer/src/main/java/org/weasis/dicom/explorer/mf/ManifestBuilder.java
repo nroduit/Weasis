@@ -21,8 +21,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -40,7 +38,6 @@ import org.weasis.dicom.mf.QueryResult;
 import org.weasis.dicom.mf.WadoParameters;
 
 public class ManifestBuilder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ManifestBuilder.class);
 
     private ManifestBuilder() {
     }

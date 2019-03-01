@@ -80,7 +80,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         MouseActions actions = eventManager.getMouseActions();
 
         if ((activeMouse & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
-            mouseLeft = buildMouseButton(actions, MouseActions.LEFT);
+            mouseLeft = buildMouseButton(actions, MouseActions.T_LEFT);
             mouseLeft.setToolTipText(
                 Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             add(mouseLeft);
@@ -89,22 +89,22 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         }
 
         if ((activeMouse & InputEvent.BUTTON2_DOWN_MASK) == InputEvent.BUTTON2_DOWN_MASK) {
-            mouseMiddle = buildMouseButton(actions, MouseActions.MIDDLE);
+            mouseMiddle = buildMouseButton(actions, MouseActions.T_MIDDLE);
             add(mouseMiddle);
         } else {
             mouseMiddle = null;
         }
 
         if ((activeMouse & InputEvent.BUTTON3_DOWN_MASK) == InputEvent.BUTTON3_DOWN_MASK) {
-            mouseRight = buildMouseButton(actions, MouseActions.RIGHT);
+            mouseRight = buildMouseButton(actions, MouseActions.T_RIGHT);
             add(mouseRight);
         } else {
             mouseRight = null;
         }
 
         if ((activeMouse & MouseActions.SCROLL_MASK) == MouseActions.SCROLL_MASK) {
-            mouseWheel = new DropDownButton(MouseActions.WHEEL,
-                buildMouseIcon(MouseActions.WHEEL, actions.getAction(MouseActions.WHEEL))) {
+            mouseWheel = new DropDownButton(MouseActions.T_WHEEL,
+                buildMouseIcon(MouseActions.T_WHEEL, actions.getAction(MouseActions.T_WHEEL))) {
 
                 @Override
                 protected JPopupMenu getPopupMenu() {
@@ -196,8 +196,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             MouseActions actions = eventManager.getMouseActions();
             if (cmd.equals(mouseLeft.getActionCommand())) {
                 ActionW last = actionsButtons.get(0);
-                actions.setAction(MouseActions.LEFT, last.cmd());
-                changeButtonState(MouseActions.LEFT, last.cmd());
+                actions.setAction(MouseActions.T_LEFT, last.cmd());
+                changeButtonState(MouseActions.T_LEFT, last.cmd());
             }
         }
     }
@@ -216,7 +216,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                         new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
                     radio.setActionCommand(b.cmd());
                     radio.addActionListener(this);
-                    if (MouseActions.LEFT.equals(type)) {
+                    if (MouseActions.T_LEFT.equals(type)) {
                         radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
                     }
                     popupMouseButtons.add(radio);
@@ -408,13 +408,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     public DropDownButton getDropDownButton(String type) {
-        if (MouseActions.LEFT.equals(type)) {
+        if (MouseActions.T_LEFT.equals(type)) {
             return mouseLeft;
-        } else if (MouseActions.RIGHT.equals(type)) {
+        } else if (MouseActions.T_RIGHT.equals(type)) {
             return mouseRight;
-        } else if (MouseActions.MIDDLE.equals(type)) {
+        } else if (MouseActions.T_MIDDLE.equals(type)) {
             return mouseMiddle;
-        } else if (MouseActions.WHEEL.equals(type)) {
+        } else if (MouseActions.T_WHEEL.equals(type)) {
             return mouseWheel;
         }
         return null;
@@ -434,13 +434,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private static Icon getMouseIcon(String type) {
-        if (MouseActions.LEFT.equals(type)) {
+        if (MouseActions.T_LEFT.equals(type)) {
             return MouseLeftIcon;
-        } else if (MouseActions.RIGHT.equals(type)) {
+        } else if (MouseActions.T_RIGHT.equals(type)) {
             return MouseRightIcon;
-        } else if (MouseActions.MIDDLE.equals(type)) {
+        } else if (MouseActions.T_MIDDLE.equals(type)) {
             return MouseMiddleIcon;
-        } else if (MouseActions.WHEEL.equals(type)) {
+        } else if (MouseActions.T_WHEEL.equals(type)) {
             return MouseWheelIcon;
         }
         return MouseLeftIcon;

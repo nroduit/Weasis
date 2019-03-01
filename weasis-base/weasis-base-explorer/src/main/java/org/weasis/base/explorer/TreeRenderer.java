@@ -29,7 +29,7 @@ public class TreeRenderer extends DefaultTreeCellRenderer {
         final Component component =
             super.getTreeCellRendererComponent(tree, value, isSelected, isExpanded, leaf, row, hasFocus);
 
-        if (value != null && value instanceof TreeNode) {
+        if (value instanceof TreeNode) {
             final TreeNode treeNode = (TreeNode) value;
             final Path selectedDir = treeNode.getNodePath();
 

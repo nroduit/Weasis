@@ -45,8 +45,8 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
     }
 
     public AcquireImageValues(AcquireImageValues object) {
-        setCropZone(Optional.ofNullable(object.cropZone).map(r -> r.getBounds()).orElse(null));
-        setLayerOffset(Optional.ofNullable(object.layerOffset).map(p -> p.getLocation()).orElse(null));
+        setCropZone(Optional.ofNullable(object.cropZone).map(Rectangle::getBounds).orElse(null));
+        setLayerOffset(Optional.ofNullable(object.layerOffset).map(Point::getLocation).orElse(null));
         setOrientation(object.orientation);
         setRotation(object.rotation);
         setBrightness(object.brightness);

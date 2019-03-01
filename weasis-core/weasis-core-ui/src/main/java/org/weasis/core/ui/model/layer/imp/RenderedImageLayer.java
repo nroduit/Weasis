@@ -215,7 +215,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1, displayImage.height() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1.0, displayImage.height() - 1.0);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;
@@ -256,7 +256,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
 
         Shape clip = g2d.getClip();
         if (clip instanceof Rectangle2D) {
-            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1, displayImage.height() - 1);
+            Rectangle2D rect = new Rectangle2D.Double(0, 0, displayImage.width() - 1.0, displayImage.height() - 1.0);
             rect = rect.createIntersection((Rectangle2D) clip);
             if (rect.isEmpty()) {
                 return;

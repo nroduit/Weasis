@@ -185,13 +185,11 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
             final CircularProgressBar progressBar = t.getBar();
             DicomProgress dicomProgress = new DicomProgress();
-            dicomProgress.addProgressListener(p -> {
-                GuiExecutor.instance().execute(() -> {
-                    int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
-                    int r = p.getNumberOfRemainingSuboperations();
-                    progressBar.setValue((c * 100) / (c + r));
-                });
-            });
+            dicomProgress.addProgressListener(p -> GuiExecutor.instance().execute(() -> {
+                int c = p.getNumberOfCompletedSuboperations() + p.getNumberOfFailedSuboperations();
+                int r = p.getNumberOfRemainingSuboperations();
+                progressBar.setValue((c * 100) / (c + r));
+            }));
             t.addCancelListener(dicomProgress);
 
             Object selectedItem = comboNode.getSelectedItem();

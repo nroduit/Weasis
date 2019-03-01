@@ -58,8 +58,8 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     public AbstractGraphicLabel(AbstractGraphicLabel object) {
         this.offsetX = object.offsetX;
         this.offsetY = object.offsetY;
-        this.labels = Optional.ofNullable(object.labels).map(l -> l.clone()).orElse(null);
-        this.labelBounds = Optional.ofNullable(object.labelBounds).map(lb -> lb.getBounds2D()).orElse(null);
+        this.labels = Optional.ofNullable(object.labels).map(String[]::clone).orElse(null);
+        this.labelBounds = Optional.ofNullable(object.labelBounds).map(Rectangle2D::getBounds2D).orElse(null);
         this.labelWidth = object.labelWidth;
         this.labelHeight = object.labelHeight;
     }

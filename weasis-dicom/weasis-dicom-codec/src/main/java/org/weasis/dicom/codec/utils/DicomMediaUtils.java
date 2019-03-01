@@ -76,6 +76,9 @@ import org.weasis.opencv.data.LookupTableCV;
  */
 public class DicomMediaUtils {
 
+    private DicomMediaUtils() {
+    }
+
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaUtils.class);
 
     private static final int[] modalityLutAttributes = new int[] { Tag.RescaleIntercept, Tag.RescaleSlope };

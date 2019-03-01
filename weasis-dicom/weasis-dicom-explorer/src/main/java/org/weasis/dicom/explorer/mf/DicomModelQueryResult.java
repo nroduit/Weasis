@@ -20,8 +20,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.dcm4che3.data.Tag;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -42,7 +40,6 @@ import org.weasis.dicom.mf.Study;
 import org.weasis.dicom.mf.WadoParameters;
 
 public class DicomModelQueryResult extends AbstractQueryResult {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DicomModelQueryResult.class);
 
     private final WadoParameters wadoParameters;
     private final Set<KOSpecialElement> koEditable;

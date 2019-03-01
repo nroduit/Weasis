@@ -243,7 +243,7 @@ public class AcquireTabPanel extends JPanel {
     }
 
     public void updateSeriesFromGlobaTags() {
-        btnMap.keySet().forEach(g -> g.updateDicomTags());
+        btnMap.keySet().forEach(SeriesGroup::updateDicomTags);
     }
 
     public void moveElementsByDate(List<AcquireImageInfo> medias) {

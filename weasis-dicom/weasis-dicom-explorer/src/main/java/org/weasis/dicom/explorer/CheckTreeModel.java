@@ -115,29 +115,31 @@ public class CheckTreeModel {
         }
 
         boolean hasGraphics = false;
-        for (MediaElement dicom : series.getMedias(null, null)) {
-            seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
-                @Override
-                public String toString() {
-                    MediaElement m = (MediaElement) getUserObject();
-                    Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
-                    StringBuilder buf = new StringBuilder();
-                    if (val != null) {
-                        buf.append("["); //$NON-NLS-1$
-                        buf.append(val);
-                        buf.append("] "); //$NON-NLS-1$
+        synchronized (series) { // NOSONAR lock object is the list for iterating its elements safely
+            for (MediaElement dicom : series.getMedias(null, null)) {
+                seriesNode.add(new DefaultMutableTreeNode(dicom, false) {
+                    @Override
+                    public String toString() {
+                        MediaElement m = (MediaElement) getUserObject();
+                        Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
+                        StringBuilder buf = new StringBuilder();
+                        if (val != null) {
+                            buf.append("["); //$NON-NLS-1$
+                            buf.append(val);
+                            buf.append("] "); //$NON-NLS-1$
+                        }
+                        String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
+                        if (sopUID != null) {
+                            buf.append(sopUID);
+                        }
+                        return buf.toString();
                     }
-                    String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
-                    if (sopUID != null) {
-                        buf.append(sopUID);
-                    }
-                    return buf.toString();
-                }
-            });
+                });
 
-            if (!hasGraphics) {
-                GraphicModel grModel = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
-                hasGraphics = grModel != null && grModel.hasSerializableGraphics();
+                if (!hasGraphics) {
+                    GraphicModel grModel = (GraphicModel) dicom.getTagValue(TagW.PresentationModel);
+                    hasGraphics = grModel != null && grModel.hasSerializableGraphics();
+                }
             }
         }
 
@@ -164,7 +166,7 @@ public class CheckTreeModel {
 
     public static DefaultTreeModel buildModel(DicomModel dicomModel) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(DicomExplorer.ALL_PATIENTS);
-        synchronized (dicomModel) {
+        synchronized (dicomModel) { // NOSONAR lock object is the list for iterating its elements safely
             for (MediaSeriesGroup pt : dicomModel.getChildren(MediaSeriesGroupNode.rootNode)) {
                 DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
                 for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {

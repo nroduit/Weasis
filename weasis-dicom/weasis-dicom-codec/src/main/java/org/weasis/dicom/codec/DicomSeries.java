@@ -37,7 +37,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     static final TagView defaultTagView =
         new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime));
 
-    private static volatile PreloadingTask preloadingTask;
+    private static PreloadingTask preloadingTask;
 
     public DicomSeries(String subseriesInstanceUID) {
         this(subseriesInstanceUID, null, defaultTagView);

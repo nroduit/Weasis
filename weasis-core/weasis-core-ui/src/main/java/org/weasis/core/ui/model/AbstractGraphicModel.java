@@ -36,8 +36,6 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -79,11 +77,9 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class AbstractGraphicModel extends DefaultUUID implements GraphicModel {
     private static final long serialVersionUID = 1187916695295007387L;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphicModel.class);
-
-    private volatile List<ReferencedSeries> referencedSeries;
-    private volatile List<GraphicLayer> layers;
-    protected volatile List<Graphic> models;
+    private List<ReferencedSeries> referencedSeries;
+    private List<GraphicLayer> layers;
+    protected List<Graphic> models;
 
     private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
     private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();

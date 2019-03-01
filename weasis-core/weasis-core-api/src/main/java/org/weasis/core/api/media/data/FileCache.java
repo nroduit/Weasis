@@ -20,9 +20,9 @@ import org.weasis.core.api.util.FileUtil;
 public class FileCache {
 
     private final MediaReader reader;
-    private volatile File originalTempFile;
-    private volatile File transformedFile;
-    private volatile boolean requireTransformation;
+    private File originalTempFile;
+    private File transformedFile;
+    private boolean requireTransformation;
 
     public FileCache(MediaReader reader) {
         this.reader = Objects.requireNonNull(reader);
@@ -51,30 +51,30 @@ public class FileCache {
         if (transformedFile != null) {
             return transformedFile;
         }
-        return  getOriginalFile().orElse(null);
+        return getOriginalFile().orElse(null);
     }
 
-    public File getOriginalTempFile() {
+    public synchronized File getOriginalTempFile() {
         return originalTempFile;
     }
 
-    public void setOriginalTempFile(File downloadedFile) {
+    public synchronized void setOriginalTempFile(File downloadedFile) {
         this.originalTempFile = downloadedFile;
     }
 
-    public File getTransformedFile() {
+    public synchronized File getTransformedFile() {
         return transformedFile;
     }
 
-    public void setTransformedFile(File transformedFile) {
+    public synchronized void setTransformedFile(File transformedFile) {
         this.transformedFile = transformedFile;
     }
 
-    public boolean isRequireTransformation() {
+    public synchronized boolean isRequireTransformation() {
         return requireTransformation;
     }
 
-    public void setRequireTransformation(boolean requireTransformation) {
+    public synchronized void setRequireTransformation(boolean requireTransformation) {
         this.requireTransformation = requireTransformation;
     }
 

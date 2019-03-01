@@ -93,7 +93,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
                             container.replaceView(selView, newView2d);
                             MipDialog dialog = MipPopup.buildDialog(newView2d);
                             dialog.pack();
-                            MipView.buildMip(dialog, newView2d, false);
+                            MipView.buildMip(newView2d, false);
                             dialog.updateThickness();
                             JMVUtils.showCenterScreen(dialog, container);
 

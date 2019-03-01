@@ -28,6 +28,7 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
+import org.weasis.acquire.explorer.gui.central.SerieButton;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -162,7 +163,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                 AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
                 if (info != null) {
                     SeriesGroup seriesGroup =
-                        Optional.ofNullable(tumbList.getSelectedSerie()).map(b -> b.getSerie()).orElse(null);
+                        Optional.ofNullable(tumbList.getSelectedSerie()).map(SerieButton::getSerie).orElse(null);
                     AcquireManager.importImage(info, seriesGroup, 0);
                 }
             }

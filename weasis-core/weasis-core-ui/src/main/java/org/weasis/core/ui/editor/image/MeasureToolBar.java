@@ -253,9 +253,9 @@ public class MeasureToolBar extends WtoolBar {
                     String cmd = draw ? ActionW.DRAW.cmd() : ActionW.MEASURE.cmd();
                     if (!toolBar.isCommandActive(cmd)) {
                         MouseActions mouseActions = eventManager.getMouseActions();
-                        mouseActions.setAction(MouseActions.LEFT, cmd);
+                        mouseActions.setAction(MouseActions.T_LEFT, cmd);
                         view.setMouseActions(mouseActions);
-                        toolBar.changeButtonState(MouseActions.LEFT, cmd);
+                        toolBar.changeButtonState(MouseActions.T_LEFT, cmd);
                     }
                 }
             }

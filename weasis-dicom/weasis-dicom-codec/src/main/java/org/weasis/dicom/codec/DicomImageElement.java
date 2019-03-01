@@ -13,7 +13,6 @@ package org.weasis.dicom.codec;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferUShort;
 import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -51,8 +50,8 @@ public class DicomImageElement extends ImageElement {
 
     private static final SoftHashMap<LutParameters, LookupTableCV> LUT_Cache = new SoftHashMap<>();
 
-    private volatile List<PresetWindowLevel> windowingPresetCollection = null;
-    private volatile Collection<LutShape> lutShapeCollection = null;
+    private List<PresetWindowLevel> windowingPresetCollection = null;
+    private Collection<LutShape> lutShapeCollection = null;
 
     public DicomImageElement(DcmMediaReader mediaIO, Object key) {
         super(mediaIO, key);
@@ -465,7 +464,7 @@ public class DicomImageElement extends ImageElement {
         return (presetList != null && !presetList.isEmpty()) ? presetList.get(0) : null;
     }
 
-    public List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
+    public synchronized List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
         if (windowingPresetCollection == null && isImageAvailable()) {
             String type = Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$
             windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this, pixelPadding, type);
@@ -483,7 +482,7 @@ public class DicomImageElement extends ImageElement {
         return false;
     }
 
-    public Collection<LutShape> getLutShapeCollection(boolean pixelPadding) {
+    public synchronized Collection<LutShape> getLutShapeCollection(boolean pixelPadding) {
         if (lutShapeCollection != null) {
             return lutShapeCollection;
         }

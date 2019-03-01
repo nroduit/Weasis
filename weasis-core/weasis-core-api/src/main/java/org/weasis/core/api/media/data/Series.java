@@ -98,13 +98,11 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     public List<E> getSortedMedias(Comparator<E> comparator) {
         // Do not sort when it is the default order.
         if (comparator != null && !comparator.equals(mediaOrder)) {
-            List<E> sorted = sortedMedias.get(comparator);
-            if (sorted == null) {
-                sorted = new ArrayList<>(medias);
+            return sortedMedias.computeIfAbsent(comparator, k -> {
+                List<E> sorted = new ArrayList<>(medias);
                 Collections.sort(sorted, comparator);
-                sortedMedias.put(comparator, sorted);
-            }
-            return sorted;
+                return sorted;
+            });
         }
         return medias;
     }

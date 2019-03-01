@@ -288,11 +288,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private URI uri;
     private int numberOfFrame;
     private final Map<TagW, Object> tags;
-    private volatile MediaElement[] image = null;
-    private volatile String mimeType;
+    private MediaElement[] image = null;
+    private String mimeType;
     private final ArrayList<Integer> fragmentsPositions = new ArrayList<>();
 
-    private volatile ImageInputStream iis;
+    private ImageInputStream iis;
     private DicomInputStream dis;
     private int dataType = 0;
     private boolean hasPixel = false;
@@ -368,7 +368,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return dcmMetadata != null && "data".equals(uri.getScheme()); //$NON-NLS-1$
     }
 
-    public boolean isReadableDicom() {
+    public synchronized boolean isReadableDicom() {
         if (UNREADABLE.equals(mimeType)) {
             // Return true only to display the error message in the view
             return true;
@@ -926,7 +926,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     }
 
     @Override
-    public MediaElement[] getMediaElement() {
+    public synchronized MediaElement[] getMediaElement() {
         if (image == null && isReadableDicom()) {
             if (SERIES_VIDEO_MIMETYPE.equals(mimeType)) {
                 image = new MediaElement[] { new DicomVideoElement(this, null) };

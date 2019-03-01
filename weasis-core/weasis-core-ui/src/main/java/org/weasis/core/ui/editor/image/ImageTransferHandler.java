@@ -16,8 +16,6 @@ import java.awt.datatransfer.Transferable;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
@@ -26,8 +24,6 @@ import org.weasis.opencv.op.ImageConversion;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
     private static final long serialVersionUID = 7716040872158831560L;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ImageTransferHandler.class);
 
     private static final DataFlavor[] flavors = { DataFlavor.imageFlavor };
     private SimpleOpManager disOp;

@@ -14,8 +14,6 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
@@ -23,7 +21,6 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.TlsOptions;
 
 public class DefaultDicomNode extends AbstractDicomNode {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DefaultDicomNode.class);
 
     protected static final String T_AETITLE = "aeTitle"; //$NON-NLS-1$
     protected static final String T_HOST = "hostname"; //$NON-NLS-1$

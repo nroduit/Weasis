@@ -39,8 +39,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
     protected final BasicActionState basicState;
     protected volatile boolean triggerAction = true;
     protected volatile boolean valueIsAdjusting = true;
-    protected volatile Double realMin;
-    protected volatile Double realMax;
+    protected Double realMin;
+    protected Double realMax;
 
     public SliderChangeListener(ActionW action, int min, int max, int value) {
         this(action, min, max, value, true);

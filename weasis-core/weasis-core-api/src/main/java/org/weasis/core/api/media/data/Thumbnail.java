@@ -77,7 +77,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         };
 
     protected volatile boolean readable = true;
-    protected volatile AtomicBoolean loading = new AtomicBoolean(false);
+    protected AtomicBoolean loading = new AtomicBoolean(false);
     protected File thumbnailPath = null;
     protected int thumbnailSize;
 

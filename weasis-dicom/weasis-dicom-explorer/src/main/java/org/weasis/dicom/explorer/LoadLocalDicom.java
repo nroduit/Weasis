@@ -178,7 +178,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 if (t == null) {
                     t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
                     dicomSeries.setTag(TagW.Thumbnail, t);
-                    Optional.ofNullable(t).ifPresent(v -> v.repaint());
+                    Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
                 }
 
                 if (DicomModel.isSpecialModality(dicomSeries)) {

@@ -83,8 +83,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         super.initCopy(graphic);
         if (graphic instanceof AnnotationGraphic) {
             AnnotationGraphic annotationGraphic = (AnnotationGraphic) graphic;
-            labels = Optional.ofNullable(annotationGraphic.labels).map(l -> l.clone()).orElse(null);
-            labelBounds = Optional.ofNullable(annotationGraphic.labelBounds).map(lb -> lb.getBounds2D()).orElse(null);
+            labels = Optional.ofNullable(annotationGraphic.labels).map(String[]::clone).orElse(null);
+            labelBounds = Optional.ofNullable(annotationGraphic.labelBounds).map(Rectangle2D::getBounds2D).orElse(null);
             labelWidth = annotationGraphic.labelWidth;
             labelHeight = annotationGraphic.labelHeight;
         }

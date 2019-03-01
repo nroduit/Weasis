@@ -406,7 +406,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         TitleMenuItem itemTitle =
             new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
         popupMenu.add(itemTitle);
-        popupMenu.setLabel(MouseActions.LEFT);
+        popupMenu.setLabel(MouseActions.T_LEFT);
         String action = eventManager.getMouseActions().getLeft();
         int count = popupMenu.getComponentCount();
 
@@ -418,7 +418,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                 ActionListener leftButtonAction = e -> {
                     if (e.getSource() instanceof JRadioButtonMenuItem) {
                         JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-                        toolBar.changeButtonState(MouseActions.LEFT, item.getActionCommand());
+                        toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
                     }
                 };
                 List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;

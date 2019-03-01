@@ -56,7 +56,7 @@ import org.weasis.core.ui.Messages;
 public class GeneralSetting extends AbstractItemDialogPage {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
 
-    public static final String pageName = Messages.getString("GeneralSetting.gen"); //$NON-NLS-1$
+    public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen"); //$NON-NLS-1$
 
     private LookInfo oldUILook;
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
@@ -105,7 +105,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
 
     public GeneralSetting() {
-        super(pageName);
+        super(PAGE_NAME);
         setComponentPosition(0);
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {

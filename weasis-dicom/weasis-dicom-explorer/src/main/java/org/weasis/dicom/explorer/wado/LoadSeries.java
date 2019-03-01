@@ -103,7 +103,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private final Series<?> dicomSeries;
     private final SeriesInstanceList seriesInstanceList;
     private final JProgressBar progressBar;
-    private volatile DownloadPriority priority = null;
+    private DownloadPriority priority = null;
     private final boolean writeInCache;
 
     private volatile boolean hasError = false;
@@ -638,7 +638,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             StringBuilder buffer = new StringBuilder();
             int start = old.indexOf("&transferSyntax="); //$NON-NLS-1$
             if (start != -1) {
-                int end = old.indexOf("&", start + 16); //$NON-NLS-1$
+                int end = old.indexOf('&', start + 16);
                 buffer.append(old.substring(0, start + 16));
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
                 if (end != -1) {

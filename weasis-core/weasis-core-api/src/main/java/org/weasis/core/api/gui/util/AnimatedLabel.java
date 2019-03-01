@@ -18,19 +18,14 @@ public class AnimatedLabel extends JLabel {
 
     private static final long serialVersionUID = 1L;
 
-    private volatile AnimatedIconStatic icon;
-    private volatile Animate animate;
+    private final AnimatedIconStatic icon;
+    private final Animate animate;
 
     public AnimatedLabel(AnimatedIconStatic icon, long refresh) {
-        init(icon, refresh);
-    }
-
-    protected void init(AnimatedIconStatic icon, long refresh) {
         this.icon = icon;
         super.setIcon(icon);
         super.setSize(icon.getIconWidth(), icon.getIconWidth());
         this.animate = new Animate(refresh);
-
     }
 
     public void start() {

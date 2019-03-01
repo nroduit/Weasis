@@ -34,6 +34,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -695,7 +696,7 @@ public class AcquireManager {
     }
 
     private static List<AcquireImageInfo> getAcquireImageInfoList() {
-        return imagesInfoByURI.entrySet().stream().map(e -> e.getValue()).collect(Collectors.toList());
+        return imagesInfoByURI.entrySet().stream().map(Entry<URI, AcquireImageInfo>::getValue).collect(Collectors.toList());
     }
 
     /**

@@ -621,7 +621,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (writer != null) {
             if (!(img.getMediaReader() instanceof DcmMediaReader)
                 || ((DcmMediaReader) img.getMediaReader()).getDicomObject() == null) {
-                LOGGER.error("Cannot export DICOM file: ", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
                 return false;
             }
             return writeInDicomDir(writer, ((DcmMediaReader) img.getMediaReader()).getDicomObject(), node, iuid,

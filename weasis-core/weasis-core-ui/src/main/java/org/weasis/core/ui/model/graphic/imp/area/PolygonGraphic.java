@@ -355,8 +355,6 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             PathIterator pathIt = pathArea.getPathIterator(null);
 
             double[] coords = new double[6];
-            Double startX = NaN;
-            Double startY = NaN;
             Double curX = NaN;
             Double curY = NaN;
 
@@ -370,8 +368,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
                 switch (segType) {
                     case PathIterator.SEG_CLOSE:
-                        lastX = startX;
-                        lastY = startY;
+                        break;
                     case PathIterator.SEG_LINETO:
                         Point2D.Double ptP1 = new Point2D.Double(curX, curY);
                         Point2D.Double ptP2 = new Point2D.Double(lastX, lastY);
@@ -399,8 +396,11 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                         curY = lastY;
                         break;
                     case PathIterator.SEG_MOVETO:
-                        startX = curX = lastX;
-                        startY = curY = lastY;
+                        curX = lastX;
+                        curY = lastY;
+                        break;
+
+                    default:
                         break;
                 }
                 pathIt.next();
@@ -464,7 +464,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
                 cy += (p1.getY() + p2.getY()) * tmp;
             }
             area /= 2.0;
-            if(area == 0.0 || MathUtil.isEqualToZero(area)) {
+            if (area == 0.0 || MathUtil.isEqualToZero(area)) {
                 return null;
             }
             cx /= (6.0 * area);

@@ -148,8 +148,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     public static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
     private static volatile boolean initComponents = false;
 
-    private volatile Thread process;
-    private volatile String lastCommand;
+    private Thread process;
+    private String lastCommand;
 
     public MPRContainer() {
         this(VIEWS_1x1, null);
@@ -240,12 +240,12 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             if (toolBar != null) {
                 String command = ActionW.CROSSHAIR.cmd();
                 MouseActions mouseActions = eventManager.getMouseActions();
-                String lastAction = mouseActions.getAction(MouseActions.LEFT);
+                String lastAction = mouseActions.getAction(MouseActions.T_LEFT);
                 if (!command.equals(lastAction)) {
                     lastCommand = lastAction;
-                    mouseActions.setAction(MouseActions.LEFT, command);
+                    mouseActions.setAction(MouseActions.T_LEFT, command);
                     setMouseActions(mouseActions);
-                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                    toolBar.changeButtonState(MouseActions.T_LEFT, command);
                 }
             }
 
@@ -261,10 +261,10 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         } else {
             if (lastCommand != null && toolBar != null) {
                 MouseActions mouseActions = eventManager.getMouseActions();
-                if (ActionW.CROSSHAIR.cmd().equals(mouseActions.getAction(MouseActions.LEFT))) {
-                    mouseActions.setAction(MouseActions.LEFT, lastCommand);
+                if (ActionW.CROSSHAIR.cmd().equals(mouseActions.getAction(MouseActions.T_LEFT))) {
+                    mouseActions.setAction(MouseActions.T_LEFT, lastCommand);
                     setMouseActions(mouseActions);
-                    toolBar.changeButtonState(MouseActions.LEFT, lastCommand);
+                    toolBar.changeButtonState(MouseActions.T_LEFT, lastCommand);
                     lastCommand = null;
                 }
             }
@@ -281,14 +281,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         }
         return false;
     }
-
-    @Override
-    public void close() {
+    
+    private synchronized void stopCurrentProcess() {
         if (process != null) {
             final Thread t = process;
             process = null;
             t.interrupt();
         }
+    }
+
+    @Override
+    public void close() {
+        stopCurrentProcess();
         MPRFactory.closeSeriesViewer(this);
         super.close();
     }
@@ -437,11 +441,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
     @Override
     public void addSeries(MediaSeries<DicomImageElement> sequence) {
-        if (process != null) {
-            final Thread t = process;
-            process = null;
-            t.interrupt();
-        }
+        stopCurrentProcess();
         // TODO Should be init elsewhere
         for (int i = 0; i < view2ds.size(); i++) {
             ViewCanvas<DicomImageElement> val = view2ds.get(i);
@@ -510,7 +510,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                         });
 
                     } catch (final Exception e) {
-                        e.printStackTrace();
+                        LOGGER.error("Build MPR", e); //$NON-NLS-1$
                         // Following actions need to be executed in EDT thread
                         GuiExecutor.instance().execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
                     }

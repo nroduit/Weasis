@@ -584,7 +584,7 @@ public class TagD extends TagW {
                         // Exclude delimitation tags
                         if (tag == null || !tag.startsWith("FFFEE0")) { //$NON-NLS-1$
                             LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
-                                new Object[] { tag, keyword, vr, vm }); // $NON-NLS-1$
+                                tag, keyword, vr, vm); // $NON-NLS-1$
                         }
                     }
 

@@ -232,6 +232,7 @@ public class RawImageIO implements DcmMediaReader {
 
     @Override
     public void replaceURI(URI uri) {
+        throw new UnsupportedOperationException();
     }
 
     public static ImageReader initRawImageReader(ImageInputStream imageStream, ImageParameters h, int frames,

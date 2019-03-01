@@ -30,7 +30,7 @@ public class CircularProgressBar extends JProgressBar {
     public static final ImageIcon ICON =
         new ImageIcon(CircularProgressBar.class.getResource("/icon/22x22/process-working.png")); //$NON-NLS-1$
 
-    private volatile Animate animateThread;
+    private Animate animateThread;
 
     public CircularProgressBar() {
         init();

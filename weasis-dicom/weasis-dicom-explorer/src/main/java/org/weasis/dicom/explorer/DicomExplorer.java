@@ -1124,21 +1124,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             }
         }
         boolean addSeries = selectedPatient == patientPane;
-        List<StudyPane> studies = patient2study.get(patient);
-        if (studies == null) {
-            studies = new ArrayList<>();
-            patient2study.put(patient, studies);
-        }
+        List<StudyPane> studies = patient2study.computeIfAbsent(patient, k -> new ArrayList<>());
         Object selectedStudy = modelStudy.getSelectedItem();
         int[] positionStudy = new int[1];
         StudyPane studyPane = createStudyPaneInstance(study, positionStudy);
 
-        List<SeriesPane> seriesList = study2series.get(study);
-        if (seriesList == null) {
-            seriesList = new ArrayList<>();
-            study2series.put(study, seriesList);
-        }
-
+        List<SeriesPane> seriesList = study2series.computeIfAbsent(study, k -> new ArrayList<>());
         int[] positionSeries = new int[1];
         createSeriesPaneInstance(series, positionSeries);
         if (addSeries && positionSeries[0] != -1) {

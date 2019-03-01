@@ -81,7 +81,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         conversionMapForStorage.put(PIXEL, "pixel"); //$NON-NLS-1$
     }
 
-    protected static final int BORDER = 10;
+    protected static final int P_BORDER = 10;
 
     protected final HashMap<String, Boolean> displayPreferences = new HashMap<>();
     protected boolean visible = true;
@@ -90,7 +90,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     protected PixelInfo pixelInfo = null;
     protected final Rectangle pixelInfoBound;
     protected final Rectangle preloadingProgressBound;
-    protected int border = BORDER;
+    protected int border = P_BORDER;
     protected double thickLength = 15.0;
     protected boolean showBottomScale = true;
     protected String name;

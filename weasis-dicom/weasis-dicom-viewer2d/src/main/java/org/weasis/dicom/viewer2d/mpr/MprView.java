@@ -17,8 +17,6 @@ import java.beans.PropertyChangeEvent;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.OpManager;
@@ -31,8 +29,7 @@ import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.viewer2d.View2d;
 
 public class MprView extends View2d {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MprView.class);
-
+    
     public enum SliceOrientation {
         AXIAL, CORONAL, SAGITTAL
     }

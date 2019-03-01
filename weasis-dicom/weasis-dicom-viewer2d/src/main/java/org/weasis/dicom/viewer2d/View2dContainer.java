@@ -677,6 +677,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
     private static void exportTosirix(Component parent, String appName, String cmd) {
         String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+        StringBuilder msg = new StringBuilder(cmd);
         if (baseDir != null) {
             String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
             if (prop != null) {
@@ -685,19 +686,21 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 for (int i = 0; i < files.length; i++) {
                     File file = new File(baseDir, dirs[i].trim());
                     if (file.canRead()) {
-                        cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                        msg.append(" "); //$NON-NLS-1$
+                        msg.append(file.getAbsolutePath());
                     }
                 }
             }
         } else {
             File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
             if (file.canRead()) {
-                cmd += " " + file.getAbsolutePath(); //$NON-NLS-1$
+                msg.append(" "); //$NON-NLS-1$
+                msg.append(file.getAbsolutePath());
             }
         }
-        LOGGER.info("Execute cmd: {}", cmd); //$NON-NLS-1$
+        LOGGER.info("Execute cmd: {}", msg); //$NON-NLS-1$
         try {
-            Process p = Runtime.getRuntime().exec(cmd);
+            Process p = Runtime.getRuntime().exec(msg.toString());
             BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
 
             String data;

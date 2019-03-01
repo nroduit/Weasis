@@ -51,7 +51,7 @@ import org.weasis.core.ui.util.Toolbar;
 @org.osgi.service.component.annotations.Component(service = MainWindowListener.class, immediate = true)
 public class WeasisWinListener implements MainWindowListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWinListener.class);
-    private volatile WeasisWin mainWindow;
+    private WeasisWin mainWindow;
 
     @Override
     public void setMainWindow(WeasisWin mainWindow) {

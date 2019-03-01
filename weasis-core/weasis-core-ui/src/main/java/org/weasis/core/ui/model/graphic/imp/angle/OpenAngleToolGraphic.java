@@ -250,8 +250,8 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
                 lineABP = new Point2D[3]; // order can be ABP (r>1) or BAP (r<0) or APB / BPA (0<=r<=1)
                 lineCDP = new Point2D[3]; // order can be CDP (s>1) or DCP (s<0) or CPD / DPC (0<=s<=1)
 
-                intersectABsegment = (r >= 0 && r <= 1) ? true : false; // means lineABP[1].equals(P)
-                intersectCDsegment = (s >= 0 && s <= 1) ? true : false; // means lineCDP[1].equals(P)
+                intersectABsegment = (r >= 0 && r <= 1); // means lineABP[1].equals(P)
+                intersectCDsegment = (s >= 0 && s <= 1); // means lineCDP[1].equals(P)
 
                 lineABP[0] = r >= 0 ? ptA : ptB;
                 lineABP[1] = r < 0 ? ptA : r > 1 ? ptB : ptP;

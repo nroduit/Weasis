@@ -17,13 +17,10 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomQidoNode extends AbstractDicomNode {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DicomQidoNode.class);
 
     private static final String Q_URL = "urlQido"; //$NON-NLS-1$
     private static final String W_URL = "urlWado"; //$NON-NLS-1$

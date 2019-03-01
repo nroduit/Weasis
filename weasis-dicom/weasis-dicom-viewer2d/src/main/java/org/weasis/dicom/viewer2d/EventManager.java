@@ -81,7 +81,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -99,7 +98,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.util.ColorLayerUI;
@@ -718,7 +716,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             return action;
         }
         // Only return the action if it is enabled
-        if (Optional.ofNullable(getAction(action.get())).filter(a -> a.isActionEnabled()).isPresent()) {
+        if (Optional.ofNullable(getAction(action.get())).filter(ActionState::isActionEnabled).isPresent()) {
             return action;
         } else if (ActionW.KO_TOOGLE_STATE.equals(action.get()) && keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
             Optional<ToggleButtonListener> koToggleAction =
@@ -788,7 +786,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void setSelectedView2dContainer(ImageViewerPlugin<DicomImageElement> selectedView2dContainer) {
         if (this.selectedView2dContainer != null) {
             this.selectedView2dContainer.setMouseActions(null);
-            getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
+            getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(SliderCineListener::stop);
         }
 
         ImageViewerPlugin<DicomImageElement> oldContainer = this.selectedView2dContainer;
@@ -834,9 +832,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private void cinePlay(String command) {
         if (command != null) {
             if (command.equals(ActionW.CINESTART.cmd())) {
-                getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.start());
+                getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(SliderCineListener::start);
             } else if (command.equals(ActionW.CINESTOP.cmd())) {
-                getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
+                getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(SliderCineListener::stop);
             }
         }
     }
@@ -1646,7 +1644,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (command.startsWith("session")) { //$NON-NLS-1$
                         AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
                     } else {
-                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.LEFT, command); //$NON-NLS-1$
+                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command); //$NON-NLS-1$
                         excecuteMouseAction(command);
                     }
                 } catch (Exception e) {
@@ -1657,8 +1655,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     private void excecuteMouseAction(String command) {
-        if (!command.equals(mouseActions.getAction(MouseActions.LEFT))) {
-            mouseActions.setAction(MouseActions.LEFT, command);
+        if (!command.equals(mouseActions.getAction(MouseActions.T_LEFT))) {
+            mouseActions.setAction(MouseActions.T_LEFT, command);
             ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
             if (view != null) {
                 view.setMouseActions(mouseActions);
@@ -1669,7 +1667,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (action == null) {
                         command = ActionW.NO_ACTION.cmd();
                     }
-                    toolBar.changeButtonState(MouseActions.LEFT, command);
+                    toolBar.changeButtonState(MouseActions.T_LEFT, command);
                 }
             }
         }
@@ -1678,7 +1676,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     public void synch(String[] argv) throws IOException {
         final String[] usage = { "Set a synchronization mode", //$NON-NLS-1$
             "Usage: dcmview2d:synch VALUE", //$NON-NLS-1$
-            "VALUE is " + View2dContainer.DEFAULT_SYNCH_LIST.stream().map(s -> s.getCommand()) //$NON-NLS-1$
+            "VALUE is " + View2dContainer.DEFAULT_SYNCH_LIST.stream().map(SynchView::getCommand) //$NON-NLS-1$
                 .collect(Collectors.joining("|", "(", ")")), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             "  -? --help       show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);

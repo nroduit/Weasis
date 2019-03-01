@@ -26,7 +26,6 @@ import java.util.function.Predicate;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.dicom.codec.display.PresetWindowLevel;

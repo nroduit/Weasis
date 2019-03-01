@@ -6,7 +6,7 @@ import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.ColorLayerUI;
 
 public class DesktopAdapter {
-    
+
     private DesktopAdapter() {
     }
 
@@ -40,9 +40,7 @@ public class DesktopAdapter {
             });
         }
         if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
-            app.setOpenFileHandler(e -> {
-            	win.dropFiles(e.getFiles(), null);
-            });
+            app.setOpenFileHandler(e -> win.dropFiles(e.getFiles(), null));
         }
     }
 }

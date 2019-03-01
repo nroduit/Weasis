@@ -51,7 +51,7 @@ public abstract class AbstractSliderComponent extends AbstractComponent {
     }
 
     public int getSliderValue() {
-        return Optional.ofNullable(slider).map(s -> s.getValue()).orElse(getDefaultValue());
+        return Optional.ofNullable(slider).map(JSlider::getValue).orElse(getDefaultValue());
     }
 
     public void setSliderValue(int value) {

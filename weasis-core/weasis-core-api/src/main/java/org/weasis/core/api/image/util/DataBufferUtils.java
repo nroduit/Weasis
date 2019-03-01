@@ -20,6 +20,9 @@ import java.lang.reflect.Method;
  */
 public final class DataBufferUtils {
 
+    private DataBufferUtils() {
+    }
+
     /**
      * Priority ordered array of DataBufferFloat class names.
      */
@@ -86,8 +89,8 @@ public final class DataBufferUtils {
 
         // Throw an exception if no class was found.
         if (dataBufferClass == null) {
-            throw new RuntimeException(
-                "dataBufferClass not found: " + (dataType == DataBuffer.TYPE_FLOAT ? "DataBufferFloat" : "DataBufferDouble")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            throw new RuntimeException("dataBufferClass not found: " //$NON-NLS-1$
+                + (dataType == DataBuffer.TYPE_FLOAT ? "DataBufferFloat" : "DataBufferDouble")); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         return dataBufferClass;
@@ -147,32 +150,31 @@ public final class DataBufferUtils {
 
     public static final DataBuffer createDataBufferFloat(float[][] dataArray, int size) {
         return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { float[][].class, int.class },
-            new Object[] { dataArray, new Integer(size) });
+            new Object[] { dataArray, size });
     }
 
     public static final DataBuffer createDataBufferFloat(float[][] dataArray, int size, int[] offsets) {
         return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { float[][].class, int.class, int[].class },
-            new Object[] { dataArray, new Integer(size), offsets });
+            new Object[] { dataArray, size, offsets });
     }
 
     public static final DataBuffer createDataBufferFloat(float[] dataArray, int size) {
         return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { float[].class, int.class },
-            new Object[] { dataArray, new Integer(size) });
+            new Object[] { dataArray, size });
     }
 
     public static final DataBuffer createDataBufferFloat(float[] dataArray, int size, int offset) {
         return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { float[].class, int.class, int.class },
-            new Object[] { dataArray, new Integer(size), new Integer(offset) });
+            new Object[] { dataArray, size, offset });
     }
 
     public static final DataBuffer createDataBufferFloat(int size) {
-        return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { int.class },
-            new Object[] { new Integer(size) });
+        return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { int.class }, new Object[] { size });
     }
 
     public static final DataBuffer createDataBufferFloat(int size, int numBanks) {
         return constructDataBuffer(DataBuffer.TYPE_FLOAT, new Class[] { int.class, int.class },
-            new Object[] { new Integer(size), new Integer(numBanks) });
+            new Object[] { size, numBanks });
     }
 
     public static final float[][] getBankDataFloat(DataBuffer dataBuffer) {
@@ -185,37 +187,36 @@ public final class DataBufferUtils {
 
     public static final float[] getDataFloat(DataBuffer dataBuffer, int bank) {
         return (float[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class }, //$NON-NLS-1$
-            new Object[] { new Integer(bank) });
+            new Object[] { bank });
     }
 
     public static final DataBuffer createDataBufferDouble(double[][] dataArray, int size) {
         return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { double[][].class, int.class },
-            new Object[] { dataArray, new Integer(size) });
+            new Object[] { dataArray, size });
     }
 
     public static final DataBuffer createDataBufferDouble(double[][] dataArray, int size, int[] offsets) {
         return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { double[][].class, int.class, int[].class },
-            new Object[] { dataArray, new Integer(size), offsets });
+            new Object[] { dataArray, size, offsets });
     }
 
     public static final DataBuffer createDataBufferDouble(double[] dataArray, int size) {
         return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { double[].class, int.class },
-            new Object[] { dataArray, new Integer(size) });
+            new Object[] { dataArray, size });
     }
 
     public static final DataBuffer createDataBufferDouble(double[] dataArray, int size, int offset) {
         return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { double[].class, int.class, int.class },
-            new Object[] { dataArray, new Integer(size), new Integer(offset) });
+            new Object[] { dataArray, size, offset });
     }
 
     public static final DataBuffer createDataBufferDouble(int size) {
-        return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { int.class },
-            new Object[] { new Integer(size) });
+        return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { int.class }, new Object[] { size });
     }
 
     public static final DataBuffer createDataBufferDouble(int size, int numBanks) {
         return constructDataBuffer(DataBuffer.TYPE_DOUBLE, new Class[] { int.class, int.class },
-            new Object[] { new Integer(size), new Integer(numBanks) });
+            new Object[] { size, numBanks });
     }
 
     public static final double[][] getBankDataDouble(DataBuffer dataBuffer) {
@@ -228,6 +229,6 @@ public final class DataBufferUtils {
 
     public static final double[] getDataDouble(DataBuffer dataBuffer, int bank) {
         return (double[]) invokeDataBufferMethod(dataBuffer, "getData", new Class[] { int.class }, //$NON-NLS-1$
-            new Object[] { new Integer(bank) });
+            new Object[] { bank });
     }
 }

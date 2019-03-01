@@ -24,7 +24,10 @@ import org.weasis.core.api.util.LocalUtil;
  *
  */
 public class DecFormater {
-
+    
+    private DecFormater() {
+    }
+    
     private static NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
     private static NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
     private static NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals

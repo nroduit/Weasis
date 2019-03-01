@@ -23,7 +23,7 @@ public class LocalUtil {
     private static final DateTimeFormatter defaultDateTimeFormatter =
         DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM);
 
-    private static volatile Locale localeFormat = null;
+    private static Locale localeFormat = null;
 
     private LocalUtil() {
     }
@@ -59,7 +59,7 @@ public class LocalUtil {
         return new Locale(language, country, variant);
     }
 
-    public static Locale getLocaleFormat() {
+    public static synchronized  Locale getLocaleFormat() {
         Locale l = LocalUtil.localeFormat;
         if (l == null) {
             l = Locale.getDefault();
@@ -67,7 +67,7 @@ public class LocalUtil {
         return l;
     }
 
-    public static void setLocaleFormat(Locale value) {
+    public static synchronized void setLocaleFormat(Locale value) {
         LocalUtil.localeFormat = value;
     }
 

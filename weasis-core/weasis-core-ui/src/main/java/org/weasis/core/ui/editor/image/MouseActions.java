@@ -28,10 +28,10 @@ public class MouseActions {
     public static final String P_MOUSE_RIGHT = "mouse_right"; //$NON-NLS-1$
     public static final String P_MOUSE_WHEEL = "mouse_wheel"; //$NON-NLS-1$
 
-    public static final String LEFT = "left"; //$NON-NLS-1$
-    public static final String MIDDLE = "middle"; //$NON-NLS-1$
-    public static final String RIGHT = "right"; //$NON-NLS-1$
-    public static final String WHEEL = "wheel"; //$NON-NLS-1$
+    public static final String T_LEFT = "left"; //$NON-NLS-1$
+    public static final String T_MIDDLE = "middle"; //$NON-NLS-1$
+    public static final String T_RIGHT = "right"; //$NON-NLS-1$
+    public static final String T_WHEEL = "wheel"; //$NON-NLS-1$
 
     private String left;
     private String middle;
@@ -101,13 +101,13 @@ public class MouseActions {
     }
 
     public String getAction(String type) {
-        if (MouseActions.LEFT.equals(type)) {
+        if (MouseActions.T_LEFT.equals(type)) {
             return left;
-        } else if (MouseActions.MIDDLE.equals(type)) {
+        } else if (MouseActions.T_MIDDLE.equals(type)) {
             return middle;
-        } else if (MouseActions.RIGHT.equals(type)) {
+        } else if (MouseActions.T_RIGHT.equals(type)) {
             return right;
-        } else if (MouseActions.WHEEL.equals(type)) {
+        } else if (MouseActions.T_WHEEL.equals(type)) {
             return wheel;
         }
         return null;
@@ -122,13 +122,13 @@ public class MouseActions {
     }
 
     public void setAction(String type, String action) {
-        if (MouseActions.LEFT.equals(type)) {
+        if (MouseActions.T_LEFT.equals(type)) {
             setLeft(action);
-        } else if (MouseActions.MIDDLE.equals(type)) {
+        } else if (MouseActions.T_MIDDLE.equals(type)) {
             setMiddle(action);
-        } else if (MouseActions.RIGHT.equals(type)) {
+        } else if (MouseActions.T_RIGHT.equals(type)) {
             setRight(action);
-        } else if (MouseActions.WHEEL.equals(type)) {
+        } else if (MouseActions.T_WHEEL.equals(type)) {
             setWheel(action);
         }
         AuditLog.LOGGER.info("mouse:{} action:{}", type, action); //$NON-NLS-1$

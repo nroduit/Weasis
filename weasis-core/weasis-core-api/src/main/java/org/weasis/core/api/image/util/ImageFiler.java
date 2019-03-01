@@ -42,7 +42,6 @@ import org.weasis.opencv.op.ImageConversion;
 public class ImageFiler extends AbstractBufferHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFiler.class);
-    private static final String TIFF_TAG = "tiff_directory"; //$NON-NLS-1$
 
     public static final int TILESIZE = 512;
     public static final int LIMIT_TO_TILE = 768;
@@ -119,7 +118,8 @@ public class ImageFiler extends AbstractBufferHandler {
                 return ImageConversion.convertTo(source, BufferedImage.TYPE_BYTE_GRAY);
             }
 
-            if (source.getColorModel() instanceof IndexColorModel || numBands == 2 || numBands > 3 || (source.getSampleModel() instanceof BandedSampleModel && numBands > 1)) {
+            if (source.getColorModel() instanceof IndexColorModel || numBands == 2 || numBands > 3
+                || (source.getSampleModel() instanceof BandedSampleModel && numBands > 1)) {
                 int imageType = numBands >= 3 ? BufferedImage.TYPE_3BYTE_BGR : BufferedImage.TYPE_BYTE_GRAY;
                 return ImageConversion.convertTo(source, imageType);
             }
@@ -132,7 +132,7 @@ public class ImageFiler extends AbstractBufferHandler {
             return ""; //$NON-NLS-1$
         }
         // replace extension after the last point
-        int pointPos = filename.lastIndexOf("."); //$NON-NLS-1$
+        int pointPos = filename.lastIndexOf('.');
         if (pointPos == -1) {
             pointPos = filename.length();
         }

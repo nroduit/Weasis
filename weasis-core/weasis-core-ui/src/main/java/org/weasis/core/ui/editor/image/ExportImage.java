@@ -21,8 +21,6 @@ import java.awt.geom.Rectangle2D;
 
 import javax.swing.ToolTipManager;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.ImageOpNode;
@@ -34,8 +32,6 @@ import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     private static final long serialVersionUID = 1149562889654679335L;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ExportImage.class);
 
     private final ViewCanvas<E> view2d;
     private Graphics2D currentG2d;

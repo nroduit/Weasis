@@ -23,13 +23,10 @@ import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.task.TaskInterruptionException;
-import org.weasis.core.api.gui.task.TaskMonitor;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.op.MaxCollectionZprojection;
 import org.weasis.core.api.image.op.MeanCollectionZprojection;
@@ -39,11 +36,9 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.View2d;
 import org.weasis.dicom.viewer2d.mip.MipView.Type;
 import org.weasis.dicom.viewer2d.mpr.RawImageIO;
@@ -59,9 +54,8 @@ public class SeriesBuilder {
     private SeriesBuilder() {
     }
 
-    public static void applyMipParameters(final TaskMonitor taskMonitor, final View2d view,
-        final MediaSeries<DicomImageElement> series, List<DicomImageElement> dicoms, Type mipType, Integer extend,
-        boolean fullSeries) {
+    public static void applyMipParameters(final View2d view, final MediaSeries<DicomImageElement> series,
+        List<DicomImageElement> dicoms, Type mipType, Integer extend, boolean fullSeries) {
 
         PlanarImage curImage;
         if (series != null) {
@@ -81,9 +75,6 @@ public class SeriesBuilder {
 
             int minImg = fullSeries ? extend : curImg;
             int maxImg = fullSeries ? series.size(filter) - extend : curImg;
-            if (fullSeries) {
-                taskMonitor.setMaximum(maxImg - minImg);
-            }
 
             DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
             final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
@@ -102,7 +93,7 @@ public class SeriesBuilder {
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
             cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); //$NON-NLS-1$ //$NON-NLS-2$
-            cpTags.setString(Tag.ImageType, VR.CS, new String[] { "DERIVED", "SECONDARY", "PROJECTION IMAGE" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "PROJECTION IMAGE"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             String seriesUID = UIDUtils.createUID();
 
             for (int index = minImg; index <= maxImg; index++) {
@@ -127,16 +118,9 @@ public class SeriesBuilder {
                 }
 
                 if (sources.size() > 1) {
-                    if (fullSeries) {
-                        taskMonitor.setShowProgression(false);
-                    }
-                    curImage = addCollectionOperation(mipType, sources, taskMonitor);
+                    curImage = addCollectionOperation(mipType, sources);
                 } else {
                     curImage = null;
-                }
-
-                if (fullSeries) {
-                    taskMonitor.setShowProgression(true);
                 }
 
                 final DicomImageElement dicom;
@@ -148,15 +132,12 @@ public class SeriesBuilder {
                         File mipDir =
                             AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
                         raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
-                        if(!raw.write(curImage)) {
+                        if (!raw.write(curImage)) {
                             raw = null;
                         }
                     } catch (Exception e) {
                         if (raw != null) {
                             FileUtil.delete(raw.getFile());
-                        }
-                        if (taskMonitor.isAborting()) {
-                            throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
                         }
                         LOGGER.error("Writing MIP", e); //$NON-NLS-1$
                     }
@@ -218,22 +199,7 @@ public class SeriesBuilder {
                     };
 
                     dicoms.add(dicom);
-
-                    if (taskMonitor.isAborting()) {
-                        throw new TaskInterruptionException("Rebuilding MIP series has been canceled!"); //$NON-NLS-1$
-                    }
-                    final int progress = index - minImg;
-                    GuiExecutor.instance().execute(() -> {
-                        taskMonitor.setProgress(progress);
-                        StringBuilder buf = new StringBuilder(Messages.getString("SeriesBuilder.image")); //$NON-NLS-1$
-                        buf.append(StringUtil.COLON_AND_SPACE);
-                        buf.append(progress);
-                        buf.append("/"); //$NON-NLS-1$
-                        buf.append(taskMonitor.getMaximum());
-                        taskMonitor.setNote(buf.toString());
-                    });
                 }
-
             }
         }
     }
@@ -259,17 +225,16 @@ public class SeriesBuilder {
         return 1.0;
     }
 
-    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources,
-        final TaskMonitor taskMonitor) {
+    public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources) {
         if (Type.MIN.equals(mipType)) {
-            MinCollectionZprojection op = new MinCollectionZprojection(sources, taskMonitor);
+            MinCollectionZprojection op = new MinCollectionZprojection(sources);
             return op.computeMinCollectionOpImage();
         }
         if (Type.MEAN.equals(mipType)) {
-            MeanCollectionZprojection op = new MeanCollectionZprojection(sources, taskMonitor);
+            MeanCollectionZprojection op = new MeanCollectionZprojection(sources);
             return op.computeMeanCollectionOpImage();
         }
-        MaxCollectionZprojection op = new MaxCollectionZprojection(sources, taskMonitor);
+        MaxCollectionZprojection op = new MaxCollectionZprojection(sources);
         return op.computeMaxCollectionOpImage();
     }
 
