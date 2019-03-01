@@ -15,6 +15,7 @@ import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -38,7 +39,7 @@ import org.weasis.core.api.service.BundleTools;
 public abstract class AbstractFileModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
-    public static final String[] functions = { "get", "close" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList( "get", "close" )); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final String NAME = "All Files"; //$NON-NLS-1$
     public static final TreeModelNode group =

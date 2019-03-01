@@ -353,7 +353,7 @@ public class Options implements Option {
                 }
             }
 
-            if (usageName == UNKNOWN) {
+            if (usageName == UNKNOWN) { //NOSONAR compare object not string
                 Matcher u = uname.matcher(line);
                 if (u.find()) {
                     usageName = u.group(1);
@@ -431,7 +431,7 @@ public class Options implements Option {
                 if ("--".equals(arg)) { //$NON-NLS-1$
                     endOpt = true;
                 } else if (arg.startsWith("--")) { //$NON-NLS-1$
-                    int eq = arg.indexOf("="); //$NON-NLS-1$
+                    int eq = arg.indexOf('='); 
                     String value = (eq == -1) ? null : arg.substring(eq + 1);
                     String name = arg.substring(2, (eq == -1) ? arg.length() : eq);
                     List<String> names = new ArrayList<>();

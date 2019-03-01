@@ -52,8 +52,6 @@ public class Singleton {
     private static volatile boolean serverStarted = false;
     private static int randomNumber;
 
-    private static final Object lock = new Object();
-
     public interface SingletonApp {
         public void newActivation(ConfigData data);
 
@@ -64,7 +62,7 @@ public class Singleton {
         Objects.requireNonNull(sia);
         Objects.requireNonNull(id);
 
-        synchronized (lock) {
+        synchronized (Singleton.class) {
             if (!serverStarted) {
                 try {
                     siServer = new SingletonServer(id);
@@ -85,7 +83,7 @@ public class Singleton {
             return;
         }
 
-        synchronized (siApp) {
+        synchronized (Singleton.class) {
 
             siApp = null;
 

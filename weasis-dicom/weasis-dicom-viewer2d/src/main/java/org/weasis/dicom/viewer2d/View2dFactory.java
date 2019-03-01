@@ -209,12 +209,12 @@ public class View2dFactory implements SeriesViewerFactory {
             || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
             return;
         } else {
-            Codec codec = BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
+            Codec codec = BundleTools.getCodec(DicomMediaIO.DICOM_MIMETYPE, DicomCodec.NAME);
             if (codec != null) {
                 ArrayList<MediaSeries<? extends MediaElement>> list = new ArrayList<>();
                 for (File file : selectedFiles) {
-                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.MIMETYPE)) {
-                        MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.MIMETYPE, null);
+                    if (MimeInspector.isMatchingMimeTypeFromMagicNumber(file, DicomMediaIO.DICOM_MIMETYPE)) {
+                        MediaReader reader = codec.getMediaIO(file.toURI(), DicomMediaIO.DICOM_MIMETYPE, null);
                         if (reader != null) {
                             if (reader.getMediaElement() == null) {
                                 // DICOM is not readable

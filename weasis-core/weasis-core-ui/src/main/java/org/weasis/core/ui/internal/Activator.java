@@ -120,7 +120,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static void registerCommands(BundleContext context) {
         Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
-        dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions);
+        dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions.toArray(new String[AbstractFileModel.functions.size()]));
         context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
     }
 

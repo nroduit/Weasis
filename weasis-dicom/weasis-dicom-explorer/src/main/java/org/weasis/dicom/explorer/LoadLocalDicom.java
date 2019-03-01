@@ -98,7 +98,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
             } else {
                 if (file[i].canRead()) {
                     if (FileUtil.isFileExtensionMatching(file[i], DicomCodec.FILE_EXTENSIONS)
-                        || MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.MIMETYPE)) {
+                        || MimeInspector.isMatchingMimeTypeFromMagicNumber(file[i], DicomMediaIO.DICOM_MIMETYPE)) {
                         DicomMediaIO loader = new DicomMediaIO(file[i]);
                         if (loader.isReadableDicom()) {
                             // Issue: must handle adding image to viewer and building thumbnail (middle image)

@@ -240,6 +240,9 @@ public abstract class AbstractDicomNode {
             XMLStreamReader xmler = null;
             try {
                 XMLInputFactory factory = XMLInputFactory.newInstance();
+                // disable external entities for security
+                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+                factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
                 xmler = factory.createXMLStreamReader(new FileInputStream(prefs));
                 int eventType;
                 while (xmler.hasNext()) {

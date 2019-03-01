@@ -254,15 +254,20 @@ public class DownloadManager {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            XMLInputFactory xmlif = XMLInputFactory.newInstance();
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            // disable external entities for security
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
 
             String path = uri.getPath();
-            
+
             URLConnection urlConnection = uri.toURL().openConnection();
             urlConnection.setUseCaches(false);
 
             LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
-            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,  StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000)  , StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$ //$NON-NLS-2$
+            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,
+                StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000), //$NON-NLS-1$
+                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
@@ -286,7 +291,7 @@ public class DownloadManager {
                 tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                 FileUtil.writeStreamWithIOException(stream, tempFile);
             }
-            xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
+            xmler = factory.createXMLStreamReader(new FileInputStream(tempFile));
 
             Source xmlFile = new StAXSource(xmler);
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
@@ -295,6 +300,8 @@ public class DownloadManager {
                     new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()), //$NON-NLS-1$
                     new StreamSource(DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm()) }); //$NON-NLS-1$
                 Validator validator = schema.newValidator();
+                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
             } catch (SAXException e) {
@@ -305,7 +312,7 @@ public class DownloadManager {
 
             ReaderParams params = new ReaderParams(model, seriesMap);
             // Try to read the xml even it is not valid.
-            xmler = xmlif.createXMLStreamReader(new FileInputStream(tempFile));
+            xmler = factory.createXMLStreamReader(new FileInputStream(tempFile));
 
             BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method = (x, r) -> {
                 String key = x.getName().getLocalPart();
@@ -404,7 +411,6 @@ public class DownloadManager {
                 String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
                 String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
                 wadoParameters.addHttpTag(httpkey, httpvalue);
-            // <Message> tag
             } else if ("Message".equals(key)) { //$NON-NLS-1$
                 final String title = TagUtil.getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                 final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$

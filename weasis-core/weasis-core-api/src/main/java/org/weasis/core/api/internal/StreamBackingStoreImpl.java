@@ -172,7 +172,11 @@ public class StreamBackingStoreImpl implements BackingStore {
             XMLStreamReader xmler = null;
             try (FileInputStream fileReader = new FileInputStream(file)) {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
-                xmler = XMLInputFactory.newInstance().createXMLStreamReader(fileReader);
+                XMLInputFactory factory = XMLInputFactory.newInstance();
+                // disable external entities for security
+                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+                factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+                xmler = factory.createXMLStreamReader(fileReader);
                 readStream(root, xmler);
                 return readStream(root, xmler);
             } catch (XMLStreamException | IOException e) {
@@ -198,7 +202,11 @@ public class StreamBackingStoreImpl implements BackingStore {
             try (InputStream fileReader = NetworkUtil.getUrlInputStream(new URL(getURL(desc, prefUrl)).openConnection(),
                 getHttpTags(false), 5000, 7000)) {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
-                xmler = XMLInputFactory.newInstance().createXMLStreamReader(fileReader);
+                XMLInputFactory factory = XMLInputFactory.newInstance();
+                // disable external entities for security
+                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+                factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+                xmler = factory.createXMLStreamReader(fileReader);
                 return readStream(root, xmler);
             } catch (XMLStreamException | IOException e) {
                 throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
@@ -258,7 +266,6 @@ public class StreamBackingStoreImpl implements BackingStore {
             n.applyChanges(prefs);
             rootPrefs = n.getRoot();
         }
-        
 
         try {
             storeInStream(rootPrefs);
@@ -288,7 +295,7 @@ public class StreamBackingStoreImpl implements BackingStore {
             }
         }
     }
-    
+
     private static void writeStream(InputStream inputStream, OutputStream out) throws IOException {
         try {
             byte[] buf = new byte[FileUtil.FILE_BUFFER];

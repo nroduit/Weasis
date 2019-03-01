@@ -53,7 +53,7 @@ public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailMod
     @Override
     public void loadContent(Path path) {
         DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p)
-            && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.MIMETYPE);
+            && !MimeInspector.isMatchingMimeTypeFromMagicNumber(p.toFile(), DicomMediaIO.DICOM_MIMETYPE);
         loadContent(path, filter);
     }
 

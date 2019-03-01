@@ -422,7 +422,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
     public ActionW getAction(List<ActionW> buttons, String command) {
         if (buttons != null) {
-            synchronized (buttons) {
+            synchronized (buttons) { //NOSONAR lock object is the list for iterating its elements safely
                 for (ActionW a : buttons) {
                     if (a.cmd().equals(command)) {
                         return a;
@@ -449,7 +449,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     public static final ActionW getNextCommand(List<ActionW> buttons, String command) {
         if (buttons != null && !buttons.isEmpty()) {
             int index = 0;
-            synchronized (buttons) {
+            synchronized (buttons) { //NOSONAR lock object is the list for iterating its elements safely
                 for (int i = 0; i < buttons.size(); i++) {
                     ActionW b = buttons.get(i);
                     if (b.cmd().equals(command)) {

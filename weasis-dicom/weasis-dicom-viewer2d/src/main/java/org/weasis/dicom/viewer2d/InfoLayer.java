@@ -133,14 +133,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         if (!image.isReadable()) {
             String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
             float y = midy;
-            AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
-                y, Color.RED);
+            AbstractGraphicLabel.paintColorFontOutline(g2, message,
+                midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
                 tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
                 y += fontHeight;
-                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
-                    y, Color.RED);
+                AbstractGraphicLabel.paintColorFontOutline(g2, tsuid,
+                    midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F, y, Color.RED);
             }
 
             String[] desc = image.getMediaReader().getReaderDescription();
@@ -353,7 +353,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     }
                 }
             }
-            positions[1] = new Point2D.Float(bound.width - border, drawY - fontHeight + 5);
+            positions[1] = new Point2D.Float((float) bound.width - border, drawY - fontHeight + 5f);
 
             drawY = bound.height - border - 1.5f; // -1.5 for outline
             if (hideMin) {
@@ -381,7 +381,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 drawY -= 5;
                 drawSeriesInMemoryState(g2, view2DPane.getSeries(), bound.width - border, (int) (drawY));
             }
-            positions[2] = new Point2D.Float(bound.width - border, drawY - 5);
+            positions[2] = new Point2D.Float((float) bound.width - border, drawY - 5);
 
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
             // String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -496,8 +496,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             // outline
         } else {
             positions[0] = new Point2D.Float(border, border);
-            positions[1] = new Point2D.Float(bound.width - border, border);
-            positions[2] = new Point2D.Float(bound.width - border, bound.height - border);
+            positions[1] = new Point2D.Float((float) bound.width - border, border);
+            positions[2] = new Point2D.Float((float) bound.width - border, (float) bound.height - border);
         }
         drawExtendedActions(g2, positions);
     }

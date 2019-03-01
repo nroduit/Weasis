@@ -157,8 +157,11 @@ public class ModalityView {
             if (!file.canRead()) {
                 return;
             }
-            XMLInputFactory xmlif = XMLInputFactory.newInstance();
-            xmler = xmlif.createXMLStreamReader(new FileInputStream(file));
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            // disable external entities for security
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+            xmler = factory.createXMLStreamReader(new FileInputStream(file));
 
             while (xmler.hasNext()) {
                 switch (xmler.next()) {

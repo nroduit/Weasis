@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.BoundedRangeModel;
@@ -140,8 +141,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             class CineThread extends Thread {
 
-                private volatile int iteration;
-                private volatile int wait;
+                private AtomicInteger iteration;
+                private AtomicInteger wait;
                 private volatile int currentCineRate;
                 private volatile long start;
                 private final int timeDiv =
@@ -157,27 +158,26 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                             frameIndex = frameIndex > getSliderMax() ? 0 : frameIndex;
                             setSliderValue(frameIndex);
                         });
-                        iteration++;
+                        iteration.incrementAndGet();
 
                         // adjust the delay time based on the current performance
                         long elapsed = (System.currentTimeMillis() - start) / 1000;
                         if (elapsed > 0) {
-                            currentCineRate = (int) (iteration / elapsed);
+                            currentCineRate = (int) (iteration.get() / elapsed);
 
                             if (currentCineRate < getSpeed()) {
-                                wait--;
+                                if (wait.decrementAndGet() < 0) {
+                                    wait.set(0);
+                                }
                             } else {
-                                wait++;
-                            }
-                            if (wait < 0) {
-                                wait = 0;
+                                wait.incrementAndGet();
                             }
                         }
 
                         // wait
-                        if (wait > 0) {
+                        if (wait.get() > 0) {
                             try {
-                                Thread.sleep(wait);
+                                Thread.sleep(wait.get());
                             } catch (Exception e) {
                             }
                         }
@@ -185,8 +185,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
                 }
 
                 public void iniSpeed() {
-                    iteration = 0;
-                    wait = timeDiv / getSpeed();
+                    iteration = new AtomicInteger(0);
+                    wait = new AtomicInteger(timeDiv / getSpeed());
                     currentCineRate = getSpeed();
                     start = System.currentTimeMillis();
                 }

@@ -26,8 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +40,7 @@ import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -84,7 +87,7 @@ import org.xml.sax.SAXException;
 public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
-    public static final String[] functions = { "patient" }; //$NON-NLS-1$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("patient")); //$NON-NLS-1$
     public static final Global GLOBAL = new Global();
 
     private static final int OPT_NONE = 0;
@@ -578,9 +581,12 @@ public class AcquireManager {
         }
 
         try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
-            LOGGER.debug("Source XML :\n{}", new String(byteArray)); //$NON-NLS-1$
-
-            return DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(inputStream);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Source XML :\n{}", new String(byteArray)); //$NON-NLS-1$
+            }
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            return factory.newDocumentBuilder().parse(inputStream);
         } catch (SAXException | IOException | ParserConfigurationException e) {
             LOGGER.error("Parsing Patient Context XML", e); //$NON-NLS-1$
         }
@@ -659,7 +665,8 @@ public class AcquireManager {
 
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-            try (InputStream inputStream = NetworkUtil.getUrlInputStream(url.openConnection(), BundleTools.SESSION_TAGS_FILE)) {
+            try (InputStream inputStream =
+                NetworkUtil.getUrlInputStream(url.openConnection(), BundleTools.SESSION_TAGS_FILE)) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int length;

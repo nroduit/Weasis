@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtil.class);
 
+    private static final String UTF_8 = "UTF-8";
     private static final int MAX_REDIRECTS = 3;
 
     private NetworkUtil() {
@@ -137,7 +139,6 @@ public class NetworkUtil {
             } catch (StreamIOException e) {
                 throw e;
             } catch (IOException e) {
-                LOGGER.error("http response: {}", e.getMessage()); //$NON-NLS-1$
                 throw new StreamIOException(e);
             }
         }
@@ -167,7 +168,7 @@ public class NetworkUtil {
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
         InputStream errorStream = httpURLConnection.getErrorStream();
         if (errorStream != null) {
-            try (InputStreamReader inputStream = new InputStreamReader(errorStream, "UTF-8"); //$NON-NLS-1$
+            try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8); //$NON-NLS-1$
                             BufferedReader reader = new BufferedReader(inputStream)) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
@@ -186,7 +187,7 @@ public class NetworkUtil {
     public static String buildHttpParamsString(Map<String, String> params) {
         return params.entrySet().stream().map(e -> {
             try {
-                return URLEncoder.encode(e.getKey(), "UTF-8") + "=" + URLEncoder.encode(e.getValue(), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                return URLEncoder.encode(e.getKey(), UTF_8) + "=" + URLEncoder.encode(e.getValue(), UTF_8); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             } catch (UnsupportedEncodingException e1) {
                 throw new IllegalArgumentException(e1);
             }

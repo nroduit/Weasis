@@ -17,18 +17,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.weasis.opencv.data.PlanarImage;
 
-public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
+public abstract class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
 
     protected final Map<K, V> hash;
     private final long maxNativeMemory;
-    private volatile long useNativeMemory;
+    private AtomicLong useNativeMemory;
 
     public NativeCache(long maxNativeMemory) {
         this.maxNativeMemory = maxNativeMemory;
-        this.useNativeMemory = 0;
+        this.useNativeMemory = new AtomicLong(0);
         this.hash = Collections.synchronizedMap(new LinkedHashMap<>(64, 0.75f, true));
     }
 
@@ -38,7 +39,7 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
     }
 
     public boolean isMemoryAvailable() {
-        return useNativeMemory < maxNativeMemory;
+        return useNativeMemory.get() < maxNativeMemory;
     }
 
     public void expungeStaleEntries() {
@@ -46,7 +47,7 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
             synchronized (hash) {
                 List<K> remKeys = new ArrayList<>();
                 // 5% of max memory + diff
-                long maxfreeSize = maxNativeMemory / 20 + (useNativeMemory - maxNativeMemory);
+                long maxfreeSize = maxNativeMemory / 20 + (useNativeMemory.get() - maxNativeMemory);
                 long freeSize = 0;
                 
                 for (Map.Entry<K, V> e : hash.entrySet()) {
@@ -59,7 +60,7 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
 
                 for (K key : remKeys) {
                     V val = hash.remove(key);
-                    useNativeMemory -= physicalBytes(val);
+                    useNativeMemory.addAndGet(- physicalBytes(val));
                     afterEntryRemove(key, val);
                 }
             }
@@ -73,22 +74,22 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
         return 0;
     }
 
-    protected void afterEntryRemove(K key, V val) {
-    }
+    protected abstract void afterEntryRemove(K key, V val);
 
     @Override
     public V put(K key, V value) {
         expungeStaleEntries();
         V result = hash.put(key, value);
-        useNativeMemory += physicalBytes(value);
-        useNativeMemory -= physicalBytes(result);
+        useNativeMemory.addAndGet( physicalBytes(value));
+        useNativeMemory.addAndGet( -physicalBytes(result));
         return result;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public V remove(Object key) {
         V val = hash.remove(key);
-        useNativeMemory -= physicalBytes(val);
+        useNativeMemory.addAndGet(- physicalBytes(val));
         afterEntryRemove((K) key, val);
         return val;
     }
@@ -96,7 +97,7 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
     @Override
     public void clear() {
         hash.clear();
-        useNativeMemory = 0;
+        useNativeMemory.set(0);
     }
 
     @Override
@@ -119,4 +120,23 @@ public class NativeCache<K, V extends PlanarImage> extends AbstractMap<K, V> {
         return hash.containsValue(value);
     }
 
+    @Override
+    public int hashCode() {
+        return hash.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        @SuppressWarnings("rawtypes")
+        NativeCache other = (NativeCache) obj;
+        return hash.equals(other.hash);
+    }
+    
+    
 }

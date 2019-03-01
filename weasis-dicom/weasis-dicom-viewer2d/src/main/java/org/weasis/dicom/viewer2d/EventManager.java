@@ -20,9 +20,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import javax.swing.BoundedRangeModel;
@@ -124,8 +126,8 @@ import org.weasis.opencv.op.ImageConversion;
 public class EventManager extends ImageViewerEventManager<DicomImageElement> implements ActionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
-    public static final String[] functions =
-        { "zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+    public static final List<String> functions = Collections
+        .unmodifiableList(Arrays.asList("zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
     /** The single instance of this singleton class. */
     private static EventManager instance;
@@ -402,7 +404,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
 
             class CineThread extends Thread {
 
-                private volatile int iteration;
+                private AtomicInteger iteration;
                 private volatile int waitTimeMillis;
                 private volatile int currentCineRate;
                 private volatile long start;
@@ -414,14 +416,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     while (cining) {
                         long startFrameTime = System.currentTimeMillis();
                         // Set the value to SliderCineListener, must be in EDT for refreshing UI correctly
-                        GuiExecutor.instance().invokeAndWait(new Runnable() {
-
-                            @Override
-                            public void run() {
-                                if (cining) {
-                                    int frameIndex = getSliderValue() + 1;
-                                    setSliderValue(frameIndex > getSliderMax() ? 0 : frameIndex);
-                                }
+                        GuiExecutor.instance().invokeAndWait(() -> {
+                            if (cining) {
+                                int frameIndex = getSliderValue() + 1;
+                                setSliderValue(frameIndex > getSliderMax() ? 0 : frameIndex);
                             }
                         });
                         // Time to set the new frame index
@@ -437,13 +435,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             }
                         }
 
-                        iteration++;
                         // Check the speed every 3 images
-                        if (iteration > 2) {
+                        if (iteration.incrementAndGet() > 2) {
                             // Get the speed rate (fps) on the last 3 images
-                            currentCineRate = (int) (iteration * 1000 / (System.currentTimeMillis() - start));
+                            currentCineRate = (int) (iteration.get() * 1000 / (System.currentTimeMillis() - start));
                             // reinitialize the parameters for computing speed next time
-                            iteration = 0;
+                            iteration.set(0);
                             waitTimeMillis = 1000 / getSpeed();
                             start = System.currentTimeMillis();
                         }
@@ -451,7 +448,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
 
                 public void iniSpeed() {
-                    iteration = 0;
+                    iteration = new AtomicInteger(0);
                     currentCineRate = getSpeed();
                     waitTimeMillis = 1000 / currentCineRate;
                     start = System.currentTimeMillis();
@@ -1307,7 +1304,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 for (final ResetTools action : ResetTools.values()) {
                     final JMenuItem item = new JMenuItem(action.toString());
                     if (ResetTools.ALL.equals(action)) {
-                        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE,  0));
+                        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0));
                     }
                     item.addActionListener(e -> reset(action));
                     menu.add(item);

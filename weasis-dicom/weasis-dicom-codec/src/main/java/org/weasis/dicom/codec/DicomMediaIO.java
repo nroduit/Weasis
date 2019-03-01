@@ -108,7 +108,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     public static final File CACHE_UNCOMPRESSED_DIR =
         AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "dcm-rawcv"); //$NON-NLS-1$
 
-    public static final String MIMETYPE = "application/dicom"; //$NON-NLS-1$
+    public static final String DICOM_MIMETYPE = "application/dicom"; //$NON-NLS-1$
     public static final String IMAGE_MIMETYPE = "image/dicom"; //$NON-NLS-1$
     public static final String SERIES_VIDEO_MIMETYPE = "video/dicom"; //$NON-NLS-1$
     public static final String SERIES_MIMETYPE = "series/dicom"; //$NON-NLS-1$
@@ -319,7 +319,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         this.uri = Objects.requireNonNull(uri);
         this.numberOfFrame = 0;
         this.tags = new HashMap<>();
-        this.mimeType = MIMETYPE;
+        this.mimeType = DICOM_MIMETYPE;
         this.fileCache = new FileCache(this);
     }
 
@@ -1016,7 +1016,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public Codec getCodec() {
-        return BundleTools.getCodec(DicomMediaIO.MIMETYPE, DicomCodec.NAME);
+        return BundleTools.getCodec(DicomMediaIO.DICOM_MIMETYPE, DicomCodec.NAME);
     }
 
     @Override

@@ -38,6 +38,8 @@ import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -143,7 +145,7 @@ import bibliothek.util.Colors;
 public class WeasisWin {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
-    public static final String[] functions = { "info", "ui" }; //$NON-NLS-1$ //$NON-NLS-2$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList( "info", "ui" )); //$NON-NLS-1$ //$NON-NLS-2$
 
     private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
     private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$

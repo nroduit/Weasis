@@ -1312,9 +1312,12 @@ public class DicomMediaUtils {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            XMLInputFactory xmlif = XMLInputFactory.newInstance();
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            // disable external entities for security
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml"); //$NON-NLS-1$
-            xmler = xmlif.createXMLStreamReader(stream);
+            xmler = factory.createXMLStreamReader(stream);
 
             while (xmler.hasNext()) {
                 switch (xmler.next()) {

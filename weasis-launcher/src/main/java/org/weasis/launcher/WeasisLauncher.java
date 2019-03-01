@@ -73,7 +73,7 @@ public class WeasisLauncher {
         try {
             LogManager.getLogManager().readConfiguration(loggerProps);
         } catch (SecurityException | IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(); //NOSONAR cannot use logger
         }
     }
 

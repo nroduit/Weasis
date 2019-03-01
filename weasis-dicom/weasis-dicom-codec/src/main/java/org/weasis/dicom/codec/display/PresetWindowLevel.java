@@ -98,7 +98,7 @@ public class PresetWindowLevel {
     public LutShape getShape() {
         return shape;
     }
-    
+
     public boolean isAutoLevel() {
         return keyCode == KeyEvent.VK_0;
     }
@@ -289,9 +289,12 @@ public class PresetWindowLevel {
             if (!file.canRead()) {
                 return Collections.emptyMap();
             }
-            XMLInputFactory xmlif = XMLInputFactory.newInstance();
+            XMLInputFactory factory = XMLInputFactory.newInstance();
+            // disable external entities for security
+            factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+            factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
             stream = new FileInputStream(file); // $NON-NLS-1$
-            xmler = xmlif.createXMLStreamReader(stream);
+            xmler = factory.createXMLStreamReader(stream);
 
             int eventType;
             while (xmler.hasNext()) {

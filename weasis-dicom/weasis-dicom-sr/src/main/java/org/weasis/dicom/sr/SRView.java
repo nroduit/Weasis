@@ -321,7 +321,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 }
             }
 
-            synchronized (model) {
+            synchronized (model) { //NOSONAR lock object is the list for iterating its elements safely
                 for (MediaSeriesGroup st : model.getChildren(patient)) {
                     if (st != study) {
                         s = findSOPInstanceReference(model, st, sopUID);
@@ -358,7 +358,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     private static Series<?> findSOPInstanceReference(DicomModel model, MediaSeriesGroup study, String sopUID) {
         if (model != null && study != null) {
             TagW sopTag = TagD.getUID(Level.INSTANCE);
-            synchronized (model) {
+            synchronized (model) { //NOSONAR lock object is the list for iterating its elements safely
                 for (MediaSeriesGroup seq : model.getChildren(study)) {
                     if (seq instanceof Series) {
                         Series<?> s = (Series<?>) seq;

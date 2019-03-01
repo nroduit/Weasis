@@ -1000,7 +1000,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void setDrawingsVisibility(Boolean visible) {
-        if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()) != visible) {
+        if (!Objects.equals((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()), visible)) {
             actionsInView.put(ActionW.DRAWINGS.cmd(), visible);
             repaint();
         }

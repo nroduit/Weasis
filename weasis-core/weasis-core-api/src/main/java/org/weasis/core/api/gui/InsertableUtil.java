@@ -38,7 +38,7 @@ public class InsertableUtil {
         String componentName, Type type) {
         if (list != null && prefs != null && bundleName != null && componentName != null) {
             Preferences prefNode = prefs.node(componentName).node(type.name().toLowerCase() + "s"); //$NON-NLS-1$
-            synchronized (list) {
+            synchronized (list) {//NOSONAR lock object is the list for iterating its elements safely
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String nodeName = getCName(c.getClass());
@@ -79,7 +79,7 @@ public class InsertableUtil {
     public static void savePreferences(List<? extends Insertable> list, Preferences prefs, Type type) {
         if (list != null && prefs != null) {
             Preferences prefNode = prefs.node(type.name().toLowerCase() + "s"); //$NON-NLS-1$
-            synchronized (list) {
+            synchronized (list) {//NOSONAR lock object is the list for iterating its elements safely
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String cname = getCName(c.getClass());

@@ -71,7 +71,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
             if (val == null || val.length == 0) {
                 Dictionary<String, Object> dict = new Hashtable<>();
                 dict.put(CommandProcessor.COMMAND_SCOPE, "acquire"); //$NON-NLS-1$
-                dict.put(CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions);
+                dict.put(CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions.toArray(new String[AcquireManager.functions.size()]));
                 context.getBundleContext().registerService(serviceClassName, AcquireManager.getInstance(), dict);
             }
         }
