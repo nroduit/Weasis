@@ -33,6 +33,7 @@ import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
@@ -255,7 +256,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         }
         if (lut != null && bound.height > 350) {
             if (lut.getLutTable() == null) {
-                lut = ByteLut.grayLUT;
+                lut = ByteLutCollection.Lut.GRAY.getByteLut();
             }
             byte[][] table = LangUtil.getNULLtoFalse((Boolean) pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
                 ? lut.getInvertedLutTable() : lut.getLutTable();

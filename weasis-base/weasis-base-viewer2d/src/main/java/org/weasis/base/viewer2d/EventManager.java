@@ -171,10 +171,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
 
     private ComboItemListener<ByteLut> newLutAction() {
         List<ByteLut> luts = new ArrayList<>();
-        luts.add(ByteLut.grayLUT);
+        luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
         ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
         // Set default first as the list has been sorted
-        luts.add(0, ByteLut.defaultLUT);
+        luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
         return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
             @Override
