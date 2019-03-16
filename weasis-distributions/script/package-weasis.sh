@@ -203,24 +203,26 @@ if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name '*-${machine}-x86-64-*'  -exec rm -f {} \;
 fi
 
-# Build Java Runtime
-if [ -d "$OUTPUT_PATH/runtime" ] ; then
-  rm -rf "$OUTPUT_PATH/runtime"
+# Remove previous package
+if [ -d "$OUTPUT_PATH" ] ; then
+  rm -rf "$OUTPUT_PATH"
 fi
+
+# Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
 SEC_LAUNCHER="$machine-secondary-launcher.properties"
 
 $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --secondary-launcher "$SEC_LAUNCHER" --verbose --overwrite
+--jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --add-launcher "$SEC_LAUNCHER" --verbose
 
 DICOMIZER_FN="Dicomizer"
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
   $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --secondary-launcher "$SEC_LAUNCHER" --verbose --overwrite
+  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --add-launcher "$SEC_LAUNCHER" --verbose
   mkdir "$IMAGE_PATH\\debug"
   DICOMIZER_FN="WeasisDicomizer"
   cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
@@ -278,24 +280,24 @@ if [ "$PACKAGE" = "YES" ] ; then
   COPYRIGHT="© 2009-2019 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --category "Medical" \
+    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" \
     --win-menu --win-menu-group "$NAME" --win-registry-name "weasis" \
-    --copyright "$COPYRIGHT" --input "$INPUT_PATH" --secondary-launcher "$SEC_LAUNCHER" --app-version "$WEASIS_CLEAN_VERSION" \
-    --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose --overwrite
+    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose
   elif [ "$machine" = "linux" ] ; then
     $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --category "Viewer;MedicalSoftware;Graphics;" \
+    --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" \
     --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-    --copyright "$COPYRIGHT" --input "$INPUT_PATH" --app-version "$WEASIS_CLEAN_VERSION" --secondary-launcher "$SEC_LAUNCHER" \
-    --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose --overwrite
+    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
   elif [ "$machine" = "macosx" ] ; then
-    declare -a installerTypes=("pkg" "mac.appStore")
+    declare -a installerTypes=("pkg")
     for installerType in ${installerTypes[@]}; do
       $JPKGCMD create-installer --app-image "$IMAGE_PATH.app" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-      --license-file "$INPUT_PATH/Licence.txt" --category "Medical" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
-      --mac-app-store-category "Medical" --copyright "$COPYRIGHT" --input "$INPUT_PATH" --app-version "$WEASIS_CLEAN_VERSION" \
-      --secondary-launcher "$SEC_LAUNCHER" --mac-signing-key-user-name "$CERTIFICATE" --installer-type "$installerType" \
-      --file-associations "$FILE_ASSOC" --verbose --overwrite "$MAC_SIGN"
+      --license-file "$INPUT_PATH/Licence.txt" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
+      --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+      --mac-signing-key-user-name "$CERTIFICATE" --installer-type "$installerType" \
+      --file-associations "$FILE_ASSOC" --verbose "$MAC_SIGN"
     done
   fi
 fi

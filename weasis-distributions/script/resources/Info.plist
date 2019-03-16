@@ -30,8 +30,8 @@
   <string>????</string>
   <!-- See http://developer.apple.com/library/mac/#releasenotes/General/SubmittingToMacAppStore/_index.html
        for list of AppStore categories -->
-  <key>Medical</key>
-  <string>DEPLOY_BUNDLE_CATEGORY</string>
+  <key>LSApplicationCategoryType</key>
+  <string>Medical</string>
   <key>CFBundleVersion</key>
   <string>DEPLOY_BUNDLE_CFBUNDLE_VERSION</string>
   <key>NSHumanReadableCopyright</key>
