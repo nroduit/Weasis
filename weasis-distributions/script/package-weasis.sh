@@ -232,7 +232,7 @@ fi
 
 match="app.name"
 insertWeasis='app.splash=resources\/images\/about-round.png\
-app.memory=70%\
+#app.memory=50%\
 app.identifier=org.weasis.viewer\
 app.preferences.id=org\/weasis\/viewer\
 app.classpath=felix.jar:substance.jar:weasis-launcher.jar\
