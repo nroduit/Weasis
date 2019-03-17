@@ -1,23 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-
     <Product Id="PRODUCT_GUID" Name="APPLICATION_NAME" 
-
              Language="1033" Version="APPLICATION_VERSION"
-
              Manufacturer="APPLICATION_VENDOR" 
-
              UpgradeCode="3aedc24e-48a8-4623-ab39-0c3c01c7383a">
-
-        <Package Description="APPLICATION_DESCRIPTION" Comments="None"
-
+        <Package Description="APPLICATION_DESCRIPTION" Manufacturer="APPLICATION_VENDOR"
                  InstallerVersion="200" Compressed="yes"
-
                  InstallScope="INSTALL_SCOPE" Platform="PLATFORM"/>
-
         <Media Id="1" Cabinet="simple.cab" EmbedCab="yes" CompressionLevel="high" />
 
       <MajorUpgrade
@@ -26,47 +17,29 @@
     	AllowSameVersionUpgrades="yes"/>
 
         <!-- We use RemoveFolderEx to ensure application folder is fully 
-
              removed on uninstall. Including files created outside of MSI
-
              after application had been installed (e.g. on AU or user state).
 
-             
 
              Hovewer, RemoveFolderEx is only available in WiX 3.6, 
-
              we will comment it out if we running older WiX.
 
 
-
              RemoveFolderEx requires that we "remember" the path for uninstall.
-
              Read the path value and set the APPLICATIONFOLDER property with the value.
-
         -->
-
         <Property Id="APPLICATIONFOLDER">
-
             <RegistrySearch Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME" 
-
                             Root="REGISTRY_ROOT" Type="raw" 
-
                             Id="APPLICATIONFOLDER_REGSEARCH" Name="Path" />
-
         </Property>
 
         <DirectoryRef Id="APPLICATIONFOLDER">
-
             <Component Id="CleanupMainApplicationFolder" Guid="*" Win64="WIN64">
-
                 <RegistryValue Root="REGISTRY_ROOT"
-
                                    Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME"
-
                                    Name="Path" Type="string" Value="[APPLICATIONFOLDER]"
-
                                    KeyPath="yes" />
-
  
                 <RegistryKey Root="HKCR" Key="weasis">
                   <RegistryValue Type="string" Value="Weasis URI handler"/>
@@ -77,41 +50,25 @@
                   </RegistryKey>
                 </RegistryKey>
                 
-                <RegistryKey Root="HKCR" Key="weasis-dicomizer">
-                  <RegistryValue Type="string" Value="Weasis Dicomizer URI handler"/>
-                  <RegistryValue Type="string" Name="URL Protocol" Value=""/>
-                  <RegistryValue Type="string" Name="DefaultIcon" Value="&quot;[APPLICATIONFOLDER]WeasisDicomizer.ico&quot;,1"/>
-                  <RegistryKey Key="shell\open\command">
-                    <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]WeasisDicomizer.exe&quot; &quot;%1&quot;" />
-                  </RegistryKey>
-                </RegistryKey>
 
                 <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
 
                      will not remove on "install". But only if WiX 3.6 is used. -->
 
                 WIX36_ONLY_START     
-
                   <util:RemoveFolderEx On="uninstall" Property="APPLICATIONFOLDER" />
-
                 WIX36_ONLY_END
-
             </Component>
-
         </DirectoryRef>        
 
         <?include bundle.wxi ?>
-
-UI_BLOCK
-
+        CA_BLOCK
+        <UI>
+            INVALID_INSTALL_DIR_DLG_BLOCK
+            UI_BLOCK
+        </UI>
         <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON" />
-
         <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON" />
-
-SECONDARY_LAUNCHER_ICONS
-
-        <Property Id="ARPPRODUCTICON" Value="StartMenuIcon.exe" />
-
+        ADD_LAUNCHER_ICONS
     </Product>
-
 </Wix>

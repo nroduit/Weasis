@@ -211,22 +211,17 @@ fi
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-SEC_LAUNCHER="$machine-secondary-launcher.properties"
-
 $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --add-launcher "$SEC_LAUNCHER" --verbose
+--jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
-DICOMIZER_FN="Dicomizer"
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
   $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --add-launcher "$SEC_LAUNCHER" --verbose
+  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"
-  DICOMIZER_FN="WeasisDicomizer"
   cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
-  cp "$OUTPUT_PATH-debug\\$NAME\\WeasisDicomizer.exe"  "$IMAGE_PATH\\debug\\$DICOMIZER_FN.exe"
 fi
 
 if [ "$machine" = "macosx" ] ; then
@@ -248,21 +243,9 @@ sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
 rm -f "$OUT_APP/$NAME.cfg.bck"
 
-insertDicomizer='app.splash=resources\/images\/about-round.png\
-app.memory=70%\
-app.identifier=org.weasis.dicomizer\
-app.preferences.id=org\/weasis\/dicomizer\
-app.classpath=felix.jar:substance.jar:weasis-launcher.jar\
-'
-sed -i.bck '/^app\.identifier/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck '/^app\.preferences\.id/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck '/^app\.classpath/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck "s/$match/$insertDicomizer$match/" "$OUT_APP/$DICOMIZER_FN.cfg"
-rm -f "$OUT_APP/$DICOMIZER_FN.cfg.bck"
-
 
 if [ "$machine" = "linux" ] ; then
-  cp "Dicomizer-WeasisTeam-MimeInfo.xml" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer-WeasisTeam-MimeInfo.xml"
+  cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
 # Fix icon of second launcher
 cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/$DICOMIZER_FN.ico"
@@ -288,7 +271,7 @@ if [ "$PACKAGE" = "YES" ] ; then
     $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
     --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" \
     --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
   elif [ "$machine" = "macosx" ] ; then
     declare -a installerTypes=("pkg")
