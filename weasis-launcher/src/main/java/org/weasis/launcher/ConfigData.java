@@ -161,7 +161,7 @@ public class ConfigData {
     }
 
     public String getSourceID() {
-        String cdb = codebase == null ? "dev" : codebase; //$NON-NLS-1$
+        String cdb = codebase == null ? "local" : codebase; //$NON-NLS-1$
         cdb += properties.getProperty(WeasisLauncher.P_WEASIS_PROFILE, "default");
         return toHex(cdb.hashCode());
     }

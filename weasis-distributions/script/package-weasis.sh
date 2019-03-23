@@ -254,7 +254,8 @@ $JPKGCMD --icon-swap  "resources\\Dicomizer.ico" "$OUTPUT_PATH\\$NAME\\$DICOMIZE
 attrib +R "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
 elif [ "$machine" = "macosx" ] ; then
 #cp "launcher.sh" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/launcher.sh"
-cp -R "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
 fi
 
 if [ "$PACKAGE" = "YES" ] ; then
