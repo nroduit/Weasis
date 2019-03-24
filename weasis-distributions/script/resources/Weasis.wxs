@@ -49,29 +49,15 @@
                   </RegistryKey>
                 </RegistryKey>
                 
-                <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
-
-                     will not remove on "install". But only if WiX 3.6 is used. -->
-
-                WIX36_ONLY_START     
-                  <util:RemoveFolderEx On="uninstall" Property="APPLICATIONFOLDER" />
-                WIX36_ONLY_END
-            </Component>
-        </DirectoryRef>        
-
-        <?include bundle.wxi ?>
-         
-        <DirectoryRef Id="DicomizerProgramsFolder">
-            <Component Id="ApplicationShortcut" Guid="*">
-                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Icon="IconDesktop" Description="Build DICOM files from images" 
+                Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Icon="IconDesktop" Description="Build DICOM files from images" 
                   Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Target="Weasis.exe">
     			   <Icon Id="IconDesktop" SourceFile="Dicomizer.ico" />
 				</Shortcut>
-                <RemoveFolder Id="DicomizerProgramsFolder" On="uninstall"/>
-           </Component>
-        </DirectoryRef>
-        
-        
+			
+        </DirectoryRef>        
+
+        <?include bundle.wxi ?>
+
         CA_BLOCK
         <UI>
             INVALID_INSTALL_DIR_DLG_BLOCK
@@ -81,9 +67,5 @@
         <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON" />
         <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe" />
         ADD_LAUNCHER_ICONS
-        
-        <Feature Id="MainApplication" Title="Main Application" Level="1">
-            <ComponentRef Id="ApplicationShortcut" />   
-        </Feature>
     </Product>
 </Wix>
