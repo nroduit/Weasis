@@ -20,13 +20,6 @@
         </RegistryKey>
       </Component>
     </DirectoryRef>
- 
-    <Component Guid="c366e221-576e-457f-a876-574c42d730eb" Id="ApplicationShortcut" Win64="WIN64" Directory="ProgramMenuDir">
-        <Shortcut Advertise="no" Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
-          <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
-        </Shortcut>
-        <RegistryValue Root='HKCU' Key='Software\[Manufacturer]\[ProductName]' Type='string' Value='' KeyPath='yes' />
-    </Component>
     
     <?include bundle.wxi ?>
     CA_BLOCK
@@ -40,6 +33,14 @@
     <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON"/>
     <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>
     ADD_LAUNCHER_ICONS
+    
+    <Component Guid="c366e221-576e-457f-a876-574c42d730eb" Id="ApplicationShortcut" Win64="WIN64" Directory="ProgramMenuDir">
+        <Shortcut Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
+          <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
+        </Shortcut>
+        <RegistryValue Root='HKCU' Key='Software\[Manufacturer]\[ProductName]' Type='string' Value='' KeyPath='yes' />
+    </Component>
+    
     
     <Feature Id="DefaultFeature2" Title="Main Feature 2" Level="1">
       <ComponentRef Id="ApplicationShortcut" />
