@@ -50,9 +50,10 @@
                   </RegistryKey>
                 </RegistryKey>
                 
-                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Advertise="no" Icon="[APPLICATIONFOLDER]Dicomizer.ico" Description="Build DICOM files from images" 
-                  Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Target="Weasis.exe" />
-
+                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Advertise="no" Icon="IconDesktop" Description="Build DICOM files from images" 
+                  Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Target="Weasis.exe">
+    			   <Icon Id="IconDesktop" SourceFile="Dicomizer.ico" />
+				</Shortcut>
                 <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
 
                      will not remove on "install". But only if WiX 3.6 is used. -->
@@ -71,6 +72,7 @@
         </UI>
         <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON" />
         <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON" />
+        <Property Id="ARPPRODUCTICON" Value="StartMenuIcon.exe" />
         ADD_LAUNCHER_ICONS
     </Product>
 </Wix>
