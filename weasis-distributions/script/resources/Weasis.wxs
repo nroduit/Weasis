@@ -1,71 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi" xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+  <Product Id="PRODUCT_GUID" Language="1033" Manufacturer="APPLICATION_VENDOR" Name="APPLICATION_NAME" UpgradeCode="3aedc24e-48a8-4623-ab39-0c3c01c7383a" Version="APPLICATION_VERSION">
+    <Package Compressed="yes" Description="APPLICATION_DESCRIPTION" InstallScope="INSTALL_SCOPE" InstallerVersion="200" Manufacturer="APPLICATION_VENDOR" Platform="PLATFORM"/>
+    <Media Cabinet="simple.cab" CompressionLevel="high" EmbedCab="yes" Id="1"/>
+    <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." Schedule="afterInstallInitialize"/>
 
-<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
-     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
-    <Product Id="PRODUCT_GUID" Name="APPLICATION_NAME" 
-             Language="1033" Version="APPLICATION_VERSION"
-             Manufacturer="APPLICATION_VENDOR" 
-             UpgradeCode="3aedc24e-48a8-4623-ab39-0c3c01c7383a">
-        <Package Description="APPLICATION_DESCRIPTION" Manufacturer="APPLICATION_VENDOR"
-                 InstallerVersion="200" Compressed="yes"
-                 InstallScope="INSTALL_SCOPE" Platform="PLATFORM"/>
-        <Media Id="1" Cabinet="simple.cab" EmbedCab="yes" CompressionLevel="high" />
-
-      <MajorUpgrade
-    	Schedule="afterInstallInitialize"
-      	DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit."/>
-
-        <!-- We use RemoveFolderEx to ensure application folder is fully 
-             removed on uninstall. Including files created outside of MSI
-             after application had been installed (e.g. on AU or user state).
-
-
-             Hovewer, RemoveFolderEx is only available in WiX 3.6, 
-             we will comment it out if we running older WiX.
-
-
-             RemoveFolderEx requires that we "remember" the path for uninstall.
-             Read the path value and set the APPLICATIONFOLDER property with the value.
-        -->
-        <Property Id="APPLICATIONFOLDER">
-            <RegistrySearch Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME" 
-                            Root="REGISTRY_ROOT" Type="raw" 
-                            Id="APPLICATIONFOLDER_REGSEARCH" Name="Path" />
-        </Property>
-
-        <DirectoryRef Id="APPLICATIONFOLDER">
-            <Component Id="CleanupMainApplicationFolder" Guid="*" Win64="WIN64">
-                <RegistryValue Root="REGISTRY_ROOT"
-                                   Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME"
-                                   Name="Path" Type="string" Value="[APPLICATIONFOLDER]"
-                                   KeyPath="yes" />
- 
-                <RegistryKey Root="HKCR" Key="weasis">
-                  <RegistryValue Type="string" Value="Weasis URI handler"/>
-                  <RegistryValue Type="string" Name="URL Protocol" Value=""/>
-                  <RegistryValue Type="string" Name="DefaultIcon" Value="&quot;[APPLICATIONFOLDER]Weasis.ico&quot;,1"/>
-                  <RegistryKey Key="shell\open\command">
-                    <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.exe&quot; &quot;%1&quot;" />
-                  </RegistryKey>
-                </RegistryKey>
-                
-                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Icon="IconDesktop" Description="Build DICOM files from images" 
-                  Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Target="Weasis.exe">
-    			   <Icon Id="IconDesktop" SourceFile="Dicomizer.ico" />
-				</Shortcut>
-			
-        </DirectoryRef>        
-
-        <?include bundle.wxi ?>
-
-        CA_BLOCK
-        <UI>
-            INVALID_INSTALL_DIR_DLG_BLOCK
-            UI_BLOCK
-        </UI>
-        <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON" />
-        <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON" />
-        <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe" />
-        ADD_LAUNCHER_ICONS
-    </Product>
+    <Property Id="APPLICATIONFOLDER">
+      <RegistrySearch Id="APPLICATIONFOLDER_REGSEARCH" Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME" Name="Path" Root="REGISTRY_ROOT" Type="raw"/>
+    </Property>
+    <DirectoryRef Id="APPLICATIONFOLDER">
+      <Component Guid="*" Id="CleanupMainApplicationFolder" Win64="WIN64">
+        <RegistryValue Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME" KeyPath="yes" Name="Path" Root="REGISTRY_ROOT" Type="string" Value="[APPLICATIONFOLDER]"/>
+        <RegistryKey Key="weasis" Root="HKCR">
+          <RegistryValue Type="string" Value="Weasis URI handler"/>
+          <RegistryValue Name="URL Protocol" Type="string" Value=""/>
+          <RegistryValue Name="DefaultIcon" Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.ico&quot;,1"/>
+          <RegistryKey Key="shell\open\command">
+            <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.exe&quot; &quot;%1&quot;"/>
+          </RegistryKey>
+        </RegistryKey>
+        <Shortcut Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
+          <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
+        </Shortcut>
+      </Component>
+    </DirectoryRef>
+    <?include bundle.wxi ?>CA_BLOCK
+        
+    <UI>INVALID_INSTALL_DIR_DLG_BLOCK
+            UI_BLOCK</UI>
+    <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON"/>
+    <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON"/>
+    <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>ADD_LAUNCHER_ICONS</Product>
 </Wix>
