@@ -34,7 +34,4 @@
     <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON"/>
     <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>
     ADD_LAUNCHER_ICONS</Product>
-  <Feature Id="MainApplication" Level="1" Title="Main Application">
-    <ComponentRef Id="ApplicationShortcut"/>
-  </Feature>
 </Wix>
