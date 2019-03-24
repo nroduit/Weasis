@@ -4,7 +4,6 @@
     <Package Compressed="yes" Description="APPLICATION_DESCRIPTION" InstallScope="INSTALL_SCOPE" InstallerVersion="200" Manufacturer="APPLICATION_VENDOR" Platform="PLATFORM"/>
     <Media Cabinet="simple.cab" CompressionLevel="high" EmbedCab="yes" Id="1"/>
     <MajorUpgrade DowngradeErrorMessage="A later version of [ProductName] is already installed. Setup will now exit." Schedule="afterInstallInitialize"/>
-
     <Property Id="APPLICATIONFOLDER">
       <RegistrySearch Id="APPLICATIONFOLDER_REGSEARCH" Key="SOFTWARE\APPLICATION_VENDOR\APPLICATION_NAME" Name="Path" Root="REGISTRY_ROOT" Type="raw"/>
     </Property>
@@ -19,16 +18,27 @@
             <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.exe&quot; &quot;%1&quot;"/>
           </RegistryKey>
         </RegistryKey>
+      </Component>
+      <Component Guid="*" Id="ApplicationShortcut">
         <Shortcut Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
           <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
         </Shortcut>
       </Component>
     </DirectoryRef>
-    <?include bundle.wxi ?>CA_BLOCK
-        
-    <UI>INVALID_INSTALL_DIR_DLG_BLOCK
-            UI_BLOCK</UI>
+    <?include bundle.wxi ?>
+    CA_BLOCK
+
+    <UI>
+      INVALID_INSTALL_DIR_DLG_BLOCK
+      UI_BLOCK
+    </UI>
     <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON"/>
     <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON"/>
-    <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>ADD_LAUNCHER_ICONS</Product>
+    <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>
+    ADD_LAUNCHER_ICONS
+
+    <Feature Id="MainApplication" Level="1" Title="Main Application">
+      <ComponentRef Id="ApplicationShortcut"/>
+    </Feature>
+  </Product>
 </Wix>
