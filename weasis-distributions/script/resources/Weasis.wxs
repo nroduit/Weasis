@@ -19,19 +19,29 @@
           </RegistryKey>
         </RegistryKey>
       </Component>
-      <Component Guid="c366e221-576e-457f-a876-574c42d730eb" Id="ApplicationShortcut">
+      <Component Guid="c366e221-576e-457f-a876-574c42d730eb" Id="ApplicationShortcut" Win64="WIN64">
         <Shortcut Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
           <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
         </Shortcut>
       </Component>
     </DirectoryRef>
-    <?include bundle.wxi ?>CA_BLOCK
-        
     
-    <UI>INVALID_INSTALL_DIR_DLG_BLOCK
-            UI_BLOCK</UI>
+    <?include bundle.wxi ?>
+    CA_BLOCK
+        
+    <UI>
+    INVALID_INSTALL_DIR_DLG_BLOCK
+    UI_BLOCK
+    </UI>
+    
     <Icon Id="DesktopIcon.exe" SourceFile="APPLICATION_ICON"/>
     <Icon Id="StartMenuIcon.exe" SourceFile="APPLICATION_ICON"/>
     <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>
-    ADD_LAUNCHER_ICONS</Product>
+    ADD_LAUNCHER_ICONS
+    
+    <Feature Id="DefaultFeature" Title="Main Feature" Level="1">
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+    
+  </Product>
 </Wix>
