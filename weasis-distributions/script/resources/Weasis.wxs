@@ -39,7 +39,7 @@
     <Property Id="ARPPRODUCTICON" Value="DesktopIcon.exe"/>
     ADD_LAUNCHER_ICONS
     
-    <Feature Id="DefaultFeature" Title="Main Feature" Level="1">
+    <Feature Id="DefaultFeature2" Title="Main Feature 2" Level="1">
       <ComponentRef Id="ApplicationShortcut" />
     </Feature>
     
