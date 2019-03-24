@@ -18,9 +18,6 @@
             <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.exe&quot; &quot;%1&quot;"/>
           </RegistryKey>
         </RegistryKey>
-        <Shortcut Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Description="Build DICOM files from images" Directory="ProgramMenuDir" Icon="IconDesktop" Id="DicomizerShortcut" Name="Dicomizer" Target="Weasis.exe">
-          <Icon Id="IconDesktop" SourceFile="Dicomizer.ico"/>
-        </Shortcut>
       </Component>
     </DirectoryRef>
     
