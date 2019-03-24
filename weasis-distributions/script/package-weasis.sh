@@ -9,6 +9,7 @@ REQUIRED_TEXT_VERSION=13
 
 # Build Parameters
 PACKAGE=YES
+SUBSTANCE_PKG="2.0.1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
@@ -187,7 +188,7 @@ WEASIS_CLEAN_VERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
 if [ "$machine" = "macosx" ] ; then
   WEASIS_VERSION="$WEASIS_CLEAN_VERSION"
   JVM_ARGS="-Dapple.laf.useScreenMenuBar=true $JVM_ARGS"
-  if [[ ! -z "$CERTIFICATE" ]] ; then
+  if [[ ! -x "$CERTIFICATE" ]] ; then
     MAC_SIGN="--mac-sign"
   fi
 fi
@@ -201,6 +202,14 @@ find "$INPUT_DIR"/bundle/*-x86* -type f ! -name '*-'${ARC_OS}'-*'  -exec rm -f {
 # Special case with 32-bit architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name '*-${machine}-x86-64-*'  -exec rm -f {} \;
+fi
+
+# Replace substance available for Java 11
+mvn dependency:get -Dartifact=org.pushing-pixels:radiance-substance-all:$SUBSTANCE_PKG -DremoteRepositories=https://raw.github.com/nroduit/mvn-repo/master/
+MVN_REPO=$(mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]')
+SUBSTANCE_FILE="$MVN_REPO/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
+if [[ ! -r "$SUBSTANCE_FILE" ]] ; then
+  cp -f "$SUBSTANCE_FILE" "$INPUT_DIR/substance.jar" 	
 fi
 
 # Remove previous package
