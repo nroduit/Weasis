@@ -43,6 +43,7 @@ Source: "INSTALLER_NAME\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdir
 
 [Icons]
 Name: "{group}\INSTALLER_NAME"; Filename: "{app}\LAUNCHER_NAME.exe"; IconFilename: "{app}\LAUNCHER_NAME.ico"; Check: APPLICATION_MENU_SHORTCUT()
+Name: "{group}\Dicomizer"; Comment: "Build DICOM files from images"; Filename: "{app}\LAUNCHER_NAME.exe"; IconFilename: "{app}\Dicomizer.ico"; Parameters: "weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22"; Check: APPLICATION_MENU_SHORTCUT()
 Name: "{commondesktop}\INSTALLER_NAME"; Filename: "{app}\LAUNCHER_NAME.exe";  IconFilename: "{app}\LAUNCHER_NAME.ico"; Check: APPLICATION_DESKTOP_SHORTCUT()
 
 [Run]
