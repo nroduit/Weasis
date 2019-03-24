@@ -50,7 +50,7 @@
                   </RegistryKey>
                 </RegistryKey>
                 
-                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Advertise="no" Icon="Dicomizer.ico" Description="Build DICOM files from images" 
+                <Shortcut Id="DicomizerShortcut" Directory="ProgramMenuDir" Name="Dicomizer" Advertise="no" Icon="[APPLICATIONFOLDER]Dicomizer.ico" Description="Build DICOM files from images" 
                   Arguments="weasis://%24weasis%3Aconfig%20pro%3D%22felix.extended.config.properties%20file%3Aconf%2Fext-dicomizer.properties%22%20pro%3D%22weasis.profile%20dicomizer%22%20pro%3D%22gosh.port%2017181%22" Target="Weasis.exe" />
 
                 <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx

@@ -207,14 +207,19 @@ fi
 # Replace substance available for Java 11
 mvn dependency:get -Dartifact=org.pushing-pixels:radiance-substance-all:$SUBSTANCE_PKG -DremoteRepositories=https://raw.github.com/nroduit/mvn-repo/master/
 MVN_REPO=$(mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]')
-SUBSTANCE_FILE="$MVN_REPO/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
-if [[ ! -r "$SUBSTANCE_FILE" ]] ; then
-  cp -f "$SUBSTANCE_FILE" "$INPUT_DIR/substance.jar" 	
+SUBSTANCE_FILE="${MVN_REPO//[$'\t\r\n']}/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
+if [[ -r "$SUBSTANCE_FILE" ]] ; then
+  cp -fv "${SUBSTANCE_FILE}" "${INPUT_DIR}/substance.jar"
+else
+  echo "Warning: cannot copy Substance file: ${SUBSTANCE_FILE}"
 fi
 
 # Remove previous package
-if [ -d "$OUTPUT_PATH" ] ; then
-  rm -rf "$OUTPUT_PATH"
+if [ -d "${OUTPUT_PATH}" ] ; then
+  rm -rf "${OUTPUT_PATH}"
+fi
+if [ -d "${OUTPUT_PATH}-debug" ] ; then
+  rm -rf "${OUTPUT_PATH}-debug"
 fi
 
 # Build Java Runtime
@@ -256,15 +261,11 @@ rm -f "$OUT_APP/$NAME.cfg.bck"
 if [ "$machine" = "linux" ] ; then
   cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
-# Fix icon of second launcher
-cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/$DICOMIZER_FN.ico"
-attrib -r "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
-$JPKGCMD --icon-swap  "resources\\Dicomizer.ico" "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
-attrib +R "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
+  # Fix icon of second launcher
+  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
-#cp "launcher.sh" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/launcher.sh"
-cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
-cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
 fi
 
 if [ "$PACKAGE" = "YES" ] ; then
@@ -294,3 +295,4 @@ if [ "$PACKAGE" = "YES" ] ; then
     done
   fi
 fi
+
