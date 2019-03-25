@@ -1,6 +1,9 @@
 package org.weasis.launcher;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -158,7 +161,7 @@ public class ConfigData {
     }
 
     public String getSourceID() {
-        String cdb = codebase == null ? "dev" : codebase; //$NON-NLS-1$
+        String cdb = codebase == null ? "local" : codebase; //$NON-NLS-1$
         cdb += properties.getProperty(WeasisLauncher.P_WEASIS_PROFILE, "default");
         return toHex(cdb.hashCode());
     }
@@ -210,8 +213,17 @@ public class ConfigData {
 
         if (files) {
             for (int i = 0; i < args.length; i++) {
+                String val = args[i];
                 // DICOM files
-                arguments.add("dicom:get -l \"" + args[i] + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                if(val.startsWith("file:")){
+                    try {
+                        val = new File(new URI(args[i])).getPath();
+                    } catch (URISyntaxException e) {
+                        LOGGER.log(Level.SEVERE, "Convert URI to file", e); //$NON-NLS-1$
+                    }
+                   
+                }
+                arguments.add("dicom:get -l \"" + val + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
     }

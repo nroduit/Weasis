@@ -9,6 +9,7 @@ REQUIRED_TEXT_VERSION=13
 
 # Build Parameters
 PACKAGE=YES
+SUBSTANCE_PKG="2.0.1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
@@ -187,7 +188,7 @@ WEASIS_CLEAN_VERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
 if [ "$machine" = "macosx" ] ; then
   WEASIS_VERSION="$WEASIS_CLEAN_VERSION"
   JVM_ARGS="-Dapple.laf.useScreenMenuBar=true $JVM_ARGS"
-  if [[ ! -z "$CERTIFICATE" ]] ; then
+  if [[ ! -x "$CERTIFICATE" ]] ; then
     MAC_SIGN="--mac-sign"
   fi
 fi
@@ -203,30 +204,38 @@ if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name '*-${machine}-x86-64-*'  -exec rm -f {} \;
 fi
 
+# Replace substance available for Java 11
+mvn dependency:get -Dartifact=org.pushing-pixels:radiance-substance-all:$SUBSTANCE_PKG -DremoteRepositories=https://raw.github.com/nroduit/mvn-repo/master/
+MVN_REPO=$(mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]')
+SUBSTANCE_FILE="${MVN_REPO//[$'\t\r\n']}/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
+if [[ -r "$SUBSTANCE_FILE" ]] ; then
+  cp -fv "${SUBSTANCE_FILE}" "${INPUT_DIR}/substance.jar"
+else
+  echo "Warning: cannot copy Substance file: ${SUBSTANCE_FILE}"
+fi
+
 # Remove previous package
-if [ -d "$OUTPUT_PATH" ] ; then
-  rm -rf "$OUTPUT_PATH"
+if [ -d "${OUTPUT_PATH}" ] ; then
+  rm -rf "${OUTPUT_PATH}"
+fi
+if [ -d "${OUTPUT_PATH}-debug" ] ; then
+  rm -rf "${OUTPUT_PATH}-debug"
 fi
 
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-SEC_LAUNCHER="$machine-secondary-launcher.properties"
-
 $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --add-launcher "$SEC_LAUNCHER" --verbose
+--jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
-DICOMIZER_FN="Dicomizer"
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
   $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --add-launcher "$SEC_LAUNCHER" --verbose
+  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"
-  DICOMIZER_FN="WeasisDicomizer"
   cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
-  cp "$OUTPUT_PATH-debug\\$NAME\\WeasisDicomizer.exe"  "$IMAGE_PATH\\debug\\$DICOMIZER_FN.exe"
 fi
 
 if [ "$machine" = "macosx" ] ; then
@@ -237,7 +246,7 @@ fi
 
 match="app.name"
 insertWeasis='app.splash=resources\/images\/about-round.png\
-app.memory=70%\
+#app.memory=50%\
 app.identifier=org.weasis.viewer\
 app.preferences.id=org\/weasis\/viewer\
 app.classpath=felix.jar:substance.jar:weasis-launcher.jar\
@@ -248,30 +257,15 @@ sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
 rm -f "$OUT_APP/$NAME.cfg.bck"
 
-insertDicomizer='app.splash=resources\/images\/about-round.png\
-app.memory=70%\
-app.identifier=org.weasis.dicomizer\
-app.preferences.id=org\/weasis\/dicomizer\
-app.classpath=felix.jar:substance.jar:weasis-launcher.jar\
-'
-sed -i.bck '/^app\.identifier/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck '/^app\.preferences\.id/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck '/^app\.classpath/d' "$OUT_APP/$DICOMIZER_FN.cfg"
-sed -i.bck "s/$match/$insertDicomizer$match/" "$OUT_APP/$DICOMIZER_FN.cfg"
-rm -f "$OUT_APP/$DICOMIZER_FN.cfg.bck"
-
 
 if [ "$machine" = "linux" ] ; then
-  cp "Dicomizer-WeasisTeam-MimeInfo.xml" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer-WeasisTeam-MimeInfo.xml"
+  cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
-# Fix icon of second launcher
-cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/$DICOMIZER_FN.ico"
-attrib -r "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
-$JPKGCMD --icon-swap  "resources\\Dicomizer.ico" "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
-attrib +R "$OUTPUT_PATH\\$NAME\\$DICOMIZER_FN.exe"
+  # Fix icon of second launcher
+  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
-#cp "launcher.sh" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/launcher.sh"
-cp -R "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
 fi
 
 if [ "$PACKAGE" = "YES" ] ; then
@@ -288,7 +282,7 @@ if [ "$PACKAGE" = "YES" ] ; then
     $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
     --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" \
     --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
   elif [ "$machine" = "macosx" ] ; then
     declare -a installerTypes=("pkg")
@@ -301,3 +295,4 @@ if [ "$PACKAGE" = "YES" ] ; then
     done
   fi
 fi
+

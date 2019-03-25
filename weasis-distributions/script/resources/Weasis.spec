@@ -1,4 +1,4 @@
-Summary: APPLICATION_SUMMARY
+Summary: APPLICATION_DESCRIPTION
 Name: APPLICATION_PACKAGE
 Version: APPLICATION_VERSION
 Release: 1
@@ -37,7 +37,7 @@ INSTALLATION_DIRECTORY/APPLICATION_FS_NAME
 %post
 if [ "CREATE_JRE_INSTALLER" != "true" ]; then
     ADD_LAUNCHERS_INSTALL
-    xdg-mime install INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer-WeasisTeam-MimeInfo.xml
+    xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop	
     xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
     FILE_ASSOCIATION_INSTALL
 fi
@@ -45,7 +45,7 @@ fi
 %preun
 if [ "CREATE_JRE_INSTALLER" != "true" ]; then
     ADD_LAUNCHERS_REMOVE
-    xdg-mime uninstall INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer-WeasisTeam-MimeInfo.xml
+    xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop
     xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
     FILE_ASSOCIATION_REMOVE
 fi

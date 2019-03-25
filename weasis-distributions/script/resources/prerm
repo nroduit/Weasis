@@ -22,7 +22,7 @@ case "$1" in
         if [ "CREATE_JRE_INSTALLER" != "true" ]; then
             echo Removing shortcut
     ADD_LAUNCHERS_REMOVE
-            xdg-mime uninstall INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer-WeasisTeam-MimeInfo.xml
+            xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop
             xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
     FILE_ASSOCIATION_REMOVE
         fi

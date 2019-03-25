@@ -92,7 +92,7 @@ public class Utils {
                 String arg = b.toString();
                 b.setLength(0);
                 if (Utils.hasText(arg)) {
-                    matchList.add(arg);
+                    matchList.add(arg.trim());
                 }
             }
         }
@@ -100,7 +100,7 @@ public class Utils {
         m.appendTail(b);
         String arg = b.toString();
         if (Utils.hasText(arg)) {
-            matchList.add(arg);
+            matchList.add(arg.trim());
         }
         return matchList;
     }
