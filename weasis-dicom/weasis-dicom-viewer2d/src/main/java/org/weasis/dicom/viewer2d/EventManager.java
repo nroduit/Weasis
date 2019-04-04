@@ -558,6 +558,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             evt.put(command, object);
             firePropertyChange(ActionW.SYNCH.cmd(), null, evt);
         }
+
+        if (selectedView2dContainer != null) {
+            fireSeriesViewerListeners(
+                new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.WIN_LEVEL));
+        }
     }
 
     private ComboItemListener<PresetWindowLevel> newPresetAction() {
