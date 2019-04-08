@@ -77,6 +77,10 @@ public class Utils {
     public static String removeEnglobingQuotes(String value) {
         return value.replaceAll("^\"|\"$", ""); //$NON-NLS-1$ //$NON-NLS-2$
     }
+    
+    public static String adaptPathToUri(String value) {
+        return value.replace("\\", "/").replace(" ", "%20");
+    }
 
     public static List<String> splitSpaceExceptInQuotes(String s) {
         if (s == null) {

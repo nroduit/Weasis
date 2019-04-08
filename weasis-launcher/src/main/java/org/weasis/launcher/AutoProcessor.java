@@ -493,6 +493,10 @@ public class AutoProcessor {
             if ((!exit) && (tokStarted)) {
                 retVal = tokBuf.toString();
             }
+            
+            if(Utils.hasText(retVal)) {
+                retVal = Utils.adaptPathToUri(retVal);  
+            }
         }
 
         return retVal;

@@ -719,7 +719,7 @@ public class WeasisLauncher {
         // Only required for dev purposes (running the app in IDE)
         String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$
         if (mvnRepo != null) {
-            System.setProperty("maven.localRepository", mvnRepo.replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
         String cdb = System.getProperty(P_WEASIS_CODEBASE_URL);
