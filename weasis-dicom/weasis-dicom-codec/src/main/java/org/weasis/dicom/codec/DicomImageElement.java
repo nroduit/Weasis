@@ -22,19 +22,15 @@ import org.dcm4che3.data.Tag;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.LutShape;
-import org.weasis.core.api.image.PseudoColorOp;
-import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.LangUtil;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
-import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
@@ -202,7 +198,7 @@ public class DicomImageElement extends ImageElement {
     public String toString() {
         return TagD.getTagValue(this, Tag.SOPInstanceUID, String.class);
     }
-    
+
     @Override
     public DcmMediaReader getMediaReader() {
         return (DcmMediaReader) super.getMediaReader();
@@ -353,7 +349,7 @@ public class DicomImageElement extends ImageElement {
      * value of LUT Descriptor. This range is always unsigned.
      *
      * @param pixelPadding
-     * @param inverseLUT
+     * @param inverseLUTAction
      * @return the modality lookup table
      */
     protected LookupTableCV getModalityLookup(TagReadable tagable, boolean pixelPadding, boolean inverseLUTAction) {
@@ -518,8 +514,10 @@ public class DicomImageElement extends ImageElement {
                 Integer paddingValue = getPaddingValue();
                 if (paddingValue != null) {
                     Integer paddingLimit = getPaddingLimit();
-                    Integer paddingValueMin = (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
-                    Integer paddingValueMax = (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
+                    Integer paddingValueMin =
+                        (paddingLimit == null) ? paddingValue : Math.min(paddingValue, paddingLimit);
+                    Integer paddingValueMax =
+                        (paddingLimit == null) ? paddingValue : Math.max(paddingValue, paddingLimit);
                     findMinMaxValues(img, paddingValueMin, paddingValueMax);
                 }
             }
@@ -634,54 +632,13 @@ public class DicomImageElement extends ImageElement {
             return null;
         }
 
-        Double window = null;
-        Double level = null;
-        Double levelMin = null;
-        Double levelMax = null;
-        LutShape lutShape = null;
-        Boolean pixelPadding = null;
-        Boolean inverseLUT = null;
-        Boolean fillLutOutside = null;
-        Boolean wlOnColorImage = null;
-        LookupTableCV prLutData = null;
-        TagReadable prTags = null;
-
-        if (params != null) {
-            window = (Double) params.get(ActionW.WINDOW.cmd());
-            level = (Double) params.get(ActionW.LEVEL.cmd());
-            levelMin = (Double) params.get(ActionW.LEVEL_MIN.cmd());
-            levelMax = (Double) params.get(ActionW.LEVEL_MAX.cmd());
-            lutShape = (LutShape) params.get(ActionW.LUT_SHAPE.cmd());
-            pixelPadding = (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
-            inverseLUT = (Boolean) params.get(PseudoColorOp.P_LUT_INVERSE);
-            fillLutOutside = (Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT);
-            wlOnColorImage = (Boolean) params.get(WindowOp.P_APPLY_WL_COLOR);
-            prTags = (TagReadable) params.get(WindowAndPresetsOp.P_PR_ELEMENT);
-            if (prTags != null) {
-                prLutData = (LookupTableCV) prTags.getTagValue(TagW.PRLUTsData);
-            }
-
-        }
-
-        boolean pixPadding = LangUtil.getNULLtoTrue(pixelPadding);
-        boolean invLUT = LangUtil.getNULLtoFalse(inverseLUT);
-        double windowValue = (window == null) ? getDefaultWindow(pixPadding) : window;
-        double levelValue = (level == null) ? getDefaultLevel(pixPadding) : level;
-        LutShape lut = (lutShape == null) ? getDefaultShape(pixPadding) : lutShape;
-        double minLevel;
-        double maxLevel;
-        if (levelMin == null || levelMax == null) {
-            minLevel = Math.min(levelValue - windowValue / 2.0, getMinValue(prTags, pixPadding));
-            maxLevel = Math.max(levelValue + windowValue / 2.0, getMaxValue(prTags, pixPadding));
-        } else {
-            minLevel = Math.min(levelMin, getMinValue(prTags, pixPadding));
-            maxLevel = Math.max(levelMax, getMaxValue(prTags, pixPadding));
-        }
-
+        WindLevelParameters p = new WindLevelParameters(this, params);
         int datatype = ImageConversion.convertToDataType(imageSource.type());
+        boolean pixPadding = p.isPixelPadding();
 
         if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-            LookupTableCV modalityLookup = getModalityLookup(prTags, pixPadding, invLUT);
+            LookupTableCV modalityLookup =
+                getModalityLookup(p.getPresentationStateTags(), pixPadding, p.isInverseLut());
             ImageCV imageModalityTransformed =
                 modalityLookup == null ? imageSource.toImageCV() : modalityLookup.lookup(imageSource.toMat());
 
@@ -691,7 +648,9 @@ public class DicomImageElement extends ImageElement {
              * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
              * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
              */
-            if ((!LangUtil.getNULLtoFalse(wlOnColorImage) || MathUtil.isEqual(windowValue, 255.0) && MathUtil.isEqual(levelValue, 127.5)) && !isPhotometricInterpretationMonochrome()) {
+            if ((!p.isAllowWinLevelOnColorImage()
+                || MathUtil.isEqual(p.getWindow(), 255.0) && MathUtil.isEqual(p.getLevel(), 127.5))
+                && !isPhotometricInterpretationMonochrome()) {
                 /*
                  * If photometric interpretation is not monochrome do not apply VOILUT. It is necessary for
                  * PALETTE_COLOR.
@@ -700,23 +659,24 @@ public class DicomImageElement extends ImageElement {
             }
 
             LookupTableCV voiLookup = null;
-            if (prLutData == null || lut.getLookup() != null) {
-                voiLookup = getVOILookup(prTags, windowValue, levelValue, minLevel, maxLevel, lut,
-                    LangUtil.getNULLtoFalse(fillLutOutside), pixPadding);
+            LookupTableCV prLutData = p.getPresentationStateLut();
+            if (prLutData == null || p.getLutShape().getLookup() != null) {
+                voiLookup = getVOILookup(p.getPresentationStateTags(), p.getWindow(), p.getLevel(), p.getLevelMin(),
+                    p.getLevelMax(), p.getLutShape(), p.isFillOutsideLutRange(), pixPadding);
             }
 
             if (prLutData == null) {
                 return voiLookup.lookup(imageModalityTransformed);
             }
 
-            ImageCV imageVoiTransformed = voiLookup == null ? imageModalityTransformed
-                : voiLookup.lookup(imageModalityTransformed);
+            ImageCV imageVoiTransformed =
+                voiLookup == null ? imageModalityTransformed : voiLookup.lookup(imageModalityTransformed);
             return prLutData.lookup(imageVoiTransformed);
 
         } else if (datatype == DataBuffer.TYPE_INT || datatype == DataBuffer.TYPE_FLOAT
             || datatype == DataBuffer.TYPE_DOUBLE) {
-            double low = levelValue - windowValue / 2.0;
-            double high = levelValue + windowValue / 2.0;
+            double low = p.getLevel() - p.getWindow() / 2.0;
+            double high = p.getLevel() + p.getWindow() / 2.0;
             double range = high - low;
             if (range < 1.0 && datatype == DataBuffer.TYPE_INT) {
                 range = 1.0;
