@@ -98,6 +98,7 @@ public class HistogramPanel extends JPanel {
         float fj = (tLut - SLIDER_Y) * zoom / maxHistogramCounts;
         float lutLength = getWidth() - SLIDER_X * 2.0f;
         this.xAxisHistoRescaleRatio = lutLength / nbBins;
+
         g2d.setStroke(new BasicStroke(xAxisHistoRescaleRatio + 0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
 
         sum = 0.0f;
