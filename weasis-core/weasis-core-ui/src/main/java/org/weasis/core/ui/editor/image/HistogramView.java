@@ -34,6 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfFloat;
 import org.opencv.core.MatOfInt;
@@ -51,9 +52,6 @@ import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.ChannelHistogramPanel;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -123,7 +121,6 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
         this.viewer = viewer;
         setLayout(new BorderLayout());
         view.setLayout(new BorderLayout());
-        setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         add(view, BorderLayout.CENTER);
         setPreferredSize(new Dimension(400, 300));
         setMinimumSize(new Dimension(150, 50));
@@ -175,6 +172,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             histView.setLayout(new BoxLayout(histView, BoxLayout.Y_AXIS));
 
             JPanel headerPanel = new JPanel();
+            headerPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7));
             headerPanel.add(new JLabel("Channel" + StringUtil.COLON));
 
             jComboBoxImgChannel.removeItemListener(modelListener);
@@ -231,16 +229,20 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             for (int i = 0; i < selChannels.length; i++) {
                 selChannels[i] = i;
             }
-            List<Mat> listHisto = getHistogram(imageSource, 256, selChannels, clorModel, p);
+            try {
+                List<Mat> listHisto = getHistogram(imageSource, 512, selChannels, clorModel, p);
 
-            ByteLut[] lut = clorModel.getByteLut();
-            for (int i = 0; i < lut.length; i++) {
-                ChannelHistogramPanel chartPanel = new ChannelHistogramPanel(lut[i].getName());
-                histView.add(chartPanel);
-                Mat h = listHisto.get(i);
-                float[] histValues = new float[h.rows()];
-                h.get(0, 0, histValues);
-                chartPanel.setHistogramBins(histValues, lut[i], p);
+                ByteLut[] lut = clorModel.getByteLut();
+                for (int i = 0; i < lut.length; i++) {
+                    ChannelHistogramPanel chartPanel = new ChannelHistogramPanel(lut[i].getName());
+                    histView.add(chartPanel);
+                    Mat h = listHisto.get(i);
+                    float[] histValues = new float[h.rows()];
+                    h.get(0, 0, histValues);
+                    chartPanel.setHistogramBins(histValues, lut[i], p);
+                }
+            } catch (Exception e) {
+                LOGGER.error("Build histogram", e);
             }
             histView.revalidate();
             histView.repaint();
@@ -255,7 +257,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             for (int i = 0; i < imageSource.height(); i++) {
                 imageSource.get(i, 0, pix);
                 IntStream is = IntStream.range(0, pix.length).map(k -> pix[k]);
-                pw.println(is.mapToObj(k -> String.valueOf(k)).collect(Collectors.joining(",")));
+                pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(",")));
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -270,13 +272,21 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
         // Number of histogram bins
         MatOfInt histSize = new MatOfInt(nbBins);
         MatOfFloat histRange = new MatOfFloat((float) p.getLevelMin(), (float) p.getLevelMax() + 1.0f);
+        Mat img;
+        if (CvType.depth(imageSource.type()) == CvType.CV_16S) {
+            Mat floatImage = new Mat(imageSource.height(), imageSource.width(), CvType.CV_32F);
+            imageSource.toMat().convertTo(floatImage, CvType.CV_32F);
+            img = floatImage;
+        } else {
+            img = imageSource.toMat();
+        }
 
         List<Mat> channels = new ArrayList<>();
         if (selChannels.length == 1) {
-            channels.add(imageSource.toMat());
+            channels.add(img);
         } else {
             if (Model.RGB == model) {
-                Core.split(imageSource.toMat(), channels);
+                Core.split(img, channels);
                 Collections.reverse(channels);
             } else {
                 ImageCV dstImg = new ImageCV();
@@ -290,7 +300,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
                 } else {
                     code = Imgproc.COLOR_BGR2RGB;
                 }
-                Imgproc.cvtColor(imageSource.toMat(), dstImg, code);
+                Imgproc.cvtColor(img, dstImg, code);
                 Core.split(dstImg, channels);
             }
         }
