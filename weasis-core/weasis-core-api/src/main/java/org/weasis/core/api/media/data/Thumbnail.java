@@ -23,6 +23,7 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -257,6 +258,9 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     if (imgPl != null) {
                         PlanarImage img = image.getRenderedImage(imgPl);
                         final PlanarImage thumb = createThumbnail(img);
+                        if (!Objects.equals(imgPl, img)) {
+                            ImageConversion.releasePlanarImage(img);
+                        }
                         if (thumb != null) {
                             try {
                                 file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
@@ -284,6 +288,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
 
                             if (thumb == null || thumb.width() <= 0) {
                                 readable = false;
+                                ImageConversion.releasePlanarImage(thumb);
                             } else {
                                 mCache.put(this, thumb);
                             }

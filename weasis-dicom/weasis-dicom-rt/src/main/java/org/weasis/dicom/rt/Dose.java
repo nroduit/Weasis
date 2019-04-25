@@ -35,6 +35,7 @@ import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.opencv.op.ImageConversion;
 
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = -1659662753587452881L;
@@ -265,6 +266,7 @@ public class Dose extends HashMap<Integer, Dvh> {
         Scalar scalar = new Scalar(this.doseGridScaling * 100);
         Mat doseMatrix = new Mat(rows, cols, CvType.CV_32FC1);
         multiply(src, scalar, doseMatrix);
+        ImageConversion.releaseMat(src);
         List<Mat> doseMatrixVector = new ArrayList<>();
         doseMatrixVector.add(doseMatrix);
 
@@ -282,7 +284,8 @@ public class Dose extends HashMap<Integer, Dvh> {
         mask.convertTo(maskSrc, CvType.CV_8U);
 
         Imgproc.calcHist(doseMatrixVector, channels, maskSrc, hist, histSize, histRange);
-        
+        ImageConversion.releaseMat(maskSrc);
+        ImageConversion.releaseMat(doseMatrix);
         return hist;
     }
 
@@ -305,11 +308,13 @@ public class Dose extends HashMap<Integer, Dvh> {
         Mat hierarchy = new Mat();
         
         Imgproc.threshold(src, thr, rawThreshold, 255, Imgproc.THRESH_BINARY);
+        ImageConversion.releaseMat(src);
         Mat thrSrc = new Mat(rows, cols, CvType.CV_8U);
         thr.convertTo(thrSrc, CvType.CV_8U);
+        ImageConversion.releaseMat(thr);
         
         Imgproc.findContours(thrSrc, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
-
+        ImageConversion.releaseMat(thrSrc);
         return contours;
     }
 

@@ -8,7 +8,7 @@
  * Contributors:
  *     Nicolas Roduit - initial API and implementation
  *******************************************************************************/
-package org.weasis.core.api.image;
+package org.weasis.core.api.image.cv;
 
 import java.util.List;
 import java.util.Objects;

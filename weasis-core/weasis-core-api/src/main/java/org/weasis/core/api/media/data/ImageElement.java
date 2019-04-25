@@ -26,10 +26,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.CvUtil;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
@@ -400,7 +400,6 @@ public class ImageElement extends MediaElement {
             PlanarImage img = null;
             try {
                 img = future.get();
-
             } catch (InterruptedException e) {
                 // Re-assert the thread's interrupted status
                 Thread.currentThread().interrupt();

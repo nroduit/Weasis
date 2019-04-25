@@ -115,6 +115,19 @@ public class ImageConversion {
         }
         return toBufferedImage(matrix.toMat());
     }
+    
+    public static void releaseMat(Mat mat) {
+        if (mat != null) {
+            mat.release();
+        }
+    }
+    
+    public static void releasePlanarImage(PlanarImage img) {
+        if (img != null) {
+            img.release();
+        }
+    }
+
 
     public static int convertToDataType(int cvType) {
         switch (CvType.depth(cvType)) {

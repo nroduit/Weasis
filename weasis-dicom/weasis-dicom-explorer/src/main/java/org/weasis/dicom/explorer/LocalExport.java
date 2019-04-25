@@ -19,6 +19,7 @@ import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Properties;
 
 import javax.swing.BoxLayout;
@@ -361,10 +362,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         String path = buildPath(img, keepNames, node);
                         File destinationDir = new File(exportDir, path);
                         destinationDir.mkdirs();
-
+                        
+                        boolean mustBeReleased = false;
                         PlanarImage image = img.getImage(null);
                         if (image != null && !img16) {
-                            image = img.getRenderedImage(image);
+                            PlanarImage rimage = img.getRenderedImage(image);
+                            mustBeReleased = !Objects.equals(rimage, image);
+                            image = rimage;
                         }
                         if (image != null) {
                             File destinationFile = new File(destinationDir, instance + getExtension(format));
@@ -373,6 +377,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             } else {
                                 MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, jpegQuality);
                                 ImageProcessor.writeImage(image.toMat(), destinationFile, map);
+                            }
+                            if(mustBeReleased) {
+                                ImageConversion.releasePlanarImage(image);
                             }
                             if (seriesGph.contains(img.getTagValue(TagD.get(Tag.SeriesInstanceUID)))) {
                                 XmlSerializer.writePresentation(img, destinationFile);
@@ -479,7 +486,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (img.saveToFile(destinationFile)) {
                             writeInDicomDir(writer, img, node, iuid, destinationFile);
                         } else {
-                            LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}", //$NON-NLS-1$
+                                img.getFileCache().getOriginalFile().orElse(null));
                         }
                     } else if (node.getUserObject() instanceof MediaElement) {
                         MediaElement dcm = (MediaElement) node.getUserObject();
@@ -707,8 +715,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         PlanarImage thumbnail = null;
         PlanarImage imgPl = image.getImage(null);
         if (imgPl != null) {
-            PlanarImage img = image.getRenderedImage(imgPl);
-            thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
+            try (PlanarImage img = image.getRenderedImage(imgPl)) {
+                thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
+            }
         }
         // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
         image.removeImageFromCache();
@@ -730,7 +739,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         if ("PALETTE COLOR".equals(pmi)) { //$NON-NLS-1$
             BufferedImage bi =
-                            ImageConversion.convertTo(ImageConversion.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
+                ImageConversion.convertTo(ImageConversion.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
             IndexColorModel cm = (IndexColorModel) bi.getColorModel();
             int[] lutDesc = { cm.getMapSize(), 0, 8 };
             byte[] r = new byte[lutDesc[0]];

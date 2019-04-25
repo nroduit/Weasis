@@ -12,7 +12,7 @@ package org.weasis.core.api.image.op;
 
 import java.util.List;
 
-import org.weasis.core.api.image.CvUtil;
+import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.opencv.data.PlanarImage;
 

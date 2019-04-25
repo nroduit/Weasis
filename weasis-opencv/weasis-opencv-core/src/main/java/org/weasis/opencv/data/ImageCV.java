@@ -73,6 +73,7 @@ public class ImageCV extends Mat implements PlanarImage {
     }
 
     // TODO remove for Java 8
+    @Override
     public Mat toMat() {
         if (this instanceof Mat) {
             return this;
@@ -81,6 +82,7 @@ public class ImageCV extends Mat implements PlanarImage {
         }
     }
 
+    @Override
     public ImageCV toImageCV() {
         if (this instanceof Mat) {
             if (this instanceof ImageCV) {
@@ -92,6 +94,11 @@ public class ImageCV extends Mat implements PlanarImage {
         } else {
             throw new IllegalAccessError("Not implemented yet");
         }
+    }
+
+    @Override
+    public void close() {
+        this.release();
     }
 
 }

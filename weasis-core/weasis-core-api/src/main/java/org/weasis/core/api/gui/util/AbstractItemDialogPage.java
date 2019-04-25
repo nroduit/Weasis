@@ -32,12 +32,6 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
         this.pagePosition = 1000;
     }
 
-    @Override
-    public abstract void resetoDefaultValues();
-
-    @Override
-    public abstract void closeAdditionalWindow();
-
     public void deselectPageAction() {
     }
 

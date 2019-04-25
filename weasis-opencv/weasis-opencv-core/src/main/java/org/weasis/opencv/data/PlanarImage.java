@@ -13,7 +13,7 @@ package org.weasis.opencv.data;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 
-public interface PlanarImage extends ImageSize {
+public interface PlanarImage extends ImageSize, AutoCloseable {
 
     // javadoc: Mat::channels()
     int channels();
@@ -63,7 +63,8 @@ public interface PlanarImage extends ImageSize {
 
     ImageCV toImageCV();
     
-
+    @Override
+    void close();
     // TODO required Java 8
 
     // default Mat toMat() {
