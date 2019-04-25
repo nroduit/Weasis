@@ -62,7 +62,7 @@ public class ByteLutCollection {
                 multiColor[2][i] = (byte) r[p];
             }
             return multiColor;
-        }), IHS("IHS", () -> {
+        }), HUE("Hue", () -> {
             byte[][] ihs = new byte[3][256];
             Color c;
             for (int i = 0; i < 256; i++) {
@@ -72,7 +72,7 @@ public class ByteLutCollection {
                 ihs[2][i] = (byte) c.getRed();
             }
             return ihs;
-        }), RED("Channel Red", () -> {
+        }), RED("Red", () -> {
             byte[][] red = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 red[0][i] = 0;
@@ -80,7 +80,7 @@ public class ByteLutCollection {
                 red[2][i] = (byte) i;
             }
             return red;
-        }), GREEN("Channel Green", () -> {
+        }), GREEN("Green", () -> {
             byte[][] green = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 green[0][i] = 0;
@@ -89,7 +89,7 @@ public class ByteLutCollection {
             }
 
             return green;
-        }), BLUE("Channel Blue", () -> {
+        }), BLUE("Blue", () -> {
             byte[][] blue = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 blue[0][i] = (byte) i;
