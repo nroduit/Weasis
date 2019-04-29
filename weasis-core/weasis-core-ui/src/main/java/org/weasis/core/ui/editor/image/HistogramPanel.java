@@ -25,6 +25,7 @@ import javax.swing.border.CompoundBorder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
@@ -200,17 +201,22 @@ public class HistogramPanel extends JPanel {
         if (low > min) {
             line.setLine(plow, SLIDER_Y, plow, tLut);
             g2d.draw(line);
+            String label = String.valueOf(DecFormater.oneDecimal(low));
+            AbstractGraphicLabel.paintFontOutline(g2d, label, plow - g2d.getFontMetrics().stringWidth(label) / 2.f, SLIDER_Y + midfontHeight);
             drawWl = true;
         }
         if (high < max) {
+            g2d.setPaint(Color.ORANGE);
             line.setLine(phigh, SLIDER_Y, phigh, tLut);
             g2d.draw(line);
+            String label = String.valueOf(DecFormater.oneDecimal(high));
+            AbstractGraphicLabel.paintFontOutline(g2d, label, phigh - g2d.getFontMetrics().stringWidth(label) / 2.f, SLIDER_Y + midfontHeight);
             drawWl = true;
         }
 
         if (drawWl) {
-            g2d.setStroke(new BasicStroke(1.0F));
-            line.setLine(plow, tLut, phigh, SLIDER_Y);
+            g2d.setPaint(Color.ORANGE);
+            line.setLine(plow, SLIDER_Y, phigh, SLIDER_Y);
             g2d.draw(line);
         }
     }
