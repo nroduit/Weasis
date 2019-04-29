@@ -50,10 +50,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
-
 public class ImageProcessor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageProcessor.class);
-
 
     public Mat blur(Mat input, int numberOfTimes) {
         Mat sourceImage;
@@ -168,8 +166,8 @@ public class ImageProcessor {
 
     public static double[][] meanStdDev(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
         Objects.requireNonNull(source);
-        Rectangle b = new Rectangle(0,0, source.width(), source.height()).intersection(shape.getBounds());
-        if(b.getWidth() < 1 || b.getHeight() < 1) {
+        Rectangle b = new Rectangle(0, 0, source.width(), source.height()).intersection(shape.getBounds());
+        if (b.getWidth() < 1 || b.getHeight() < 1) {
             return null;
         }
 
@@ -214,7 +212,7 @@ public class ImageProcessor {
 
         return val;
     }
-    
+
     public static MinMaxLocResult minMaxLoc(Mat srcImg, Mat mask) {
         List<Mat> channels = new ArrayList<>(Objects.requireNonNull(srcImg).channels());
         if (srcImg.channels() > 1) {
@@ -229,13 +227,13 @@ public class ImageProcessor {
 
         for (int i = 0; i < channels.size(); i++) {
             MinMaxLocResult minMax = Core.minMaxLoc(channels.get(i), mask);
-            result.minVal = Math.min(result.minVal , minMax.minVal);
-            if(result.minVal == minMax.minVal) {
-                result.minLoc = minMax.minLoc; 
+            result.minVal = Math.min(result.minVal, minMax.minVal);
+            if (result.minVal == minMax.minVal) {
+                result.minLoc = minMax.minLoc;
             }
-            result.maxVal = Math.max(result.maxVal , minMax.maxVal);
-            if(result.maxVal == minMax.maxVal) {
-                result.maxLoc = minMax.maxLoc; 
+            result.maxVal = Math.max(result.maxVal, minMax.maxVal);
+            if (result.maxVal == minMax.maxVal) {
+                result.maxLoc = minMax.maxLoc;
             }
         }
         return result;
@@ -278,8 +276,6 @@ public class ImageProcessor {
         return dstImg;
     }
 
-
-
     public static ImageCV combineTwoImages(Mat source, Mat imgOverlay, int transparency) {
         Mat srcImg = Objects.requireNonNull(source);
         Mat src2Img = Objects.requireNonNull(imgOverlay);
@@ -303,15 +299,14 @@ public class ImageProcessor {
             grayImg.copyTo(dstImg, mask);
             return dstImg;
         }
-        
+
         ImageCV dstImg = new ImageCV();
         if (srcImg.channels() < 3) {
             Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
+        } else {
+            srcImg.copyTo(dstImg);
         }
-        else {
-            srcImg.copyTo(dstImg); 
-        }
-        
+
         Mat colorImg =
             new Mat(dstImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
         colorImg.copyTo(dstImg, mask);
@@ -325,27 +320,29 @@ public class ImageProcessor {
         return ImageConversion.toBufferedImage(srcImg);
     }
 
-    
     public static ImageCV applyCropMask(Mat source, Rectangle b, double alpha) {
         Mat srcImg = Objects.requireNonNull(source);
-        ImageCV dstImg = new ImageCV();        
+        ImageCV dstImg = new ImageCV();
         source.copyTo(dstImg);
-        if(b.getY() > 0) {
-            Imgproc.rectangle(dstImg, new Point(0.0, 0.0), new Point(dstImg.width(), b.getMinY() ), new Scalar(0), -1);
+        if (b.getY() > 0) {
+            Imgproc.rectangle(dstImg, new Point(0.0, 0.0), new Point(dstImg.width(), b.getMinY()), new Scalar(0), -1);
         }
-        if(b.getX() > 0) {
-            Imgproc.rectangle(dstImg, new Point(0.0, b.getMinY()), new Point(b.getMinX(), b.getMaxY() ), new Scalar(0), -1);
+        if (b.getX() > 0) {
+            Imgproc.rectangle(dstImg, new Point(0.0, b.getMinY()), new Point(b.getMinX(), b.getMaxY()), new Scalar(0),
+                -1);
         }
-        if(b.getX() < dstImg.width()) {
-            Imgproc.rectangle(dstImg, new Point(b.getMaxX(), b.getMinY()), new Point(dstImg.width(), b.getMaxY() ), new Scalar(0), -1);
+        if (b.getX() < dstImg.width()) {
+            Imgproc.rectangle(dstImg, new Point(b.getMaxX(), b.getMinY()), new Point(dstImg.width(), b.getMaxY()),
+                new Scalar(0), -1);
         }
-        if(b.getY() < dstImg.height()) {
-            Imgproc.rectangle(dstImg, new Point(0.0, b.getMaxY()), new Point(dstImg.width(), dstImg.height() ), new Scalar(0), -1);
+        if (b.getY() < dstImg.height()) {
+            Imgproc.rectangle(dstImg, new Point(0.0, b.getMaxY()), new Point(dstImg.width(), dstImg.height()),
+                new Scalar(0), -1);
         }
-        Core.addWeighted(dstImg, alpha, srcImg, 1- alpha, 0.0, dstImg);
+        Core.addWeighted(dstImg, alpha, srcImg, 1 - alpha, 0.0, dstImg);
         return dstImg;
     }
-    
+
     public static ImageCV applyShutter(Mat source, Shape shape, Color color) {
         Mat srcImg = Objects.requireNonNull(source);
         Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
@@ -371,11 +368,10 @@ public class ImageProcessor {
         ImageCV dstImg = new ImageCV();
         if (srcImg.channels() < 3) {
             Imgproc.cvtColor(srcImg, dstImg, Imgproc.COLOR_GRAY2BGR);
+        } else {
+            srcImg.copyTo(dstImg);
         }
-        else {
-            srcImg.copyTo(dstImg); 
-        }
-        
+
         Mat colorImg =
             new Mat(dstImg.size(), CvType.CV_8UC3, new Scalar(color.getBlue(), color.getGreen(), color.getRed()));
         colorImg.copyTo(dstImg, mask);
@@ -413,7 +409,7 @@ public class ImageProcessor {
         Core.flip(source, dstImg, flipCvType);
         return dstImg;
     }
-    
+
     private static boolean isEqualToZero(double val) {
         return Math.copySign(val, 1.0) < 1e-6;
     }
@@ -510,7 +506,7 @@ public class ImageProcessor {
         Imgproc.resize(srcImg, dstImg, dim, 0, 0, Imgproc.INTER_AREA);
         return dstImg;
     }
-    
+
     public static boolean writeImage(Mat source, File file) {
         if (file.exists() && !file.canWrite()) {
             return false;
@@ -541,14 +537,14 @@ public class ImageProcessor {
 
     public static boolean writeThumbnail(Mat source, File file, int maxSize) {
         try {
-            final double scale =
-                Math.min(maxSize / (double) source.height(), (double) maxSize / source.width());
+            final double scale = Math.min(maxSize / (double) source.height(), (double) maxSize / source.width());
             if (scale < 1.0) {
                 Size dim = new Size((int) (scale * source.width()), (int) (scale * source.height()));
-                Mat thumbnail = new Mat();
-                Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
-                MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
-                return Imgcodecs.imwrite(file.getPath(), thumbnail, map);
+                try (ImageCV thumbnail = new ImageCV()) {
+                    Imgproc.resize(source, thumbnail, dim, 0, 0, Imgproc.INTER_AREA);
+                    MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
+                    return Imgcodecs.imwrite(file.getPath(), thumbnail, map);
+                }
             }
             return false;
         } catch (OutOfMemoryError | CvException e) {
@@ -565,12 +561,13 @@ public class ImageProcessor {
 
         // TOOD handle binary
         Mat srcImg = Objects.requireNonNull(source);
+        Mat dstImg = null;
         int type = srcImg.type();
         int elemSize = CvType.ELEM_SIZE(type);
         int channels = CvType.channels(type);
         int bpp = (elemSize * 8) / channels;
         if (bpp > 16 || !CvType.isInteger(type)) {
-            Mat dstImg = new Mat();
+            dstImg = new Mat();
             srcImg.convertTo(dstImg, CvType.CV_16SC(channels));
             srcImg = dstImg;
         }
@@ -581,6 +578,8 @@ public class ImageProcessor {
             LOGGER.error("", e); //$NON-NLS-1$
             delete(file);
             return false;
+        }finally {
+            ImageConversion.releaseMat(dstImg);
         }
     }
 
@@ -589,8 +588,8 @@ public class ImageProcessor {
             return false;
         }
 
-        try {
-            return Imgcodecs.imwrite(file.getPath(), ImageConversion.toMat(source));
+        try (ImageCV  dstImg = ImageConversion.toMat(source)) {
+            return Imgcodecs.imwrite(file.getPath(), dstImg);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("", e); //$NON-NLS-1$
             return false;
@@ -631,7 +630,7 @@ public class ImageProcessor {
         }
         return ImageCV.toImageCV(img);
     }
-    
+
     private static boolean deleteFile(File fileOrDirectory) {
         try {
             Files.delete(fileOrDirectory.toPath());
@@ -657,7 +656,6 @@ public class ImageProcessor {
         }
         return deleteFile(fileOrDirectory);
     }
-
 
     public void process(Mat sourceImage, Mat resultImage, int tileSize) {
 

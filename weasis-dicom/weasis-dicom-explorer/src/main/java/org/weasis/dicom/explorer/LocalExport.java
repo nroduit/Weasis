@@ -312,9 +312,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 for (int i = 0; i < chars.length; i++) {
                     chars[i] = '0';
                 }
-
                 return new String(chars) + val;
-
             } else {
                 return val;
             }
@@ -388,9 +386,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                             LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
                                 img.getFileCache().getOriginalFile().orElse(null));
                         }
-
-                        // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-                        img.removeImageFromCache();
                     } else if (node.getUserObject() instanceof MediaElement
                         && node.getUserObject() instanceof FileExtractor) {
                         MediaElement dcm = (MediaElement) node.getUserObject();
@@ -719,8 +714,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 thumbnail = ImageProcessor.buildThumbnail(img, new Dimension(128, 128), true);
             }
         }
-        // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-        image.removeImageFromCache();
 
         if (thumbnail == null) {
             return null;
@@ -730,7 +723,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         String pmi = TagD.getTagValue(image, Tag.PhotometricInterpretation, String.class);
         if (thumbnail.channels() >= 3) {
-
             pmi = "PALETTE COLOR"; //$NON-NLS-1$
         }
 

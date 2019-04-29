@@ -165,9 +165,6 @@ public final class JIThumbnailCache {
             final BufferedImage tIcon = ImageConversion
                 .toBufferedImage((PlanarImage) ImageProcessor.buildThumbnail(img, ThumbnailRenderer.ICON_DIM, true));
 
-            // Prevent to many files open on Linux (Ubuntu => 1024) and close image stream
-            diskObject.removeImageFromCache();
-
             GuiExecutor.instance().execute(() -> {
                 if (tIcon != null) {
                     cachedThumbnails.put(diskObject.getMediaURI(), new ThumbnailIcon(tIcon));
