@@ -15,7 +15,9 @@ import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.ComboBoxModel;
@@ -65,8 +67,9 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.web.StowRS;
-import org.weasis.dicom.web.StowRS.ContentType;
+import org.weasis.dicom.web.AbstractStowrs.ContentType;
+import org.weasis.dicom.web.StowrsMultiFiles;
+
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
@@ -209,7 +212,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 DicomWebNode destination = (DicomWebNode) selectedItem;
-                try (StowRS stowRS = new StowRS(destination.getUrl().toString(), ContentType.DICOM)) {
+                Map<String, String> headers = new HashMap<>();
+                headers.put("Authorization", "Bearer ez4hZTcdleaIr9QCJsJvsc");
+                try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), ContentType.DICOM, AppProperties.WEASIS_NAME, headers)) {
                     stowRS.uploadDicom(files, true);
                 } catch (Exception e) {
                     LOGGER.error("StowRS error: {}", e.getMessage()); //$NON-NLS-1$
