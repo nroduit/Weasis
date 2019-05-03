@@ -258,8 +258,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             if (lut.getLutTable() == null) {
                 lut = ByteLutCollection.Lut.GRAY.getByteLut();
             }
-            byte[][] table = LangUtil.getNULLtoFalse((Boolean) pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE))
-                ? lut.getInvertedLutTable() : lut.getLutTable();
+            byte[][] table = lut.getLutTable();
             float length = table[0].length;
 
             int width = 0;
@@ -318,11 +317,15 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
                 rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
                 g2.draw(rect);
             }
-
+            
+            boolean invert = LangUtil.getNULLtoFalse((Boolean) pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE));
+            int dynamic = table[0].length - 1;
+                           
             for (int k = 0; k < length; k++) {
                 int l = (int)length -1 - k;
                 // Convert BGR LUT to RBG color
-                g2.setPaint(new Color(table[2][l] & 0xff, table[1][l] & 0xff, table[0][l] & 0xff));
+                int i = invert ?  dynamic - l : l;
+                g2.setPaint(new Color(table[2][i] & 0xff, table[1][i] & 0xff, table[0][i] & 0xff));
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }

@@ -14,12 +14,11 @@ public class ByteLut {
 
     private final String name;
     private final byte[][] lutTable;
-    private final byte[][] invertedLutTable;
 
-    public ByteLut(String name, byte[][] lutTable, byte[][] invertedLutTable) {
+
+    public ByteLut(String name, byte[][] lutTable) {
         this.name = name;
         this.lutTable = lutTable;
-        this.invertedLutTable = invertedLutTable;
     }
 
     @Override
@@ -34,9 +33,4 @@ public class ByteLut {
     public byte[][] getLutTable() {
         return lutTable;
     }
-
-    public byte[][] getInvertedLutTable() {
-        return invertedLutTable;
-    }
-
 }

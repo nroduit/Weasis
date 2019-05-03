@@ -15,7 +15,6 @@ import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
@@ -34,14 +33,21 @@ public class ChannelHistogramPanel extends JPanel {
     private final JButton jButtonHistoMinus;
     private final JButton jButtonHistoPlus;
 
-    private final JCheckBox jCheckAccumulate = new JCheckBox("Acuumulate", false);
-    private final JCheckBox jCheckLogarithmic = new JCheckBox("Logarithmic", false);
-    private final JCheckBox jCheckShowIntensity = new JCheckBox("Show intensity color", true);
+    private final JCheckBox jCheckAccumulate;
+    private final JCheckBox jCheckLogarithmic;
+    private final JCheckBox jCheckShowIntensity;
     private final JButton jButtonReset = new JButton("Reset");
     private final JButton jButtonSave = new JButton("Save");
     private final JPanel panel = new JPanel();
 
     public ChannelHistogramPanel(String name) {
+        this(name, false, false, true);
+    }
+
+    public ChannelHistogramPanel(String name, boolean accumulate, boolean logarithmic, boolean showIntensity) {
+        this.jCheckAccumulate = new JCheckBox("Acuumulate", accumulate);
+        this.jCheckLogarithmic = new JCheckBox("Logarithmic", logarithmic);
+        this.jCheckShowIntensity = new JCheckBox("Show intensity color", showIntensity);
         this.jPanelHistogram = new HistogramPanel();
         this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png")));
         this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png")));
@@ -77,9 +83,33 @@ public class ChannelHistogramPanel extends JPanel {
         jButtonHistoMinus.addActionListener(e -> jPanelHistogram.updateZoom(false));
         panel.add(jButtonReset);
         jButtonReset.addActionListener(e -> reset());
-//        panel.add(jButtonSave);
-//        jButtonSave.addActionListener(e -> save());
+        // panel.add(jButtonSave);
+        // jButtonSave.addActionListener(e -> save());
         jPanelSouth.add(jLabelResultVal, BorderLayout.CENTER);
+    }
+
+    public boolean isAccumulate() {
+        return jCheckAccumulate.isSelected();
+    }
+
+    public boolean isLogarithmic() {
+        return jCheckLogarithmic.isSelected();
+    }
+
+    public boolean isShowIntensity() {
+        return jCheckShowIntensity.isSelected();
+    }
+
+    public float[] getHistValues() {
+        return jPanelHistogram.getHistValues();
+    }
+
+    public WindLevelParameters getWindLevelParameters() {
+        return jPanelHistogram.getWindLevelParameters();
+    }
+    
+    public DisplayByteLut getLut() {
+        return jPanelHistogram.getLut();
     }
 
     private void save() {
@@ -97,7 +127,7 @@ public class ChannelHistogramPanel extends JPanel {
         jCheckAccumulate.setSelected(jPanelHistogram.isAccumulate());
     }
 
-    public void setHistogramBins(float[] histValues, ByteLut lut, WindLevelParameters p) {
+    public void setHistogramBins(float[] histValues, DisplayByteLut lut, WindLevelParameters p) {
         jPanelHistogram.setHistogramBins(histValues, lut, jCheckAccumulate.isSelected(), jCheckLogarithmic.isSelected(),
             jCheckShowIntensity.isSelected());
         jPanelHistogram.setWindLevelParameters(p);
@@ -115,6 +145,11 @@ public class ChannelHistogramPanel extends JPanel {
 
     public void setWindLevelParameters(WindLevelParameters p) {
         jPanelHistogram.setWindLevelParameters(p);
+        jPanelHistogram.repaint();
+    }
+
+    public void setLut(DisplayByteLut lut) {
+        jPanelHistogram.setLut(lut);
         jPanelHistogram.repaint();
     }
 }

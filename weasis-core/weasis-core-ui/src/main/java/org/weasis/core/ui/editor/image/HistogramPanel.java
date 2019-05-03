@@ -26,7 +26,7 @@ import javax.swing.border.CompoundBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.image.op.ByteLut;
+import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
@@ -41,8 +41,8 @@ public class HistogramPanel extends JPanel {
     private static final int SLIDER_Y = SLIDER_HEIGHT + 5;
 
     private float[] histValues;
-    private ByteLut lut;
-    private WindLevelParameters winLevParam;
+    private DisplayByteLut lut;
+    private WindLevelParameters windLevel;
 
     private boolean showIntensity = true;
     private boolean logarithmic = false;
@@ -100,10 +100,10 @@ public class HistogramPanel extends JPanel {
         float lutLength = getWidth() - SLIDER_X * 2.0f;
         this.xAxisHistoRescaleRatio = lutLength / nbBins;
 
-        double min = winLevParam.getLevelMin();
-        double max = winLevParam.getLevelMax();
-        double low = winLevParam.getLevel() - winLevParam.getWindow() / 2.0;
-        double high = winLevParam.getLevel() + winLevParam.getWindow() / 2.0;
+        double min = windLevel.getLevelMin();
+        double max = windLevel.getLevelMax();
+        double low = windLevel.getLevel() - windLevel.getWindow() / 2.0;
+        double high = windLevel.getLevel() + windLevel.getWindow() / 2.0;
         float firstlevel = (float) min;
         float hRange = (float) (max - min);
         float spaceFactor = (lutLength - xAxisHistoRescaleRatio) / hRange;
@@ -126,16 +126,15 @@ public class HistogramPanel extends JPanel {
             float xVal = SLIDER_X + i * xAxisHistoRescaleRatio;
 
             // Convert BGR LUT to RBG color
-            Color cLut;
+            int lin;
             if (xVal < plow) {
-                cLut = Color.BLACK;
+                lin = 0;
             } else if (xVal > phigh) {
-                cLut = Color.WHITE;
+                lin = lut.getLutTable()[0].length - 1;
             } else {
-                int lin = (int) ((xVal - plow) * factor);
-                cLut = new Color((lut.getLutTable()[2][lin] & 0xff), (lut.getLutTable()[1][lin] & 0xff),
-                    (lut.getLutTable()[0][lin] & 0xff));
+                lin = (int) ((xVal - plow) * factor);
             }
+            Color cLut = buildColor(lin);
 
             if (showIntensity) {
                 g2d.setPaint(cLut);
@@ -202,7 +201,8 @@ public class HistogramPanel extends JPanel {
             line.setLine(plow, SLIDER_Y, plow, tLut);
             g2d.draw(line);
             String label = String.valueOf(DecFormater.oneDecimal(low));
-            AbstractGraphicLabel.paintFontOutline(g2d, label, plow - g2d.getFontMetrics().stringWidth(label) / 2.f, SLIDER_Y + midfontHeight);
+            AbstractGraphicLabel.paintFontOutline(g2d, label, plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
+                SLIDER_Y + midfontHeight);
             drawWl = true;
         }
         if (high < max) {
@@ -210,7 +210,8 @@ public class HistogramPanel extends JPanel {
             line.setLine(phigh, SLIDER_Y, phigh, tLut);
             g2d.draw(line);
             String label = String.valueOf(DecFormater.oneDecimal(high));
-            AbstractGraphicLabel.paintFontOutline(g2d, label, phigh - g2d.getFontMetrics().stringWidth(label) / 2.f, SLIDER_Y + midfontHeight);
+            AbstractGraphicLabel.paintFontOutline(g2d, label, phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,
+                SLIDER_Y + midfontHeight);
             drawWl = true;
         }
 
@@ -221,17 +222,31 @@ public class HistogramPanel extends JPanel {
         }
     }
 
-    public void setHistogramBins(float[] histValues, ByteLut lut, boolean accumulate, boolean logarithmic,
+    private Color buildColor(int index) {
+        int dynamic = lut.getLutTable()[0].length - 1;
+        int i = LutShape.getByteLutIndex(windLevel.getLutShape(), index);
+        if (lut.isInvert()) {
+            i = dynamic - i;
+        }
+        return new Color((lut.getLutTable()[2][i] & 0xff), (lut.getLutTable()[1][i] & 0xff),
+            (lut.getLutTable()[0][i] & 0xff));
+    }
+
+    public void setHistogramBins(float[] histValues, DisplayByteLut lut, boolean accumulate, boolean logarithmic,
         boolean showIntensity) {
-        this.histValues = histValues;
-        this.lut = lut;
+        this.histValues = Objects.requireNonNull(histValues);
+        setLut(lut);
         this.accumulate = accumulate;
         this.logarithmic = logarithmic;
         this.showIntensity = showIntensity;
     }
 
     public void setWindLevelParameters(WindLevelParameters p) {
-        this.winLevParam = p;
+        this.windLevel = p;
+    }
+
+    public WindLevelParameters getWindLevelParameters() {
+        return windLevel;
     }
 
     public void updateZoom(boolean in) {
@@ -297,15 +312,15 @@ public class HistogramPanel extends JPanel {
         return histValues;
     }
 
-    public ByteLut getLut() {
+    public DisplayByteLut getLut() {
         return lut;
     }
 
     public void saveHistogramInCSV(File csvOutputFile) {
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
             pw.println("Class,Occurrences");
-            double min = winLevParam.getLevelMin();
-            double max = winLevParam.getLevelMax() + 1.0;
+            double min = windLevel.getLevelMin();
+            double max = windLevel.getLevelMax() + 1.0;
             double factor = (max - min) / histValues.length;
             for (int i = 0; i < histValues.length; i++) {
                 int val = (int) Math.ceil(i * factor + min);
@@ -349,8 +364,8 @@ public class HistogramPanel extends JPanel {
             float lpos = (e.getX() - SLIDER_X) / xAxisHistoRescaleRatio;
             int i = Math.round(lpos);
             if (i >= 0 && i < histValues.length) {
-                double min = winLevParam.getLevelMin();
-                double max = winLevParam.getLevelMax() + 1.0;
+                double min = windLevel.getLevelMin();
+                double max = windLevel.getLevelMax() + 1.0;
                 int val = (int) Math.ceil(i * (max - min) / histValues.length + min);
                 int val2 = (int) Math.floor((i + 1) * (max - min) / histValues.length + min);
 
@@ -402,6 +417,10 @@ public class HistogramPanel extends JPanel {
         public void mouseMoved(MouseEvent e) {
             // Do nothing
         }
+    }
+
+    public void setLut(DisplayByteLut lut) {
+        this.lut = Objects.requireNonNull(lut);
     }
 
 }

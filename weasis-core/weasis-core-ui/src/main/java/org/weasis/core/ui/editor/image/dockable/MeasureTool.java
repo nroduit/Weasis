@@ -310,6 +310,25 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
         // just clear tableContainer if measList is null
         if (measList != null) {
+            String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+            jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
+            jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+            createTableHeaders(jtable);
+            int height = (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
+                + jtable.getTableHeader().getHeight() + 5;
+            tableContainer.setPreferredSize(new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
+            tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+            tableContainer.add(jtable, BorderLayout.CENTER);
+            TableColumnAdjuster.pack(jtable);
+        } else {
+            tableContainer.setPreferredSize(new Dimension(50, 50));
+        }
+        tableContainer.revalidate();
+        tableContainer.repaint();
+    }
+
+    public static Object[][] getLabels(List<MeasureItem> measList) {
+        if (measList != null) {
             Object[][] labels = new Object[measList.size()][];
             for (int i = 0; i < labels.length; i++) {
                 MeasureItem m = measList.get(i);
@@ -327,21 +346,9 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
                 row[1] = m.getValue();
                 labels[i] = row;
             }
-            String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") }; //$NON-NLS-1$ //$NON-NLS-2$
-            jtable.setModel(new SimpleTableModel(headers, labels));
-            jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-            createTableHeaders(jtable);
-            int height = (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
-                + jtable.getTableHeader().getHeight() + 5;
-            tableContainer.setPreferredSize(new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
-            tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
-            tableContainer.add(jtable, BorderLayout.CENTER);
-            TableColumnAdjuster.pack(jtable);
-        } else {
-            tableContainer.setPreferredSize(new Dimension(50, 50));
+            return labels;
         }
-        tableContainer.revalidate();
-        tableContainer.repaint();
+        return null;
     }
 
     public static int getNumberOfMeasures(boolean[] select) {

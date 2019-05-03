@@ -697,6 +697,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             public void itemStateChanged(Object object) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
                     new SynchEvent(getSelectedViewPane(), action.cmd(), object));
+                if (selectedView2dContainer != null) {
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.LUT));
+                }
             }
         };
     }

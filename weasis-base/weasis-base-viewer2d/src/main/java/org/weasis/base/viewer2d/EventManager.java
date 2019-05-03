@@ -58,7 +58,6 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.DefaultView2d;
@@ -70,7 +69,6 @@ import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ZoomToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 
@@ -182,6 +180,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                 if (object instanceof ByteLut) {
                     firePropertyChange(ActionW.SYNCH.cmd(), null,
                         new SynchEvent(getSelectedViewPane(), action.cmd(), object));
+                    if (selectedView2dContainer != null) {
+                        fireSeriesViewerListeners(
+                            new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.LUT));
+                    }
                 }
             }
         };

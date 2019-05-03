@@ -172,7 +172,8 @@ public class ImageConversion {
         }
 
         if (isBinary(raster.getSampleModel())) {
-            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);
+            // Sonar false positive: not mandatory to close ImageCV (can be done with finalize())
+            ImageCV mat = new ImageCV(raster.getHeight(), raster.getWidth(), CvType.CV_8UC1);  //NOSONAR
             mat.put(0, 0, getUnpackedBinaryData(raster, raster.getBounds()));
             return mat;
         }

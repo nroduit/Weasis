@@ -252,6 +252,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             public void stateChanged(BoundedRangeModel model) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
                     new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
+                if (selectedView2dContainer != null) {
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.WIN_LEVEL));
+                }
             }
         };
     }
@@ -263,6 +267,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             public void stateChanged(BoundedRangeModel model) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
                     new SynchEvent(getSelectedViewPane(), getActionW().cmd(), toModelValue(model.getValue())));
+                if (selectedView2dContainer != null) {
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.WIN_LEVEL));
+                }
             }
         };
     }
@@ -356,6 +364,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             public void actionPerformed(boolean selected) {
                 firePropertyChange(ActionW.SYNCH.cmd(), null,
                     new SynchEvent(getSelectedViewPane(), action.cmd(), selected));
+                if (selectedView2dContainer != null) {
+                    fireSeriesViewerListeners(
+                        new SeriesViewerEvent(selectedView2dContainer, null, null, EVENT.LUT));
+                }
             }
         };
     }

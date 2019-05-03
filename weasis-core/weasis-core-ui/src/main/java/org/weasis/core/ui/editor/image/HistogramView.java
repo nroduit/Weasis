@@ -11,8 +11,10 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
@@ -28,10 +30,16 @@ import java.util.stream.IntStream;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.JTable;
+import javax.swing.SpinnerNumberModel;
+import javax.swing.border.TitledBorder;
 
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -41,17 +49,28 @@ import org.opencv.core.MatOfInt;
 import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.op.ByteLutCollection.Lut;
+import org.weasis.core.api.image.util.Statistics;
+import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.image.util.WindLevelParameters;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
+import org.weasis.core.ui.model.utils.ImageStatistics;
+import org.weasis.core.ui.model.utils.bean.MeasureItem;
+import org.weasis.core.ui.util.SimpleTableModel;
+import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -59,9 +78,10 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HistogramView.class);
 
-    private final JPanel view = new JPanel();;
+    private final JPanel view = new JPanel();
     private final JPanel histView = new JPanel();
     private final SeriesViewer<?> viewer;
+    private final JSpinner spinnerBins = new JSpinner(new SpinnerNumberModel(512, 64, 4096, 16));
 
     private ViewCanvas<?> view2DPane;
 
@@ -101,11 +121,11 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
         }
 
         private static ByteLut buildLut(String name, Lut lut) {
-            return new ByteLut(name, lut.getByteLut().getLutTable(), lut.getByteLut().getInvertedLutTable());
+            return new ByteLut(name, lut.getByteLut().getLutTable());
         }
 
         private static ByteLut buildLut(String name, byte[][] slut) {
-            return new ByteLut(name, slut, ByteLutCollection.invert(slut));
+            return new ByteLut(name, slut);
         }
     }
 
@@ -144,6 +164,21 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
                         }
                     }
                 }
+            } else if (EVENT.LUT.equals(type)) {
+                WindLevelParameters p = getWinLeveParameters();
+                if (p == null) {
+                    return;
+                }
+                PlanarImage imageSource = view2DPane.getSourceImage();
+                int channels = imageSource.channels();
+                Model colorModel = getSelectedColorModel(channels);
+                DisplayByteLut[] lut = getLut(p, colorModel);
+                for (int i = 0; i < histView.getComponentCount(); i++) {
+                    Component c = histView.getComponent(i);
+                    if (c instanceof ChannelHistogramPanel) {
+                        ((ChannelHistogramPanel) c).setLut(lut[i]);
+                    }
+                }
             }
         }
     }
@@ -172,8 +207,13 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             histView.setLayout(new BoxLayout(histView, BoxLayout.Y_AXIS));
 
             JPanel headerPanel = new JPanel();
-            headerPanel.setBorder(BorderFactory.createEmptyBorder(7, 7, 7, 7));
-            headerPanel.add(new JLabel("Channel" + StringUtil.COLON));
+            headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
+            headerPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 7, 7, 7),
+                new TitledBorder(null, "Histogram Parameters", TitledBorder.DEFAULT_JUSTIFICATION,
+                    TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
+
+            JPanel row1 = new JPanel();
+            row1.add(new JLabel("Channel" + StringUtil.COLON));
 
             jComboBoxImgChannel.removeItemListener(modelListener);
             jComboBoxImgChannel.removeAllItems();
@@ -187,16 +227,88 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             }
             jComboBoxImgChannel.addItemListener(modelListener);
 
-            headerPanel.add(jComboBoxImgChannel);
-            headerPanel.add(Box.createHorizontalStrut(15));
+            row1.add(jComboBoxImgChannel);
+            headerPanel.add(row1);
 
-            final JLabel lutLabel = new JLabel();
-            lutLabel.setText("Channel" + StringUtil.COLON);
-            headerPanel
-                .add(new JLabel("Pixels" + StringUtil.COLON_AND_SPACE + imageSource.width() * imageSource.height()));
+            JPanel row2 = new JPanel();
+            row2.add(new JLabel("Bins" + StringUtil.COLON));
+            JMVUtils.formatCheckAction(spinnerBins);
+            row2.add(spinnerBins);
+            spinnerBins.addChangeListener(e -> buildHistogram());
+            row2.add(Box.createHorizontalStrut(15));
+
+            final JButton stats = new JButton("Statistics");
+            stats.addActionListener((ActionEvent e) -> showStatistics());
+            row2.add(stats);
+            headerPanel.add(row2);
+
             view.add(headerPanel, BorderLayout.NORTH);
             view.add(histView, BorderLayout.CENTER);
         }
+    }
+
+    private void showStatistics() {
+        ChannelHistogramPanel[] hist = new ChannelHistogramPanel[histView.getComponentCount()];
+        for (int i = 0; i < hist.length; i++) {
+            Component c = histView.getComponent(i);
+            if (c instanceof ChannelHistogramPanel) {
+                hist[i] = (ChannelHistogramPanel) c;
+            }
+        }
+
+        if (hist.length == 0) {
+            return;
+        }
+       
+        List<MeasureItem> measList = new ArrayList<>();
+        for (int i = 0; i < hist.length; i++) {
+            String unit = hist[i].getLut().getName();
+            float[] b = hist[i].getHistValues();
+            double[] bins = new double[b.length];
+            double nb = 0;
+            double min = Double.MAX_VALUE;
+            double max = 0;
+            for (int k = 0; k < bins.length; k++) {
+                bins[k] = b[k];
+                nb += bins[k];
+                if (bins[k] < min) {
+                    min = bins[k];
+                }
+                if (bins[k] > max) {
+                    max = bins[k];
+                }
+            }
+            double mean = nb / bins.length;
+            Statistics.stDev(bins, mean);
+            if (i == 0) {
+                measList.add(new MeasureItem(ImageStatistics.IMAGE_PIXELS, nb, Unit.PIXEL.getAbbreviation()));
+            }
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_MIN, min, unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_MAX, max, unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_MEDIAN, Statistics.median(bins), unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_MEAN, mean, unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_STD, Statistics.stDev(bins, mean), unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_SKEW, Statistics.skewness(bins), unit));
+            measList.add(new MeasureItem(ImageStatistics.IMAGE_KURTOSIS, Statistics.kurtosis(bins), unit));
+        }
+        JPanel tableContainer = new JPanel();
+        tableContainer.setBorder(BorderFactory.createEtchedBorder());
+        tableContainer.setLayout(new BorderLayout());
+
+        JTable jtable =
+            MeasureTool.createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
+        jtable.setFont(FontTools.getFont10());
+        jtable.getTableHeader().setReorderingAllowed(false);
+
+        String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+        jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
+        jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
+        MeasureTool.createTableHeaders(jtable);
+        tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
+        tableContainer.add(jtable, BorderLayout.CENTER);
+        jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
+        jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
+        JOptionPane.showMessageDialog(spinnerBins, tableContainer, "Statistics", JOptionPane.PLAIN_MESSAGE, null);
     }
 
     private WindLevelParameters getWinLeveParameters() {
@@ -210,8 +322,56 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
         return null;
     }
 
+    private DisplayByteLut[] getLut(WindLevelParameters p, Model colorModel) {
+        DisplayByteLut[] lut = null;
+        if (view2DPane != null) {
+            int channels = view2DPane.getSourceImage().channels();
+            if (channels == 1) {
+                DisplayByteLut disLut = null;
+                OpManager dispOp = view2DPane.getDisplayOpManager();
+                PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
+                if (lutOp != null) {
+                    ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
+                    if (lutTable != null && lutTable.getLutTable() != null) {
+                        disLut = new DisplayByteLut(lutTable);
+                    }
+                }
+
+                if (disLut == null) {
+                    disLut = new DisplayByteLut(Model.GRAY.getByteLut()[0]);
+                }
+                disLut.setInvert(p.isInverseLut());
+                lut = new DisplayByteLut[] { disLut };
+            }
+        }
+
+        if (lut == null) {
+            ByteLut[] l = colorModel.getByteLut();
+            lut = new DisplayByteLut[l.length];
+            for (int i = 0; i < l.length; i++) {
+                lut[i] = new DisplayByteLut(l[i]);
+            }
+        }
+        return lut;
+    }
+
+    private Model getSelectedColorModel(int channels) {
+        Model clorModel = (Model) jComboBoxImgChannel.getSelectedItem();
+        if (clorModel == null) {
+            clorModel = channels > 1 ? Model.RGB : Model.GRAY;
+        }
+        return clorModel;
+    }
+
     private void buildHistogram() {
         if (view2DPane != null) {
+            ChannelHistogramPanel[] old = new ChannelHistogramPanel[histView.getComponentCount()];
+            for (int i = 0; i < old.length; i++) {
+                Component c = histView.getComponent(i);
+                if (c instanceof ChannelHistogramPanel) {
+                    old[i] = (ChannelHistogramPanel) c;
+                }
+            }
             histView.removeAll();
 
             WindLevelParameters p = getWinLeveParameters();
@@ -220,26 +380,30 @@ public class HistogramView extends JComponent implements SeriesViewerListener {
             }
             PlanarImage imageSource = view2DPane.getSourceImage();
             int channels = imageSource.channels();
-            // exportcsv(imageSource);
-            Model clorModel = (Model) jComboBoxImgChannel.getSelectedItem();
-            if (clorModel == null) {
-                clorModel = channels > 1 ? Model.RGB : Model.GRAY;
-            }
+            Model colorModel = getSelectedColorModel(channels);
             int[] selChannels = new int[channels];
             for (int i = 0; i < selChannels.length; i++) {
                 selChannels[i] = i;
             }
             try {
-                List<Mat> listHisto = getHistogram(imageSource, 512, selChannels, clorModel, p);
+                List<Mat> listHisto =
+                    getHistogram(imageSource, (Integer) spinnerBins.getValue(), selChannels, colorModel, p);
 
-                ByteLut[] lut = clorModel.getByteLut();
+                ByteLut[] lut = colorModel.getByteLut();
+                DisplayByteLut[] displut = getLut(p, colorModel);
                 for (int i = 0; i < lut.length; i++) {
-                    ChannelHistogramPanel chartPanel = new ChannelHistogramPanel(lut[i].getName());
+                    ChannelHistogramPanel chartPanel;
+                    if (i >= old.length || old[i] == null) {
+                        chartPanel = new ChannelHistogramPanel(lut[i].getName());
+                    } else {
+                        chartPanel = new ChannelHistogramPanel(lut[i].getName(), old[i].isAccumulate(),
+                            old[i].isLogarithmic(), old[i].isShowIntensity());
+                    }
                     histView.add(chartPanel);
                     Mat h = listHisto.get(i);
                     float[] histValues = new float[h.rows()];
                     h.get(0, 0, histValues);
-                    chartPanel.setHistogramBins(histValues, lut[i], p);
+                    chartPanel.setHistogramBins(histValues, displut[i], p);
                 }
             } catch (Exception e) {
                 LOGGER.error("Build histogram", e);

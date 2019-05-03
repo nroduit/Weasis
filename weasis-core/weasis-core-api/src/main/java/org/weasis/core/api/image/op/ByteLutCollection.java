@@ -110,7 +110,7 @@ public class ByteLutCollection {
         private final ByteLut byteLut;
 
         private Lut(String name, Supplier<byte[][]> slut) {
-            this.byteLut = new ByteLut(name, slut.get(), ByteLutCollection.invert(slut.get()));
+            this.byteLut = new ByteLut(name, slut.get());
         }
 
         public String getName() {
@@ -149,8 +149,7 @@ public class ByteLutCollection {
                 if (files[i].isFile() && files[i].canRead()) {
                     try (Scanner scan = new Scanner(files[i], "UTF-8")) {
                         byte[][] lut = readLutFile(scan); // $NON-NLS-1$
-                        luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut,
-                            ByteLutCollection.invert(lut)));
+                        luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut));
                     } catch (Exception e) {
                         LOGGER.error("Reading LUT file {}", files[i], e);
                     }
