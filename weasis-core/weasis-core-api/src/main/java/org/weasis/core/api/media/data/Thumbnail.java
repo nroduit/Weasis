@@ -258,7 +258,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     if (imgPl != null) {
                         PlanarImage img = image.getRenderedImage(imgPl);
                         final PlanarImage thumb = createThumbnail(img);
-                        if (!Objects.equals(imgPl, img)) {
+                        if (!Objects.equals(thumb, img)) {
                             ImageConversion.releasePlanarImage(img);
                         }
                         if (thumb != null) {
