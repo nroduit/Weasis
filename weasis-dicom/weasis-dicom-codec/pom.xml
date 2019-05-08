@@ -14,7 +14,7 @@
 
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<weasis-dicom-tools.version>5.16.1</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.16.2-SNAPSHOT</weasis-dicom-tools.version>
 	</properties>
 
 	<repositories>
