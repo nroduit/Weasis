@@ -615,8 +615,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     modelList = new XmlGraphicModel(img);
                     img.setTag(TagW.PresentationModel, modelList);
                 }
+                List<GraphicSelectionListener> gListeners = new ArrayList<>(graphicManager.getGraphicSelectionListeners());  
                 setGraphicManager(modelList);
-                updateGraphicSelectionListener(eventManager.getSelectedView2dContainer());
+                gListeners.forEach(l -> graphicManager.addGraphicSelectionListener(l));
             }
 
             if (panner != null) {
@@ -1000,7 +1001,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     @Override
     public void setDrawingsVisibility(Boolean visible) {
-        if (!Objects.equals((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()), visible)) {
+        if (!Objects.equals(actionsInView.get(ActionW.DRAWINGS.cmd()), visible)) {
             actionsInView.put(ActionW.DRAWINGS.cmd(), visible);
             repaint();
         }
