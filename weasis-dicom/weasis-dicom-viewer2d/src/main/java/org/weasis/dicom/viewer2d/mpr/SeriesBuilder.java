@@ -512,21 +512,22 @@ public class SeriesBuilder {
 
     private static void writeRasterInRaw(PlanarImage image, FileRawImage[] newSeries, ImageCV[] builImgs,
         ViewParameter params, int dstHeight, int imgIndex) throws IOException {
-        try (ImageCV img = ImageProcessor.getRotatedImage(image.toMat(), params.rotateCvType)) {
-            if (newSeries != null && img != null && img.height() == newSeries.length) {
-
-                if (newSeries[0] == null) {
-                    File dir = new File(MPR_CACHE_DIR, params.seriesUID);
-                    dir.mkdirs();
-                    for (int i = 0; i < newSeries.length; i++) {
-                        newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$ //$NON-NLS-2$
-                        builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
-                    }
+        ImageCV img = ImageProcessor.getRotatedImage(image.toMat(), params.rotateCvType);
+        if (newSeries != null && img != null && img.height() == newSeries.length) {
+            if (newSeries[0] == null) {
+                File dir = new File(MPR_CACHE_DIR, params.seriesUID);
+                dir.mkdirs();
+                for (int i = 0; i < newSeries.length; i++) {
+                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$ //$NON-NLS-2$
+                    builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
                 }
+            }
 
-                for (int j = 0; j < newSeries.length; j++) {
-                    img.row(j).copyTo(builImgs[j].row(imgIndex - 1));
-                }
+            for (int j = 0; j < newSeries.length; j++) {
+                img.row(j).copyTo(builImgs[j].row(imgIndex - 1));
+            }
+            if(!img.equals(image)) {
+                img.release();
             }
         }
     }
