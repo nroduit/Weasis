@@ -206,20 +206,16 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 final DicomState state =
                     CStore.process(params, new DicomNode(weasisAet), node.getDicomNode(), files, dicomProgress);
                 if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
-                    LOGGER.error("Dicom send error: {}", state.getMessage()); //$NON-NLS-1$
-                    GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree, state.getMessage(),
-                        getTitle(), JOptionPane.ERROR_MESSAGE));
+                    showErrorMessage(null, null, state);
+                } else {
+                    LOGGER.info("Dicom send: {}", state.getMessage());
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 DicomWebNode destination = (DicomWebNode) selectedItem;
-                Map<String, String> headers = new HashMap<>();
-                headers.put("Authorization", "Bearer ez4hZTcdleaIr9QCJsJvsc");
-                try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), ContentType.DICOM, AppProperties.WEASIS_NAME, headers)) {
+                try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), ContentType.DICOM, AppProperties.WEASIS_NAME, destination.getHeaders())) {
                     stowRS.uploadDicom(files, true);
                 } catch (Exception e) {
-                    LOGGER.error("StowRS error: {}", e.getMessage()); //$NON-NLS-1$
-                    GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree, e.getMessage(),
-                        getTitle(), JOptionPane.ERROR_MESSAGE));
+                    showErrorMessage("StowRS error: {}", e, null);
                 }
             }
         } finally {
@@ -227,6 +223,14 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         }
 
         return true;
+    }
+
+    private void showErrorMessage(String title, Exception e, DicomState state) {
+        if (e != null) {
+            LOGGER.error(title, e.getMessage()); // $NON-NLS-1$
+        }
+        GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree,
+            state == null ? e.getMessage() : state.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE));
     }
 
     private void writeDicom(ExplorerTask<Boolean, String> task, File writeDir, CheckTreeModel model)
