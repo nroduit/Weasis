@@ -154,7 +154,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
 
     private void buildLayout() {
         view.removeAll();
-        if (view2DPane != null) {
+        if (view2DPane != null && view2DPane.getSourceImage() != null) {
             PlanarImage imageSource = view2DPane.getSourceImage();
             int channels = imageSource.channels();
 
@@ -310,7 +310,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
     }
 
     private void buildHistogram() {
-        if (view2DPane != null) {
+        if (view2DPane != null && view2DPane.getSourceImage() != null) {
             ChannelHistogramPanel[] old = new ChannelHistogramPanel[histView.getComponentCount()];
             for (int i = 0; i < old.length; i++) {
                 Component c = histView.getComponent(i);
