@@ -26,19 +26,19 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.osgi.service.prefs.Preferences;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.editor.image.DisplayByteLut;
+import org.weasis.core.ui.editor.image.HistogramData;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -248,16 +248,9 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     }
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-        OpManager disOp = view2DPane.getDisplayOpManager();
-        ImageOpNode pseudoColorOp = disOp.getNode(PseudoColorOp.OP_NAME);
-        ByteLut lut = null;
-        if (pseudoColorOp != null) {
-            lut = (ByteLut) pseudoColorOp.getParam(PseudoColorOp.P_LUT);
-        }
-        if (lut != null && bound.height > 350) {
-            if (lut.getLutTable() == null) {
-                lut = ByteLutCollection.Lut.GRAY.getByteLut();
-            }
+        WindLevelParameters p = getWinLeveParameters();
+        DisplayByteLut lut = getLut(p);
+        if (p != null && lut != null && bound.height > 350) {
             byte[][] table = lut.getLutTable();
             float length = table[0].length;
 
@@ -289,47 +282,79 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             g2.draw(rect);
 
             g2.setPaint(Color.WHITE);
-            Line2D.Float line = new Line2D.Float(x - 10f, y - 1f, x - 1f, y - 1f);
-            g2.draw(line);
+            ImageElement img = view2DPane.getImage();
+            double pixMin = img.getPixelMin();
+            double pixMax = img.getPixelMax();
+            HistogramData data =
+                new HistogramData(new float[0], lut, 0, p, pixMin, pixMax, view2DPane.getMeasurableLayer());
+            data.updateVoiLut(view2DPane);
+            double binFactor = (pixMax - pixMin) / (length - 1);
+            double stepWindow = (pixMax - pixMin)  / separation;
 
-            Double ww = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.WINDOW.cmd());
-            Double wl = (Double) disOp.getParamValue(WindowOp.OP_NAME, ActionW.LEVEL.cmd());
-            if (ww != null && wl != null) {
-                int stepWindow = (int) (ww / separation);
-                int firstlevel = (int) (wl - stepWindow * 2.0);
-                String str = Integer.toString(firstlevel + separation * stepWindow); // $NON-NLS-1$
-                AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12f,
-                    y + midfontHeight);
-                for (int i = 1; i < separation; i++) {
-                    float posY = y + i * step;
-                    line.setLine(x - 5f, posY, x - 1f, posY);
-                    g2.draw(line);
-                    str = Integer.toString(firstlevel + (separation - i) * stepWindow); // $NON-NLS-1$
-                    AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
-                        posY + midfontHeight);
-                }
-
-                line.setLine(x - 10f, y + length + 1f, x - 1f, y + length + 1f);
+            Line2D.Float line = new Line2D.Float();
+            for (int i = 0; i <= separation; i++) {
+                float posY = y + i * step;
+                line.setLine(x - 5f, posY, x - 1f, posY);
                 g2.draw(line);
-                str = Integer.toString(firstlevel); // $NON-NLS-1$
-                AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 12,
-                    y + length + midfontHeight);
-                rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
-                g2.draw(rect);
+                double level = data.getLayer().pixelToRealValue((separation - i) * stepWindow + pixMin);
+                String str = DecFormater.allNumber(level);
+                AbstractGraphicLabel.paintFontOutline(g2, str, x - g2.getFontMetrics().stringWidth(str) - 7,
+                    posY + midfontHeight);
             }
-            
-            boolean invert = LangUtil.getNULLtoFalse((Boolean) pseudoColorOp.getParam(PseudoColorOp.P_LUT_INVERSE));
-            int dynamic = table[0].length - 1;
-                           
-            for (int k = 0; k < length; k++) {
-                int l = (int)length -1 - k;
-                // Convert BGR LUT to RBG color
-                int i = invert ?  dynamic - l : l;
-                g2.setPaint(new Color(table[2][i] & 0xff, table[1][i] & 0xff, table[0][i] & 0xff));
+            rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
+            g2.draw(rect);
+
+            int limit = table[0].length - 1;
+            for (int k = 0; k <= limit; k++) {
+                double level = data.getLayer().pixelToRealValue( (limit - k) * binFactor + pixMin);
+                Color cLut = data.getFinalVoiLutColor(level);
+                g2.setPaint(cLut);
                 rect.setRect(x, y + k, 19f, 1f);
                 g2.draw(rect);
             }
         }
+    }
+    
+
+
+    private WindLevelParameters getWinLeveParameters() {
+        if (view2DPane != null) {
+            OpManager dispOp = view2DPane.getDisplayOpManager();
+            WindowOp wlOp = (WindowOp) dispOp.getNode(WindowOp.OP_NAME);
+            if (wlOp != null) {
+                return wlOp.getWindLevelParameters();
+            }
+        }
+        return null;
+    }
+
+    private DisplayByteLut getLut(WindLevelParameters p) {
+        DisplayByteLut lut = null;
+        if (view2DPane != null) {
+            int channels = view2DPane.getSourceImage().channels();
+            if (channels == 1) {
+                DisplayByteLut disLut = null;
+                OpManager dispOp = view2DPane.getDisplayOpManager();
+                PseudoColorOp lutOp = (PseudoColorOp) dispOp.getNode(PseudoColorOp.OP_NAME);
+                if (lutOp != null) {
+                    ByteLut lutTable = (ByteLut) lutOp.getParam(PseudoColorOp.P_LUT);
+                    if (lutTable != null && lutTable.getLutTable() != null) {
+                        disLut = new DisplayByteLut(lutTable);
+                    }
+                }
+
+                if (disLut == null) {
+                    disLut = new DisplayByteLut(ByteLutCollection.Lut.GRAY.getByteLut());
+                }
+                disLut.setInvert(p.isInverseLut());
+                lut = disLut;
+            }
+        }
+
+        if (lut == null) {
+            lut = new DisplayByteLut(ByteLutCollection.Lut.GRAY.getByteLut());
+        }
+        return lut;
     }
 
     public void drawScale(Graphics2D g2d, Rectangle bound, float fontHeight) {

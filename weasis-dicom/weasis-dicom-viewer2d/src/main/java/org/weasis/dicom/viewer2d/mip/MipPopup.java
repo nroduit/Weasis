@@ -221,7 +221,7 @@ public class MipPopup {
 
                 if (fimg != null && limg != null) {
                     buf.append(" ("); //$NON-NLS-1$
-                    buf.append(DecFormater.oneDecimal(SeriesBuilder.getThickness(fimg, limg)));
+                    buf.append(DecFormater.allNumber(SeriesBuilder.getThickness(fimg, limg)));
                     buf.append(" "); //$NON-NLS-1$
                     buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
                     buf.append(")"); //$NON-NLS-1$

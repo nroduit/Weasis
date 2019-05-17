@@ -38,7 +38,7 @@ class ToolPanel extends JPanel {
             if (this == AUTO) {
                 return "auto mm/s"; //$NON-NLS-1$
             }
-            return DecFormater.oneDecimal(value) + " mm/s"; //$NON-NLS-1$
+            return DecFormater.allNumber(value) + " mm/s"; //$NON-NLS-1$
         }
         
         public static Speed fromValue(double value) {

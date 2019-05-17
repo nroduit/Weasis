@@ -13,9 +13,10 @@ SUBSTANCE_PKG="2.0.1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
+# jdk.localedata => other locale (en_us) data are included in the jdk.localedata 
 # jdk.jdwp.agent => package for debugging agent
 # jdk.pack => jpack required to unpacked bundle.jar.pack.gz
-JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.unsupported,jdk.pack,jdk.jdwp.agent"
+JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.unsupported,jdk.pack,jdk.jdwp.agent"
 NAME="Weasis"
 IDENTIFIER="org.weasis.viewer"
 JVM_ARGS="-Dgosh.port=17179 #-Daudit.log=true #-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789"
@@ -225,13 +226,13 @@ fi
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-$JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
+$JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
 --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
-  $JPKGCMD create-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
+  $JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
   --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"

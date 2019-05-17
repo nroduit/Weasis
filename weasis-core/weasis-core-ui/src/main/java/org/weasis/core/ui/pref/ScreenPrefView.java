@@ -220,10 +220,10 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             if (monitor.getRealScaleFactor() > 0) {
                 String hlength = DecFormater
-                    .oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * horizontalLength)
+                    .allNumber(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * horizontalLength)
                     + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
                 String vlength = DecFormater
-                    .oneDecimal(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * verticalLength) + " " //$NON-NLS-1$
+                    .allNumber(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * verticalLength) + " " //$NON-NLS-1$
                     + Unit.MILLIMETER.getAbbreviation();
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);

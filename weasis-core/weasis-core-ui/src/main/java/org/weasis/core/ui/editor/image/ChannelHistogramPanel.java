@@ -100,17 +100,10 @@ public class ChannelHistogramPanel extends JPanel {
         return jCheckShowIntensity.isSelected();
     }
 
-    public float[] getHistValues() {
-        return jPanelHistogram.getHistValues();
+    public HistogramData getData() {
+        return jPanelHistogram.getData();
     }
 
-    public WindLevelParameters getWindLevelParameters() {
-        return jPanelHistogram.getWindLevelParameters();
-    }
-    
-    public DisplayByteLut getLut() {
-        return jPanelHistogram.getLut();
-    }
 
     private void save() {
         JFileChooser saveFC = new JFileChooser();
@@ -127,10 +120,9 @@ public class ChannelHistogramPanel extends JPanel {
         jCheckAccumulate.setSelected(jPanelHistogram.isAccumulate());
     }
 
-    public void setHistogramBins(float[] histValues, DisplayByteLut lut, WindLevelParameters p) {
-        jPanelHistogram.setHistogramBins(histValues, lut, jCheckAccumulate.isSelected(), jCheckLogarithmic.isSelected(),
+    public void setHistogramBins(HistogramData data) {
+        jPanelHistogram.setHistogram(data, jCheckAccumulate.isSelected(), jCheckLogarithmic.isSelected(),
             jCheckShowIntensity.isSelected());
-        jPanelHistogram.setWindLevelParameters(p);
     }
 
     public void setDisplayMinMaxLabel(int min, int max) {
@@ -149,7 +141,7 @@ public class ChannelHistogramPanel extends JPanel {
     }
 
     public void setLut(DisplayByteLut lut) {
-        jPanelHistogram.setLut(lut);
+        jPanelHistogram.getData().setLut(lut);
         jPanelHistogram.repaint();
     }
 }

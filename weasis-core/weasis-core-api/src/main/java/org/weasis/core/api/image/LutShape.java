@@ -146,33 +146,4 @@ public final class LutShape {
         }
         return null;
     }
-
-    public static final int getByteLutIndex(LutShape shape, int inputIndex) {
-        int val;
-        if (shape == null || LutShape.LINEAR.equals(shape)) {
-            val = inputIndex;
-        } else if (LutShape.SIGMOID.equals(shape)) {
-            val = (int) Math.round(256.0 / (1.0 + Math.exp((2.0 * -20.0 / 10.0))));
-        } else if (LutShape.SIGMOID_NORM.equals(shape)) {
-            val = (int) Math.round(256.0 / (1.0 + Math.exp((2.0 * -20.0 / 10.0))));
-        } else if (LutShape.LOG.equals(shape)) {
-            double min = Math.log(2.0 * 1);
-            double max = Math.log(2.0 * 256); 
-            val = (int) Math.round((Math.log(2.0 * (1 + inputIndex)) -min) * 255.0 / (max -min));
-        } else if (LutShape.LOG_INV.equals(shape)) {
-            double min = Math.exp(2.0 * 0);
-            double max = Math.exp(2.0 * 255); 
-            val = (int) Math.round((Math.exp(2.0 * inputIndex) -min) * 255.0 / (max -min));
-        } else {
-            val = inputIndex;
-        }
-
-        if (val < 0) {
-            val = 0;
-        }
-        if (val > 255) {
-            val = 255;
-        }
-        return val;
-    }
 }

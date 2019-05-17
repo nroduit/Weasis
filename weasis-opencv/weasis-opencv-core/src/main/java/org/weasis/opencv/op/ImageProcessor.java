@@ -27,6 +27,8 @@ import java.awt.image.SampleModel;
 import java.io.File;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -160,21 +162,77 @@ public class ImageProcessor {
         return points;
     }
 
+    public static double[][] meanStdDev(Mat source) {
+        return meanStdDev(source, null, null, null);
+    }
+
     public static double[][] meanStdDev(Mat source, Shape shape) {
         return meanStdDev(source, shape, null, null);
     }
 
     public static double[][] meanStdDev(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
-        Objects.requireNonNull(source);
-        Rectangle b = new Rectangle(0, 0, source.width(), source.height()).intersection(shape.getBounds());
-        if (b.getWidth() < 1 || b.getHeight() < 1) {
+        List<Mat> list = getMaskImage(source, shape, paddingValue, paddingLimit);
+        if(list.size() < 2) {
             return null;
         }
+        Mat srcImg = list.get(0);
+        Mat mask = list.get(1);
+        
+        MatOfDouble mean = new MatOfDouble();
+        MatOfDouble stddev = new MatOfDouble();
+        if (mask == null) {
+            Core.meanStdDev(srcImg, mean, stddev);
+        } else {
+            Core.meanStdDev(srcImg, mean, stddev, mask);
+        }
 
-        Mat srcImg = source.submat(new Rect(b.x, b.y, b.width, b.height));
-        Mat mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
-        List<MatOfPoint> pts = transformShapeToContour(shape, false);
-        Imgproc.fillPoly(mask, pts, new Scalar(255));
+        List<Mat> channels = new ArrayList<>();
+        if (srcImg.channels() > 1) {
+            Core.split(srcImg, channels);
+        } else {
+            channels.add(srcImg);
+        }
+
+        double[][] val = new double[5][channels.size()];
+        for (int i = 0; i < channels.size(); i++) {
+            MinMaxLocResult minMax;
+            if (mask == null) {
+                minMax = Core.minMaxLoc(channels.get(i));
+            } else {
+                minMax = Core.minMaxLoc(channels.get(i), mask);
+            }
+            val[0][i] = minMax.minVal;
+            val[1][i] = minMax.maxVal;
+        }
+
+        val[2] = mean.toArray();
+        val[3] = stddev.toArray();
+        if(mask == null) {
+            val[4][0] = srcImg.width() * srcImg.height();  
+        }
+        else {
+            val[4][0] = Core.countNonZero(mask);  
+        }
+
+        return val;
+    }
+    public static List<Mat> getMaskImage(Mat source, Shape shape, Integer paddingValue, Integer paddingLimit) {
+        Objects.requireNonNull(source);
+        Mat srcImg;
+        Mat mask = null;
+        if (shape == null) {
+            srcImg = source;
+        } else {
+            Rectangle b = new Rectangle(0, 0, source.width(), source.height()).intersection(shape.getBounds());
+            if (b.getWidth() < 1 || b.getHeight() < 1) {
+                return Collections.emptyList();
+            }
+
+            srcImg = source.submat(new Rect(b.x, b.y, b.width, b.height));
+            mask = Mat.zeros(srcImg.size(), CvType.CV_8UC1);
+            List<MatOfPoint> pts = transformShapeToContour(shape, false);
+            Imgproc.fillPoly(mask, pts, new Scalar(255));
+        }
 
         if (paddingValue != null) {
             if (paddingLimit == null) {
@@ -184,33 +242,15 @@ public class ImageProcessor {
                 paddingValue = paddingLimit;
                 paddingLimit = temp;
             }
-            exludePaddingValue(srcImg, mask, paddingValue, paddingLimit);
+            Mat maskPix = new Mat(srcImg.size(), CvType.CV_8UC1, new Scalar(0));
+            exludePaddingValue(srcImg, maskPix, paddingValue, paddingLimit);
+            if (mask == null) {
+                mask = maskPix;
+            } else {
+                Core.bitwise_and(mask, maskPix, mask);
+            }
         }
-
-        // System.out.println(mask.dump());
-
-        MatOfDouble mean = new MatOfDouble();
-        MatOfDouble stddev = new MatOfDouble();
-        Core.meanStdDev(srcImg, mean, stddev, mask);
-
-        List<Mat> channels = new ArrayList<>();
-        if (srcImg.channels() > 1) {
-            Core.split(srcImg, channels);
-        } else {
-            channels.add(srcImg);
-        }
-
-        double[][] val = new double[4][channels.size()];
-        for (int i = 0; i < channels.size(); i++) {
-            MinMaxLocResult minMax = Core.minMaxLoc(channels.get(i), mask);
-            val[0][i] = minMax.minVal;
-            val[1][i] = minMax.maxVal;
-        }
-
-        val[2] = mean.toArray();
-        val[3] = stddev.toArray();
-
-        return val;
+        return Arrays.asList(srcImg, mask);
     }
 
     public static MinMaxLocResult minMaxLoc(Mat srcImg, Mat mask) {
@@ -578,7 +618,7 @@ public class ImageProcessor {
             LOGGER.error("", e); //$NON-NLS-1$
             delete(file);
             return false;
-        }finally {
+        } finally {
             ImageConversion.releaseMat(dstImg);
         }
     }
@@ -588,7 +628,7 @@ public class ImageProcessor {
             return false;
         }
 
-        try (ImageCV  dstImg = ImageConversion.toMat(source)) {
+        try (ImageCV dstImg = ImageConversion.toMat(source)) {
             return Imgcodecs.imwrite(file.getPath(), dstImg);
         } catch (OutOfMemoryError | CvException e) {
             LOGGER.error("", e); //$NON-NLS-1$

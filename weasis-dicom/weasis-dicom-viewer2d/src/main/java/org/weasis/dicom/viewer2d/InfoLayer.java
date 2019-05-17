@@ -231,9 +231,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             if (window != null && level != null) {
                 sb.append(ActionW.WINLEVEL.getTitle());
                 sb.append(StringUtil.COLON_AND_SPACE);
-                sb.append(DecFormater.oneDecimal(window));
+                sb.append(DecFormater.allNumber(window));
                 sb.append("/");//$NON-NLS-1$
-                sb.append(DecFormater.oneDecimal(level));
+                sb.append(DecFormater.allNumber(level));
 
                 if (image != null) {
                     PresentationStateReader prReader =

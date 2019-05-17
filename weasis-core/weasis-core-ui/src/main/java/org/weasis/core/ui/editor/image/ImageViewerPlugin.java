@@ -60,6 +60,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
 import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 
@@ -309,7 +310,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             }
         }
         removeComponents();
-
+        GraphicSelectionListener glistener = null;
         final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
         Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
         while (enumVal.hasNext()) {
@@ -335,6 +336,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     if (component instanceof JComponent) {
                         ((JComponent) component).setOpaque(true);
                     }
+                    if (component instanceof HistogramView) {
+                        glistener = (HistogramView) component;
+                    }
                     components.add(component);
                     elements.put(e, component);
                     grid.add(component, e);
@@ -357,6 +361,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
                     v.setSeries(selectedImagePane.getSeries(), null);
                 }
                 v.enableMouseAndKeyListener(mouseActions);
+                if (glistener != null) {
+                    v.getGraphicManager().addGraphicSelectionListener(glistener);
+                }
             }
             selectedImagePane.setSelected(true);
             eventManager.updateComponentsListener(selectedImagePane);

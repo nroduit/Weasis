@@ -58,6 +58,7 @@ import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
@@ -274,7 +275,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         buf.append(time);
         buf.append(" rate:"); //$NON-NLS-1$
         // rate in kB/s or B/ms
-        DecimalFormat format = new DecimalFormat("#.##"); //$NON-NLS-1$
+        DecimalFormat format = new DecimalFormat("#.##", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
         buf.append(val == null ? 0 : format.format(dicomSeries.getFileSize() / time));
         return buf.toString();
     }

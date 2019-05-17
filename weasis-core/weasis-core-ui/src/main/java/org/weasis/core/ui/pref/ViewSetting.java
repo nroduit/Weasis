@@ -56,13 +56,16 @@ public class ViewSetting {
             basicStatistics = stats.getBoolean("basic", true); //$NON-NLS-1$
             moreStatistics = stats.getBoolean("more", true); //$NON-NLS-1$
 
+            ImageStatistics.IMAGE_PIXELS.setComputed(basicStatistics);
             ImageStatistics.IMAGE_MIN.setComputed(basicStatistics);
             ImageStatistics.IMAGE_MAX.setComputed(basicStatistics);
             ImageStatistics.IMAGE_MEAN.setComputed(basicStatistics);
 
+            ImageStatistics.IMAGE_MEDIAN.setComputed(moreStatistics);
             ImageStatistics.IMAGE_STD.setComputed(moreStatistics);
             ImageStatistics.IMAGE_SKEW.setComputed(moreStatistics);
             ImageStatistics.IMAGE_KURTOSIS.setComputed(moreStatistics);
+            ImageStatistics.IMAGE_ENTROPY.setComputed(moreStatistics);
 
             String labels = stats.get("label", null); //$NON-NLS-1$
             if (labels != null) {

@@ -22,19 +22,23 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpEventListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
@@ -239,8 +243,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
                 disOpManager.setFirstNode(getSourceRenderedImage());
                 updateDisplayOperations();
             }
-        }
-        catch (OutOfMemoryError e) {
+        } catch (OutOfMemoryError e) {
             LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
             CvUtil.runGarbageCollectorAndWait(100);
         }
@@ -263,72 +266,73 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             }
             g2d.setClip(rect);
         }
-        
-//        Rectangle2D modelArea = canvas.getViewModel().getModelArea();
-//        double rWidth = modelArea.getWidth();
-//        double rHeight = modelArea.getHeight();
-//
-//        OpManager dispOp = getDisplayOpManager();
-//        boolean flip = LangUtil.getNULLtoFalse((Boolean) canvas.getActionValue(ActionW.FLIP.cmd()));
-//        Integer rotationAngle = (Integer) canvas.getActionValue(ActionW.ROTATION.cmd());
-//        
-//        double curScale = canvas.getViewModel().getViewScale();
-//        // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not interpolate)
-//        double imageRes = viewScale < curScale ? curScale : viewScale;
-//
-//        AffineTransform affineTransform = AffineTransform.getScaleInstance(flip ? -imageRes : imageRes, imageRes);
-//        if (rotationAngle != null && rotationAngle > 0) {
-//            affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-//        }
-//        if (flip) {
-//            affineTransform.translate(-rWidth, 0.0);
-//        }
-//
-//        ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
-//        if (node != null) {
-//            double diffRatio = curScale / imageRes;
-//            Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
-//
-//            double diffx = 0.0;
-//            double diffy = 0.0;
-//            Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, canvas.getJComponent().getWidth(), canvas.getJComponent().getHeight());
-//            Rectangle2D srcBounds = canvas.getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
-//
-//            Rectangle2D dstBounds;
-//            if (viewBounds.contains(srcBounds)) {
-//                dstBounds = srcBounds;
-//            } else {
-//                dstBounds = viewBounds.createIntersection(srcBounds);
-//
-//                if (srcBounds.getX() < 0.0) {
-//                    diffx += srcBounds.getX();
-//                }
-//                if (srcBounds.getY() < 0.0) {
-//                    diffy += srcBounds.getY();
-//                }
-//            }
-//
-//            double[] fmx = new double[6];
-//            affineTransform.getMatrix(fmx);
-//            // adjust transformation matrix => move the center to keep all the image
-//            fmx[4] -= imgBounds.getX() - diffx;
-//            fmx[5] -= imgBounds.getY() - diffy;
-//            affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
-//
-//            // Convert to openCV affine matrix
-//            double[] m = new double[] { fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5] };
-//            Object oldMatrix = node.getParam(AffineTransformOp.P_AFFINE_MATRIX);
-//            Object oldBounds = node.getParam(AffineTransformOp.P_DST_BOUNDS);
-//            node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
-//            node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
-//            PlanarImage img = disOpManager.process();
-//            node.setParam(AffineTransformOp.P_AFFINE_MATRIX, oldMatrix);
-//            node.setParam(AffineTransformOp.P_DST_BOUNDS, oldBounds);
-//            
-//            
-//            g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(diffRatio, diffRatio));
-//        }
 
+        // Rectangle2D modelArea = canvas.getViewModel().getModelArea();
+        // double rWidth = modelArea.getWidth();
+        // double rHeight = modelArea.getHeight();
+        //
+        // OpManager dispOp = getDisplayOpManager();
+        // boolean flip = LangUtil.getNULLtoFalse((Boolean) canvas.getActionValue(ActionW.FLIP.cmd()));
+        // Integer rotationAngle = (Integer) canvas.getActionValue(ActionW.ROTATION.cmd());
+        //
+        // double curScale = canvas.getViewModel().getViewScale();
+        // // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not interpolate)
+        // double imageRes = viewScale < curScale ? curScale : viewScale;
+        //
+        // AffineTransform affineTransform = AffineTransform.getScaleInstance(flip ? -imageRes : imageRes, imageRes);
+        // if (rotationAngle != null && rotationAngle > 0) {
+        // affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
+        // }
+        // if (flip) {
+        // affineTransform.translate(-rWidth, 0.0);
+        // }
+        //
+        // ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
+        // if (node != null) {
+        // double diffRatio = curScale / imageRes;
+        // Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
+        //
+        // double diffx = 0.0;
+        // double diffy = 0.0;
+        // Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, canvas.getJComponent().getWidth(),
+        // canvas.getJComponent().getHeight());
+        // Rectangle2D srcBounds = canvas.getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
+        //
+        // Rectangle2D dstBounds;
+        // if (viewBounds.contains(srcBounds)) {
+        // dstBounds = srcBounds;
+        // } else {
+        // dstBounds = viewBounds.createIntersection(srcBounds);
+        //
+        // if (srcBounds.getX() < 0.0) {
+        // diffx += srcBounds.getX();
+        // }
+        // if (srcBounds.getY() < 0.0) {
+        // diffy += srcBounds.getY();
+        // }
+        // }
+        //
+        // double[] fmx = new double[6];
+        // affineTransform.getMatrix(fmx);
+        // // adjust transformation matrix => move the center to keep all the image
+        // fmx[4] -= imgBounds.getX() - diffx;
+        // fmx[5] -= imgBounds.getY() - diffy;
+        // affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
+        //
+        // // Convert to openCV affine matrix
+        // double[] m = new double[] { fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5] };
+        // Object oldMatrix = node.getParam(AffineTransformOp.P_AFFINE_MATRIX);
+        // Object oldBounds = node.getParam(AffineTransformOp.P_DST_BOUNDS);
+        // node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
+        // node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
+        // PlanarImage img = disOpManager.process();
+        // node.setParam(AffineTransformOp.P_AFFINE_MATRIX, oldMatrix);
+        // node.setParam(AffineTransformOp.P_DST_BOUNDS, oldBounds);
+        //
+        //
+        // g2d.drawRenderedImage(ImageProcessor.toBufferedImage(img), AffineTransform.getScaleInstance(diffRatio,
+        // diffRatio));
+        // }
 
         double[] matrix =
             (double[]) disOpManager.getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX);
@@ -347,13 +351,12 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         matrix[0] = imageResX;
         matrix[4] = imageResY;
 
-        
         double rx = ratioX / imageResX;
         double ry = ratioY / imageResY;
         Rectangle2D b =
             new Rectangle2D.Double(bound.getX() / rx, bound.getY() / ry, bound.getWidth() / rx, bound.getHeight() / ry);
         matrix[2] = offsetX / rx;
-        matrix[5] = offsetY/ ry;
+        matrix[5] = offsetY / ry;
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, b);
         PlanarImage img = bound.equals(b) ? displayImage : disOpManager.process();
@@ -466,6 +469,27 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     }
 
     @Override
+    public double pixelToRealValue(Number pixelValue) {
+        Number val = pixelValue;
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            TagReadable tagable = null;
+            boolean pixelPadding = false;
+            WindowOp wlOp = (WindowOp) disOpManager.getNode(WindowOp.OP_NAME);
+            if (wlOp != null) {
+                pixelPadding = LangUtil.getNULLtoTrue((Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+                tagable = (TagReadable) wlOp.getParam("pr.element");
+            }
+            val = imageElement.pixelToRealValue(pixelValue, tagable, pixelPadding);
+        }
+        
+        if (val != null) {
+            return val.doubleValue();
+        }
+        return 0;
+    }
+    
+    @Override
     public Point getOffset() {
         return offset;
     }
@@ -473,5 +497,23 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
     @Override
     public void setOffset(Point offset) {
         this.offset = offset;
+    }
+
+    @Override
+    public double getPixelMin() {
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            return imageElement.getPixelMin();
+        }
+        return 0;
+    }
+
+    @Override
+    public double getPixelMax() {
+        E imageElement = getSourceImage();
+        if (imageElement != null) {
+            return imageElement.getPixelMax();
+        }
+        return 0;
     }
 }

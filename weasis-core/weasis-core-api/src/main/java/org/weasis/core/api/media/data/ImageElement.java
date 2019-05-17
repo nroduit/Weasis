@@ -33,6 +33,7 @@ import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
@@ -140,6 +141,14 @@ public class ImageElement extends MediaElement {
     public double getMinValue(TagReadable tagable, boolean pixelPadding) {
         return minPixelValue == null ? 0.0 : minPixelValue;
     }
+    
+    public double getPixelMax() {
+        return maxPixelValue == null ? 0.0 : maxPixelValue;
+    }
+
+    public double getPixelMin() {
+        return minPixelValue == null ? 0.0 : minPixelValue;
+    }
 
     public int getRescaleWidth(int width) {
         return (int) Math.ceil(width * getRescaleX() - 0.5);
@@ -211,6 +220,15 @@ public class ImageElement extends MediaElement {
 
     public String getPixelSizeCalibrationDescription() {
         return pixelSizeCalibrationDescription;
+    }
+    
+    public Number pixelToRealValue(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
+        return pixelValue;
+    }
+    
+    public LookupTableCV getVOILookup(TagReadable tagable, Double window, Double level, Double minLevel,
+        Double maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
+            return null;
     }
 
     public MeasurementsAdapter getMeasurementAdapter(Unit displayUnit, Point offset) {

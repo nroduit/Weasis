@@ -811,7 +811,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
                             }
                             sb.append(" : "); //$NON-NLS-1$
                             if (value instanceof Number) {
-                                sb.append(DecFormater.oneDecimal((Number) value));
+                                sb.append(DecFormater.allNumber((Number) value));
                                 if (unit != null) {
                                     sb.append(" ").append(unit); //$NON-NLS-1$
                                 }

@@ -56,7 +56,7 @@ public class PixelInfo {
         if (values != null) {
             if (values.length == 1) {
                 StringBuilder text = new StringBuilder();
-                text.append(DecFormater.oneDecimal(values[0]));
+                text.append(DecFormater.allNumber(values[0]));
                 if (pixelValueUnit != null) {
                     text.append(" ");//$NON-NLS-1$
                     text.append(pixelValueUnit);

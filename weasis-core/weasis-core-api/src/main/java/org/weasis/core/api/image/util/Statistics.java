@@ -222,9 +222,8 @@ public class Statistics {
             double[] out = new double[data.length];
             for (int i = 0; i < data.length; i++) {
                 out[i] = data[i];
-
-                // Sort data
             }
+            // Sort data
             java.util.Arrays.sort(out);
 
             // Get median

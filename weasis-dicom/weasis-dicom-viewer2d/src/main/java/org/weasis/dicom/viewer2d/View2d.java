@@ -1004,7 +1004,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             PresentationStateReader prReader =
                 (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);
             for (int i = 0; i < c.length; i++) {
-                c[i] = imageElement.pixel2mLUT(c[i], prReader, pixelPadding);
+                c[i] = imageElement.pixelToRealValue(c[i], prReader, pixelPadding).doubleValue();
             }
             pixelInfo.setValues(c);
         }

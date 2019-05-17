@@ -129,9 +129,7 @@ public class DicomImageElement extends ImageElement {
      */
     @Override
     public double getMinValue(TagReadable tagable, boolean pixelPadding) {
-        // Computes min and max as slope can be negative
-        return Math.min(pixel2mLUT(super.getMinValue(tagable, pixelPadding), tagable, pixelPadding),
-            pixel2mLUT(super.getMaxValue(tagable, pixelPadding), tagable, pixelPadding));
+        return minMaxValue(tagable, pixelPadding, true);
     }
 
     /**
@@ -140,10 +138,22 @@ public class DicomImageElement extends ImageElement {
      */
     @Override
     public double getMaxValue(TagReadable tagable, boolean pixelPadding) {
-        // Computes min and max as slope can be negative
-        return Math.max(pixel2mLUT(super.getMinValue(tagable, pixelPadding), tagable, pixelPadding),
-            pixel2mLUT(super.getMaxValue(tagable, pixelPadding), tagable, pixelPadding));
+        return minMaxValue(tagable, pixelPadding, false);
     }
+    
+    private double minMaxValue(TagReadable tagable, boolean pixelPadding, boolean minVal) {
+        Number min = pixelToRealValue(super.getMinValue(tagable, pixelPadding), tagable, pixelPadding);
+        Number max = pixelToRealValue(super.getMaxValue(tagable, pixelPadding), tagable, pixelPadding);
+        if (min == null || max == null) {
+            return 0;
+        }
+        // Computes min and max as slope can be negative
+        if (minVal) {
+            return Math.min(min.doubleValue(), max.doubleValue());
+        }
+        return Math.max(min.doubleValue(), max.doubleValue());
+    }
+
 
     @Override
     protected boolean isGrayImage(RenderedImage source) {
@@ -217,7 +227,8 @@ public class DicomImageElement extends ImageElement {
         return slope == null ? 1.0 : slope;
     }
 
-    public double pixel2mLUT(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
+    @Override
+    public Number pixelToRealValue(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
         if (pixelValue != null) {
             LookupTableCV lookup = getModalityLookup(tagable, pixelPadding);
             if (lookup != null) {
@@ -226,9 +237,8 @@ public class DicomImageElement extends ImageElement {
                     return lookup.lookup(0, val);
                 }
             }
-            return pixelValue.doubleValue();
         }
-        return 0;
+        return pixelValue;
     }
 
     public int getMinAllocatedValue(TagReadable tagable, boolean pixelPadding) {
@@ -426,6 +436,8 @@ public class DicomImageElement extends ImageElement {
      *
      * @return 8 bits unsigned Lookup Table
      */
+    
+    @Override
     public LookupTableCV getVOILookup(TagReadable tagable, Double window, Double level, Double minLevel,
         Double maxLevel, LutShape shape, boolean fillLutOutside, boolean pixelPadding) {
 

@@ -45,4 +45,9 @@ public interface MeasurableLayer {
      */
     PlanarImage getSourceRenderedImage();
 
+    double pixelToRealValue(Number pixelValue);
+
+    double getPixelMin();
+
+    double getPixelMax();
 }
