@@ -34,6 +34,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 
 /**
@@ -449,7 +450,7 @@ public class TagW implements Serializable {
                     if (pattern != null) {
                         fmLength += pattern.length() + 2;
                         try {
-                            str = new DecimalFormat(pattern).format(Double.parseDouble(str));
+                            str = new DecimalFormat(pattern, LocalUtil.getDecimalFormatSymbols()).format(Double.parseDouble(str));
                         } catch (NumberFormatException e) {
                             LOGGER.warn("Cannot apply pattern to decimal value", e); //$NON-NLS-1$
                         }

@@ -108,25 +108,24 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             for (LeadPanel lead : waveLayoutManager.getSortedComponents()) {
                 MarkerAnnotation m = lead.getMarkerAnnotation();
                 if (m.getStartSeconds() != null) {
-
                     String leadName = m.getLead().toString();
                     list.add(
-                        new Object[] { leadName, Messages.getString("WaveView.start_time"), InfoPanel.secondFormatter.format(m.getStartSeconds()) }); //$NON-NLS-1$
+                        new Object[] { leadName, Messages.getString("WaveView.start_time"), MarkerAnnotation.secondFormatter.format(m.getStartSeconds()) }); //$NON-NLS-1$
                     list.add(
-                        new Object[] { leadName, Messages.getString("WaveView.start_val"), InfoPanel.mVFormatter.format(m.getStartMiliVolt()) }); //$NON-NLS-1$
+                        new Object[] { leadName, Messages.getString("WaveView.start_val"), MarkerAnnotation.mVFormatter.format(m.getStartMiliVolt()) }); //$NON-NLS-1$
 
                     if (m.getStopSeconds() != null) {
                         list.add(new Object[] { leadName, Messages.getString("WaveView.stop_time"), //$NON-NLS-1$
-                            InfoPanel.secondFormatter.format(m.getStopSeconds()) });
+                            MarkerAnnotation.secondFormatter.format(m.getStopSeconds()) });
                         list.add(
-                            new Object[] { leadName, Messages.getString("WaveView.stop_val"), InfoPanel.mVFormatter.format(m.getStopMiliVolt()) }); //$NON-NLS-1$
+                            new Object[] { leadName, Messages.getString("WaveView.stop_val"), MarkerAnnotation.mVFormatter.format(m.getStopMiliVolt()) }); //$NON-NLS-1$
                     }
                     if (m.getDuration() != null) {
                         list.add(
-                            new Object[] { leadName, Messages.getString("WaveView.duration"), InfoPanel.secondFormatter.format(m.getDuration()) }); //$NON-NLS-1$
-                        list.add(new Object[] { leadName, Messages.getString("WaveView.diff"), InfoPanel.mVFormatter.format(m.getDiffmV()) }); //$NON-NLS-1$
+                            new Object[] { leadName, Messages.getString("WaveView.duration"), MarkerAnnotation.secondFormatter.format(m.getDuration()) }); //$NON-NLS-1$
+                        list.add(new Object[] { leadName, Messages.getString("WaveView.diff"), MarkerAnnotation.mVFormatter.format(m.getDiffmV()) }); //$NON-NLS-1$
                         list.add(
-                            new Object[] { leadName, Messages.getString("WaveView.amplitude"), InfoPanel.mVFormatter.format(m.getAmplitude()) }); //$NON-NLS-1$
+                            new Object[] { leadName, Messages.getString("WaveView.amplitude"), MarkerAnnotation.mVFormatter.format(m.getAmplitude()) }); //$NON-NLS-1$
                     }
                 }
             }

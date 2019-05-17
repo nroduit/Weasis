@@ -26,6 +26,7 @@ import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -33,9 +34,6 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 
 class InfoPanel extends JPanel {
     private static final long serialVersionUID = -470038831713011257L;
-
-    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s"); //$NON-NLS-1$
-    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV"); //$NON-NLS-1$
 
     private JLabel lead = new JLabel(" "); //$NON-NLS-1$
     private JLabel maximum = new JLabel();
@@ -135,8 +133,8 @@ class InfoPanel extends JPanel {
         max.append(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
         max.append(StringUtil.COLON_AND_SPACE);
         max.append("-##.#### mV"); //$NON-NLS-1$
-        this.minimum.setText(new DecimalFormat(min.toString()).format(minimum));
-        this.maximum.setText(new DecimalFormat(max.toString()).format(maximum));
+        this.minimum.setText(new DecimalFormat(min.toString(), LocalUtil.getDecimalFormatSymbols()).format(minimum));
+        this.maximum.setText(new DecimalFormat(max.toString(), LocalUtil.getDecimalFormatSymbols()).format(maximum));
     }
 
     public void setCurrentValues(double sec, double mV) {
@@ -144,8 +142,8 @@ class InfoPanel extends JPanel {
             clearValue(currentLabel, seconds, miliVolt);
         } else {
             currentLabel.setText(Messages.getString("InfoPanel.cursor")); //$NON-NLS-1$
-            seconds.setText(secondFormatter.format(sec));
-            miliVolt.setText(mVFormatter.format(mV));
+            seconds.setText(MarkerAnnotation.secondFormatter.format(sec));
+            miliVolt.setText(MarkerAnnotation.mVFormatter.format(mV));
         }
     }
 

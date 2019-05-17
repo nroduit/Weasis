@@ -11,6 +11,7 @@
 package org.weasis.core.api.util;
 
 import java.text.DateFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -71,6 +72,11 @@ public class LocalUtil {
         LocalUtil.localeFormat = value;
     }
 
+    
+    public static DecimalFormatSymbols getDecimalFormatSymbols() {
+        return DecimalFormatSymbols.getInstance(getLocaleFormat());
+    }
+    
     public static NumberFormat getNumberInstance() {
         return NumberFormat.getNumberInstance(getLocaleFormat());
     }

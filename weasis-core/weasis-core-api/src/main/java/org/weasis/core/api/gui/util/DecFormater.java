@@ -11,7 +11,6 @@
 package org.weasis.core.api.gui.util;
 
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 
 import javax.swing.text.DefaultFormatterFactory;
@@ -24,25 +23,29 @@ import org.weasis.core.api.util.LocalUtil;
  *
  */
 public class DecFormater {
-    
+
     private DecFormater() {
     }
-    
-    private static NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
-    private static NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
-    private static NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
-    private static NumberFormat percent2 = LocalUtil.getPercentInstance();
+
+    private static final NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
+    private static final NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
+    private static final NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
+    private static final NumberFormat percent2 = LocalUtil.getPercentInstance();
+    private static final DecimalFormat decimalAndNumber = new DecimalFormat("#,##0.#", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
     // Scientific format with 4 decimals
-    private static DecimalFormat dfSci = new DecimalFormat("0.####E0"); //$NON-NLS-1$
+    private static final DecimalFormat dfSci = new DecimalFormat("0.####E0", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
 
     static {
         df1.setMaximumFractionDigits(1);
         df2.setMaximumFractionDigits(2);
         df4.setMaximumFractionDigits(4);
         percent2.setMaximumFractionDigits(2);
-        dfSci.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(LocalUtil.getLocaleFormat()));
     }
 
+    public static String allNumber(Number val) {
+        return decimalAndNumber.format(val);
+    }
+    
     public static String oneDecimal(Number val) {
         return df1.format(val);
     }
@@ -64,9 +67,9 @@ public class DecFormater {
     }
 
     public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {
-        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##")); //$NON-NLS-1$
+        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##", LocalUtil.getDecimalFormatSymbols())); //$NON-NLS-1$
         displayFormatter.setValueClass(Double.class);
-        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############")); //$NON-NLS-1$
+        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############", LocalUtil.getDecimalFormatSymbols())); //$NON-NLS-1$
         editFormatter.setValueClass(Double.class);
         editFormatter.setMinimum(min);
         editFormatter.setMaximum(max);
