@@ -561,20 +561,6 @@ public class ImageProcessor {
         }
     }
 
-    public static boolean writePNM(Mat source, File file) {
-        if (file.exists() && !file.canWrite()) {
-            return false;
-        }
-
-        try {
-            return Imgcodecs.imwrite(file.getPath(), source);
-        } catch (OutOfMemoryError | CvException e) {
-            LOGGER.error("Writing PNM", e); //$NON-NLS-1$
-            delete(file);
-            return false;
-        }
-    }
-
     public static boolean writeThumbnail(Mat source, File file, int maxSize) {
         try {
             final double scale = Math.min(maxSize / (double) source.height(), (double) maxSize / source.width());

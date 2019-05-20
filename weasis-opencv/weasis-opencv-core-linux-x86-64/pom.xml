@@ -10,7 +10,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-linux-x86-64</artifactId>
 	<name>OpenCV native Linux amd64</name>
-	<version>4.0.0-dcmR3</version>
+	<version>4.1.0-dcm</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
