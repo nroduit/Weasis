@@ -130,8 +130,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         final JCheckBox boxKeepNames = new JCheckBox(Messages.getString("LocalExport.keep_dir"), //$NON-NLS-1$
             Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"))); //$NON-NLS-1$
 
-        Object seltected = comboBoxImgFormat.getSelectedItem();
-        if (EXPORT_FORMAT[0].equals(seltected)) {
+        Object selected = comboBoxImgFormat.getSelectedItem();
+        if (EXPORT_FORMAT[0].equals(selected)) {
             final JCheckBox box1 = new JCheckBox(Messages.getString("LocalExport.inc_dicomdir"), //$NON-NLS-1$
                 Boolean.valueOf(pref.getProperty(INC_DICOMDIR, Boolean.TRUE.toString())));
             final JCheckBox box2 = new JCheckBox(Messages.getString("LocalExport.cd_folders"), //$NON-NLS-1$
@@ -151,9 +151,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
                 pref.setProperty(CD_COMPATIBLE, String.valueOf(box2.isSelected()));
             }
-        } else if (EXPORT_FORMAT[1].equals(seltected)) {
+        } else if (EXPORT_FORMAT[1].equals(selected)) {
             // No option
-        } else if (EXPORT_FORMAT[2].equals(seltected)) {
+        } else if (EXPORT_FORMAT[2].equals(selected)) {
             final JSlider slider = new JSlider(0, 100, StringUtil.getInt(pref.getProperty(IMG_QUALITY, null), 80));
 
             final JPanel palenSlider1 = new JPanel();
@@ -180,7 +180,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 pref.setProperty(IMG_QUALITY, String.valueOf(slider.getValue()));
                 pref.setProperty(KEEP_INFO_DIR, String.valueOf(boxKeepNames.isSelected()));
             }
-        } else if (EXPORT_FORMAT[3].equals(seltected)) {
+        } else if (EXPORT_FORMAT[3].equals(selected)) {
             final JCheckBox box1 = new JCheckBox(Messages.getString("LocalExport.ch_16"), //$NON-NLS-1$
                 Boolean.valueOf(pref.getProperty(IMG_16_BIT, "false"))); //$NON-NLS-1$
             Object[] options = { box1, boxKeepNames };
@@ -616,7 +616,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String buildFolderName(String str, int length) {
         String value = FileUtil.getValidFileNameWithoutHTML(str);
-        return StringUtil.getTruncatedString(value, length, Suffix.NO);
+        return StringUtil.getTruncatedString(value, length, Suffix.NO).trim();
     }
 
     private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement img, DefaultMutableTreeNode node,
