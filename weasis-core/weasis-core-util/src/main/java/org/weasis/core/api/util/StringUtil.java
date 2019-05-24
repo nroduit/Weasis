@@ -39,6 +39,8 @@ public class StringUtil {
 
     public enum Suffix {
         NO(""), //$NON-NLS-1$
+        
+        UNDERSCORE("_"), //$NON-NLS-1$
 
         ONE_PTS("."), //$NON-NLS-1$
 

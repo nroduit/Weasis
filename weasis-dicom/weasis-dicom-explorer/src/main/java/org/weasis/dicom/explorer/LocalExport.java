@@ -616,7 +616,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String buildFolderName(String str, int length) {
         String value = FileUtil.getValidFileNameWithoutHTML(str);
-        return StringUtil.getTruncatedString(value, length, Suffix.NO).trim();
+        value = StringUtil.getTruncatedString(value, length, Suffix.UNDERSCORE).trim();
+        return value.endsWith(".") ? value.substring(0, value.length() - 1) : value;
     }
 
     private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement img, DefaultMutableTreeNode node,
