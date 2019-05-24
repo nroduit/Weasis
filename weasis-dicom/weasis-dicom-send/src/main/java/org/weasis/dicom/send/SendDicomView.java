@@ -15,9 +15,7 @@ import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import javax.swing.ComboBoxModel;
@@ -261,7 +259,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
                     File destinationFile = new File(destinationDir, iuid);
                     if (!img.saveToFile(destinationFile)) {
-                        LOGGER.error("Cannot export DICOM file: {}", img.getFile()); //$NON-NLS-1$
+                        LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
                     }
                 } else if (node.getUserObject() instanceof MediaElement) {
                     MediaElement dcm = (MediaElement) node.getUserObject();

@@ -32,12 +32,10 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor 
     public void setDocument(File document) {
         FileUtil.delete(this.document);
         this.document = document;
-        getFileCache().setOriginalTempFile(document);
     }
 
     @Override
     public File getExtractFile() {
         return document;
     }
-
 }

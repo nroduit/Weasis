@@ -58,7 +58,6 @@ public class DicomVideoElement extends AudioVideoElement implements FileExtracto
     public void setVideoFile(File videoFile) {
         FileUtil.delete(this.videoFile);
         this.videoFile = videoFile;
-        getFileCache().setOriginalTempFile(videoFile);
     }
 
     @Override
