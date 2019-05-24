@@ -69,7 +69,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 			<artifactId>javaws</artifactId>
-		</dependency>		
+		</dependency>
 
 		<!-- Dependencies below are provided for debugging Weasis from IDE (by launching WeasisLauncher) -->
 		<!-- No direct dependency should be made with weasis-launcher -->
@@ -84,6 +84,14 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.scr</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.util.function</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.util.promise</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.felix</groupId>
