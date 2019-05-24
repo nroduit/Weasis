@@ -16,7 +16,6 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Map;
 
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Code;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
@@ -29,6 +28,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.macro.Code;
 import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -182,7 +182,7 @@ public class SRReader {
                     if (item != null) {
                         Code unit = new Code(item);
                         html.append(" "); //$NON-NLS-1$
-                        html.append(EscapeChars.forHTML(unit.getCodeValue()));
+                        html.append(EscapeChars.forHTML(unit.getExistingCodeValue()));
                     }
                 }
             } else if ("CONTAINER".equals(type)) { //$NON-NLS-1$

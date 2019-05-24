@@ -13,6 +13,7 @@ package org.weasis.dicom.codec.macro;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import org.dcm4che3.data.Attributes;
@@ -32,7 +33,7 @@ public class DigitalSignatures extends Module {
 
     public static Collection<DigitalSignatures> toDigitalSignaturesMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         ArrayList<DigitalSignatures> list = new ArrayList<>(seq.size());

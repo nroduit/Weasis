@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.macro;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
@@ -31,7 +32,7 @@ public class SOPInstanceReference extends Module {
 
     public static Collection<SOPInstanceReference> toSOPInstanceReferenceMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         ArrayList<SOPInstanceReference> list = new ArrayList<>(seq.size());

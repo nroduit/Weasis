@@ -12,12 +12,14 @@ package org.weasis.dicom.codec.macro;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.weasis.core.api.util.StringUtil;
 
 public class Code extends Module {
 
@@ -31,7 +33,7 @@ public class Code extends Module {
 
     public static Collection<Code> toCodeMacros(Sequence seq) {
         if (seq == null || seq.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
 
         ArrayList<Code> list = new ArrayList<>(seq.size());
@@ -43,12 +45,39 @@ public class Code extends Module {
         return list;
     }
 
+    public String getExistingCodeValue() {
+        String val = getCodeValue();
+        if (!StringUtil.hasText(val)) {
+            val = getLongCodeValue();
+        }
+        if (!StringUtil.hasText(val)) {
+            val = getURNCodeValue();
+        }
+        return val;
+    }
+
     public String getCodeValue() {
         return dcmItems.getString(Tag.CodeValue);
     }
 
     public void setCodeValue(String s) {
         dcmItems.setString(Tag.CodeValue, VR.SH, s);
+    }
+
+    public String getLongCodeValue() {
+        return dcmItems.getString(Tag.LongCodeValue);
+    }
+
+    public void setLongCodeValue(String s) {
+        dcmItems.setString(Tag.LongCodeValue, VR.UC, s);
+    }
+
+    public String getURNCodeValue() {
+        return dcmItems.getString(Tag.URNCodeValue);
+    }
+
+    public void setURNCodeValue(String s) {
+        dcmItems.setString(Tag.URNCodeValue, VR.UR, s);
     }
 
     public String getCodingSchemeDesignator() {
