@@ -280,6 +280,11 @@ public class WeasisLauncher {
             // End of splash screen
             loader.close();
             loader = null;
+            
+            String logActivatation = serverProp.get("org.apache.sling.commons.log.file"); //$NON-NLS-1$
+            if (Utils.hasText(logActivatation)) {
+                LOGGER.log(Level.INFO, "Logs has been delegated to the OSGI service and can be read in {0}", logActivatation); //$NON-NLS-1$
+            }
 
             executeCommands(commandList, goshArgs);
 
@@ -295,7 +300,7 @@ public class WeasisLauncher {
             System.exit(0);
         } catch (Throwable ex) {
             exitStatus = -1;
-            LOGGER.log(Level.SEVERE, "Cannot not start framework: " + ex); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot not start framework.", ex); //$NON-NLS-1$
             LOGGER.log(Level.SEVERE, "Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
             LOGGER.log(Level.SEVERE, "State of the framework:"); //$NON-NLS-1$
             for (Bundle b : mFelix.getBundleContext().getBundles()) {
