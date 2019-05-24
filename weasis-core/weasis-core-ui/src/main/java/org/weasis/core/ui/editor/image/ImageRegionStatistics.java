@@ -215,7 +215,7 @@ public class ImageRegionStatistics {
             double stdev = Math.sqrt(variance);
 
             if (bins.length > 3 && variance > MathUtil.DOUBLE_EPSILON) {
-                skew = (sum * skew) / ((sum - 1) * (sum - 2) * stdev * variance);
+                skew = (sum * skew) / ((sum - 1) * (sum - 2) * stdev * variance); //NOSONAR the condition above should exclude the division by 0
                 kurtosis = (sum * (sum + 1) * kurtosis - 3 * m2 * m2 * (sum - 1))
                     / ((sum - 1) * (sum - 2) * (sum - 3) * variance * variance);
             } else {

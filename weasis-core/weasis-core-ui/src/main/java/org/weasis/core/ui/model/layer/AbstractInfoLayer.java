@@ -249,8 +249,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
     public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
         WindLevelParameters p = getWinLeveParameters();
-        DisplayByteLut lut = getLut(p);
-        if (p != null && lut != null && bound.height > 350) {
+        if (p != null && bound.height > 350) {
+            DisplayByteLut lut = getLut(p);
+            if (lut == null) {
+                return;
+            }
             byte[][] table = lut.getLutTable();
             float length = table[0].length;
 

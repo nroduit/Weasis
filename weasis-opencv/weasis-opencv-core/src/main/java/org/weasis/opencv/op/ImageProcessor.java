@@ -208,7 +208,7 @@ public class ImageProcessor {
         val[2] = mean.toArray();
         val[3] = stddev.toArray();
         if(mask == null) {
-            val[4][0] = srcImg.width() * srcImg.height();  
+            val[4][0] = srcImg.width() * (double) srcImg.height();  
         }
         else {
             val[4][0] = Core.countNonZero(mask);  
