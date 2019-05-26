@@ -228,13 +228,13 @@ $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
 $JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
+--java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
   $JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --jvm-args "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
+  --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"
   cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
 fi
