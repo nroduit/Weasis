@@ -213,7 +213,8 @@ public class HistogramData {
         MatOfInt histSize = new MatOfInt(nbBins);
         MatOfFloat histRange = new MatOfFloat((float) pixMin, (float) pixMax + 1.0f);
         Mat img;
-        if (CvType.depth(imageSource.type()) == CvType.CV_16S) {
+        int cvType = CvType.depth(imageSource.type());
+        if (cvType == CvType.CV_16S || cvType ==  CvType.CV_32S) {
             Mat floatImage = new Mat(imageSource.height(), imageSource.width(), CvType.CV_32F);
             imageSource.convertTo(floatImage, CvType.CV_32F);
             img = floatImage;
