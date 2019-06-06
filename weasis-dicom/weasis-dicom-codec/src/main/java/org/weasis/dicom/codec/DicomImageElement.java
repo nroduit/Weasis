@@ -670,13 +670,9 @@ public class DicomImageElement extends ImageElement {
                 return imageModalityTransformed;
             }
 
-            LookupTableCV voiLookup = null;
+            LookupTableCV voiLookup = getVOILookup(p.getPresentationStateTags(), p.getWindow(), p.getLevel(), p.getLevelMin(),
+                p.getLevelMax(), p.getLutShape(), p.isFillOutsideLutRange(), pixPadding);
             LookupTableCV prLutData = p.getPresentationStateLut();
-            if (prLutData == null || p.getLutShape().getLookup() != null) {
-                voiLookup = getVOILookup(p.getPresentationStateTags(), p.getWindow(), p.getLevel(), p.getLevelMin(),
-                    p.getLevelMax(), p.getLutShape(), p.isFillOutsideLutRange(), pixPadding);
-            }
-
             if (prLutData == null) {
                 return voiLookup.lookup(imageModalityTransformed);
             }
