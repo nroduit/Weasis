@@ -402,21 +402,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
     }
 
-    @Override
-    public void reset() {
-        super.reset();
-        DicomImageElement img = getImage();
-        if (img != null) {
-            Object key = img.getKey();
-            List<PRSpecialElement> prList =
-                DicomModel.getPrSpecialElements(series, TagD.getTagValue(img, Tag.SOPInstanceUID, String.class),
-                    key instanceof Integer ? (Integer) key + 1 : null);
-            if (!prList.isEmpty()) {
-                setPresentationState(prList.get(0), false);
-            }
-        }
-    }
-
     void setPresentationState(Object val, boolean newImage) {
 
         Object old = actionsInView.get(ActionW.PR_STATE.cmd());
@@ -1342,10 +1327,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             Optional<ViewerPlugin<?>> pluginOp = UIManager.VIEWER_PLUGINS.stream()
                 .filter(p -> p instanceof View2dContainer && ((View2dContainer) p).isContainingView(View2d.this))
                 .findFirst();
-            if(!pluginOp.isPresent()) {
+            if (!pluginOp.isPresent()) {
                 return false;
             }
-            
+
             View2dContainer selPlugin = (View2dContainer) pluginOp.get();
             Series seq;
             try {
