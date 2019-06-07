@@ -16,6 +16,8 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
 
+import javax.imageio.spi.IIOServiceProvider;
+
 import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
@@ -86,9 +88,10 @@ public class DicomCodec implements Codec {
         }
     };
 
-    // private final RLEImageReaderSpi rleImageReaderSpi = new RLEImageReaderSpi();
-    // private final DicomImageWriterSpi DicomImageWriterSpi = new DicomImageWriterSpi();
-    // private final RawImageReaderSpi RawImageReaderSpi = new RawImageReaderSpi();
+    private static final IIOServiceProvider[] dcm4cheCodecs = { new org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi(),
+        new org.dcm4che3.opencv.NativeJLSImageReaderSpi(), new  org.dcm4che3.opencv.NativeJPEGImageReaderSpi(),
+        new  org.dcm4che3.opencv.NativeJ2kImageReaderSpi(), new org.dcm4che3.opencv.NativeJLSImageWriterSpi(),
+        new org.dcm4che3.opencv.NativeJPEGImageWriterSpi(), new org.dcm4che3.opencv.NativeJ2kImageWriterSpi() };
 
     @Override
     public String[] getReaderMIMETypes() {
@@ -162,11 +165,11 @@ public class DicomCodec implements Codec {
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
-        // org.dcm4che3.imageioimpl.plugins.rle.RLEImageReaderSpi
-        // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageReaderSpi
-        // org.dcm4che3.imageioimpl.plugins.dcm.DicomImageWriterSpi
-        // ImageioUtil.registerServiceProvider(rleImageReaderSpi);
         ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
+
+        for (IIOServiceProvider p : dcm4cheCodecs) {
+            ImageioUtil.registerServiceProvider(p);
+        }
 
         ConfigurationAdmin confAdmin =
             BundlePreferences.getService(context.getBundleContext(), ConfigurationAdmin.class);
@@ -192,8 +195,10 @@ public class DicomCodec implements Codec {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
-        // ImageioUtil.deregisterServiceProvider(rleImageReaderSpi);
         ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
+        for (IIOServiceProvider p : dcm4cheCodecs) {
+            ImageioUtil.deregisterServiceProvider(p);
+        }
     }
 
     @Reference(service = DicomSpecialElementFactory.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "removeDicomSpecialElementFactory")

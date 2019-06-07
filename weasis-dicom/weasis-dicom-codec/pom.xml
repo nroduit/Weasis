@@ -14,7 +14,7 @@
 
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<weasis-dicom-tools.version>5.16.2</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.17.0</weasis-dicom-tools.version>
 	</properties>
 
 	<repositories>
@@ -56,14 +56,6 @@
 				<exclusion>
 					<groupId>org.weasis.core</groupId>
 					<artifactId>weasis-core-util</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-imageio-opencv</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.dcm4che</groupId>
-					<artifactId>dcm4che-imageio-rle</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>junit</groupId>
