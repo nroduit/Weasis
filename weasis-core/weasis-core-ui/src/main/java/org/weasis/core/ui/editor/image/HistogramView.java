@@ -77,7 +77,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
     private final JPanel view = new JPanel();
     private final JPanel histView = new JPanel();
     private final SeriesViewer<?> viewer;
-    private final JSpinner spinnerBins = new JSpinner(new SpinnerNumberModel(512, 64, 4096, 16));
+    private final JSpinner spinnerBins = new JSpinner(new SpinnerNumberModel(512, 64, 4096, 8));
 
     private ViewCanvas<?> view2DPane;
 
@@ -347,11 +347,19 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                     DisplayByteLut[] displut = getLut(p, colorModel);
                     for (int i = 0; i < lut.length; i++) {
                         ChannelHistogramPanel chartPanel;
+                        StringBuilder name = new StringBuilder(lut[i].getName());
+                        name.append(StringUtil.SPACE);
+                        name.append("Histogram");
+                        if (StringUtil.hasText(layer.getPixelValueUnit())) {
+                            name.append(" [");
+                            name.append(layer.getPixelValueUnit());
+                            name.append("]");
+                        }
                         if (i >= old.length || old[i] == null) {
-                            chartPanel = new ChannelHistogramPanel(lut[i].getName());
+                            chartPanel = new ChannelHistogramPanel(name.toString());
                         } else {
-                            chartPanel = new ChannelHistogramPanel(lut[i].getName(), old[i].isAccumulate(),
-                                old[i].isLogarithmic(), old[i].isShowIntensity());
+                            chartPanel = new ChannelHistogramPanel(name.toString(), old[i].isAccumulate(), old[i].isLogarithmic(),
+                                old[i].isShowIntensity());
                         }
                         histView.add(chartPanel);
                         Mat h = listHisto.get(i);

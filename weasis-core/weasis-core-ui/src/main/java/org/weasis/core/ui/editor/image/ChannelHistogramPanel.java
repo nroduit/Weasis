@@ -17,7 +17,6 @@ import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.StringUtil;
 
 /**
  * @author Nicolas Roduit
@@ -45,7 +44,7 @@ public class ChannelHistogramPanel extends JPanel {
     }
 
     public ChannelHistogramPanel(String name, boolean accumulate, boolean logarithmic, boolean showIntensity) {
-        this.jCheckAccumulate = new JCheckBox("Acuumulate", accumulate);
+        this.jCheckAccumulate = new JCheckBox("Accumulate", accumulate);
         this.jCheckLogarithmic = new JCheckBox("Logarithmic", logarithmic);
         this.jCheckShowIntensity = new JCheckBox("Show intensity color", showIntensity);
         this.jPanelHistogram = new HistogramPanel();
@@ -56,7 +55,7 @@ public class ChannelHistogramPanel extends JPanel {
 
     private void init(String name) {
         this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(null, name + StringUtil.SPACE + "Intensity Histogram", TitledBorder.DEFAULT_JUSTIFICATION,
+            new TitledBorder(null, name, TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
         this.setLayout(borderLayout1);
         this.add(jPanelHistogram, BorderLayout.CENTER);
