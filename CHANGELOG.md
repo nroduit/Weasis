@@ -1,5 +1,44 @@
 # Changelog
 
+## [3.5.2-rc](https://github.com/nroduit/weasis/tree/3.5.2-rc) (2019-06-14)
+
+[Full Changelog](https://github.com/nroduit/weasis/compare/3.0.4...3.5.2-rc)
+
+**Implemented enhancements:**
+
+- Weasis binaries does not launch in MacOS Mojave [\#85](https://github.com/nroduit/Weasis/issues/85) [[Type: Security](https://github.com/nroduit/Weasis/labels/Type:%20Security)]
+- DICOM send is not able to transcode when the receiver has limited syntaxes [\#82](https://github.com/nroduit/Weasis/issues/82)
+- Add median, skewness, kurtosis and entropy for statistics of an area [\#79](https://github.com/nroduit/Weasis/issues/79)
+- Supports modality LUT \(table\) when displaying LUT values [\#77](https://github.com/nroduit/Weasis/issues/77)
+- Allow to add custom HTTP headers for DICOMWeb nodes [\#74](https://github.com/nroduit/Weasis/issues/74) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- Histogram view [\#73](https://github.com/nroduit/Weasis/issues/73) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- The same name of the system process for every platform [\#67](https://github.com/nroduit/Weasis/issues/67)
+- HiDPI support [\#64](https://github.com/nroduit/Weasis/issues/64) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- A single instance mechanism for all the launch context [\#63](https://github.com/nroduit/Weasis/issues/63) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- Allow to enable app sandbox on Mac OS X [\#62](https://github.com/nroduit/Weasis/issues/62)
+- Integration of the Mac OS X application menu [\#61](https://github.com/nroduit/Weasis/issues/61) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- Improves the traces of the launcher module [\#60](https://github.com/nroduit/Weasis/issues/60)
+- Register the DICOM mime type for file association \(for windows .dcm extension\) [\#59](https://github.com/nroduit/Weasis/issues/59) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- Register an URI handler for the weasis and weasis-dicomizer scheme [\#58](https://github.com/nroduit/Weasis/issues/58) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+- Supporting from Java 8 to Java 13 Runtime [\#56](https://github.com/nroduit/Weasis/issues/56)
+- Allow to embed JRE for Linux and Mac [\#38](https://github.com/nroduit/Weasis/issues/38) [[Priority: Medium](https://github.com/nroduit/Weasis/labels/Priority:%20Medium)]
+
+**Fixed bugs:**
+
+- Issue when reseting a Presentation State [\#87](https://github.com/nroduit/Weasis/issues/87)
+- Cannot change W/L when a Presentation LUT is applied [\#86](https://github.com/nroduit/Weasis/issues/86)
+- Cannot export DICOM PDF and Video [\#84](https://github.com/nroduit/Weasis/issues/84)
+- Cannot render DICOM SR [\#83](https://github.com/nroduit/Weasis/issues/83)
+- Exporting jpeg images doesn't work with some patient names [\#81](https://github.com/nroduit/Weasis/issues/81)
+- Measurement statistics doesn't use modality LUT \(table\) [\#78](https://github.com/nroduit/Weasis/issues/78)
+- Do not apply LUT shape when displaying LUT \(only linear\) [\#76](https://github.com/nroduit/Weasis/issues/76)
+- Some numbers doesn't apply the regional format selected in the preferences [\#75](https://github.com/nroduit/Weasis/issues/75)
+- The displayed image becomes black after exporting series in jpeg or png [\#72](https://github.com/nroduit/Weasis/issues/72)
+- Cannot write MPR images on Windows when the path contain non-ASCII characters [\#69](https://github.com/nroduit/Weasis/issues/69)
+- 3D Stl file Open Does not work [\#68](https://github.com/nroduit/Weasis/issues/68)
+- Open image menu or toolbar should not appear on Dicomizer [\#55](https://github.com/nroduit/Weasis/issues/55)
+- W/L issue with MR containing Modality LUT values [\#52](https://github.com/nroduit/Weasis/issues/52) [[Priority: High](https://github.com/nroduit/Weasis/labels/Priority:%20High)]
+
 ## [3.0.4](https://github.com/nroduit/weasis/tree/3.0.4) (2018-12-20)
 
 [Full Changelog](https://github.com/nroduit/weasis/compare/3.0.3...3.0.4)
