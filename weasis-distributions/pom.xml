@@ -381,7 +381,7 @@
 								</artifactItem>
 								<artifactItem>
 									<groupId>org.glassfish</groupId>
-									<artifactId>javax.json</artifactId>
+									<artifactId>jakarta.json</artifactId>
 									<version>${javax.json.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
