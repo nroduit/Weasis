@@ -1419,6 +1419,9 @@ public class WeasisLauncher {
     private static String applyCodebase(File localCodebase) {
         File baseDir = localCodebase == null ? findLocalCodebase() : localCodebase;
         String baseURI = baseDir.toURI().toString();
+        if(baseURI.endsWith("/")) {
+            baseURI = baseURI.substring(0, baseURI.length() -1);
+        }
         try {
             System.setProperty("weasis.codebase.local", baseDir.getAbsolutePath()); //$NON-NLS-1$
             System.setProperty(P_WEASIS_CODEBASE_URL, baseURI);
