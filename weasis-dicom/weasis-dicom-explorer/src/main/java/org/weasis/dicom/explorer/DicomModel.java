@@ -659,7 +659,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private void splitSeries(DicomMediaIO dicomReader, Series original, MediaElement media) {
         Series s = splitSeries(dicomReader, original);
         s.addMedia(media);
-        LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
     }
 
     private Series splitSeries(DicomMediaIO dicomReader, Series original) {
