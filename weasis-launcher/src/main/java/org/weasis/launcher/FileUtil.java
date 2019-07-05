@@ -13,6 +13,8 @@
 package org.weasis.launcher;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -25,6 +27,7 @@ import java.nio.file.Files;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -254,5 +257,38 @@ public class FileUtil {
         int exp = (int) (Math.log(bytes) / Math.log(unit));
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //$NON-NLS-1$
+    }
+    
+    public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {
+        if (isGzip(bytes)) {
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);) {
+                gzipUncompress(inputStream, outputStream);
+                return outputStream.toByteArray();
+            }
+        } else {
+            return bytes;
+        }
+    }
+    
+    public static boolean isGzip(byte[] bytes) {
+        if (bytes != null && bytes.length >= 4) {
+            int head = (bytes[0] & 0xff) | ((bytes[1] << 8) & 0xff00);
+            if (GZIPInputStream.GZIP_MAGIC == head) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    private static boolean gzipUncompress(InputStream inputStream, OutputStream out) throws IOException {
+        try (GZIPInputStream in = new GZIPInputStream(inputStream)) {
+            byte[] buf = new byte[1024];
+            int offset;
+            while ((offset = in.read(buf)) > 0) {
+                out.write(buf, 0, offset);
+            }
+            return true;
+        }
     }
 }

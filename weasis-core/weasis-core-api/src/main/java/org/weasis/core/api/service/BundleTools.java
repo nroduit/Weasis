@@ -62,12 +62,18 @@ public class BundleTools {
 
     public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
-
+    /**
+     * This the persistence used at launch which can be stored remotely. These are the preferences necessary for launching unlike the preferences associated with the plugins.
+     */
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
-    public static final WProperties INIT_SYSTEM_PREFERENCES = new WProperties();
+    /**
+     * This the common local persistence for UI. It should be used only for preferences for which remote storage makes no sense.
+     */
+    public static final WProperties LOCAL_UI_PERSISTENCE = new WProperties();
+    
+    private static final WProperties INIT_SYSTEM_PREFERENCES = new WProperties();
     private static final File propsFile;
-    @Deprecated
-    public static final WProperties LOCAL_PERSISTENCE = new WProperties();
+    
 
     static {
         String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir"); //$NON-NLS-1$
@@ -116,13 +122,13 @@ public class BundleTools {
     }
 
     private static void readSystemPreferences() {
-        boolean notContent = false;
+        boolean noContent = false;
         SYSTEM_PREFERENCES.clear();
         String remotePrefURL = getServiceUrl();
         if (remotePrefURL != null) {
             readRemoteProperties(SYSTEM_PREFERENCES, remotePrefURL);
             if (SYSTEM_PREFERENCES.isEmpty()) {
-                notContent = true;
+                noContent = true;
             }
         }
 
@@ -130,7 +136,7 @@ public class BundleTools {
             FileUtil.readProperties(propsFile, SYSTEM_PREFERENCES);
         }
         resetInitProperties();
-        if (notContent) {
+        if (noContent) {
             INIT_SYSTEM_PREFERENCES.setProperty("no.content", "true");
         }
     }

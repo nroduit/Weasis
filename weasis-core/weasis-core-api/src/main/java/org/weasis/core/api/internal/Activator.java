@@ -45,11 +45,9 @@ public class Activator implements BundleActivator, ServiceListener {
 
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
 
-        // Trick for avoiding 403 error when downloading from some web sites
-        System.setProperty("http.agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.1"); //$NON-NLS-1$ //$NON-NLS-2$
         // Allows to connect through a proxy initialized by Java Webstart
         if (!LangUtil.geEmptytoTrue(System.getProperty("http.bundle.cache"))) {
-            ProxyDetector.setProxyFromJavaWebStart();
+            ProxyUtils.setProxyFromJavaWebStart();
         }
 
         initLoggerAndAudit(bundleContext);

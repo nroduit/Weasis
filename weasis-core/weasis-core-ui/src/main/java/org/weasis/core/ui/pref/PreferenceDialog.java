@@ -60,6 +60,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
         ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
         list.add(new GeneralSetting());
+        list.add(new ProxyPrefView());
         list.add(new LabelsPrefView());
         list.add(new ScreenPrefView());
 

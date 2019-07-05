@@ -140,7 +140,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         defMonitorComboBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 JComboBox<?> comboBox = (JComboBox<?>) e.getSource();
-                BundleTools.LOCAL_PERSISTENCE.putIntProperty("default.monitor", comboBox.getSelectedIndex()); //$NON-NLS-1$
+                BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("default.monitor", comboBox.getSelectedIndex()); //$NON-NLS-1$
             }
         });
 
@@ -155,7 +155,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     }
 
     public static int getDefaultMonitor() {
-        return BundleTools.LOCAL_PERSISTENCE.getIntProperty("default.monitor", 0); //$NON-NLS-1$
+        return BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("default.monitor", 0); //$NON-NLS-1$
     }
 
     @Override
@@ -319,7 +319,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 buf.append("x"); //$NON-NLS-1$
                 buf.append(b.height);
                 buf.append(".pitch"); //$NON-NLS-1$
-                BundleTools.LOCAL_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
+                BundleTools.LOCAL_UI_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
             }
         }
 
