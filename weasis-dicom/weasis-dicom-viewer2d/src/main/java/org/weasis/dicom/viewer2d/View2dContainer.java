@@ -10,16 +10,11 @@
  *******************************************************************************/
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,7 +27,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
@@ -50,7 +44,6 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.JMVUtils;
@@ -652,82 +645,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public List<Action> getExportActions() {
         List<Action> actions = selectedImagePane == null ? null : selectedImagePane.getExportToClipboardAction();
-        if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
-            if (actions == null) {
-                actions = new ArrayList<>();
-            }
-
-            boolean expOsirix = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.osirix", true); //$NON-NLS-1$
-            if (expOsirix) {
-                DefaultAction action =
-                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Osirix"), //$NON-NLS-1$ //$NON-NLS-2$
-                        new ImageIcon(View2dContainer.class.getResource("/icon/16x16/osirix.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this, "Osirix", "/usr/bin/open -b com.rossetantoine.osirix")); //$NON-NLS-1$ //$NON-NLS-2$
-                actions.add(action);
-            }
-
-            boolean expHoros = BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("export.menu.horos", true); //$NON-NLS-1$
-            if (expHoros) {
-                DefaultAction action =
-                    new DefaultAction(String.format(Messages.getString("View2dContainer.expOsirixMes"), "Horos"), //$NON-NLS-1$ //$NON-NLS-2$
-                        new ImageIcon(View2dContainer.class.getResource("/icon/16x16/horos.png")), //$NON-NLS-1$
-                        event -> exportTosirix(this, "Horos", "/usr/bin/open -b com.horosproject.horos")); // $NON-NLS-1$ //$NON-NLS-1$ //$NON-NLS-2$
-                actions.add(action);
-            }
-        }
         return actions;
     }
 
-    private static void exportTosirix(Component parent, String appName, String cmd) {
-        String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-        StringBuilder msg = new StringBuilder(cmd);
-        if (baseDir != null) {
-            String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
-            if (prop != null) {
-                String[] dirs = prop.split(","); //$NON-NLS-1$
-                File[] files = new File[dirs.length];
-                for (int i = 0; i < files.length; i++) {
-                    File file = new File(baseDir, dirs[i].trim());
-                    if (file.canRead()) {
-                        msg.append(" "); //$NON-NLS-1$
-                        msg.append(file.getAbsolutePath());
-                    }
-                }
-            }
-        } else {
-            File file = new File(AppProperties.APP_TEMP_DIR, "dicom"); //$NON-NLS-1$
-            if (file.canRead()) {
-                msg.append(" "); //$NON-NLS-1$
-                msg.append(file.getAbsolutePath());
-            }
-        }
-        LOGGER.info("Execute cmd: {}", msg); //$NON-NLS-1$
-        try {
-            Process p = Runtime.getRuntime().exec(msg.toString());
-            BufferedReader buffer = new BufferedReader(new InputStreamReader(p.getInputStream()));
-
-            String data;
-            while ((data = buffer.readLine()) != null) {
-                System.out.println(data);
-            }
-            int val = 0;
-            if (p.waitFor() != 0) {
-                val = p.exitValue();
-            }
-            if (val != 0) {
-                JOptionPane.showMessageDialog(parent,
-                    String.format(Messages.getString("View2dContainer.expOsirixTitle"), //$NON-NLS-1$
-                        appName),
-                    Messages.getString("View2dContainer.expOsirixMes"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-            }
-
-        } catch (IOException e1) {
-            LOGGER.error("Running cmd", e1); //$NON-NLS-1$
-        } catch (InterruptedException e2) {
-            LOGGER.error("Cannot get the exit status of the open Osirix command", e2); //$NON-NLS-1$
-            Thread.currentThread().interrupt();
-        }
-    }
 
     @Override
     public List<Action> getPrintActions() {
