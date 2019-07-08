@@ -2,6 +2,8 @@ package org.weasis.launcher;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -229,13 +231,17 @@ public class ConfigData {
 
             boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth"));
             if (auth) {
-                applyProxyProperty("http.proxyUser", p.getProperty("proxy.auth.user"), mproxy);
+               String authUser = p.getProperty("proxy.auth.user");
+               String authPassword;
                 try {
                     byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null);
                     if (pwd != null) {
                         pwd = Utils.decrypt(pwd, "proxy.auth");
                         if (pwd != null && pwd.length > 0) {
-                            applyProxyProperty("http.proxyPassword", new String(pwd), mproxy);
+                            authPassword = new String(pwd);
+                            applyPasswordAuthentication(authUser, authPassword);
+                            applyProxyProperty("http.proxyUser", authUser, mproxy);
+                            applyProxyProperty("http.proxyPassword", authPassword, mproxy);
                         }
                     }
                 } catch (Exception e) {
@@ -244,7 +250,19 @@ public class ConfigData {
             }
         }
     }
-
+    
+    private static void applyPasswordAuthentication(final String authUser, final String authPassword ) {
+        Authenticator.setDefault(
+           new Authenticator() {
+              @Override
+              public PasswordAuthentication getPasswordAuthentication() {
+                 return new PasswordAuthentication(
+                       authUser, authPassword.toCharArray());
+              }
+           }
+        );
+    }
+    
     private static void applyProxyProperty(String key, String value, boolean manual) {
         if (manual && Utils.hasText(value)) {
             System.setProperty(key, value);
