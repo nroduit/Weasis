@@ -249,6 +249,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcPanel2.gridy = 7;
         add(panel2, gbcPanel2);
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
+        panel2.add(JMVUtils.createHelpButton("locale", true));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> {
             resetoDefaultValues();
@@ -260,11 +261,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
     private static String getText() {
         ZonedDateTime now = ZonedDateTime.now();
         return String.format(Messages.getString("GeneralSetting.txtNote"), //$NON-NLS-1$
-            new Object[] { LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
-                LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
-                LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
-                LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
-                LocalUtil.getNumberInstance().format(2543456.3465) });
+            LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
+            LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
+            LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
+            LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
+            LocalUtil.getNumberInstance().format(2543456.3465));
     }
 
     private void checkRolingLog() {

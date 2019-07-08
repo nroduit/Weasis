@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.StringUtil;
 
 public class WProperties extends Properties {
     private static final long serialVersionUID = 3647479963645248145L;
@@ -86,7 +87,7 @@ public class WProperties extends Properties {
     }
 
     public void putIntProperty(String key, int value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             this.put(key, String.valueOf(value));
         }
     }
@@ -107,7 +108,7 @@ public class WProperties extends Properties {
     }
 
     public void putLongProperty(String key, long value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             this.put(key, String.valueOf(value));
         }
     }
@@ -201,9 +202,13 @@ public class WProperties extends Properties {
     }
 
     public void putByteArrayProperty(String key, byte[] value) {
-        if (isValid(key, value)) {
+        if (isKeyValid(key)) {
             try {
-                this.put(key, Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)));
+                String val = "";
+                if(value != null && value.length > 0) {
+                    val = new String(Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)));
+                }
+                this.put(key, val);
             } catch (IOException e) {
                 LOGGER.error("Set byte property", e); //$NON-NLS-1$
             }
@@ -213,10 +218,10 @@ public class WProperties extends Properties {
     public byte[] getByteArrayProperty(String key, byte[] def) {
         byte[] result = def;
         if (isKeyValid(key)) {
-            Object value = this.get(key);
-            if (value instanceof byte[]) {
+            String value = this.getProperty(key);
+            if (StringUtil.hasText(value)) {
                 try {
-                    result = GzipManager.gzipUncompressToByte(Base64.getDecoder().decode((byte[]) value));
+                    result = GzipManager.gzipUncompressToByte(Base64.getDecoder().decode(value.getBytes()));
                 } catch (IOException e) {
                     LOGGER.error("Get byte property", e); //$NON-NLS-1$
                 }

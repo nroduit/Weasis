@@ -103,10 +103,9 @@ public class WPropertiesTest {
         prop.putByteArrayProperty("byte", data); //$NON-NLS-1$
         Assert.assertArrayEquals("different byte data", data, prop.getByteArrayProperty("byte", null)); //$NON-NLS-1$ //$NON-NLS-2$
         prop.putByteArrayProperty("byte", null); //$NON-NLS-1$
-        // Return the previous value
-        Assert.assertArrayEquals("different byte data", data, prop.getByteArrayProperty("byte", null)); //$NON-NLS-1$ //$NON-NLS-2$
+        Assert.assertArrayEquals("different byte data", null, prop.getByteArrayProperty("byte", null)); //$NON-NLS-1$ //$NON-NLS-2$
         prop.putByteArrayProperty("byte", new byte[] {}); //$NON-NLS-1$
-        Assert.assertArrayEquals("different byte data", new byte[] {}, prop.getByteArrayProperty("byte", null)); //$NON-NLS-1$ //$NON-NLS-2$
+        Assert.assertArrayEquals("different byte data", null, prop.getByteArrayProperty("byte", null)); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Test

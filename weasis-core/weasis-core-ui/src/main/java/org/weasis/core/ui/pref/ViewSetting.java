@@ -142,7 +142,7 @@ public class ViewSetting {
             buf.append("x"); //$NON-NLS-1$
             buf.append(b.height);
             buf.append(".pitch"); //$NON-NLS-1$
-            double pitch = BundleTools.LOCAL_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
+            double pitch = BundleTools.LOCAL_UI_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
             monitor.setRealScaleFactor(pitch);
             monitors.add(monitor);
         }

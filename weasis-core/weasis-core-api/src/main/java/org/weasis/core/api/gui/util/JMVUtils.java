@@ -22,12 +22,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.Objects;
 
 import javax.swing.AbstractAction;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
@@ -61,6 +64,7 @@ import javax.swing.text.html.StyleSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.StringUtil;
 
 /**
@@ -280,6 +284,31 @@ public class JMVUtils {
             return new Dimension(30, 30);
         }
     }
+    
+    public static JButton createHelpButton(final String topic, boolean small) {
+        JButton jButtonHelp;
+        if (small) {
+          jButtonHelp =
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png")));
+          jButtonHelp.setPreferredSize(getSmallIconButtonSize());
+        } else {
+          jButtonHelp =
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png")));
+          jButtonHelp.setPreferredSize(getBigIconButtonSize());
+        }
+        jButtonHelp.addActionListener(
+            e -> {
+              try {
+                JMVUtils.openInDefaultBrowser(
+                    jButtonHelp,
+                    new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic));
+              } catch (MalformedURLException e1) {
+                LOGGER.error("Cannot open online help", e1);
+              }
+            });
+
+        return jButtonHelp;
+      }
 
     public static HTMLEditorKit buildHTMLEditorKit(JComponent component) {
         Objects.requireNonNull(component);

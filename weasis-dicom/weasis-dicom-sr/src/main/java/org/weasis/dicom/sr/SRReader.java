@@ -18,6 +18,8 @@ import java.util.Map;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagUtil;
@@ -34,6 +36,7 @@ import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
 
 public class SRReader {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SRReader.class);
 
     private final DicomSpecialElement dicomSR;
     private final Attributes dcmItems;
@@ -182,7 +185,7 @@ public class SRReader {
                     if (item != null) {
                         Code unit = new Code(item);
                         html.append(" "); //$NON-NLS-1$
-                        html.append(EscapeChars.forHTML(unit.getExistingCodeValue()));
+                        addCodeMeaning(html, unit, null, null);
                     }
                 }
             } else if ("CONTAINER".equals(type)) { //$NON-NLS-1$
@@ -215,7 +218,6 @@ public class SRReader {
                     html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
                     for (int i = 0; i < sequenceElt.size(); i++) {
                         SOPInstanceReference sopRef = new SOPInstanceReference(sequenceElt.get(i));
-                        // TODO convert UID to text
                         html.append(sopRef.getReferencedSOPClassUID());
                         html.append(" (SOP Instance UID"); //$NON-NLS-1$
                         html.append(StringUtil.COLON_AND_SPACE);
@@ -250,7 +252,7 @@ public class SRReader {
                                     imgRef.addGraphic(graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                e.printStackTrace();
+                                LOGGER.error("Cannot build graphic from SR", e);
                             }
 
                             html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
@@ -302,7 +304,7 @@ public class SRReader {
         if (item == null) {
             return null;
         }
-        SRImageReference imgRef = map.computeIfAbsent(level, k ->  new SRImageReference(level));
+        SRImageReference imgRef = map.computeIfAbsent(level, k -> new SRImageReference(level));
         if (imgRef.getSopInstanceReference() == null) {
             imgRef.setSopInstanceReference(new SOPInstanceReference(item));
         }

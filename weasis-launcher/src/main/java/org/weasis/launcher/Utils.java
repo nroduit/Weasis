@@ -1,10 +1,20 @@
 package org.weasis.launcher;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Utils {
 
@@ -107,5 +117,29 @@ public class Utils {
             matchList.add(arg.trim());
         }
         return matchList;
+    }
+    
+    public static byte[] getByteArrayProperty(Properties prop, String key, byte[] def) {
+        byte[] result = def;
+        if (key != null) {
+            String value = prop.getProperty(key);
+            if (Utils.hasText(value)) {
+                try {
+                    result = FileUtil.gzipUncompressToByte(Base64.getDecoder().decode(value.getBytes()));
+                } catch (IOException e) {
+                    Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, "Get byte property", e); //$NON-NLS-1$
+                }
+            }
+        }
+        return result;
+    }
+    
+
+    
+    public static byte[] decrypt(byte[] input, String strKey) throws GeneralSecurityException {
+        SecretKeySpec skeyspec = new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish");
+        Cipher cipher = Cipher.getInstance("Blowfish");
+        cipher.init(Cipher.DECRYPT_MODE, skeyspec);
+        return cipher.doFinal(input);
     }
 }

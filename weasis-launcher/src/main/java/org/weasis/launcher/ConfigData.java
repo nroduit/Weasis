@@ -249,6 +249,69 @@ public class ConfigData {
             System.setProperty(key, properties.getProperty(key));
         }
     }
+    public void applyProxy(String dir) {
+        File file = new File(dir, "persitence.properties");
+        if (!file.canRead()) {
+            return;
+        }
+        Properties p = new Properties();
+        FileUtil.readProperties(file, p);
+
+        boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual"));
+
+        if (mproxy) {
+            String exceptions = p.getProperty("proxy.exceptions");
+            String val = p.getProperty("proxy.http.host");
+            applyProxyProperty("http.proxyHost", val, mproxy);
+            if (Utils.hasText(val)) {
+                applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy);
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+            }
+
+            val = p.getProperty("proxy.https.host");
+            applyProxyProperty("https.proxyHost", val, mproxy);
+            if (Utils.hasText(val)) {
+                applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy);
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+            }
+
+            val = p.getProperty("proxy.ftp.host");
+            applyProxyProperty("ftp.proxyHost", val, mproxy);
+            if (Utils.hasText(val)) {
+                applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy);
+                applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy);
+            }
+
+            val = p.getProperty("proxy.socks.host");
+            applyProxyProperty("socksProxyHost", val, mproxy);
+            if (Utils.hasText(val)) {
+                applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy);
+            }
+
+            boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth"));
+            if (auth) {
+                applyProxyProperty("http.proxyUser", p.getProperty("proxy.auth.user"), mproxy);
+                try {
+                    byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null);
+                    if (pwd != null) {
+                        pwd = Utils.decrypt(pwd, "proxy.auth");
+                        if (pwd != null && pwd.length > 0) {
+                            applyProxyProperty("http.proxyPassword", new String(pwd), mproxy);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.log(Level.SEVERE, "Cannot store the proxy password", e);
+                }
+            }
+        }
+    }
+
+    private static void applyProxyProperty(String key, String value, boolean manual) {
+        if (manual && Utils.hasText(value)) {
+            System.setProperty(key, value);
+        }
+    }
+
     private void splitArgToCmd(String... args) {
         boolean files = true;
         int length = args.length;

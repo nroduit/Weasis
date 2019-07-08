@@ -32,7 +32,7 @@ public class AppProperties {
     /**
      * The version of the application (for display)
      */
-    public static final String WEASIS_VERSION = System.getProperty("weasis.version", "2.5.x"); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String WEASIS_VERSION = System.getProperty("weasis.version", "x.x.x"); //$NON-NLS-1$ //$NON-NLS-2$
 
     /**
      * The name of the application (for display)

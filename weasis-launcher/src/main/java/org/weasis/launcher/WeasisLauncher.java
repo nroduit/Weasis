@@ -892,6 +892,7 @@ public class WeasisLauncher {
             System.setProperty(P_WEASIS_USER, user);
         }
 
+        configData.applyProxy(dir + File.separator + "data" + File.separator + "weasis-core-ui");
         StringBuilder bufDir = new StringBuilder(dir);
         bufDir.append(File.separator);
         bufDir.append("preferences"); //$NON-NLS-1$
@@ -1165,6 +1166,11 @@ public class WeasisLauncher {
         if (update) {
             FileUtil.storeProperties(sourceIDProps, localSourceProp, null);
         }
+        
+        // Define the http user agent
+        System.setProperty("http.agent", System.getProperty(P_WEASIS_NAME, "Weasis") + "/" + System.getProperty(P_WEASIS_VERSION, "x.x.x") + " (" //$NON-NLS-1$ //$NON-NLS-2$
+            + System.getProperty(P_OS_NAME)  + "; " + System.getProperty("os.version") + "; "
+            + System.getProperty("os.arch")  + ")");
 
         String pevConf = conf.toString();
         conf.setLength(0);
@@ -1198,6 +1204,8 @@ public class WeasisLauncher {
         conf.append(System.getProperty("weasis.languages", "en")); //$NON-NLS-1$ //$NON-NLS-2$
         conf.append("\n  OSGI native specs = "); //$NON-NLS-1$
         conf.append(System.getProperty(P_NATIVE_LIB_SPEC)); // $NON-NLS-1$
+        conf.append("\n  HTTP user agent = "); //$NON-NLS-1$
+        conf.append(System.getProperty("http.agent")); // $NON-NLS-1$
         conf.append("\n  Operating system = "); //$NON-NLS-1$
         conf.append(System.getProperty(P_OS_NAME));
         conf.append(' ');

@@ -185,7 +185,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     static void getOpenImageAction(ActionEvent e) {
-        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -229,7 +229,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                 JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), //$NON-NLS-1$
                     Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
             }
-            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }
     }
 }

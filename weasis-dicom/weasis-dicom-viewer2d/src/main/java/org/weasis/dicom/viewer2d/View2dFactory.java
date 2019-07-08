@@ -194,7 +194,7 @@ public class View2dFactory implements SeriesViewerFactory {
     }
 
     private static void getOpenImageAction(ActionEvent e) {
-        String directory = BundleTools.LOCAL_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -243,7 +243,7 @@ public class View2dFactory implements SeriesViewerFactory {
                         Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                 }
             }
-            BundleTools.LOCAL_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }
     }
 }
