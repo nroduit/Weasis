@@ -28,6 +28,9 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+
 import org.apache.felix.framework.util.Util;
 
 public class FileUtil {
@@ -44,10 +47,21 @@ public class FileUtil {
             try {
                 object.close();
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Cannot close AutoCloseable", e); //$NON-NLS-1$
+                LOGGER.log(Level.WARNING, "Cannot close AutoCloseable", e); //$NON-NLS-1$
             }
         }
     }
+    
+    public static void safeClose(XMLStreamReader xmler) {
+        if (xmler != null) {
+            try {
+                xmler.close();
+            } catch (XMLStreamException e) {
+                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e); 
+            }
+        }
+    }
+
 
     public static void recursiveDelete(File rootDir, boolean deleteRoot) {
         if ((rootDir == null) || !rootDir.isDirectory()) {
