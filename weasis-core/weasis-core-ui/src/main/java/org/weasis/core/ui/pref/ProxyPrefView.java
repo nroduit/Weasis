@@ -3,6 +3,8 @@ package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.net.Authenticator;
+import java.net.PasswordAuthentication;
 import java.text.NumberFormat;
 
 import javax.swing.ButtonGroup;
@@ -361,8 +363,10 @@ public class ProxyPrefView extends AbstractItemDialogPage {
             char[] pwd = proxyPass.getPassword();
             if (pwd != null && pwd.length > 0) {
                 if (auth) {
+                    String authPassword = new String(pwd);
+                    applyPasswordAuthentication(val, authPassword);
                     applyProxyProperty("http.proxyUser", val, mproxy);
-                    applyProxyProperty("http.proxyPassword", new String(pwd), mproxy);
+                    applyProxyProperty("http.proxyPassword", authPassword, mproxy);
                 }
                 byte[] b = new byte[pwd.length];
                 for (int i = 0; i < b.length; i++) {
@@ -378,6 +382,18 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
     }
 
+    private static void applyPasswordAuthentication(final String authUser, final String authPassword ) {
+        Authenticator.setDefault(
+           new Authenticator() {
+              @Override
+              public PasswordAuthentication getPasswordAuthentication() {
+                 return new PasswordAuthentication(
+                       authUser, authPassword.toCharArray());
+              }
+           }
+        );
+    }
+    
     private static void applyProxyProperty(String key, String value, boolean manual) {
         if (manual && StringUtil.hasText(value)) {
             System.setProperty(key, value);

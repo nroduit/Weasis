@@ -184,8 +184,10 @@ public class SRReader {
                     Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
                     if (item != null) {
                         Code unit = new Code(item);
-                        html.append(" "); //$NON-NLS-1$
-                        addCodeMeaning(html, unit, null, null);
+                        if (!"1".equals(unit.getCodeValue())) {
+                            html.append(" "); //$NON-NLS-1$
+                            addCodeMeaning(html, unit, null, null);
+                        }
                     }
                 }
             } else if ("CONTAINER".equals(type)) { //$NON-NLS-1$
