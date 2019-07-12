@@ -358,14 +358,15 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                         if (i >= old.length || old[i] == null) {
                             chartPanel = new ChannelHistogramPanel(name.toString());
                         } else {
-                            chartPanel = new ChannelHistogramPanel(name.toString(), old[i].isAccumulate(), old[i].isLogarithmic(),
-                                old[i].isShowIntensity());
+                            chartPanel = new ChannelHistogramPanel(name.toString(), old[i].isAccumulate(),
+                                old[i].isLogarithmic(), old[i].isShowIntensity());
                         }
                         histView.add(chartPanel);
                         Mat h = listHisto.get(i);
                         float[] histValues = new float[h.rows()];
                         h.get(0, 0, histValues);
-                        HistogramData data = new HistogramData(histValues, displut[i], i, p, pixMin, pixMax, layer);
+                        HistogramData data =
+                            new HistogramData(histValues, displut[i], i, colorModel, p, pixMin, pixMax, layer);
                         data.updateVoiLut(view2DPane);
                         chartPanel.setHistogramBins(data);
                     }

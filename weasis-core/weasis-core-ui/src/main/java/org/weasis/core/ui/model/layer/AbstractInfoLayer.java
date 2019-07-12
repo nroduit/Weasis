@@ -289,7 +289,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             double pixMin = img.getPixelMin();
             double pixMax = img.getPixelMax();
             HistogramData data =
-                new HistogramData(new float[0], lut, 0, p, pixMin, pixMax, view2DPane.getMeasurableLayer());
+                new HistogramData(new float[0], lut, 0, null, p, pixMin, pixMax, view2DPane.getMeasurableLayer());
             data.updateVoiLut(view2DPane);
             double binFactor = (pixMax - pixMin) / (length - 1);
             double stepWindow = (pixMax - pixMin)  / separation;

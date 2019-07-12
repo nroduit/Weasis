@@ -29,6 +29,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 
 public class HistogramPanel extends JPanel {
@@ -192,31 +193,37 @@ public class HistogramPanel extends JPanel {
         g2d.setStroke(
             new BasicStroke(0.5f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5f, new float[] { 5.0f }, 0.0f));
 
-        boolean drawWl = false;
-        float plow = x + (piLow * (float) binFactor) * spaceFactor;
-        float phigh = x + (piHigh * (float) binFactor) * spaceFactor;
-        if (low > windLevel.getLevelMin()) {
-            line.setLine(plow, SLIDER_Y, plow, tLut);
-            g2d.draw(line);
-            String label = String.valueOf(DecFormater.allNumber(data.getLayer().pixelToRealValue(piLow * binFactor + min)));
-            AbstractGraphicLabel.paintFontOutline(g2d, label, plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
-                SLIDER_Y + midfontHeight);
-            drawWl = true;
-        }
-        if (high < windLevel.getLevelMax()) {
-            g2d.setPaint(Color.ORANGE);
-            line.setLine(phigh, SLIDER_Y, phigh, tLut);
-            g2d.draw(line);
-            String label = String.valueOf(DecFormater.allNumber(data.getLayer().pixelToRealValue(piHigh * binFactor + min)));
-            AbstractGraphicLabel.paintFontOutline(g2d, label, phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,
-                SLIDER_Y + midfontHeight);
-            drawWl = true;
-        }
+        Model m = data.getColorModel();
+        boolean hls = HistogramData.Model.HLS.equals(m) || HistogramData.Model.HSV.equals(m);
+        if (!hls) {
+            boolean drawWl = false;
+            float plow = x + (piLow * (float) binFactor) * spaceFactor;
+            float phigh = x + (piHigh * (float) binFactor) * spaceFactor;
+            if (low > windLevel.getLevelMin()) {
+                line.setLine(plow, SLIDER_Y, plow, tLut);
+                g2d.draw(line);
+                String label =
+                    String.valueOf(DecFormater.allNumber(data.getLayer().pixelToRealValue(piLow * binFactor + min)));
+                AbstractGraphicLabel.paintFontOutline(g2d, label, plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
+                    SLIDER_Y + midfontHeight);
+                drawWl = true;
+            }
+            if (high < windLevel.getLevelMax()) {
+                g2d.setPaint(Color.ORANGE);
+                line.setLine(phigh, SLIDER_Y, phigh, tLut);
+                g2d.draw(line);
+                String label =
+                    String.valueOf(DecFormater.allNumber(data.getLayer().pixelToRealValue(piHigh * binFactor + min)));
+                AbstractGraphicLabel.paintFontOutline(g2d, label, phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,
+                    SLIDER_Y + midfontHeight);
+                drawWl = true;
+            }
 
-        if (drawWl) {
-            g2d.setPaint(Color.ORANGE);
-            line.setLine(plow, SLIDER_Y, phigh, SLIDER_Y);
-            g2d.draw(line);
+            if (drawWl) {
+                g2d.setPaint(Color.ORANGE);
+                line.setLine(plow, SLIDER_Y, phigh, SLIDER_Y);
+                g2d.draw(line);
+            }
         }
     }
 

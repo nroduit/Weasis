@@ -119,7 +119,7 @@ public class ImageRegionStatistics {
                     Mat h = listHisto.get(i);
                     float[] histValues = new float[h.rows()];
                     h.get(0, 0, histValues);
-                    data.add(new HistogramData(histValues, displut[i], i, null, pixMin, pixMax, layer));
+                    data.add(new HistogramData(histValues, displut[i], i, colorModel, null, pixMin, pixMax, layer));
                 }
             } catch (Exception e) {
                 LOGGER.error("Build histogram", e);

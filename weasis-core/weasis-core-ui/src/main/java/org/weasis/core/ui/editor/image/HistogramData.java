@@ -32,6 +32,7 @@ public class HistogramData {
     private final int bandIndex;
     private final double pixMin;
     private final double pixMax;
+    private final Model colorModel;
     private WindLevelParameters windLevel;
     private DisplayByteLut lut;
     private LookupTableCV voiLut;
@@ -80,10 +81,11 @@ public class HistogramData {
         }
     }
 
-    public HistogramData(float[] histValues, DisplayByteLut lut, int bandIndex, WindLevelParameters windLevel,
+    public HistogramData(float[] histValues, DisplayByteLut lut, int bandIndex, Model colorModel, WindLevelParameters windLevel,
         double pixMin, double pixMax, MeasurableLayer layer) {
         this.histValues = Objects.requireNonNull(histValues);
         this.layer = Objects.requireNonNull(layer);
+        this.colorModel = colorModel;
         this.lut = lut;
         this.windLevel = windLevel;
         this.bandIndex = bandIndex;
@@ -97,6 +99,10 @@ public class HistogramData {
 
     public DisplayByteLut getLut() {
         return lut;
+    }
+
+    public Model getColorModel() {
+        return colorModel;
     }
 
     public void setLut(DisplayByteLut lut) {
