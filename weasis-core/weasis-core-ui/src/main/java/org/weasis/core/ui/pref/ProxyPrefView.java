@@ -50,7 +50,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR
 
     private final JRadioButton directConnectionRadio =
-        new JRadioButton("Direct connexion (no proxy) or configuration at launch");
+        new JRadioButton("Direct connection (no proxy) or configuration at launch");
     private final JRadioButton proxyConnectionRadio = new JRadioButton("Manual proxy configuration");
     private final ButtonGroup buttonGroup = new ButtonGroup();
 
