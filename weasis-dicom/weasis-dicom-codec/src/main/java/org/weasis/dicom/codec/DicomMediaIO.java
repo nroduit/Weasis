@@ -783,15 +783,14 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
 
             if (extParams.getSegmentPositions() != null) {
-                
-//                FileInputStream in = new FileInputStream(extParams.getFile());
-//                File outFile = new File(AppProperties.FILE_CACHE_DIR,
-//                    fileCache.getFinalFile().getName() + "-" + frame + ".j2k");
-//                FileOutputStream out = new FileOutputStream(outFile);
-//                StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
-//                StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
-                
-                
+
+                // FileInputStream in = new FileInputStream(extParams.getFile());
+                // File outFile = new File(AppProperties.FILE_CACHE_DIR,
+                // fileCache.getFinalFile().getName() + "-" + frame + ".j2k");
+                // FileOutputStream out = new FileOutputStream(outFile);
+                // StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
+                // StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
+
                 int dcmFlags =
                     dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
 
@@ -818,16 +817,17 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                     new MatOfDouble(Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
 
                 if (rawData) {
+                    int bits = bitsStored <= 8 && bitsAllocated > 8 ? 9 : bitsStored; // Fix #94
                     MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
                         TagD.getTagValue(this, Tag.Columns, Integer.class),
                         TagD.getTagValue(this, Tag.Rows, Integer.class), 0,
-                        TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
+                        TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bits,
                         banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
                     return ImageCV.toImageCV(Imgcodecs.dicomRawFileRead(orinigal.get().getAbsolutePath(), positions,
                         lengths, dicomparams, pmi.name()));
                 }
-                return ImageCV.toImageCV(Imgcodecs.dicomJpgFileRead(orinigal.get().getAbsolutePath(), positions, lengths,
-                    dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
+                return ImageCV.toImageCV(Imgcodecs.dicomJpgFileRead(orinigal.get().getAbsolutePath(), positions,
+                    lengths, dcmFlags, Imgcodecs.IMREAD_UNCHANGED));
 
                 // Mat buf = getMatBuffer(extParams);
                 // if (rawData) {
