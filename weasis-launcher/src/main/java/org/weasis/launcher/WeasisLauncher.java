@@ -475,19 +475,24 @@ public class WeasisLauncher {
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
             String val = getGeneralProperty("weasis.show.release", "true", serverProp, currentProps, false, false); //$NON-NLS-1$ //$NON-NLS-2$
             if (Boolean.valueOf(val)) {
-                Version vOld = getVersion(versionOld);
-                Version vNew = getVersion(versionNew);
-                if (vNew.compareTo(vOld) > 0) {
+                try {
+                    Version vOld = getVersion(versionOld);
+                    Version vNew = getVersion(versionNew);
+                    if (vNew.compareTo(vOld) > 0) {
 
-                    String lastTag = currentProps.getProperty("weasis.version.release", null); //$NON-NLS-1$
-                    if (lastTag != null) {
-                        vOld = getVersion(lastTag);
-                        if (vNew.compareTo(vOld) <= 0) {
-                            // Message has been already displayed once.
-                            return;
+                        String lastTag = currentProps.getProperty("weasis.version.release", null); //$NON-NLS-1$
+                        if (lastTag != null) {
+                            vOld = getVersion(lastTag);
+                            if (vNew.compareTo(vOld) <= 0) {
+                                // Message has been already displayed once.
+                                return;
+                            }
                         }
+                        currentProps.setProperty("weasis.version.release", vNew.toString()); //$NON-NLS-1$
                     }
-                    currentProps.setProperty("weasis.version.release", vNew.toString()); //$NON-NLS-1$
+                } catch (Exception e2) {
+                    LOGGER.log(Level.SEVERE, "Cannot read version", e2); //$NON-NLS-1$
+                    return;
                 }
                 final String releaseNotesUrl = serverProp.get("weasis.releasenotes"); //$NON-NLS-1$
                 final StringBuilder message = new StringBuilder("<P>"); //$NON-NLS-1$
