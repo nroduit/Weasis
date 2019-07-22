@@ -22,8 +22,10 @@ case "$1" in
         if [ "CREATE_JRE_INSTALLER" != "true" ]; then
             echo Removing shortcut
     ADD_LAUNCHERS_REMOVE
-            xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop
+            xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/bin/Dicomizer.desktop
             xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
+	    rm -f /etc/opt/chrome/policies/managed/weasis.json 
+	    rm -f /etc/chromium/policies/managed/weasis.json
     FILE_ASSOCIATION_REMOVE
         fi
     ;;

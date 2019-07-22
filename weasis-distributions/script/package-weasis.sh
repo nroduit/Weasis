@@ -226,17 +226,17 @@ fi
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-$JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
---resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
+$JPKGCMD --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" --resource-dir "resources" \
+--main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
 --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
-  $JPKGCMD create-app-image --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
-  --resource-dir "resources" --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
+  $JPKGCMD --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" --resource-dir "resources" \
+  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
   --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"
-  cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
+  cp "$OUTPUT_PATH-debug\\$NAME\\bin\\$NAME.exe"  "$IMAGE_PATH\\bin\\debug\\$NAME.exe"
 fi
 
 if [ "$machine" = "macosx" ] ; then
@@ -250,7 +250,7 @@ insertWeasis='app.splash=resources\/images\/about-round.png\
 #app.memory=50%\
 app.identifier=org.weasis.viewer\
 app.preferences.id=org\/weasis\/viewer\
-app.classpath=felix.jar:substance.jar:weasis-launcher.jar\
+app.classpath=$APPDIR\/app\/felix.jar:$APPDIR\/app\/substance.jar:$APPDIR\/app\/weasis-launcher.jar\
 '
 sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck '/^app\.preferences\.id/d' "$OUT_APP/$NAME.cfg"
@@ -260,10 +260,10 @@ rm -f "$OUT_APP/$NAME.cfg.bck"
 
 
 if [ "$machine" = "linux" ] ; then
-  cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.desktop"
+  cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/bin/Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
   # Fix icon of second launcher
-  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
+  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/bin/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
   cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
   cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
@@ -274,26 +274,26 @@ if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
   COPYRIGHT="© 2009-2019 Weasis Team"
   if [ "$machine" = "windows" ] ; then
-    $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" \
-    --win-menu --win-menu-group "$NAME" --win-registry-name "weasis" \
-    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
+    --win-menu --win-menu-group "$NAME" --win-registry-name "weasis" --win-upgrade-uuid "3aedc24e-48a8-4623-ab39-0c3c01c7383a" \
+    --win-wxs "resources\main.wxs" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose
   elif [ "$machine" = "linux" ] ; then
-    $JPKGCMD create-installer --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" \
-    --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-    --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-    --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
-  elif [ "$machine" = "macosx" ] ; then
-    declare -a installerTypes=("pkg")
+    declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
-      $JPKGCMD create-installer --app-image "$IMAGE_PATH.app" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-      --license-file "$INPUT_PATH/Licence.txt" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
-      --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-      --mac-signing-key-user-name "$CERTIFICATE" --installer-type "$installerType" \
-      --file-associations "$FILE_ASSOC" --verbose "$MAC_SIGN"
+      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
+      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
+      --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+      --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
     done
+  elif [ "$machine" = "macosx" ] ; then
+    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    --license-file "$INPUT_PATH/Licence.txt" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
+    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --identifier "$IDENTIFIER" \
+    --mac-signing-key-user-name "$CERTIFICATE" \
+    --file-associations "$FILE_ASSOC" --verbose "$MAC_SIGN"
   fi
 fi
 

@@ -37,16 +37,24 @@ INSTALLATION_DIRECTORY/APPLICATION_FS_NAME
 %post
 if [ "CREATE_JRE_INSTALLER" != "true" ]; then
     ADD_LAUNCHERS_INSTALL
-    xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop	
+    xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/bin/Dicomizer.desktop	
     xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
+    mkdir -p /etc/opt/chrome/policies/managed/
+    echo '{
+    "URLWhitelist": ["weasis://*"]
+}' > /etc/opt/chrome/policies/managed/weasis.json 
+    mkdir -p /etc/chromium/policies/managed/
+    cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
     FILE_ASSOCIATION_INSTALL
 fi
 
 %preun
 if [ "CREATE_JRE_INSTALLER" != "true" ]; then
     ADD_LAUNCHERS_REMOVE
-    xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/Dicomizer.desktop
+    xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/bin/Dicomizer.desktop
     xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
+    rm -f /etc/opt/chrome/policies/managed/weasis.json 
+    rm -f /etc/chromium/policies/managed/weasis.json
     FILE_ASSOCIATION_REMOVE
 fi
 
