@@ -239,8 +239,11 @@ if [ "$machine" == "windows" ] ; then
   cp "$OUTPUT_PATH-debug\\$NAME\\bin\\$NAME.exe"  "$IMAGE_PATH\\bin\\debug\\$NAME.exe"
 fi
 
+APP_FOLDER_NAME="app"
+
 if [ "$machine" = "macosx" ] ; then
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/Java"
+  APP_FOLDER_NAME="Java"
 else
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME/app"
 fi
@@ -248,12 +251,10 @@ fi
 match="app.name"
 insertWeasis='app.splash=resources\/images\/about-round.png\
 #app.memory=50%\
-app.identifier=org.weasis.viewer\
-app.preferences.id=org\/weasis\/viewer\
-app.classpath=$APPDIR\/app\/felix.jar:$APPDIR\/app\/substance.jar:$APPDIR\/app\/weasis-launcher.jar\
+app.identifier='"$IDENTIFIER"'\
+app.classpath=$APPDIR\/'"$APP_FOLDER_NAME"'\/felix.jar:$APPDIR\/'"$APP_FOLDER_NAME"'\/substance.jar:$APPDIR\/'"$APP_FOLDER_NAME"'\/weasis-launcher.jar\
 '
 sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
-sed -i.bck '/^app\.preferences\.id/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
 rm -f "$OUT_APP/$NAME.cfg.bck"
