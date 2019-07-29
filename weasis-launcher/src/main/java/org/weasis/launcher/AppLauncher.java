@@ -12,6 +12,8 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
+import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
 public class AppLauncher extends WeasisLauncher implements Singleton.SingletonApp {
@@ -21,21 +23,19 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     }
 
     public static void main(String[] argv) throws Exception {
-        String id = System.getProperty("app.preferences.id", "org.weasis.viewer").replace('/', '.');
         ConfigData configData = new ConfigData(argv);
-        id += "." + configData.getSourceID();
-        if (!Singleton.invoke(id, argv)) {
+        if (!Singleton.invoke(configData)) {
             AppLauncher instance = new AppLauncher(configData);
-            Singleton.start(instance, id);
+            Singleton.start(instance, configData.getSourceID());
             instance.launch(Type.NATIVE);
         }
     }
 
     @Override
-    public void newActivation(ConfigData data) {
+    public void newActivation(List<String> arguments) {
         waitWhenStarted();
         if (mTracker != null) {
-            executeCommands(data.getArguments(), null);
+            executeCommands(arguments, null);
         }
     }
 
@@ -59,10 +59,10 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     }
 
     @Override
-    public boolean canStartNewActivation(ConfigData data) {
-        boolean sameUser = configData.isPropertyValueSimilar(data, P_WEASIS_USER);
-        boolean sameVersion = configData.isPropertyValueSimilar(data, P_WEASIS_VERSION);
-        return sameUser && sameVersion;
+    public boolean canStartNewActivation(Properties prop) {
+        boolean sameUser = configData.isPropertyValueSimilar(P_WEASIS_USER, prop.getProperty(P_WEASIS_USER));
+        boolean sameConfig = configData.isPropertyValueSimilar(P_WEASIS_CONFIG_HASH, prop.getProperty(P_WEASIS_CONFIG_HASH));
+        return sameUser && sameConfig;
     }
 
     @Override

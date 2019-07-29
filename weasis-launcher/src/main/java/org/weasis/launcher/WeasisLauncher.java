@@ -29,8 +29,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Enumeration;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -57,7 +55,6 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 
 import org.apache.felix.framework.Felix;
-import org.apache.felix.framework.util.FelixConstants;
 import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
@@ -141,19 +138,22 @@ public class WeasisLauncher {
     public static final String P_WEASIS_NAME = "weasis.name"; //$NON-NLS-1$
     public static final String P_WEASIS_PATH = "weasis.path"; //$NON-NLS-1$
     public static final String P_WEASIS_RES_DATE = "weasis.resources.date"; //$NON-NLS-1$
+    public static final String P_WEASIS_CODEBASE_LOCAL = "weasis.codebase.local"; //$NON-NLS-1$
     public static final String P_WEASIS_SOURCE_ID = "weasis.source.id"; //$NON-NLS-1$
     public static final String P_WEASIS_CODEBASE_URL = "weasis.codebase.url"; //$NON-NLS-1$
     public static final String P_WEASIS_CODEBASE_EXT_URL = "weasis.codebase.ext.url"; //$NON-NLS-1$
+    public static final String P_WEASIS_CONFIG_HASH = "weasis.config.hash"; //$NON-NLS-1$
     public static final String P_WEASIS_PREFS_URL = "weasis.pref.url"; //$NON-NLS-1$
+    public static final String P_WEASIS_CONFIG_URL = "weasis.config.url"; //$NON-NLS-1$
     public static final String P_WEASIS_USER = "weasis.user"; //$NON-NLS-1$
     public static final String P_OS_NAME = "os.name"; //$NON-NLS-1$
     public static final String P_WEASIS_LOOK = "weasis.look"; //$NON-NLS-1$
     public static final String P_GOSH_ARGS = "gosh.args"; //$NON-NLS-1$
     public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache"; //$NON-NLS-1$
     public static final String P_HTTP_AUTHORIZATION = "http.authorization";
-    private static final String P_NATIVE_LIB_SPEC = "native.library.spec";
+    public static final String P_NATIVE_LIB_SPEC = "native.library.spec";
     public static final String F_RESOURCES = "resources"; //$NON-NLS-1$
-    private static final String MAC_OS_X = "Mac OS X";
+    static final String MAC_OS_X = "Mac OS X";
 
     protected Felix mFelix = null;
     protected ServiceTracker mTracker = null;
@@ -175,63 +175,14 @@ public class WeasisLauncher {
     }
 
     public static void main(String[] argv) throws Exception {
-        setSystemProperties(argv); // @Deprecated
+        setSystemProperties(argv);
         WeasisLauncher instance = new WeasisLauncher(new ConfigData(argv));
         instance.launch(Type.DEFAULT);
     }
 
-    final public void launch(Type type) throws Exception {
-        // Set system property for dynamically loading only native libraries corresponding of the current platform
-        setOsgiNativeLibSpecification();
-
-        configData.applyConfigToSystemProperties();
-
-        final List<String> commandList = configData.getArguments();
-        // Look for bundle directory and/or cache directory.
-        // We support at most one argument, which is the bundle
-        // cache directory.
-        String bundleDir = null;
-        String cacheDir = null;
-        for (String command : commandList) {
-            if (command.startsWith("felix")) { //$NON-NLS-1$
-                String[] params = command.split(" "); //$NON-NLS-1$
-                if (params.length < 3 || params.length > 4) {
-                    LOGGER.log(Level.WARNING, "Usage: [$felix -b <bundle-deploy-dir>] [<bundle-cache-dir>]"); //$NON-NLS-1$
-                } else {
-                    bundleDir = params[2];
-                    if (params.length > 3) {
-                        cacheDir = params[3];
-                    }
-                }
-                commandList.remove(command);
-                break;
-            }
-        }
-
-        // Deprecated to use "weasis.portable.dir"
-        String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-        if (portable != null) {
-            applyCodebase(new File(portable, "weasis")); //$NON-NLS-1$
-        }
-        LOGGER.log(Level.INFO, "Starting the configuration..."); //$NON-NLS-1$
-        StringBuilder conf = new StringBuilder();
-        // Read configuration properties.
-        Map<String, String> serverProp = WeasisLauncher.loadConfigProperties(conf);
-
-        // If there is a passed in bundle auto-deploy directory, then
-        // that overwrites anything in the config file.
-        if (bundleDir != null) {
-            serverProp.put(AutoProcessor.AUTO_DEPLOY_DIR_PROPERTY, bundleDir);
-        }
-
-        String profileName = serverProp.getOrDefault(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
-        serverProp.put(P_WEASIS_PROFILE, profileName);
-
-        // Define the sourceID for the temp and cache directory.
-        String sourceID = configData.getSourceID();
-        System.setProperty(P_WEASIS_SOURCE_ID, sourceID);
-
-        cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + sourceID; //$NON-NLS-1$
+    final public void launch(Type type) throws Exception {        
+        Map<String, String> serverProp = configData.getFelixProps();
+        String cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + configData.getSourceID(); //$NON-NLS-1$
         // If there is a passed in bundle cache directory, then
         // that overwrites anything in the config file.
         serverProp.put(Constants.FRAMEWORK_STORAGE, cacheDir);
@@ -242,7 +193,7 @@ public class WeasisLauncher {
         }
 
         // Load local properties and clean if necessary the previous version
-        WeasisLoader loader = loadProperties(serverProp, conf);
+        WeasisLoader loader = loadProperties(serverProp, configData.getConfigOutput());
         WeasisMainFrame mainFrame = loader.getMainFrame();
 
         // If enabled, register a shutdown hook to make sure the framework is
@@ -289,7 +240,7 @@ public class WeasisLauncher {
                     logActivatation);
             }
 
-            executeCommands(commandList, goshArgs);
+            executeCommands(configData.getArguments(), goshArgs);
 
             checkBundleUI(serverProp);
             frameworkLoaded = true;
@@ -316,26 +267,7 @@ public class WeasisLauncher {
         }
     }
 
-    public static void setJnlpSystemProperties() {
-
-        final String PREFIX = "jnlp.weasis."; //$NON-NLS-1$
-        final int PREFIX_LENGTH = PREFIX.length();
-
-        Properties properties = System.getProperties();
-
-        for (String propertyName : properties.stringPropertyNames()) {
-            if (propertyName.startsWith(PREFIX)) {
-                String value = properties.getProperty(propertyName);
-                System.setProperty(propertyName.substring(PREFIX_LENGTH), value);
-                properties.remove(propertyName);
-            }
-        }
-
-        // Disabling extension framework is mandatory to work with Java Web Start.
-        // From framework 4.4.1, See https://issues.apache.org/jira/browse/FELIX-4281.
-        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true"); //$NON-NLS-1$
-    }
-
+    @Deprecated
     private static void setSystemProperties(String[] argv) {
         for (int i = 0; i < argv.length; i++) {
             // @Deprecated : use properties with the prefix "jnlp.weasis" instead
@@ -691,114 +623,6 @@ public class WeasisLauncher {
      * This following part has been copied from the Main class of the Felix project
      *
      **/
-
-    /**
-     * <p>
-     * Loads the configuration properties in the configuration property file associated with the framework installation;
-     * these properties are accessible to the framework and to bundles and are intended for configuration purposes. By
-     * default, the configuration property file is located in the <tt>conf/</tt> directory of the Felix installation
-     * directory and is called "<tt>config.properties</tt>". The installation directory of Felix is assumed to be the
-     * parent directory of the <tt>felix.jar</tt> file as found on the system class path property. The precise file from
-     * which to load configuration properties can be set by initializing the "<tt>felix.config.properties</tt>" system
-     * property to an arbitrary URL.
-     * </p>
-     *
-     * @return A <tt>Properties</tt> instance or <tt>null</tt> if there was an error.
-     **/
-    public static Map<String, String> loadConfigProperties(StringBuilder conf) {
-
-        // TODO ## move here code below for DEV purpose so felix.config.properties doesn't have to be defined
-
-        URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-        // Read the properties file
-        Properties props = null;
-        if (propURI != null) {
-            conf.append("\n  Application configuration file = "); //$NON-NLS-1$
-            conf.append(propURI);
-            props = readProperties(propURI, null);
-        } else {
-            LOGGER.log(Level.SEVERE, "No config.properties path found, Weasis cannot start!"); //$NON-NLS-1$
-        }
-
-        propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
-        if (propURI != null) {
-            conf.append("\n  Application extension configuration file = "); //$NON-NLS-1$
-            conf.append(propURI);
-            // Extended properties, add or override existing properties
-            props = readProperties(propURI, props);
-        }
-
-        if (props == null || props.isEmpty()) {
-            throw new IllegalStateException("Cannot load weasis config!"); //$NON-NLS-1$
-        }
-
-        ////////////////////////////////////////////////////////
-        // TODO ## move above code below
-
-        // Only required for dev purposes (running the app in IDE)
-        String mvnRepo = System.getProperty("maven.localRepository", props.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$
-        if (mvnRepo != null) {
-            System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$
-        }
-
-        String cdb = System.getProperty(P_WEASIS_CODEBASE_URL);
-        if (mvnRepo == null && cdb == null) {
-            // Set the code base for the installed version
-            applyCodebase(null);
-        }
-        ////////////////////////////////////////////////////////
-
-        // Perform variable substitution for system properties and
-        // convert to dictionary.
-        Map<String, String> map = new HashMap<>();
-        for (Enumeration<?> e = props.propertyNames(); e.hasMoreElements();) {
-            String name = (String) e.nextElement();
-            map.put(name, Util.substVars(props.getProperty(name), name, null, props));
-        }
-        return map;
-    }
-
-    public static URI getPropertiesURI(String configProp, String configFile) {
-
-        // The config properties file is either specified by a system
-        // property or it is in the conf/ directory of the Felix
-        // installation directory. Try to load it from one of these
-        // places.
-
-        // See if the property URL was specified as a property.
-        URI propURL;
-        String custom = System.getProperty(configProp);
-        if (custom != null) {
-            try {
-                propURL = new URI(custom);
-            } catch (URISyntaxException e) {
-                LOGGER.log(Level.SEVERE, configProp, e);
-                return null;
-            }
-        } else {
-            // Development folder only
-            // TODO ##is code below revelant ?? , looks similar to the one defined when calling : applyCodebase(null)
-
-            File confDir = new File(System.getProperty("user.dir") + File.separator + "target", CONFIG_DIRECTORY); //$NON-NLS-1$ //$NON-NLS-2$
-            if (!confDir.canRead()) {
-                confDir = null;
-            }
-
-            // Installed version
-            if (confDir == null) {
-                confDir = new File(findLocalCodebase(), CONFIG_DIRECTORY);
-            }
-
-            try {
-                propURL = new File(confDir, configFile).toURI();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, configFile, ex);
-                return null;
-            }
-        }
-        return propURL;
-    }
-
     public static Properties readProperties(URI propURI, Properties props) {
         Properties p = props == null ? new Properties() : props;
 
@@ -834,70 +658,16 @@ public class WeasisLauncher {
         return value;
     }
 
-    public static void setOsgiNativeLibSpecification() {
-        // Follows the OSGI specification to use Bundle-NativeCode in the bundle fragment :
-        // http://www.osgi.org/Specifications/Reference
-        String osName = System.getProperty(P_OS_NAME);
-        String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
-        if (Utils.hasText(osName) && Utils.hasText(osArch)) {
-            if (osName.toLowerCase().startsWith("win")) { //$NON-NLS-1$
-                // All Windows versions with a specific processor architecture (x86 or x86-64) are grouped under
-                // windows. If you need to make different native libraries for the Windows versions, define it in the
-                // Bundle-NativeCode tag of the bundle fragment.
-                osName = "windows"; //$NON-NLS-1$
-            } else if (osName.equals(MAC_OS_X)) { // $NON-NLS-1$
-                osName = "macosx"; //$NON-NLS-1$
-            } else if (osName.equals("SymbianOS")) { //$NON-NLS-1$
-                osName = "epoc32"; //$NON-NLS-1$
-            } else if (osName.equals("hp-ux")) { //$NON-NLS-1$
-                osName = "hpux"; //$NON-NLS-1$
-            } else if (osName.equals("Mac OS")) { //$NON-NLS-1$
-                osName = "macos"; //$NON-NLS-1$
-            } else if (osName.equals("OS/2")) { //$NON-NLS-1$
-                osName = "os2"; //$NON-NLS-1$
-            } else if (osName.equals("procnto")) { //$NON-NLS-1$
-                osName = "qnx"; //$NON-NLS-1$
-            } else {
-                osName = osName.toLowerCase();
-            }
-
-            if (osArch.equals("pentium") || osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                || osArch.equals("i686")) { //$NON-NLS-1$
-                osArch = "x86"; //$NON-NLS-1$
-            } else if (osArch.equals("amd64") || osArch.equals("em64t") || osArch.equals("x86_64")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                osArch = "x86-64"; //$NON-NLS-1$
-            } else if (osArch.equals("power ppc")) { //$NON-NLS-1$
-                osArch = "powerpc"; //$NON-NLS-1$
-            } else if (osArch.equals("psc1k")) { //$NON-NLS-1$
-                osArch = "ignite"; //$NON-NLS-1$
-            } else {
-                osArch = osArch.toLowerCase();
-            }
-            System.setProperty(P_NATIVE_LIB_SPEC, osName + "-" + osArch); //$NON-NLS-1$
-        }
-    }
-
     public WeasisLoader loadProperties(Map<String, String> serverProp, StringBuilder conf) {
         currentProps.clear();
 
-        String dir = new File(serverProp.get(Constants.FRAMEWORK_STORAGE)).getParent();
-        System.setProperty(P_WEASIS_PATH, dir);
-
-        String weasisName = serverProp.getOrDefault(P_WEASIS_NAME, "Weasis");//$NON-NLS-1$
-        System.setProperty(P_WEASIS_NAME, weasisName);
-
-        String profileName = serverProp.getOrDefault(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
-        System.setProperty(P_WEASIS_PROFILE, profileName);
-
-        boolean localSessionUser = false;
-        String user = System.getProperty(P_WEASIS_USER);
-        if (!Utils.hasText(user)) {
-            localSessionUser = true;
-            user = System.getProperty("user.name", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
-            System.setProperty(P_WEASIS_USER, user);
-        }
-
+        String dir = configData.getProperty(P_WEASIS_PATH);
+        String profileName = configData.getProperty(P_WEASIS_PROFILE, "default");
+        String user = configData.getProperty(P_WEASIS_USER);
+        
+        // If proxy configuration, activate it
         configData.applyProxy(dir + File.separator + "data" + File.separator + "weasis-core-ui");
+        
         StringBuilder bufDir = new StringBuilder(dir);
         bufDir.append(File.separator);
         bufDir.append("preferences"); //$NON-NLS-1$
@@ -916,15 +686,13 @@ public class WeasisLauncher {
         serverProp.put("weasis.pref.dir", prefDir.getPath());
 
         boolean notContent = false;
-        String remotePrefURL = System.getProperty(WeasisLauncher.P_WEASIS_PREFS_URL);
+        String remotePrefURL = configData.getProperty(WeasisLauncher.P_WEASIS_PREFS_URL);
         if (Utils.hasText(remotePrefURL)) {
             String storeLocalSession = "weasis.pref.store.local.session";
-            String defaultVal = System.getProperty(storeLocalSession, null);
+            String defaultVal = configData.getProperty(storeLocalSession, null);
             if (defaultVal == null) {
                 defaultVal = serverProp.getOrDefault(storeLocalSession, "false");
             }
-            serverProp.put(WeasisLauncher.P_WEASIS_PREFS_URL, remotePrefURL);
-            serverProp.put("weasis.pref.local.session", String.valueOf(localSessionUser));
             serverProp.put(storeLocalSession, defaultVal);
             try {
                 remotePrefs = new RemotePrefService(serverProp, user, profileName);
@@ -936,13 +704,6 @@ public class WeasisLauncher {
                 String msg = String.format("Cannot read Launcher preference for user: %s", user);
                 LOGGER.log(Level.SEVERE, e, () -> msg);
             }
-        }
-
-        String portable = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-        if (portable != null) {
-            LOGGER.log(Level.INFO, "Starting portable version"); //$NON-NLS-1$
-            System.setProperty("weasis.portable.dicom.directory", //$NON-NLS-1$
-                serverProp.get("weasis.portable.dicom.directory")); //$NON-NLS-1$
         }
 
         if (currentProps.isEmpty()) {
@@ -979,17 +740,17 @@ public class WeasisLauncher {
         getGeneralProperty("org.apache.sling.commons.log.pattern", //$NON-NLS-1$
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", serverProp, currentProps, false, true); //$NON-NLS-1$
 
-        String cdb = System.getProperty("weasis.codebase.local"); //$NON-NLS-1$
+        String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
         URI translationModules = null;
-        if (cdb != null) {
-            File file = new File(cdb, "bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
+        if (cdbl != null) {
+            File file = new File(cdbl, "bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
             if (file.canRead()) {
                 translationModules = file.toURI();
                 String path = file.getParentFile().toURI().toString();
                 System.setProperty("weasis.i18n", path); //$NON-NLS-1$
             }
         } else {
-            String path = System.getProperty("weasis.i18n", null); //$NON-NLS-1$
+            String path = configData.getProperty("weasis.i18n", null); //$NON-NLS-1$
             if (path != null) {
                 path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 try {
@@ -1109,9 +870,10 @@ public class WeasisLauncher {
         // Loads the resource files
         String defaultResources = "/resources.zip"; //$NON-NLS-1$
         String resPath = serverProp.getOrDefault("weasis.resources.url", //$NON-NLS-1$
-            System.getProperty(P_WEASIS_CODEBASE_URL, "") + defaultResources); //$NON-NLS-1$
+            configData.getProperty(P_WEASIS_CODEBASE_URL, "") + defaultResources); //$NON-NLS-1$
         File cacheDir = null;
-        boolean localRes = cdb != null && new File(cdb, F_RESOURCES).exists();
+        boolean mavenRepo = Utils.hasText(System.getProperty("maven.localRepository", null));
+        boolean localRes = mavenRepo || new File(cdbl, F_RESOURCES).exists();
         try {
             if (!localRes && resPath.endsWith(".zip") && !resPath.equals(defaultResources)) { //$NON-NLS-1$
                 cacheDir =
@@ -1130,11 +892,12 @@ public class WeasisLauncher {
         }
 
         if (cacheDir == null) {
-            if (cdb != null) {
-                cacheDir = new File(cdb, F_RESOURCES);
-            } else {
+            if (mavenRepo) {
+                // In Development mode
                 File f = new File(System.getProperty("user.dir")); //$NON-NLS-1$
                 cacheDir = new File(f.getParent(), "weasis-distributions" + File.separator + F_RESOURCES); //$NON-NLS-1$
+            } else {
+                cacheDir = new File(cdbl, F_RESOURCES);
             }
         }
         serverProp.put("weasis.resources.path", cacheDir.getPath()); //$NON-NLS-1$
@@ -1171,11 +934,6 @@ public class WeasisLauncher {
         if (update) {
             FileUtil.storeProperties(sourceIDProps, localSourceProp, null);
         }
-        
-        // Define the http user agent
-        System.setProperty("http.agent", System.getProperty(P_WEASIS_NAME, "Weasis") + "/" + System.getProperty(P_WEASIS_VERSION, "x.x.x") + " (" //$NON-NLS-1$ //$NON-NLS-2$
-            + System.getProperty(P_OS_NAME)  + "; " + System.getProperty("os.version") + "; "
-            + System.getProperty("os.arch")  + ")");
 
         String pevConf = conf.toString();
         conf.setLength(0);
@@ -1185,8 +943,8 @@ public class WeasisLauncher {
         conf.append("\n  Current version = "); //$NON-NLS-1$
         conf.append(versionNew);
         conf.append("\n  Application name = "); //$NON-NLS-1$
-        conf.append(weasisName);
-        conf.append("\n  Application ID = "); //$NON-NLS-1$
+        conf.append(configData.getProperty(P_WEASIS_NAME));
+        conf.append("\n  Application Source ID = "); //$NON-NLS-1$
         conf.append(System.getProperty(P_WEASIS_SOURCE_ID));
         conf.append("\n  Application Profile = "); //$NON-NLS-1$
         conf.append(profileName);
@@ -1421,53 +1179,4 @@ public class WeasisLauncher {
             FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
         }
     }
-
-    private static File findLocalCodebase() {
-        // Determine where the configuration directory is by figuring
-        // out where weasis-launcher.jar is located on the system class path.
-        String jarLocation = null;
-        String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
-        String[] vals = classpath.split(File.pathSeparator);
-        for (String cp : vals) {
-            if (cp.endsWith("weasis-launcher.jar")) { //$NON-NLS-1$
-                jarLocation = cp;
-            }
-        }
-        if (jarLocation == null) {
-            throw new IllegalStateException(
-                "Cannot find the local repository path, weasis-launcher.jar is not the classpath!"); //$NON-NLS-1$
-        } else {
-            return new File(new File(jarLocation).getAbsolutePath()).getParentFile();
-        }
-    }
-
-    private static String applyCodebase(File localCodebase) {
-        File baseDir = localCodebase == null ? findLocalCodebase() : localCodebase;
-        String baseURI = baseDir.toURI().toString();
-        if (baseURI.endsWith("/")) {
-            baseURI = baseURI.substring(0, baseURI.length() - 1);
-        }
-        try {
-            System.setProperty("weasis.codebase.local", baseDir.getAbsolutePath()); //$NON-NLS-1$
-            System.setProperty(P_WEASIS_CODEBASE_URL, baseURI);
-            baseURI += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
-            if (System.getProperty(CONFIG_PROPERTIES_PROP) == null) {
-                System.setProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
-            }
-            if (System.getProperty(EXTENDED_PROPERTIES_PROP) == null) {
-                System.setProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
-            }
-
-            // TODO ## shouldn't be set here, it's a config.properties files to define those
-            // Allow export feature for portable version
-            System.setProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            System.setProperty("weasis.export.dicom.send", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            System.setProperty("weasis.import.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            System.setProperty("weasis.import.dicom.qr", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Apply Codebase", e); //$NON-NLS-1$
-        }
-        return baseURI;
-    }
-
 }

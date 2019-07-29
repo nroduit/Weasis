@@ -20,6 +20,7 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,6 +33,8 @@ public class Singleton {
     private static final File SI_FILEDIR =
         new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton");
     private static final String SI_MAGICWORD = "si.init";
+    private static final String SI_ARG = "si.arg";
+    private static final String SI_PROP = "si.prop";
     private static final String SI_ACK = "si.ack";
     private static final String SI_EXIT = "si.exit";
     private static final String SI_STOP = "si.stop";
@@ -53,9 +56,10 @@ public class Singleton {
     private static int randomNumber;
 
     public interface SingletonApp {
-        public void newActivation(ConfigData data);
 
-        boolean canStartNewActivation(ConfigData data);
+        boolean canStartNewActivation(Properties prop);
+
+        void newActivation(List<String> arguments);
     }
 
     public static void start(SingletonApp sia, String id) {
@@ -139,14 +143,18 @@ public class Singleton {
         return false;
     }
 
-    public static boolean invoke(String id, String[] args) {
-        return running(id) && connectToServer(args);
+    public static boolean invoke(ConfigData configData) {
+        return running(configData.getSourceID()) && connectToServer(configData);
+    }
+
+    private static void printProperty(PrintStream out, String key, Properties p) {
+        out.println(String.format("%s=%s", key,p.getProperty(key, "")));
     }
 
     /**
      * Returns true if we connect successfully to the server for the stringId
      */
-    static boolean connectToServer(String[] args) {
+    static boolean connectToServer(ConfigData configData) {
         LOGGER.log(Level.CONFIG, "Connect to {0} on port {1}", new Object[] { stringId, currPort }); //$NON-NLS-1$
         if (randomNumberString == null) {
             // should not happen
@@ -170,9 +178,15 @@ public class Singleton {
             // send MAGICWORD
             out.println(SI_MAGICWORD);
 
-            for (String arg : args) {
+            out.println(SI_ARG);
+            for (String arg : configData.getArguments()) {
                 out.println(arg);
             }
+
+            out.println(SI_PROP);
+            Properties p = configData.getProperties();
+            printProperty(out, WeasisLauncher.P_WEASIS_USER, p);
+            printProperty(out, WeasisLauncher.P_WEASIS_CONFIG_HASH, p);
 
             // indicate end of file transmission
             out.println(SI_EOF);
@@ -339,10 +353,7 @@ public class Singleton {
         }
 
         private Void runSingletonServer() {
-            List<String> recvArgs = new ArrayList<>();
             while (true) {
-                String line;
-                recvArgs.clear();
                 try (Socket s = ss.accept();
                                 InputStream is = s.getInputStream();
                                 InputStreamReader isr = new InputStreamReader(is, getStreamEncoding(is));
@@ -350,29 +361,41 @@ public class Singleton {
                     LOGGER.log(Level.FINE, "Singleton server is waiting a connection"); //$NON-NLS-1$
 
                     // First read the random number
-                    line = in.readLine();
+                    String line = in.readLine();
                     if (line.equals(String.valueOf(randomNumber))) {
                         line = in.readLine();
 
                         LOGGER.log(Level.FINE, "Recieve message: {0}", line); //$NON-NLS-1$
-                        if (line.equals(SI_MAGICWORD)) {
+                        if (SI_MAGICWORD.equals(line)) {
                             LOGGER.log(Level.FINE, "Got Magic work"); //$NON-NLS-1$
+                            List<String> recvArgs = new ArrayList<>();
+                            Properties props = new Properties();
+                            boolean arg = false;
                             while (true) {
                                 try {
                                     line = in.readLine();
-                                    if (line != null && line.equals(SI_EOF)) {
+                                    if (SI_EOF.equals(line)) {
                                         break;
-                                    } else {
-                                        recvArgs.add(line);
+                                    } else if (SI_ARG.equals(line)) {
+                                        arg = true;
+                                    } else if (SI_PROP.equals(line)) {
+                                        arg = false;
+                                    } else if (Utils.hasText(line)) {
+                                        if (arg) {
+                                            recvArgs.add(line);
+                                        } else {
+                                            String[] vals = line.split("=", 2);
+                                            if (vals.length == 2) {
+                                                props.put(vals[0], vals[1]);
+                                            }
+                                        }
                                     }
                                 } catch (IOException ioe1) {
                                     LOGGER.log(Level.SEVERE, "Reading singleton lock file", ioe1); //$NON-NLS-1$
                                 }
                             }
-                            String[] arguments = recvArgs.toArray(new String[recvArgs.size()]);
-                            ConfigData data = new ConfigData(arguments);
-                            if (siApp.canStartNewActivation(data)) {
-                                siApp.newActivation(data);
+                            if (siApp.canStartNewActivation(props)) {
+                                siApp.newActivation(recvArgs);
                                 LOGGER.log(Level.FINE, "Sending ACK"); //$NON-NLS-1$
                                 try (OutputStream os = s.getOutputStream();
                                                 PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
@@ -388,7 +411,7 @@ public class Singleton {
                                 }
                                 System.exit(0);
                             }
-                        } else if (line.equals(SI_STOP)) {
+                        } else if (SI_STOP.equals(line)) {
                             removeSiFile();
                             break;
                         }

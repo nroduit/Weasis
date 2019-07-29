@@ -14,6 +14,7 @@ package org.weasis.launcher;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +24,8 @@ import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
+
+import org.apache.felix.framework.util.FelixConstants;
 
 @Deprecated
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
@@ -96,5 +99,23 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         // Workaround for having a fully trusted application with JWS,
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
         instance.launch(Type.JWS);
+    }
+    
+    private static void setJnlpSystemProperties() {
+        final String PREFIX = "jnlp.weasis."; //$NON-NLS-1$
+        final int PREFIX_LENGTH = PREFIX.length();
+
+        Properties properties = System.getProperties();
+        for (String propertyName : properties.stringPropertyNames()) {
+            if (propertyName.startsWith(PREFIX)) {
+                String value = properties.getProperty(propertyName);
+                System.setProperty(propertyName.substring(PREFIX_LENGTH), value);
+                properties.remove(propertyName);
+            }
+        }
+
+        // Disabling extension framework is mandatory to work with Java Web Start.
+        // From framework 4.4.1, See https://issues.apache.org/jira/browse/FELIX-4281.
+        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true"); //$NON-NLS-1$
     }
 }

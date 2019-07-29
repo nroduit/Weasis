@@ -23,11 +23,9 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -49,13 +47,12 @@ public class BundleTools {
     public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
 
     static {
-        for (Iterator<Entry<Object, Object>> iter = System.getProperties().entrySet().iterator(); iter.hasNext();) {
-            Entry<Object, Object> element = iter.next();
-            String tag = element.getKey().toString();
-            if (tag.startsWith("TGM-")) { //$NON-NLS-1$
-                SESSION_TAGS_MANIFEST.put(tag.substring(4), element.getValue().toString());
-            } else if (tag.startsWith("TGF-")) { //$NON-NLS-1$
-                SESSION_TAGS_FILE.put(tag.substring(4), element.getValue().toString());
+        Properties properties = System.getProperties();
+        for (String key : properties.stringPropertyNames()) {
+            if (key.startsWith("TGM-")) { //$NON-NLS-1$
+                SESSION_TAGS_MANIFEST.put(key.substring(4), properties.getProperty(key));
+            } else if (key.startsWith("TGF-")) { //$NON-NLS-1$
+                SESSION_TAGS_FILE.put(key.substring(4), properties.getProperty(key));
             }
         }
     }

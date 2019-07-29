@@ -25,7 +25,7 @@ import org.weasis.core.api.util.FileUtil;
  *
  */
 public class AppProperties {
-    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$ 
+    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppProperties.class);
 
@@ -43,7 +43,7 @@ public class AppProperties {
      * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
      * operating system session if the property is null)
      */
-    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN); //$NON-NLS-1$ 
+    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN); //$NON-NLS-1$
 
     /**
      * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
@@ -70,7 +70,7 @@ public class AppProperties {
          * or by running multiple instances of Weasis from different sources.
          */
         APP_TEMP_DIR = new File(tdir, "weasis-" + System.getProperty("user.name", "tmp") + "." //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-            + System.getProperty("weasis.source.id", UNKNOWN)); //$NON-NLS-1$ 
+            + System.getProperty("weasis.source.id", UNKNOWN)); //$NON-NLS-1$
         System.setProperty("weasis.tmp.dir", APP_TEMP_DIR.getAbsolutePath()); //$NON-NLS-1$
         try {
             // Clean temp folder, necessary when the application has crashed.
@@ -84,11 +84,11 @@ public class AppProperties {
      * The path of the directory “.weasis” (containing the installation and the preferences)
      */
     public static final String WEASIS_PATH =
-        System.getProperty("weasis.path", APP_TEMP_DIR + File.separator + ".weasis"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.getProperty("weasis.path", System.getProperty("user.home") + File.separator + ".weasis"); //$NON-NLS-1$ //$NON-NLS-2$
 
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 
-    public static final String OPERATING_SYSTEM = System.getProperty("os.name", UNKNOWN).toLowerCase(); //$NON-NLS-1$ 
+    public static final String OPERATING_SYSTEM = System.getProperty("os.name", UNKNOWN).toLowerCase(); //$NON-NLS-1$
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 

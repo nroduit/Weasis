@@ -171,9 +171,6 @@ public class FileUtil {
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", propsFile.getPath())); //$NON-NLS-1$
             }
-        } else {
-            File appFoler = new File(System.getProperty(WeasisLauncher.P_WEASIS_PATH, "")); //$NON-NLS-1$
-            appFoler.mkdirs();
         }
         return false;
     }
