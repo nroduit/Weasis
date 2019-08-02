@@ -62,7 +62,7 @@ public class ConfigData {
     public static final String PARAM_ARGUMENT = "arg";
     public static final String PARAM_PROPERTY = "pro";
     public static final String PARAM_CODEBASE = "cdb";
-    public static final String PARAM_CODEBASE_EXT = "cdb-ext"; 
+    public static final String PARAM_CODEBASE_EXT = "cdb-ext";
     public static final String PARAM_AUTHORIZATION = "auth";
 
     private final List<String> arguments = new ArrayList<>();
@@ -120,14 +120,10 @@ public class ConfigData {
         Properties felixConfig = loadConfigProperties();
 
         initWeasisProperties(felixConfig);
-        applyConfigToSystemProperties();
     }
 
     private void applyJavaProperty(String key) {
-        String val = System.getProperty(key);
-        if (Utils.hasText(val)) {
-            addProperty(key, val);
-        }
+        addProperty(key, System.getProperty(key));
     }
 
     public Map<String, String> getFelixProps() {
@@ -146,7 +142,7 @@ public class ConfigData {
 
         String version = felixConfig.getProperty(P_WEASIS_VERSION, "x.x.x"); //$NON-NLS-1$
         addProperty(P_WEASIS_VERSION, version);
-        
+
         String codebase = properties.getProperty(P_WEASIS_CODEBASE_URL);
         addProperty(P_WEASIS_SOURCE_ID, toHex((codebase + profile).hashCode()));
 
@@ -162,18 +158,25 @@ public class ConfigData {
             name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; "
                 + System.getProperty("os.arch") + ")");
 
+        String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+        if (portable != null) {
+            LOGGER.log(Level.INFO, "Starting portable version"); //$NON-NLS-1$
+            String pkey = "weasis.portable.dicom.directory"; //$NON-NLS-1$
+            addProperty(pkey, felixConfig.getProperty(pkey, "dicom,DICOM,IMAGES,images"));
+        }
+
+        // Set weasis properties to Java System Properties before variables substitution.
+        applyConfigToSystemProperties();
+
         filterConfigProperties(felixConfig);
+        if (LOGGER.isLoggable(Level.FINEST)) {
+            felixProps.forEach((k, v) -> LOGGER.log(Level.FINEST, () -> String.format("Felix config: %s = %s", k, v)));
+        }
 
         File appFolder = new File(felixProps.get(Constants.FRAMEWORK_STORAGE)).getParentFile();
         appFolder.mkdirs();
         addProperty(P_WEASIS_PATH, appFolder.getPath());
-        
-        String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-        if (portable != null) {
-            LOGGER.log(Level.INFO, "Starting portable version"); //$NON-NLS-1$
-            addProperty("weasis.portable.dicom.directory", //$NON-NLS-1$
-                felixProps.get("weasis.portable.dicom.directory")); //$NON-NLS-1$
-        }
+        System.setProperty(P_WEASIS_PATH, appFolder.getPath());
 
     }
 
@@ -183,7 +186,7 @@ public class ConfigData {
         if (mvnRepo != null) {
             System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$
         }
-        
+
         // Perform variable substitution for system properties and
         // convert to dictionary.
 
@@ -235,18 +238,15 @@ public class ConfigData {
                 String.format("%s/%s/%s", codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE);
             addProperty(EXTENDED_PROPERTIES_PROP, extConfigProp);
         }
+
+        configOutput.append("\n  Application local codebase = "); //$NON-NLS-1$
+        configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_LOCAL));
+        configOutput.append("\n  Application codebase URL = "); //$NON-NLS-1$
+        configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_URL));
     }
 
     private String applyLocalCodebase() {
-        File localCodebase;
-        // Deprecated to use "weasis.portable.dir"
-        String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
-        if (portable == null) {
-            localCodebase = findLocalCodebase();
-        } else {
-            localCodebase = new File(portable, "weasis"); //$NON-NLS-1$
-        }
-
+        File localCodebase = findLocalCodebase();
         String baseURI = localCodebase.toURI().toString();
         if (baseURI.endsWith("/")) {
             baseURI = baseURI.substring(0, baseURI.length() - 1);
@@ -259,10 +259,10 @@ public class ConfigData {
             addProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
 
             // Allow export feature for local/portable version
-            addProperty("weasis.export.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            addProperty("weasis.export.dicom.send", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            addProperty("weasis.import.dicom", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-            addProperty("weasis.import.dicom.qr", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+            addProperty("weasis.export.dicom", Boolean.TRUE.toString()); //$NON-NLS-1$
+            addProperty("weasis.export.dicom.send", Boolean.TRUE.toString()); //$NON-NLS-1$
+            addProperty("weasis.import.dicom", Boolean.TRUE.toString()); //$NON-NLS-1$
+            addProperty("weasis.import.dicom.qr", Boolean.TRUE.toString()); //$NON-NLS-1$
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Apply Codebase", e); //$NON-NLS-1$
         }
@@ -322,7 +322,7 @@ public class ConfigData {
     }
 
     private void addProperty(String key, String val) {
-        if (Utils.hasText(key)) {
+        if (Utils.hasText(key) && Utils.hasText(val)) {
             properties.putIfAbsent(key, val);
         }
     }
@@ -677,11 +677,11 @@ public class ConfigData {
             return new File(new File(jarLocation).getAbsolutePath()).getParentFile();
         }
     }
-    
+
     public String getProperty(String key) {
         return properties.getProperty(key);
     }
-    
+
     public String getProperty(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
     }
