@@ -29,7 +29,7 @@
 		<felix.gogo.shell.version>1.1.2</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.1.0</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-		<felix.configadmin.version>1.9.14</felix.configadmin.version>
+		<felix.configadmin.version>1.9.16</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
 		<felix.scr.version>2.1.16</felix.scr.version>
 		<osgi.promise.version>1.1.1</osgi.promise.version>
@@ -40,9 +40,9 @@
 		<slf4j.version>1.7.25</slf4j.version>
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.2</dockingframes.version>
-		<weasis.opencv.native.version>4.1.0-dcm</weasis.opencv.native.version>
+		<weasis.opencv.native.version>4.1.1-dcm</weasis.opencv.native.version>
 		<javax.json.version>1.1.5</javax.json.version>
-		<jaxb.osgi.version>2.3.1-r1</jaxb.osgi.version>
+		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 		<tilecachetool.version>1.0.2</tilecachetool.version>
 

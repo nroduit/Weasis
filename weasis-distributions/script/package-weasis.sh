@@ -9,7 +9,7 @@ REQUIRED_TEXT_VERSION=13
 
 # Build Parameters
 PACKAGE=YES
-SUBSTANCE_PKG="2.0.1"
+SUBSTANCE_PKG="2.5.0-rc"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
