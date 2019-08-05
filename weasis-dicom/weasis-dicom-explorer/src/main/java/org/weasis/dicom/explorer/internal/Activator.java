@@ -39,8 +39,6 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
         FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
             IMPORT_EXPORT_PERSISTENCE, null);
-        // Save preferences
-        DicomManager.getInstance().savePreferences();
         
         DicomModel.LOADING_EXECUTOR.shutdownNow();
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);

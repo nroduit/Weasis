@@ -364,18 +364,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     request.append("&objectUID="); //$NON-NLS-1$
                     request.append(instance.getSopInstanceUID());
                     request.append("&contentType=application%2Fdicom"); //$NON-NLS-1$
-                    TransferSyntax transcoding = DicomManager.getInstance().getWadoTSUID();
-                    if (transcoding.getTransferSyntaxUID() != null) {
-                        dicomSeries.setTag(TagW.WadoTransferSyntaxUID, transcoding.getTransferSyntaxUID());
-                    }
+
                     // for dcm4chee: it gets original DICOM files when no TransferSyntax is specified
                     String wadoTsuid = (String) dicomSeries.getTagValue(TagW.WadoTransferSyntaxUID);
                     if (StringUtil.hasText(wadoTsuid)) {
                         request.append("&transferSyntax="); //$NON-NLS-1$
                         request.append(wadoTsuid);
-                        if (transcoding.getTransferSyntaxUID() != null) {
-                            dicomSeries.setTag(TagW.WadoCompressionRate, transcoding.getCompression());
-                        }
                         Integer rate = (Integer) dicomSeries.getTagValue(TagW.WadoCompressionRate);
                         if (rate != null && rate > 0) {
                             request.append("&imageQuality="); //$NON-NLS-1$
