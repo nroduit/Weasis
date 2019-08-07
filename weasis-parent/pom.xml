@@ -88,7 +88,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-compiler-plugin</artifactId>
-					<version>3.8.0</version>
+					<version>3.8.1</version>
 					<configuration>
 						<source>${java-version}</source>
 						<target>${java-version}</target>
@@ -97,7 +97,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-scr-plugin</artifactId>
-					<version>1.26.0</version>
+					<version>1.26.2</version>
 					<executions>
 						<execution>
 							<id>generate-scr-scrdescriptor</id>
@@ -120,8 +120,9 @@
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
 							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except 
-								any containing 'impl' or 'internal' -->
+							<!-- Using <_exportcontents> requires to configure <Export-Package>, 
+								there is no default export (All packages, except any containing 'impl' or 
+								'internal' -->
 							<_removeheaders>
 								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Created-By
 							</_removeheaders>
@@ -140,7 +141,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-clean-plugin</artifactId>
-					<version>3.0.0</version>
+					<version>3.1.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -150,7 +151,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jar-plugin</artifactId>
-					<version>3.0.2</version>
+					<version>3.1.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -160,7 +161,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-jarsigner-plugin</artifactId>
-					<version>1.4</version>
+					<version>3.0.0</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -170,16 +171,21 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-site-plugin</artifactId>
-					<version>3.7</version>
+					<version>3.8.2</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>2.22.0</version>
+					<version>3.0.0-M3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-dependency-plugin</artifactId>
+					<version>3.1.1</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-assembly-plugin</artifactId>
 					<version>3.1.1</version>
 				</plugin>
 				<plugin>
@@ -200,7 +206,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-source-plugin</artifactId>
-					<version>3.0.1</version>
+					<version>3.1.0</version>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -312,7 +318,8 @@
 				<scope>provided</scope>
 			</dependency>
 
-			<!--The following dependencies are not required for compilation (required when loading the OSGI framework for debugging) -->
+			<!--The following dependencies are not required for compilation (required 
+				when loading the OSGI framework for debugging) -->
 			<dependency>
 				<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 				<artifactId>javaws</artifactId>
