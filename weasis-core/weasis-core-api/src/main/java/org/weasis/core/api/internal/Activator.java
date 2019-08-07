@@ -55,7 +55,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
-        // TODO should be stop in after all bundles implementing preferences
+        BundleTools.saveSystemPreferences();
     }
 
     @Override

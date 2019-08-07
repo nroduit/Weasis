@@ -13,14 +13,11 @@ package org.weasis.acquire.explorer.gui.control;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireExplorer;
@@ -32,7 +29,6 @@ import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.FontTools;
 
 import net.samuelcampos.usbdrivedectector.USBDeviceDetectorManager;
@@ -42,8 +38,6 @@ import net.samuelcampos.usbdrivedectector.events.USBStorageEvent;
 
 @SuppressWarnings("serial")
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
-    private static final String USER_HOME = System.getProperty("user.home"); //$NON-NLS-1$
-
     private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 
     private final AcquireExplorer mainView;
@@ -55,8 +49,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     public BrowsePanel(AcquireExplorer acquisitionView) {
         this.mainView = acquisitionView;
         try {
-            String last = iniLastPath();
-            mainView.setSystemDrive(new FileSystemDrive(last));
+            mainView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
             mediaSourceList.addItem(mainView.getSystemDrive());
         } catch (Exception e) {
             LOGGER.warn(e.getMessage(), e);
@@ -103,24 +96,6 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
             mediaSourceSelectionCombo.getPreferredSize().width - pathSelectionBtn.getPreferredSize().width - 5);
     }
 
-    private String iniLastPath() {
-
-        File prefDir;
-        Preferences prefs =
-            BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-        if (prefs == null) {
-            prefDir = new File(USER_HOME); // $NON-NLS-1$
-        } else {
-            Preferences p = prefs.node(AcquireExplorer.PREFERENCE_NODE);
-            prefDir = new File(p.get(AcquireExplorer.P_LAST_DIR, USER_HOME)); // $NON-NLS-1$
-        }
-
-        if (prefDir.canRead() && prefDir.isDirectory()) {
-            return prefDir.getPath();
-        }
-        return USER_HOME;
-    }
-
     public JComboBox<MediaSource> getMediaSourceSelectionCombo() {
         return mediaSourceSelectionCombo;
     }
@@ -156,12 +131,12 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     private void removeUsbDevice(USBStorageDevice storageDevice) {
         MediaSource selected = (MediaSource) mediaSourceSelectionCombo.getSelectedItem();
         String id = storageDevice.getRootDirectory().getPath();
-        mediaSourceList.getList().removeIf(m -> m.getID().startsWith(id));
+        mediaSourceList.getList().removeIf(m -> m.getPath().startsWith(id));
         if (mediaSourceList.isEmpty()) {
             mediaSourceSelectionCombo.setSelectedItem(null);
         }
 
-        if (selected == null || selected.getID().startsWith(id)) {
+        if (selected == null || selected.getPath().startsWith(id)) {
             mediaSourceSelectionCombo.setSelectedIndex(0);
         }
     }

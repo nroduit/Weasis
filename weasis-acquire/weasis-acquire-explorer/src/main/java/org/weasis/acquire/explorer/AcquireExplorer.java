@@ -24,8 +24,6 @@ import java.util.stream.Collectors;
 import javax.swing.Action;
 import javax.swing.Icon;
 
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.prefs.Preferences;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.control.BrowsePanel;
@@ -39,7 +37,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 
@@ -51,7 +49,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
 
     public static final String BUTTON_NAME = "dicomizer"; //$NON-NLS-1$
     public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition"); //$NON-NLS-1$
-    public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
+    public static final String P_LAST_DIR = "acquire.explorer.last.dir"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "importer"; //$NON-NLS-1$
 
     public static final int MEDIASOURCELIST_MAX = 5;
@@ -80,21 +78,28 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         add(acquireThumbnailListPane, BorderLayout.CENTER);
         add(importPanel, BorderLayout.SOUTH);
 
-        this.acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getID()));
+        this.acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getPath()));
 
         // Remove dropping capabilities in the central area (limit to import
         // from browse panel)
         UIManager.MAIN_AREA.getComponent().setTransferHandler(null);
     }
+    
+    public static String getLastPath() {
+        String home = System.getProperty("user.home"); //$NON-NLS-1$
+        File prefDir = new File(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(AcquireExplorer.P_LAST_DIR, home));
+        if (prefDir.canRead() && prefDir.isDirectory()) {
+            return prefDir.getPath();
+        }
+        return home;
+    }
+
 
     void saveLastPath() {
         if (systemDrive != null) {
-            File dir = new File(systemDrive.getID());
-            Preferences prefs =
-                BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-            if (prefs != null && dir.canRead()) {
-                Preferences p = prefs.node(PREFERENCE_NODE);
-                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.getPath());
+            File dir = new File(systemDrive.getPath());
+            if (dir.canRead()) {
+                BundleTools.LOCAL_UI_PERSISTENCE.setProperty(P_LAST_DIR, dir.getPath());
             }
         }
     }
@@ -237,6 +242,6 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     }
 
     public void loadSystemDrive() {
-        acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getID()));
+        acquireThumbnailListPane.loadDirectory(Paths.get(systemDrive.getPath()));
     }
 }

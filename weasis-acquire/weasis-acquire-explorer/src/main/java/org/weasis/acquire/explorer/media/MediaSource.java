@@ -17,26 +17,26 @@ import javax.swing.Icon;
 /**
  * Represent either a FileSystemDrive or a MediaDevice
  *
- * @author btja
+ * @author btja, nirt
  *
  */
 public abstract class MediaSource {
 
-    protected final String id; // assume to be unique, like a DeviceID or a FilePath/URL
+    protected final String path;
     protected String displayName;
     protected String description;
     protected Icon icon;
 
-    public MediaSource(String id) {
-        this.id = Objects.requireNonNull(id);
+    public MediaSource(String path) {
+        this.path = Objects.requireNonNull(path);
     }
 
-    public final String getID() {
-        return id;
+    public final String getPath() {
+        return path;
     }
 
     public String getDisplayName() {
-        return displayName != null ? displayName : id;
+        return displayName != null ? displayName : path;
     }
 
     public String getDescription() {
@@ -46,32 +46,21 @@ public abstract class MediaSource {
     public Icon getIcon() {
         return icon;
     }
+    @Override
+    public String toString() {
+        return displayName;
+    }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (getClass() != obj.getClass()) {
-            return false;
-        }
-        MediaSource other = (MediaSource) obj;
-        return id.equals(other.id);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MediaSource that = (MediaSource) o;
+        return path.equals(that.path);
     }
 
     @Override
     public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + id.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return displayName;
+        return Objects.hash(path);
     }
 }

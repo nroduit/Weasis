@@ -46,15 +46,13 @@ import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.explorer.list.DiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.util.DefaultAction;
@@ -71,7 +69,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     public static final String BUTTON_NAME = "Explorer"; //$NON-NLS-1$
     public static final String NAME = Messages.getString("DefaultExplorer.name"); //$NON-NLS-1$
-    public static final String P_LAST_DIR = "last.dir"; //$NON-NLS-1$
+    public static final String P_LAST_DIR = "default.explorer.last.dir"; //$NON-NLS-1$
     private static final String PREFERENCE_NODE = "view"; //$NON-NLS-1$
 
     protected FileTreeModel model;
@@ -130,22 +128,17 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     protected void iniLastPath() {
         Path prefDir = null;
-        Preferences prefs =
-            BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-        if (prefs != null) {
-            Preferences p = prefs.node(PREFERENCE_NODE);
-            try {
-                prefDir = Paths.get(p.get(P_LAST_DIR, System.getProperty("user.home"))); //$NON-NLS-1$
-            } catch (InvalidPathException e) {
-                LOGGER.error("Get last dir path", e); //$NON-NLS-1$
-            }
+        try {
+            prefDir = Paths.get(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR));
+        } catch (InvalidPathException e) {
+            LOGGER.error("Get last dir path", e); //$NON-NLS-1$
         }
 
         if (prefDir == null) {
             prefDir = Paths.get(System.getProperty("user.home")); //$NON-NLS-1$
         }
 
-        if (Files.isReadable(prefDir) && Files.isDirectory(prefDir)) {
+        if (Files.isReadable(prefDir) && prefDir.toFile().isDirectory()) {
             final TreeNode selectedTreeNode = findNode(prefDir);
 
             if (selectedTreeNode != null) {
@@ -156,13 +149,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     protected void saveLastPath() {
         Path dir = getCurrentDir();
-        if (dir != null) {
-            Preferences prefs =
-                BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
-            if (prefs != null && Files.isReadable(dir)) {
-                Preferences p = prefs.node(PREFERENCE_NODE);
-                BundlePreferences.putStringPreferences(p, P_LAST_DIR, dir.toString());
-            }
+        if (dir != null && Files.isReadable(dir)) {
+            BundleTools.LOCAL_UI_PERSISTENCE.setProperty(P_LAST_DIR, dir.toString());
         }
     }
 

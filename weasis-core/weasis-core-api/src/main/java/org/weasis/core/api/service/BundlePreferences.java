@@ -16,6 +16,7 @@ import java.util.Arrays;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.osgi.service.prefs.BackingStoreException;
 import org.osgi.service.prefs.Preferences;
 import org.osgi.service.prefs.PreferencesService;
 import org.slf4j.Logger;
@@ -62,7 +63,7 @@ public class BundlePreferences {
                     return context.getService(serviceRef);
                 }
             } catch (Exception e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("Cannot get OSGI service from {}", clazz, e); //$NON-NLS-1$
             }
         }
         return null;

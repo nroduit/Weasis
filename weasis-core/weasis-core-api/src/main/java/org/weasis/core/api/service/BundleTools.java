@@ -13,7 +13,6 @@ package org.weasis.core.api.service;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -28,6 +27,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -60,17 +60,18 @@ public class BundleTools {
     public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     /**
-     * This the persistence used at launch which can be stored remotely. These are the preferences necessary for launching unlike the preferences associated with the plugins.
+     * This the persistence used at launch which can be stored remotely. These are the preferences necessary for
+     * launching unlike the preferences associated with the plugins.
      */
     public static final WProperties SYSTEM_PREFERENCES = new WProperties();
     /**
-     * This the common local persistence for UI. It should be used only for preferences for which remote storage makes no sense.
+     * This the common local persistence for UI. It should be used only for preferences for which remote storage makes
+     * no sense.
      */
     public static final WProperties LOCAL_UI_PERSISTENCE = new WProperties();
-    
+
     private static final WProperties INIT_SYSTEM_PREFERENCES = new WProperties();
     private static final File propsFile;
-    
 
     static {
         String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir"); //$NON-NLS-1$
@@ -81,7 +82,7 @@ public class BundleTools {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write {}", propsFile.getPath(), e); //$NON-NLS-1$
             }
         }
         String code = BundleTools.SYSTEM_PREFERENCES.getProperty(BundleTools.P_FORMAT_CODE);
@@ -119,43 +120,43 @@ public class BundleTools {
     }
 
     private static void readSystemPreferences() {
-        boolean noContent = false;
         SYSTEM_PREFERENCES.clear();
-        String remotePrefURL = getServiceUrl();
-        if (remotePrefURL != null) {
-            readRemoteProperties(SYSTEM_PREFERENCES, remotePrefURL);
-            if (SYSTEM_PREFERENCES.isEmpty()) {
-                noContent = true;
+        BundleContext context = AppProperties.getBundleContext();
+        if (context != null) {
+            String pkeys = context.getProperty("wp.list");
+            if (StringUtil.hasText(pkeys)) {
+                for (String key : pkeys.split(",")) {
+                    SYSTEM_PREFERENCES.setProperty(key, context.getProperty(key));
+                    INIT_SYSTEM_PREFERENCES.setProperty(key, context.getProperty("wp.init." + key));
+                }
+                // In case the remote file is empty or has less properties than the local file, set a pref to force
+                // rewriting both files
+                String diffRemote = "wp.init.diff.remote.pref";
+                INIT_SYSTEM_PREFERENCES.setProperty(diffRemote, context.getProperty(diffRemote));
+                saveSystemPreferences();
             }
-        }
-
-        if (SYSTEM_PREFERENCES.isEmpty()) {
-            FileUtil.readProperties(propsFile, SYSTEM_PREFERENCES);
-        }
-        resetInitProperties();
-        if (noContent) {
-            INIT_SYSTEM_PREFERENCES.setProperty("no.content", "true");
         }
     }
 
-    public static void saveSystemPreferences() {
-        String remotePrefURL = getServiceUrl();
+    public static synchronized void saveSystemPreferences() {
+        // Set in a popup message of the launcher
+        String key = "weasis.accept.disclaimer";
+        SYSTEM_PREFERENCES.setProperty(key, System.getProperty(key));
+        key = "weasis.version.release";
+        SYSTEM_PREFERENCES.setProperty(key, System.getProperty(key));
+
         if (!SYSTEM_PREFERENCES.equals(INIT_SYSTEM_PREFERENCES)) {
-            if (remotePrefURL == null) {
-                FileUtil.storeProperties(propsFile, SYSTEM_PREFERENCES, null);
-                resetInitProperties();
-            } else {
+            FileUtil.storeProperties(propsFile, SYSTEM_PREFERENCES, null);
+            String remotePrefURL = getServiceUrl();
+            if (remotePrefURL != null) {
                 try {
-                    Properties remoteProps = storeLauncherPref(SYSTEM_PREFERENCES, remotePrefURL);
-                    if (remoteProps != null) {
-                        FileUtil.storeProperties(propsFile, remoteProps, null);
-                        SYSTEM_PREFERENCES.putAll(remoteProps);
-                        resetInitProperties();
-                    }
+                    storeLauncherPref(SYSTEM_PREFERENCES, remotePrefURL);
                 } catch (Exception e) {
                     LOGGER.error("Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e); //$NON-NLS-1$
                 }
             }
+            INIT_SYSTEM_PREFERENCES.clear();
+            INIT_SYSTEM_PREFERENCES.putAll(SYSTEM_PREFERENCES);
         }
     }
 
@@ -168,53 +169,29 @@ public class BundleTools {
     }
 
     public static boolean isLocalSession() {
-        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.local.session", true); //$NON-NLS-1$
+        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.local.session", false); //$NON-NLS-1$
     }
 
     public static boolean isStoreLocalSession() {
         return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.store.local.session", false); //$NON-NLS-1$
     }
-    
+
     public static String getEncodedValue(String val) throws UnsupportedEncodingException {
         return URLEncoder.encode(val, "UTF-8");
     }
 
-    private static void resetInitProperties() {
-        INIT_SYSTEM_PREFERENCES.clear();
-        INIT_SYSTEM_PREFERENCES.putAll(SYSTEM_PREFERENCES);
-    }
-
-    private static Properties storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
+    private static void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
         if (!isLocalSession() || isStoreLocalSession()) {
             String sURL = String.format("%spreferences?user=%s&profile=%s", remotePrefURL,
                 getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
-            Properties remoteProps = new Properties();
-            readRemoteProperties(remoteProps, remotePrefURL);
-            if (!remoteProps.equals(props)) {
-                remoteProps.putAll(props);
-                OutputStream out = NetworkUtil.getUrlOutputStream(new URL(sURL).openConnection(), getHttpTags(true));
-                remoteProps.store(new DataOutputStream(out), null);
-                return remoteProps;
+            URLConnection urlConnection = new URL(sURL).openConnection();
+            Map<String, String> headers = getHttpTags(true);
+            try (OutputStream out = NetworkUtil.getUrlOutputStream(urlConnection, headers)) {
+                props.store(new DataOutputStream(out), null);
             }
-        }
-        return null;
-    }
-
-    private static void readRemoteProperties(Properties remoteProps, String remotePrefURL) {
-        try {
-            String sURL = String.format("%spreferences?user=%s&profile=%s", remotePrefURL,
-                getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
-            URLConnection prefSv = new URL(sURL).openConnection();
-
-            try (InputStream input = NetworkUtil.getUrlInputStream(prefSv, getHttpTags(false))) {
-                // Do not write if not content (HTTP_NO_CONTENT)
-                if (prefSv instanceof HttpURLConnection
-                    && ((HttpURLConnection) prefSv).getResponseCode() == HttpURLConnection.HTTP_OK) {
-                    remoteProps.load(input);
-                }
+            if (urlConnection instanceof HttpURLConnection) {
+                NetworkUtil.readResponse((HttpURLConnection) urlConnection, headers);
             }
-        } catch (Exception e) {
-            LOGGER.error("Cannot load Launcher preference for user: {}", AppProperties.WEASIS_USER, e); //$NON-NLS-1$
         }
     }
 

@@ -69,7 +69,7 @@ import org.weasis.opencv.data.PlanarImage;
 public class AcquirePublishDialog extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
 
-    public static final String P_LAST_RES = "last.dir"; //$NON-NLS-1$
+    public static final String P_LAST_RESOLUTION = "last.resolution"; //$NON-NLS-1$
     public static final String PREFERENCE_NODE = "publish"; //$NON-NLS-1$
 
     public enum Resolution {
@@ -182,7 +182,7 @@ public class AcquirePublishDialog extends JDialog {
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {
             Preferences p = prefs.node(PREFERENCE_NODE);
-            resolutionCombo.setSelectedItem(Resolution.getInstance(p.get(P_LAST_RES, Resolution.ORIGINAL.name())));
+            resolutionCombo.setSelectedItem(Resolution.getInstance(p.get(P_LAST_RESOLUTION, Resolution.ORIGINAL.name())));
         }
         resolutionPane.add(resolutionCombo);
         resolutionPane.setVisible(Boolean.FALSE);
@@ -370,7 +370,7 @@ public class AcquirePublishDialog extends JDialog {
             BundlePreferences.getDefaultPreferences(FrameworkUtil.getBundle(this.getClass()).getBundleContext());
         if (prefs != null) {
             Preferences p = prefs.node(PREFERENCE_NODE);
-            BundlePreferences.putStringPreferences(p, P_LAST_RES, resolution.name());
+            BundlePreferences.putStringPreferences(p, P_LAST_RESOLUTION, resolution.name());
         }
     }
 

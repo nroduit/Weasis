@@ -100,7 +100,7 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
                 removeItemListener(this);
                 Locale locale = ((JLocale) item).getLocale();
                 Locale.setDefault(locale);
-                BundleTools.SYSTEM_PREFERENCES.put("locale.lang.code", LocalUtil.localeToText(locale)); //$NON-NLS-1$
+                BundleTools.SYSTEM_PREFERENCES.setProperty("locale.lang.code", LocalUtil.localeToText(locale)); //$NON-NLS-1$
                 removeAllItems();
                 sortLocales();
                 addItemListener(this);

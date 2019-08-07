@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -146,6 +147,10 @@ public class WeasisLauncher {
     public static final String P_WEASIS_PREFS_URL = "weasis.pref.url"; //$NON-NLS-1$
     public static final String P_WEASIS_CONFIG_URL = "weasis.config.url"; //$NON-NLS-1$
     public static final String P_WEASIS_USER = "weasis.user"; //$NON-NLS-1$
+    public static final String P_WEASIS_SHOW_DISCLAIMER = "weasis.show.disclaimer";
+    public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer";
+    public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release";
+    public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release";
     public static final String P_OS_NAME = "os.name"; //$NON-NLS-1$
     public static final String P_WEASIS_LOOK = "weasis.look"; //$NON-NLS-1$
     public static final String P_GOSH_ARGS = "gosh.args"; //$NON-NLS-1$
@@ -165,13 +170,9 @@ public class WeasisLauncher {
     protected String localPrefsDir;
 
     protected final ConfigData configData;
-    protected final Properties initProps;
-    protected final Properties currentProps;
 
     public WeasisLauncher(ConfigData configData) {
         this.configData = Objects.requireNonNull(configData);
-        this.initProps = new Properties();
-        this.currentProps = new Properties();
     }
 
     public static void main(String[] argv) throws Exception {
@@ -180,7 +181,7 @@ public class WeasisLauncher {
         instance.launch(Type.DEFAULT);
     }
 
-    final public void launch(Type type) throws Exception {        
+    final public void launch(Type type) throws Exception {
         Map<String, String> serverProp = configData.getFelixProps();
         String cacheDir = serverProp.get(Constants.FRAMEWORK_STORAGE) + "-" + configData.getSourceID(); //$NON-NLS-1$
         // If there is a passed in bundle cache directory, then
@@ -246,8 +247,6 @@ public class WeasisLauncher {
             frameworkLoaded = true;
 
             showMessage(mainFrame, serverProp);
-
-            writeProperties();
 
             // Wait for framework to stop to exit the VM.
             mFelix.waitForStop(0);
@@ -372,11 +371,12 @@ public class WeasisLauncher {
 
     private void showMessage(final WeasisMainFrame mainFrame, Map<String, String> serverProp) {
         String versionOld = serverProp.get("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
-        String versionNew = serverProp.get(P_WEASIS_VERSION);
+        String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0");
         // First time launch
         if (versionOld == null) {
-            String val = getGeneralProperty("weasis.show.disclaimer", "true", serverProp, currentProps, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-            if (Boolean.valueOf(val)) {
+            String val = serverProp.get("prev." + P_WEASIS_SHOW_DISCLAIMER); //$NON-NLS-1$
+            String accept = serverProp.get(P_WEASIS_ACCEPT_DISCLAIMER);
+            if (Utils.geEmptytoTrue(val) && !Utils.getEmptytoFalse(accept)) {
 
                 EventQueue.invokeLater(() -> {
                     Object[] options =
@@ -393,7 +393,7 @@ public class WeasisLauncher {
                     if (response == 0) {
                         // Write "false" in weasis.properties. It can be useful when preferences are store remotely.
                         // The user will accept the disclaimer only once.
-                        currentProps.setProperty("weasis.show.disclaimer", Boolean.FALSE.toString()); //$NON-NLS-1$
+                        System.setProperty(P_WEASIS_ACCEPT_DISCLAIMER, Boolean.TRUE.toString());
                     } else {
                         File file = new File(System.getProperty(P_WEASIS_PATH, ""), //$NON-NLS-1$
                             System.getProperty(P_WEASIS_SOURCE_ID) + ".properties"); //$NON-NLS-1$
@@ -405,14 +405,13 @@ public class WeasisLauncher {
                 });
             }
         } else if (versionNew != null && !versionNew.equals(versionOld)) {
-            String val = getGeneralProperty("weasis.show.release", "true", serverProp, currentProps, false, false); //$NON-NLS-1$ //$NON-NLS-2$
-            if (Boolean.valueOf(val)) {
+            String val = serverProp.get("prev." + P_WEASIS_SHOW_RELEASE); //$NON-NLS-1$
+            if (Utils.geEmptytoTrue(val)) {
                 try {
                     Version vOld = getVersion(versionOld);
                     Version vNew = getVersion(versionNew);
                     if (vNew.compareTo(vOld) > 0) {
-
-                        String lastTag = currentProps.getProperty("weasis.version.release", null); //$NON-NLS-1$
+                        String lastTag = serverProp.get(P_WEASIS_VERSION_RELEASE);
                         if (lastTag != null) {
                             vOld = getVersion(lastTag);
                             if (vNew.compareTo(vOld) <= 0) {
@@ -420,7 +419,7 @@ public class WeasisLauncher {
                                 return;
                             }
                         }
-                        currentProps.setProperty("weasis.version.release", vNew.toString()); //$NON-NLS-1$
+                        System.setProperty(P_WEASIS_VERSION_RELEASE, vNew.toString());
                     }
                 } catch (Exception e2) {
                     LOGGER.log(Level.SEVERE, "Cannot read version", e2); //$NON-NLS-1$
@@ -659,15 +658,13 @@ public class WeasisLauncher {
     }
 
     public WeasisLoader loadProperties(Map<String, String> serverProp, StringBuilder conf) {
-        currentProps.clear();
-
         String dir = configData.getProperty(P_WEASIS_PATH);
         String profileName = configData.getProperty(P_WEASIS_PROFILE, "default");
         String user = configData.getProperty(P_WEASIS_USER);
-        
+
         // If proxy configuration, activate it
         configData.applyProxy(dir + File.separator + "data" + File.separator + "weasis-core-ui");
-        
+
         StringBuilder bufDir = new StringBuilder(dir);
         bufDir.append(File.separator);
         bufDir.append("preferences"); //$NON-NLS-1$
@@ -685,7 +682,11 @@ public class WeasisLauncher {
         localPrefsDir = prefDir.getPath();
         serverProp.put("weasis.pref.dir", prefDir.getPath());
 
-        boolean notContent = false;
+        Properties currentProps = new Properties();
+        FileUtil.readProperties(new File(prefDir, APP_PROPERTY_FILE), currentProps);
+        currentProps.stringPropertyNames()
+            .forEach(key -> serverProp.put("wp.init." + key, currentProps.getProperty(key)));
+
         String remotePrefURL = configData.getProperty(WeasisLauncher.P_WEASIS_PREFS_URL);
         if (Utils.hasText(remotePrefURL)) {
             String storeLocalSession = "weasis.pref.store.local.session";
@@ -695,24 +696,17 @@ public class WeasisLauncher {
             }
             serverProp.put(storeLocalSession, defaultVal);
             try {
-                remotePrefs = new RemotePrefService(serverProp, user, profileName);
-                remotePrefs.readLauncherPref(currentProps);
-                if (currentProps.isEmpty()) {
-                    notContent = true;
+                remotePrefs = new RemotePrefService(remotePrefURL, serverProp, user, profileName);
+                Properties remote = remotePrefs.readLauncherPref(null);
+                currentProps.putAll(remote); // merger remote to local
+                if (remote.size() < currentProps.size()) { 
+                    // Force to have difference for saving preferences
+                    serverProp.put("wp.init.diff.remote.pref", "true");
                 }
             } catch (Exception e) {
                 String msg = String.format("Cannot read Launcher preference for user: %s", user);
                 LOGGER.log(Level.SEVERE, e, () -> msg);
             }
-        }
-
-        if (currentProps.isEmpty()) {
-            File profileProps = new File(prefDir, APP_PROPERTY_FILE);
-            FileUtil.readProperties(profileProps, currentProps);
-        }
-        resetInitProperties();
-        if (notContent) {
-            initProps.setProperty("no.content", "true");
         }
 
         // General Preferences priority order:
@@ -855,15 +849,15 @@ public class WeasisLauncher {
         }
         currentProps.put(P_WEASIS_LOOK, look);
 
-        File sourceIDProps = new File(dir, System.getProperty(P_WEASIS_SOURCE_ID) + ".properties"); //$NON-NLS-1$
+        File sourceIDProps = new File(dir, configData.getProperty(P_WEASIS_SOURCE_ID) + ".properties"); //$NON-NLS-1$
         Properties localSourceProp = new Properties();
         FileUtil.readProperties(sourceIDProps, localSourceProp);
 
         final String versionOld = localSourceProp.getProperty(P_WEASIS_VERSION);
-        if (versionOld != null) {
+        if (Utils.hasText(versionOld)) {
             serverProp.put("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
         }
-        final String versionNew = serverProp.get(P_WEASIS_VERSION);
+        final String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0");
         String cleanCacheAfterCrash = localSourceProp.getProperty(P_WEASIS_CLEAN_CACHE);
 
         boolean update = false;
@@ -908,12 +902,19 @@ public class WeasisLauncher {
         loader.open();
 
         if (versionNew != null) {
-            // Add also to java properties for the about
-            System.setProperty(P_WEASIS_VERSION, versionNew);
             localSourceProp.put(P_WEASIS_VERSION, versionNew);
             if (versionOld == null || !versionOld.equals(versionNew)) {
                 update = true;
             }
+        }
+        String showDisclaimer =
+            getGeneralProperty(P_WEASIS_SHOW_DISCLAIMER, "true", serverProp, currentProps, false, false); //$NON-NLS-1$
+        if (Utils.hasText(showDisclaimer)) {
+            serverProp.put("prev." + P_WEASIS_SHOW_DISCLAIMER, showDisclaimer); //$NON-NLS-1$
+        }
+        String showRelease = getGeneralProperty(P_WEASIS_SHOW_RELEASE, "true", serverProp, currentProps, false, false); //$NON-NLS-1$
+        if (Utils.hasText(showRelease)) {
+            serverProp.put("prev." + P_WEASIS_SHOW_RELEASE, showRelease); //$NON-NLS-1$
         }
 
         // Clean cache if Weasis has crashed during the previous launch
@@ -934,6 +935,11 @@ public class WeasisLauncher {
         if (update) {
             FileUtil.storeProperties(sourceIDProps, localSourceProp, null);
         }
+
+        // Transmit weasis.properties
+        Set<String> pKeys = currentProps.stringPropertyNames();
+        serverProp.put("wp.list", String.join(",", pKeys));
+        pKeys.forEach(key -> serverProp.put(key, currentProps.getProperty(key)));
 
         String pevConf = conf.toString();
         conf.setLength(0);
@@ -1143,39 +1149,10 @@ public class WeasisLauncher {
         // Do nothing in this class
     }
 
-    private void writeProperties() {
-        if (!currentProps.equals(initProps) && localPrefsDir != null) {
-            File file = new File(localPrefsDir, APP_PROPERTY_FILE);
-            if (remotePrefs == null) {
-                FileUtil.storeProperties(file, currentProps, null);
-                resetInitProperties();
-            } else {
-                try {
-                    Properties remoteProps = remotePrefs.storeLauncherPref(currentProps);
-                    if (remoteProps != null) {
-                        FileUtil.storeProperties(file, remoteProps, null);
-                        currentProps.putAll(remoteProps);
-                        resetInitProperties();
-                    }
-                } catch (Exception e) {
-                    String msg = String.format("Cannot store Launcher preference for user: %s", remotePrefs.getUser());
-                    LOGGER.log(Level.SEVERE, e, () -> msg);
-                }
-            }
-        }
-        currentProps.clear();
-        initProps.clear();
-    }
-
-    private void resetInitProperties() {
-        initProps.clear();
-        initProps.putAll(currentProps);
-    }
-
     static void cleanImageCache() {
         // Clean temp folder.
         String dir = System.getProperty("weasis.tmp.dir"); //$NON-NLS-1$
-        if (dir != null) {
+        if (Utils.hasText(dir)) {
             FileUtil.deleteDirectoryContents(new File(dir), 3, 0);
         }
     }

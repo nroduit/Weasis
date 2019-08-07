@@ -17,11 +17,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLOutputFactory;
@@ -157,11 +161,53 @@ public class StreamBackingStoreImpl implements BackingStore {
      */
     @Override
     public PreferencesImpl load(BackingStoreManager manager, PreferencesDescription desc) throws BackingStoreException {
-        PreferencesImpl pref = loadFromService(manager, desc);
-        if (pref != null) {
-            return pref;
+        final PreferencesImpl prefs = loadFromeFile(manager, desc);
+
+        PreferencesImpl remoteprefs = loadFromService(manager, desc);
+        if (remoteprefs != null) {
+            // merge with saved version
+            final PreferencesImpl n = remoteprefs.getOrCreateNode(prefs.absolutePath());
+            update(prefs, n);
         }
-        return loadFromeFile(manager, desc);
+        return prefs;
+    }
+
+    protected static void update(PreferencesImpl prefs, PreferencesImpl update) {
+        for (Entry<String, String> entry : update.getProperties().entrySet()) {
+            String val = prefs.getProperties().get(entry.getKey());
+            if (!Objects.equals(val, entry.getValue())) {
+                prefs.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        Map<String, PreferencesImpl> children = new HashMap<>();
+        for (PreferencesImpl child : prefs.getChildren()) {
+            children.put(child.name(), child);
+        }
+
+        Collection<PreferencesImpl> uchildren = update.getChildren();
+
+        if (update.getProperties().size() < prefs.getProperties().size() || uchildren.size() < children.size()) {
+            // Force the changeset to store remote prefs
+            prefs.getChangeSet()
+                .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> ""));
+        }
+
+        for (PreferencesImpl child : uchildren) {
+            final String name = child.name();
+            if (!children.containsKey(name)) {
+                // create node
+                prefs.node(name);
+            }
+            update(children.get(name), child);
+        }
+    }
+
+    protected static void clearAllChangeSet(PreferencesImpl prefs) {
+        prefs.getChangeSet().clear();
+        for (PreferencesImpl child : prefs.getChildren()) {
+            clearAllChangeSet(child);
+        }
     }
 
     protected PreferencesImpl loadFromeFile(BackingStoreManager manager, PreferencesDescription desc)
@@ -199,8 +245,8 @@ public class StreamBackingStoreImpl implements BackingStore {
         String prefUrl = BundleTools.getServiceUrl();
         if (StringUtil.hasText(prefUrl) && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
             XMLStreamReader xmler = null;
-            try (InputStream fileReader = NetworkUtil.getUrlInputStream(new URL(getURL(desc, prefUrl)).openConnection(),
-                getHttpTags(false), 5000, 7000)) {
+            try (InputStream fileReader =
+                NetworkUtil.getUrlInputStream(new URL(getURL(desc, prefUrl)).openConnection(), getHttpTags(false))) {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
                 XMLInputFactory factory = XMLInputFactory.newInstance();
                 // disable external entities for security
@@ -247,26 +293,8 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (!hasChanges(prefs)) {
             return;
         }
-        checkAccess();
-        // load existing data
-        PreferencesImpl savedData = null;
-        try {
-            savedData = load(prefs.getBackingStoreManager(), prefs.getDescription());
-        } catch (BackingStoreException e1) {
-            // if the file is empty or corrupted
-            LOGGER.error("Cannot read preference file", e1); //$NON-NLS-1$
-        }
 
-        final PreferencesImpl rootPrefs;
-        if (savedData == null) {
-            rootPrefs = prefs.getRoot();
-        } else {
-            // merge with saved version
-            final PreferencesImpl n = savedData.getOrCreateNode(prefs.absolutePath());
-            n.applyChanges(prefs);
-            rootPrefs = n.getRoot();
-        }
-
+        PreferencesImpl rootPrefs = prefs.getRoot();
         try {
             storeInStream(rootPrefs);
         } catch (IOException e) {
@@ -281,16 +309,19 @@ public class StreamBackingStoreImpl implements BackingStore {
                 LOGGER.error("Cannot store preference file", e); //$NON-NLS-1$
             }
         }
-
     }
 
     private void remoteStore(PreferencesImpl prefs, String prefUrl) throws IOException, BackingStoreException {
         if (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession()) {
             File file = getFile(prefs.getDescription());
             if (file != null && file.exists()) {
-                try (OutputStream out = NetworkUtil.getUrlOutputStream(
-                    new URL(getURL(prefs.getDescription(), prefUrl)).openConnection(), getHttpTags(false))) {
+                URLConnection urlConnection = new URL(getURL(prefs.getDescription(), prefUrl)).openConnection();
+                Map<String, String> headers = getHttpTags(true);
+                try (OutputStream out = NetworkUtil.getUrlOutputStream(urlConnection, headers)) {
                     writeStream(new FileInputStream(file), out);
+                }
+                if (urlConnection instanceof HttpURLConnection) {
+                    NetworkUtil.readResponse((HttpURLConnection) urlConnection, headers);
                 }
             }
         }
@@ -312,7 +343,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     protected void storeInStream(PreferencesImpl prefs) throws BackingStoreException, IOException {
         final PreferencesImpl rootPrefs = prefs.getRoot();
         XMLStreamWriter writer = null;
-        try (final OutputStream output = getOutputStream(prefs.getDescription())) {
+        try (final OutputStream output = getOutputStream(rootPrefs.getDescription())) {
             XMLOutputFactory factory = XMLOutputFactory.newInstance();
             writer = factory.createXMLStreamWriter(output, "UTF-8"); //$NON-NLS-1$
             writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -320,11 +351,13 @@ public class StreamBackingStoreImpl implements BackingStore {
             write(rootPrefs, writer);
             writer.writeEndElement();
             writer.writeEndDocument();
+            clearAllChangeSet(rootPrefs);
         } catch (XMLStreamException e) {
             throw new BackingStoreException("Unable to store preferences.", e); //$NON-NLS-1$
         } finally {
             FileUtil.safeClose(writer);
         }
+
     }
 
     /**

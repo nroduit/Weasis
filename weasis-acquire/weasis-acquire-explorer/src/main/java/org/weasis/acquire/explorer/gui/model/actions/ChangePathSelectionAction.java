@@ -41,7 +41,7 @@ public class ChangePathSelectionAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         MediaSource drive = mainView.getSystemDrive();
         if (drive != null && e.getSource() instanceof Component) {
-            String newRootPath = openDirectoryChooser(drive.getID(), (Component) e.getSource());
+            String newRootPath = openDirectoryChooser(drive.getPath(), (Component) e.getSource());
             if (newRootPath != null) {
                 try {
                     mainView.applyNewPath(newRootPath);

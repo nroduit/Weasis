@@ -12,7 +12,6 @@
  ******************************************************************************/
 package org.weasis.launcher;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -38,11 +37,10 @@ public class RemotePrefService {
     private final boolean localSessionUser;
     private final boolean storeLocalSession;
 
-    public RemotePrefService(Map<String, String> serverProp, String user, String profile) {
-        String url = serverProp.get(WeasisLauncher.P_WEASIS_PREFS_URL);
+    public RemotePrefService(String url, Map<String, String> serverProp, String user, String profile) {
         this.remotePrefURL = Objects.requireNonNull(url).endsWith("/") ? url : url + "/";
         this.user = Objects.requireNonNull(user);
-        this.localSessionUser = Utils.geEmptytoTrue(serverProp.get("weasis.pref.local.session"));
+        this.localSessionUser = Utils.getEmptytoFalse(serverProp.get("weasis.pref.local.session"));
         this.storeLocalSession = Utils.getEmptytoFalse(serverProp.get("weasis.pref.store.local.session"));
         this.profile = Objects.requireNonNull(profile);
     }
@@ -50,7 +48,7 @@ public class RemotePrefService {
     public final String getUser() {
         return user;
     }
-    
+
     public String getProfile() {
         return profile;
     }
@@ -68,10 +66,12 @@ public class RemotePrefService {
             getEncodedValue(profile));
     }
 
-    public void readLauncherPref(Properties props) throws IOException {
+    public Properties readLauncherPref(Properties props) throws IOException {
+        Properties p = props == null ? new Properties() : props;
         if (!localSessionUser || storeLocalSession) {
-            readRemoteProperties(props);
+            readRemoteProperties(p);
         }
+        return p;
     }
 
     private void readRemoteProperties(Properties props) throws IOException {
@@ -89,27 +89,5 @@ public class RemotePrefService {
                 LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", remoteURL)); //$NON-NLS-1$
             }
         }
-    }
-
-    public Properties storeLauncherPref(Properties props) throws IOException {
-        if (!localSessionUser || storeLocalSession) {
-            Properties remoteProps = new Properties();
-            readRemoteProperties(remoteProps);
-            if (!remoteProps.equals(props)) {
-                remoteProps.putAll(props);
-                HttpURLConnection prefSv =
-                    (HttpURLConnection) FileUtil.getAdaptedConnection(new URL(getRemoteLauncherUrl()), false);
-                prefSv.setRequestProperty("Content-Type", TEXT_X_JAVA_PROP);
-                prefSv.setConnectTimeout(7000);
-                prefSv.setReadTimeout(10000);
-                prefSv.setDoOutput(true);
-                prefSv.setDoInput(true);
-                prefSv.setRequestMethod("POST"); //$NON-NLS-1$
-                DataOutputStream out = new DataOutputStream(prefSv.getOutputStream());
-                remoteProps.store(out, null);
-                return remoteProps;
-            }
-        }
-        return null;
     }
 }

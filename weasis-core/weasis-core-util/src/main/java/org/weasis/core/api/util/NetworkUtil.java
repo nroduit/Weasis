@@ -104,7 +104,7 @@ public class NetworkUtil {
         if (headers != null && headers.size() > 0) {
             for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                 Entry<String, String> element = iter.next();
-                urlConnection.addRequestProperty(element.getKey(), element.getValue());
+                urlConnection.setRequestProperty(element.getKey(), element.getValue());
             }
         }
         urlConnection.setConnectTimeout(connectTimeout);
@@ -119,28 +119,46 @@ public class NetworkUtil {
                 if (post) {
                     httpURLConnection.setRequestMethod("POST"); //$NON-NLS-1$
                 } else {
-                    int code = httpURLConnection.getResponseCode();
-                    if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
-                        if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
-                            || code == HttpURLConnection.HTTP_SEE_OTHER) {
-                            applyRedirectionStream(httpURLConnection, headers);
-                            return;
-                        }
-
-                        LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
-
-                        // Following is only intended LOG more info about Http Server Error
-                        if (LOGGER.isTraceEnabled()) {
-                            writeErrorResponse(httpURLConnection);
-                        }
-                        throw new StreamIOException(httpURLConnection.getResponseMessage());
-                    }
+                    readResponse(httpURLConnection, headers);
                 }
             } catch (StreamIOException e) {
                 throw e;
             } catch (IOException e) {
                 throw new StreamIOException(e);
             }
+        }
+    }
+
+    public static void readResponse(HttpURLConnection httpURLConnection, Map<String, String> headers)
+        throws IOException {
+        int code = httpURLConnection.getResponseCode();
+        if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
+            if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
+                || code == HttpURLConnection.HTTP_SEE_OTHER) {
+                applyRedirectionStream(httpURLConnection, headers);
+                return;
+            }
+
+            LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
+
+            // Following is only intended LOG more info about Http Server Error
+            if (LOGGER.isTraceEnabled()) {
+                writeErrorResponse(httpURLConnection);
+            }
+            throw new StreamIOException(httpURLConnection.getResponseMessage());
+        }
+    }
+
+    public static String read(URLConnection urlConnection) throws IOException {
+        urlConnection.connect();
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()))) {
+            StringBuilder body = new StringBuilder();
+            String inputLine;
+
+            while ((inputLine = in.readLine()) != null) {
+                body.append(inputLine);
+            }
+            return body.toString();
         }
     }
 
@@ -168,7 +186,7 @@ public class NetworkUtil {
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
         InputStream errorStream = httpURLConnection.getErrorStream();
         if (errorStream != null) {
-            try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8); //$NON-NLS-1$
+            try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8); // $NON-NLS-1$
                             BufferedReader reader = new BufferedReader(inputStream)) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
@@ -187,7 +205,7 @@ public class NetworkUtil {
     public static String buildHttpParamsString(Map<String, String> params) {
         return params.entrySet().stream().map(e -> {
             try {
-                return URLEncoder.encode(e.getKey(), UTF_8) + "=" + URLEncoder.encode(e.getValue(), UTF_8); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                return URLEncoder.encode(e.getKey(), UTF_8) + "=" + URLEncoder.encode(e.getValue(), UTF_8); //$NON-NLS-1$
             } catch (UnsupportedEncodingException e1) {
                 throw new IllegalArgumentException(e1);
             }

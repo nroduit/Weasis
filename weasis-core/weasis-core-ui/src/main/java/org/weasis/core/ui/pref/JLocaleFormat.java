@@ -82,7 +82,7 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
         if (local == null) {
             BundleTools.SYSTEM_PREFERENCES.remove(BundleTools.P_FORMAT_CODE);
         } else {
-            BundleTools.SYSTEM_PREFERENCES.put(BundleTools.P_FORMAT_CODE, LocalUtil.localeToText(local));
+            BundleTools.SYSTEM_PREFERENCES.setProperty(BundleTools.P_FORMAT_CODE, LocalUtil.localeToText(local));
         }
 
         Locale l = local == null ? null : local.equals(Locale.getDefault()) ? null : local;

@@ -25,6 +25,7 @@
 			</modules>
 		</profile>
 		<profile>
+			<id>9</id>
 			<activation>
 				<jdk>[9,)</jdk>
 			</activation>

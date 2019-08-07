@@ -140,7 +140,7 @@ public class ConfigData {
         String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis");
         addProperty(P_WEASIS_NAME, name); // $NON-NLS-1$
 
-        String version = felixConfig.getProperty(P_WEASIS_VERSION, "x.x.x"); //$NON-NLS-1$
+        String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
         addProperty(P_WEASIS_VERSION, version);
 
         String codebase = properties.getProperty(P_WEASIS_CODEBASE_URL);

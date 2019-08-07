@@ -385,9 +385,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {
-            BundleTools.SYSTEM_PREFERENCES.put("weasis.look", look.getClassName()); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.look", look.getClassName()); //$NON-NLS-1$
         }
-        // save preferences in local file
+        // save preferences
         BundleTools.saveSystemPreferences();
 
         // Restore old laf to avoid display issues.
