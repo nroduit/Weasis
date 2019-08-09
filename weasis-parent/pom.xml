@@ -11,7 +11,7 @@
 
 	<properties>
 		<java-version>1.8</java-version>
-		<jdk-version>1.8</jdk-version>
+		<jdk-version>11</jdk-version>
 		<enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
 		<enforcer.maven-version>[3.5.0,)</enforcer.maven-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

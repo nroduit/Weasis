@@ -31,8 +31,12 @@ import org.apache.felix.framework.util.FelixConstants;
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
     private static final Logger LOGGER = Logger.getLogger(WebstartLauncher.class.getName());
 
+    static {
+        setJnlpSystemProperties();
+    }
+    
     private static final WebstartLauncher instance = new WebstartLauncher();
-
+    
     static {
         try {
             SingleInstanceService singleInstanceService =
@@ -62,6 +66,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
         for (Object provider : toRemove) {
             registry.deregisterServiceProvider(provider);
         }
+
     }
 
     public WebstartLauncher() {
@@ -93,14 +98,13 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     }
 
     public static void main(String[] argv) throws Exception {
-        setJnlpSystemProperties();
         instance.configData.init(argv);
         // Remove the prefix "jnlp.weasis" of JNLP Properties
         // Workaround for having a fully trusted application with JWS,
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
         instance.launch(Type.JWS);
     }
-    
+
     private static void setJnlpSystemProperties() {
         final String PREFIX = "jnlp.weasis."; //$NON-NLS-1$
         final int PREFIX_LENGTH = PREFIX.length();
