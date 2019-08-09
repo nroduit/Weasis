@@ -81,7 +81,8 @@ public class ConfigData {
 
     public void init(String[] args) {
         this.clear();
-        LOGGER.log(Level.INFO, "Starting the configuration..."); //$NON-NLS-1$
+        LOGGER.log(Level.INFO, "Starting Weasis..."); //$NON-NLS-1$
+        LOGGER.log(Level.INFO, "Initialization of the launch configuration..."); //$NON-NLS-1$
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 LOGGER.log(Level.INFO, "Main arg {0} = {1}", new Object[] { Integer.toString(i), args[i] }); //$NON-NLS-1$
@@ -177,7 +178,6 @@ public class ConfigData {
         appFolder.mkdirs();
         addProperty(P_WEASIS_PATH, appFolder.getPath());
         System.setProperty(P_WEASIS_PATH, appFolder.getPath());
-
     }
 
     private void filterConfigProperties(Properties felixConfig) {

@@ -318,7 +318,7 @@ public class WeasisLauncher {
     private static void displayStartingAciiIcon() {
         StringBuilder buf = new StringBuilder();
         buf.append(END_LINE);
-        buf.append("Starting..."); //$NON-NLS-1$
+        buf.append("Starting OSGI Bundles..."); //$NON-NLS-1$
         buf.append(END_LINE);
         buf.append(END_LINE);
         buf.append("         | | /| / /__ ___ ____ (_)__"); //$NON-NLS-1$
