@@ -10,7 +10,7 @@ import org.weasis.core.api.util.StringUtil;
 
 public class CryptoHandler {
 
-    private static final String BLOWFISH = "Blowfish";
+    private static final String BLOWFISH = "Blowfish"; //$NON-NLS-1$
 
     public static String encrypt(String strClearText, String strKey) throws GeneralSecurityException {
         if(!StringUtil.hasText(strClearText)) {

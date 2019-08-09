@@ -279,7 +279,7 @@ public class ImageCVIO implements MediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION, "Supports the common types of image files (JPEG, TIFF, PNG...)" }; //$NON-NLS-1$
+        return new String[] { "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION }; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public ImageReader getDefaultReader(String mimeType) {
@@ -360,12 +360,12 @@ public class ImageCVIO implements MediaReader {
                         if (MathUtil.isEqual(min, max)) {
                             max += 1.0;
                         }
-                        
-                        params.put(ActionW.WINDOW.cmd(), max -min);
-                        params.put(ActionW.LEVEL.cmd(), min + (max -min) / 2.0 );
-                    } 
+
+                        params.put(ActionW.WINDOW.cmd(), max - min);
+                        params.put(ActionW.LEVEL.cmd(), min + (max - min) / 2.0);
+                    }
                     img8 = imgElement.getRenderedImage(img, params);
-                    
+
                 }
                 ImageProcessor.writeThumbnail(img8.toMat(),
                     new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE); //$NON-NLS-1$

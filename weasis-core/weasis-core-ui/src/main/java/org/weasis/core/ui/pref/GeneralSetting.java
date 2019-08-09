@@ -249,7 +249,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcPanel2.gridy = 7;
         add(panel2, gbcPanel2);
         JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
-        panel2.add(JMVUtils.createHelpButton("locale", true));
+        panel2.add(JMVUtils.createHelpButton("locale", true)); //$NON-NLS-1$
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> {
             resetoDefaultValues();
@@ -413,7 +413,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     @Override
     public void resetoDefaultValues() {
-        BundleTools.SYSTEM_PREFERENCES.resetProperty(BundleTools.CONFIRM_CLOSE, "false");//$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty(BundleTools.CONFIRM_CLOSE, Boolean.FALSE.toString());
 
         // Reset properties used by OSGI service (Sling Logger)
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3"); //$NON-NLS-1$

@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtil.class);
 
-    private static final String UTF_8 = "UTF-8";
+    private static final String UTF_8 = "UTF-8"; //$NON-NLS-1$
     private static final int MAX_REDIRECTS = 3;
 
     private NetworkUtil() {

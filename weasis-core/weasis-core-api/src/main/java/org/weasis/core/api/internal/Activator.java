@@ -46,7 +46,7 @@ public class Activator implements BundleActivator, ServiceListener {
         bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
 
         // Allows to connect through a proxy initialized by Java Webstart
-        if (!LangUtil.geEmptytoTrue(System.getProperty("http.bundle.cache"))) {
+        if (!LangUtil.geEmptytoTrue(System.getProperty("http.bundle.cache"))) { //$NON-NLS-1$
             ProxyUtils.setProxyFromJavaWebStart();
         }
 

@@ -226,7 +226,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Build DICOM hierarchy", e);
+            LOGGER.error("Build DICOM hierarchy", e); //$NON-NLS-1$
         }
         return thumb;
     }

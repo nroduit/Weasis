@@ -128,7 +128,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     protected void showExportingOptions() {
         Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
         final JCheckBox boxKeepNames = new JCheckBox(Messages.getString("LocalExport.keep_dir"), //$NON-NLS-1$
-            Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"))); //$NON-NLS-1$
+            Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString())));
 
         Object selected = comboBoxImgFormat.getSelectedItem();
         if (EXPORT_FORMAT[0].equals(selected)) {
@@ -182,7 +182,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             }
         } else if (EXPORT_FORMAT[3].equals(selected)) {
             final JCheckBox box1 = new JCheckBox(Messages.getString("LocalExport.ch_16"), //$NON-NLS-1$
-                Boolean.valueOf(pref.getProperty(IMG_16_BIT, "false"))); //$NON-NLS-1$
+                Boolean.valueOf(pref.getProperty(IMG_16_BIT, Boolean.FALSE.toString())));
             Object[] options = { box1, boxKeepNames };
             int response = JOptionPane.showOptionDialog(this, options, Messages.getString("LocalExport.export_message"), //$NON-NLS-1$
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
@@ -435,9 +435,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             writeDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "zip")); //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             Properties pref = Activator.IMPORT_EXPORT_PERSISTENCE;
-            writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, "true"));//$NON-NLS-1$
-            keepNames = writeDicomdir ? false : Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, "true"));//$NON-NLS-1$
-            cdCompatible = Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, "false"));//$NON-NLS-1$
+            writeDicomdir = Boolean.valueOf(pref.getProperty(INC_DICOMDIR, Boolean.TRUE.toString()));
+            keepNames = writeDicomdir ? false : Boolean.valueOf(pref.getProperty(KEEP_INFO_DIR, Boolean.TRUE.toString()));
+            cdCompatible = Boolean.valueOf(pref.getProperty(CD_COMPATIBLE, Boolean.FALSE.toString()));
             writeDir = exportDir;
         }
 
@@ -617,7 +617,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static String buildFolderName(String str, int length) {
         String value = FileUtil.getValidFileNameWithoutHTML(str);
         value = StringUtil.getTruncatedString(value, length, Suffix.UNDERSCORE).trim();
-        return value.endsWith(".") ? value.substring(0, value.length() - 1) : value;
+        return value.endsWith(".") ? value.substring(0, value.length() - 1) : value; //$NON-NLS-1$
     }
 
     private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement img, DefaultMutableTreeNode node,

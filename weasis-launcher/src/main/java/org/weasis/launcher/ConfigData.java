@@ -58,12 +58,12 @@ public class ConfigData {
     private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
 
     // Params, see https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
-    public static final String PARAM_CONFIG_URL = "wcfg";
-    public static final String PARAM_ARGUMENT = "arg";
-    public static final String PARAM_PROPERTY = "pro";
-    public static final String PARAM_CODEBASE = "cdb";
-    public static final String PARAM_CODEBASE_EXT = "cdb-ext";
-    public static final String PARAM_AUTHORIZATION = "auth";
+    public static final String PARAM_CONFIG_URL = "wcfg"; //$NON-NLS-1$
+    public static final String PARAM_ARGUMENT = "arg"; //$NON-NLS-1$
+    public static final String PARAM_PROPERTY = "pro"; //$NON-NLS-1$
+    public static final String PARAM_CODEBASE = "cdb"; //$NON-NLS-1$
+    public static final String PARAM_CODEBASE_EXT = "cdb-ext"; //$NON-NLS-1$
+    public static final String PARAM_AUTHORIZATION = "auth"; //$NON-NLS-1$
 
     private final List<String> arguments = new ArrayList<>();
     private final Properties properties = new Properties();
@@ -108,7 +108,7 @@ public class ConfigData {
         applyJavaProperty(CONFIG_PROPERTIES_PROP);
         applyJavaProperty(EXTENDED_PROPERTIES_PROP);
         for (String propertyName : System.getProperties().stringPropertyNames()) {
-            if (propertyName.startsWith("weasis.")) {
+            if (propertyName.startsWith("weasis.")) { //$NON-NLS-1$
                 applyJavaProperty(propertyName);
             }
         }
@@ -134,10 +134,10 @@ public class ConfigData {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setOsgiNativeLibSpecification();
 
-        String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default");
+        String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
         addProperty(P_WEASIS_PROFILE, profile);
 
-        String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis");
+        String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis"); //$NON-NLS-1$
         addProperty(P_WEASIS_NAME, name); // $NON-NLS-1$
 
         String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
@@ -150,19 +150,19 @@ public class ConfigData {
         if (!Utils.hasText(user)) {
             user = System.getProperty("user.name", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
             addProperty(P_WEASIS_USER, user);
-            addProperty("weasis.pref.local.session", Boolean.TRUE.toString());
+            addProperty("weasis.pref.local.session", Boolean.TRUE.toString()); //$NON-NLS-1$
         }
 
         // Define the http user agent
         addProperty("http.agent", //$NON-NLS-1$
-            name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; "
-                + System.getProperty("os.arch") + ")");
+            name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+                + System.getProperty("os.arch") + ")"); //$NON-NLS-1$ //$NON-NLS-2$
 
         String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
             LOGGER.log(Level.INFO, "Starting portable version"); //$NON-NLS-1$
             String pkey = "weasis.portable.dicom.directory"; //$NON-NLS-1$
-            addProperty(pkey, felixConfig.getProperty(pkey, "dicom,DICOM,IMAGES,images"));
+            addProperty(pkey, felixConfig.getProperty(pkey, "dicom,DICOM,IMAGES,images")); //$NON-NLS-1$
         }
 
         // Set weasis properties to Java System Properties before variables substitution.
@@ -170,7 +170,7 @@ public class ConfigData {
 
         filterConfigProperties(felixConfig);
         if (LOGGER.isLoggable(Level.FINEST)) {
-            felixProps.forEach((k, v) -> LOGGER.log(Level.FINEST, () -> String.format("Felix config: %s = %s", k, v)));
+            felixProps.forEach((k, v) -> LOGGER.log(Level.FINEST, () -> String.format("Felix config: %s = %s", k, v))); //$NON-NLS-1$
         }
 
         File appFolder = new File(felixProps.get(Constants.FRAMEWORK_STORAGE)).getParentFile();
@@ -222,20 +222,20 @@ public class ConfigData {
         applyConfigParams(getConfigParamsFromArgs(configArgs));
         applyConfigParams(getConfigParamsFromServicePath());
 
-        String codeBaseUrl = properties.getProperty(P_WEASIS_CODEBASE_URL, "");
+        String codeBaseUrl = properties.getProperty(P_WEASIS_CODEBASE_URL, ""); //$NON-NLS-1$
         if (!Utils.hasText(codeBaseUrl)) {
             applyLocalCodebase();
         }
 
         if (!properties.containsKey(CONFIG_PROPERTIES_PROP) && Utils.hasText(codeBaseUrl)) {
-            String configProp = String.format("%s/%s/%s", codeBaseUrl, CONFIG_DIRECTORY, CONFIG_PROPERTIES_FILE_VALUE);
+            String configProp = String.format("%s/%s/%s", codeBaseUrl, CONFIG_DIRECTORY, CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
             addProperty(CONFIG_PROPERTIES_PROP, configProp);
         }
 
-        String codeBaseExtUrl = properties.getProperty(P_WEASIS_CODEBASE_EXT_URL, "");
+        String codeBaseExtUrl = properties.getProperty(P_WEASIS_CODEBASE_EXT_URL, ""); //$NON-NLS-1$
         if (!properties.containsKey(EXTENDED_PROPERTIES_PROP) && Utils.hasText(codeBaseExtUrl)) {
             String extConfigProp =
-                String.format("%s/%s/%s", codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE);
+                String.format("%s/%s/%s", codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
             addProperty(EXTENDED_PROPERTIES_PROP, extConfigProp);
         }
 
@@ -248,7 +248,7 @@ public class ConfigData {
     private String applyLocalCodebase() {
         File localCodebase = findLocalCodebase();
         String baseURI = localCodebase.toURI().toString();
-        if (baseURI.endsWith("/")) {
+        if (baseURI.endsWith("/")) { //$NON-NLS-1$
             baseURI = baseURI.substring(0, baseURI.length() - 1);
         }
         try {
@@ -365,61 +365,61 @@ public class ConfigData {
     }
 
     public void applyProxy(String dir) {
-        File file = new File(dir, "persitence.properties");
+        File file = new File(dir, "persitence.properties"); //$NON-NLS-1$
         if (!file.canRead()) {
             return;
         }
         Properties p = new Properties();
         FileUtil.readProperties(file, p);
 
-        boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual"));
+        boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual")); //$NON-NLS-1$
 
         if (mproxy) {
-            String exceptions = p.getProperty("proxy.exceptions");
-            String val = p.getProperty("proxy.http.host");
-            applyProxyProperty("http.proxyHost", val, mproxy);
+            String exceptions = p.getProperty("proxy.exceptions"); //$NON-NLS-1$
+            String val = p.getProperty("proxy.http.host"); //$NON-NLS-1$
+            applyProxyProperty("http.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy);
-                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+                applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
             }
 
-            val = p.getProperty("proxy.https.host");
-            applyProxyProperty("https.proxyHost", val, mproxy);
+            val = p.getProperty("proxy.https.host"); //$NON-NLS-1$
+            applyProxyProperty("https.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy);
-                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+                applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
             }
 
-            val = p.getProperty("proxy.ftp.host");
-            applyProxyProperty("ftp.proxyHost", val, mproxy);
+            val = p.getProperty("proxy.ftp.host"); //$NON-NLS-1$
+            applyProxyProperty("ftp.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy);
-                applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy);
+                applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
+                applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
             }
 
-            val = p.getProperty("proxy.socks.host");
-            applyProxyProperty("socksProxyHost", val, mproxy);
+            val = p.getProperty("proxy.socks.host"); //$NON-NLS-1$
+            applyProxyProperty("socksProxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy);
+                applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth"));
+            boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth")); //$NON-NLS-1$
             if (auth) {
-                String authUser = p.getProperty("proxy.auth.user");
+                String authUser = p.getProperty("proxy.auth.user"); //$NON-NLS-1$
                 String authPassword;
                 try {
-                    byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null);
+                    byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null); //$NON-NLS-1$
                     if (pwd != null) {
-                        pwd = Utils.decrypt(pwd, "proxy.auth");
+                        pwd = Utils.decrypt(pwd, "proxy.auth"); //$NON-NLS-1$
                         if (pwd != null && pwd.length > 0) {
                             authPassword = new String(pwd);
                             applyPasswordAuthentication(authUser, authPassword);
-                            applyProxyProperty("http.proxyUser", authUser, mproxy);
-                            applyProxyProperty("http.proxyPassword", authPassword, mproxy);
+                            applyProxyProperty("http.proxyUser", authUser, mproxy); //$NON-NLS-1$
+                            applyProxyProperty("http.proxyPassword", authPassword, mproxy); //$NON-NLS-1$
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Cannot store the proxy password", e);
+                    LOGGER.log(Level.SEVERE, "Cannot store the proxy password", e); //$NON-NLS-1$
                 }
             }
         }
@@ -451,7 +451,7 @@ public class ConfigData {
                 while (i + 1 < length && !args[i + 1].startsWith("$")) { //$NON-NLS-1$
                     i++;
                     command.append(' ');
-                    if (args[i].indexOf(' ') != -1 && !args[i].startsWith("\"")) {
+                    if (args[i].indexOf(' ') != -1 && !args[i].startsWith("\"")) { //$NON-NLS-1$
                         command.append("\""); //$NON-NLS-1$
                         command.append(args[i]);
                         command.append("\""); //$NON-NLS-1$
@@ -467,7 +467,7 @@ public class ConfigData {
             for (int i = 0; i < args.length; i++) {
                 String val = args[i];
                 // DICOM files
-                if (val.startsWith("file:")) {
+                if (val.startsWith("file:")) { //$NON-NLS-1$
                     try {
                         val = new File(new URI(args[i])).getPath();
                     } catch (URISyntaxException e) {
@@ -502,7 +502,7 @@ public class ConfigData {
             return;
         }
 
-        String[] vals = argument.split("=", 2);
+        String[] vals = argument.split("=", 2); //$NON-NLS-1$
         if (vals.length != 2) {
             return;
         }
@@ -530,14 +530,14 @@ public class ConfigData {
         try {
             URI configServiceUri = new URI(configServicePath);
 
-            if (configServiceUri.getScheme().startsWith("file")) {
+            if (configServiceUri.getScheme().startsWith("file")) { //$NON-NLS-1$
                 stream = new FileInputStream(new File(configServiceUri));
             } else {
                 URLConnection urlConnection = FileUtil.getAdaptedConnection(new URI(configServicePath).toURL(), false);
 
-                urlConnection.setRequestProperty("Accept", "application/xml");
-                urlConnection.setConnectTimeout(Integer.valueOf(System.getProperty("UrlConnectionTimeout", "1000")));
-                urlConnection.setReadTimeout(Integer.valueOf((System.getProperty("UrlReadTimeout", "2000"))));
+                urlConnection.setRequestProperty("Accept", "application/xml"); //$NON-NLS-1$ //$NON-NLS-2$
+                urlConnection.setConnectTimeout(Integer.valueOf(System.getProperty("UrlConnectionTimeout", "1000"))); //$NON-NLS-1$ //$NON-NLS-2$
+                urlConnection.setReadTimeout(Integer.valueOf((System.getProperty("UrlReadTimeout", "2000")))); //$NON-NLS-1$ //$NON-NLS-2$
 
                 if (urlConnection instanceof HttpURLConnection) {
                     HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
@@ -579,12 +579,12 @@ public class ConfigData {
             switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
                     switch (xmler.getLocalName()) {
-                        case "property":
-                            String name = xmler.getAttributeValue(null, "name");
-                            String value = xmler.getAttributeValue(null, "value");
-                            addConfigParam(configParams, PARAM_PROPERTY, String.format("%s %s", name, value));
+                        case "property": //$NON-NLS-1$
+                            String name = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
+                            String value = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
+                            addConfigParam(configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); //$NON-NLS-1$
                             break;
-                        case "argument":
+                        case "argument": //$NON-NLS-1$
                             addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
                             break;
                     }
@@ -629,7 +629,7 @@ public class ConfigData {
         String custom = properties.getProperty(configProp);
         if (Utils.hasText(custom)) {
             try {
-                if (custom.startsWith("file:conf/")) {
+                if (custom.startsWith("file:conf/")) { //$NON-NLS-1$
                     propURL = new File(findLocalCodebase(), custom.substring(5)).toURI();
                 } else {
                     propURL = new URI(custom);

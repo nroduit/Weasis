@@ -20,9 +20,9 @@ public interface ImageStatistics {
     Measurement IMAGE_STD = new Measurement(Messages.getString("measure.stdev"), 4, false, true, false); //$NON-NLS-1$
     Measurement IMAGE_SKEW = new Measurement(Messages.getString("measure.skew"), 5, false, true, false); //$NON-NLS-1$
     Measurement IMAGE_KURTOSIS = new Measurement(Messages.getString("measure.kurtosis"), 6, false, true, false); //$NON-NLS-1$
-    Measurement IMAGE_PIXELS = new Measurement("Pixels", 7, false, true, false); 
-    Measurement IMAGE_MEDIAN = new Measurement("Median", 8, false, true, false); 
-    Measurement IMAGE_ENTROPY = new Measurement("Entropy", 9, false, true, false); 
+    Measurement IMAGE_PIXELS = new Measurement(Messages.getString("ImageStatistics.pixels"), 7, false, true, false);  //$NON-NLS-1$
+    Measurement IMAGE_MEDIAN = new Measurement(Messages.getString("ImageStatistics.median"), 8, false, true, false);  //$NON-NLS-1$
+    Measurement IMAGE_ENTROPY = new Measurement(Messages.getString("ImageStatistics.entropy"), 9, false, true, false);  //$NON-NLS-1$
     
     Measurement[] ALL_MEASUREMENTS = { IMAGE_PIXELS, IMAGE_MIN, IMAGE_MAX, IMAGE_MEDIAN, IMAGE_MEAN, IMAGE_STD, IMAGE_SKEW, IMAGE_KURTOSIS, IMAGE_ENTROPY };
 }

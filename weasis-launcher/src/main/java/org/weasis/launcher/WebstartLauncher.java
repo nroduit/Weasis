@@ -116,6 +116,6 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
 
         // Disabling extension framework is mandatory to work with Java Web Start.
         // From framework 4.4.1, See https://issues.apache.org/jira/browse/FELIX-4281.
-        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, "true"); //$NON-NLS-1$
+        System.setProperty(FelixConstants.FELIX_EXTENSIONS_DISABLE, Boolean.TRUE.toString());
     }
 }

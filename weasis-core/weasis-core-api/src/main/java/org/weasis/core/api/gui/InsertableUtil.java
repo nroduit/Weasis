@@ -50,7 +50,7 @@ public class InsertableUtil {
                         if (valString == null) {
                             val = getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                                 nodeName, key, val);
-                        } else if ("false".equalsIgnoreCase(valString)) { //$NON-NLS-1$
+                        } else if (Boolean.FALSE.toString().equalsIgnoreCase(valString)) { 
                             val = false;
                         }
                         c.setComponentEnabled(val);
@@ -106,9 +106,9 @@ public class InsertableUtil {
                     buf.append(key);
                     final String value = props.getProperty(buf.toString());
                     if (value != null) {
-                        if ("true".equalsIgnoreCase(value)) { //$NON-NLS-1$
+                        if (Boolean.TRUE.toString().equalsIgnoreCase(value)) {
                             return true;
-                        } else if ("false".equalsIgnoreCase(value)) { //$NON-NLS-1$
+                        } else if (Boolean.FALSE.toString().equalsIgnoreCase(value)) {
                             return false;
                         }
                     }

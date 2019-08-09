@@ -230,7 +230,7 @@ public class WeasisWin {
 
         if (frame != null) {
             frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$
-            ImageIcon icon =  AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") :  ResourceUtil.getIconLogo64();
+            ImageIcon icon =  AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") :  ResourceUtil.getIconLogo64(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             if (icon != null) {
                 frame.setIconImage(icon.getImage());
             }

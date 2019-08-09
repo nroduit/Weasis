@@ -225,7 +225,7 @@ public class TagWTest {
         int[] intValues = { 1234, 567, 890 };
         assertThat(TagW.getFormattedText(intValues, null)).isEqualTo("1234, 567, 890"); //$NON-NLS-1$
 
-        assertThat(TagW.getFormattedText(Boolean.TRUE, null)).isEqualTo("true"); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText(Boolean.TRUE, null)).isEqualTo(Boolean.TRUE.toString());
     }
 
     @Test

@@ -60,7 +60,7 @@ public class FileUtil {
             try {
                 xmler.close();
             } catch (XMLStreamException e) {
-                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e); 
+                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e);  //$NON-NLS-1$
             }
         }
     }

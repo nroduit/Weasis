@@ -289,11 +289,11 @@ public class JMVUtils {
         JButton jButtonHelp;
         if (small) {
           jButtonHelp =
-              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png")));
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png"))); //$NON-NLS-1$
           jButtonHelp.setPreferredSize(getSmallIconButtonSize());
         } else {
           jButtonHelp =
-              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png")));
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png"))); //$NON-NLS-1$
           jButtonHelp.setPreferredSize(getBigIconButtonSize());
         }
         jButtonHelp.addActionListener(
@@ -301,9 +301,9 @@ public class JMVUtils {
               try {
                 JMVUtils.openInDefaultBrowser(
                     jButtonHelp,
-                    new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic));
+                    new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic)); //$NON-NLS-1$
               } catch (MalformedURLException e1) {
-                LOGGER.error("Cannot open online help", e1);
+                LOGGER.error("Cannot open online help", e1); //$NON-NLS-1$
               }
             });
 

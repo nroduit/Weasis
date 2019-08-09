@@ -55,7 +55,7 @@ import org.weasis.core.api.util.StringUtil;
  * complete preferences tree in a single stream.
  */
 public class StreamBackingStoreImpl implements BackingStore {
-    private static final String PREFS_TAG = "preferences";
+    private static final String PREFS_TAG = "preferences"; //$NON-NLS-1$
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamBackingStoreImpl.class);
 
@@ -146,8 +146,8 @@ public class StreamBackingStoreImpl implements BackingStore {
             return null;
         }
         if (StringUtil.hasText(prefUrl)) {
-            String baseUrl = prefUrl.endsWith("/") ? prefUrl : prefUrl + "/";
-            return String.format("%spreferences?user=%s&profile=%s&module=%s", baseUrl,
+            String baseUrl = prefUrl.endsWith("/") ? prefUrl : prefUrl + "/"; //$NON-NLS-1$ //$NON-NLS-2$
+            return String.format("%spreferences?user=%s&profile=%s&module=%s", baseUrl, //$NON-NLS-1$
                 BundleTools.getEncodedValue(AppProperties.WEASIS_USER),
                 BundleTools.getEncodedValue(AppProperties.WEASIS_PROFILE),
                 BundleTools.getEncodedValue(bundle.getSymbolicName()));
@@ -190,7 +190,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (update.getProperties().size() < prefs.getProperties().size() || uchildren.size() < children.size()) {
             // Force the changeset to store remote prefs
             prefs.getChangeSet()
-                .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> ""));
+                .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> "")); //$NON-NLS-1$
         }
 
         for (PreferencesImpl child : uchildren) {
@@ -236,7 +236,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     private static Map<String, String> getHttpTags(boolean post) {
         HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
-        map.put(post ? "Content-Type" : "Accept", "application/xml");
+        map.put(post ? "Content-Type" : "Accept", "application/xml"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         return map;
     }
 

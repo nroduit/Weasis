@@ -147,18 +147,18 @@ public class WeasisLauncher {
     public static final String P_WEASIS_PREFS_URL = "weasis.pref.url"; //$NON-NLS-1$
     public static final String P_WEASIS_CONFIG_URL = "weasis.config.url"; //$NON-NLS-1$
     public static final String P_WEASIS_USER = "weasis.user"; //$NON-NLS-1$
-    public static final String P_WEASIS_SHOW_DISCLAIMER = "weasis.show.disclaimer";
-    public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer";
-    public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release";
-    public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release";
+    public static final String P_WEASIS_SHOW_DISCLAIMER = "weasis.show.disclaimer"; //$NON-NLS-1$
+    public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer"; //$NON-NLS-1$
+    public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release"; //$NON-NLS-1$
+    public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release"; //$NON-NLS-1$
     public static final String P_OS_NAME = "os.name"; //$NON-NLS-1$
     public static final String P_WEASIS_LOOK = "weasis.look"; //$NON-NLS-1$
     public static final String P_GOSH_ARGS = "gosh.args"; //$NON-NLS-1$
     public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache"; //$NON-NLS-1$
-    public static final String P_HTTP_AUTHORIZATION = "http.authorization";
-    public static final String P_NATIVE_LIB_SPEC = "native.library.spec";
+    public static final String P_HTTP_AUTHORIZATION = "http.authorization"; //$NON-NLS-1$
+    public static final String P_NATIVE_LIB_SPEC = "native.library.spec"; //$NON-NLS-1$
     public static final String F_RESOURCES = "resources"; //$NON-NLS-1$
-    static final String MAC_OS_X = "Mac OS X";
+    static final String MAC_OS_X = "Mac OS X"; //$NON-NLS-1$
 
     protected Felix mFelix = null;
     protected ServiceTracker mTracker = null;
@@ -201,7 +201,7 @@ public class WeasisLauncher {
         // cleanly shutdown when the VM exits
         if (Type.JWS == type) {
             handleWebstartHookBug();
-            System.setProperty("http.bundle.cache", "false");
+            System.setProperty("http.bundle.cache", Boolean.FALSE.toString()); //$NON-NLS-1$
         }
 
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -365,13 +365,13 @@ public class WeasisLauncher {
             new File(System.getProperty(P_WEASIS_PATH, ""), System.getProperty(P_WEASIS_SOURCE_ID) + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
         Properties localSourceProp = new Properties();
         FileUtil.readProperties(sourceIdProps, localSourceProp);
-        localSourceProp.setProperty(P_WEASIS_CLEAN_CACHE, "true"); //$NON-NLS-1$
+        localSourceProp.setProperty(P_WEASIS_CLEAN_CACHE, Boolean.TRUE.toString());
         FileUtil.storeProperties(sourceIdProps, localSourceProp, null);
     }
 
     private void showMessage(final WeasisMainFrame mainFrame, Map<String, String> serverProp) {
         String versionOld = serverProp.get("prev." + P_WEASIS_VERSION); //$NON-NLS-1$
-        String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0");
+        String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
         // First time launch
         if (versionOld == null) {
             String val = serverProp.get("prev." + P_WEASIS_SHOW_DISCLAIMER); //$NON-NLS-1$
@@ -659,11 +659,11 @@ public class WeasisLauncher {
 
     public WeasisLoader loadProperties(Map<String, String> serverProp, StringBuilder conf) {
         String dir = configData.getProperty(P_WEASIS_PATH);
-        String profileName = configData.getProperty(P_WEASIS_PROFILE, "default");
+        String profileName = configData.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
         String user = configData.getProperty(P_WEASIS_USER);
 
         // If proxy configuration, activate it
-        configData.applyProxy(dir + File.separator + "data" + File.separator + "weasis-core-ui");
+        configData.applyProxy(dir + File.separator + "data" + File.separator + "weasis-core-ui"); //$NON-NLS-1$ //$NON-NLS-2$
 
         StringBuilder bufDir = new StringBuilder(dir);
         bufDir.append(File.separator);
@@ -680,19 +680,19 @@ public class WeasisLauncher {
             LOGGER.log(Level.SEVERE, "Cannot create preferences folders", e); //$NON-NLS-1$
         }
         localPrefsDir = prefDir.getPath();
-        serverProp.put("weasis.pref.dir", prefDir.getPath());
+        serverProp.put("weasis.pref.dir", prefDir.getPath()); //$NON-NLS-1$
 
         Properties currentProps = new Properties();
         FileUtil.readProperties(new File(prefDir, APP_PROPERTY_FILE), currentProps);
         currentProps.stringPropertyNames()
-            .forEach(key -> serverProp.put("wp.init." + key, currentProps.getProperty(key)));
+            .forEach(key -> serverProp.put("wp.init." + key, currentProps.getProperty(key))); //$NON-NLS-1$
 
         String remotePrefURL = configData.getProperty(WeasisLauncher.P_WEASIS_PREFS_URL);
         if (Utils.hasText(remotePrefURL)) {
-            String storeLocalSession = "weasis.pref.store.local.session";
+            String storeLocalSession = "weasis.pref.store.local.session"; //$NON-NLS-1$
             String defaultVal = configData.getProperty(storeLocalSession, null);
             if (defaultVal == null) {
-                defaultVal = serverProp.getOrDefault(storeLocalSession, "false");
+                defaultVal = serverProp.getOrDefault(storeLocalSession, Boolean.FALSE.toString());
             }
             serverProp.put(storeLocalSession, defaultVal);
             try {
@@ -701,10 +701,10 @@ public class WeasisLauncher {
                 currentProps.putAll(remote); // merger remote to local
                 if (remote.size() < currentProps.size()) { 
                     // Force to have difference for saving preferences
-                    serverProp.put("wp.init.diff.remote.pref", "true");
+                    serverProp.put("wp.init.diff.remote.pref", Boolean.TRUE.toString()); //$NON-NLS-1$
                 }
             } catch (Exception e) {
-                String msg = String.format("Cannot read Launcher preference for user: %s", user);
+                String msg = String.format("Cannot read Launcher preference for user: %s", user); //$NON-NLS-1$
                 LOGGER.log(Level.SEVERE, e, () -> msg);
             }
         }
@@ -720,7 +720,7 @@ public class WeasisLauncher {
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", serverProp, currentProps, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
-        String logActivatation = getGeneralProperty("org.apache.sling.commons.log.file.activate", "false", serverProp, //$NON-NLS-1$ //$NON-NLS-2$
+        String logActivatation = getGeneralProperty("org.apache.sling.commons.log.file.activate", Boolean.FALSE.toString(), serverProp, //$NON-NLS-1$
             currentProps, true, true);
         if (Utils.getEmptytoFalse(logActivatation)) {
             String logFile = dir + File.separator + "log" + File.separator + "default.log"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -857,7 +857,7 @@ public class WeasisLauncher {
         if (Utils.hasText(versionOld)) {
             serverProp.put("prev." + P_WEASIS_VERSION, versionOld); //$NON-NLS-1$
         }
-        final String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0");
+        final String versionNew = serverProp.getOrDefault(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
         String cleanCacheAfterCrash = localSourceProp.getProperty(P_WEASIS_CLEAN_CACHE);
 
         boolean update = false;
@@ -866,7 +866,7 @@ public class WeasisLauncher {
         String resPath = serverProp.getOrDefault("weasis.resources.url", //$NON-NLS-1$
             configData.getProperty(P_WEASIS_CODEBASE_URL, "") + defaultResources); //$NON-NLS-1$
         File cacheDir = null;
-        boolean mavenRepo = Utils.hasText(System.getProperty("maven.localRepository", null));
+        boolean mavenRepo = Utils.hasText(System.getProperty("maven.localRepository", null)); //$NON-NLS-1$
         boolean localRes = mavenRepo || new File(cdbl, F_RESOURCES).exists();
         try {
             if (!localRes && resPath.endsWith(".zip") && !resPath.equals(defaultResources)) { //$NON-NLS-1$
@@ -908,18 +908,18 @@ public class WeasisLauncher {
             }
         }
         String showDisclaimer =
-            getGeneralProperty(P_WEASIS_SHOW_DISCLAIMER, "true", serverProp, currentProps, false, false); //$NON-NLS-1$
+            getGeneralProperty(P_WEASIS_SHOW_DISCLAIMER, Boolean.TRUE.toString(), serverProp, currentProps, false, false);
         if (Utils.hasText(showDisclaimer)) {
             serverProp.put("prev." + P_WEASIS_SHOW_DISCLAIMER, showDisclaimer); //$NON-NLS-1$
         }
-        String showRelease = getGeneralProperty(P_WEASIS_SHOW_RELEASE, "true", serverProp, currentProps, false, false); //$NON-NLS-1$
+        String showRelease = getGeneralProperty(P_WEASIS_SHOW_RELEASE, Boolean.TRUE.toString(), serverProp, currentProps, false, false);
         if (Utils.hasText(showRelease)) {
             serverProp.put("prev." + P_WEASIS_SHOW_RELEASE, showRelease); //$NON-NLS-1$
         }
 
         // Clean cache if Weasis has crashed during the previous launch
         boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version")); //$NON-NLS-1$
-        if (cleanCacheAfterCrash != null && "true".equals(cleanCacheAfterCrash)) { //$NON-NLS-1$
+        if (cleanCacheAfterCrash != null && Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
             serverProp.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             localSourceProp.remove(P_WEASIS_CLEAN_CACHE);
             update = true;
@@ -938,7 +938,7 @@ public class WeasisLauncher {
 
         // Transmit weasis.properties
         Set<String> pKeys = currentProps.stringPropertyNames();
-        serverProp.put("wp.list", String.join(",", pKeys));
+        serverProp.put("wp.list", String.join(",", pKeys)); //$NON-NLS-1$ //$NON-NLS-2$
         pKeys.forEach(key -> serverProp.put(key, currentProps.getProperty(key)));
 
         String pevConf = conf.toString();
@@ -974,7 +974,7 @@ public class WeasisLauncher {
         conf.append("\n  OSGI native specs = "); //$NON-NLS-1$
         conf.append(System.getProperty(P_NATIVE_LIB_SPEC)); // $NON-NLS-1$
         conf.append("\n  HTTP user agent = "); //$NON-NLS-1$
-        conf.append(System.getProperty("http.agent")); // $NON-NLS-1$
+        conf.append(System.getProperty("http.agent")); // $NON-NLS-1$ //$NON-NLS-1$
         conf.append("\n  Operating system = "); //$NON-NLS-1$
         conf.append(System.getProperty(P_OS_NAME));
         conf.append(' ');

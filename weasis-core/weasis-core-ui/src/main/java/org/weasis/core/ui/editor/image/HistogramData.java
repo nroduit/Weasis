@@ -21,6 +21,7 @@ import org.weasis.core.api.image.op.ByteLutCollection.Lut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.ui.Messages;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -38,20 +39,20 @@ public class HistogramData {
     private LookupTableCV voiLut;
 
     public enum Model {
-        GRAY("Luminance", buildLut(ByteLutCollection.Lut.GRAY)),
+        GRAY(Messages.getString("HistogramData.lum"), buildLut(ByteLutCollection.Lut.GRAY)), //$NON-NLS-1$
 
-        RGB("RGB", buildLut(ByteLutCollection.Lut.RED), buildLut(ByteLutCollection.Lut.GREEN),
+        RGB(Messages.getString("HistogramData.rgb"), buildLut(ByteLutCollection.Lut.RED), buildLut(ByteLutCollection.Lut.GREEN), //$NON-NLS-1$
                         buildLut(ByteLutCollection.Lut.BLUE)),
-        HSV("HSV", buildLut(ByteLutCollection.Lut.HUE), buildLut("Saturation", ByteLutCollection.Lut.GRAY),
-                        buildLut("Value", ByteLutCollection.Lut.GRAY)),
-        HLS("HLS", buildLut(ByteLutCollection.Lut.HUE), buildLut("Lightness", ByteLutCollection.Lut.GRAY),
-                        buildLut("Saturation", ByteLutCollection.Lut.GRAY));
+        HSV(Messages.getString("HistogramData.hsv"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY), //$NON-NLS-1$ //$NON-NLS-2$
+                        buildLut(Messages.getString("HistogramData.val"), ByteLutCollection.Lut.GRAY)), //$NON-NLS-1$
+        HLS(Messages.getString("HistogramData.hls"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.lightness"), ByteLutCollection.Lut.GRAY), //$NON-NLS-1$ //$NON-NLS-2$
+                        buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY)); //$NON-NLS-1$
 
         private final ByteLut[] byteLut;
         private final String title;
 
         private Model(String name, ByteLut... luts) {
-            this.title = name + " (" + Arrays.stream(luts).map(ByteLut::getName).collect(Collectors.joining(",")) + ")";
+            this.title = name + " (" + Arrays.stream(luts).map(ByteLut::getName).collect(Collectors.joining(",")) + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             this.byteLut = luts;
         }
 

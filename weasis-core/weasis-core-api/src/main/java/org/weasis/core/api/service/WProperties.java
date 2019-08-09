@@ -139,9 +139,9 @@ public class WProperties extends Properties {
         if (isKeyValid(key)) {
             final String value = this.getProperty(key);
             if (value != null) {
-                if ("true".equalsIgnoreCase(value)) { //$NON-NLS-1$
+                if (Boolean.TRUE.toString().equalsIgnoreCase(value)) {
                     result = true;
-                } else if ("false".equalsIgnoreCase(value)) { //$NON-NLS-1$
+                } else if (Boolean.FALSE.toString().equalsIgnoreCase(value)) {
                     result = false;
                 }
             }
@@ -204,7 +204,7 @@ public class WProperties extends Properties {
     public void putByteArrayProperty(String key, byte[] value) {
         if (isKeyValid(key)) {
             try {
-                String val = "";
+                String val = StringUtil.EMPTY_STRING;
                 if(value != null && value.length > 0) {
                     val = new String(Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)));
                 }

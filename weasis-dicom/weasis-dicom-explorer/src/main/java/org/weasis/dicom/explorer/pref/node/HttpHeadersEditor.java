@@ -43,7 +43,7 @@ public class HttpHeadersEditor extends JDialog {
     private DicomWebNode node;
 
     public HttpHeadersEditor(Window parent, DicomWebNode node) {
-        super(parent, Messages.getString("DicomWebNodeDialog.httpHeaders"), ModalityType.APPLICATION_MODAL);
+        super(parent, Messages.getString("DicomWebNodeDialog.httpHeaders"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
         this.node = node;
         jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jbInit();
@@ -68,20 +68,20 @@ public class HttpHeadersEditor extends JDialog {
             BorderFactory.createEmptyBorder(5, 5, 5, 5));
         panel1.setLayout(borderLayout1);
 
-        jButtonClose.setText("Close");
+        jButtonClose.setText(Messages.getString("HttpHeadersEditor.close")); //$NON-NLS-1$
         jButtonClose.addActionListener(e -> cancel());
         jPanelComponentBar.setLayout(gridBagLayout3);
         jList1.setBorder(border2);
         jList1.setSelectionModel(selctedModel);
         jPanelComponentAction.setLayout(gridBagLayout2);
         jButtonDelete.addActionListener(e -> deleteSelectedComponents());
-        jButtonDelete.setText("Delete");
+        jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete")); //$NON-NLS-1$
 
-        jButtonEdit.setText("Edit");
+        jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit")); //$NON-NLS-1$
         jButtonEdit.addActionListener(e -> editHeader());
 
         jButtonAdd.addActionListener(e -> add());
-        jButtonAdd.setText("Add");
+        jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add")); //$NON-NLS-1$
 
         jScrollPane1.setBorder(border1);
         jScrollPane1.setPreferredSize(new Dimension(300, 150));
@@ -119,7 +119,7 @@ public class HttpHeadersEditor extends JDialog {
         if (node.getHeaders().isEmpty()) {
             jList1.setListData(new String[0]);
         } else {
-            jList1.setListData(node.getHeaders().entrySet().stream().map(m -> m.getKey() + ": " + m.getValue())
+            jList1.setListData(node.getHeaders().entrySet().stream().map(m -> m.getKey() + StringUtil.COLON_AND_SPACE + m.getValue()) 
                 .toArray(String[]::new));
         }
     }
@@ -131,7 +131,7 @@ public class HttpHeadersEditor extends JDialog {
 
         List<String> selItems = jList1.getSelectedValuesList();
         for (String val : selItems) {
-            String[] kv = val.split(":", 2);
+            String[] kv = val.split(":", 2); //$NON-NLS-1$
             if (kv.length == 2) {
                 node.removeHeader(kv[0]);
             }
@@ -149,14 +149,14 @@ public class HttpHeadersEditor extends JDialog {
         if (selItems.size() == 1) {
             modifiy(selItems.get(0));
         } else {
-            JOptionPane.showMessageDialog(this, "Only one header must be selected!", this.getTitle(),
+            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_onlyone"), this.getTitle(), //$NON-NLS-1$
                 JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private boolean isNoComponentSelected() {
         if (selctedModel.isSelectionEmpty()) {
-            JOptionPane.showMessageDialog(this, "No header is selected!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_noheader"), this.getTitle(), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
             return true;
         }
         return false;
@@ -168,10 +168,10 @@ public class HttpHeadersEditor extends JDialog {
 
     private void modifiy(String input) {
         String property =
-            (String) JOptionPane.showInputDialog(this, "Header entry => {key}: {value}",
+            (String) JOptionPane.showInputDialog(this, Messages.getString("HttpHeadersEditor.msg_keyValue"), //$NON-NLS-1$
                 this.getTitle(), JOptionPane.PLAIN_MESSAGE, null, null, input);
         if (StringUtil.hasLength(property)) {
-            String[] kv = property.split(":", 2);
+            String[] kv = property.split(":", 2); //$NON-NLS-1$
             if (kv.length == 2) {
                 node.addHeader(kv[0].trim(), kv[1].trim());
             }

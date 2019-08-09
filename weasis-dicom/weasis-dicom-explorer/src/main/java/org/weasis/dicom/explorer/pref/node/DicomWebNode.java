@@ -107,8 +107,8 @@ public class DicomWebNode extends AbstractDicomNode {
         writer.writeAttribute(T_URL, url.toString());
         writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmptyStringIfNullEnum(webType));
         String val = headers.entrySet().stream()
-                        .map(map -> map.getKey() + ":" + map.getValue())
-                        .collect(Collectors.joining("\n"));
+                        .map(map -> map.getKey() + ":" + map.getValue()) //$NON-NLS-1$
+                        .collect(Collectors.joining("\n")); //$NON-NLS-1$
         writer.writeAttribute(T_HEADER,  Base64.getEncoder().encodeToString(val.getBytes()));
     }
 
@@ -126,9 +126,9 @@ public class DicomWebNode extends AbstractDicomNode {
         String val = xmler.getAttributeValue(null, T_HEADER);
         if(StringUtil.hasText(val)) {
             String result = new String(Base64.getDecoder().decode(val));
-            String[] entry = result.split("[\\n]+");
+            String[] entry = result.split("[\\n]+"); //$NON-NLS-1$
             for (String s : entry) {
-                String[] kv = s.split(":", 2);
+                String[] kv = s.split(":", 2); //$NON-NLS-1$
                 if(kv.length == 2) {
                     node.addHeader(kv[0].trim(), kv[1].trim());
                 }

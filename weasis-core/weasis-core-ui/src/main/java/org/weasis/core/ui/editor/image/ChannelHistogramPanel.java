@@ -10,13 +10,13 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.ui.Messages;
 
 /**
  * @author Nicolas Roduit
@@ -27,16 +27,14 @@ public class ChannelHistogramPanel extends JPanel {
 
     private final BorderLayout borderLayout1 = new BorderLayout();
     private final HistogramPanel jPanelHistogram;
-    private final JPanel jPanelSouth = new JPanel();
-    private final JLabel jLabelResultVal = new JLabel();
     private final JButton jButtonHistoMinus;
     private final JButton jButtonHistoPlus;
 
     private final JCheckBox jCheckAccumulate;
     private final JCheckBox jCheckLogarithmic;
     private final JCheckBox jCheckShowIntensity;
-    private final JButton jButtonReset = new JButton("Reset");
-    private final JButton jButtonSave = new JButton("Save");
+    private final JButton jButtonReset = new JButton(Messages.getString("ChannelHistogramPanel.reset")); //$NON-NLS-1$
+  //  private final JButton jButtonSave = new JButton(Messages.getString("ChannelHistogramPanel.save")); //$NON-NLS-1$
     private final JPanel panel = new JPanel();
 
     public ChannelHistogramPanel(String name) {
@@ -44,12 +42,12 @@ public class ChannelHistogramPanel extends JPanel {
     }
 
     public ChannelHistogramPanel(String name, boolean accumulate, boolean logarithmic, boolean showIntensity) {
-        this.jCheckAccumulate = new JCheckBox("Accumulate", accumulate);
-        this.jCheckLogarithmic = new JCheckBox("Logarithmic", logarithmic);
-        this.jCheckShowIntensity = new JCheckBox("Show intensity color", showIntensity);
+        this.jCheckAccumulate = new JCheckBox(Messages.getString("ChannelHistogramPanel.accu"), accumulate); //$NON-NLS-1$
+        this.jCheckLogarithmic = new JCheckBox(Messages.getString("ChannelHistogramPanel.log"), logarithmic); //$NON-NLS-1$
+        this.jCheckShowIntensity = new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity); //$NON-NLS-1$
         this.jPanelHistogram = new HistogramPanel();
-        this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png")));
-        this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png")));
+        this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png"))); //$NON-NLS-1$
+        this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png"))); //$NON-NLS-1$
         init(name);
     }
 
@@ -59,16 +57,14 @@ public class ChannelHistogramPanel extends JPanel {
                 TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
         this.setLayout(borderLayout1);
         this.add(jPanelHistogram, BorderLayout.CENTER);
-        this.add(jPanelSouth, BorderLayout.SOUTH);
-        jPanelSouth.setLayout(new BorderLayout(0, 0));
-        jPanelSouth.add(panel, BorderLayout.NORTH);
+        this.add(panel, BorderLayout.SOUTH);
         panel.setLayout(new FlowLayout(FlowLayout.LEADING, 5, 5));
         panel.add(jButtonHistoMinus);
 
-        jButtonHistoMinus.setToolTipText("Shrink histogram vertically");
+        jButtonHistoMinus.setToolTipText(Messages.getString("ChannelHistogramPanel.shrink")); //$NON-NLS-1$
         jButtonHistoMinus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
         panel.add(jButtonHistoPlus);
-        jButtonHistoPlus.setToolTipText("Stretch histogram vertically");
+        jButtonHistoPlus.setToolTipText(Messages.getString("ChannelHistogramPanel.strech")); //$NON-NLS-1$
         jButtonHistoPlus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
 
         panel.add(Box.createHorizontalStrut(15));
@@ -84,7 +80,6 @@ public class ChannelHistogramPanel extends JPanel {
         jButtonReset.addActionListener(e -> reset());
         // panel.add(jButtonSave);
         // jButtonSave.addActionListener(e -> save());
-        jPanelSouth.add(jLabelResultVal, BorderLayout.CENTER);
     }
 
     public boolean isAccumulate() {
@@ -122,16 +117,6 @@ public class ChannelHistogramPanel extends JPanel {
     public void setHistogramBins(HistogramData data) {
         jPanelHistogram.setHistogram(data, jCheckAccumulate.isSelected(), jCheckLogarithmic.isSelected(),
             jCheckShowIntensity.isSelected());
-    }
-
-    public void setDisplayMinMaxLabel(int min, int max) {
-        String val = "Val:";
-        if (jCheckLogarithmic.isSelected()) {
-            val += max + "-" + min;
-        } else {
-            val += min + "-" + max;
-        }
-        jLabelResultVal.setText(val);
     }
 
     public void setWindLevelParameters(WindLevelParameters p) {

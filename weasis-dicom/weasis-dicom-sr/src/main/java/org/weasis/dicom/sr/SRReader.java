@@ -184,7 +184,7 @@ public class SRReader {
                     Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
                     if (item != null) {
                         Code unit = new Code(item);
-                        if (!"1".equals(unit.getCodeValue())) {
+                        if (!"1".equals(unit.getCodeValue())) { //$NON-NLS-1$
                             html.append(" "); //$NON-NLS-1$
                             addCodeMeaning(html, unit, null, null);
                         }
@@ -254,7 +254,7 @@ public class SRReader {
                                     imgRef.addGraphic(graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                LOGGER.error("Cannot build graphic from SR", e);
+                                LOGGER.error("Cannot build graphic from SR", e); //$NON-NLS-1$
                             }
 
                             html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$

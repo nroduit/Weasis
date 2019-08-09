@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 
 public class RemotePrefService {
 
-    private static final String TEXT_X_JAVA_PROP = "text/x-java-properties";
+    private static final String TEXT_X_JAVA_PROP = "text/x-java-properties"; //$NON-NLS-1$
 
     private static final Logger LOGGER = Logger.getLogger(RemotePrefService.class.getName());
 
@@ -38,10 +38,10 @@ public class RemotePrefService {
     private final boolean storeLocalSession;
 
     public RemotePrefService(String url, Map<String, String> serverProp, String user, String profile) {
-        this.remotePrefURL = Objects.requireNonNull(url).endsWith("/") ? url : url + "/";
+        this.remotePrefURL = Objects.requireNonNull(url).endsWith("/") ? url : url + "/"; //$NON-NLS-1$ //$NON-NLS-2$
         this.user = Objects.requireNonNull(user);
-        this.localSessionUser = Utils.getEmptytoFalse(serverProp.get("weasis.pref.local.session"));
-        this.storeLocalSession = Utils.getEmptytoFalse(serverProp.get("weasis.pref.store.local.session"));
+        this.localSessionUser = Utils.getEmptytoFalse(serverProp.get("weasis.pref.local.session")); //$NON-NLS-1$
+        this.storeLocalSession = Utils.getEmptytoFalse(serverProp.get("weasis.pref.store.local.session")); //$NON-NLS-1$
         this.profile = Objects.requireNonNull(profile);
     }
 
@@ -58,11 +58,11 @@ public class RemotePrefService {
     }
 
     private String getEncodedValue(String val) throws UnsupportedEncodingException {
-        return URLEncoder.encode(val, "UTF-8");
+        return URLEncoder.encode(val, "UTF-8"); //$NON-NLS-1$
     }
 
     private String getRemoteLauncherUrl() throws UnsupportedEncodingException {
-        return String.format("%spreferences?user=%s&profile=%s", remotePrefURL, getEncodedValue(user),
+        return String.format("%spreferences?user=%s&profile=%s", remotePrefURL, getEncodedValue(user), //$NON-NLS-1$
             getEncodedValue(profile));
     }
 
@@ -77,7 +77,7 @@ public class RemotePrefService {
     private void readRemoteProperties(Properties props) throws IOException {
         String remoteURL = getRemoteLauncherUrl();
         URLConnection prefSv = FileUtil.getAdaptedConnection(new URL(remoteURL), false);
-        prefSv.setRequestProperty("Accept", TEXT_X_JAVA_PROP);
+        prefSv.setRequestProperty("Accept", TEXT_X_JAVA_PROP); //$NON-NLS-1$
         prefSv.setConnectTimeout(7000);
         prefSv.setReadTimeout(10000);
         // Do not write if not content (HTTP_NO_CONTENT)

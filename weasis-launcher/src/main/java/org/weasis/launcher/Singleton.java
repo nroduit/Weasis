@@ -29,20 +29,20 @@ public class Singleton {
 
     private static final Logger LOGGER = Logger.getLogger(Singleton.class.getName());
 
-    private static final String LOCALHOST = "127.0.0.1";
+    private static final String LOCALHOST = "127.0.0.1"; //$NON-NLS-1$
     private static final File SI_FILEDIR =
-        new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton");
-    private static final String SI_MAGICWORD = "si.init";
-    private static final String SI_ARG = "si.arg";
-    private static final String SI_PROP = "si.prop";
-    private static final String SI_ACK = "si.ack";
-    private static final String SI_EXIT = "si.exit";
-    private static final String SI_STOP = "si.stop";
-    private static final String SI_EOF = "si.EOF";
+        new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    private static final String SI_MAGICWORD = "si.init"; //$NON-NLS-1$
+    private static final String SI_ARG = "si.arg"; //$NON-NLS-1$
+    private static final String SI_PROP = "si.prop"; //$NON-NLS-1$
+    private static final String SI_ACK = "si.ack"; //$NON-NLS-1$
+    private static final String SI_EXIT = "si.exit"; //$NON-NLS-1$
+    private static final String SI_STOP = "si.stop"; //$NON-NLS-1$
+    private static final String SI_EOF = "si.EOF"; //$NON-NLS-1$
     private static final int ENCODING_PLATFORM = 1;
     private static final int ENCODING_UNICODE = 2;
 
-    private static final String ENCODING_UNICODE_NAME = "UTF-16LE";
+    private static final String ENCODING_UNICODE_NAME = "UTF-16LE"; //$NON-NLS-1$
 
     private static int currPort;
     private static String stringId = null;
@@ -148,7 +148,7 @@ public class Singleton {
     }
 
     private static void printProperty(PrintStream out, String key, Properties p) {
-        out.println(String.format("%s=%s", key,p.getProperty(key, "")));
+        out.println(String.format("%s=%s", key,p.getProperty(key, ""))); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     /**
@@ -240,7 +240,7 @@ public class Singleton {
     }
 
     private static File getSiFile(final String id, final int port) {
-        return new File(SI_FILEDIR, id + "_" + port);
+        return new File(SI_FILEDIR, id + "_" + port); //$NON-NLS-1$
     }
 
     private static class SingletonServer {
@@ -250,14 +250,14 @@ public class Singleton {
 
         SingletonServer(SingletonServerRunnable runnable) throws Exception {
             if ("1.8".equals(System.getProperty("java.specification.version"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                thread = new Thread(null, runnable, "SIThread", 0);
+                thread = new Thread(null, runnable, "SIThread", 0); //$NON-NLS-1$
             } else {
                 // TODO call directly the constructor when Java 8 will be dropped
                 // thread = new Thread(null, runnable, "SIThread", 0, false);
                 Class<?> clazz = Class.forName("java.lang.Thread"); //$NON-NLS-1$
                 Constructor<?> constructor =
                     clazz.getConstructor(ThreadGroup.class, Runnable.class, String.class, long.class, boolean.class); // $NON-NLS-1$
-                thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false);
+                thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false); //$NON-NLS-1$
             }
 
             thread.setDaemon(true);
@@ -384,7 +384,7 @@ public class Singleton {
                                         if (arg) {
                                             recvArgs.add(line);
                                         } else {
-                                            String[] vals = line.split("=", 2);
+                                            String[] vals = line.split("=", 2); //$NON-NLS-1$
                                             if (vals.length == 2) {
                                                 props.put(vals[0], vals[1]);
                                             }

@@ -206,14 +206,14 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
                     showErrorMessage(null, null, state);
                 } else {
-                    LOGGER.info("Dicom send: {}", state.getMessage());
+                    LOGGER.info("Dicom send: {}", state.getMessage()); //$NON-NLS-1$
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 DicomWebNode destination = (DicomWebNode) selectedItem;
                 try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), ContentType.DICOM, AppProperties.WEASIS_NAME, destination.getHeaders())) {
                     stowRS.uploadDicom(files, true);
                 } catch (Exception e) {
-                    showErrorMessage("StowRS error: {}", e, null);
+                    showErrorMessage("StowRS error: {}", e, null); //$NON-NLS-1$
                 }
             }
         } finally {

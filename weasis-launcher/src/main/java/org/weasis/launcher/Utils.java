@@ -36,7 +36,7 @@ public class Utils {
     }
 
     private static boolean getBoolean(String val) {
-        return "true".equalsIgnoreCase(val); //$NON-NLS-1$
+        return Boolean.TRUE.toString().equalsIgnoreCase(val);
     }
 
     public static boolean hasLength(CharSequence str) {
@@ -89,7 +89,7 @@ public class Utils {
     }
     
     public static String adaptPathToUri(String value) {
-        return value.replace("\\", "/").replace(" ", "%20");
+        return value.replace("\\", "/").replace(" ", "%20"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     }
 
     public static List<String> splitSpaceExceptInQuotes(String s) {
@@ -137,8 +137,8 @@ public class Utils {
 
     
     public static byte[] decrypt(byte[] input, String strKey) throws GeneralSecurityException {
-        SecretKeySpec skeyspec = new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish");
-        Cipher cipher = Cipher.getInstance("Blowfish");
+        SecretKeySpec skeyspec = new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish"); //$NON-NLS-1$
+        Cipher cipher = Cipher.getInstance("Blowfish"); //$NON-NLS-1$
         cipher.init(Cipher.DECRYPT_MODE, skeyspec);
         return cipher.doFinal(input);
     }

@@ -30,35 +30,36 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.Messages;
 
 public class ProxyPrefView extends AbstractItemDialogPage {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyPrefView.class);
 
-    private static final String PROXY_MANUAL = "proxy.manual";
-    private static final String PROXY_EXCEPTIONS = "proxy.exceptions";
-    private static final String PROXY_HTTP_HOST = "proxy.http.host";
-    private static final String PROXY_HTTP_PORT = "proxy.http.port";
-    private static final String PROXY_HTTPS_HOST = "proxy.https.host";
-    private static final String PROXY_HTTPS_PORT = "proxy.https.port";
-    private static final String PROXY_FTP_HOST = "proxy.ftp.host";
-    private static final String PROXY_FTP_PORT = "proxy.ftp.port";
-    private static final String PROXY_SOCKS_HOST = "proxy.socks.host";
-    private static final String PROXY_SOCKS_PORT = "proxy.socks.port";
+    private static final String PROXY_MANUAL = "proxy.manual"; //$NON-NLS-1$
+    private static final String PROXY_EXCEPTIONS = "proxy.exceptions"; //$NON-NLS-1$
+    private static final String PROXY_HTTP_HOST = "proxy.http.host"; //$NON-NLS-1$
+    private static final String PROXY_HTTP_PORT = "proxy.http.port"; //$NON-NLS-1$
+    private static final String PROXY_HTTPS_HOST = "proxy.https.host"; //$NON-NLS-1$
+    private static final String PROXY_HTTPS_PORT = "proxy.https.port"; //$NON-NLS-1$
+    private static final String PROXY_FTP_HOST = "proxy.ftp.host"; //$NON-NLS-1$
+    private static final String PROXY_FTP_PORT = "proxy.ftp.port"; //$NON-NLS-1$
+    private static final String PROXY_SOCKS_HOST = "proxy.socks.host"; //$NON-NLS-1$
+    private static final String PROXY_SOCKS_PORT = "proxy.socks.port"; //$NON-NLS-1$
 
-    private static final String PROXY_AUTH_REQUIRED = "proxy.auth";
-    private static final String PROXY_AUTH_USER = "proxy.auth.user";
-    private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR
+    private static final String PROXY_AUTH_REQUIRED = "proxy.auth"; //$NON-NLS-1$
+    private static final String PROXY_AUTH_USER = "proxy.auth.user"; //$NON-NLS-1$
+    private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR //$NON-NLS-1$
 
     private final JRadioButton directConnectionRadio =
-        new JRadioButton("Direct connection (no proxy) or configuration at launch");
-    private final JRadioButton proxyConnectionRadio = new JRadioButton("Manual proxy configuration");
+        new JRadioButton(Messages.getString("ProxyPrefView.direct")); //$NON-NLS-1$
+    private final JRadioButton proxyConnectionRadio = new JRadioButton(Messages.getString("ProxyPrefView.manual")); //$NON-NLS-1$
     private final ButtonGroup buttonGroup = new ButtonGroup();
 
-    private final JLabel lblType = new JLabel("Type");
-    private final JLabel lblAddress = new JLabel("Address of proxy server");
-    private final JLabel lblPort = new JLabel("Port");
+    private final JLabel lblType = new JLabel(Messages.getString("ProxyPrefView.type")); //$NON-NLS-1$
+    private final JLabel lblAddress = new JLabel(Messages.getString("ProxyPrefView.host")); //$NON-NLS-1$
+    private final JLabel lblPort = new JLabel(Messages.getString("ProxyPrefView.port")); //$NON-NLS-1$
 
-    private final JCheckBox proxyAuthCheckBox = new JCheckBox("Proxy server requires authentication");
+    private final JCheckBox proxyAuthCheckBox = new JCheckBox(Messages.getString("ProxyPrefView.authentication")); //$NON-NLS-1$
 
     private final JTextField proxyHostHttp = new JTextField(20);
     private final JFormattedTextField proxyPortHttp = new JFormattedTextField();
@@ -70,21 +71,21 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     private final JFormattedTextField proxyPortSocks = new JFormattedTextField();
     private final JTextField proxyExceptions = new JTextField(27);
 
-    private final JLabel proxyLabelHttp = new JLabel("HTTP" + StringUtil.COLON);
-    private final JLabel proxyLabelSecure = new JLabel("Secure" + StringUtil.COLON);
-    private final JLabel proxyLabelFtp = new JLabel("FTP" + StringUtil.COLON);
-    private final JLabel proxyLabelSocks = new JLabel("SOCKS" + StringUtil.COLON);
-    private final JLabel proxyLabelExceptions = new JLabel("Exceptions" + StringUtil.COLON);
+    private final JLabel proxyLabelHttp = new JLabel("HTTP" + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel proxyLabelSecure = new JLabel(Messages.getString("ProxyPrefView.secure") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel proxyLabelFtp = new JLabel("FTP" + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel proxyLabelSocks = new JLabel("SOCKS" + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel proxyLabelExceptions = new JLabel(Messages.getString("ProxyPrefView.exceptions") + StringUtil.COLON); //$NON-NLS-1$
 
-    private final JLabel userLabel = new JLabel("Username" + StringUtil.COLON);
-    private final JLabel passLabel = new JLabel("Password" + StringUtil.COLON);
+    private final JLabel userLabel = new JLabel(Messages.getString("ProxyPrefView.user") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel passLabel = new JLabel(Messages.getString("ProxyPrefView.pwd") + StringUtil.COLON); //$NON-NLS-1$
     private final JTextField proxyUser = new JTextField(15);
     private final JPasswordField proxyPass = new JPasswordField(15);
 
     private final JPanel dataPanel = new JPanel();
 
     public ProxyPrefView() {
-        super("Proxy Server");
+        super(Messages.getString("ProxyPrefView.proxy")); //$NON-NLS-1$
         initialize();
     }
 
@@ -109,7 +110,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
         add(bottomPanel, BorderLayout.SOUTH);
 
         JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        bottomPanel.add(JMVUtils.createHelpButton("proxy", true));
+        bottomPanel.add(JMVUtils.createHelpButton("proxy", true)); //$NON-NLS-1$
         bottomPanel.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
 
@@ -142,7 +143,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
         proxyPortSocks.setValue(p.getIntProperty(PROXY_SOCKS_PORT, 1080));
 
         String user = p.getProperty(PROXY_AUTH_USER);
-        String pass = "";
+        String pass = ""; //$NON-NLS-1$
         try {
             byte[] pwd = p.getByteArrayProperty(PROXY_AUTH_PWD, null);
             if (pwd != null) {
@@ -152,7 +153,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Cannot store the proxy password", e);
+            LOGGER.error("Cannot store the proxy password", e); //$NON-NLS-1$
         }
 
         proxyUser.setText(user);
@@ -312,47 +313,47 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
         String val = proxyHostHttp.getText();
         p.setProperty(PROXY_HTTP_HOST, val);
-        applyProxyProperty("http.proxyHost", val, mproxy);
+        applyProxyProperty("http.proxyHost", val, mproxy); //$NON-NLS-1$
         Number port = JMVUtils.getFormattedValue(proxyPortHttp);
         if (port != null) {
             p.putIntProperty(PROXY_HTTP_PORT, port.intValue());
-            applyProxyPortProperty("http.proxyPort", port.intValue(), val, mproxy);
+            applyProxyPortProperty("http.proxyPort", port.intValue(), val, mproxy); //$NON-NLS-1$
         }
         if (mproxy && StringUtil.hasText(val)) {
-            applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+            applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
         }
         
         val = proxyHostSecure.getText();
         p.setProperty(PROXY_HTTPS_HOST, val);
         port = JMVUtils.getFormattedValue(proxyPortSecure);
-        applyProxyProperty("https.proxyHost", val, mproxy);
+        applyProxyProperty("https.proxyHost", val, mproxy); //$NON-NLS-1$
         if (port != null) {
             p.putIntProperty(PROXY_HTTPS_PORT, port.intValue());
-            applyProxyPortProperty("https.proxyPort", port.intValue(), val, mproxy);
+            applyProxyPortProperty("https.proxyPort", port.intValue(), val, mproxy); //$NON-NLS-1$
         }
         if (mproxy && StringUtil.hasText(val)) {
-            applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
+            applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
         }
         
         val = proxyHostFtp.getText();
         p.setProperty(PROXY_FTP_HOST, val);
-        applyProxyProperty("ftp.proxyHost", val, mproxy);
+        applyProxyProperty("ftp.proxyHost", val, mproxy); //$NON-NLS-1$
         port = JMVUtils.getFormattedValue(proxyPortFtp);
         if (port != null) {
             p.putIntProperty(PROXY_FTP_PORT, port.intValue());
-            applyProxyPortProperty("ftp.proxyPort", port.intValue(), val, mproxy);
+            applyProxyPortProperty("ftp.proxyPort", port.intValue(), val, mproxy); //$NON-NLS-1$
         }
         if (mproxy && StringUtil.hasText(val)) {
-            applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy);
+            applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
         }
         
         val = proxyHostSocks.getText();
         p.setProperty(PROXY_SOCKS_HOST, val);
-        applyProxyProperty("socksProxyHost", val, mproxy);
+        applyProxyProperty("socksProxyHost", val, mproxy); //$NON-NLS-1$
         port = JMVUtils.getFormattedValue(proxyPortSocks);
         if (port != null) {
             p.putIntProperty(PROXY_SOCKS_PORT, port.intValue());
-            applyProxyPortProperty("socksProxyPort", port.intValue(), val, mproxy);
+            applyProxyPortProperty("socksProxyPort", port.intValue(), val, mproxy); //$NON-NLS-1$
         }
 
         boolean auth = proxyAuthCheckBox.isSelected();
@@ -365,8 +366,8 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                 if (auth) {
                     String authPassword = new String(pwd);
                     applyPasswordAuthentication(val, authPassword);
-                    applyProxyProperty("http.proxyUser", val, mproxy);
-                    applyProxyProperty("http.proxyPassword", authPassword, mproxy);
+                    applyProxyProperty("http.proxyUser", val, mproxy); //$NON-NLS-1$
+                    applyProxyProperty("http.proxyPassword", authPassword, mproxy); //$NON-NLS-1$
                 }
                 byte[] b = new byte[pwd.length];
                 for (int i = 0; i < b.length; i++) {
@@ -377,7 +378,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                 p.putByteArrayProperty(PROXY_AUTH_PWD, null);
             }
         } catch (Exception ex) {
-            LOGGER.error("Cannot store the proxy user", ex);
+            LOGGER.error("Cannot store the proxy user", ex); //$NON-NLS-1$
         }
 
     }

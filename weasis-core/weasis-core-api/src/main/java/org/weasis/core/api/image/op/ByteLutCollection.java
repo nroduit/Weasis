@@ -35,7 +35,7 @@ public class ByteLutCollection {
 
     public enum Lut {
 
-        IMAGE(Messages.getString("ByteLut.def"), () -> null), FLAG("Flag", () -> { //$NON-NLS-1$
+        IMAGE(Messages.getString("ByteLut.def"), () -> null), FLAG(Messages.getString("ByteLutCollection.flag"), () -> { //$NON-NLS-1$ //$NON-NLS-2$
             byte[][] flag = new byte[3][256];
 
             int[] r = { 255, 255, 0, 0 };
@@ -47,7 +47,7 @@ public class ByteLutCollection {
                 flag[2][i] = (byte) r[i % 4];
             }
             return flag;
-        }), MULTICOLOR("Multi-Color", () -> {
+        }), MULTICOLOR(Messages.getString("ByteLutCollection.mcolor"), () -> { //$NON-NLS-1$
             byte[][] multiColor = new byte[3][256];
             int[] r = { 255, 0, 255, 0, 255, 128, 64, 255, 0, 128, 236, 189, 250, 154, 221, 255, 128, 255, 0, 128, 228,
                 131, 189, 0, 36, 66, 40, 132, 156, 135, 98, 194, 217, 251, 255, 0 };
@@ -62,7 +62,7 @@ public class ByteLutCollection {
                 multiColor[2][i] = (byte) r[p];
             }
             return multiColor;
-        }), HUE("Hue", () -> {
+        }), HUE(Messages.getString("ByteLutCollection.hue"), () -> { //$NON-NLS-1$
             byte[][] ihs = new byte[3][256];
             Color c;
             for (int i = 0; i < 256; i++) {
@@ -72,7 +72,7 @@ public class ByteLutCollection {
                 ihs[2][i] = (byte) c.getRed();
             }
             return ihs;
-        }), RED("Red", () -> {
+        }), RED(Messages.getString("ByteLutCollection.red"), () -> { //$NON-NLS-1$
             byte[][] red = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 red[0][i] = 0;
@@ -80,7 +80,7 @@ public class ByteLutCollection {
                 red[2][i] = (byte) i;
             }
             return red;
-        }), GREEN("Green", () -> {
+        }), GREEN(Messages.getString("ByteLutCollection.green"), () -> { //$NON-NLS-1$
             byte[][] green = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 green[0][i] = 0;
@@ -89,7 +89,7 @@ public class ByteLutCollection {
             }
 
             return green;
-        }), BLUE("Blue", () -> {
+        }), BLUE(Messages.getString("ByteLutCollection.blue"), () -> { //$NON-NLS-1$
             byte[][] blue = new byte[3][256];
             for (int i = 0; i < 256; i++) {
                 blue[0][i] = (byte) i;
@@ -147,11 +147,11 @@ public class ByteLutCollection {
             File[] files = lutFolder.listFiles();
             for (int i = 0; i < files.length; i++) {
                 if (files[i].isFile() && files[i].canRead()) {
-                    try (Scanner scan = new Scanner(files[i], "UTF-8")) {
+                    try (Scanner scan = new Scanner(files[i], "UTF-8")) { //$NON-NLS-1$
                         byte[][] lut = readLutFile(scan); // $NON-NLS-1$
                         luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut));
                     } catch (Exception e) {
-                        LOGGER.error("Reading LUT file {}", files[i], e);
+                        LOGGER.error("Reading LUT file {}", files[i], e); //$NON-NLS-1$
                     }
                 }
             }

@@ -51,7 +51,7 @@ public class WindLevelParameters {
             invLUT = (Boolean) params.get(PseudoColorOp.P_LUT_INVERSE);
             fillLutOut = (Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT);
             wlOnColor = (Boolean) params.get(WindowOp.P_APPLY_WL_COLOR);
-            prTags = (TagReadable) params.get("pr.element");
+            prTags = (TagReadable) params.get("pr.element"); //$NON-NLS-1$
             if (prTags != null) {
                 prLutData = (LookupTableCV) prTags.getTagValue(TagW.PRLUTsData);
             }

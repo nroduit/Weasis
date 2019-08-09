@@ -300,8 +300,8 @@ public class DownloadManager {
                     new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()), //$NON-NLS-1$
                     new StreamSource(DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm()) }); //$NON-NLS-1$
                 Validator validator = schema.newValidator();
-                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
-                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, StringUtil.EMPTY_STRING);
+                validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, StringUtil.EMPTY_STRING);
                 validator.validate(xmlFile);
                 LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
             } catch (SAXException e) {
@@ -376,7 +376,7 @@ public class DownloadManager {
         String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, ""); //$NON-NLS-1$
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
         String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
@@ -388,7 +388,7 @@ public class DownloadManager {
     private static void readWadoQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
         String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
         boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, "false")); //$NON-NLS-1$
+            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
         String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);

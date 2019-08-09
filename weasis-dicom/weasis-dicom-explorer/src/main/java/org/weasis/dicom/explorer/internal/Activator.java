@@ -30,7 +30,7 @@ public class Activator implements BundleActivator {
     @Override
     public void start(final BundleContext context) throws Exception {
         String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
-        DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase("false")));//$NON-NLS-1$
+        DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase(Boolean.FALSE.toString())));
         FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
             IMPORT_EXPORT_PERSISTENCE);
     }
@@ -39,13 +39,13 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
         FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
             IMPORT_EXPORT_PERSISTENCE, null);
-        
+
         DicomModel.LOADING_EXECUTOR.shutdownNow();
         DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
         if (explorer instanceof DicomExplorer) {
             DicomExplorer dexp = (DicomExplorer) explorer;
             // Remove image in viewers, in image cache and close the image stream
             ((DicomModel) dexp.getDataExplorerModel()).dispose();
-        }  
+        }
     }
 }

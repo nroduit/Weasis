@@ -84,7 +84,7 @@ public class AppProperties {
      * The path of the directory “.weasis” (containing the installation and the preferences)
      */
     public static final String WEASIS_PATH =
-        System.getProperty("weasis.path", System.getProperty("user.home") + File.separator + ".weasis"); //$NON-NLS-1$ //$NON-NLS-2$
+        System.getProperty("weasis.path", System.getProperty("user.home") + File.separator + ".weasis"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
 

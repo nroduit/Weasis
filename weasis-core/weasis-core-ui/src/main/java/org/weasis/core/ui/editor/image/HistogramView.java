@@ -163,11 +163,11 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
             JPanel headerPanel = new JPanel();
             headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
             headerPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 7, 7, 7),
-                new TitledBorder(null, "Histogram Parameters", TitledBorder.DEFAULT_JUSTIFICATION,
+                new TitledBorder(null, Messages.getString("HistogramView.histoParams"), TitledBorder.DEFAULT_JUSTIFICATION, //$NON-NLS-1$
                     TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(), Color.GRAY)));
 
             JPanel row1 = new JPanel();
-            row1.add(new JLabel("Channel" + StringUtil.COLON));
+            row1.add(new JLabel(Messages.getString("HistogramView.channel") + StringUtil.COLON)); //$NON-NLS-1$
 
             jComboBoxImgChannel.removeItemListener(modelListener);
             jComboBoxImgChannel.removeAllItems();
@@ -185,7 +185,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
             headerPanel.add(row1);
 
             JPanel row2 = new JPanel();
-            row2.add(new JLabel("Bins" + StringUtil.COLON));
+            row2.add(new JLabel(Messages.getString("HistogramView.bins") + StringUtil.COLON)); //$NON-NLS-1$
             JMVUtils.formatCheckAction(spinnerBins);
             MeasurableLayer layer = view2DPane.getMeasurableLayer();
             int datatype = ImageConversion.convertToDataType(imageSource.type());
@@ -201,7 +201,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
             spinnerBins.addChangeListener(e -> buildHistogram());
             row2.add(Box.createHorizontalStrut(15));
 
-            final JButton stats = new JButton("Statistics");
+            final JButton stats = new JButton(Messages.getString("HistogramView.stats")); //$NON-NLS-1$
             stats.addActionListener((ActionEvent e) -> showStatistics());
             row2.add(stats);
             headerPanel.add(row2);
@@ -254,7 +254,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
         tableContainer.add(jtable, BorderLayout.CENTER);
         jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
         jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
-        JOptionPane.showMessageDialog(spinnerBins, tableContainer, "Statistics", JOptionPane.PLAIN_MESSAGE, null);
+        JOptionPane.showMessageDialog(spinnerBins, tableContainer, Messages.getString("HistogramView.stats"), JOptionPane.PLAIN_MESSAGE, null); //$NON-NLS-1$
     }
 
     private WindLevelParameters getWinLeveParameters() {
@@ -349,11 +349,11 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                         ChannelHistogramPanel chartPanel;
                         StringBuilder name = new StringBuilder(lut[i].getName());
                         name.append(StringUtil.SPACE);
-                        name.append("Histogram");
+                        name.append(Messages.getString("HistogramView.histo")); //$NON-NLS-1$
                         if (StringUtil.hasText(layer.getPixelValueUnit())) {
-                            name.append(" [");
+                            name.append(" ["); //$NON-NLS-1$
                             name.append(layer.getPixelValueUnit());
-                            name.append("]");
+                            name.append("]"); //$NON-NLS-1$
                         }
                         if (i >= old.length || old[i] == null) {
                             chartPanel = new ChannelHistogramPanel(name.toString());
@@ -372,7 +372,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Build histogram", e);
+                LOGGER.error("Build histogram", e); //$NON-NLS-1$
             }
             histView.revalidate();
             histView.repaint();
@@ -381,13 +381,13 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
 
     // TODO remove
     private void exportcsv(PlanarImage imageSource) {
-        File csvOutputFile = new File("/tmp/" + "image" + ".csv");
+        File csvOutputFile = new File("/tmp/" + "image" + ".csv"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
             short[] pix = new short[imageSource.width()];
             for (int i = 0; i < imageSource.height(); i++) {
                 imageSource.get(i, 0, pix);
                 IntStream is = IntStream.range(0, pix.length).map(k -> pix[k]);
-                pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(",")));
+                pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(","))); //$NON-NLS-1$
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();

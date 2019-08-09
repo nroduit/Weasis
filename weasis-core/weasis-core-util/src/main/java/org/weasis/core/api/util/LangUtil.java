@@ -51,7 +51,7 @@ public class LangUtil {
     }
 
     private static boolean getBoolean(String val) {
-        return "true".equalsIgnoreCase(val); //$NON-NLS-1$
+        return Boolean.TRUE.toString().equalsIgnoreCase(val); 
     }
 
     public static <T, C extends Collection<T>> C convertCollectionType(Iterable<?> from, C newCollection,

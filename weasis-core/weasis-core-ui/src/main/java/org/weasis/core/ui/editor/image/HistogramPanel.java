@@ -29,6 +29,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 
@@ -303,7 +304,7 @@ public class HistogramPanel extends JPanel {
 
     public void saveHistogramInCSV(File csvOutputFile) {
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            pw.println("Class,Occurrences");
+            pw.println("Class,Occurrences"); //$NON-NLS-1$
             float[] histValues = data.getHistValues();
             WindLevelParameters windLevel = data.getWindLevel();
             double min = windLevel.getLevelMin();
@@ -316,15 +317,15 @@ public class HistogramPanel extends JPanel {
                 StringBuilder buf = new StringBuilder();
                 buf.append(val);
                 if (val2 != val && val2 < max) {
-                    buf.append("...");
+                    buf.append("..."); //$NON-NLS-1$
                     buf.append(val2);
                 }
-                buf.append(",");
+                buf.append(","); //$NON-NLS-1$
                 buf.append(histValues[i]);
                 pw.println(buf.toString());
             }
         } catch (IOException e) {
-            LOGGER.error("Cannot save histogram values", e);
+            LOGGER.error("Cannot save histogram values", e); //$NON-NLS-1$
         }
     }
 
@@ -361,15 +362,15 @@ public class HistogramPanel extends JPanel {
 
                 StringBuilder buf = new StringBuilder();
                 buf.append("<html>"); //$NON-NLS-1$
-                buf.append("Intensity");
+                buf.append(Messages.getString("HistogramPanel.intensity")); //$NON-NLS-1$
                 buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append(val);
                 if (val2 != val && val2 < max) {
-                    buf.append("...");
+                    buf.append("..."); //$NON-NLS-1$
                     buf.append(val2);
                 }
-                buf.append("<br>");
-                buf.append("Pixels");
+                buf.append("<br>"); //$NON-NLS-1$
+                buf.append(Messages.getString("HistogramPanel.pixels")); //$NON-NLS-1$
                 buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append((int) histValues[i]);
                 JLabel text = new JLabel(buf.toString());

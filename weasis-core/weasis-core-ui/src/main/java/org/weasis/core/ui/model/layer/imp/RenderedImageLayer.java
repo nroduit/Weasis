@@ -478,7 +478,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             WindowOp wlOp = (WindowOp) disOpManager.getNode(WindowOp.OP_NAME);
             if (wlOp != null) {
                 pixelPadding = LangUtil.getNULLtoTrue((Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-                tagable = (TagReadable) wlOp.getParam("pr.element");
+                tagable = (TagReadable) wlOp.getParam("pr.element"); //$NON-NLS-1$
             }
             val = imageElement.pixelToRealValue(pixelValue, tagable, pixelPadding);
         }

@@ -1021,13 +1021,10 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        String[] desc = new String[5];
-        desc[0] = "DICOM Codec: " + DicomCodec.NAME; //$NON-NLS-1$
-        desc[1] = "Version: " + Implementation.getVersionName(); //$NON-NLS-1$
-        desc[2] = "Image Codec: OpenCV imgcodecs";
-        desc[3] = "Version: " + Core.VERSION;
-        desc[4] = "Supports all the DICOM compression types";
-        return desc;
+        return new String[] { "DICOM Codec: " + DicomCodec.NAME, //$NON-NLS-1$
+            "Version: " + Implementation.getVersionName(), //$NON-NLS-1$
+            "Image decompression: OpenCV imgcodecs", //$NON-NLS-1$
+            "Version: " + Core.VERSION }; //$NON-NLS-1$
     }
 
     public Series<MediaElement> buildSeries(String seriesUID) {

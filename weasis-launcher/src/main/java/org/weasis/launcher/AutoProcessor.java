@@ -166,7 +166,7 @@ public class AutoProcessor {
             }
             weasisLoader.setMax(jarList.size());
 
-            boolean cache = "true".equals(System.getProperty("http.bundle.cache", "true"));
+            boolean cache = Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
             // Install bundle JAR files and remember the bundle objects.
             final List<Bundle> startBundleList = new ArrayList<>();
             for (int i = 0; i < jarList.size(); i++) {
@@ -327,7 +327,7 @@ public class AutoProcessor {
             }
         }
 
-        boolean cache = "true".equals(System.getProperty("http.bundle.cache", "true"));
+        boolean cache = Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
         int bundleIter = 0;
 
         // Parse and install the bundles associated with the key.
