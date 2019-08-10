@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+     xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+     
+  <?ifdef JpIsSystemWide ?>
+    <?define JpInstallScope="perMachine"?>
+    <?define JpRegistryRoot="HKLM"?>
+  <?else?>
+    <?define JpInstallScope="perUser"?>
+    <?define JpRegistryRoot="HKCU"?>
+  <?endif?>
+  
+  <Product  Id="$(var.JpProductCode)" Name="$(var.JpAppName)"
+            Language="1033" Version="$(var.JpAppVersion)"
+            Manufacturer="$(var.JpAppVendor)"
+            UpgradeCode="$(var.JpProductUpgradeCode)">
+    <Package  Description="$(var.JpAppDescription)"
+              Manufacturer="$(var.JpAppVendor)"
+              InstallerVersion="200" Compressed="yes"
+              InstallScope="$(var.JpInstallScope)" Platform="x86"/>
+    <Media Id="1" Cabinet="simple.cab" EmbedCab="yes" CompressionLevel="high" />
+
+    <?ifdef JpAllowDowngrades ?>
+    <MajorUpgrade AllowDowngrades="yes"/>
+    <?endif?>
+    
+        <!-- We use RemoveFolderEx to ensure application folder is fully
+             removed on uninstall. Including files created outside of MSI
+             after application had been installed (e.g. on AU or user state).
+
+             However, RemoveFolderEx is only available in WiX 3.6,
+             we will comment it out if we running older WiX.
+
+             RemoveFolderEx requires that we "remember" the path for uninstall.
+             Read the path value and set the APPLICATIONFOLDER property with the value.
+        -->
+        <Property Id="APPLICATIONFOLDER">
+            <RegistrySearch Key="SOFTWARE\$(var.JpAppVendor)\$(var.JpAppName)"
+                            Root="$(var.JpRegistryRoot)" Type="raw" Win64="no"
+                            Id="APPLICATIONFOLDER_REGSEARCH" Name="Path" />
+        </Property>
+        <DirectoryRef Id="APPLICATIONFOLDER">
+            <Component Id="CleanupMainApplicationFolder" Guid="*" Win64="no">
+                <RegistryValue Root="$(var.JpRegistryRoot)"
+                               Key="SOFTWARE\$(var.JpAppVendor)\$(var.JpAppName)"
+                               Name="Path" Type="string" Value="[APPLICATIONFOLDER]"
+                               KeyPath="yes" />
+            <!-- Register weasis protocol -->
+		        <RegistryKey Key="weasis" Root="HKCR">
+		          <RegistryValue Type="string" Value="Weasis URI handler"/>
+		          <RegistryValue Name="URL Protocol" Type="string" Value=""/>
+		          <RegistryValue Name="DefaultIcon" Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.ico&quot;,1"/>
+		          <RegistryKey Key="shell\open\command">
+		            <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]\bin\Weasis.exe&quot; &quot;%1&quot;"/>
+		          </RegistryKey>
+		        </RegistryKey>
+            <!-- Remove popup on Edge and IE for weasis protocol -->
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Microsoft\Internet Explorer\ProtocolExecute\weasis">
+              <RegistryValue Type="integer" Name="WarnOnOpen" Value="0" />
+            </RegistryKey>
+            <!-- Remove popup on Chrome for weasis protocol -->
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Google\Chrome\URLWhitelist">
+               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
+            </RegistryKey>
+            <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Chromium\URLWhitelist">
+               <RegistryValue Name="787" Type="string" Value="weasis://*"/>
+            </RegistryKey>
+                <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
+                     will not remove on "install". But only if WiX 3.6 is used. -->
+                  <?ifdef JpWixVersion36OrNewer ?>
+                  <util:RemoveFolderEx On="uninstall" Property="APPLICATIONFOLDER" />
+                  <?endif?>
+            </Component>
+        </DirectoryRef>
+        
+        <?include $(var.JpConfigDir)/bundle.wxi ?>
+        
+        <?ifdef JpInstallDirChooser ?>
+        <Binary Id="JpCaDll" SourceFile="wixhelper.dll"/>
+        <CustomAction Id="JpCheckInstallDir" BinaryKey="JpCaDll" DllEntry="CheckInstallDir" />
+        <?endif?>
+        
+        <UI>
+          <?ifdef JpInstallDirChooser ?>
+          <Dialog Id="JpInvalidInstallDir" Width="300" Height="85" Title="[ProductName] Setup" NoMinimize="yes">
+            <Control Id="JpInvalidInstallDirYes" Type="PushButton" X="100" Y="55" Width="50" Height="15" Default="no" Cancel="no" Text="Yes">
+              <Publish Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+            </Control>
+            <Control Id="JpInvalidInstallDirNo" Type="PushButton" X="150" Y="55" Width="50" Height="15" Default="yes" Cancel="yes" Text="No">
+              <Publish Event="NewDialog" Value="InstallDirDlg">1</Publish>
+            </Control>
+            <Control Id="Text" Type="Text" X="25" Y="15" Width="250" Height="30" TabSkip="no">
+              <Text>!(loc.message.install.dir.exist)</Text>
+            </Control>
+          </Dialog>
+          
+          <!-- 
+            Run WixUI_InstallDir dialog in the default install directory.
+          -->
+          <Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONFOLDER"/>
+          <UIRef Id="WixUI_InstallDir" />
+
+          <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="JpCheckInstallDir" Order="3">1</Publish>
+          <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="JpInvalidInstallDir" Order="5">INSTALLDIR_VALID="0"</Publish>
+          <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="5">INSTALLDIR_VALID="1"</Publish>
+          
+          <?ifndef JpLicenseRtf ?>
+          <!-- 
+            No license file provided. 
+            Override the dialog sequence in built-in dialog set "WixUI_InstallDir"
+            to exclude license dialog. 
+          -->
+          <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg" Order="2">1</Publish>
+          <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">1</Publish>
+          <?endif?>
+
+          <?else?>
+          
+          <?ifdef JpLicenseRtf ?>
+          <UIRef Id="WixUI_Minimal" />
+          <?endif?>
+          
+          <?endif?>
+        </UI>
+        
+        <?ifdef JpLicenseRtf ?>
+        <WixVariable Id="WixUILicenseRtf" Value="$(var.JpLicenseRtf)"/>
+        <?endif?>
+        
+        <?include $(var.JpConfigDir)/icons.wxi ?>
+        <Property Id="ARPPRODUCTICON" Value="StartMenuIcon.exe"/>
+    </Product>
+</Wix>
