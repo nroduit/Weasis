@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
@@ -261,10 +263,14 @@ public class ViewerPluginBuilder {
 
             for (MediaElement media : medias) {
                 if (media instanceof ImageElement) {
-                    File gpxFile = new File(media.getFile().getPath() + ".xml"); //$NON-NLS-1$
-                    GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
-                    if (graphicModel != null) {
-                        media.setTag(TagW.PresentationModel, graphicModel);
+                    FileCache fc = media.getFileCache();
+                    Optional<File> fo = fc.getOriginalFile();
+                    if (fc.isLocalFile() && fo.isPresent()) {                      
+                        File gpxFile = new File(fo.get().getPath() + ".xml"); //$NON-NLS-1$
+                        GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
+                        if (graphicModel != null) {
+                            media.setTag(TagW.PresentationModel, graphicModel);
+                        }
                     }
                 }
             }
