@@ -16,7 +16,7 @@ SUBSTANCE_PKG="2.5.0-rc"
 # jdk.localedata => other locale (en_us) data are included in the jdk.localedata 
 # jdk.jdwp.agent => package for debugging agent
 # jdk.pack => jpack required to unpacked bundle.jar.pack.gz
-JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.unsupported,jdk.pack,jdk.jdwp.agent"
+JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.pack,jdk.jdwp.agent"
 NAME="Weasis"
 IDENTIFIER="org.weasis.viewer"
 JVM_ARGS="-Dgosh.port=17179 #-Daudit.log=true #-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789"

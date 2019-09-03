@@ -31,7 +31,7 @@
   <!-- See http://developer.apple.com/library/mac/#releasenotes/General/SubmittingToMacAppStore/_index.html
        for list of AppStore categories -->
   <key>LSApplicationCategoryType</key>
-  <string>Medical</string>
+  <string>public.app-category.medical</string>
   <key>CFBundleVersion</key>
   <string>DEPLOY_BUNDLE_CFBUNDLE_VERSION</string>
   <key>NSHumanReadableCopyright</key>
