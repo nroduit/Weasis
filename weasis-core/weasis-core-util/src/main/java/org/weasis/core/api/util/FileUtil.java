@@ -373,9 +373,9 @@ public final class FileUtil {
             ByteBuffer buffer = ByteBuffer.allocate(bufferSize);
 
             while (readChannel.read(buffer) != -1) {
-                buffer.flip();
+                LangUtil.safeBufferType(buffer).flip();
                 writeChannel.write(buffer);
-                buffer.clear();
+                LangUtil.safeBufferType(buffer).clear();
             }
             return true;
         } catch (IOException e) {

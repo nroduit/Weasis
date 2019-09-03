@@ -18,6 +18,7 @@ import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 
 public class MagicMimeEntry {
@@ -190,7 +191,7 @@ public class MagicMimeEntry {
         if (buf == null) {
             return null;
         }
-        buf.position(0);
+        LangUtil.safeBufferType(buf).position(0);
         boolean matches = match(buf);
         if (matches) {
             int subLen = subEntries.size();
