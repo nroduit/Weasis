@@ -17,7 +17,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.NetworkUtil;
@@ -184,13 +184,13 @@ public class BundleTools {
         if (!isLocalSession() || isStoreLocalSession()) {
             String sURL = String.format("%spreferences?user=%s&profile=%s", remotePrefURL, //$NON-NLS-1$
                 getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
-            URLConnection urlConnection = new URL(sURL).openConnection();
             Map<String, String> headers = getHttpTags(true);
-            try (OutputStream out = NetworkUtil.getUrlOutputStream(urlConnection, headers)) {
+            ClosableURLConnection http = NetworkUtil.getUrlConnection(new URL(sURL), headers, true);
+            try (OutputStream out = http.getOutputStream()) {
                 props.store(new DataOutputStream(out), null);
             }
-            if (urlConnection instanceof HttpURLConnection) {
-                NetworkUtil.readResponse((HttpURLConnection) urlConnection, headers);
+            if (http.getUrlConnection() instanceof HttpURLConnection) {
+                NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), headers);
             }
         }
     }

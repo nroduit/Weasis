@@ -19,7 +19,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -45,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
@@ -245,8 +245,8 @@ public class StreamBackingStoreImpl implements BackingStore {
         String prefUrl = BundleTools.getServiceUrl();
         if (StringUtil.hasText(prefUrl) && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
             XMLStreamReader xmler = null;
-            try (InputStream fileReader =
-                NetworkUtil.getUrlInputStream(new URL(getURL(desc, prefUrl)).openConnection(), getHttpTags(false))) {
+            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(new URL(getURL(desc, prefUrl)), getHttpTags(false));
+                            InputStream fileReader = c.getInputStream()) {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
                 XMLInputFactory factory = XMLInputFactory.newInstance();
                 // disable external entities for security
@@ -315,13 +315,14 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession()) {
             File file = getFile(prefs.getDescription());
             if (file != null && file.exists()) {
-                URLConnection urlConnection = new URL(getURL(prefs.getDescription(), prefUrl)).openConnection();
                 Map<String, String> headers = getHttpTags(true);
-                try (OutputStream out = NetworkUtil.getUrlOutputStream(urlConnection, headers)) {
+                ClosableURLConnection http =
+                    NetworkUtil.getUrlConnection(getURL(prefs.getDescription(), prefUrl), headers, true);
+                try (OutputStream out = http.getOutputStream()) {
                     writeStream(new FileInputStream(file), out);
                 }
-                if (urlConnection instanceof HttpURLConnection) {
-                    NetworkUtil.readResponse((HttpURLConnection) urlConnection, headers);
+                if (http.getUrlConnection() instanceof HttpURLConnection) {
+                    NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), headers);
                 }
             }
         }

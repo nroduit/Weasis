@@ -1,7 +1,6 @@
 package org.weasis.dicom.explorer.rs;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +23,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -44,8 +44,9 @@ import org.weasis.dicom.web.Multipart;
 
 public class RsQueryResult extends AbstractQueryResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryResult.class);
-    
-    private static final String STUDY_QUERY = "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010";
+
+    private static final String STUDY_QUERY =
+        "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010";
     private static final String QIDO_REQUEST = "QIDO-RS request: {}";
 
     private final RsQueryParams rsQueryParams;
@@ -80,8 +81,7 @@ public class RsQueryResult extends AbstractQueryResult {
                 buf.append("&00100021=");
                 buf.append(patientID.substring(beginIndex + 3));
             }
-            buf.append(
-                STUDY_QUERY);
+            buf.append(STUDY_QUERY);
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -99,9 +99,10 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private List<Attributes> parseJSON(String url) throws IOException {
         List<Attributes> items = new ArrayList<>();
-        try (InputStream httpCon =
-            NetworkUtil.getUrlInputStream(new URL(url).openConnection(), rsQueryParams.getQueryHeaders());
-                        InputStreamReader instream = new InputStreamReader(httpCon, StandardCharsets.UTF_8)) {
+        try (ClosableURLConnection httpCon =
+            NetworkUtil.getUrlConnection(new URL(url), rsQueryParams.getQueryHeaders());
+                        InputStreamReader instream =
+                            new InputStreamReader(httpCon.getInputStream(), StandardCharsets.UTF_8)) {
             JSONReader reader = new JSONReader(Json.createParser(instream));
             Callback callback = (fmi, dataset) -> items.add(dataset);
             reader.readDatasets(callback);
@@ -246,8 +247,7 @@ public class RsQueryResult extends AbstractQueryResult {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/studies?0020000D=");
             buf.append(studyInstanceUID);
-            buf.append(
-                STUDY_QUERY);
+            buf.append(STUDY_QUERY);
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -270,8 +270,7 @@ public class RsQueryResult extends AbstractQueryResult {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/studies?00080050=");
             buf.append(accessionNumber);
-            buf.append(
-                STUDY_QUERY);
+            buf.append(STUDY_QUERY);
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -295,8 +294,7 @@ public class RsQueryResult extends AbstractQueryResult {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/series?0020000E=");
             buf.append(seriesInstanceUID);
-            buf.append(
-                STUDY_QUERY);
+            buf.append(STUDY_QUERY);
             buf.append(",0008103E,00080060,00081190,00200011");
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
@@ -327,8 +325,7 @@ public class RsQueryResult extends AbstractQueryResult {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/instances?00080018=");
             buf.append(sopInstanceUID);
-            buf.append(
-                STUDY_QUERY);
+            buf.append(STUDY_QUERY);
             buf.append(",0008103E,00080060,0020000E,00200011");
             buf.append(",00200013,00081190");
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
@@ -371,7 +368,7 @@ public class RsQueryResult extends AbstractQueryResult {
             buf.append("/studies/");
             buf.append(studyInstanceUID);
             buf.append("/series?includefield=");
-            buf.append("0008103E,00080060,0020000E,00200011");
+            buf.append("0008103E,00080060,0020000E,00200011,00081190");
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -493,7 +490,7 @@ public class RsQueryResult extends AbstractQueryResult {
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, new SeriesInstanceList());
 
-            TagW[] tags = TagD.getTagFromIDs(Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription);
+            TagW[] tags = TagD.getTagFromIDs(Tag.Modality, Tag.SeriesNumber, Tag.SeriesDescription, Tag.RetrieveURL);
             for (TagW tag : tags) {
                 tag.readValue(seriesDataset, dicomSeries);
             }

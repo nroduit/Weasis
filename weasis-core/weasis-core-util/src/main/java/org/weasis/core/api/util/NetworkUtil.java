@@ -15,7 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -42,6 +41,14 @@ public class NetworkUtil {
     private NetworkUtil() {
     }
 
+    public static int getUrlConnectionTimeout() {
+        return StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000); //$NON-NLS-1$
+    }
+
+    public static int getUrlReadTimeout() {
+        return StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000); //$NON-NLS-1$
+    }
+
     public static URI getURI(String pathOrUri) throws MalformedURLException, URISyntaxException {
         URI uri = null;
         if (!pathOrUri.startsWith("http")) { //$NON-NLS-1$
@@ -60,46 +67,33 @@ public class NetworkUtil {
         return uri;
     }
 
-    public static InputStream getUrlInputStream(URLConnection urlConnection) throws StreamIOException {
-        return getUrlInputStream(urlConnection, null);
+    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers) throws IOException {
+        return getUrlConnection(new URL(url), headers, getUrlConnectionTimeout(), getUrlReadTimeout(), false);
     }
 
-    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers)
-        throws StreamIOException {
-        return getUrlInputStream(urlConnection, headers,
-            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
-            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000)); //$NON-NLS-1$
+    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers, boolean httpPost) throws IOException {
+        return getUrlConnection(new URL(url), headers, getUrlConnectionTimeout(), getUrlReadTimeout(), httpPost);
     }
 
-    public static InputStream getUrlInputStream(URLConnection urlConnection, Map<String, String> headers,
-        int connectTimeout, int readTimeout) throws StreamIOException {
-        prepareConnection(urlConnection, headers, connectTimeout, readTimeout, false);
-        try {
-            return urlConnection.getInputStream();
-        } catch (IOException e) {
-            throw new StreamIOException(e);
-        }
-
+    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers, int connectTimeout,
+        int readTimeout, boolean httpPost) throws IOException {
+        return  getUrlConnection(new URL(url), headers, connectTimeout, readTimeout, httpPost);
+    }
+    
+    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers) throws IOException {
+        return getUrlConnection(url, headers, getUrlConnectionTimeout(), getUrlReadTimeout(), false);
+    }
+    
+    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers, boolean httpPost) throws IOException {
+        return getUrlConnection(url, headers, getUrlConnectionTimeout(), getUrlReadTimeout(), httpPost);
     }
 
-    public static OutputStream getUrlOutputStream(URLConnection urlConnection, Map<String, String> headers)
-        throws StreamIOException {
-        return getUrlOutputStream(urlConnection, headers,
-            StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000), //$NON-NLS-1$
-            StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000)); //$NON-NLS-1$
+    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers, int connectTimeout,
+        int readTimeout, boolean httpPost) throws IOException {
+        return prepareConnection(url.openConnection(), headers, connectTimeout, readTimeout, httpPost);
     }
 
-    public static OutputStream getUrlOutputStream(URLConnection urlConnection, Map<String, String> headers,
-        int connectTimeout, int readTimeout) throws StreamIOException {
-        prepareConnection(urlConnection, headers, connectTimeout, readTimeout, true);
-        try {
-            return urlConnection.getOutputStream();
-        } catch (IOException e) {
-            throw new StreamIOException(e);
-        }
-    }
-
-    private static void prepareConnection(URLConnection urlConnection, Map<String, String> headers, int connectTimeout,
+    private static ClosableURLConnection prepareConnection(URLConnection urlConnection, Map<String, String> headers, int connectTimeout,
         int readTimeout, boolean post) throws StreamIOException {
         if (headers != null && headers.size() > 0) {
             for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
@@ -119,7 +113,7 @@ public class NetworkUtil {
                 if (post) {
                     httpURLConnection.setRequestMethod("POST"); //$NON-NLS-1$
                 } else {
-                    readResponse(httpURLConnection, headers);
+                    return new ClosableURLConnection(readResponse(httpURLConnection, headers));
                 }
             } catch (StreamIOException e) {
                 throw e;
@@ -127,16 +121,16 @@ public class NetworkUtil {
                 throw new StreamIOException(e);
             }
         }
+        return new ClosableURLConnection(urlConnection);
     }
 
-    public static void readResponse(HttpURLConnection httpURLConnection, Map<String, String> headers)
+    public static URLConnection readResponse(HttpURLConnection httpURLConnection, Map<String, String> headers)
         throws IOException {
         int code = httpURLConnection.getResponseCode();
         if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
             if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
                 || code == HttpURLConnection.HTTP_SEE_OTHER) {
-                applyRedirectionStream(httpURLConnection, headers);
-                return;
+                return applyRedirectionStream(httpURLConnection, headers);
             }
 
             LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
@@ -147,6 +141,7 @@ public class NetworkUtil {
             }
             throw new StreamIOException(httpURLConnection.getResponseMessage());
         }
+        return httpURLConnection;
     }
 
     public static String read(URLConnection urlConnection) throws IOException {
@@ -162,25 +157,30 @@ public class NetworkUtil {
         }
     }
 
-    public static void applyRedirectionStream(URLConnection urlConnection, Map<String, String> headers)
+    public static URLConnection applyRedirectionStream(URLConnection urlConnection, Map<String, String> headers)
         throws IOException {
-        String redirect = urlConnection.getHeaderField("Location"); //$NON-NLS-1$
+        URLConnection c = urlConnection;
+        String redirect = c.getHeaderField("Location"); //$NON-NLS-1$
         for (int i = 0; i < MAX_REDIRECTS; i++) {
             if (redirect != null) {
-                String cookies = urlConnection.getHeaderField("Set-Cookie"); //$NON-NLS-1$
-                urlConnection = new URL(redirect).openConnection();
-                urlConnection.setRequestProperty("Cookie", cookies); //$NON-NLS-1$
+                String cookies = c.getHeaderField("Set-Cookie"); //$NON-NLS-1$
+                if (c instanceof HttpURLConnection) {
+                    ((HttpURLConnection) c).disconnect();
+                }
+                c = new URL(redirect).openConnection();
+                c.setRequestProperty("Cookie", cookies); //$NON-NLS-1$
                 if (headers != null && headers.size() > 0) {
                     for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                         Entry<String, String> element = iter.next();
-                        urlConnection.addRequestProperty(element.getKey(), element.getValue());
+                        c.addRequestProperty(element.getKey(), element.getValue());
                     }
                 }
-                redirect = urlConnection.getHeaderField("Location"); //$NON-NLS-1$
+                redirect = c.getHeaderField("Location"); //$NON-NLS-1$
             } else {
                 break;
             }
         }
+        return c;
     }
 
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {

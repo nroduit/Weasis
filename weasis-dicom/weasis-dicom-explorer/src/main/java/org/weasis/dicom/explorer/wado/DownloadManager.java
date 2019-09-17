@@ -16,7 +16,6 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -62,6 +61,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.BiConsumerWithException;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
@@ -261,13 +261,13 @@ public class DownloadManager {
 
             String path = uri.getPath();
 
-            URLConnection urlConnection = uri.toURL().openConnection();
-            urlConnection.setUseCaches(false);
+            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), BundleTools.SESSION_TAGS_MANIFEST,
+                StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000), //$NON-NLS-1$
+                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2, false); //$NON-NLS-1$
+            urlConnection.getUrlConnection().setUseCaches(false);
 
             LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
-            InputStream urlInputStream = NetworkUtil.getUrlInputStream(urlConnection, BundleTools.SESSION_TAGS_MANIFEST,
-                StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000), //$NON-NLS-1$
-                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$
+            InputStream urlInputStream = urlConnection.getInputStream();
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
@@ -375,8 +375,8 @@ public class DownloadManager {
     private static void readArcQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
         String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, ""); //$NON-NLS-1$
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
-        boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
+        boolean onlySopUID = Boolean
+            .parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
         String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
@@ -387,8 +387,8 @@ public class DownloadManager {
 
     private static void readWadoQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
         String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
-        boolean onlySopUID =
-            Boolean.parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
+        boolean onlySopUID = Boolean
+            .parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
         String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);

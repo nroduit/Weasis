@@ -15,7 +15,6 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -73,9 +72,15 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         for (String h : LangUtil.emptyIfNull(urlHeaders)) {
             String[] val = h.split(":", 2);
             if (val.length == 1) {
-                headers.put(val[0].trim(), "");
+                headers.put(val[0].trim().toLowerCase(), "");
             } else if (val.length == 2) {
-                headers.put(val[0].trim(), val[1].trim());
+                String name = val[0].trim().toLowerCase();
+                String value = val[1].trim();
+                // Hack for dcm4chee-arc integration
+                if ("authorization".equals(name) && value.length() > 14 && value.startsWith("&access_token=")) {
+                    value = "Bearer " + value.substring(14);
+                }
+                headers.put(name, value);
             }
         }
         return headers;
@@ -112,8 +117,10 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             if (!ps) {
-                loadSeries.startDownloadImageReference(
-                    (WadoParameters) loadSeries.getDicomSeries().getTagValue(TagW.WadoParameters));
+                WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
+                getRetrieveHeaders().forEach(wp::addHttpTag);
+                wp.addHttpTag("Accept", "image/jpeg");
+                loadSeries.startDownloadImageReference(wp);
             }
             DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
         }

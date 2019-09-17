@@ -67,6 +67,7 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
@@ -663,11 +664,10 @@ public class AcquireManager {
         try {
             URL url = Objects.requireNonNull(uri).toURL();
             LOGGER.debug("Download from URL: {}", url); //$NON-NLS-1$
-
+            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(url, BundleTools.SESSION_TAGS_FILE);
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
-            try (InputStream inputStream =
-                NetworkUtil.getUrlInputStream(url.openConnection(), BundleTools.SESSION_TAGS_FILE)) {
+            try (InputStream inputStream = urlConnection.getInputStream()) {
                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int length;
@@ -676,7 +676,6 @@ public class AcquireManager {
                 }
                 return outputStream.toByteArray();
             }
-
         } catch (Exception e) {
             LOGGER.error("Downloading URI content", e); //$NON-NLS-1$
         }
@@ -696,7 +695,8 @@ public class AcquireManager {
     }
 
     private static List<AcquireImageInfo> getAcquireImageInfoList() {
-        return imagesInfoByURI.entrySet().stream().map(Entry<URI, AcquireImageInfo>::getValue).collect(Collectors.toList());
+        return imagesInfoByURI.entrySet().stream().map(Entry<URI, AcquireImageInfo>::getValue)
+            .collect(Collectors.toList());
     }
 
     /**
