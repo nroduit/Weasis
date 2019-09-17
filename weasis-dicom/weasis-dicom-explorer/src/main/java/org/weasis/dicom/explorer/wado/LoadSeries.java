@@ -44,6 +44,7 @@ import org.dcm4che3.util.SafeClose;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
@@ -86,6 +87,9 @@ import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
+import org.weasis.dicom.web.Multipart;
+import org.weasis.dicom.web.Multipart.Handler;
+import org.weasis.dicom.web.MultipartReader;
 
 public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesImporter {
 
@@ -758,13 +762,33 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         }
 
         private int downloadInFileCache(InputStream stream, File tempFile) throws IOException {
-            final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
-            int[] overrideList = Optional.ofNullable(wado).map(WadoParameters::getOverrideDicomTagIDList).orElse(null);
+            final WadoParameters wadoParams = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
+            int[] overrideList =
+                Optional.ofNullable(wadoParams).map(WadoParameters::getOverrideDicomTagIDList).orElse(null);
 
             int bytesTransferred;
             if (overrideList == null) {
-                bytesTransferred =
-                    FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile);
+                if (wadoParams.isWadoRS()) {
+                    int[] readBytes = { 0 };
+                    Multipart.Handler handler = new Handler() {
+
+                        @Override
+                        public void readBodyPart(MultipartReader multipartReader, int partNumber,
+                            Map<String, String> headers) throws IOException {
+                            // At sop instance level must have only one part
+                            try (InputStream in = multipartReader.newPartInputStream()) {
+                                readBytes[0] =
+                                    FileUtil.writeStream(new SeriesProgressMonitor(dicomSeries, in), tempFile, false);
+                            }
+                        }
+                    };
+
+                    Multipart.parseMultipartRelated(urlConnection, stream, handler);
+                    bytesTransferred = readBytes[0];
+                } else {
+                    bytesTransferred =
+                        FileUtil.writeStream(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile);
+                }
             } else {
                 bytesTransferred =
                     writFile(new DicomSeriesProgressMonitor(dicomSeries, stream, false), tempFile, overrideList);

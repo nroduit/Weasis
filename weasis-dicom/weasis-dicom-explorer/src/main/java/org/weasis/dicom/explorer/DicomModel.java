@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -57,6 +58,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -78,6 +80,7 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
+import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.LoadRemoteDicomManifest;
@@ -86,6 +89,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 
 @org.osgi.service.component.annotations.Component(immediate = false, property = {
     CommandProcessor.COMMAND_SCOPE + "=dicom", CommandProcessor.COMMAND_FUNCTION + "=get",
+    CommandProcessor.COMMAND_FUNCTION + "=rs",
     CommandProcessor.COMMAND_FUNCTION + "=close" }, service = DicomModel.class)
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
@@ -928,13 +932,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void get(String[] argv) throws IOException {
         final String[] usage = { "Load DICOM files remotely or locally", //$NON-NLS-1$
-            "Usage: dicom:get ([-l PATH]... [-r URI]... [-p] [-i DATA]... [-w URI]...)", //$NON-NLS-1$
+            "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", //$NON-NLS-1$
             "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
+            "  -w --wado=URI     open DICOMs from an XML manifest", 
             "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-1$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
+            "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> largs = opt.getList("local"); //$NON-NLS-1$
@@ -1041,6 +1046,56 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
         }
+    }
+
+    public void rs(String[] argv) throws IOException {
+        final String[] usage = { "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", //$NON-NLS-1$
+            "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT]", //$NON-NLS-1$
+            "  -u --url=URL               URL of the DICOMWeb service", //$NON-NLS-1$
+            "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", //$NON-NLS-1$
+            "  -H --header=HEADER         Pass custom header(s) to all the requests",
+            "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", //$NON-NLS-1$
+            "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", //$NON-NLS-1$
+            "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //$NON-NLS-1$
+            "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //$NON-NLS-1$
+            "  -? --help                  show help" };
+
+        final Option opt = Options.compile(usage).parse(argv);
+        final String rsUrl = opt.get("url"); //$NON-NLS-1$
+        final List<String> pargs = opt.getList("request"); //$NON-NLS-1$
+
+        if (opt.isSet("help") || rsUrl.isEmpty() //$NON-NLS-1$
+            || (pargs.isEmpty())) {
+            opt.usage();
+            return;
+        }
+
+        Properties props = new Properties();
+        props.setProperty(RsQueryParams.P_DICOMWEB_URL, rsUrl);
+        String queryExt = opt.get("query-ext");
+        if (StringUtil.hasText(queryExt)) {
+            props.setProperty(RsQueryParams.P_QUERY_EXT, queryExt);
+        }
+        String retrieveExt = opt.get("retrieve-ext");
+        if (StringUtil.hasText(retrieveExt)) {
+            props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
+        }
+
+        GuiExecutor.instance().execute(() -> {
+            firePropertyChange(
+                new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
+            for (String query : pargs) {
+                List<String> common = opt.getList("header");
+                List<String> q = opt.getList("query-header");
+                q.addAll(common);
+                List<String> r = opt.getList("retrieve-header");
+                r.addAll(common);
+                RsQueryParams rsquery = new RsQueryParams(DicomModel.this, props, RsQueryParams.getQueryMap(query),
+                    RsQueryParams.getHeaders(q), RsQueryParams.getHeaders(r));
+                LOADING_EXECUTOR.execute(rsquery);
+            }
+        });
+
     }
 
     public void close(String[] argv) throws IOException {

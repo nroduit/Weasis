@@ -65,7 +65,7 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.web.AbstractStowrs.ContentType;
+import org.weasis.dicom.web.Multipart;
 import org.weasis.dicom.web.StowrsMultiFiles;
 
 
@@ -210,7 +210,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 DicomWebNode destination = (DicomWebNode) selectedItem;
-                try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), ContentType.DICOM, AppProperties.WEASIS_NAME, destination.getHeaders())) {
+                try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), Multipart.ContentType.DICOM, AppProperties.WEASIS_NAME, destination.getHeaders())) {
                     stowRS.uploadDicom(files, true);
                 } catch (Exception e) {
                     showErrorMessage("StowRS error: {}", e, null); //$NON-NLS-1$

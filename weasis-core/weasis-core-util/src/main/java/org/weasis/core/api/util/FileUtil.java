@@ -132,7 +132,7 @@ public final class FileUtil {
     public static void getAllFilesInDirectory(File directory, List<File> files) {
         getAllFilesInDirectory(directory, files, true);
     }
-    
+
     public static void getAllFilesInDirectory(File directory, List<File> files, boolean recursive) {
         File[] fList = directory.listFiles();
         for (File f : fList) {
@@ -290,6 +290,11 @@ public final class FileUtil {
      * @throws StreamIOException
      */
     public static int writeStream(InputStream inputStream, File outFile) throws StreamIOException {
+        return writeStream(inputStream, outFile, true);
+    }
+
+    public static int writeStream(InputStream inputStream, File outFile, boolean closeInputStream)
+        throws StreamIOException {
         try (FileOutputStream outputStream = new FileOutputStream(outFile)) {
             byte[] buf = new byte[FILE_BUFFER];
             int offset;
@@ -310,7 +315,9 @@ public final class FileUtil {
             FileUtil.delete(outFile);
             throw new StreamIOException(e);
         } finally {
-            FileUtil.safeClose(inputStream);
+            if (closeInputStream) {
+                FileUtil.safeClose(inputStream);
+            }
         }
     }
 
@@ -338,7 +345,7 @@ public final class FileUtil {
             FileUtil.safeClose(inputStream);
         }
     }
-    
+
     public static String humanReadableByte(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
         if (bytes < unit) return bytes + " B"; //$NON-NLS-1$
