@@ -37,6 +37,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     public static final String P_DICOMWEB_URL = "dicomweb.url";
     public static final String P_QUERY_EXT = "query.ext";
     public static final String P_RETRIEVE_EXT = "retrieve.ext";
+    public static final String P_ACCEPT_EXT = "accept.ext";
 
     private final DicomModel dicomModel;
     private final Map<String, LoadSeries> seriesMap;

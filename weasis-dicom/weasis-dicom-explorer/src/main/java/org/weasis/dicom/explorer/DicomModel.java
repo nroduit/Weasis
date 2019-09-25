@@ -935,11 +935,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", //$NON-NLS-1$
             "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", 
-            "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-1$
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-2$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
-            "  -? --help         show help" }; //$NON-NLS-1$//$NON-NLS-2$
+            "  -? --help         show help" }; //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> largs = opt.getList("local"); //$NON-NLS-1$
@@ -1050,7 +1049,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public void rs(String[] argv) throws IOException {
         final String[] usage = { "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", //$NON-NLS-1$
-            "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT]", //$NON-NLS-1$
+            "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", //$NON-NLS-1$
             "  -u --url=URL               URL of the DICOMWeb service", //$NON-NLS-1$
             "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", //$NON-NLS-1$
             "  -H --header=HEADER         Pass custom header(s) to all the requests",
@@ -1058,6 +1057,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", //$NON-NLS-1$
             "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //$NON-NLS-1$
             "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //$NON-NLS-1$
+            "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", //$NON-NLS-1$
             "  -? --help                  show help" };
 
         final Option opt = Options.compile(usage).parse(argv);
@@ -1080,6 +1080,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (StringUtil.hasText(retrieveExt)) {
             props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
         }
+
+        // Accept empty value
+        props.setProperty(RsQueryParams.P_ACCEPT_EXT, opt.get("accept-ext"));
+
 
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(
