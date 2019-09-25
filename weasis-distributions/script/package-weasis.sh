@@ -228,15 +228,15 @@ fi
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-$JPKGCMD --input "$INPUT_DIR" --output "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" --resource-dir "resources" \
+$JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
 --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
+--resource-dir "resources" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
-  $JPKGCMD --input "$INPUT_DIR" --output "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" --resource-dir "resources" \
+  $JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
+  --resource-dir "resources" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\bin\\debug"
   cp "$OUTPUT_PATH-debug\\$NAME\\bin\\$NAME.exe"  "$IMAGE_PATH\\bin\\debug\\$NAME.exe"
 fi
@@ -279,7 +279,7 @@ if [ "$PACKAGE" = "YES" ] ; then
   if [ "$machine" = "windows" ] ; then
     [ "$ARC_NAME" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     [ "$ARC_NAME" = "x86" ]  && WXS="resources\main32.wxs" || WXS="resources\main.wxs"
-    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
     --win-menu --win-menu-group "$NAME" --win-registry-name "weasis" --win-upgrade-uuid "$UPGRADE_UID" \
     --win-wxs "$WXS" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
@@ -288,14 +288,14 @@ if [ "$PACKAGE" = "YES" ] ; then
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
-      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --output "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
+      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
-      --linux-bundle-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+      --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-      --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose
+      --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose --linux-shortcut
     done
   elif [ "$machine" = "macosx" ] ; then
-    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --output "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
     --license-file "$INPUT_PATH/Licence.txt" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
     --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --identifier "$IDENTIFIER" \
     --mac-signing-key-user-name "$CERTIFICATE" \

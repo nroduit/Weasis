@@ -2,7 +2,7 @@
 Version=1.0
 Name=Dicomizer
 Comment=Build DICOM files from images
-Exec=/opt/Weasis/bin/Weasis '$weasis:config pro="felix.extended.config.properties file:/opt/Weasis/app/conf/ext-dicomizer.properties" pro="weasis.profile dicomizer" pro="gosh.port 17181"'
+Exec=/opt/Weasis/bin/Weasis '$weasis:config pro="felix.extended.config.properties file:/opt/Weasis/app/conf/ext-dicomizer.properties" pro="gosh.port 17181"'
 Icon=/opt/Weasis/app/resources/images/dicomizer.png
 Terminal=false
 Type=Application
