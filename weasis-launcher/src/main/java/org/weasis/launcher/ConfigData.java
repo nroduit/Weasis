@@ -525,7 +525,7 @@ public class ConfigData {
 
     private Map<String, List<String>> getConfigParamsFromServicePath() {
 
-        String configServicePath = properties.getProperty(PARAM_CONFIG_URL);
+        String configServicePath = properties.getProperty(P_WEASIS_CONFIG_URL);
         if (!Utils.hasText(configServicePath)) {
             return null;
         }
