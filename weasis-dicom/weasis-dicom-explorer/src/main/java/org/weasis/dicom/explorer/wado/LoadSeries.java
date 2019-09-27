@@ -63,6 +63,7 @@ import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -107,6 +108,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private final Series<?> dicomSeries;
     private final SeriesInstanceList seriesInstanceList;
     private final JProgressBar progressBar;
+    private final URLParameters urlParams;
     private DownloadPriority priority = null;
     private final boolean writeInCache;
 
@@ -129,6 +131,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         }
         this.dicomSeries.setSeriesLoader(this);
         this.concurrentDownloads = concurrentDownloads;
+        this.urlParams = new URLParameters(getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
     }
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
@@ -146,6 +149,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         this.writeInCache = writeInCache;
         this.dicomSeries.setSeriesLoader(this);
         this.concurrentDownloads = concurrentDownloads;
+        this.urlParams = new URLParameters(getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
     }
 
     @Override
@@ -384,7 +388,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             String url = request.toString();
 
             LOGGER.debug("Download DICOM instance {} index {}.", url, k); //$NON-NLS-1$
-            Download ref = new Download(url, wado);
+            Download ref = new Download(url);
             tasks.add(ref);
         }
 
@@ -399,21 +403,21 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return true;
     }
 
-    private static Map<String, String> getHttpTags(WadoParameters wadoParameters) {
+    private static Map<String, String> getHttpTags(WadoParameters wadoParams) {
         boolean hasBundleTags = !BundleTools.SESSION_TAGS_FILE.isEmpty();
-        boolean hasWadoTags = wadoParameters != null && wadoParameters.getHttpTaglist() != null;
-        boolean hasWadoLogin = wadoParameters != null && wadoParameters.getWebLogin() != null;
+        boolean hasWadoTags = wadoParams != null && wadoParams.getHttpTaglist() != null;
+        boolean hasWadoLogin = wadoParams != null && wadoParams.getWebLogin() != null;
 
         if (hasWadoTags || hasWadoLogin || hasBundleTags) {
             HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
             if (hasWadoTags) {
-                for (HttpTag tag : wadoParameters.getHttpTaglist()) {
+                for (HttpTag tag : wadoParams.getHttpTaglist()) {
                     map.put(tag.getKey(), tag.getValue());
                 }
             }
             if (hasWadoLogin) {
                 // Set http login (no protection, only convert in base64)
-                map.put("Authorization", "Basic " + wadoParameters.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
+                map.put("Authorization", "Basic " + wadoParams.getWebLogin()); //$NON-NLS-1$ //$NON-NLS-2$
             }
             return map;
         }
@@ -482,8 +486,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 try {
                     File outFile = File.createTempFile("tumb_", extension, //$NON-NLS-1$
                         Thumbnail.THUMBNAIL_CACHE_DIR);
-                    ClosableURLConnection httpCon =
-                        NetworkUtil.getUrlConnection(new URL(thumURL), getHttpTags(wadoParameters));
+                    ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(thumURL, urlParams);
                     FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
                     if (outFile.length() == 0) {
                         throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
@@ -547,15 +550,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         return dicomSeries;
     }
 
-    public File getJPEGThumnails(WadoParameters wadoParameters, String StudyUID, String SeriesUID,
-        String SOPInstanceUID) throws IOException {
+    public File getJPEGThumnails(WadoParameters wadoParameters, String studyUID, String seriesUID,
+        String sopInstanceUID) throws IOException {
         // TODO set quality as a preference
         URL url =
-            new URL(wadoParameters.getBaseURL() + "?requestType=WADO&studyUID=" + StudyUID + "&seriesUID=" + SeriesUID //$NON-NLS-1$ //$NON-NLS-2$
-                + "&objectUID=" + SOPInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            new URL(wadoParameters.getBaseURL() + "?requestType=WADO&studyUID=" + studyUID + "&seriesUID=" + seriesUID //$NON-NLS-1$ //$NON-NLS-2$
+                + "&objectUID=" + sopInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
 
-        ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(url, getHttpTags(wadoParameters));
+        ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(url, urlParams);
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
         FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
@@ -605,12 +608,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     class Download implements Callable<Boolean> {
 
         private final String url; // download URL
-        private final WadoParameters wado;
         private Status status; // current status of download
 
-        public Download(String url, WadoParameters wado) {
+        public Download(String url) {
             this.url = url;
-            this.wado = wado;
             this.status = Status.DOWNLOADING;
         }
 
@@ -646,7 +647,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
             }
 
-            return NetworkUtil.getUrlConnection(new URL(buffer.toString()), getHttpTags(wado));
+            return NetworkUtil.getUrlConnection(new URL(buffer.toString()), urlParams);
         }
 
         @Override
@@ -684,8 +685,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             boolean cache = true;
             File tempFile = null;
             DicomMediaIO dicomReader = null;
-            Map<String, String> headers = getHttpTags(wado);
-            ClosableURLConnection urlcon = NetworkUtil.getUrlConnection(new URL(url), headers);
+            ClosableURLConnection urlcon = NetworkUtil.getUrlConnection(new URL(url), urlParams);
             try (InputStream stream = urlcon.getInputStream()) {
 
                 if (!writeInCache && url.startsWith("file:")) { //$NON-NLS-1$

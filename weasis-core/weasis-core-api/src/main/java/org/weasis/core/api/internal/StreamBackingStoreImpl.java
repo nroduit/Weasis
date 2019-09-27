@@ -18,7 +18,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -49,6 +48,7 @@ import org.weasis.core.api.util.EscapeChars;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.URLParameters;
 
 /**
  * This is an abstract implementation of a backing store which uses streams to read/write the preferences and stores a
@@ -234,10 +234,10 @@ public class StreamBackingStoreImpl implements BackingStore {
         return null;
     }
 
-    private static Map<String, String> getHttpTags(boolean post) {
-        HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    private static URLParameters getURLParameters(boolean post) {
+        Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
         map.put(post ? "Content-Type" : "Accept", "application/xml"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        return map;
+        return new URLParameters(map, post);
     }
 
     protected PreferencesImpl loadFromService(BackingStoreManager manager, PreferencesDescription desc)
@@ -245,7 +245,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         String prefUrl = BundleTools.getServiceUrl();
         if (StringUtil.hasText(prefUrl) && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
             XMLStreamReader xmler = null;
-            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(new URL(getURL(desc, prefUrl)), getHttpTags(false));
+            try (ClosableURLConnection c = NetworkUtil.getUrlConnection(getURL(desc, prefUrl), getURLParameters(false));
                             InputStream fileReader = c.getInputStream()) {
                 final PreferencesImpl root = new PreferencesImpl(desc, manager);
                 XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -315,14 +315,14 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession()) {
             File file = getFile(prefs.getDescription());
             if (file != null && file.exists()) {
-                Map<String, String> headers = getHttpTags(true);
+                URLParameters urlParams = getURLParameters(true);
                 ClosableURLConnection http =
-                    NetworkUtil.getUrlConnection(getURL(prefs.getDescription(), prefUrl), headers, true);
+                    NetworkUtil.getUrlConnection(getURL(prefs.getDescription(), prefUrl), urlParams);
                 try (OutputStream out = http.getOutputStream()) {
                     writeStream(new FileInputStream(file), out);
                 }
                 if (http.getUrlConnection() instanceof HttpURLConnection) {
-                    NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), headers);
+                    NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), urlParams.getHeaders());
                 }
             }
         }

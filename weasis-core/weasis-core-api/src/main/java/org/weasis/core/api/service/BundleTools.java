@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -37,6 +36,7 @@ import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.URLParameters;
 
 public class BundleTools {
     private static final Logger LOGGER = LoggerFactory.getLogger(BundleTools.class);
@@ -184,20 +184,20 @@ public class BundleTools {
         if (!isLocalSession() || isStoreLocalSession()) {
             String sURL = String.format("%spreferences?user=%s&profile=%s", remotePrefURL, //$NON-NLS-1$
                 getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
-            Map<String, String> headers = getHttpTags(true);
-            ClosableURLConnection http = NetworkUtil.getUrlConnection(new URL(sURL), headers, true);
+            URLParameters urlParameters = getURLParameters(true);
+            ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
             try (OutputStream out = http.getOutputStream()) {
                 props.store(new DataOutputStream(out), null);
             }
             if (http.getUrlConnection() instanceof HttpURLConnection) {
-                NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), headers);
+                NetworkUtil.readResponse((HttpURLConnection) http.getUrlConnection(), urlParameters.getHeaders());
             }
         }
     }
-
-    private static Map<String, String> getHttpTags(boolean post) {
-        HashMap<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
+    
+    private static URLParameters getURLParameters(boolean post) {
+        Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
         map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        return map;
+        return new URLParameters(map, post);
     }
 }

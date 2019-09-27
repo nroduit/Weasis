@@ -68,6 +68,7 @@ import org.weasis.core.api.util.StreamIOException;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.GraphicModel;
@@ -260,11 +261,11 @@ public class DownloadManager {
             factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
 
             String path = uri.getPath();
-
-            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), BundleTools.SESSION_TAGS_MANIFEST,
+            URLParameters urlParameters = new URLParameters(BundleTools.SESSION_TAGS_MANIFEST,
                 StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000), //$NON-NLS-1$
-                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2, false); //$NON-NLS-1$
-            urlConnection.getUrlConnection().setUseCaches(false);
+                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$
+
+            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
 
             LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
             InputStream urlInputStream = urlConnection.getInputStream();

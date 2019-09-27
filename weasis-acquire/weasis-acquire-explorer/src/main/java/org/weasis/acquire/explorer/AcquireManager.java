@@ -71,6 +71,7 @@ import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.dicom.codec.TagD;
@@ -664,7 +665,7 @@ public class AcquireManager {
         try {
             URL url = Objects.requireNonNull(uri).toURL();
             LOGGER.debug("Download from URL: {}", url); //$NON-NLS-1$
-            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(url, BundleTools.SESSION_TAGS_FILE);
+            ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
             try (InputStream inputStream = urlConnection.getInputStream()) {

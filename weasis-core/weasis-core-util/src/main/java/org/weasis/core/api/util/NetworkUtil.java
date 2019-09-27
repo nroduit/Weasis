@@ -67,50 +67,36 @@ public class NetworkUtil {
         return uri;
     }
 
-    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers) throws IOException {
-        return getUrlConnection(new URL(url), headers, getUrlConnectionTimeout(), getUrlReadTimeout(), false);
+    public static ClosableURLConnection getUrlConnection(String url, URLParameters urlParameters) throws IOException {
+        return prepareConnection(new URL(url).openConnection(), urlParameters);
     }
 
-    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers, boolean httpPost) throws IOException {
-        return getUrlConnection(new URL(url), headers, getUrlConnectionTimeout(), getUrlReadTimeout(), httpPost);
+    public static ClosableURLConnection getUrlConnection(URL url, URLParameters urlParameters) throws IOException {
+        return prepareConnection(url.openConnection(), urlParameters);
     }
 
-    public static ClosableURLConnection getUrlConnection(String url, Map<String, String> headers, int connectTimeout,
-        int readTimeout, boolean httpPost) throws IOException {
-        return  getUrlConnection(new URL(url), headers, connectTimeout, readTimeout, httpPost);
-    }
-    
-    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers) throws IOException {
-        return getUrlConnection(url, headers, getUrlConnectionTimeout(), getUrlReadTimeout(), false);
-    }
-    
-    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers, boolean httpPost) throws IOException {
-        return getUrlConnection(url, headers, getUrlConnectionTimeout(), getUrlReadTimeout(), httpPost);
-    }
-
-    public static ClosableURLConnection getUrlConnection(URL url, Map<String, String> headers, int connectTimeout,
-        int readTimeout, boolean httpPost) throws IOException {
-        return prepareConnection(url.openConnection(), headers, connectTimeout, readTimeout, httpPost);
-    }
-
-    private static ClosableURLConnection prepareConnection(URLConnection urlConnection, Map<String, String> headers, int connectTimeout,
-        int readTimeout, boolean post) throws StreamIOException {
+    private static ClosableURLConnection prepareConnection(URLConnection urlConnection, URLParameters urlParameters)
+        throws StreamIOException {
+        Map<String, String> headers = urlParameters.getHeaders();
         if (headers != null && headers.size() > 0) {
             for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                 Entry<String, String> element = iter.next();
                 urlConnection.setRequestProperty(element.getKey(), element.getValue());
             }
         }
-        urlConnection.setConnectTimeout(connectTimeout);
-        urlConnection.setReadTimeout(readTimeout);
+        urlConnection.setConnectTimeout(urlParameters.getConnectTimeout());
+        urlConnection.setReadTimeout(urlParameters.getReadTimeout());
+        urlConnection.setAllowUserInteraction(urlParameters.isAllowUserInteraction());
+        urlConnection.setUseCaches(urlParameters.isUseCaches());
+        urlConnection.setIfModifiedSince(urlParameters.getIfModifiedSince());
         urlConnection.setDoInput(true);
-        if (post) {
+        if (urlParameters.isHttpPost()) {
             urlConnection.setDoOutput(true);
         }
         if (urlConnection instanceof HttpURLConnection) {
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
             try {
-                if (post) {
+                if (urlParameters.isHttpPost()) {
                     httpURLConnection.setRequestMethod("POST"); //$NON-NLS-1$
                 } else {
                     return new ClosableURLConnection(readResponse(httpURLConnection, headers));

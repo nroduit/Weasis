@@ -114,13 +114,14 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         fillPatientList();
         boolean downloadImmediately =
             BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
+        WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
+        getRetrieveHeaders().forEach(wp::addHttpTag);
+        wp.addHttpTag("Accept", "image/jpeg");
+        
         for (final LoadSeries loadSeries : seriesMap.values()) {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
             boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
             if (!ps) {
-                WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
-                getRetrieveHeaders().forEach(wp::addHttpTag);
-                wp.addHttpTag("Accept", "image/jpeg");
                 loadSeries.startDownloadImageReference(wp);
             }
             DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);

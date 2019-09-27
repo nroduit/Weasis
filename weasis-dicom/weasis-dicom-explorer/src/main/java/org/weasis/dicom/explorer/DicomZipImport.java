@@ -32,6 +32,7 @@ import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.FileUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -144,7 +145,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 } else {
                     tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
                     ClosableURLConnection urlConnection =
-                        NetworkUtil.getUrlConnection(u.toURL(), BundleTools.SESSION_TAGS_FILE);
+                        NetworkUtil.getUrlConnection(u.toURL(), new URLParameters(BundleTools.SESSION_TAGS_FILE));
                     FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), tempFile);
                 }
             } catch (Exception e) {

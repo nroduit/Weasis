@@ -27,6 +27,7 @@ import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.api.util.URLParameters;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -101,7 +102,7 @@ public class RsQueryResult extends AbstractQueryResult {
     private List<Attributes> parseJSON(String url) throws IOException {
         List<Attributes> items = new ArrayList<>();
         try (ClosableURLConnection httpCon =
-            NetworkUtil.getUrlConnection(new URL(url), rsQueryParams.getQueryHeaders());
+            NetworkUtil.getUrlConnection(new URL(url), new URLParameters(rsQueryParams.getQueryHeaders()));
                         InputStreamReader instream =
                             new InputStreamReader(httpCon.getInputStream(), StandardCharsets.UTF_8)) {
             JSONReader reader = new JSONReader(Json.createParser(instream));
