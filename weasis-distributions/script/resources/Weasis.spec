@@ -1,20 +1,26 @@
-Summary: APPLICATION_DESCRIPTION
+Summary: APPLICATION_SUMMARY
 Name: APPLICATION_PACKAGE
 Version: APPLICATION_VERSION
-Release: 1
+Release: APPLICATION_RELEASE
 License: APPLICATION_LICENSE_TYPE
 Vendor: APPLICATION_VENDOR
-Prefix: INSTALLATION_DIRECTORY
+Prefix: %{dirname:APPLICATION_DIRECTORY}
 Provides: APPLICATION_PACKAGE
+%if "xAPPLICATION_GROUP" != x
+Group: APPLICATION_GROUP
+%endif
+
 Autoprov: 0
 Autoreq: 0
-PACKAGE_DEPENDENCIES
+%if "xPACKAGE_DEPENDENCIES" != x
+Requires: PACKAGE_DEPENDENCIES
+%endif
 
 #avoid ARCH subfolder
 %define _rpmfilename %%{NAME}-%%{VERSION}-%%{RELEASE}.%%{ARCH}.rpm
 
 #comment line below to enable effective jar compression
-#it could easily get your package size from 40 to 15Mb but 
+#it could easily get your package size from 40 to 15Mb but
 #build time will substantially increase and it may require unpack200/system java to install
 %define __jar_repack %{nil}
 
@@ -27,35 +33,39 @@ APPLICATION_DESCRIPTION
 
 %install
 rm -rf %{buildroot}
-mkdir -p %{buildroot}INSTALLATION_DIRECTORY
-cp -r %{_sourcedir}/APPLICATION_FS_NAME %{buildroot}INSTALLATION_DIRECTORY
+install -d -m 755 %{buildroot}APPLICATION_DIRECTORY
+cp -r %{_sourcedir}APPLICATION_DIRECTORY/* %{buildroot}APPLICATION_DIRECTORY
+%if "xAPPLICATION_LICENSE_FILE" != x
+  %define license_install_file %{_defaultlicensedir}/%{name}-%{version}/%{basename:APPLICATION_LICENSE_FILE}
+  install -d -m 755 %{buildroot}%{dirname:%{license_install_file}}
+  install -m 644 APPLICATION_LICENSE_FILE %{buildroot}%{license_install_file}
+%endif
 
 %files
-APPLICATION_LICENSE_FILE
-INSTALLATION_DIRECTORY/APPLICATION_FS_NAME
+%if "xAPPLICATION_LICENSE_FILE" != x
+  %license %{license_install_file}
+  %{dirname:%{license_install_file}}
+%endif
+# If installation directory for the application is /a/b/c, we want only root
+# component of the path (/a) in the spec file to make sure all subdirectories
+# are owned by the package.
+%(echo APPLICATION_DIRECTORY | sed -e "s|\(^/[^/]\{1,\}\).*$|\1|")
 
 %post
-if [ "CREATE_JRE_INSTALLER" != "true" ]; then
-    ADD_LAUNCHERS_INSTALL
-    xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/bin/Dicomizer.desktop	
-    xdg-desktop-menu install --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
-    mkdir -p /etc/opt/chrome/policies/managed/
+DESKTOP_COMMANDS_INSTALL
+xdg-desktop-menu install /opt/weasis/lib/weasis-Dicomizer.desktop	
+mkdir -p /etc/opt/chrome/policies/managed/
     echo '{
     "URLWhitelist": ["weasis://*"]
 }' > /etc/opt/chrome/policies/managed/weasis.json 
-    mkdir -p /etc/chromium/policies/managed/
-    cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
-    FILE_ASSOCIATION_INSTALL
-fi
+mkdir -p /etc/chromium/policies/managed/
+cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/weasis.json
 
 %preun
-if [ "CREATE_JRE_INSTALLER" != "true" ]; then
-    ADD_LAUNCHERS_REMOVE
-    xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/bin/Dicomizer.desktop
-    xdg-desktop-menu uninstall --novendor INSTALLATION_DIRECTORY/APPLICATION_FS_NAME/APPLICATION_LAUNCHER_FILENAME.desktop
-    rm -f /etc/opt/chrome/policies/managed/weasis.json 
-    rm -f /etc/chromium/policies/managed/weasis.json
-    FILE_ASSOCIATION_REMOVE
-fi
+UTILITY_SCRIPTS
+DESKTOP_COMMANDS_UNINSTALL
+xdg-desktop-menu uninstall /opt/weasis/lib/weasis-Dicomizer.desktop
+rm -f /etc/opt/chrome/policies/managed/weasis.json 
+rm -f /etc/chromium/policies/managed/weasis.json
 
 %clean

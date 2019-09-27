@@ -10,6 +10,7 @@ REQUIRED_TEXT_VERSION=13
 # Build Parameters
 PACKAGE=YES
 SUBSTANCE_PKG="2.5.0-rc"
+REVISON_INC="1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
@@ -237,17 +238,21 @@ if [ "$machine" == "windows" ] ; then
   $JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
   --resource-dir "resources" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
-  mkdir "$IMAGE_PATH\\bin\\debug"
-  cp "$OUTPUT_PATH-debug\\$NAME\\bin\\$NAME.exe"  "$IMAGE_PATH\\bin\\debug\\$NAME.exe"
+  mkdir "$IMAGE_PATH\\debug"
+  cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
 fi
 
-APP_FOLDER_NAME="app"
+
 
 if [ "$machine" = "macosx" ] ; then
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/Java"
   APP_FOLDER_NAME="Java"
+elif [ "$machine" = "linux" ] ; then
+  OUT_APP="$OUTPUT_PATH_UNIX/$NAME/lib/app"
+  APP_FOLDER_NAME="lib\/app"
 else
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME/app"
+  APP_FOLDER_NAME="app"
 fi
 
 match="app.name"
@@ -263,10 +268,10 @@ rm -f "$OUT_APP/$NAME.cfg.bck"
 
 
 if [ "$machine" = "linux" ] ; then
-  cp "resources/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/bin/Dicomizer.desktop"
+  cp "resources/weasis-Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
   # Fix icon of second launcher
-  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/bin/Dicomizer.ico"
+  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
   cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
   cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
@@ -281,7 +286,7 @@ if [ "$PACKAGE" = "YES" ] ; then
     [ "$ARC_NAME" = "x86" ]  && WXS="resources\main32.wxs" || WXS="resources\main.wxs"
     $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
-    --win-menu --win-menu-group "$NAME" --win-registry-name "weasis" --win-upgrade-uuid "$UPGRADE_UID" \
+    --win-menu --win-menu-group "$NAME" --win-upgrade-uuid "$UPGRADE_UID" \
     --win-wxs "$WXS" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
@@ -289,17 +294,15 @@ if [ "$PACKAGE" = "YES" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
       $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
-      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
-      --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-      --vendor "$VENDOR" --file-associations "linux-$FILE_ASSOC" --verbose --linux-shortcut
+      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" --vendor "$VENDOR" \
+      --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "$FILE_ASSOC" \
+      --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
     done
   elif [ "$machine" = "macosx" ] ; then
     $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH/Licence.txt" --mac-bundle-name "$NAME" --mac-bundle-identifier "$IDENTIFIER" \
-    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --identifier "$IDENTIFIER" \
-    --mac-signing-key-user-name "$CERTIFICATE" \
-    --file-associations "$FILE_ASSOC" --verbose "$MAC_SIGN"
+    --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --identifier "$IDENTIFIER" \
+    --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
   fi
 fi
 

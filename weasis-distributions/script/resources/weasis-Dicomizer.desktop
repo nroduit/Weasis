@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Dicomizer
+Comment=Build DICOM files from images
+Exec=/opt/weasis/bin/Weasis '$weasis:config pro="felix.extended.config.properties file:/opt/weasis/lib/app/conf/ext-dicomizer.properties" pro="gosh.port 17181"'
+Icon=/opt/weasis/lib/app/resources/images/dicomizer.png
+Terminal=false
+Type=Application
+Categories=Viewer;MedicalSoftware;Graphics;

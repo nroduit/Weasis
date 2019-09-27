@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=APPLICATION_NAME
+Comment=Medical DICOM viewer
+Exec=APPLICATION_LAUNCHER %U
+Icon=APPLICATION_ICON
+Terminal=false
+Type=Application
+Categories=DEPLOY_BUNDLE_CATEGORY
+DESKTOP_MIMES;x-scheme-handler/weasis;
