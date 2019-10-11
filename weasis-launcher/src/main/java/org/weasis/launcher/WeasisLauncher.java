@@ -28,7 +28,6 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -151,6 +150,7 @@ public class WeasisLauncher {
     public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer"; //$NON-NLS-1$
     public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release"; //$NON-NLS-1$
+    public static final String P_WEASIS_I18N = "weasis.i18n";
     public static final String P_OS_NAME = "os.name"; //$NON-NLS-1$
     public static final String P_WEASIS_LOOK = "weasis.look"; //$NON-NLS-1$
     public static final String P_GOSH_ARGS = "gosh.args"; //$NON-NLS-1$
@@ -164,15 +164,16 @@ public class WeasisLauncher {
     protected ServiceTracker mTracker = null;
     protected volatile boolean frameworkLoaded = false;
 
-    static Properties modulesi18n = null;
     protected String look = null;
     protected RemotePrefService remotePrefs;
     protected String localPrefsDir;
 
+    protected final Properties modulesi18n;
     protected final ConfigData configData;
 
     public WeasisLauncher(ConfigData configData) {
         this.configData = Objects.requireNonNull(configData);
+        this.modulesi18n = new Properties();
     }
 
     public static void main(String[] argv) throws Exception {
@@ -220,7 +221,7 @@ public class WeasisLauncher {
 
             // Use the system bundle context to process the auto-deploy
             // and auto-install/auto-start properties.
-            loader.setFelix(serverProp, mFelix.getBundleContext());
+            loader.setFelix(serverProp, mFelix.getBundleContext(), modulesi18n);
             loader.writeLabel(
                 String.format(Messages.getString("WeasisLauncher.starting"), System.getProperty(P_WEASIS_NAME))); //$NON-NLS-1$
             mTracker =
@@ -622,16 +623,12 @@ public class WeasisLauncher {
      * This following part has been copied from the Main class of the Felix project
      *
      **/
-    public static Properties readProperties(URI propURI, Properties props) {
-        Properties p = props == null ? new Properties() : props;
-
+    public static void readProperties(URI propURI, Properties props) {
         try (InputStream is = FileUtil.getAdaptedConnection(propURI.toURL(), false).getInputStream()) {
-            // Try to load config.properties
-            p.load(is);
+            props.load(is);
         } catch (Exception ex) {
             LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot read properties file: %s", propURI)); //$NON-NLS-1$
         }
-        return p;
     }
 
     private static String getGeneralProperty(String key, String defaultValue, Map<String, String> serverProp,
@@ -699,7 +696,7 @@ public class WeasisLauncher {
                 remotePrefs = new RemotePrefService(remotePrefURL, serverProp, user, profileName);
                 Properties remote = remotePrefs.readLauncherPref(null);
                 currentProps.putAll(remote); // merger remote to local
-                if (remote.size() < currentProps.size()) { 
+                if (remote.size() < currentProps.size()) {
                     // Force to have difference for saving preferences
                     serverProp.put("wp.init.diff.remote.pref", Boolean.TRUE.toString()); //$NON-NLS-1$
                 }
@@ -720,8 +717,9 @@ public class WeasisLauncher {
         // Set value back to the bundle context properties, sling logger uses bundleContext.getProperty(prop)
         getGeneralProperty("org.apache.sling.commons.log.level", "INFO", serverProp, currentProps, true, true); //$NON-NLS-1$ //$NON-NLS-2$
         // Empty string make the file log writer disable
-        String logActivatation = getGeneralProperty("org.apache.sling.commons.log.file.activate", Boolean.FALSE.toString(), serverProp, //$NON-NLS-1$
-            currentProps, true, true);
+        String logActivatation =
+            getGeneralProperty("org.apache.sling.commons.log.file.activate", Boolean.FALSE.toString(), serverProp, //$NON-NLS-1$
+                currentProps, true, true);
         if (Utils.getEmptytoFalse(logActivatation)) {
             String logFile = dir + File.separator + "log" + File.separator + "default.log"; //$NON-NLS-1$ //$NON-NLS-2$
             serverProp.put("org.apache.sling.commons.log.file", logFile); //$NON-NLS-1$
@@ -734,37 +732,12 @@ public class WeasisLauncher {
         getGeneralProperty("org.apache.sling.commons.log.pattern", //$NON-NLS-1$
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", serverProp, currentProps, false, true); //$NON-NLS-1$
 
-        String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
-        URI translationModules = null;
-        if (cdbl != null) {
-            File file = new File(cdbl, "bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
-            if (file.canRead()) {
-                translationModules = file.toURI();
-                String path = file.getParentFile().toURI().toString();
-                System.setProperty("weasis.i18n", path); //$NON-NLS-1$
-            }
-        } else {
-            String path = configData.getProperty("weasis.i18n", null); //$NON-NLS-1$
-            if (path != null) {
-                path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                try {
-                    translationModules = new URI(path);
-                } catch (URISyntaxException e) {
-                    LOGGER.log(Level.SEVERE, "Cannot find translation modules", e); //$NON-NLS-1$
-                }
-            }
-        }
-        if (translationModules != null) {
-            modulesi18n = readProperties(translationModules, null);
-            if (modulesi18n != null) {
-                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            }
-        }
+        loadI18nModules();
 
         Locale locale = textToLocale(lang);
         if (Locale.ENGLISH.equals(locale)) {
             // if English no need to load i18n bundle fragments
-            modulesi18n = null;
+            modulesi18n.clear();
         } else {
             String suffix = locale.toString();
             SwingResources.loadResources("/swing/basic_" + suffix + ".properties"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -867,6 +840,7 @@ public class WeasisLauncher {
             configData.getProperty(P_WEASIS_CODEBASE_URL, "") + defaultResources); //$NON-NLS-1$
         File cacheDir = null;
         boolean mavenRepo = Utils.hasText(System.getProperty("maven.localRepository", null)); //$NON-NLS-1$
+        String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
         boolean localRes = mavenRepo || new File(cdbl, F_RESOURCES).exists();
         try {
             if (!localRes && resPath.endsWith(".zip") && !resPath.equals(defaultResources)) { //$NON-NLS-1$
@@ -907,12 +881,13 @@ public class WeasisLauncher {
                 update = true;
             }
         }
-        String showDisclaimer =
-            getGeneralProperty(P_WEASIS_SHOW_DISCLAIMER, Boolean.TRUE.toString(), serverProp, currentProps, false, false);
+        String showDisclaimer = getGeneralProperty(P_WEASIS_SHOW_DISCLAIMER, Boolean.TRUE.toString(), serverProp,
+            currentProps, false, false);
         if (Utils.hasText(showDisclaimer)) {
             serverProp.put("prev." + P_WEASIS_SHOW_DISCLAIMER, showDisclaimer); //$NON-NLS-1$
         }
-        String showRelease = getGeneralProperty(P_WEASIS_SHOW_RELEASE, Boolean.TRUE.toString(), serverProp, currentProps, false, false);
+        String showRelease =
+            getGeneralProperty(P_WEASIS_SHOW_RELEASE, Boolean.TRUE.toString(), serverProp, currentProps, false, false);
         if (Utils.hasText(showRelease)) {
             serverProp.put("prev." + P_WEASIS_SHOW_RELEASE, showRelease); //$NON-NLS-1$
         }
@@ -965,9 +940,10 @@ public class WeasisLauncher {
         conf.append(prefDir.getPath());
         conf.append("\n  Look and Feel = "); //$NON-NLS-1$
         conf.append(look);
-        if (translationModules != null) {
+        String i18nPath = System.getProperty(P_WEASIS_I18N);
+        if (Utils.hasText(i18nPath)) {
             conf.append("\n  Languages path = "); //$NON-NLS-1$
-            conf.append(translationModules);
+            conf.append(i18nPath);
         }
         conf.append("\n  Languages available = "); //$NON-NLS-1$
         conf.append(System.getProperty("weasis.languages", "en")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -993,6 +969,49 @@ public class WeasisLauncher {
         conf.append("\n***** End of Configuration *****"); //$NON-NLS-1$
         LOGGER.log(Level.INFO, conf::toString);
         return loader;
+    }
+
+    private void loadI18nModules() {
+        try {
+            String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
+            if (cdbl == null) {
+                String path = configData.getProperty(P_WEASIS_I18N, null); 
+                if (Utils.hasText(path)) {
+                    path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    WeasisLauncher.readProperties(new URI(path), modulesi18n);
+                } else {
+                    String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null); // $NON-NLS-1$
+                    if (Utils.hasText(cdb)) {
+                        path = cdb.substring(0, cdb.lastIndexOf('/')) + "/weasis-i18n";
+                        WeasisLauncher.readProperties(new URI(path + "/buildNumber.properties"), modulesi18n);
+                        if (!modulesi18n.isEmpty()) {
+                            System.setProperty(P_WEASIS_I18N, path); 
+                        }
+                    }
+                }
+
+            }
+            
+            // Try to find the native installation
+            if (modulesi18n.isEmpty()) {
+                if (cdbl == null) {
+                    cdbl = ConfigData.findLocalCodebase().getPath();
+                }
+                File file = new File(cdbl, "bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
+                if (file.canRead()) {
+                    WeasisLauncher.readProperties(file.toURI(), modulesi18n);
+                    if (!modulesi18n.isEmpty()) {
+                        System.setProperty(P_WEASIS_I18N, file.getParentFile().toURI().toString()); 
+                    }
+                }
+            }
+
+            if (!modulesi18n.isEmpty()) {
+                System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            }
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Cannot load translation modules", e); //$NON-NLS-1$
+        }
     }
 
     /**

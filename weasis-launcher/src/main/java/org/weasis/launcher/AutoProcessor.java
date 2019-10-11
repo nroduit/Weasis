@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.jar.JarOutputStream;
@@ -99,10 +100,11 @@ public class AutoProcessor {
      *            The system bundle context.
      * @param weasisLoader
      **/
-    public static void process(Map<String, String> configMap, BundleContext context, WeasisLoader weasisLoader) {
+    public static void process(Map<String, String> configMap, Properties modulesi18n, BundleContext context,
+        WeasisLoader weasisLoader) {
         Map<String, String> map = (configMap == null) ? new HashMap<>() : configMap;
         processAutoDeploy(map, context, weasisLoader);
-        processAutoProperties(map, context, weasisLoader);
+        processAutoProperties(map, modulesi18n, context, weasisLoader);
     }
 
     /**
@@ -166,7 +168,8 @@ public class AutoProcessor {
             }
             weasisLoader.setMax(jarList.size());
 
-            boolean cache = Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
+            boolean cache =
+                Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
             // Install bundle JAR files and remember the bundle objects.
             final List<Bundle> startBundleList = new ArrayList<>();
             for (int i = 0; i < jarList.size(); i++) {
@@ -248,8 +251,8 @@ public class AutoProcessor {
      * Processes the auto-install and auto-start properties from the specified configuration properties.
      * </p>
      */
-    private static void processAutoProperties(Map<String, String> configMap, BundleContext context,
-        WeasisLoader weasisLoader) {
+    private static void processAutoProperties(Map<String, String> configMap, Properties modulesi18n,
+        BundleContext context, WeasisLoader weasisLoader) {
         // Retrieve the Start Level service, since it will be needed
         // to set the start level of the installed bundles.
         StartLevel sl = (StartLevel) context
@@ -327,7 +330,8 @@ public class AutoProcessor {
             }
         }
 
-        boolean cache = Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
+        boolean cache =
+            Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
         int bundleIter = 0;
 
         // Parse and install the bundles associated with the key.
@@ -349,7 +353,7 @@ public class AutoProcessor {
                     installedBundleMap.put(bundleName, b);
                 }
                 sl.setBundleStartLevel(b, bundle.getStartLevel());
-                loadTranslationBundle(context, b, installedBundleMap);
+                loadTranslationBundle(context, b, installedBundleMap, modulesi18n);
             } catch (Exception ex) {
                 if (bundleName.contains(System.getProperty("native.library.spec"))) { //$NON-NLS-1$
                     LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install a native bundle %s", bundleName)); //$NON-NLS-1$
@@ -406,8 +410,8 @@ public class AutoProcessor {
     }
 
     private static void loadTranslationBundle(BundleContext context, Bundle b,
-        final Map<String, Bundle> installedBundleMap) {
-        if (WeasisLauncher.modulesi18n != null) {
+        final Map<String, Bundle> installedBundleMap, Properties modulesi18n) {
+        if (!modulesi18n.isEmpty()) {
             if (b != null) {
                 StringBuilder p = new StringBuilder(b.getSymbolicName());
                 p.append("-i18n-"); //$NON-NLS-1$
@@ -416,9 +420,9 @@ public class AutoProcessor {
                 p.append("2.0.0"); //$NON-NLS-1$
                 p.append(".jar"); //$NON-NLS-1$
                 String filename = p.toString();
-                String value = WeasisLauncher.modulesi18n.getProperty(filename);
+                String value = modulesi18n.getProperty(filename);
                 if (value != null) {
-                    String baseURL = System.getProperty("weasis.i18n"); //$NON-NLS-1$
+                    String baseURL = System.getProperty(WeasisLauncher.P_WEASIS_I18N); 
                     if (baseURL != null) {
                         String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
                         String bundleName = getBundleNameFromLocation(filename);
@@ -493,9 +497,9 @@ public class AutoProcessor {
             if ((!exit) && (tokStarted)) {
                 retVal = tokBuf.toString();
             }
-            
-            if(Utils.hasText(retVal)) {
-                retVal = Utils.adaptPathToUri(retVal);  
+
+            if (Utils.hasText(retVal)) {
+                retVal = Utils.adaptPathToUri(retVal);
             }
         }
 

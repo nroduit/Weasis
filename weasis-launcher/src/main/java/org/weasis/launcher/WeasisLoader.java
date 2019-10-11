@@ -26,6 +26,7 @@ import java.awt.Window;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -246,7 +247,7 @@ public class WeasisLoader {
         }
     }
 
-    public void setFelix(Map<String, String> serverProp, BundleContext bundleContext) {
-        AutoProcessor.process(serverProp, bundleContext, this);
+    public void setFelix(Map<String, String> serverProp, BundleContext bundleContext, Properties modulesi18n) {
+        AutoProcessor.process(serverProp, modulesi18n, bundleContext, this);
     }
 }

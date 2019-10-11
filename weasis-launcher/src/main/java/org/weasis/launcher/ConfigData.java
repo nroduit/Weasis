@@ -663,7 +663,7 @@ public class ConfigData {
         return String.valueOf(ch8);
     }
 
-    private static File findLocalCodebase() {
+    static File findLocalCodebase() {
         // Determine where the configuration directory is by figuring
         // out where weasis-launcher.jar is located on the system class path.
         String jarLocation = null;
