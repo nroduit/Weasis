@@ -450,6 +450,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public void loadThumbnail(SopInstance instance, WadoParameters wadoParameters) {
         File file = null;
+        URLParameters params = urlParams;
         if (instance.getDirectDownloadFile() == null) {
             String studyUID = ""; //$NON-NLS-1$
             String seriesUID = ""; //$NON-NLS-1$
@@ -469,7 +470,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (wadoParameters.isWadoRS()) {
                 thumURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
                 if (thumURL != null) {
-                    thumURL += "/thumbnail?viewport=256,256";
+                    thumURL += "/thumbnail?viewport=" + Thumbnail.MAX_SIZE +"%2C" + + Thumbnail.MAX_SIZE;
+                    params = new URLParameters(new HashMap<>(urlParams.getHeaders()));
+                    params.getHeaders().put("Accept", "image/jpeg");
                 }
             } else {
                 thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
@@ -486,14 +489,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 try {
                     File outFile = File.createTempFile("tumb_", extension, //$NON-NLS-1$
                         Thumbnail.THUMBNAIL_CACHE_DIR);
-                    ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(thumURL, urlParams);
+                    ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(thumURL, params);
                     FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
                     if (outFile.length() == 0) {
                         throw new IllegalStateException("Thumbnail file is empty"); //$NON-NLS-1$
                     }
                     file = outFile;
                 } catch (Exception e) {
-                    LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
+                    LOGGER.error("Downloading thumbnail with {}", thumURL, e); //$NON-NLS-1$
                 }
             }
         }

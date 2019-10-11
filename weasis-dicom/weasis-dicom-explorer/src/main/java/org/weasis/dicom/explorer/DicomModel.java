@@ -1081,9 +1081,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
         }
 
-        // Accept empty value
-        props.setProperty(RsQueryParams.P_ACCEPT_EXT, opt.get("accept-ext"));
-
+        String acceptExt = opt.get("accept-ext");
+        if (!StringUtil.hasText(acceptExt)) {
+            acceptExt = "transfer-syntax=*";
+        }
+        props.setProperty(RsQueryParams.P_ACCEPT_EXT, acceptExt);
 
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(

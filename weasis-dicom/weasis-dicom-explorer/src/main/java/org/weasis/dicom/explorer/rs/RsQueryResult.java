@@ -46,8 +46,12 @@ import org.weasis.dicom.web.Multipart;
 public class RsQueryResult extends AbstractQueryResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryResult.class);
 
-    private static final String STUDY_QUERY =
-        "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010";
+    private static final boolean multipleParams =
+        LangUtil.getEmptytoFalse(System.getProperty("dicom.qido.query.multi.params"));
+    private static final String STUDY_QUERY = multiParams(
+        "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010");
+    private static final String SERIES_QUERY = multiParams("0008103E,00080060,0020000E,00200011,00081190");
+    private static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190");
     private static final String QIDO_REQUEST = "QIDO-RS request: {}";
 
     private final RsQueryParams rsQueryParams;
@@ -57,9 +61,13 @@ public class RsQueryResult extends AbstractQueryResult {
         this.rsQueryParams = rsQueryParams;
         this.wadoParameters = new WadoParameters("", true, true); //$NON-NLS-1$
         rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
-        String ext = rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT, "transfer-syntax=*");
         // Accept only multipart/related and retrieve dicom at the stored syntax
-        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=" + Multipart.ContentType.DICOM + ";"  + ext);
+        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=" + Multipart.ContentType.DICOM + ";"
+            + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
+    }
+
+    private static String multiParams(String query) {
+        return multipleParams ? query.replace(",", "&includefield=") : query;
     }
 
     @Override
@@ -340,20 +348,12 @@ public class RsQueryResult extends AbstractQueryResult {
                     MediaSeriesGroup patient = getPatient(dataset);
                     MediaSeriesGroup study = getStudy(patient, dataset);
                     Series<?> dicomSeries = getSeries(study, dataset);
+                    String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
                     SeriesInstanceList seriesInstanceList =
                         (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
                     if (seriesInstanceList != null) {
                         for (Attributes instanceDataSet : instances) {
-                            String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                            Integer frame =
-                                DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
-
-                            SopInstance sop = seriesInstanceList.getSopInstance(sopUID, frame);
-                            if (sop == null) {
-                                sop = new SopInstance(sopUID, frame);
-                                sop.setDirectDownloadFile(instanceDataSet.getString(Tag.RetrieveURL));
-                                seriesInstanceList.addSopInstance(sop);
-                            }
+                            addSopInstance(instanceDataSet, seriesInstanceList, seriesRetrieveURL);
                         }
                     }
                 }
@@ -370,7 +370,7 @@ public class RsQueryResult extends AbstractQueryResult {
             buf.append("/studies/");
             buf.append(studyInstanceUID);
             buf.append("/series?includefield=");
-            buf.append("0008103E,00080060,0020000E,00200011,00081190");
+            buf.append(SERIES_QUERY);
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -394,13 +394,10 @@ public class RsQueryResult extends AbstractQueryResult {
     private void fillInstance(Attributes seriesDataset, MediaSeriesGroup study, Series<?> dicomSeries) {
         String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
         if (StringUtil.hasText(serieInstanceUID)) {
-            StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/studies/");
-            buf.append(study.getTagValue(TagD.get(Tag.StudyInstanceUID)));
-            buf.append("/series/");
-            buf.append(serieInstanceUID);
+            String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
+            StringBuilder buf = new StringBuilder(seriesRetrieveURL);
             buf.append("/instances?includefield=");
-            buf.append("00080018,00200013,00081190");
+            buf.append(INSTANCE_QUERY);
             buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
@@ -411,22 +408,33 @@ public class RsQueryResult extends AbstractQueryResult {
                         (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
                     if (seriesInstanceList != null) {
                         for (Attributes instanceDataSet : instances) {
-                            String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
-                            Integer frame =
-                                DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
-
-                            SopInstance sop = seriesInstanceList.getSopInstance(sopUID, frame);
-                            if (sop == null) {
-                                sop = new SopInstance(sopUID, frame);
-                                sop.setDirectDownloadFile(instanceDataSet.getString(Tag.RetrieveURL));
-                                seriesInstanceList.addSopInstance(sop);
-                            }
+                            addSopInstance(instanceDataSet, seriesInstanceList, seriesRetrieveURL);
                         }
                     }
                 }
             } catch (Exception e) {
                 LOGGER.error("QIDO-RS all instances with seriesUID {}", serieInstanceUID, e);
             }
+        }
+    }
+
+    private void addSopInstance(Attributes instanceDataSet, SeriesInstanceList seriesInstanceList,
+        String seriesRetrieveURL) {
+        String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
+        Integer frame = DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
+
+        SopInstance sop = seriesInstanceList.getSopInstance(sopUID, frame);
+        if (sop == null) {
+            sop = new SopInstance(sopUID, frame);
+            String rurl = instanceDataSet.getString(Tag.RetrieveURL);
+            if (!StringUtil.hasText(rurl)) {
+                StringBuilder b = new StringBuilder(seriesRetrieveURL);
+                b.append("/instances/");
+                b.append(sopUID);
+                rurl = b.toString();
+            }
+            sop.setDirectDownloadFile(rurl);
+            seriesInstanceList.addSopInstance(sop);
         }
     }
 
@@ -496,6 +504,15 @@ public class RsQueryResult extends AbstractQueryResult {
             for (TagW tag : tags) {
                 tag.readValue(seriesDataset, dicomSeries);
             }
+            if (!StringUtil.hasText(TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class))) {
+                StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
+                buf.append("/studies/");
+                buf.append(study.getTagValue(TagD.get(Tag.StudyInstanceUID)));
+                buf.append("/series/");
+                buf.append(seriesUID);
+                dicomSeries.setTag(TagD.get(Tag.RetrieveURL), buf.toString());
+            }
+
             model.addHierarchyNode(study, dicomSeries);
 
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, rsQueryParams.getDicomModel(),
