@@ -71,8 +71,7 @@ public class ConfigData {
     private final StringBuilder configOutput = new StringBuilder();
     private final Map<String, String> felixProps = new HashMap<>();
 
-    public ConfigData() {
-        this(null);
+    protected ConfigData() {
     }
 
     public ConfigData(String[] args) {
@@ -83,6 +82,7 @@ public class ConfigData {
         this.clear();
         LOGGER.log(Level.INFO, "Starting Weasis..."); //$NON-NLS-1$
         LOGGER.log(Level.INFO, "Initialization of the launch configuration..."); //$NON-NLS-1$
+
         if (args != null) {
             for (int i = 0; i < args.length; i++) {
                 LOGGER.log(Level.INFO, "Main arg {0} = {1}", new Object[] { Integer.toString(i), args[i] }); //$NON-NLS-1$
@@ -105,7 +105,21 @@ public class ConfigData {
             }
         }
 
-        // Apply first the Java System Properties
+        // Add config and weasis properties from previously set Java System Properties
+        // It avoids any given launch arguments from overloading them.
+        applyJavaProperties();
+
+        // Extract config and weasis properties from arguments, but has no effect on those already set
+        applyConfigFromArguments();
+
+        // Load all the felix properties
+        Properties felixConfig = loadConfigProperties();
+
+        // Set "application config" properties, but has no effect on those already set
+        initWeasisProperties(felixConfig);
+    }
+
+    private void applyJavaProperties() {
         applyJavaProperty(CONFIG_PROPERTIES_PROP);
         applyJavaProperty(EXTENDED_PROPERTIES_PROP);
         for (String propertyName : System.getProperties().stringPropertyNames()) {
@@ -113,14 +127,6 @@ public class ConfigData {
                 applyJavaProperty(propertyName);
             }
         }
-
-        // Extract config and properties from arguments
-        applyConfigFromArguments();
-
-        // Loading all the felix properties
-        Properties felixConfig = loadConfigProperties();
-
-        initWeasisProperties(felixConfig);
     }
 
     private void applyJavaProperty(String key) {
@@ -187,8 +193,7 @@ public class ConfigData {
             System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$
         }
 
-        // Perform variable substitution for system properties and
-        // convert to dictionary.
+        // Perform variable substitution for system properties and convert to dictionary.
 
         for (Enumeration<?> e = felixConfig.propertyNames(); e.hasMoreElements();) {
             String name = (String) e.nextElement();
@@ -203,8 +208,8 @@ public class ConfigData {
             if (cmds.length > 0) {
                 for (int i = 1; i < cmds.length; i++) {
                     // Fix Windows issue (add a trailing slash)
-                    if (i == cmds.length -1 && cmds[i].endsWith("/")) {
-                        cmds[i] = cmds[i].substring(0, cmds[i].length() -1);
+                    if (i == cmds.length - 1 && cmds[i].endsWith("/")) {
+                        cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
                     }
                     arguments.add(cmds[i]);
                 }
@@ -217,8 +222,11 @@ public class ConfigData {
     /**
      * First extract $weasis:config arguments from command launch. If serviceConfigUrl is given then config parameters
      * will be read from this URl. <br>
-     * Note that any command launch argument take priority over serviceConfig parameters. <br>
-     * Calling this method will have no effect if called more than once per init(args) call
+     * If none codebase/or weasis properties URLs are given from arguments, then default values will be set.<br>
+     * Local path is considered when codebaseUrl is not defined.
+     * 
+     * @note Any command launch argument takes priority over serviceConfig parameters. <br>
+     * 
      */
 
     private void applyConfigFromArguments() {
@@ -596,6 +604,10 @@ public class ConfigData {
         }
         return configParams;
     }
+
+    /**
+     * Reads application config files and compute WEASIS_CONFIG_HASH to check if those would have been updated.
+     */
 
     public Properties loadConfigProperties() {
         URI propURI = getPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
