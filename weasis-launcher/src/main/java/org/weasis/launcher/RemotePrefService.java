@@ -27,6 +27,9 @@ import java.util.logging.Logger;
 
 public class RemotePrefService {
 
+    public static final String P_REMOTE_PREF_USER = "user";
+    public static final String P_REMOTE_PREF_PROFILE = "profile";
+
     private static final String TEXT_X_JAVA_PROP = "text/x-java-properties"; //$NON-NLS-1$
 
     private static final Logger LOGGER = Logger.getLogger(RemotePrefService.class.getName());
@@ -38,7 +41,7 @@ public class RemotePrefService {
     private final boolean storeLocalSession;
 
     public RemotePrefService(String url, Map<String, String> serverProp, String user, String profile) {
-        this.remotePrefURL = Objects.requireNonNull(url).endsWith("/") ? url : url + "/"; //$NON-NLS-1$ //$NON-NLS-2$
+        this.remotePrefURL = Objects.requireNonNull(url);
         this.user = Objects.requireNonNull(user);
         this.localSessionUser = Utils.getEmptytoFalse(serverProp.get("weasis.pref.local.session")); //$NON-NLS-1$
         this.storeLocalSession = Utils.getEmptytoFalse(serverProp.get("weasis.pref.store.local.session")); //$NON-NLS-1$
@@ -62,8 +65,8 @@ public class RemotePrefService {
     }
 
     private String getRemoteLauncherUrl() throws UnsupportedEncodingException {
-        return String.format("%spreferences?user=%s&profile=%s", remotePrefURL, getEncodedValue(user), //$NON-NLS-1$
-            getEncodedValue(profile));
+        return String.format("%s?%s=%s&%s=%s", remotePrefURL, P_REMOTE_PREF_USER, getEncodedValue(user),
+            P_REMOTE_PREF_PROFILE, getEncodedValue(profile));
     }
 
     public Properties readLauncherPref(Properties props) throws IOException {
