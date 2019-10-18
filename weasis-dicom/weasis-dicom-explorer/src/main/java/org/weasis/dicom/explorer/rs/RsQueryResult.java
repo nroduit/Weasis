@@ -62,7 +62,7 @@ public class RsQueryResult extends AbstractQueryResult {
         this.wadoParameters = new WadoParameters("", true, true); //$NON-NLS-1$
         rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
         // Accept only multipart/related and retrieve dicom at the stored syntax
-        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=" + Multipart.ContentType.DICOM + ";"
+        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM + "\";"
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
     }
 
