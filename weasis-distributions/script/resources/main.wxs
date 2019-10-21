@@ -4,10 +4,8 @@
      
   <?ifdef JpIsSystemWide ?>
     <?define JpInstallScope="perMachine"?>
-    <?define JpRegistryRoot="HKLM"?>
   <?else?>
     <?define JpInstallScope="perUser"?>
-    <?define JpRegistryRoot="HKCU"?>
   <?endif?>
   
   <Product  Id="$(var.JpProductCode)" Name="$(var.JpAppName)"
@@ -24,34 +22,18 @@
     <MajorUpgrade AllowDowngrades="yes"/>
     <?endif?>
     
-        <!-- We use RemoveFolderEx to ensure application folder is fully
-             removed on uninstall. Including files created outside of MSI
-             after application had been installed (e.g. on AU or user state).
-
-             However, RemoveFolderEx is only available in WiX 3.6,
-             we will comment it out if we running older WiX.
-
-             RemoveFolderEx requires that we "remember" the path for uninstall.
-             Read the path value and set the APPLICATIONFOLDER property with the value.
-        -->
-        <Property Id="APPLICATIONFOLDER">
-            <RegistrySearch Key="SOFTWARE\$(var.JpAppVendor)\$(var.JpAppName)"
-                            Root="$(var.JpRegistryRoot)" Type="raw" Win64="yes"
-                            Id="APPLICATIONFOLDER_REGSEARCH" Name="Path" />
-        </Property>
-        <DirectoryRef Id="APPLICATIONFOLDER">
-            <Component Id="CleanupMainApplicationFolder" Guid="*" Win64="yes">
-                <RegistryValue Root="$(var.JpRegistryRoot)"
-                               Key="SOFTWARE\$(var.JpAppVendor)\$(var.JpAppName)"
-                               Name="Path" Type="string" Value="[APPLICATIONFOLDER]"
-                               KeyPath="yes" />
+    <!-- Standard required root -->
+    <Directory Id="TARGETDIR" Name="SourceDir"/>
+    
+    <DirectoryRef Id="INSTALLDIR">
+        <Component Id="URIHandlerRegistry" Guid="D99D1C53-7173-414B-81F8-AFC94641B3C0">
             <!-- Register weasis protocol -->
 		        <RegistryKey Key="weasis" Root="HKCR">
 		          <RegistryValue Type="string" Value="Weasis URI handler"/>
 		          <RegistryValue Name="URL Protocol" Type="string" Value=""/>
-		          <RegistryValue Name="DefaultIcon" Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.ico&quot;,1"/>
+		          <RegistryValue Name="DefaultIcon" Type="string" Value="&quot;[INSTALLDIR]Weasis.ico&quot;,1"/>
 		          <RegistryKey Key="shell\open\command">
-		            <RegistryValue Type="string" Value="&quot;[APPLICATIONFOLDER]Weasis.exe&quot; &quot;%1&quot;"/>
+		            <RegistryValue Type="string" Value="&quot;[INSTALLDIR]Weasis.exe&quot; &quot;%1&quot;"/>
 		          </RegistryKey>
 		        </RegistryKey>
             <!-- Remove popup on Edge and IE for weasis protocol -->
@@ -65,15 +47,16 @@
             <RegistryKey Root="HKLM" Key="SOFTWARE\Policies\Chromium\URLWhitelist">
                <RegistryValue Name="787" Type="string" Value="weasis://*"/>
             </RegistryKey>
-                <!-- We need to use APPLICATIONFOLDER variable here or RemoveFolderEx
-                     will not remove on "install". But only if WiX 3.6 is used. -->
-                  <?ifdef JpWixVersion36OrNewer ?>
-                  <util:RemoveFolderEx On="uninstall" Property="APPLICATIONFOLDER" />
-                  <?endif?>
-            </Component>
-        </DirectoryRef>
+       </Component>   
+  </DirectoryRef>
+    
         
-        <?include $(var.JpConfigDir)/bundle.wxi ?>
+    <Feature Id="DefaultFeature" Title="Main Feature" Level="1">
+      <ComponentGroupRef Id="Shortcuts"/>
+      <ComponentGroupRef Id="Files"/>
+      <ComponentGroupRef Id="FileAssociations"/>
+      <ComponentRef Id="URIHandlerRegistry" />
+    </Feature>
         
         <?ifdef JpInstallDirChooser ?>
         <Binary Id="JpCaDll" SourceFile="wixhelper.dll"/>
@@ -127,7 +110,8 @@
         <WixVariable Id="WixUILicenseRtf" Value="$(var.JpLicenseRtf)"/>
         <?endif?>
         
-        <?include $(var.JpConfigDir)/icons.wxi ?>
-        <Property Id="ARPPRODUCTICON" Value="StartMenuIcon.exe"/>
+        <Icon Id="icon_pkg" SourceFile="$(var.JpConfigDir)\..\images\win-msi.image\$(var.JpAppName)\$(var.JpAppName).ico"></Icon>
+        <Property Id="ARPPRODUCTICON" Value="icon_pkg"/>
+      
     </Product>
 </Wix>

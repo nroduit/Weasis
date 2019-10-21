@@ -229,13 +229,13 @@ fi
 # Build Java Runtime
 $JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
 
-$JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --identifier "$IDENTIFIER" --name "$NAME" \
+$JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
 --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
 --resource-dir "resources" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
 
 # Build exe for debugging in the console and copy them into the debug folder
 if [ "$machine" == "windows" ] ; then
-  $JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH-debug" --identifier "$IDENTIFIER" --name "$NAME" \
+  $JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH-debug" --name "$NAME" \
   --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
   --resource-dir "resources" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
   mkdir "$IMAGE_PATH\\debug"
@@ -255,11 +255,17 @@ else
   APP_FOLDER_NAME="app"
 fi
 
+if [ "$machine" = "windows" ] ; then
+  LAUNCHER_CP=";\$ROOTDIR\\\\$APP_FOLDER_NAME\\\\"
+else
+  LAUNCHER_CP=":\$ROOTDIR\/$APP_FOLDER_NAME\/"
+fi
+
 match="app.name"
 insertWeasis='app.splash=resources\/images\/about-round.png\
 #app.memory=50%\
 app.identifier='"$IDENTIFIER"'\
-app.classpath=$APPDIR\/'"$APP_FOLDER_NAME"'\/felix.jar:$APPDIR\/'"$APP_FOLDER_NAME"'\/substance.jar:$APPDIR\/'"$APP_FOLDER_NAME"'\/weasis-launcher.jar\
+app.classpath='"${LAUNCHER_CP:1}"'felix.jar'"$LAUNCHER_CP"'substance.jar'"$LAUNCHER_CP"'weasis-launcher.jar\
 '
 sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
 sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
@@ -285,23 +291,23 @@ if [ "$PACKAGE" = "YES" ] ; then
     [ "$ARC_NAME" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
     [ "$ARC_NAME" = "x86" ]  && WXS="resources\main32.wxs" || WXS="resources\main.wxs"
     $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" \
+    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" \
     --win-menu --win-menu-group "$NAME" --win-upgrade-uuid "$UPGRADE_UID" \
-    --win-wxs "$WXS" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
       $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
-      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --identifier "$IDENTIFIER" --vendor "$VENDOR" \
+      --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "$FILE_ASSOC" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
     done
   elif [ "$machine" = "macosx" ] ; then
     $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
-    --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --identifier "$IDENTIFIER" \
+    --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --mac-package-identifier "$IDENTIFIER" \
     --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
   fi
 fi
