@@ -108,6 +108,8 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
+RES="resources/$machine"
+
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
   OUTPUT_PATH_UNIX=$(cygpath -u "$OUTPUT_PATH")
@@ -274,10 +276,10 @@ rm -f "$OUT_APP/$NAME.cfg.bck"
 
 
 if [ "$machine" = "linux" ] ; then
-  cp "resources/weasis-Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
+  cp "$RES/weasis-Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
   # Fix icon of second launcher
-  cp "resources/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
+  cp "$RES/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
   cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
   cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
@@ -289,8 +291,7 @@ if [ "$PACKAGE" = "YES" ] ; then
   COPYRIGHT="© 2009-2019 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     [ "$ARC_NAME" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
-    [ "$ARC_NAME" = "x86" ]  && WXS="resources\main32.wxs" || WXS="resources\main.wxs"
-    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/$ARC_NAME" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" \
     --win-menu --win-menu-group "$NAME" --win-upgrade-uuid "$UPGRADE_UID" \
     --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
@@ -299,14 +300,14 @@ if [ "$PACKAGE" = "YES" ] ; then
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
-      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "resources" \
+      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES/$installerType" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "$FILE_ASSOC" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
     done
   elif [ "$machine" = "macosx" ] ; then
-    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "resources" \
+    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/pkg" \
     --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --mac-package-identifier "$IDENTIFIER" \
     --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
   fi
