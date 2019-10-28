@@ -146,8 +146,8 @@ public class StreamBackingStoreImpl implements BackingStore {
             return null;
         }
         if (StringUtil.hasText(prefUrl)) {
-            String baseUrl = prefUrl.endsWith("/") ? prefUrl : prefUrl + "/"; //$NON-NLS-1$ //$NON-NLS-2$
-            return String.format("%spreferences?user=%s&profile=%s&module=%s", baseUrl, //$NON-NLS-1$
+
+            return String.format("%s?user=%s&profile=%s&module=%s", prefUrl, //$NON-NLS-1$
                 BundleTools.getEncodedValue(AppProperties.WEASIS_USER),
                 BundleTools.getEncodedValue(AppProperties.WEASIS_PROFILE),
                 BundleTools.getEncodedValue(bundle.getSymbolicName()));

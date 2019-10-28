@@ -161,11 +161,7 @@ public class BundleTools {
     }
 
     public static String getServiceUrl() {
-        String remotePrefURL = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.url"); //$NON-NLS-1$
-        if (remotePrefURL != null && !remotePrefURL.endsWith("/")) { //$NON-NLS-1$
-            remotePrefURL = remotePrefURL + "/"; //$NON-NLS-1$
-        }
-        return remotePrefURL;
+        return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.url"); //$NON-NLS-1$
     }
 
     public static boolean isLocalSession() {
@@ -182,7 +178,7 @@ public class BundleTools {
 
     private static void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
         if (!isLocalSession() || isStoreLocalSession()) {
-            String sURL = String.format("%spreferences?user=%s&profile=%s", remotePrefURL, //$NON-NLS-1$
+            String sURL = String.format("%s?user=%s&profile=%s", remotePrefURL, //$NON-NLS-1$
                 getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
             URLParameters urlParameters = getURLParameters(true);
             ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);
