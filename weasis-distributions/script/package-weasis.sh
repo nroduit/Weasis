@@ -276,7 +276,7 @@ rm -f "$OUT_APP/$NAME.cfg.bck"
 
 
 if [ "$machine" = "linux" ] ; then
-  cp "$RES/weasis-Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
+  cp "$RES/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/Dicomizer.desktop"
 elif [ "$machine" = "windows" ] ; then
   # Fix icon of second launcher
   cp "$RES/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
