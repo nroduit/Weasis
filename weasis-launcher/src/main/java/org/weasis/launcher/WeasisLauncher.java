@@ -974,34 +974,31 @@ public class WeasisLauncher {
     private void loadI18nModules() {
         try {
             String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
-            if (cdbl == null) {
-                String path = configData.getProperty(P_WEASIS_I18N, null); 
-                if (Utils.hasText(path)) {
-                    path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    WeasisLauncher.readProperties(new URI(path), modulesi18n);
-                } else {
-                    String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null); // $NON-NLS-1$
-                    if (Utils.hasText(cdb)) {
-                        path = cdb.substring(0, cdb.lastIndexOf('/')) + "/weasis-i18n";
-                        WeasisLauncher.readProperties(new URI(path + "/buildNumber.properties"), modulesi18n);
-                        if (!modulesi18n.isEmpty()) {
-                            System.setProperty(P_WEASIS_I18N, path); 
-                        }
+            String path = configData.getProperty(P_WEASIS_I18N, null);
+            if (Utils.hasText(path)) {
+                path += path.endsWith("/") ? "buildNumber.properties" : "/buildNumber.properties"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                WeasisLauncher.readProperties(new URI(path), modulesi18n);
+            } else if (cdbl == null) {
+                String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null); // $NON-NLS-1$
+                if (Utils.hasText(cdb)) {
+                    path = cdb.substring(0, cdb.lastIndexOf('/')) + "/weasis-i18n";
+                    WeasisLauncher.readProperties(new URI(path + "/buildNumber.properties"), modulesi18n);
+                    if (!modulesi18n.isEmpty()) {
+                        System.setProperty(P_WEASIS_I18N, path);
                     }
                 }
-
             }
-            
+
             // Try to find the native installation
             if (modulesi18n.isEmpty()) {
                 if (cdbl == null) {
                     cdbl = ConfigData.findLocalCodebase().getPath();
                 }
-                File file = new File(cdbl, "bundle-i18n/buildNumber.properties"); //$NON-NLS-1$
+                File file = new File(cdbl, "bundle-i18n" + File.separator  +"buildNumber.properties"); //$NON-NLS-1$
                 if (file.canRead()) {
                     WeasisLauncher.readProperties(file.toURI(), modulesi18n);
                     if (!modulesi18n.isEmpty()) {
-                        System.setProperty(P_WEASIS_I18N, file.getParentFile().toURI().toString()); 
+                        System.setProperty(P_WEASIS_I18N, file.getParentFile().toURI().toString());
                     }
                 }
             }
