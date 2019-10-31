@@ -58,7 +58,7 @@ public abstract class DynamicMenu extends JMenu {
 
     public void addPopupMenuListener() {
         // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look and feel
-        if (Boolean.TRUE.toString().equals(System.getProperty("apple.laf.useScreenMenuBar", Boolean.FALSE.toString()))) { //$NON-NLS-1$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("mac") && Boolean.TRUE.toString().equals(System.getProperty("apple.laf.useScreenMenuBar", Boolean.FALSE.toString()))) { //$NON-NLS-1$
             this.addChangeListener(e -> {
                 if (DynamicMenu.this.isSelected()) {
                 	DynamicMenu.this.removeAll();
