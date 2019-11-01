@@ -4,7 +4,7 @@
 
   <groupId>org.weasis.samples</groupId>
   <artifactId>weasis-plugin-base-viewer-archetype</artifactId>
-  <version>3.5.3</version>
+  <version>3.5.4</version>
   <packaging>maven-archetype</packaging>
 
   <name>${project.artifactId}</name>
