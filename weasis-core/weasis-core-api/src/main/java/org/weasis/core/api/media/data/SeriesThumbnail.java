@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Container;
 import java.awt.Graphics2D;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -397,8 +398,11 @@ public class SeriesThumbnail extends Thumbnail
             JProgressBar bar = progressBar;
             if (bar.isVisible()) {
                 Point p = e.getPoint();
-                p.translate(-(thumbnailSize - stopButton.width), -5);
-                if (stopButton.contains(p)) {
+                Insets bd = this.getInsets();
+                p.translate(-(thumbnailSize + bd.left - stopButton.width), -6 -bd.top);
+                Rectangle rect = stopButton.getBounds();
+                rect.grow(2, 2);
+                if (rect.contains(p)) {
                     SeriesImporter loader = series.getSeriesLoader();
                     if (loader != null) {
                         loader.stop();
@@ -408,7 +412,7 @@ public class SeriesThumbnail extends Thumbnail
                 }
 
                 p.translate(3 * BUTTON_SIZE_HALF, 0);
-                if (startButton.getBounds().contains(p)) {
+                if (rect.contains(p)) {
                     SeriesImporter loader = series.getSeriesLoader();
                     if (loader != null) {
                         loader.resume();
