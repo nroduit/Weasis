@@ -111,10 +111,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     private final URLParameters urlParams;
     private DownloadPriority priority = null;
     private final boolean writeInCache;
+    private final boolean startDownloading;
 
     private volatile boolean hasError = false;
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
+        this(dicomSeries, dicomModel, concurrentDownloads, writeInCache, true);
+    }
+    
+    public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache, boolean startDownloading) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
@@ -132,10 +137,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         this.dicomSeries.setSeriesLoader(this);
         this.concurrentDownloads = concurrentDownloads;
         this.urlParams = new URLParameters(getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
+        this.startDownloading = startDownloading;
     }
 
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, JProgressBar progressBar, int concurrentDownloads,
-        boolean writeInCache) {
+        boolean writeInCache, boolean startDownloading) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null || progressBar == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
@@ -150,6 +156,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         this.dicomSeries.setSeriesLoader(this);
         this.concurrentDownloads = concurrentDownloads;
         this.urlParams = new URLParameters(getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
+        this.startDownloading = startDownloading;
     }
 
     @Override
@@ -238,6 +245,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public boolean hasDownloadFailed() {
         return hasError;
+    }
+
+    public boolean isStartDownloading() {
+        return startDownloading;
     }
 
     private String getLoadType() {
@@ -1016,7 +1027,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public LoadSeries cancelAndReplace(LoadSeries s) {
         LoadSeries taskResume = new LoadSeries(s.getDicomSeries(), dicomModel, s.getProgressBar(),
-            s.getConcurrentDownloads(), s.writeInCache);
+            s.getConcurrentDownloads(), s.writeInCache, s.startDownloading);
         s.cancel();
         taskResume.setPriority(s.getPriority());
         Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);

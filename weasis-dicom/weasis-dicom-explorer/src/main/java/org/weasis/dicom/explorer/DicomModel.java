@@ -1058,6 +1058,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //$NON-NLS-1$
             "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //$NON-NLS-1$
             "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", //$NON-NLS-1$
+            "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", //$NON-NLS-1$
             "  -? --help                  show help" };
 
         final Option opt = Options.compile(usage).parse(argv);
@@ -1086,6 +1087,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             acceptExt = "transfer-syntax=*";
         }
         props.setProperty(RsQueryParams.P_ACCEPT_EXT, acceptExt);
+        
+        if (opt.isSet("show-whole-study")) {
+            props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
+        }
 
         GuiExecutor.instance().execute(() -> {
             firePropertyChange(

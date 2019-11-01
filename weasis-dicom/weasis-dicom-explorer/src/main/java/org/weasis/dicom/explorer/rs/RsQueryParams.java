@@ -15,7 +15,6 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LangUtil;
 import org.weasis.core.api.util.StringUtil;
 import org.weasis.core.api.util.StringUtil.Suffix;
@@ -24,7 +23,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -37,6 +35,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     public static final String P_DICOMWEB_URL = "dicomweb.url";
     public static final String P_QUERY_EXT = "query.ext";
     public static final String P_RETRIEVE_EXT = "retrieve.ext";
+    public static final String P_SHOW_WHOLE_STUDY = "show.whole.study";
     public static final String P_ACCEPT_EXT = "accept.ext";
 
     private final DicomModel dicomModel;
@@ -112,8 +111,6 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     @Override
     protected Boolean doInBackground() throws Exception {
         fillPatientList();
-        boolean downloadImmediately =
-            BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
         WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
         getRetrieveHeaders().forEach(wp::addHttpTag);
         wp.addHttpTag("Accept", "image/jpeg");
@@ -124,7 +121,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
             if (!ps) {
                 loadSeries.startDownloadImageReference(wp);
             }
-            DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
+            DownloadManager.addLoadSeries(loadSeries, dicomModel, loadSeries.isStartDownloading());
         }
 
         // Sort tasks from the download priority order (low number has a higher priority), TASKS

@@ -8,7 +8,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.json.Json;
 
@@ -34,6 +36,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.wado.DownloadPriority;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.explorer.wado.SeriesInstanceList;
@@ -56,14 +59,17 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private final RsQueryParams rsQueryParams;
     private final WadoParameters wadoParameters;
+    private final boolean defaultStartDownloading;
 
     public RsQueryResult(RsQueryParams rsQueryParams) {
         this.rsQueryParams = rsQueryParams;
         this.wadoParameters = new WadoParameters("", true, true); //$NON-NLS-1$
         rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
         // Accept only multipart/related and retrieve dicom at the stored syntax
-        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM + "\";"
-            + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
+        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM
+            + "\";" + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
+        defaultStartDownloading =
+            BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
     }
 
     private static String multiParams(String query) {
@@ -213,7 +219,7 @@ public class RsQueryResult extends AbstractQueryResult {
         }
 
         for (Attributes studyDataSet : studies) {
-            fillSeries(studyDataSet);
+            fillSeries(studyDataSet, defaultStartDownloading);
         }
     }
 
@@ -250,6 +256,10 @@ public class RsQueryResult extends AbstractQueryResult {
     }
 
     public void buildFromStudyInstanceUID(List<String> studyInstanceUIDs) {
+        buildFromStudyInstanceUID(studyInstanceUIDs, defaultStartDownloading);
+    }
+
+    public void buildFromStudyInstanceUID(List<String> studyInstanceUIDs, boolean startDownloading) {
         for (String studyInstanceUID : LangUtil.emptyIfNull(studyInstanceUIDs)) {
             if (!StringUtil.hasText(studyInstanceUID)) {
                 continue;
@@ -264,7 +274,7 @@ public class RsQueryResult extends AbstractQueryResult {
                 LOGGER.debug(QIDO_REQUEST, buf);
                 List<Attributes> studies = parseJSON(buf.toString());
                 for (Attributes studyDataSet : studies) {
-                    fillSeries(studyDataSet);
+                    fillSeries(studyDataSet, startDownloading);
                 }
             } catch (Exception e) {
                 LOGGER.error("QIDO-RS with studyUID {}", studyInstanceUID, e);
@@ -287,7 +297,7 @@ public class RsQueryResult extends AbstractQueryResult {
                 LOGGER.debug(QIDO_REQUEST, buf);
                 List<Attributes> studies = parseJSON(buf.toString());
                 for (Attributes studyDataSet : studies) {
-                    fillSeries(studyDataSet);
+                    fillSeries(studyDataSet, defaultStartDownloading);
                 }
             } catch (Exception e) {
                 LOGGER.error("QIDO-RS with AccessionNumber {}", accessionNumber, e);
@@ -296,6 +306,10 @@ public class RsQueryResult extends AbstractQueryResult {
     }
 
     public void buildFromSeriesInstanceUID(List<String> seriesInstanceUIDs) {
+        boolean wholeStudy =
+            LangUtil.getEmptytoFalse(rsQueryParams.getProperties().getProperty(RsQueryParams.P_SHOW_WHOLE_STUDY));
+        Set<String> studyHashSet = new LinkedHashSet<>();
+
         for (String seriesInstanceUID : LangUtil.emptyIfNull(seriesInstanceUIDs)) {
             if (!StringUtil.hasText(seriesInstanceUID)) {
                 continue;
@@ -316,13 +330,18 @@ public class RsQueryResult extends AbstractQueryResult {
                     MediaSeriesGroup patient = getPatient(dataset);
                     MediaSeriesGroup study = getStudy(patient, dataset);
                     for (Attributes seriesDataset : series) {
-                        Series<?> dicomSeries = getSeries(study, seriesDataset);
+                        Series<?> dicomSeries = getSeries(study, seriesDataset, defaultStartDownloading);
                         fillInstance(seriesDataset, study, dicomSeries);
                     }
+                    studyHashSet.add(dataset.getString(Tag.StudyInstanceUID));
                 }
             } catch (Exception e) {
                 LOGGER.error("QIDO-RS with seriesUID {}", seriesInstanceUID, e);
             }
+        }
+        
+        if (wholeStudy) {
+            buildFromStudyInstanceUID(new ArrayList<>(studyHashSet), false);
         }
     }
 
@@ -347,7 +366,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     Attributes dataset = instances.get(0);
                     MediaSeriesGroup patient = getPatient(dataset);
                     MediaSeriesGroup study = getStudy(patient, dataset);
-                    Series<?> dicomSeries = getSeries(study, dataset);
+                    Series<?> dicomSeries = getSeries(study, dataset, defaultStartDownloading);
                     String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
                     SeriesInstanceList seriesInstanceList =
                         (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
@@ -363,7 +382,7 @@ public class RsQueryResult extends AbstractQueryResult {
         }
     }
 
-    private void fillSeries(Attributes studyDataSet) {
+    private void fillSeries(Attributes studyDataSet, boolean startDownloading) {
         String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
         if (StringUtil.hasText(studyInstanceUID)) {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
@@ -381,7 +400,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     MediaSeriesGroup patient = getPatient(studyDataSet);
                     MediaSeriesGroup study = getStudy(patient, studyDataSet);
                     for (Attributes seriesDataset : series) {
-                        Series<?> dicomSeries = getSeries(study, seriesDataset);
+                        Series<?> dicomSeries = getSeries(study, seriesDataset, startDownloading);
                         fillInstance(seriesDataset, study, dicomSeries);
                     }
                 }
@@ -486,7 +505,7 @@ public class RsQueryResult extends AbstractQueryResult {
         return study;
     }
 
-    private Series getSeries(MediaSeriesGroup study, final Attributes seriesDataset) {
+    private Series getSeries(MediaSeriesGroup study, final Attributes seriesDataset, boolean startDownloading) {
         if (seriesDataset == null) {
             throw new IllegalArgumentException("seriesDataset cannot be null");
         }
@@ -516,7 +535,8 @@ public class RsQueryResult extends AbstractQueryResult {
             model.addHierarchyNode(study, dicomSeries);
 
             final LoadSeries loadSeries = new LoadSeries(dicomSeries, rsQueryParams.getDicomModel(),
-                BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
+                BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true,
+                startDownloading);
             loadSeries.setPriority(
                 new DownloadPriority(model.getParent(study, DicomModel.patient), study, dicomSeries, true));
             rsQueryParams.getSeriesMap().put(TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class),
