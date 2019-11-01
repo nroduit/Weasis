@@ -1,5 +1,22 @@
 # Changelog
 
+## [v3.5.4](https://github.com/nroduit/weasis/tree/v3.5.4) (2019-11-01)
+
+[Full Changelog](https://github.com/nroduit/weasis/compare/3.5.4-rc...v3.5.4)
+
+**Implemented enhancements:**
+
+- DICOMWeb query/retrieve with a new command "dicom:rs" [\#102](https://github.com/nroduit/Weasis/issues/102) [[Type: Feature](https://github.com/nroduit/Weasis/labels/Type:%20Feature)]
+
+**Fixed bugs:**
+
+- Some menus are freezing [\#104](https://github.com/nroduit/Weasis/issues/104)
+- The language modules are not load from the server side [\#101](https://github.com/nroduit/Weasis/issues/101)
+- Http redirection not working when downloading \(regression\) [\#100](https://github.com/nroduit/Weasis/issues/100)
+- Fix covariant return types in ByteBuffer introduced in Java 9 [\#99](https://github.com/nroduit/Weasis/issues/99)
+- HTTPS download error: handshake\_failure  [\#98](https://github.com/nroduit/Weasis/issues/98) [[Priority: High](https://github.com/nroduit/Weasis/labels/Priority:%20High)]
+- Images blanking out randomly [\#43](https://github.com/nroduit/Weasis/issues/43)
+
 ## [v3.5.3](https://github.com/nroduit/weasis/tree/v3.5.3) (2019-08-09)
 
 [Full Changelog](https://github.com/nroduit/weasis/compare/v3.5.1...v3.5.3)
