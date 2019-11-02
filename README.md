@@ -19,7 +19,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 # [Release History](CHANGELOG.md)
 
 # General Features
-* Flexible integration to HIS or PHR (see [weasis-pacs-connector](https://github.com/nroduit/weasis-pacs-connector))
+* Flexible integration to HIS or PHR (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * Desktop distribution (Windows, Mac OS X, and Linux)
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
@@ -27,7 +27,7 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 * [Configuration of preferences](https://nroduit.github.io/en/basics/customize/preferences/) on server-side and client-side
 * [API for building custom plug-ins](https://nroduit.github.io/en/basics/customize/build-plugins/)
 * DICOM Send (storeSCU and STOW-RS)
-* DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI)
+* DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI) and DICOMWeb (QUERY and RETRIEVE)
 * Dicomizer module (allow importing standard images and convert them in DICOM)
 
 # Viewer Features
@@ -41,12 +41,14 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 * Display Presentation States (GSPS) and Key Object Selection
 * Create key images (Key Object Selection object) by selection
 * Support of Modality LUTs, VOI LUTs, and Presentation LUTs (even non-linear)
-* Support of several screens and full-screen mode
+* Support of several screens with different calibration, support of HiDPI (High Dots Per Inch) monitors, full-screen mode
 * Multiplanar reconstructions and Maximum Intensity Projection
 * Display Structured Reports
+* Display and search into all DICOM attributes
 * Display cross-lines
 * Measurement and annotation tools
 * Region statistics of pixels (Min, Max, Mean, StDev, Skewness, Kurtosis, Entropy)
+* Histogram of modality values
 * SUV measurement
 * Save measurements and annotations in DICOM PR or XML file
 * Import CD/DVD and local DICOM files
