@@ -247,8 +247,8 @@ fi
 
 
 if [ "$machine" = "macosx" ] ; then
-  OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/Java"
-  APP_FOLDER_NAME="Java"
+  OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/app"
+  APP_FOLDER_NAME="app"
 elif [ "$machine" = "linux" ] ; then
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME/lib/app"
   APP_FOLDER_NAME="lib\/app"

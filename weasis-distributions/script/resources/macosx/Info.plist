@@ -13,7 +13,7 @@
   <key>CFBundleIconFile</key>
   <string>DEPLOY_ICON_FILE</string>
   <key>CFBundleIdentifier</key>
-  <string>DEPLOY_BUNDLE_IDENTIFIER</string>
+  <string>org.weasis.viewer</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleSupportedPlatforms</key>
@@ -36,8 +36,6 @@
   <string>DEPLOY_BUNDLE_CFBUNDLE_VERSION</string>
   <key>NSHumanReadableCopyright</key>
   <string>DEPLOY_BUNDLE_COPYRIGHT</string>
-  <key>JavaRuntime</key>
-  <string>DEPLOY_JAVA_RUNTIME_NAME</string>
   <key>JavaMainClassName</key>
   <string>DEPLOY_LAUNCHER_CLASS</string>
   <key>JavaAppClasspath</key>
