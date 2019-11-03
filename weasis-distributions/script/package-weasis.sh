@@ -14,7 +14,7 @@ REVISON_INC="1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
-# jdk.localedata => other locale (en_us) data are included in the jdk.localedata 
+# jdk.localedata => other locale (en_us) data are included in the jdk.localedata
 # jdk.jdwp.agent => package for debugging agent
 # jdk.pack => jpack required to unpacked bundle.jar.pack.gz
 JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.pack,jdk.jdwp.agent"
@@ -281,8 +281,8 @@ elif [ "$machine" = "windows" ] ; then
   # Fix icon of second launcher
   cp "$RES/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
 elif [ "$machine" = "macosx" ] ; then
-  cp -Rf "weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
-  cp -Rf "Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "$RES/weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  cp -Rf "$RES/Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
 fi
 
 if [ "$PACKAGE" = "YES" ] ; then
