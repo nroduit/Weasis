@@ -44,10 +44,9 @@
 		<javax.json.version>1.1.5</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
-		<tilecachetool.version>1.0.2</tilecachetool.version>
 
-		<assertj.version>3.12.2</assertj.version>
-		<powermock.version>2.0.2</powermock.version>
+		<assertj.version>3.14.0</assertj.version>
+		<powermock.version>2.0.4</powermock.version>
 		<bean-matchers.version>0.11</bean-matchers.version>
 	</properties>
 
