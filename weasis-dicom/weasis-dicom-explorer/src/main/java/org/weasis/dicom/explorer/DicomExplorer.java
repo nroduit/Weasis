@@ -300,8 +300,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 int index = Collections.binarySearch(studies, studyPane, DicomSorter.STUDY_COMPARATOR);
                 if (index < 0) {
                     index = -(index + 1);
-                } else {
-                    index = studies.size();
                 }
                 if (position != null) {
                     position[0] = index;
@@ -351,8 +349,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 int index = Collections.binarySearch(seriesList, seriesPane, DicomSorter.SERIES_COMPARATOR);
                 if (index < 0) {
                     index = -(index + 1);
-                } else {
-                    index = seriesList.size();
                 }
                 if (position != null) {
                     position[0] = index;
