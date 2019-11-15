@@ -118,8 +118,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache) {
         this(dicomSeries, dicomModel, concurrentDownloads, writeInCache, true);
     }
-    
-    public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache, boolean startDownloading) {
+
+    public LoadSeries(Series<?> dicomSeries, DicomModel dicomModel, int concurrentDownloads, boolean writeInCache,
+        boolean startDownloading) {
         super(Messages.getString("DicomExplorer.loading"), writeInCache, true); //$NON-NLS-1$
         if (dicomModel == null || dicomSeries == null) {
             throw new IllegalArgumentException("null parameters"); //$NON-NLS-1$
@@ -481,18 +482,20 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             if (wadoParameters.isWadoRS()) {
                 thumURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
                 if (thumURL != null) {
-                    thumURL += "/thumbnail?viewport=" + Thumbnail.MAX_SIZE +"%2C" + + Thumbnail.MAX_SIZE;
+                    thumURL += "/thumbnail?viewport=" + Thumbnail.MAX_SIZE + "%2C" + +Thumbnail.MAX_SIZE;
                     params = new URLParameters(new HashMap<>(urlParams.getHeaders()));
                     params.getHeaders().put("Accept", "image/jpeg");
                 }
             } else {
                 thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
-                if (thumURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.getPath())) {
-                    file = new File(thumURL);
-                    thumURL = null;
-                } else {
-                    thumURL = wadoParameters.getBaseURL() + thumURL;
-                    extension = FileUtil.getExtension(thumURL);
+                if (StringUtil.hasLength(thumURL)) {
+                    if (thumURL.startsWith(Thumbnail.THUMBNAIL_CACHE_DIR.getPath())) {
+                        file = new File(thumURL);
+                        thumURL = null;
+                    } else {
+                        thumURL = wadoParameters.getBaseURL() + thumURL;
+                        extension = FileUtil.getExtension(thumURL);
+                    }
                 }
             }
 
