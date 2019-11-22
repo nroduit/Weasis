@@ -20,6 +20,7 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
+import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
@@ -1202,11 +1203,15 @@ public class WeasisWin {
                     try {
                         Thread.sleep(500L);
                         Robot robot = new Robot();
+                        Point old = MouseInfo.getPointerInfo().getLocation();
                         Point p = app.getLocationOnScreen();
-                        robot.mouseMove(p.x + app.getWidth() / 2, p.y + 5);
+                        int x = p.x + app.getWidth() / 2;
+                        int y = p.y + app.getHeight() / 2;
+                        robot.mouseMove(x, y);
                         // Simulate a mouse click
                         robot.mousePress(InputEvent.BUTTON1_MASK);
                         robot.mouseRelease(InputEvent.BUTTON1_MASK);
+                        robot.mouseMove(old.x, old.y);
                     } catch (AWTException e1) {
                         // DO nothing
                     } catch (InterruptedException e) {
