@@ -54,17 +54,16 @@ public class FileUtil {
             }
         }
     }
-    
+
     public static void safeClose(XMLStreamReader xmler) {
         if (xmler != null) {
             try {
                 xmler.close();
             } catch (XMLStreamException e) {
-                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e);  //$NON-NLS-1$
+                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e); //$NON-NLS-1$
             }
         }
     }
-
 
     public static void recursiveDelete(File rootDir, boolean deleteRoot) {
         if ((rootDir == null) || !rootDir.isDirectory()) {
@@ -162,7 +161,7 @@ public class FileUtil {
         }
         return new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     }
-    
+
     public static boolean readProperties(File propsFile, Properties props) {
         if (propsFile.canRead()) {
             try (FileInputStream fis = new FileInputStream(propsFile)) {
@@ -215,7 +214,7 @@ public class FileUtil {
 
         String auth = System.getProperty("http.authorization", null); //$NON-NLS-1$
         if (Utils.hasText(auth) && ("http".equals(p) || "https".equals(p))) { //$NON-NLS-1$ //$NON-NLS-2$
-            connection.setRequestProperty("Authorization", auth); //$NON-NLS-1$ 
+            connection.setRequestProperty("Authorization", auth); //$NON-NLS-1$
         }
 
         return connection;
@@ -261,15 +260,24 @@ public class FileUtil {
         }
     }
 
+    // From: https://programming.guide/worlds-most-copied-so-snippet.html
     public static String humanReadableByteCount(long bytes, boolean si) {
         int unit = si ? 1000 : 1024;
-        if (bytes < unit)
+        long absBytes = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
+        if (absBytes < unit)
             return bytes + " B"; //$NON-NLS-1$
-        int exp = (int) (Math.log(bytes) / Math.log(unit));
+        int exp = (int) (Math.log(absBytes) / Math.log(unit));
+        long th = (long) (Math.pow(unit, exp) * (unit - 0.05));
+        if (exp < 6 && absBytes >= th - ((th & 0xfff) == 0xd00 ? 52 : 0))
+            exp++;
         String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        if (exp > 4) {
+            bytes /= unit;
+            exp -= 1;
+        }
         return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //$NON-NLS-1$
     }
-    
+
     public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {
         if (isGzip(bytes)) {
             try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -281,7 +289,7 @@ public class FileUtil {
             return bytes;
         }
     }
-    
+
     public static boolean isGzip(byte[] bytes) {
         if (bytes != null && bytes.length >= 4) {
             int head = (bytes[0] & 0xff) | ((bytes[1] << 8) & 0xff00);
@@ -291,7 +299,7 @@ public class FileUtil {
         }
         return false;
     }
-    
+
     private static boolean gzipUncompress(InputStream inputStream, OutputStream out) throws IOException {
         try (GZIPInputStream in = new GZIPInputStream(inputStream)) {
             byte[] buf = new byte[1024];
