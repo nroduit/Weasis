@@ -89,14 +89,6 @@
 		<set type="response-header" name="Pragma">no-cache</set>
 	</rule>
 
-	<rule>
-		<name>Set standard header encoding for HTTP/Pack200 Compression</name>
-
-		<from>^\/.+\.pack\.gz$</from>
-		<set type="response-header" name="Content-Encoding">pack200-gzip</set>
-	</rule>
-
-
 	<rule enabled="${jnlp.app.version.download.enable}">
 		<name>Forward to weasis-launcher.jar with x-java-jnlp-version-id header set</name>
 		<note>

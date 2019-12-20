@@ -14,13 +14,8 @@
 			<outputDirectory>weasis</outputDirectory>
 			<includes>
 				<include>/*.jar</include>
-				<include>/*.jar.pack.gz</include>
 				<include>bundle/repository.xml</include>
-				<include>bundle/*-windows-*.jar</include>
-				<include>bundle/*-linux-*.jar</include>
-				<include>bundle/*-macosx-*.jar</include>
-				<include>bundle/*-solaris-*.jar</include>
-				<include>bundle/*.jar${pack200.ext}</include>
+				<include>bundle/*.jar${xz.ext}</include>
 				<include>bundle-i18n/*.jar</include>
 				<include>bundle-i18n/buildNumber.properties</include>
 			</includes>
@@ -38,19 +33,8 @@
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-portable</directory>
 			<outputDirectory></outputDirectory>
-			<excludes>
-				<exclude>**/*.plist</exclude>
-			</excludes>
 			<fileMode>0755</fileMode>
 			<directoryMode>0755</directoryMode>
-		</fileSet>
-		<fileSet>
-			<directory>src/main/resources-portable</directory>
-			<outputDirectory></outputDirectory>
-			<includes>
-				<include>**/*.plist</include>
-			</includes>
-			<filtered>true</filtered>
 		</fileSet>
 		<fileSet>
 			<!-- copy resources -->

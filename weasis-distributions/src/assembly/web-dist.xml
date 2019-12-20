@@ -14,13 +14,8 @@
 			<outputDirectory></outputDirectory>
 			<includes>
 				<include>/*.jar</include>
-				<include>/*.jar.pack.gz</include>
 				<include>bundle/repository.xml</include>
-				<include>bundle/*-windows-*.jar</include>
-				<include>bundle/*-linux-*.jar</include>
-				<include>bundle/*-macosx-*.jar</include>
-				<include>bundle/*-solaris-*.jar</include>
-				<include>bundle/*.jar${pack200.ext}</include>
+				<include>bundle/*.jar${xz.ext}</include>
 			</includes>
 		</fileSet>
 		<fileSet>

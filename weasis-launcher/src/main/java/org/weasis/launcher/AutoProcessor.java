@@ -13,8 +13,6 @@
 package org.weasis.launcher;
 
 import java.io.File;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -27,18 +25,15 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Pack200;
-import java.util.jar.Pack200.Unpacker;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.Constants;
 import org.osgi.service.startlevel.StartLevel;
+import org.tukaani.xz.XZInputStream;
 
 public class AutoProcessor {
 
@@ -85,7 +80,7 @@ public class AutoProcessor {
      **/
     public static final String AUTO_START_PROP = "felix.auto.start"; //$NON-NLS-1$
 
-    public static final String PACK200_COMPRESSION = ".pack.gz"; //$NON-NLS-1$
+    public static final String XZ_COMPRESSION = ".xz"; //$NON-NLS-1$
 
     private AutoProcessor() {
     }
@@ -422,7 +417,7 @@ public class AutoProcessor {
                 String filename = p.toString();
                 String value = modulesi18n.getProperty(filename);
                 if (value != null) {
-                    String baseURL = System.getProperty(WeasisLauncher.P_WEASIS_I18N); 
+                    String baseURL = System.getProperty(WeasisLauncher.P_WEASIS_I18N);
                     if (baseURL != null) {
                         String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
                         String bundleName = getBundleNameFromLocation(filename);
@@ -511,29 +506,20 @@ public class AutoProcessor {
     }
 
     private static Bundle installBundle(BundleContext context, String location, boolean httpCache) throws Exception {
-        boolean pack = location.endsWith(PACK200_COMPRESSION);
+        boolean pack = location.endsWith(XZ_COMPRESSION);
         if (pack) {
             // Remove the pack classifier from the location path
-            location = location.substring(0, location.length() - 8);
+            location = location.substring(0, location.length() - 3);
             pack = context.getBundle(location) == null;
         }
 
         if (pack) {
-            final URL url = new URL(location + PACK200_COMPRESSION);
-            final PipedInputStream in = new PipedInputStream();
-            try (final PipedOutputStream out = new PipedOutputStream(in)) {
-                Thread t = new Thread(() -> {
-                    try (JarOutputStream jarStream = new JarOutputStream(out);
-                                    GZIPInputStream gzStream = new GZIPInputStream(
-                                        FileUtil.getAdaptedConnection(url, httpCache).getInputStream())) {
-                        Unpacker unpacker = Pack200.newUnpacker();
-                        unpacker.unpack(gzStream, jarStream);
-                    } catch (Exception e) {
-                        LOGGER.log(Level.SEVERE, e, () -> String.format("Cannot install a pack bundle %s", url)); //$NON-NLS-1$
-                    }
-                });
-                t.start();
-                return context.installBundle(location, in);
+            final URL url = new URL(location + XZ_COMPRESSION);
+            try (XZInputStream xzStream =
+                new XZInputStream(FileUtil.getAdaptedConnection(url, httpCache).getInputStream())) {
+                return context.installBundle(location, xzStream);
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, e, () -> String.format("Cannot install xz compressed bundle %s", url)); //$NON-NLS-1$
             }
         }
         return context.installBundle(location,

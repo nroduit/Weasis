@@ -52,6 +52,19 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+			    <!-- Embedding the xz library -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
@@ -60,11 +73,18 @@
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.framework</artifactId>
 			<version>${felix.framework.version}</version>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.pushing-pixels</groupId>
 			<artifactId>radiance-substance-all</artifactId>
 			<version>${substance.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.tukaani</groupId>
+			<artifactId>xz</artifactId>
+			<version>${xz.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.thirdparty.javax.jnlp</groupId>

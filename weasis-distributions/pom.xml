@@ -20,7 +20,7 @@
 		<tmp.dir>${project.build.directory}/tmp</tmp.dir>
 		<tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-		<pack200.ext></pack200.ext>
+		<xz.ext></xz.ext>
 		<windowsName>weasis-native</windowsName>
 	</properties>
 
@@ -757,58 +757,28 @@
 
 	<profiles>
 		<profile>
-			<id>pack200</id>
+			<id>compressXZ</id>
 			<properties>
-				<pack200.ext>.pack.gz</pack200.ext>
+				<xz.ext>.xz</xz.ext>
 			</properties>
 			<build>
 				<plugins>
 					<plugin>
-						<!-- normalize jar before signing -->
 						<groupId>org.weasis.maven</groupId>
-						<artifactId>build-pack200-plugin</artifactId>
-						<version>1.0.4</version>
+						<artifactId>build-txz-plugin</artifactId>
+						<version>1.0.0</version>
 						<executions>
 							<execution>
-								<id>sign</id>
-								<phase>process-resources</phase>
-								<goals>
-									<goal>packFiles</goal>
-								</goals>
-								<configuration>
-									<!-- packing requires removing all the old signatures, so if jarsigner.alias is not null jars are normalized -->
-									<signed>${jarsigner.alias}</signed>
-									<normalizeOnly>true</normalizeOnly>
-									<archiveDirectory>${tmp.dir}</archiveDirectory>
-									<includes>
-										<include>**/*.jar</include>
-									</includes>
-									<excludes>
-										<exclude>**/*-windows-*.jar</exclude>
-										<exclude>**/*-linux-*.jar</exclude>
-										<exclude>**/*-macosx-*.jar</exclude>
-										<exclude>**/*-solaris-*.jar</exclude>
-									</excludes>
-								</configuration>
-							</execution>
-							<execution>
-								<id>pack</id>
+								<id>xz</id>
 								<phase>compile</phase>
 								<goals>
 									<goal>packFiles</goal>
 								</goals>
 								<configuration>
-									<archiveDirectory>${tmp.dir}</archiveDirectory>
+									<archiveDirectory>${tmp.bundle.dir}</archiveDirectory>
 									<includes>
 										<include>**/*.jar</include>
 									</includes>
-									<excludes>
-										<exclude>**/*.original.jar</exclude>
-										<exclude>**/*-windows-*.jar</exclude>
-										<exclude>**/*-linux-*.jar</exclude>
-										<exclude>**/*-macosx-*.jar</exclude>
-										<exclude>**/*-solaris-*.jar</exclude>
-									</excludes>
 								</configuration>
 							</execution>
 						</executions>
