@@ -92,7 +92,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate), TagD.get(Tag.SeriesTime)); //$NON-NLS-1$
         toolTips.append("</html>"); //$NON-NLS-1$
         return toolTips.toString();
     }

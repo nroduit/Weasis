@@ -352,6 +352,19 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         }
         toolTips.append("<br>"); //$NON-NLS-1$
     }
+    
+    protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag1, TagW tag2) {
+        toolTips.append(title);
+        toolTips.append(StringUtil.COLON_AND_SPACE);
+        if (tag1 != null) {
+            toolTips.append(tag1.getFormattedTagValue(getTagValue(tag1), null));
+            toolTips.append(" - "); //$NON-NLS-1$
+        }
+        if (tag2 != null) {
+            toolTips.append(tag2.getFormattedTagValue(getTagValue(tag2), null));
+        }
+        toolTips.append("<br>"); //$NON-NLS-1$
+    }
 
     @Override
     public void setOpen(boolean open) {

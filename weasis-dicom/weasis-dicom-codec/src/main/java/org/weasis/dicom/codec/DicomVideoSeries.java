@@ -108,7 +108,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
         addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate)); //$NON-NLS-1$
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate), TagD.get(Tag.SeriesTime)); //$NON-NLS-1$
 
         toolTips.append(Messages.getString("DicomVideo.video_l")); //$NON-NLS-1$
         toolTips.append(StringUtil.COLON_AND_SPACE);
