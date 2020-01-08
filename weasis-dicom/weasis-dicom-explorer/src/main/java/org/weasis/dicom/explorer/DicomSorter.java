@@ -106,6 +106,14 @@ public class DicomSorter {
             MediaSeriesGroup st1 = (MediaSeriesGroup) o1;
             MediaSeriesGroup st2 = (MediaSeriesGroup) o2;
 
+            // Force Dose report to be at the end
+            if (isDoseReport(st1)) {
+                return 1;
+            }
+            if (isDoseReport(st2)) {
+                return -1;
+            }
+
             Integer val1 = TagD.getTagValue(st1, Tag.SeriesNumber, Integer.class);
             Integer val2 = TagD.getTagValue(st2, Tag.SeriesNumber, Integer.class);
             int c = -1;
@@ -229,5 +237,14 @@ public class DicomSorter {
         }
         return Objects.equals(o1, o2) ? 0 : -1;
     };
+
+    private static boolean isDoseReport(MediaSeriesGroup series) {
+        String s1 = TagD.getTagValue(series, Tag.SOPClassUID, String.class);
+        if(s1 == null || !s1.startsWith("1.2.840.10008.5.1.4.1.1.88")) {
+            return false;
+        }
+        return "1.2.840.10008.5.1.4.1.1.88.67".equals(s1) || "1.2.840.10008.5.1.4.1.1.88.68".equals(s1)
+            || "1.2.840.10008.5.1.4.1.1.88.73".equals(s1);
+    }
 
 }

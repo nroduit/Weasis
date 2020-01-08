@@ -152,6 +152,7 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         tagManager.addTag(Tag.Modality, Level.SERIES);
         // -------- End of Mandatory Tags --------
         tagManager.addTag(Tag.SeriesDescription, Level.SERIES);
+        tagManager.addTag(Tag.SOPClassUID, Level.SERIES);
         tagManager.addTag(Tag.RetrieveAETitle, Level.SERIES); // not required
         tagManager.addTag(Tag.ReferringPhysicianName, Level.SERIES);
         tagManager.addTag(Tag.InstitutionName, Level.SERIES);
