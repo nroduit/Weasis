@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -21,6 +21,11 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.dicom.viewer2d.EventManager;
 
+/**
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
+ */
 @org.osgi.service.component.annotations.Component(service = InsertableFactory.class, immediate = false, property = {
     "org.weasis.dicom.viewer2d.View2dContainer=true" })
 public class RtDisplayToolFactory implements InsertableFactory {

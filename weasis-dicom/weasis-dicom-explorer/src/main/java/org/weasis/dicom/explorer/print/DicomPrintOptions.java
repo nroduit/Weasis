@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -14,8 +14,10 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 
 /**
  *
- * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
- * @version 09/01/2012
+ * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Nicolas Roduit
+ * 
+ * @since 09/01/2012
  */
 public class DicomPrintOptions extends PrintOptions {
     public static final String DEF_MEDIUM_TYPE = "BLUE FILM"; //$NON-NLS-1$

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -7,13 +7,17 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-
 package org.weasis.dicom.rt;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 
+/**
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
+ */
 public class StructureSet extends HashMap<Integer, StructureLayer> {
     private static final long serialVersionUID = 6156886965129631894L;
 

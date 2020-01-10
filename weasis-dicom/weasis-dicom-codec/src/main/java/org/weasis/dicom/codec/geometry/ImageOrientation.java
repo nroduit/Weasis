@@ -35,7 +35,8 @@ import org.weasis.dicom.codec.TagD;
  * along the positive y-axis is equal to a unit vector along the positive z-axis.
  * </p>
  *
- * @author dclunie
+ * @author David A. Clunie
+ * @author Nicolas Roduit
  */
 public abstract class ImageOrientation {
 

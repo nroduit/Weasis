@@ -13,9 +13,9 @@ import javax.vecmath.Vector3d;
  * A class to describe the spatial geometry of a single cross-sectional image slice.
  * </p>
  *
- * Contributors:
- *     Nicolas Roduit - initial API and implementation
- *******************************************************************************/
+ * @author David A. Clunie
+ * @author Nicolas Roduit
+ */
 public class GeometryOfSlice {
 
     protected double[] rowArray;

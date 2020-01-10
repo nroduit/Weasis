@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -17,7 +17,8 @@ import org.weasis.core.ui.model.layer.LayerType;
 /**
  * The Class DefaultLayer.
  *
- * @author Nicolas Roduit, Benoit Jacquemoud
+ * @author Nicolas Roduit
+ * @author Benoit Jacquemoud
  */
 @XmlRootElement(name = "layer")
 public class DefaultLayer extends AbstractGraphicLayer {

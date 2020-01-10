@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -44,7 +44,8 @@ import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 
 /**
  *
- * @author Marcelo Porto (marcelo@animati.com.br), Nicolas Roduit
+ * @author Marcelo Porto (marcelo@animati.com.br)
+ * @author Nicolas Roduit
  */
 public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);

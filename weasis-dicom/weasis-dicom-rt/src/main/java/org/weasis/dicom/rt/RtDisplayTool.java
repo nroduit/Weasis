@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -7,7 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-
 package org.weasis.dicom.rt;
 
 import java.awt.BorderLayout;
@@ -73,6 +72,11 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 
+/**
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
+ */
 public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(RtDisplayTool.class);
 

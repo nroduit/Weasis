@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -7,7 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-
 package org.weasis.dicom.rt;
 
 import static org.opencv.core.Core.add;
@@ -56,6 +55,8 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 /**
  * RtSet is a collection of linked DICOM-RT entities that form the whole treatment case (Plans, Doses, StructureSets)
+ * 
+ * @author Tomas Skripcak
  */
 public class RtSet {
 

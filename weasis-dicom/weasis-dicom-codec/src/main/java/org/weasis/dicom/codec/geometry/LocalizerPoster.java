@@ -37,11 +37,9 @@ import org.weasis.core.api.gui.util.MathUtil;
  * Vector shapes = localizerPoster.getOutlineOnLocalizerForThisGeometry(postImageGeometry);
  * </pre>
  *
- * @see com.pixelmed.geometry.LocalizerPosterFactory
  * @see com.pixelmed.geometry.GeometryOfSlice
- * @see com.pixelmed.dicom.GeometryOfSliceFromAttributeList
  *
- * @author dclunie
+ * @author David A. Clunie
  */
 public abstract class LocalizerPoster {
 

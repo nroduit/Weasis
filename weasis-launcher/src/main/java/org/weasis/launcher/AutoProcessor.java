@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -34,6 +34,11 @@ import org.osgi.framework.Constants;
 import org.osgi.service.startlevel.StartLevel;
 import org.tukaani.xz.XZInputStream;
 
+/**
+ * 
+ * @author Richard S. Hall
+ * @author Nicolas Roduit
+ */
 public class AutoProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());

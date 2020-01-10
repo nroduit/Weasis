@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -25,9 +25,8 @@ import org.weasis.opencv.op.ImageProcessor;
 
 /**
  *
- * @author Benoit Jacquemoud, Nicolas Roduit
- *
- * @version $Rev$ $Date$
+ * @author Benoit Jacquemoud
+ * @author Nicolas Roduit
  */
 public class DicomImageUtils {
 

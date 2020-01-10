@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -14,6 +14,10 @@ import java.util.Objects;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 
+/**
+ * 
+ * @author Tomas Skripcak
+ */
 public class StructureLayer extends RtLayer {
     private final Structure structure;
 

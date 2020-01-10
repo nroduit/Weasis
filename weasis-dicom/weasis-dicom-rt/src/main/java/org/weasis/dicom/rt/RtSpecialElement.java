@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -14,6 +14,11 @@ import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 
+/**
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
+ */
 public class RtSpecialElement extends DicomSpecialElement {
 
     public RtSpecialElement(DicomMediaIO mediaIO) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -127,7 +127,8 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.opencv.data.PlanarImage;
 
 /**
- * @author Nicolas Roduit, Benoit Jacquemoud
+ * @author Nicolas Roduit
+ * @author Benoit Jacquemoud
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane implements ViewCanvas<E> {
     private static final long serialVersionUID = 4546307243696460899L;

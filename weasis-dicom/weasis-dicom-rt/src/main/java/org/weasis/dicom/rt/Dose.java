@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -7,7 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
-
 package org.weasis.dicom.rt;
 
 import static org.opencv.core.Core.addWeighted;
@@ -35,6 +34,12 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.opencv.op.ImageConversion;
 
+
+/**
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
+ */
 public class Dose extends HashMap<Integer, Dvh> {
     private static final long serialVersionUID = -1659662753587452881L;
 
@@ -59,7 +64,8 @@ public class Dose extends HashMap<Integer, Dvh> {
     private Pair<double[], double[]> dosePixLUT;
 
     public Dose() {
-        // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without interpolation
+        // Default threshold in mm to determine the max difference from slicePosition to closest dose frame without
+        // interpolation
         this.doseSlicePositionThreshold = 0.5;
         this.doseMax = 0.0;
     }
@@ -199,14 +205,16 @@ public class Dose extends HashMap<Integer, Dvh> {
             // Initial dose grid position Z (in patient coordinates)
             double imagePatientPositionZ = this.imagePositionPatient[2];
 
-            // Add initial image patient position Z to the offset vector to determine the Z coordinate of each dose plane
+            // Add initial image patient position Z to the offset vector to determine the Z coordinate of each dose
+            // plane
             double[] dosePlanesZ = new double[this.gridFrameOffsetVector.length];
             for (int i = 0; i < dosePlanesZ.length; i++) {
-                dosePlanesZ[i] = this.gridFrameOffsetVector[i]  + imagePatientPositionZ;
+                dosePlanesZ[i] = this.gridFrameOffsetVector[i] + imagePatientPositionZ;
             }
 
             // Check whether the requested plane is within the dose grid boundaries
-            if (Arrays.stream(dosePlanesZ).min().getAsDouble() <= slicePosition && slicePosition <= Arrays.stream(dosePlanesZ).max().getAsDouble()) {
+            if (Arrays.stream(dosePlanesZ).min().getAsDouble() <= slicePosition
+                && slicePosition <= Arrays.stream(dosePlanesZ).max().getAsDouble()) {
 
                 // Calculate the absolute distance vector between dose planes and requested slice position
                 double[] absoluteDistance = new double[dosePlanesZ.length];
@@ -241,7 +249,8 @@ public class Dose extends HashMap<Integer, Dvh> {
 
                     // Fractional distance of dose plane between upper and lower boundary (from bottom to top)
                     // E.g. if = 1, the plane is at the upper plane, = 0, it is at the lower plane.
-                    double fractionalDistance = (slicePosition - dosePlanesZ[lowerBoundaryIndex]) / (dosePlanesZ[upperBoundaryIndex] - dosePlanesZ[lowerBoundaryIndex]);
+                    double fractionalDistance = (slicePosition - dosePlanesZ[lowerBoundaryIndex])
+                        / (dosePlanesZ[upperBoundaryIndex] - dosePlanesZ[lowerBoundaryIndex]);
 
                     dosePlane = this.interpolateDosePlanes(upperBoundaryIndex, lowerBoundaryIndex, fractionalDistance);
                 }
@@ -304,13 +313,13 @@ public class Dose extends HashMap<Integer, Dvh> {
         dosePlane.getImage().toMat().convertTo(src, CvType.CV_32FC1);
 
         Mat hierarchy = new Mat();
-        
+
         Imgproc.threshold(src, thr, rawThreshold, 255, Imgproc.THRESH_BINARY);
         ImageConversion.releaseMat(src);
         Mat thrSrc = new Mat(rows, cols, CvType.CV_8U);
         thr.convertTo(thrSrc, CvType.CV_8U);
         ImageConversion.releaseMat(thr);
-        
+
         Imgproc.findContours(thrSrc, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
         ImageConversion.releaseMat(thrSrc);
         return contours;
@@ -321,34 +330,38 @@ public class Dose extends HashMap<Integer, Dvh> {
         // Transpose the dose grid LUT onto the image grid LUT
         double[] x = new double[this.doseMmLUT.getFirst().length];
         for (int i = 0; i < this.doseMmLUT.getFirst().length; i++) {
-            x[i] = (this.doseMmLUT.getFirst()[i] - patientImage.getImageLUT().getFirst()[0]) * patientImage.getProne() * patientImage.getFeetFirst() / patientImage.getImageSpacing()[0];
+            x[i] = (this.doseMmLUT.getFirst()[i] - patientImage.getImageLUT().getFirst()[0]) * patientImage.getProne()
+                * patientImage.getFeetFirst() / patientImage.getImageSpacing()[0];
 
         }
         double[] y = new double[this.doseMmLUT.getSecond().length];
         for (int j = 0; j < this.doseMmLUT.getSecond().length; j++) {
-            y[j] = (this.doseMmLUT.getSecond()[j]) - patientImage.getImageLUT().getSecond()[0] * patientImage.getProne() / patientImage.getImageSpacing()[1];
+            y[j] = (this.doseMmLUT.getSecond()[j]) - patientImage.getImageLUT().getSecond()[0] * patientImage.getProne()
+                / patientImage.getImageSpacing()[1];
         }
 
         this.dosePixLUT = new Pair<>(x, y);
     }
 
-    private MediaElement interpolateDosePlanes(int upperBoundaryIndex, int lowerBoundaryIndex, double fractionalDistance) {
+    private MediaElement interpolateDosePlanes(int upperBoundaryIndex, int lowerBoundaryIndex,
+        double fractionalDistance) {
         MediaElement dosePlane = null;
 
         DicomImageElement upperPlane = (DicomImageElement) this.images.get(upperBoundaryIndex);
         DicomImageElement lowerPlane = (DicomImageElement) this.images.get(lowerBoundaryIndex);
-        
+
         // A simple linear interpolation (lerp)
         Mat dosePlaneMat = new Mat();
-        addWeighted(lowerPlane.getImage().toMat(), 1.0 - fractionalDistance, upperPlane.getImage().toMat(), fractionalDistance, 0.0, dosePlaneMat);
+        addWeighted(lowerPlane.getImage().toMat(), 1.0 - fractionalDistance, upperPlane.getImage().toMat(),
+            fractionalDistance, 0.0, dosePlaneMat);
 
-        //TODO: dosePlaneMat should be an image for new dosePlane MediaElement
+        // TODO: dosePlaneMat should be an image for new dosePlane MediaElement
 
         return dosePlane;
     }
 
     private static int firstIndexOf(double[] array, double valueToFind, double tolerance) {
-        for(int i = 0; i < array.length; i++) {
+        for (int i = 0; i < array.length; i++) {
             if (Math.abs(array[i] - valueToFind) < tolerance) {
                 return i;
             }

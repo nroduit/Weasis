@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Tomas Skripcak, Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -31,6 +31,9 @@ import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 
 /**
  * Created by toskrip on 2/1/15.
+ * 
+ * @author Tomas Skripcak
+ * @author Nicolas Roduit
  */
 public class Contour {
     private static final Logger LOGGER = LoggerFactory.getLogger(Contour.class);

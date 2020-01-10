@@ -10,7 +10,7 @@ import javax.vecmath.Tuple3d;
 import javax.vecmath.Vector3d;
 
 /**
- * @author dclunie
+ * @author David A. Clunie
  */
 public class IntersectSlice extends LocalizerPoster {
 
