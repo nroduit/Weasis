@@ -58,7 +58,7 @@ public class ImageConversion {
         if (matrix == null) {
             return null;
         }
-
+        
         int cols = matrix.cols();
         int rows = matrix.rows();
         int type = matrix.type();
@@ -86,7 +86,7 @@ public class ImageConversion {
                 break;
             default:
                 throw new UnsupportedOperationException(
-                    "No implementation to handle " + matrix.channels() + " channels");
+                    "No implementation to handle " + channels + " channels");
         }
 
         DataBuffer buf = raster.getDataBuffer();

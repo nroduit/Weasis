@@ -35,7 +35,6 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FileUtil;
-import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.viewer2d.View2d;
@@ -76,7 +75,7 @@ public class SeriesBuilder {
             int maxImg = fullSeries ? series.size(filter) - extend : curImg;
 
             DicomImageElement img = series.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, filter, sortFilter);
-            final Attributes attributes = ((DcmMediaReader) img.getMediaReader()).getDicomObject();
+            final Attributes attributes = img.getMediaReader().getDicomObject();
             final int[] COPIED_ATTRS = { Tag.SpecificCharacterSet, Tag.PatientID, Tag.PatientName, Tag.PatientBirthDate,
                 Tag.PatientBirthTime, Tag.PatientSex, Tag.IssuerOfPatientID, Tag.IssuerOfAccessionNumberSequence,
                 Tag.PatientWeight, Tag.PatientAge, Tag.PatientSize, Tag.PatientState, Tag.PatientComments,
@@ -137,6 +136,7 @@ public class SeriesBuilder {
                     } catch (Exception e) {
                         if (raw != null) {
                             FileUtil.delete(raw.getFile());
+                            raw = null;
                         }
                         LOGGER.error("Writing MIP", e); //$NON-NLS-1$
                     }
