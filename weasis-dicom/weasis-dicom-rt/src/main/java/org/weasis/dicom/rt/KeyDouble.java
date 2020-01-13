@@ -7,7 +7,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
- *******************************************************************************/
 package org.weasis.dicom.rt;
 
 import org.weasis.core.api.gui.util.MathUtil;
