@@ -15,6 +15,7 @@ import java.util.Arrays;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.opencv.core.CvType;
 import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
@@ -46,8 +47,13 @@ public class DicomImageUtils {
             byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
                 Tag.SegmentedBluePaletteColorLookupTableData);
 
-            // Replace the original image with the RGB image.
-            return ImageProcessor.applyLUT(source.toMat(), new byte[][] { b, g, r });
+            if (source.depth() <= CvType.CV_8S) {
+                // Replace the original image with the RGB image.
+                return ImageProcessor.applyLUT(source.toMat(), new byte[][] { b, g, r });
+            } else {
+                LookupTableCV lookup = new LookupTableCV( new byte[][] { b, g, r });
+                return lookup.lookup(source.toMat());
+            }
         }
         return source;
     }
@@ -636,7 +642,7 @@ public class DicomImageUtils {
                             }
                         }
                     }
-                    break;
+                        break;
                     default:
                         illegalOpcode(op, i - 2);
                 }

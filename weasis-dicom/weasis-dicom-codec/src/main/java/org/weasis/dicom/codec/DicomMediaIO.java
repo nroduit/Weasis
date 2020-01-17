@@ -845,64 +845,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return null;
     }
 
-    private PlanarImage getValidImage(RenderedImage buffer, MediaElement media) {
-        PlanarImage img = null;
-        if (buffer != null) {
-            RenderedImage image = ImageFiler.getReadableImage(buffer);
-
-            if (dataType == DataBuffer.TYPE_SHORT && buffer.getSampleModel().getDataType() == DataBuffer.TYPE_USHORT) {
-                image = ImageConversion.fixSignedShortDataBuffer(image); // sh
-            }
-
-            // TODO free memory
-            img = ImageConversion.toMat(image);
-            if (image.getColorModel() instanceof PaletteColorModel) {
-                img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
-            }
-
-            // TODO should be applied for all images
-            /*
-             * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in the
-             * pixel data.
-             */
-            Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
-            if (overlayBitMask != null) {
-                if (media.getTagValue(TagW.OverlayBurninDataPath) == null) {
-                    // Serialize overlay (from pixel data)
-                    Attributes ds = getDicomObject();
-                    int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
-
-                    // TODO remove if the output image is cache
-                    if (embeddedOverlayGroupOffsets.length > 0) {
-                        FileOutputStream fileOut = null;
-                        ObjectOutput objOut = null;
-                        try {
-                            byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
-                            Raster raster = buffer.getData();
-                            for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
-                                overlayData[i] =
-                                    OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i], raster, ds);
-                            }
-                            File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-                            fileOut = new FileOutputStream(file);
-                            objOut = new ObjectOutputStream(fileOut);
-                            objOut.writeObject(overlayData);
-                            media.setTag(TagW.OverlayBurninDataPath, file.getPath());
-                        } catch (Exception e) {
-                            LOGGER.error("Cannot serialize overlay", e); //$NON-NLS-1$
-                        } finally {
-                            FileUtil.safeClose(objOut);
-                            FileUtil.safeClose(fileOut);
-                        }
-                    }
-                }
-                // Set to 0 all bits outside bitStored
-                img = ImageProcessor.bitwiseAnd(img.toMat(), overlayBitMask);
-            }
-        }
-        return img;
-    }
-
     private MediaElement getSingleImage() {
         return getSingleImage(0);
     }
