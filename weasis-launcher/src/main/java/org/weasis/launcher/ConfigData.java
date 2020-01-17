@@ -217,7 +217,7 @@ public class ConfigData {
             if (cmds.length > 0) {
                 for (int i = 1; i < cmds.length; i++) {
                     // Fix Windows issue (add a trailing slash)
-                    if (i == cmds.length - 1 && cmds[i].endsWith("/")) {
+                    if (i == cmds.length - 1 && cmds[i].endsWith("/")) { //$NON-NLS-1$
                         cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
                     }
                     arguments.add(cmds[i]);

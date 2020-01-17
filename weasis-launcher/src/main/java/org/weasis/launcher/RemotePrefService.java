@@ -24,8 +24,8 @@ import java.util.logging.Logger;
 
 public class RemotePrefService {
 
-    public static final String P_REMOTE_PREF_USER = "user";
-    public static final String P_REMOTE_PREF_PROFILE = "profile";
+    public static final String P_REMOTE_PREF_USER = "user"; //$NON-NLS-1$
+    public static final String P_REMOTE_PREF_PROFILE = "profile"; //$NON-NLS-1$
 
     private static final String TEXT_X_JAVA_PROP = "text/x-java-properties"; //$NON-NLS-1$
 
@@ -62,7 +62,7 @@ public class RemotePrefService {
     }
 
     private String getRemoteLauncherUrl() throws UnsupportedEncodingException {
-        return String.format("%s?%s=%s&%s=%s", remotePrefURL, P_REMOTE_PREF_USER, getEncodedValue(user),
+        return String.format("%s?%s=%s&%s=%s", remotePrefURL, P_REMOTE_PREF_USER, getEncodedValue(user), //$NON-NLS-1$
             P_REMOTE_PREF_PROFILE, getEncodedValue(profile));
     }
 

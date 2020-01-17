@@ -153,7 +153,7 @@ public class WeasisLauncher {
     public static final String P_WEASIS_ACCEPT_DISCLAIMER = "weasis.accept.disclaimer"; //$NON-NLS-1$
     public static final String P_WEASIS_SHOW_RELEASE = "weasis.show.release"; //$NON-NLS-1$
     public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release"; //$NON-NLS-1$
-    public static final String P_WEASIS_I18N = "weasis.i18n";
+    public static final String P_WEASIS_I18N = "weasis.i18n"; //$NON-NLS-1$
     public static final String P_OS_NAME = "os.name"; //$NON-NLS-1$
     public static final String P_WEASIS_LOOK = "weasis.look"; //$NON-NLS-1$
     public static final String P_GOSH_ARGS = "gosh.args"; //$NON-NLS-1$
@@ -984,8 +984,8 @@ public class WeasisLauncher {
             } else if (cdbl == null) {
                 String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null); // $NON-NLS-1$
                 if (Utils.hasText(cdb)) {
-                    path = cdb.substring(0, cdb.lastIndexOf('/')) + "/weasis-i18n";
-                    WeasisLauncher.readProperties(new URI(path + "/buildNumber.properties"), modulesi18n);
+                    path = cdb.substring(0, cdb.lastIndexOf('/')) + "/weasis-i18n"; //$NON-NLS-1$
+                    WeasisLauncher.readProperties(new URI(path + "/buildNumber.properties"), modulesi18n); //$NON-NLS-1$
                     if (!modulesi18n.isEmpty()) {
                         System.setProperty(P_WEASIS_I18N, path);
                     }
@@ -997,7 +997,7 @@ public class WeasisLauncher {
                 if (cdbl == null) {
                     cdbl = ConfigData.findLocalCodebase().getPath();
                 }
-                File file = new File(cdbl, "bundle-i18n" + File.separator  +"buildNumber.properties"); //$NON-NLS-1$
+                File file = new File(cdbl, "bundle-i18n" + File.separator  +"buildNumber.properties"); //$NON-NLS-1$ //$NON-NLS-2$
                 if (file.canRead()) {
                     WeasisLauncher.readProperties(file.toURI(), modulesi18n);
                     if (!modulesi18n.isEmpty()) {
