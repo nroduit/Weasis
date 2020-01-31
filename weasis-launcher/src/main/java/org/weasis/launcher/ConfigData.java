@@ -61,6 +61,7 @@ import javax.xml.stream.XMLStreamReader;
 
 import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Constants;
+import org.osgi.framework.Version;
 
 public class ConfigData {
 
@@ -626,6 +627,7 @@ public class ConfigData {
             configOutput.append("\n  Application configuration file = "); //$NON-NLS-1$
             configOutput.append(propURI);
             WeasisLauncher.readProperties(propURI, felixConfig);
+
         } else {
             LOGGER.log(Level.SEVERE, "No config.properties path found, Weasis cannot start!"); //$NON-NLS-1$
         }
@@ -637,6 +639,7 @@ public class ConfigData {
             // Extended properties, add or override existing properties
             WeasisLauncher.readProperties(propURI, felixConfig);
         }
+        checkMinimalVersion(felixConfig);
 
         if (felixConfig.isEmpty()) {
             throw new IllegalStateException("Cannot load weasis config!"); //$NON-NLS-1$
@@ -646,6 +649,22 @@ public class ConfigData {
         properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(felixConfig.hashCode()));
 
         return felixConfig;
+    }
+    
+    private void checkMinimalVersion(Properties felixConfig) {
+        // TODO if native version 
+        String val = felixConfig.getProperty("weasis.min.native.version");
+        if(Utils.hasText(val)) {
+            Version cur = new Version(felixConfig.getProperty("weasis.version").replace("-SNAPSHOT", ".SNAPSHOT"));
+            Version min = new Version(val);
+            if(cur.compareTo(min) < 0) {
+                URI propURI =getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+                WeasisLauncher.readProperties(propURI, felixConfig);
+                propURI =getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+                WeasisLauncher.readProperties(propURI, felixConfig);
+                //TODO popup
+            }
+        }
     }
 
     public URI getPropertiesURI(String configProp, String configFile) {
@@ -664,15 +683,19 @@ public class ConfigData {
                 return null;
             }
         } else {
-            File confDir = new File(findLocalCodebase(), CONFIG_DIRECTORY);
-            try {
-                propURL = new File(confDir, configFile).toURI();
-            } catch (Exception ex) {
-                LOGGER.log(Level.SEVERE, configFile, ex);
-                return null;
-            }
+            propURL = getLocalPropertiesURI(configProp, configFile);
         }
         return propURL;
+    }
+
+    private URI getLocalPropertiesURI(String configProp, String configFile) {
+        File confDir = new File(findLocalCodebase(), CONFIG_DIRECTORY);
+        try {
+            return new File(confDir, configFile).toURI();
+        } catch (Exception ex) {
+            LOGGER.log(Level.SEVERE, configFile, ex);
+            return null;
+        }
     }
 
     private static String toHex(int val) {
