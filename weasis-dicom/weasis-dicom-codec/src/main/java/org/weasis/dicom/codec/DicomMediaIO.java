@@ -52,7 +52,6 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
-import org.dcm4che3.image.PaletteColorModel;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
@@ -71,7 +70,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
@@ -785,30 +783,30 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             if (extParams.getSegmentPositions() != null) {
 
                 // FileInputStream in = new FileInputStream(extParams.getFile());
-                // File outFile = new File(AppProperties.FILE_CACHE_DIR,
-                // fileCache.getFinalFile().getName() + "-" + frame + ".j2k");
+                // File outFile =
+                // new File(AppProperties.FILE_CACHE_DIR, fileCache.getFinalFile().getName() + "-" + frame + ".jp2");
                 // FileOutputStream out = new FileOutputStream(outFile);
                 // StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
                 // StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
 
                 int dcmFlags =
-                    dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_IMREAD_SIGNED : Imgcodecs.DICOM_IMREAD_UNSIGNED;
+                    dataType == DataBuffer.TYPE_SHORT ? Imgcodecs.DICOM_FLAG_SIGNED : Imgcodecs.DICOM_FLAG_UNSIGNED;
 
                 // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error made by some
                 // constructors). RGB color model doesn't make sense for lossy jpeg.
                 // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
                 if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
                     && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
-                    dcmFlags |= Imgcodecs.DICOM_IMREAD_YBR;
+                    dcmFlags |= Imgcodecs.DICOM_FLAG_YBR;
                 }
                 if (bigendian) {
-                    dcmFlags |= Imgcodecs.DICOM_IMREAD_BIGENDIAN;
+                    dcmFlags |= Imgcodecs.DICOM_FLAG_BIGENDIAN;
                 }
                 if (dataType == DataBuffer.TYPE_FLOAT || dataType == DataBuffer.TYPE_DOUBLE) {
-                    dcmFlags |= Imgcodecs.DICOM_IMREAD_FLOAT;
+                    dcmFlags |= Imgcodecs.DICOM_FLAG_FLOAT;
                 }
                 if (TransferSyntax.RLE.getTransferSyntaxUID().equals(syntax)) {
-                    dcmFlags |= Imgcodecs.DICOM_IMREAD_RLE;
+                    dcmFlags |= Imgcodecs.DICOM_FLAG_RLE;
                 }
 
                 MatOfDouble positions =

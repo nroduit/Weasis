@@ -112,8 +112,13 @@ public class ImageProcessor {
     }
 
     public static ImageCV crop(Mat source, Rectangle area) {
-        return ImageCV
-            .toImageCV(Objects.requireNonNull(source).submat(new Rect(area.x, area.y, area.width, area.height)));
+        Objects.requireNonNull(source);
+        Rectangle rect = Objects.requireNonNull(area).intersection(new Rectangle(0, 0, source.width(), source.height()));
+        if (area.width > 1 && area.height > 1) {
+            return ImageCV
+                .toImageCV(source.submat(new Rect(rect.x, rect.y, rect.width, rect.height)));
+        }
+        return ImageCV.toImageCV(source);
     }
 
     public static MinMaxLocResult minMaxLoc(RenderedImage source, Rectangle area) {
