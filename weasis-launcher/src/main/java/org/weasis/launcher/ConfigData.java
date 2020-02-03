@@ -655,7 +655,7 @@ public class ConfigData {
         // TODO if native version 
         String val = felixConfig.getProperty("weasis.min.native.version");
         if(Utils.hasText(val)) {
-            Version cur = new Version(felixConfig.getProperty("weasis.version").replace("-SNAPSHOT", ".SNAPSHOT"));
+            Version cur = new Version(felixConfig.getProperty("weasis.version").replaceFirst("-", "."));
             Version min = new Version(val);
             if(cur.compareTo(min) < 0) {
                 URI propURI =getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
