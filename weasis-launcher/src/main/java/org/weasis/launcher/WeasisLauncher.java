@@ -200,6 +200,24 @@ public class WeasisLauncher {
         // Load local properties and clean if necessary the previous version
         WeasisLoader loader = loadProperties(serverProp, configData.getConfigOutput());
         WeasisMainFrame mainFrame = loader.getMainFrame();
+        
+        if (Utils.getEmptytoFalse(System.getProperty("force.locale.launch"))) {
+            EventQueue.invokeAndWait(() -> {
+                String appName = System.getProperty(P_WEASIS_NAME);
+                int response = JOptionPane.showOptionDialog(
+                    mainFrame.getRootPaneContainer() == null ? null : mainFrame.getRootPaneContainer().getContentPane(),
+                    String.format(
+                        "The local installation of %s must be updated at least to %s." + "\n\n"
+                            + "Try to continue with the current local version?",
+                        appName, serverProp.get("weasis.min.native.version")),
+                    null, JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
+
+                if (response != 0) {
+                    LOGGER.log(Level.SEVERE, "Abort to update the native version"); //$NON-NLS-1$
+                    System.exit(-1);
+                }
+            });
+        }
 
         // If enabled, register a shutdown hook to make sure the framework is
         // cleanly shutdown when the VM exits
@@ -698,7 +716,7 @@ public class WeasisLauncher {
             try {
                 remotePrefs = new RemotePrefService(remotePrefURL, serverProp, user, profileName);
                 Properties remote = remotePrefs.readLauncherPref(null);
-                currentProps.putAll(remote); // merger remote to local
+                currentProps.putAll(remote); // merge remote to local
                 if (remote.size() < currentProps.size()) {
                     // Force to have difference for saving preferences
                     serverProp.put("wp.init.diff.remote.pref", Boolean.TRUE.toString()); //$NON-NLS-1$
@@ -997,7 +1015,7 @@ public class WeasisLauncher {
                 if (cdbl == null) {
                     cdbl = ConfigData.findLocalCodebase().getPath();
                 }
-                File file = new File(cdbl, "bundle-i18n" + File.separator  +"buildNumber.properties"); //$NON-NLS-1$ //$NON-NLS-2$
+                File file = new File(cdbl, "bundle-i18n" + File.separator + "buildNumber.properties"); //$NON-NLS-1$ //$NON-NLS-2$
                 if (file.canRead()) {
                     WeasisLauncher.readProperties(file.toURI(), modulesi18n);
                     if (!modulesi18n.isEmpty()) {

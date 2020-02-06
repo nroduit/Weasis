@@ -652,17 +652,20 @@ public class ConfigData {
     }
     
     private void checkMinimalVersion(Properties felixConfig) {
-        // TODO if native version 
         String val = felixConfig.getProperty("weasis.min.native.version");
-        if(Utils.hasText(val)) {
-            Version cur = new Version(felixConfig.getProperty("weasis.version").replaceFirst("-", "."));
-            Version min = new Version(val);
-            if(cur.compareTo(min) < 0) {
-                URI propURI =getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-                WeasisLauncher.readProperties(propURI, felixConfig);
-                propURI =getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
-                WeasisLauncher.readProperties(propURI, felixConfig);
-                //TODO popup
+        if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) != null) {
+            try {
+                Version cur = new Version(felixConfig.getProperty("weasis.version").replaceFirst("-", "."));
+                Version min = new Version(val.replaceFirst("-", "."));
+                if (cur.compareTo(min) < 0) {
+                    URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+                    WeasisLauncher.readProperties(propURI, felixConfig);
+                    propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
+                    WeasisLauncher.readProperties(propURI, felixConfig);
+                    System.setProperty("force.locale.launch", Boolean.TRUE.toString()); //$NON-NLS-1$
+                }
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e);
             }
         }
     }
