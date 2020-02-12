@@ -160,6 +160,7 @@ public class WeasisLauncher {
     public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache"; //$NON-NLS-1$
     public static final String P_HTTP_AUTHORIZATION = "http.authorization"; //$NON-NLS-1$
     public static final String P_NATIVE_LIB_SPEC = "native.library.spec"; //$NON-NLS-1$
+    public static final String P_WEASIS_MIN_NATIVE_VERSION = "weasis.min.native.version";
     public static final String F_RESOURCES = "resources"; //$NON-NLS-1$
     static final String MAC_OS_X = "Mac OS X"; //$NON-NLS-1$
 
@@ -201,7 +202,8 @@ public class WeasisLauncher {
         WeasisLoader loader = loadProperties(serverProp, configData.getConfigOutput());
         WeasisMainFrame mainFrame = loader.getMainFrame();
         
-        if (Utils.getEmptytoFalse(System.getProperty("force.locale.launch"))) {
+        String minVersion = System.getProperty(P_WEASIS_MIN_NATIVE_VERSION);
+        if (Utils.hasText(minVersion)) {
             EventQueue.invokeAndWait(() -> {
                 String appName = System.getProperty(P_WEASIS_NAME);
                 int response = JOptionPane.showOptionDialog(
@@ -209,11 +211,11 @@ public class WeasisLauncher {
                     String.format(
                         "The local installation of %s must be updated at least to %s." + "\n\n"
                             + "Try to continue with the current local version?",
-                        appName, serverProp.get("weasis.min.native.version")),
+                        appName, minVersion),
                     null, JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
 
                 if (response != 0) {
-                    LOGGER.log(Level.SEVERE, "Abort to update the native version"); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Do not continue the launch with the local version"); //$NON-NLS-1$
                     System.exit(-1);
                 }
             });

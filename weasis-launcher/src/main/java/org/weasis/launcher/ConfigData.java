@@ -64,7 +64,6 @@ import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 
 public class ConfigData {
-
     private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
 
     // Params, see https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
@@ -652,17 +651,20 @@ public class ConfigData {
     }
     
     private void checkMinimalVersion(Properties felixConfig) {
-        String val = felixConfig.getProperty("weasis.min.native.version");
-        if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) != null) {
+        String val = felixConfig.getProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION);
+        if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) == null) {
             try {
-                Version cur = new Version(felixConfig.getProperty("weasis.version").replaceFirst("-", "."));
+                URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
+                Properties localProps = new Properties();
+                WeasisLauncher.readProperties(propURI, localProps);
+                Version loc = new Version(localProps.getProperty("weasis.version").replaceFirst("-", "."));
                 Version min = new Version(val.replaceFirst("-", "."));
-                if (cur.compareTo(min) < 0) {
-                    URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
-                    WeasisLauncher.readProperties(propURI, felixConfig);
+                if (loc.compareTo(min) < 0) {
+                    felixConfig.clear();
+                    felixConfig.putAll(localProps);
                     propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
                     WeasisLauncher.readProperties(propURI, felixConfig);
-                    System.setProperty("force.locale.launch", Boolean.TRUE.toString()); //$NON-NLS-1$
+                    System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val); //$NON-NLS-1$
                 }
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e);
