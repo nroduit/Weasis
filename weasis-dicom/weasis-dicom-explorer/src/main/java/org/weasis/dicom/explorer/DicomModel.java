@@ -934,7 +934,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", //$NON-NLS-1$
             "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
             "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", "  -z --zip=URI      open DICOM ZIP from an URI", //$NON-NLS-2$
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -z --zip=URI      open DICOM ZIP from an URI",  //$NON-NLS-1$//$NON-NLS-2$
             "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
             "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
             "  -? --help         show help" }; //$NON-NLS-1$
@@ -1051,14 +1051,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", //$NON-NLS-1$
             "  -u --url=URL               URL of the DICOMWeb service", //$NON-NLS-1$
             "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", //$NON-NLS-1$
-            "  -H --header=HEADER         Pass custom header(s) to all the requests",
+            "  -H --header=HEADER         Pass custom header(s) to all the requests", //$NON-NLS-1$
             "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", //$NON-NLS-1$
             "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", //$NON-NLS-1$
             "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //$NON-NLS-1$
             "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //$NON-NLS-1$
             "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", //$NON-NLS-1$
             "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", //$NON-NLS-1$
-            "  -? --help                  show help" };
+            "  -? --help                  show help" }; //$NON-NLS-1$
 
         final Option opt = Options.compile(usage).parse(argv);
         final String rsUrl = opt.get("url"); //$NON-NLS-1$
@@ -1072,22 +1072,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         Properties props = new Properties();
         props.setProperty(RsQueryParams.P_DICOMWEB_URL, rsUrl);
-        String queryExt = opt.get("query-ext");
+        String queryExt = opt.get("query-ext"); //$NON-NLS-1$
         if (StringUtil.hasText(queryExt)) {
             props.setProperty(RsQueryParams.P_QUERY_EXT, queryExt);
         }
-        String retrieveExt = opt.get("retrieve-ext");
+        String retrieveExt = opt.get("retrieve-ext"); //$NON-NLS-1$
         if (StringUtil.hasText(retrieveExt)) {
             props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
         }
 
-        String acceptExt = opt.get("accept-ext");
+        String acceptExt = opt.get("accept-ext"); //$NON-NLS-1$
         if (!StringUtil.hasText(acceptExt)) {
-            acceptExt = "transfer-syntax=*";
+            acceptExt = "transfer-syntax=*"; //$NON-NLS-1$
         }
         props.setProperty(RsQueryParams.P_ACCEPT_EXT, acceptExt);
         
-        if (opt.isSet("show-whole-study")) {
+        if (opt.isSet("show-whole-study")) { //$NON-NLS-1$
             props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
         }
 
@@ -1095,10 +1095,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
             for (String query : pargs) {
-                List<String> common = opt.getList("header");
-                List<String> q = opt.getList("query-header");
+                List<String> common = opt.getList("header"); //$NON-NLS-1$
+                List<String> q = opt.getList("query-header"); //$NON-NLS-1$
                 q.addAll(common);
-                List<String> r = opt.getList("retrieve-header");
+                List<String> r = opt.getList("retrieve-header"); //$NON-NLS-1$
                 r.addAll(common);
                 RsQueryParams rsquery = new RsQueryParams(DicomModel.this, props, RsQueryParams.getQueryMap(query),
                     RsQueryParams.getHeaders(q), RsQueryParams.getHeaders(r));

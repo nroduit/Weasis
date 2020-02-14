@@ -41,11 +41,11 @@ import org.weasis.dicom.web.InvokeImageDisplay;
 public class RsQueryParams extends ExplorerTask<Boolean, String> {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryParams.class);
 
-    public static final String P_DICOMWEB_URL = "dicomweb.url";
-    public static final String P_QUERY_EXT = "query.ext";
-    public static final String P_RETRIEVE_EXT = "retrieve.ext";
-    public static final String P_SHOW_WHOLE_STUDY = "show.whole.study";
-    public static final String P_ACCEPT_EXT = "accept.ext";
+    public static final String P_DICOMWEB_URL = "dicomweb.url"; //$NON-NLS-1$
+    public static final String P_QUERY_EXT = "query.ext"; //$NON-NLS-1$
+    public static final String P_RETRIEVE_EXT = "retrieve.ext"; //$NON-NLS-1$
+    public static final String P_SHOW_WHOLE_STUDY = "show.whole.study"; //$NON-NLS-1$
+    public static final String P_ACCEPT_EXT = "accept.ext"; //$NON-NLS-1$
 
     private final DicomModel dicomModel;
     private final Map<String, LoadSeries> seriesMap;
@@ -63,11 +63,11 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         this.requestMap = Objects.requireNonNull(requestMap);
         String url = properties.getProperty(P_DICOMWEB_URL);
         if (StringUtil.hasText(url)) {
-            if (url.endsWith("/")) {
+            if (url.endsWith("/")) { //$NON-NLS-1$
                 properties.setProperty(P_DICOMWEB_URL, url.substring(0, url.length() - 1));
             }
         } else {
-            throw new IllegalArgumentException("DICOMWeb URL cannot be null");
+            throw new IllegalArgumentException("DICOMWeb URL cannot be null"); //$NON-NLS-1$
         }
 
         this.seriesMap = new HashMap<>();
@@ -79,15 +79,15 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     public static Map<String, String> getHeaders(List<String> urlHeaders) {
         Map<String, String> headers = new HashMap<>();
         for (String h : LangUtil.emptyIfNull(urlHeaders)) {
-            String[] val = h.split(":", 2);
+            String[] val = h.split(":", 2); //$NON-NLS-1$
             if (val.length == 1) {
-                headers.put(val[0].trim().toLowerCase(), "");
+                headers.put(val[0].trim().toLowerCase(), ""); //$NON-NLS-1$
             } else if (val.length == 2) {
                 String name = val[0].trim().toLowerCase();
                 String value = val[1].trim();
                 // Hack for dcm4chee-arc integration
-                if ("authorization".equals(name) && value.length() > 14 && value.startsWith("&access_token=")) {
-                    value = "Bearer " + value.substring(14);
+                if ("authorization".equals(name) && value.length() > 14 && value.startsWith("&access_token=")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    value = "Bearer " + value.substring(14); //$NON-NLS-1$
                 }
                 headers.put(name, value);
             }
@@ -96,10 +96,10 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     }
 
     public static Map<String, List<String>> getQueryMap(String query) {
-        String[] params = query.split("&");
+        String[] params = query.split("&"); //$NON-NLS-1$
         Map<String, List<String>> map = new HashMap<>();
         for (String param : params) {
-            String[] val = param.split("=", 2);
+            String[] val = param.split("=", 2); //$NON-NLS-1$
             String name = val[0];
             if (!name.isEmpty()) {
                 List<String> v = map.get(name);
@@ -108,7 +108,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                     map.put(val[0], v);
                 }
                 if (val.length == 1) {
-                    v.add("");
+                    v.add(""); //$NON-NLS-1$
                 } else if (val.length == 2) {
                     v.add(val[1]);
                 }
@@ -122,7 +122,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         fillPatientList();
         WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
         getRetrieveHeaders().forEach(wp::addHttpTag);
-        wp.addHttpTag("Accept", "image/jpeg");
+        wp.addHttpTag("Accept", "image/jpeg"); //$NON-NLS-1$ //$NON-NLS-2$
         
         for (final LoadSeries loadSeries : seriesMap.values()) {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
@@ -154,8 +154,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                     arcConfig.buildFromStudyInstanceUID(Arrays.asList(stuID));
 
                 } else {
-                    LOGGER.error("Not ID found for STUDY request type: {}", requestType);
-                    showErrorMessage("Missing Study ID", "No studyUID found in the request");
+                    LOGGER.error("Not ID found for STUDY request type: {}", requestType); //$NON-NLS-1$
+                    showErrorMessage(Messages.getString("RsQueryParams.missing_study_uid"), Messages.getString("RsQueryParams.no_sudy_uid")); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             } else if (InvokeImageDisplay.PATIENT_LEVEL.equals(requestType)) {
                 String patID = getReqPatientID();
@@ -163,8 +163,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                     arcConfig.buildFromPatientID(Arrays.asList(patID));
                 }
             } else if (requestType != null) {
-                LOGGER.error("Not supported IID request type: {}", requestType);
-                showErrorMessage("Unexpected Request", "IID request type: " + requestType);
+                LOGGER.error("Not supported IID request type: {}", requestType); //$NON-NLS-1$
+                showErrorMessage(Messages.getString("RsQueryParams.unexpect_req"), Messages.getString("RsQueryParams.idd_type") + requestType); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
                 arcConfig.buildFromSopInstanceUID(getReqObjectUIDs());
                 arcConfig.buildFromSeriesInstanceUID(getReqSeriesUIDs());
@@ -173,8 +173,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                 arcConfig.buildFromPatientID(getReqPatientIDs());
             }
         } catch (Exception e) {
-            LOGGER.error("Error when building the patient list", e);
-            showErrorMessage("Unexpected Error", "Unexpected Error when building the manifest" + StringUtil.COLON + "\n"
+            LOGGER.error("Error when building the patient list", e); //$NON-NLS-1$
+            showErrorMessage(Messages.getString("RsQueryParams.unexpect_error"), Messages.getString("RsQueryParams.error_build_mf") + StringUtil.COLON + "\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + StringUtil.getTruncatedString(e.getMessage(), 130, Suffix.THREE_PTS));
         }
     }
@@ -192,7 +192,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     }
 
     public boolean isAcceptNoImage() {
-        return LangUtil.getEmptytoFalse(properties.getProperty("accept.noimage"));
+        return LangUtil.getEmptytoFalse(properties.getProperty("accept.noimage")); //$NON-NLS-1$
     }
 
     public DicomModel getDicomModel() {
