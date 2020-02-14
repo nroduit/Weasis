@@ -657,17 +657,17 @@ public class ConfigData {
                 URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
                 Properties localProps = new Properties();
                 WeasisLauncher.readProperties(propURI, localProps);
-                Version loc = new Version(localProps.getProperty("weasis.version").replaceFirst("-", "."));
-                Version min = new Version(val.replaceFirst("-", "."));
+                Version loc = new Version(localProps.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
+                Version min = new Version(val.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
                 if (loc.compareTo(min) < 0) {
                     felixConfig.clear();
                     felixConfig.putAll(localProps);
                     propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
                     WeasisLauncher.readProperties(propURI, felixConfig);
-                    System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val); //$NON-NLS-1$
+                    System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val); 
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e);
+                LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e); //$NON-NLS-1$
             }
         }
     }
