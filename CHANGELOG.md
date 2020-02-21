@@ -1,8 +1,26 @@
 # Changelog
 
+## [v3.6.0](https://github.com/nroduit/weasis/tree/v3.6.0) (2020-02-21)
+
+[Full Changelog](https://github.com/nroduit/weasis/compare/v3.5.4...v3.6.0)
+
+**Implemented enhancements:**
+
+- Define a minimal local version for loading the remote plug-ins [\#113](https://github.com/nroduit/Weasis/issues/113)
+- Always set the Dose Report series at the end when sorting series [\#110](https://github.com/nroduit/Weasis/issues/110)
+
+**Fixed bugs:**
+
+- Remove pack200 compression in Java 14 \(replace by xz for plug-in files\) [\#117](https://github.com/nroduit/Weasis/issues/117)
+- Weasis 3.5.4 crashes on OS X 10.15.2 [\#116](https://github.com/nroduit/Weasis/issues/116)
+- Cannot display 16-bit image with DICOM PALETTE\_COLOR [\#112](https://github.com/nroduit/Weasis/issues/112)
+- Mouse cursor is moving on the Weasis window \(when already open\) [\#108](https://github.com/nroduit/Weasis/issues/108)
+- NPE when loading a manifest [\#107](https://github.com/nroduit/Weasis/issues/107)
+- Issue of sorting series order [\#105](https://github.com/nroduit/Weasis/issues/105)
+
 ## [v3.5.4](https://github.com/nroduit/weasis/tree/v3.5.4) (2019-11-01)
 
-[Full Changelog](https://github.com/nroduit/weasis/compare/3.5.4-rc...v3.5.4)
+[Full Changelog](https://github.com/nroduit/weasis/compare/3.5.3...v3.5.4)
 
 **Implemented enhancements:**
 
