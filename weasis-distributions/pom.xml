@@ -765,7 +765,7 @@
 				<plugins>
 					<plugin>
 						<groupId>org.weasis.maven</groupId>
-						<artifactId>build-txz-plugin</artifactId>
+						<artifactId>build-xz-plugin</artifactId>
 						<version>1.0.0</version>
 						<executions>
 							<execution>
