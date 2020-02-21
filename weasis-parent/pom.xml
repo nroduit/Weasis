@@ -21,7 +21,7 @@
 		<app.version>${project.version}</app.version>
 		<javaws.version>1.6.0-17</javaws.version>
 		<felix.framework.version>6.0.3</felix.framework.version>
-		<substance.version>1.9.1</substance.version>
+		<substance.version>1.9.2</substance.version>
 		<xz.version>1.8</xz.version>
 
 		<osgi.cmpn.version>7.0.0</osgi.cmpn.version>

@@ -11,7 +11,7 @@ REQUIRED_TEXT_VERSION=13
 REVISON_INC="1"
 PACKAGE=YES
 # Package for Java 11 (remove in weasis 4)
-SUBSTANCE_PKG="3.0.0-rc"
+SUBSTANCE_PKG="3.0.0-rc3"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
