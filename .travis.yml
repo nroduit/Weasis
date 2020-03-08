@@ -8,8 +8,7 @@ jdk:
 addons:
   sonarcloud:
     organization: "nroduit-github"
-    token:
-      secure: "0c4c3860461d7d1098d51dfc52ec19d886025323"
+    token: "0c4c3860461d7d1098d51dfc52ec19d886025323"
 script:
   # the following command line builds the project, runs the tests with coverage and then execute the SonarCloud analysis
   - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
