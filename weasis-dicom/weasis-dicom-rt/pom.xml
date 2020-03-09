@@ -5,7 +5,7 @@
 	<parent>
 		<artifactId>weasis-dicom-parent</artifactId>
 		<groupId>org.weasis.dicom</groupId>
-		<version>3.6.0</version>
+		<version>3.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-dicom-rt</artifactId>

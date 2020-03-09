@@ -5,7 +5,7 @@
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
 		<!-- Remove "-SNAPSHOT" for release -->
-		<version>3.6.0</version>
+		<version>3.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>

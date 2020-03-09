@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-opencv-parent</artifactId>
 		<groupId>org.weasis.opencv</groupId>
-		<version>3.6.0</version>
+		<version>3.6.1-SNAPSHOT</version>
 		<relativePath>../weasis-opencv-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>

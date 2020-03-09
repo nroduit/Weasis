@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.weasis.base</groupId>
 		<artifactId>weasis-base-ui-mr</artifactId>
-		<version>3.6.0</version>
+		<version>3.6.1-SNAPSHOT</version>
 	</parent>
 
 	<artifactId>weasis-base-ui-nine</artifactId>
