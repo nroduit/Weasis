@@ -14,7 +14,6 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>weasis-opencv-parent</module>
-		<module>weasis-opencv-core</module>
 		<module>weasis-opencv-core-windows-x86</module>
 		<module>weasis-opencv-core-windows-x86-64</module>
 		<module>weasis-opencv-core-linux-x86</module>
