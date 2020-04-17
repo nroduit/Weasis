@@ -14,7 +14,7 @@ import java.io.File;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.util.FileUtil;
 
 public class DicomVideoElement extends AudioVideoElement implements FileExtractor {
 

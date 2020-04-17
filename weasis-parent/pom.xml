@@ -41,6 +41,7 @@
 		<slf4j.version>1.7.29</slf4j.version>
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.3p1</dockingframes.version>
+		<weasis.core.img.version>4.2.0-SNAPSHOT</weasis.core.img.version>
 		<weasis.opencv.native.version>4.2.0-dcm</weasis.opencv.native.version>
 		<javax.json.version>1.1.5</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
@@ -97,7 +98,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-scr-plugin</artifactId>
-					<version>1.26.2</version>
+					<version>1.26.5-SNAPSHOT</version>
 					<executions>
 						<execution>
 							<id>generate-scr-scrdescriptor</id>

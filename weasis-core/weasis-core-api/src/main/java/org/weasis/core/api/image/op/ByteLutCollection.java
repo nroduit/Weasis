@@ -19,7 +19,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.util.FileUtil;
 
 /**
  * <code>ByteLutCollection</code> contains a collection of lookup tables (LUT) stored in BGR for OpenCV.

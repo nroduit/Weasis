@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;

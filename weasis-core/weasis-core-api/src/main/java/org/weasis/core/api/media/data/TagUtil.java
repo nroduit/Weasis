@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -124,7 +125,7 @@ public final class TagUtil {
             return LocalUtil.getDateFormatter().format(date);
         } else if (date instanceof LocalTime) {
             return LocalUtil.getTimeFormatter().format(date);
-        } else if (date instanceof LocalDateTime) {
+        } else if (date instanceof LocalDateTime || date instanceof ZonedDateTime) {
             return LocalUtil.getDateTimeFormatter().format(date);
         } else if (date instanceof Instant) {
             return LocalUtil.getDateTimeFormatter().format(((Instant) date).atZone(ZoneId.systemDefault()));

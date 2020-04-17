@@ -11,11 +11,11 @@
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>bundle</packaging>
 	<name>2D DICOM Viewer [${project.artifactId}]</name>
-	
+
 	<properties>
 		<bundle.namespace>org.weasis.dicom.viewer2d</bundle.namespace>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -33,23 +33,17 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 	<dependencies>
 		<dependency>
-			<groupId>org.weasis.opencv</groupId>
-			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-ui</artifactId>
+			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-explorer</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-ui</artifactId>
 			<version>${project.version}</version>
 			<scope>provided</scope>
 		</dependency>

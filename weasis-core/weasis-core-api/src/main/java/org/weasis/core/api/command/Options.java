@@ -20,7 +20,7 @@ import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 /**
  * Yet another GNU long options parser. This one is configured by parsing its Usage string.

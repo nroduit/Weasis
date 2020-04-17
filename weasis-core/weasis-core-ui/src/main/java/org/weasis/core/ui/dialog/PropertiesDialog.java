@@ -28,7 +28,7 @@ import javax.swing.JSpinner;
 import javax.swing.border.EmptyBorder;
 
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.core.ui.Messages;
 
 public abstract class PropertiesDialog extends JDialog {

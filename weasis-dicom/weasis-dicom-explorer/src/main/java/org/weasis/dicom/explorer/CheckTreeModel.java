@@ -36,7 +36,7 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnailable;
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;

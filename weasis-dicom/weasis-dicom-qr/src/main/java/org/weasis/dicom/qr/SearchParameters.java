@@ -11,7 +11,7 @@ package org.weasis.dicom.qr;
 
 import java.util.ArrayList;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.param.DicomParam;
 
 public class SearchParameters {

@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.weasis.core.api.util.Copyable;
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 
 public class SynchData implements Copyable<SynchData> {
 

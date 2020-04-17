@@ -14,7 +14,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 
 public class WindowOp extends AbstractOp {

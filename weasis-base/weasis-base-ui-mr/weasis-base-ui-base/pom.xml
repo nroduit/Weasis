@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.weasis.base</groupId>
-        <artifactId>weasis-base-ui-mr</artifactId>
+		<artifactId>weasis-base-ui-mr</artifactId>
 		<version>3.6.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>weasis-base-ui-base</artifactId>
@@ -16,7 +16,7 @@
 		<bundle.namespace>org.weasis.base.ui</bundle.namespace>
 		<maven.install.skip>true</maven.install.skip>
 	</properties>
-	
+
 	<build>
 		<plugins>
 			<plugin>
@@ -26,7 +26,7 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<configuration>					
+				<configuration>
 					<instructions>
 						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
 						<Multi-Release>true</Multi-Release>
@@ -44,6 +44,12 @@
 		<dependency>
 			<groupId>org.apache.felix</groupId>
 			<artifactId>org.apache.felix.gogo.runtime</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-img</artifactId>
+			<version>${weasis.core.img.version}</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 </project>

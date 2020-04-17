@@ -14,7 +14,7 @@ import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 
 import org.weasis.core.api.media.data.TagUtil;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.TlsOptions;

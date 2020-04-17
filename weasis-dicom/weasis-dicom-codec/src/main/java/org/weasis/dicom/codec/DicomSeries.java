@@ -26,8 +26,8 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
 
 public class DicomSeries extends Series<DicomImageElement> {

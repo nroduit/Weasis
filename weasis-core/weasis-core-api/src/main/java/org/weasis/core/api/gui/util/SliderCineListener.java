@@ -17,7 +17,7 @@ import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public abstract class SliderCineListener extends SliderChangeListener {
     public enum TIME {

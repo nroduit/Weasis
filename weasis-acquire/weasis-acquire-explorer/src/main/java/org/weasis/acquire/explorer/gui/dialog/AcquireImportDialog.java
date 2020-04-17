@@ -41,7 +41,7 @@ import org.weasis.acquire.explorer.gui.control.ImportPanel;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {

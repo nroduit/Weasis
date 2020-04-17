@@ -27,8 +27,8 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FileUtil;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 
 public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements FilesExtractor {
 

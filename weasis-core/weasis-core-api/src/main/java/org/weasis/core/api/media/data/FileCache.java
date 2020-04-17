@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.util.Objects;
 import java.util.Optional;
 
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.util.FileUtil;
 
 public class FileCache {
 

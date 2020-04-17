@@ -22,7 +22,7 @@ import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.central.SeriesDataListener;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
 public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGroup> {

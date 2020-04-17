@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.dicom.Transform2Dicom;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.util.FileUtil;
 
 /**
  * Do the process of convert to JPEG and dicomize given image collection to a temporary folder. All the job is done

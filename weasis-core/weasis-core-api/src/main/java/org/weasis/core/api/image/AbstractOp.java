@@ -12,7 +12,7 @@ package org.weasis.core.api.image;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 
 public abstract class AbstractOp implements ImageOpNode {
 

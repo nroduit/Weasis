@@ -14,7 +14,7 @@
 
 	<properties>
 		<bundle.namespace>org.weasis.dicom.codec</bundle.namespace>
-		<weasis-dicom-tools.version>5.20.0</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.22.1</weasis-dicom-tools.version>
 	</properties>
 
 	<repositories>
@@ -55,7 +55,7 @@
 			<exclusions>
 				<exclusion>
 					<groupId>org.weasis.core</groupId>
-					<artifactId>weasis-core-util</artifactId>
+					<artifactId>weasis-core-img</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>junit</groupId>
@@ -67,12 +67,6 @@
 			<groupId>org.weasis.imageio</groupId>
 			<artifactId>weasis-imageio-codec</artifactId>
 			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.opencv</groupId>
-			<artifactId>weasis-opencv-core</artifactId>
-			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>

@@ -18,7 +18,7 @@ import javax.swing.JLabel;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public class ContrastComponent extends AbstractSliderComponent {
     private static final long serialVersionUID = -8952577162679680694L;

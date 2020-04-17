@@ -9,7 +9,7 @@
  *******************************************************************************/
 package org.weasis.core.api.media.data;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public class TagView {
     private final TagW[] tag;

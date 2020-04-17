@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.Copyable;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;

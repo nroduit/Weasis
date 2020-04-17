@@ -23,7 +23,7 @@
 				<configuration>
 					<instructions>
 						<Bundle-NativeCode>lib/libopencv_java.so; processor=x86-64; osname=Linux</Bundle-NativeCode>
-						<Fragment-Host>weasis-opencv-core;bundle-version="3"</Fragment-Host>
+						<Fragment-Host>weasis-core-img;bundle-version="4"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>

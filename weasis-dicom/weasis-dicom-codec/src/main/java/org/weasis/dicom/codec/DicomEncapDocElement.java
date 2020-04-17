@@ -13,7 +13,7 @@ import java.io.File;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.util.FileUtil;
+import org.weasis.core.util.FileUtil;
 
 public class DicomEncapDocElement extends MediaElement implements FileExtractor {
     private File document = null;

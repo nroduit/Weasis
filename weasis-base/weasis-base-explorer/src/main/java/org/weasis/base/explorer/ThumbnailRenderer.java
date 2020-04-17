@@ -33,7 +33,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.LangUtil;
+import org.weasis.core.util.LangUtil;
 
 @SuppressWarnings("serial")
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements ListCellRenderer<E> {

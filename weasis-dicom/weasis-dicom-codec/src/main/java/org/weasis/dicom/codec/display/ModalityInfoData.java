@@ -9,7 +9,7 @@
  *******************************************************************************/
 package org.weasis.dicom.codec.display;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public class ModalityInfoData {
 

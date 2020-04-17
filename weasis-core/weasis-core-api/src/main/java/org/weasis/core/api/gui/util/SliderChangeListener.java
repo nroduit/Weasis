@@ -28,7 +28,7 @@ import javax.swing.event.ChangeListener;
 
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 
 public abstract class SliderChangeListener extends MouseActionAdapter implements ChangeListener, ActionState {
     public static final int DEFAULT_SMALLEST = 0;

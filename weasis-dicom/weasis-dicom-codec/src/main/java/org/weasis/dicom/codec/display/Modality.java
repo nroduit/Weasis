@@ -11,7 +11,7 @@ package org.weasis.dicom.codec.display;
 
 import java.util.Arrays;
 
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
