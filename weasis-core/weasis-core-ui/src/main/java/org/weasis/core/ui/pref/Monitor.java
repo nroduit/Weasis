@@ -63,7 +63,7 @@ public class Monitor {
             Rectangle bound = this.getBounds();
             frame.setBounds(bound.x, bound.y, bound.width - 150, bound.height - 150);
             frame.setVisible(true);
-            frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            frame.setExtendedState(frame.getExtendedState() | Frame.MAXIMIZED_BOTH);
 
             try {
                 // Let time to maximize window
