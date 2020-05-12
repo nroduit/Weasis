@@ -41,8 +41,8 @@
 		<slf4j.version>1.7.29</slf4j.version>
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.3p1</dockingframes.version>
-		<weasis.core.img.version>4.2.0-SNAPSHOT</weasis.core.img.version>
-		<weasis.opencv.native.version>4.2.0-dcm</weasis.opencv.native.version>
+		<weasis.core.img.version>4.3.0</weasis.core.img.version>
+		<weasis.opencv.native.version>4.3.0-dcm</weasis.opencv.native.version>
 		<javax.json.version>1.1.5</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>

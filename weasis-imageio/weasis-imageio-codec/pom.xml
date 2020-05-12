@@ -32,7 +32,7 @@
 						<!-- <_exportcontents>com.sun.media.imageio.stream,com.sun.media.imageio.plugins.bmp,com.sun.media.imageio.plugins.jpeg2000,com.sun.media.imageio.plugins.pnm,com.sun.media.imageio.plugins.tiff,com.sun.media.imageioimpl.common,com.sun.media.jai.operator</_exportcontents> -->
 
 						<!-- Do not add com.sun.media.jai => problem to initialize JAI class -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,!com.sun.media.jai.util.*,!com.sun.media.jai.operator.*,!com.sun.media.jai.imageioimpl.*,com.sun.**,jj2000.**</Export-Package>
+						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,!com.sun.media.jai.util.*,!com.sun.media.jai.operator.*,!com.sun.media.jai.imageioimpl.*,com.sun.**</Export-Package>
 						<Embed-Dependency>*;scope=compile;inline=com.sun.media.imageio.**|com.sun.media.imageioimpl.**|com.sun.medialib.**|jj2000.**</Embed-Dependency>
 
 						<Specification-Title>Java Advanced Imaging Image I/O Tools</Specification-Title>

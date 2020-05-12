@@ -11,7 +11,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-windows-x86-64</artifactId>
 	<name>OpenCV native Windows x86-64</name>
-	<version>4.2.0-dcm</version>
+	<version>4.3.0-dcm</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 	</properties>
@@ -24,7 +24,7 @@
 				<configuration>
 					<instructions>
 						<Bundle-NativeCode>lib/opencv_java.dll; processor=x86-64; osname=win32</Bundle-NativeCode>
-						<Fragment-Host>weasis-opencv-core;bundle-version="4"</Fragment-Host>
+						<Fragment-Host>weasis-core-img;bundle-version="4"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->
 						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
