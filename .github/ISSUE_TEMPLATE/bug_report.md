@@ -4,8 +4,6 @@ about: Create a report to help us to fix the issue
 
 ---
 
-First, look at the [GitHub issues system](https://github.com/nroduit/Weasis/issues), the [forum](http://groups.google.com/group/dcm4che) and/or this Weasis website (like [FAQs](https://nroduit.github.io/en/faq/) or [Getting Started](https://nroduit.github.io/en/getting-started) to see if your problem has not been reported yet).
-
 **Describe the bug**
 A clear and concise description of what the bug is.
 
