@@ -23,7 +23,9 @@ import java.util.Map;
 
 import javax.swing.Icon;
 import javax.xml.XMLConstants;
+import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLEventReader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,7 +85,10 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         try {
             SAXParserFactory factory = SAXParserFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.newSAXParser().parse(stream, new SAXAdapter());
+            SAXParser parser = factory.newSAXParser();
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            parser.parse(stream, new SAXAdapter());
         } catch (Exception e) {
             LOGGER.error("Loading layout xml", e); //$NON-NLS-1$
         }

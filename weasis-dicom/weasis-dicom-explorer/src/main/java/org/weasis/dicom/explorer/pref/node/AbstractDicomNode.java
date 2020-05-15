@@ -310,7 +310,7 @@ public abstract class AbstractDicomNode {
 
                 list.add(node);
             } catch (Exception e) {
-                LOGGER.error("Cannot read DicomNode: {}", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read DicomNode", e); //$NON-NLS-1$
             }
         }
     }

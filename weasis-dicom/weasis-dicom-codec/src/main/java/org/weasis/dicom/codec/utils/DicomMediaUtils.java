@@ -224,7 +224,7 @@ public class DicomMediaUtils {
             try {
                 bData = dicomLutObject.getBytes(Tag.LUTData);
             } catch (IOException e) {
-                LOGGER.error("Cannot get byte[] of {}: {} ", TagUtils.toString(Tag.LUTData), e); //$NON-NLS-1$
+                LOGGER.error("Cannot get byte[] of {}", TagUtils.toString(Tag.LUTData), e); //$NON-NLS-1$
                 return null;
             }
 

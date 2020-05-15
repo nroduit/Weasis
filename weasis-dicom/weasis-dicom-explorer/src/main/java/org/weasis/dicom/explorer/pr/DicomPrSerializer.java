@@ -421,7 +421,7 @@ public class DicomPrSerializer {
                 out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Cannot write dicom PR: {}", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write dicom PR into {}", output, e); //$NON-NLS-1$
             }
         }
         return false;

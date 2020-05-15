@@ -78,7 +78,7 @@ public class ResourceUtil {
             try {
                 return new ImageIcon(file.toURI().toURL());
             } catch (Exception e) {
-                LOGGER.error("Cannot read logo image:{}", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read logo image:{}", filename, e); //$NON-NLS-1$
             }
         }
         return null;
