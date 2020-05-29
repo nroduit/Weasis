@@ -214,10 +214,11 @@ public class ConfigData {
         try {
             String url = URLDecoder.decode(uri, "UTF-8"); //$NON-NLS-1$
             String[] cmds = url.split("\\$"); //$NON-NLS-1$
+            boolean windows = System.getProperty( P_OS_NAME,"").toLowerCase().startsWith("win");
             if (cmds.length > 0) {
                 for (int i = 1; i < cmds.length; i++) {
                     // Fix Windows issue (add a trailing slash)
-                    if (i == cmds.length - 1 && cmds[i].endsWith("/")) { //$NON-NLS-1$
+                    if (windows && i == cmds.length - 1 && cmds[i].endsWith("/")) { //$NON-NLS-1$
                         cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
                     }
                     arguments.add(cmds[i]);
@@ -472,13 +473,7 @@ public class ConfigData {
                 while (i + 1 < length && !args[i + 1].startsWith("$")) { //$NON-NLS-1$
                     i++;
                     command.append(' ');
-                    if (args[i].indexOf(' ') != -1 && !args[i].startsWith("\"")) { //$NON-NLS-1$
-                        command.append("\""); //$NON-NLS-1$
-                        command.append(args[i]);
-                        command.append("\""); //$NON-NLS-1$
-                    } else {
-                        command.append(args[i]);
-                    }
+                    command.append(args[i]);
                 }
                 arguments.add(command.toString());
             }
