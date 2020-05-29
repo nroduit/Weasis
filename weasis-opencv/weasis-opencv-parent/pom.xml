@@ -12,4 +12,25 @@
 	<artifactId>weasis-opencv-parent</artifactId>
 	<name>Parent of OpenCV [${project.artifactId}]</name>
 	<packaging>pom</packaging>
+	<properties>
+		<native.configuration>changeMeInChildModule</native.configuration>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<version>4.1.0</version>
+				<configuration>
+					<instructions>
+						<Bundle-NativeCode>${native.configuration}</Bundle-NativeCode>
+						<Fragment-Host>weasis-core-img;bundle-version="4"</Fragment-Host>
+						<Embed-StripVersion>true</Embed-StripVersion>
+						<!-- Do not inline native libs -->
+						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

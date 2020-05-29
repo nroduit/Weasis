@@ -39,8 +39,9 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.imageio.codec.ImageioUtil;
 
-import com.sun.media.imageioimpl.common.ImageioUtil;
+
 
 @org.osgi.service.component.annotations.Component(service = Codec.class, immediate = false)
 public class DicomCodec implements Codec {
