@@ -26,7 +26,7 @@ public final class LookAndFeels {
         "Substance Creme Coffee", "Substance Creme", "Substance Dust Coffee (saturated)", "Substance Dust (saturated)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$//$NON-NLS-4$
         "Substance Gemini", "Substance Graphite Aqua (dark)", "Substance Graphite Chalk (dark)", //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
         "Substance Graphite Electric (dark)", "Substance Graphite Glass (dark)", "Substance Graphite Gold (dark)", //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
-        "Substance Graphite (dark)", "Substance Graphite Sunset (dark)", "Substance Magellan (blue)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        "Substance Graphite (dark)", "Substance Graphite Sienna (dark)", "Substance Graphite Sunset (dark)", "Substance Magellan (blue)", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         "Substance Mariner", "Substance Mist Aqua", //$NON-NLS-1$//$NON-NLS-2$
         "Substance Mist Silver", //$NON-NLS-1$
         "Substance Moderate", "Substance Nebula Amethyst", "Substance Nebula Brick Wall", "Substance Nebula", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$//$NON-NLS-4$
@@ -49,6 +49,7 @@ public final class LookAndFeels {
         "org.pushingpixels.substance.api.skin.SubstanceGraphiteGlassLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceGraphiteGoldLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceGraphiteLookAndFeel", //$NON-NLS-1$
+        "org.pushingpixels.substance.api.skin.SubstanceGraphiteSiennaLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceGraphiteSunsetLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceMagellanLookAndFeel", //$NON-NLS-1$
         "org.pushingpixels.substance.api.skin.SubstanceMarinerLookAndFeel", //$NON-NLS-1$
