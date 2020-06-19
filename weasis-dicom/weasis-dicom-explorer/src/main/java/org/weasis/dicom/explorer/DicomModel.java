@@ -120,7 +120,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         ArrayList<Codec> codecPlugins = new ArrayList<>(1);
         synchronized (BundleTools.CODEC_PLUGINS) {
             for (Codec codec : BundleTools.CODEC_PLUGINS) {
-                if (codec != null && !"Sun java imageio".equals(codec.getCodecName()) //$NON-NLS-1$
+                if (codec != null && !"JDK ImageIO".equals(codec.getCodecName()) //$NON-NLS-1$
                     && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE) && !codecPlugins.contains(codec)) {
                     codecPlugins.add(codec);
                 }
