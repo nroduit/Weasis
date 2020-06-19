@@ -96,12 +96,14 @@ public class RsQueryResult extends AbstractQueryResult {
                 continue;
             }
 
+
             // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
             int beginIndex = patientID.indexOf("^^^"); //$NON-NLS-1$
 
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/studies?00100020="); //$NON-NLS-1$
-            buf.append(beginIndex <= 0 ? patientID : patientID.substring(0, beginIndex));
+            String patientVal = beginIndex <= 0 ? patientID : patientID.substring(0, beginIndex);
+            buf.append(patientVal.replace(" ", "%20") );
             if (beginIndex > 0) {
                 buf.append("&00100021="); //$NON-NLS-1$
                 buf.append(patientID.substring(beginIndex + 3));
