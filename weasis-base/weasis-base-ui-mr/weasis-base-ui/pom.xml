@@ -6,7 +6,7 @@
 	<parent>
 		<groupId>org.weasis.base</groupId>
 		<artifactId>weasis-base-ui-mr</artifactId>
-		<version>3.6.1-SNAPSHOT</version>
+		<version>3.6.1</version>
 	</parent>
 	<artifactId>weasis-base-ui</artifactId>
 	<name>Distribution multirelease [${project.artifactId}]</name>

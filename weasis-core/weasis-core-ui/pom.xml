@@ -4,7 +4,7 @@
 	<parent>
 		<artifactId>weasis-core-parent</artifactId>
 		<groupId>org.weasis.core</groupId>
-		<version>3.6.1-SNAPSHOT</version>
+		<version>3.6.1</version>
 		<relativePath>../weasis-core-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
