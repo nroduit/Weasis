@@ -214,7 +214,7 @@ public class ConfigData {
         try {
             String url = URLDecoder.decode(uri, "UTF-8"); //$NON-NLS-1$
             String[] cmds = url.split("\\$"); //$NON-NLS-1$
-            boolean windows = System.getProperty( P_OS_NAME,"").toLowerCase().startsWith("win");
+            boolean windows = System.getProperty( P_OS_NAME,"").toLowerCase().startsWith("win"); //$NON-NLS-1$ //$NON-NLS-2$
             if (cmds.length > 0) {
                 for (int i = 1; i < cmds.length; i++) {
                     // Fix Windows issue (add a trailing slash)

@@ -86,7 +86,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
             SAXParserFactory factory = SAXParserFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             SAXParser parser = factory.newSAXParser();
-            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, ""); //$NON-NLS-1$
             parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             parser.parse(stream, new SAXAdapter());
         } catch (Exception e) {
