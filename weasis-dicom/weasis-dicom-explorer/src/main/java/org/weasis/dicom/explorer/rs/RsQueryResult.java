@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.rs;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,10 +36,10 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
-import org.weasis.core.util.LangUtil;
 import org.weasis.core.api.util.NetworkUtil;
-import org.weasis.core.util.StringUtil;
 import org.weasis.core.api.util.URLParameters;
+import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -96,22 +97,21 @@ public class RsQueryResult extends AbstractQueryResult {
                 continue;
             }
 
-
             // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
             int beginIndex = patientID.indexOf("^^^"); //$NON-NLS-1$
 
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
             buf.append("/studies?00100020="); //$NON-NLS-1$
             String patientVal = beginIndex <= 0 ? patientID : patientID.substring(0, beginIndex);
-            buf.append(patientVal.replace(" ", "%20") );
-            if (beginIndex > 0) {
-                buf.append("&00100021="); //$NON-NLS-1$
-                buf.append(patientID.substring(beginIndex + 3));
-            }
-            buf.append(STUDY_QUERY);
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
-
             try {
+                buf.append(URLEncoder.encode(patientVal, StandardCharsets.UTF_8.toString()));
+                if (beginIndex > 0) {
+                    buf.append("&00100021="); //$NON-NLS-1$
+                    buf.append(patientID.substring(beginIndex + 3));
+                }
+                buf.append(STUDY_QUERY);
+                buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+
                 LOGGER.debug(QIDO_REQUEST, buf);
                 List<Attributes> studies = parseJSON(buf.toString());
                 if (!studies.isEmpty()) {
