@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
  <dict>
   <key>LSMinimumSystemVersion</key>
@@ -36,20 +36,6 @@
   <string>DEPLOY_BUNDLE_CFBUNDLE_VERSION</string>
   <key>NSHumanReadableCopyright</key>
   <string>DEPLOY_BUNDLE_COPYRIGHT</string>
-  <key>JavaMainClassName</key>
-  <string>DEPLOY_LAUNCHER_CLASS</string>
-  <key>JavaAppClasspath</key>
-  <string>app.classpath=$APPDIR/Java/felix.jar:$APPDIR/Java/substance.jar:$APPDIR/Java/weasis-launcher.jar</string>
-  <key>JavaMainJarName</key>
-  <string>DEPLOY_MAIN_JAR_NAME</string>
-  <key>JavaOptions</key>
-  <array>
-DEPLOY_JAVA_OPTIONS
-  </array>
-  <key>ArgOptions</key>
-  <array>
-DEPLOY_ARGUMENTS
-  </array>
   <key>NSHighResolutionCapable</key>
   <string>true</string>
 	<key>UTImportedTypeDeclarations</key>
