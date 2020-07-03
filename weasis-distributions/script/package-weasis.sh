@@ -5,7 +5,7 @@
 
 # Specify the required Java version.
 # Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=13
+REQUIRED_TEXT_VERSION=14
 
 # Build Parameters
 REVISON_INC="1"
@@ -20,7 +20,7 @@ SUBSTANCE_PKG="3.0.0"
 JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
 NAME="Weasis"
 IDENTIFIER="org.weasis.viewer"
-JVM_ARGS="-Dgosh.port=17179 #-Daudit.log=true #-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789"
+JVM_ARGS="-Dgosh.port=17179 -splash:\$APPDIR/resources/images/about-round.png"
 
 # Aux functions:
 die ( ) {
@@ -249,32 +249,41 @@ fi
 
 if [ "$machine" = "macosx" ] ; then
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/app"
-  APP_FOLDER_NAME="app"
 elif [ "$machine" = "linux" ] ; then
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME/lib/app"
-  APP_FOLDER_NAME="lib\/app"
 else
   OUT_APP="$OUTPUT_PATH_UNIX/$NAME/app"
-  APP_FOLDER_NAME="app"
 fi
 
 if [ "$machine" = "windows" ] ; then
-  LAUNCHER_CP=";\$ROOTDIR\\\\$APP_FOLDER_NAME\\\\"
+  LAUNCHER_CP=";\APPDIR\\\\"
 else
-  LAUNCHER_CP=":\$ROOTDIR\/$APP_FOLDER_NAME\/"
+  LAUNCHER_CP=":\$APPDIR\/"
 fi
 
-match="app.name"
-insertWeasis='app.splash=resources\/images\/about-round.png\
-#app.memory=50%\
-app.identifier='"$IDENTIFIER"'\
-app.classpath='"${LAUNCHER_CP:1}"'felix.jar'"$LAUNCHER_CP"'substance.jar'"$LAUNCHER_CP"'weasis-launcher.jar\
-'
-sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
-sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
-sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
+match="\[JavaOptions\]"
+insertOptions='\
+#java-options=-Daudit.log=true\
+#java-options=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789\
+java-options=--illegal-access=warn\
+java-options=--add-exports=java.base\/sun.net.www.protocol.http=ALL-UNNAMED\
+java-options=--add-exports=java.base\/sun.net.www.protocol.file=ALL-UNNAMED\
+java-options=--add-exports=java.base\/sun.net.www.protocol.https=ALL-UNNAMED\
+java-options=--add-exports=java.base\/sun.net.www.protocol.file=ALL-UNNAMED\
+java-options=--add-exports=java.base\/sun.net.www.protocol.ftp=ALL-UNNAMED\
+java-options=--add-exports=java.base\/sun.net.www.protocol.jar=ALL-UNNAMED\
+java-options=--add-exports=jdk.unsupported\/sun.misc=ALL-UNNAMED\
+java-options=--add-opens=java.base\/java.net=ALL-UNNAMED\
+java-options=--add-opens=java.base\/java.lang=ALL-UNNAMED\
+java-options=--add-opens=java.base\/java.security=ALL-UNNAMED\
+java-options=--add-opens=java.base\/java.io=ALL-UNNAMED\
+java-options=--add-opens=java.desktop\/javax.imageio.stream=ALL-UNNAMED\
+java-options=--add-opens=java.desktop\/javax.imageio=ALL-UNNAMED\
+java-options=--add-opens=java.desktop\/com.sun.awt=ALL-UNNAMED'
+sed -i.bck "s/$match/$match$insertOptions/" "$OUT_APP/$NAME.cfg"
+sed -i.bck '/^java-options=--module-path/d' "$OUT_APP/$NAME.cfg"
+sed -i.bck '/^java-options=\$APPDIR\/mods/d' "$OUT_APP/$NAME.cfg"
 rm -f "$OUT_APP/$NAME.cfg.bck"
-
 
 if [ "$machine" = "linux" ] ; then
   cp "$RES/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
@@ -313,4 +322,3 @@ if [ "$PACKAGE" = "YES" ] ; then
     --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
   fi
 fi
-
