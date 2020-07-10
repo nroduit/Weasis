@@ -20,14 +20,10 @@ import java.io.InterruptedIOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 import javax.swing.JProgressBar;
 
@@ -568,11 +564,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
     public File getJPEGThumnails(WadoParameters wadoParameters, String studyUID, String seriesUID,
         String sopInstanceUID) throws IOException {
+        String addParams = wadoParameters.getAdditionnalParameters();
+        if(StringUtil.hasText(addParams)) {
+            addParams = Arrays.stream(addParams.split("&")).filter(p -> !p.startsWith("transferSyntax") && !p.startsWith("anonymize")).collect(Collectors.joining("&"));
+        }
         // TODO set quality as a preference
         URL url =
             new URL(wadoParameters.getBaseURL() + "?requestType=WADO&studyUID=" + studyUID + "&seriesUID=" + seriesUID //$NON-NLS-1$ //$NON-NLS-2$
                 + "&objectUID=" + sopInstanceUID + "&contentType=image/jpeg&imageQuality=70" + "&rows=" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + wadoParameters.getAdditionnalParameters()); //$NON-NLS-1$
+                + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + addParams); //$NON-NLS-1$
 
         ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(url, urlParams);
         File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
