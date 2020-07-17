@@ -9,48 +9,7 @@
  *******************************************************************************/
 package org.weasis.dicom.codec;
 
-import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.Raster;
-import java.awt.image.RenderedImage;
-import java.awt.image.SampleModel;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
-import java.io.RandomAccessFile;
-import java.lang.ref.Reference;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.ByteOrder;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.stream.ImageInputStream;
-
-import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.BulkData;
-import org.dcm4che3.data.Fragments;
-import org.dcm4che3.data.Implementation;
-import org.dcm4che3.data.Tag;
-import org.dcm4che3.data.UID;
-import org.dcm4che3.data.VR;
+import org.dcm4che3.data.*;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
@@ -60,28 +19,16 @@ import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
-import org.opencv.core.Core;
-import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
-import org.opencv.core.MatOfInt;
+import org.opencv.core.*;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.media.data.Codec;
-import org.weasis.core.api.media.data.FileCache;
-import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SimpleTagable;
-import org.weasis.core.api.media.data.SoftHashMap;
-import org.weasis.core.api.media.data.TagView;
-import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.media.data.*;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.Modality;
@@ -96,6 +43,23 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
+
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReadParam;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.stream.ImageInputStream;
+import java.awt.image.*;
+import java.io.*;
+import java.lang.ref.Reference;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.ByteOrder;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
@@ -796,8 +760,21 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 // constructors). RGB color model doesn't make sense for lossy jpeg.
                 // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
                 if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
-                    && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
-                    dcmFlags |= Imgcodecs.DICOM_FLAG_YBR;
+                        && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
+                    boolean ybr = true;
+                    if("RGB".equalsIgnoreCase(pmi.name())) {
+                        String[] list = BundleTools.SYSTEM_PREFERENCES.getProperty("jpeg.lossy.rgb.manufacturer.list", "").split(",");
+                        String manufacturer = getDicomObject().getString(Tag.Manufacturer);
+                        for (int i = 0; i < list.length; i++) {
+                            if(StringUtil.hasText(list[i]) && list[i].trim().equalsIgnoreCase(manufacturer)){
+                                ybr = false;
+                                break;
+                            }
+                        }
+                    }
+                    if(ybr){
+                        dcmFlags |= Imgcodecs.DICOM_FLAG_YBR;
+                    }
                 }
                 if (bigendian) {
                     dcmFlags |= Imgcodecs.DICOM_FLAG_BIGENDIAN;
