@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<!-- Remove "-SNAPSHOT" for release -->
-		<version>3.6.2-SNAPSHOT</version>
+		<version>${revision}${changelist}</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -105,13 +103,11 @@
 									<maxVersion></maxVersion>
 									<initialHeapSize>64</initialHeapSize>
 									<maxHeapSize>768</maxHeapSize>
-									<!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 
-										2) "64/32" Use 64-bit runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, otherwise 
+									<!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, otherwise 
 										use 64-bit. 4) "32" Use only 32-bit runtimes -->
 									<runtimeBits>64/32</runtimeBits>
-									<!-- Optional, defaults to false which treats the bundled JRE as the primary runtime. When set to true, the bundled 
-										JRE will only be used in case the mix/max version search fails. This can be used as a fallback option if the user does not 
-										have the required Java installed and the bundled JRE is provided on a CD or shared network location. -->
+									<!-- Optional, defaults to false which treats the bundled JRE as the primary runtime. When set to true, the bundled JRE will only be used in case the mix/max version search fails. This can be used as a fallback option if the user does not have 
+										the required Java installed and the bundled JRE is provided on a CD or shared network location. -->
 									<bundledJreAsFallback>true</bundledJreAsFallback>
 									<opts>
 										<opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
@@ -272,7 +268,6 @@
 						</goals>
 						<configuration>
 							<artifactItems>
-
 								<!-- ===================================== -->
 								<!-- OSGI Framework and Launcher -->
 								<!-- (only one version, referenced in JNLP) -->
@@ -782,8 +777,7 @@
 		<profile>
 			<id>jar.signer</id>
 			<activation>
-				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" 
-					or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
+				<!-- Use your own certificate either: mvn package -Djarsigner.alias="alias" -Djarsigner.storepass="storepass" -Djarsigner.keystore="/etc/cert_keystore" or : add properties in setting.xml (<jarsigner.alias>alias</jarsigner.alias>) -->
 				<property>
 					<name>jarsigner.alias</name>
 				</property>

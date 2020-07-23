@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>3.6.2-SNAPSHOT</version>
+	<version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
 	<properties>
+
+		<revision>3.6.2</revision>
+		<changelist>-SNAPSHOT</changelist>		<!-- Remove "-SNAPSHOT" for release -->
+
 		<java-version>1.8</java-version>
 		<jdk-version>11</jdk-version>
 		<enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
@@ -18,7 +21,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 
-		<app.version>${project.version}</app.version>
+		<app.version>${revision}${changelist}</app.version>
 		<javaws.version>1.6.0-17</javaws.version>
 		<felix.framework.version>6.0.3</felix.framework.version>
 		<substance.version>1.9.2</substance.version>
@@ -122,9 +125,7 @@
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
 							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-							<!-- Using <_exportcontents> requires to configure <Export-Package>, 
-								there is no default export (All packages, except any containing 'impl' or 
-								'internal' -->
+							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except any containing 'impl' or 'internal' -->
 							<_removeheaders>
 								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Created-By
 							</_removeheaders>
@@ -210,8 +211,19 @@
 					<artifactId>maven-source-plugin</artifactId>
 					<version>3.2.0</version>
 				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>flatten-maven-plugin</artifactId>
+					<version>1.2.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-shade-plugin</artifactId>
+					<version>3.2.4</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
+
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -232,6 +244,31 @@
 								</requireJavaVersion>
 							</rules>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>flatten-maven-plugin</artifactId>
+				<configuration>
+					<updatePomFile>true</updatePomFile>
+					<flattenMode>resolveCiFriendliesOnly</flattenMode>
+				</configuration>
+				<executions>
+					<execution>
+						<id>flatten</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>flatten</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>flatten.clean</id>
+						<phase>clean</phase>
+						<goals>
+							<goal>clean</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
@@ -320,8 +357,7 @@
 				<scope>provided</scope>
 			</dependency>
 
-			<!--The following dependencies are not required for compilation (required 
-				when loading the OSGI framework for debugging) -->
+			<!--The following dependencies are not required for compilation (required when loading the OSGI framework for debugging) -->
 			<dependency>
 				<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 				<artifactId>javaws</artifactId>
