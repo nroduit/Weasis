@@ -9,6 +9,11 @@
 
 package org.weasis.core.api.image.cv;
 
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.awt.image.VolatileImage;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -50,6 +55,23 @@ public class CvUtil {
         // TODO improve speed with dedicated call
         // Imgproc.blur(srcImg, dstImg, new Size(3,3));
         return dstImg;
+    }
+
+    public static VolatileImage  getVolatileImage(GraphicsConfiguration gc, BufferedImage src) {
+        if(gc == null || src == null) {
+            return null;
+        }
+        VolatileImage dst = null;
+        try{
+            dst = gc.createCompatibleVolatileImage(src.getWidth(), src.getHeight());
+            Graphics2D g = dst.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g.drawImage(src, 0, 0, null);
+            g.dispose();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return dst;
     }
     
     public static ImageCV meanStack(List<ImageElement> sources) {

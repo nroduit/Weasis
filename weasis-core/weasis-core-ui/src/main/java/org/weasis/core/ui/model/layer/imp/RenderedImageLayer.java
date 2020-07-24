@@ -10,7 +10,9 @@
 package org.weasis.core.ui.model.layer.imp;
 
 import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -18,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -37,12 +38,12 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.LangUtil;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
+import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
@@ -229,8 +230,10 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         }
 
         try {
-            g2d.drawRenderedImage(ImageConversion.toBufferedImage(displayImage),
-                AffineTransform.getTranslateInstance(0.0, 0.0));
+            if (g2d.getDeviceConfiguration().getDefaultTransform().getScaleX() > 1.0) {
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            }
+            g2d.drawImage(ImageConversion.toBufferedImage(displayImage), null, null);
         } catch (Exception e) {
             LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
             if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
@@ -367,7 +370,10 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, matrix);
         disOpManager.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_DST_BOUNDS, bound);
 
-        g2d.drawRenderedImage(ImageConversion.toBufferedImage(img), AffineTransform.getScaleInstance(rx, ry));
+        if (g2d.getDeviceConfiguration().getDefaultTransform().getScaleX() > 1.0) {
+            g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        }
+        g2d.drawImage(ImageConversion.toBufferedImage(displayImage), AffineTransform.getScaleInstance(rx, ry), null);
 
         g2d.setClip(clip);
     }
