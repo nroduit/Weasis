@@ -10,8 +10,11 @@
 
 	<properties>
 
-		<revision>3.6.2</revision>
-		<changelist>-SNAPSHOT</changelist>		<!-- Remove "-SNAPSHOT" for release -->
+		<!-- empty values for ${revision}${changelist} force command line arguments settings -->
+		<revision></revision>
+		<changelist></changelist>		<!-- Remove "-SNAPSHOT" for release -->
+		<!-- ex : how to compile <version>3.6.2-SNAPSHOT</version> -->
+		<!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
 
 		<java-version>1.8</java-version>
 		<jdk-version>11</jdk-version>
@@ -50,6 +53,7 @@
 		<javax.json.version>1.1.5</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
+		<jogamp.version>2.3.2</jogamp.version>
 
 		<assertj.version>3.14.0</assertj.version>
 		<powermock.version>2.0.4</powermock.version>
