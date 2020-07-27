@@ -10,7 +10,7 @@
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-windows-x86</artifactId>
 	<name>OpenCV native Windows x86</name>
-	<version>4.3.0-dcm</version>
+	<version>4.4.0-dcm</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<native.configuration>lib/opencv_java.dll; processor=x86; osname=win32</native.configuration>
