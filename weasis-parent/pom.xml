@@ -12,7 +12,7 @@
 
 		<!-- force command line arguments settings to set version -->
 		<revision>${revision}</revision>
-		<changelist>-${changelist}</changelist>		<!-- Remove "-SNAPSHOT" for release -->
+		<changelist>${changelist}</changelist>		<!-- Remove "-SNAPSHOT" for release -->
 		<!-- ex : how to compile <version>3.6.2-SNAPSHOT</version> -->
 		<!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
 
