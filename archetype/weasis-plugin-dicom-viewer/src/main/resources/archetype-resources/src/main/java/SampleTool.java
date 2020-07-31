@@ -10,6 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
+
 package ${package};
 
 import java.awt.Component;

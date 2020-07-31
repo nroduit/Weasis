@@ -1,12 +1,12 @@
-/*******************************************************************************
+/*
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ */
+
 package org.weasis.core.api.media.data;
 
 import java.awt.Component;
@@ -27,13 +27,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingWorker;
-
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -41,10 +39,11 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.media.MimeInspector;
-import org.weasis.core.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.util.FileUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
@@ -178,6 +177,10 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     height = thumbnail.height();
                     x += (thumbnailSize - width) / 2;
                     y += (thumbnailSize - height) / 2;
+                    if (g2d.getDeviceConfiguration().getDefaultTransform().getScaleX() > 1.0) {
+                        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+                            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+                    }
                     g2d.drawImage(ImageConversion.toBufferedImage(thumbnail),
                         AffineTransform.getTranslateInstance(x, y), null);
                 }
