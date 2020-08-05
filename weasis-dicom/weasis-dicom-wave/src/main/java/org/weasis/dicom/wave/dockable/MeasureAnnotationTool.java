@@ -34,6 +34,8 @@ import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -58,6 +60,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public class MeasureAnnotationTool extends PluginTool implements SeriesViewerListener {
     private static final long serialVersionUID = 1117961156637401550L;
+    private static final Logger LOGGER = LoggerFactory.getLogger( MeasureAnnotationTool.class );
 
     public static final String BUTTON_NAME = "Measurements"; //$NON-NLS-1$
 
@@ -250,8 +253,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                         .getString(Tag.CodeMeaning);
                     addValueToModel(list, name, value);
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    LOGGER.error("Cannot read AcquisitionContextSequence", e);
                 }
             }
         }
@@ -327,8 +329,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                     }
 
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                    LOGGER.error("Cannot read MeasurementUnitsCodeSequence", e);
                 }
             }
         }

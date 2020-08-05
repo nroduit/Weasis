@@ -17,6 +17,8 @@ import javax.imageio.spi.IIORegistry;
 import javax.imageio.spi.IIOServiceProvider;
 import javax.imageio.spi.ImageReaderWriterSpi;
 import javax.imageio.spi.ServiceRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The Class ImageioUtil.
@@ -25,7 +27,7 @@ import javax.imageio.spi.ServiceRegistry;
  */
 
 public final class ImageioUtil {
-
+    private static final Logger LOGGER = LoggerFactory.getLogger( ImageioUtil.class );
     // Hack to get the default imageio registry. Otherwise the method getDefaultInstance() is not thread safe (that will
     // duplicate the registry).
     private final static IIORegistry registry;
@@ -37,7 +39,7 @@ public final class ImageioUtil {
             field.setAccessible(true);
             temp = (IIORegistry) field.get(null);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot get IIORegistry}", e);
         } finally {
             if (temp == null) {
                 temp = IIORegistry.getDefaultInstance();
@@ -64,7 +66,7 @@ public final class ImageioUtil {
             // Resister again the SPI class
             registry.registerServiceProvider(clazz.newInstance());
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot register service {}", clazz.getName(), e);
         }
     }
 
@@ -82,7 +84,7 @@ public final class ImageioUtil {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot register service {}", clazz.getName(), e);
         }
     }
 
@@ -100,7 +102,7 @@ public final class ImageioUtil {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot register service {}", clazz.getName(), e);
         }
     }
 
@@ -144,7 +146,7 @@ public final class ImageioUtil {
         try {
             registry.registerServiceProvider(serviceProvider);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot register IIOServiceProvider", e);
         }
     }
 

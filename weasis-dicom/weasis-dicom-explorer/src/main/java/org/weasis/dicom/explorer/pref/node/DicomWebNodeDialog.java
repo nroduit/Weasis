@@ -47,7 +47,7 @@ public class DicomWebNodeDialog extends JDialog {
     private JLabel descriptionLabel;
     private JTextField descriptionTf;
     private JButton okButton;
-    private DicomWebNode dicomNode;
+    private final DicomWebNode dicomNode;
     private JComboBox<DicomWebNode> nodesComboBox;
     private JPanel footPanel;
     private JLabel lblType;
@@ -58,9 +58,14 @@ public class DicomWebNodeDialog extends JDialog {
         JComboBox<DicomWebNode> nodeComboBox) {
         super(parent, title, ModalityType.APPLICATION_MODAL);
         initComponents();
-        this.dicomNode = dicomNode;
         this.nodesComboBox = nodeComboBox;
-        if (dicomNode != null) {
+        if(dicomNode == null){
+            this.dicomNode = new DicomWebNode("", (DicomWebNode.WebType) comboBox.getSelectedItem(), null, null);
+            nodesComboBox.addItem(this.dicomNode);
+            nodesComboBox.setSelectedItem(this.dicomNode);
+        }
+        else {
+            this.dicomNode = dicomNode;
             descriptionTf.setText(dicomNode.getDescription());
             urlTf.setText(dicomNode.getUrl().toString());
             comboBox.setSelectedItem(dicomNode.getWebType());
@@ -189,20 +194,13 @@ public class DicomWebNodeDialog extends JDialog {
             return;
         }
 
-        boolean addNode = dicomNode == null;
         UsageType usageType = DicomWebNode.getUsageType(webType);
 
-        if (addNode) {
-            dicomNode = new DicomWebNode(desc, webType, validUrl, usageType);
-            nodesComboBox.addItem(dicomNode);
-            nodesComboBox.setSelectedItem(dicomNode);
-        } else {
-            dicomNode.setDescription(desc);
-            dicomNode.setWebType(webType);
-            dicomNode.setUrl(validUrl);
-            dicomNode.setUsageType(usageType);
-            nodesComboBox.repaint();
-        }
+        dicomNode.setDescription(desc);
+        dicomNode.setWebType(webType);
+        dicomNode.setUrl(validUrl);
+        dicomNode.setUsageType(usageType);
+        nodesComboBox.repaint();
 
         AbstractDicomNode.saveDicomNodes(nodesComboBox, AbstractDicomNode.Type.WEB);
         dispose();

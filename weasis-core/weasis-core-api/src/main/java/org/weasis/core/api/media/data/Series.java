@@ -14,6 +14,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     public static final DataFlavor sequenceDataFlavor =
         createConstant(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + Series.class.getName(), null); //$NON-NLS-1$
 
-    private static final Random RANDOM = new Random();
+    private static final Random RANDOM = new SecureRandom();
     private static final DataFlavor[] flavors = { sequenceDataFlavor };
 
     private PropertyChangeSupport propertyChange = null;

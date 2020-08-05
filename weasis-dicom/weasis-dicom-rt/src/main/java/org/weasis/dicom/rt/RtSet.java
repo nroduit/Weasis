@@ -13,6 +13,7 @@ import static org.opencv.core.Core.add;
 import static org.opencv.core.Core.multiply;
 
 import java.awt.Color;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -74,7 +75,7 @@ public class RtSet {
     private int structureFillTransparency = 115;
     private int isoFillTransparency = 70;
     boolean forceRecalculateDvh = false;
-    private  Random rand = new Random();
+    private  Random rand = new SecureRandom();
 
     public RtSet(String frameOfReferenceUID, List<MediaElement> rtElements) {
         this.frameOfReferenceUID = Objects.requireNonNull(frameOfReferenceUID);

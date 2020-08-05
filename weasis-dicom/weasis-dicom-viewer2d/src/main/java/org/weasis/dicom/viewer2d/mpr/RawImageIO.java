@@ -9,32 +9,17 @@
 
 package org.weasis.dicom.viewer2d.mpr;
 
-import java.awt.Dimension;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
-import java.awt.image.BandedSampleModel;
-import java.awt.image.ComponentColorModel;
-import java.awt.image.DataBuffer;
-import java.awt.image.PixelInterleavedSampleModel;
-import java.awt.image.SampleModel;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteOrder;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.stream.ImageInputStream;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
@@ -55,7 +40,6 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.PlanarImage;
-
 
 
 public class RawImageIO implements DcmMediaReader {
@@ -233,7 +217,9 @@ public class RawImageIO implements DcmMediaReader {
 
     @Override
     public Attributes getDicomObject() {
-        Attributes dcm = new Attributes();
+        Attributes dcm = new Attributes(tags.size() + attributes.size());
+        SpecificCharacterSet cs = attributes.getSpecificCharacterSet();
+        dcm.setSpecificCharacterSet(cs.toCodes());
         DicomMediaUtils.fillAttributes(tags, dcm);
         dcm.addAll(attributes);
         return dcm;

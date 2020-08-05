@@ -27,10 +27,8 @@ import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-
 import org.apache.felix.framework.util.Util;
 
 public class FileUtil {
@@ -217,38 +215,38 @@ public class FileUtil {
         return connection;
     }
 
-    private static void copy(InputStream in, OutputStream out) throws IOException {
-        if (in == null || out == null) {
+    private static void copyZip(InputStream in, File file) throws IOException {
+        if (in == null) {
             return;
         }
-        byte[] buf = new byte[FILE_BUFFER];
-        int offset;
-        while ((offset = in.read(buf)) > 0) {
-            out.write(buf, 0, offset);
-        }
-        out.flush();
-    }
-
-    private static void copyZip(InputStream in, File file) throws IOException {
         try (OutputStream out = new FileOutputStream(file)) {
-            copy(in, out);
+            byte[] buf = new byte[FILE_BUFFER];
+            int offset;
+            while ((offset = in.read(buf)) > 0) {
+                out.write(buf, 0, offset); // NOSONAR only write a file in the target directory
+            }
+            out.flush();
         }
     }
 
-    public static void unzip(InputStream inputStream, File directory) throws IOException {
+    private static void unzip(InputStream inputStream, File directory) throws IOException {
         if (inputStream == null || directory == null) {
             return;
         }
+        String canonicalDirPath = directory.getCanonicalPath();
 
         try (BufferedInputStream bufInStream = new BufferedInputStream(inputStream);
-                        ZipInputStream zis = new ZipInputStream(bufInStream)) {
+            ZipInputStream zis = new ZipInputStream(bufInStream)) {
             ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
+            while ((entry = zis.getNextEntry()) != null) { // NOSONAR cannot write outside the target directory
                 File file = new File(directory, entry.getName());
+                if (!file.getCanonicalPath().startsWith(canonicalDirPath + File.separator)) { // Security check
+                    throw new IllegalStateException("Entry is trying to leave the target dir: " + entry.getName());
+                }
                 if (entry.isDirectory()) {
-                    file.mkdirs();
+                    file.mkdirs(); // NOSONAR only create a folder in the target directory
                 } else {
-                    file.getParentFile().mkdirs();
+                    file.getParentFile().mkdirs(); // NOSONAR only create a folder in the target directory
                     copyZip(zis, file);
                 }
             }

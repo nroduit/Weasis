@@ -23,12 +23,15 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 
 public class CvUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger( CvUtil.class );
     
     private CvUtil() {
     }
@@ -69,7 +72,7 @@ public class CvUtil {
             g.drawImage(src, 0, 0, null);
             g.dispose();
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.error("Cannot create volatile image", e);
         }
         return dst;
     }
