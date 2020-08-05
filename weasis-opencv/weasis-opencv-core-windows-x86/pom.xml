@@ -3,14 +3,14 @@
 	<parent>
 		<artifactId>weasis-opencv-parent</artifactId>
 		<groupId>org.weasis.opencv</groupId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 		<relativePath>../weasis-opencv-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>bundle</packaging>
 	<artifactId>weasis-opencv-core-windows-x86</artifactId>
 	<name>OpenCV native Windows x86</name>
-	<version>4.4.0-dcm</version>
 	<properties>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
 		<native.configuration>lib/opencv_java.dll; processor=x86; osname=win32</native.configuration>
@@ -19,7 +19,7 @@
 		<dependency>
 			<groupId>org.weasis.thirdparty.org.opencv</groupId>
 			<artifactId>opencv_java</artifactId>
-			<version>${project.version}</version>
+			<version>${weasis.opencv.native.version}</version>
 			<type>dll</type>
 			<classifier>windows-x86</classifier>
 			<scope>compile</scope>

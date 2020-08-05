@@ -17,6 +17,7 @@ import java.util.Hashtable;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Insertable;

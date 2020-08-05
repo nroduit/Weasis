@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-
+	<parent>
+		<artifactId>weasis-parent</artifactId>
+		<groupId>org.weasis</groupId>
+		<!--suppress MavenPropertyInParent -->
+		<version>${revision}${changelist}</version>
+		<relativePath>../weasis-parent/pom.xml</relativePath>
+	</parent>
 	<groupId>org.weasis.samples</groupId>
 	<artifactId>weasis-plugin-archetype</artifactId>
-	<version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
 	<name>Default Plug-ins Achetypes [${project.artifactId}]</name>
 
@@ -14,7 +19,6 @@
 	</modules>
 
 	<build>
-
 		<extensions>
 			<extension>
 				<groupId>org.apache.maven.archetype</groupId>
@@ -30,41 +34,8 @@
 					<version>2.2</version>
 					<extensions>true</extensions>
 				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>flatten-maven-plugin</artifactId>
-					<version>1.2.4</version>
-				</plugin>
 			</plugins>
 		</pluginManagement>
-
-		<plugins>
-			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<artifactId>flatten-maven-plugin</artifactId>
-
-				<configuration>
-					<updatePomFile>true</updatePomFile>
-					<flattenMode>resolveCiFriendliesOnly</flattenMode>
-				</configuration>
-				<executions>
-					<execution>
-						<id>flatten</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>flatten</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>flatten.clean</id>
-						<phase>clean</phase>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-		</plugins>
 	</build>
 
 </project>

@@ -4,7 +4,8 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 		<relativePath>../../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -20,10 +21,10 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>4.1.0</version>
 				<configuration>
 					<instructions>
 						<Bundle-NativeCode>${native.configuration}</Bundle-NativeCode>
+						<!-- Version must be change with major version change of weasis-core-img -->
 						<Fragment-Host>weasis-core-img;bundle-version="4"</Fragment-Host>
 						<Embed-StripVersion>true</Embed-StripVersion>
 						<!-- Do not inline native libs -->

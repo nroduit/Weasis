@@ -3,7 +3,8 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -62,9 +63,17 @@
 							<goal>shade</goal>
 						</goals>
 						<configuration>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
 							<!-- createDependencyReducedPom=false is require to fix an issue with flatten plugin -->
 							<!-- @see https://issues.apache.org/jira/browse/MSHADE-323 -->
+							<createDependencyReducedPom>false</createDependencyReducedPom>
+							<filters>
+								<filter>
+									<artifact>org.tukaani:xz</artifact>
+									<excludes>
+										<exclude>META-INF/**</exclude>
+									</excludes>
+								</filter>
+							</filters>
 						</configuration>
 					</execution>
 				</executions>

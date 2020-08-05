@@ -3,8 +3,10 @@
 	<parent>
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
-		<version>${revision}${changelist}</version>
-		<relativePath>../../weasis-parent/pom.xml</relativePath>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+		<!-- Must be adapted to your relative path -->
+		<relativePath>../Weasis/weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>${groupId}</groupId>
@@ -27,23 +29,29 @@
 			</plugin>
 		</plugins>
 	</build>
-		<dependencies>
+	<dependencies>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-api</artifactId>
-			<version>${project.version}</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.core</groupId>
 			<artifactId>weasis-core-ui</artifactId>
-			<version>${project.version}</version>
+			<version>${project.parent.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.weasis.thirdparty</groupId>
+			<artifactId>docking-frames</artifactId>
+			<version>${dockingframes.version}</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-viewer2d</artifactId>
-			<version>${project.version}</version>
+			<version>${project.parent.version}</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>

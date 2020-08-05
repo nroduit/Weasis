@@ -42,7 +42,7 @@ public class SampleToolBar<E extends ImageElement> extends WtoolBar {
                     URL url;
                     try {
                         url = new URL("http://www.dcm4che.org/confluence/display/WEA/User+Guide"); //${symbol_dollar}NON-NLS-1${symbol_dollar}
-                        JMVUtils.OpenInDefaultBrowser((Component) e.getSource(), url);
+                        JMVUtils.openInDefaultBrowser((Component) e.getSource(), url);
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();
                     }

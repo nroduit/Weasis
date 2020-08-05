@@ -5,7 +5,8 @@
 	<parent>
 		<groupId>org.weasis.samples</groupId>
 		<artifactId>weasis-plugin-archetype</artifactId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 	</parent>
 
 	<artifactId>weasis-plugin-base-viewer-archetype</artifactId>

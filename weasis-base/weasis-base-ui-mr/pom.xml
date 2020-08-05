@@ -5,7 +5,8 @@
 	<parent>
 		<artifactId>weasis-base-parent</artifactId>
 		<groupId>org.weasis.base</groupId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 		<relativePath>../weasis-base-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>

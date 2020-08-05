@@ -4,22 +4,21 @@
 	<!-- Shared parent. Define the settings common to all projects using Weasis -->
 	<groupId>org.weasis</groupId>
 	<artifactId>weasis-parent</artifactId>
-	<version>${revision}${changelist}</version>
+	  <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
 	<name>${project.artifactId}</name>
 
 	<properties>
-
 		<!-- force command line arguments settings to set version -->
-		<revision>${revision}</revision>
-		<changelist>${changelist}</changelist>		<!-- Remove "-SNAPSHOT" for release -->
-		<!-- ex : how to compile <version>3.6.2-SNAPSHOT</version> -->
 		<!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
+		<revision>3.6.2</revision>
+		<changelist>-SNAPSHOT</changelist>	<!-- Remove "-SNAPSHOT" for release -->
 
 		<java-version>1.8</java-version>
 		<jdk-version>11</jdk-version>
 		<enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
-		<enforcer.maven-version>[3.5.0,)</enforcer.maven-version>
+		<enforcer.maven-version>[3.5.3,)</enforcer.maven-version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
@@ -120,7 +119,7 @@
 				<plugin>
 					<groupId>org.apache.felix</groupId>
 					<artifactId>maven-bundle-plugin</artifactId>
-					<version>4.2.1</version>
+					<version>5.1.1</version>
 					<extensions>true</extensions>
 					<configuration>
 						<obrRepository>NONE</obrRepository>
@@ -128,7 +127,9 @@
 							<Bundle-SymbolicName>${bundle.symbolicName}</Bundle-SymbolicName>
 							<Bundle-Version>${project.version}</Bundle-Version>
 							<Bundle-RequiredExecutionEnvironment>JavaSE-1.8</Bundle-RequiredExecutionEnvironment>
-							<!-- Using <_exportcontents> requires to configure <Export-Package>, there is no default export (All packages, except any containing 'impl' or 'internal' -->
+							<!-- Using <_exportcontents> requires to configure <Export-Package>,
+								there is no default export (All packages, except any containing 'impl' or
+								'internal' -->
 							<_removeheaders>
 								Bnd-LastModified,Include-Resource,Private-Package,Tool,Built-By,Created-By
 							</_removeheaders>
@@ -223,6 +224,31 @@
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-shade-plugin</artifactId>
 					<version>3.2.4</version>
+				</plugin>
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>org.codehaus.mojo</groupId>
+										<artifactId>flatten-maven-plugin</artifactId>
+										<versionRange>[1.1.0,)</versionRange>
+										<goals>
+											<goal>flatten</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
 				</plugin>
 			</plugins>
 		</pluginManagement>
@@ -360,7 +386,8 @@
 				<scope>provided</scope>
 			</dependency>
 
-			<!--The following dependencies are not required for compilation (required when loading the OSGI framework for debugging) -->
+			<!--The following dependencies are not required for compilation (required
+				when loading the OSGI framework for debugging) -->
 			<dependency>
 				<groupId>org.weasis.thirdparty.javax.jnlp</groupId>
 				<artifactId>javaws</artifactId>

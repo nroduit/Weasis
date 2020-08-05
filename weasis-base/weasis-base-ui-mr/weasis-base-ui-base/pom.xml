@@ -5,7 +5,8 @@
 	<parent>
 		<groupId>org.weasis.base</groupId>
 		<artifactId>weasis-base-ui-mr</artifactId>
-		<version>${revision}${changelist}</version>
+		<!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
 	</parent>
 	<artifactId>weasis-base-ui-base</artifactId>
 	<packaging>bundle</packaging>
