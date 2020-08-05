@@ -181,7 +181,7 @@ public class FileUtil {
         }
     }
 
-    public static String writeResources(String srcPath, File cacheDir, String date) throws IOException {
+    static String writeResources(String srcPath, File cacheDir, String date) throws IOException {
         String fileDate = null;
 
         URLConnection urlConnection = FileUtil.getAdaptedConnection(new URL(srcPath), false);
@@ -235,7 +235,7 @@ public class FileUtil {
         }
     }
 
-    public static void unzip(InputStream inputStream, File directory) throws IOException {
+    private static void unzip(InputStream inputStream, File directory) throws IOException {
         if (inputStream == null || directory == null) {
             return;
         }

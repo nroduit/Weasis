@@ -15,15 +15,17 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.imageio.spi.IIORegistry;
 import javax.jnlp.ServiceManager;
 import javax.jnlp.SingleInstanceListener;
 import javax.jnlp.SingleInstanceService;
 import javax.jnlp.UnavailableServiceException;
-
 import org.apache.felix.framework.util.FelixConstants;
 
+/**
+ * Java > 8
+ * @deprecated (will be removed in weasis 4)
+ */
 @Deprecated
 public class WebstartLauncher extends WeasisLauncher implements SingleInstanceListener {
     private static final Logger LOGGER = Logger.getLogger(WebstartLauncher.class.getName());
