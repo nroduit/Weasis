@@ -146,9 +146,6 @@ public class TagDTest {
 
          time = TagD.getDicomDateTime(null,"19530827111300.005");
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
-
-         time = TagD.getDicomDateTime(null,"19530827111300+0700");
-         assertEquals(LocalDateTime.of(1953, 8, 27, 5, 13, 0, 0), time);
     }
 
     @Test
