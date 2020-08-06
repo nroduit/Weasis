@@ -35,27 +35,27 @@
 		<felix.gogo.shell.version>1.1.2</felix.gogo.shell.version>
 		<felix.gogo.command.version>1.1.0</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
-		<felix.configadmin.version>1.9.16</felix.configadmin.version>
+		<felix.configadmin.version>1.9.18</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.1.16</felix.scr.version>
+		<felix.scr.version>2.1.20</felix.scr.version>
 		<osgi.promise.version>1.1.1</osgi.promise.version>
 		<osgi.function.version>1.1.0</osgi.function.version>
 		<felix.metatype.version>1.2.2</felix.metatype.version>
 		<felix.scr.annotations.version>1.12.0</felix.scr.annotations.version>
 
-		<slf4j.version>1.7.29</slf4j.version>
+		<slf4j.version>1.7.30</slf4j.version>
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.3p1</dockingframes.version>
 		<weasis-dicom-tools.version>5.22.2</weasis-dicom-tools.version>
 		<weasis.core.img.version>4.4.0</weasis.core.img.version>
 		<weasis.opencv.native.version>4.4.0-dcm</weasis.opencv.native.version>
-		<javax.json.version>1.1.5</javax.json.version>
+		<javax.json.version>1.1.6</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<com.sun.media.j3d.version>1.5.2</com.sun.media.j3d.version>
 
-		<assertj.version>3.14.0</assertj.version>
-		<powermock.version>2.0.4</powermock.version>
-		<bean-matchers.version>0.11</bean-matchers.version>
+		<assertj.version>3.16.1</assertj.version>
+		<powermock.version>2.0.7</powermock.version>
+		<bean-matchers.version>0.12</bean-matchers.version>
 	</properties>
 
 	<licenses>
