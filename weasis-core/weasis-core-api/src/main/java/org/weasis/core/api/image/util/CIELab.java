@@ -22,41 +22,35 @@ public class CIELab {
     private CIELab() {
     }
 
-    public static double[] dicomLab2rgb(int ldcm, int adcm, int bdcm) {
-        // Dicom lab to lab
-        double cl = ((ldcm * 100.0) / 65535.0);
-        double ca = ((adcm * 255.0) / 65535.0) - 128;
-        double cb = ((bdcm * 255.0) / 65535.0) - 128;
-
+    public static double[] dicomLab2rgb(double l, double a, double b) {
         // lab to xyz
-        cl = (cl + 16) / 116;
-        ca = cl + ca / 500;
-        cb = cl - cb / 200;
-        double x = D65_WHITE_POINT_X * labfInv( cl + ca / 500);
-        double y = D65_WHITE_POINT_Y * labfInv((cl + 16) / 11);
-        double z = D65_WHITE_POINT_Z * labfInv(cl - cb / 200);
+        double cl = (l + 16) / 116;
+        double ca = cl + a / 500;
+        double cb = cl - b / 200;
+        double x = D65_WHITE_POINT_X * labfInv(ca);
+        double y = D65_WHITE_POINT_Y * labfInv(cl);
+        double z = D65_WHITE_POINT_Z * labfInv(cb);
 
         // xyz to rgb
         double r = 3.2406 * x - 1.5372 * y - 0.4986 * z;
         double g = -0.9689 * x + 1.8758 * y + 0.0415 * z;
-        double b = 0.0557 * x - 0.2040 * y + 1.0570 * z;
+        double bl = 0.0557 * x - 0.2040 * y + 1.0570 * z;
 
         double min;
-        if (r <=g) {
-            min = r <= b ? r : b;
-        }
-        else {
-            min = g <= b ? g : b;
+        if (r <= g) {
+            min = r <= bl ? r : bl;
+        } else {
+            min = g <= bl ? g : bl;
         }
 
         if (min < 0) {
             r -= min;
             g -= min;
-            b -= min;
+            bl -= min;
         }
 
         /* Transform from RGB to R'G'B' */
-        return new double[]{gammaCorrection(r), gammaCorrection(g), gammaCorrection(b)};
+        return new double[]{gammaCorrection(r), gammaCorrection(g), gammaCorrection(bl)};
     }
 
     public static double[] rgb2DicomLab(double r, double g, double b) {
@@ -79,8 +73,7 @@ public class CIELab {
         double ca = 500 * (x - y);
         double cb = 200 * (y - z);
 
-        // lab to Dicom lab
-        return new double[]{cl * 65535.0 / 100.0,(ca + 128) * 65535.0 / 255.0, (cb + 128) * 65535.0 / 255.0};
+        return new double[]{cl, ca, cb};
     }
 
 
@@ -126,16 +119,22 @@ public class CIELab {
         if (lab == null || lab.length != 3) {
             return null;
         }
-        double[] rgb = dicomLab2rgb(lab[0], lab[1], lab[2]);
-        return new int[]{(int) Math.round(rgb[0] * 255), (int) Math.round(rgb[1] * 255), (int) Math.round(rgb[2] *255),};
+        // Dicom lab to lab
+        double l = ((lab[0] * 100.0) / 65535.0);
+        double a = ((lab[1] * 255.0) / 65535.0) - 128;
+        double b = ((lab[2] * 255.0) / 65535.0) - 128;
+        double[] rgb = dicomLab2rgb(l, a, b);
+        return new int[]{(int) Math.round(rgb[0] * 255), (int) Math.round(rgb[1] * 255), (int) Math.round(rgb[2] * 255)};
     }
 
     public static int[] rgbToDicomLab(Color c) {
-        return convertToDicomLab(Objects.requireNonNull(c).getRed(), c.getGreen(), c.getBlue());
+        return rgbToDicomLab(Objects.requireNonNull(c).getRed(), c.getGreen(), c.getBlue());
     }
 
-    public static int[] convertToDicomLab(int r, int g, int b) {
-        double[] res = rgb2DicomLab(r, g, b);
-        return new int[]{(int) Math.round(res[0]), (int) Math.round(res[1]), (int) Math.round(res[2]),};
+    public static int[] rgbToDicomLab(int r, int g, int b) {
+        double[] lab = rgb2DicomLab(r / 255.0, g / 255.0, b / 255.0);
+        // lab to Dicom lab
+        return new int[]{(int) Math.round(lab[0] * 65535.0 / 100.0), (int) Math.round((lab[1] + 128) * 65535.0 / 255.0),
+                (int) Math.round((lab[2] + 128) * 65535.0 / 255.0)};
     }
 }
