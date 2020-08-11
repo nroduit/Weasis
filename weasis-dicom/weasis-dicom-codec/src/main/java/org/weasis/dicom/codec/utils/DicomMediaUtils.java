@@ -624,10 +624,10 @@ public class DicomMediaUtils {
     public static void setShutterColor(Tagable tagable, Attributes attributes) {
         Integer psVal = (Integer) TagD.get(Tag.ShutterPresentationValue).getValue(attributes);
         tagable.setTagNoNull(TagW.ShutterPSValue, TagD.get(Tag.ShutterPresentationValue).getValue(attributes));
-        float[] rgb =
-            CIELab.convertToFloatLab((int[]) TagD.get(Tag.ShutterPresentationColorCIELabValue).getValue(attributes));
+        int[] rgb =
+            CIELab.dicomLab2rgb((int[]) TagD.get(Tag.ShutterPresentationColorCIELabValue).getValue(attributes));
         Color color =
-            rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb, (int[]) null);
+            rgb == null ? null : PresentationStateReader.getRGBColor(psVal == null ? 0 : psVal, rgb);
         tagable.setTagNoNull(TagW.ShutterRGBColor, color);
     }
 

@@ -267,7 +267,7 @@ public class RtSet {
                     rgb = new int[] { rand.nextInt(255), rand.nextInt(255), rand.nextInt(255) };
                 }
 
-                Color color1 = PresentationStateReader.getRGBColor(255, null, rgb);
+                Color color1 = PresentationStateReader.getRGBColor(255, rgb);
                 Color color2 =
                     new Color(color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);
                 layer.getStructure().setColor(color2);

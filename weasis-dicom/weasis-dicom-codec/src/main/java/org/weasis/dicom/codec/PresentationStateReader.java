@@ -166,20 +166,19 @@ public class PresentationStateReader implements Tagable {
         }
     }
 
-    public static Color getRGBColor(int pGray, float[] labColour, int[] rgbColour) {
+    public static Color getRGBColor(int pGray, int[] rgbColour) {
         int r, g, b;
-        if (labColour != null) {
-            float[] rgb = LAB.toRGB(labColour);
-            r = (int) (rgb[0] * 255);
-            g = (int) (rgb[1] * 255);
-            b = (int) (rgb[2] * 255);
-        } else if (rgbColour != null) {
+        if (rgbColour != null) {
             r = rgbColour[0];
             g = rgbColour[1];
             b = rgbColour[2];
-            if (r > 255 || g > 255 || b > 255) {
+            if (r > 255) {
                 r >>= 8;
+            }
+            if (g > 255) {
                 g >>= 8;
+            }
+            if (b > 255) {
                 b >>= 8;
             }
         } else {
