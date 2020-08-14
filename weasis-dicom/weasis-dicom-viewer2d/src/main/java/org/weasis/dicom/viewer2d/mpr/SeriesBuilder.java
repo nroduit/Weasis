@@ -23,8 +23,8 @@ import java.util.Map;
 import javax.imageio.IIOException;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
-import javax.vecmath.Point3d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Vector3d;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;

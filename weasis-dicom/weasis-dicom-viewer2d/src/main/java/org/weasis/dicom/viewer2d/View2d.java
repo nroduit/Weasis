@@ -45,9 +45,9 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Tuple3d;
+import org.jogamp.vecmath.Vector3d;
 
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;

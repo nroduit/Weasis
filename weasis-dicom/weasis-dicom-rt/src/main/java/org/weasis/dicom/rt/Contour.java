@@ -16,9 +16,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Tuple3d;
+import org.jogamp.vecmath.Vector3d;
 
 import org.opencv.core.Point;
 import org.slf4j.Logger;

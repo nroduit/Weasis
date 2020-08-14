@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import javax.swing.Icon;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3d;
 
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.model.TreeModelNode;

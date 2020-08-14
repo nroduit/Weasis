@@ -61,7 +61,7 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+			<groupId>org.jogamp.java3d</groupId>
 			<artifactId>vecmath</artifactId>
 		</dependency>
 	</dependencies>

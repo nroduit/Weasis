@@ -395,9 +395,9 @@
 									<destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
 								</artifactItem>
 								<artifactItem>
-									<groupId>org.weasis.thirdparty.com.sun.media</groupId>
+									<groupId>org.jogamp.java3d</groupId>
 									<artifactId>vecmath</artifactId>
-									<version>${com.sun.media.j3d.version}</version>
+									<version>${org.jogamp.java3d.version}</version>
 									<outputDirectory>${tmp.bundle.dir}</outputDirectory>
 								</artifactItem>
 

@@ -13,9 +13,9 @@ package org.weasis.dicom.codec.geometry;
 import java.awt.geom.Point2D;
 import java.util.List;
 
-import javax.vecmath.Point3d;
-import javax.vecmath.Tuple3d;
-import javax.vecmath.Vector3d;
+import org.jogamp.vecmath.Point3d;
+import org.jogamp.vecmath.Tuple3d;
+import org.jogamp.vecmath.Vector3d;
 
 /**
  * @author David A. Clunie
