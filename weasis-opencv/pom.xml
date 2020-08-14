@@ -13,12 +13,34 @@
 	<artifactId>weasis-opencv</artifactId>
 	<name>OpenCV [${project.artifactId}]</name>
 	<packaging>pom</packaging>
+
 	<modules>
-		<module>weasis-opencv-parent</module>
 		<module>weasis-opencv-core-windows-x86</module>
 		<module>weasis-opencv-core-windows-x86-64</module>
 		<module>weasis-opencv-core-linux-x86</module>
 		<module>weasis-opencv-core-linux-x86-64</module>
 		<module>weasis-opencv-core-macosx-x86-64</module>
 	</modules>
+
+	<properties>
+		<native.configuration>changeMeInChildModule</native.configuration>
+	</properties>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.felix</groupId>
+				<artifactId>maven-bundle-plugin</artifactId>
+				<configuration>
+					<instructions>
+						<Bundle-NativeCode>${native.configuration}</Bundle-NativeCode>
+						<!-- Version must be change with major version change of weasis-core-img -->
+						<Fragment-Host>weasis-core-img;bundle-version="${weasis.core.img.version}"</Fragment-Host>
+						<Embed-StripVersion>true</Embed-StripVersion>
+						<!-- Do not inline native libs -->
+						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
+					</instructions>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
