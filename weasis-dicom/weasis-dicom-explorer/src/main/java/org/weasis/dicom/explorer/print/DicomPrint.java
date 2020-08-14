@@ -33,7 +33,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Executors;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -44,9 +43,12 @@ import org.dcm4che3.net.Association;
 import org.dcm4che3.net.Connection;
 import org.dcm4che3.net.Device;
 import org.dcm4che3.net.DimseRSP;
+import org.dcm4che3.net.Status;
 import org.dcm4che3.net.pdu.AAssociateRQ;
 import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
@@ -61,6 +63,7 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.opencv.data.PlanarImage;
 
 public class DicomPrint {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrint.class );
 
     private final DicomPrintNode dcmNode;
     private final DicomPrintOptions printOptions;
@@ -329,6 +332,7 @@ public class DicomPrint {
         rq.setCalledAET(remoteAE.getAETitle());
         Association as = ae.connect(remoteConn, rq);
         try {
+            // See http://dicom.nema.org/medical/dicom/current/output/chtml/part02/sect_E.4.2.html
             // Create a Basic Film Session
             dimseRSPHandler(as.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
                 filmSessionAttrs, UID.ImplicitVRLittleEndian));
@@ -360,8 +364,13 @@ public class DicomPrint {
     private void dimseRSPHandler(DimseRSP response) throws IOException, InterruptedException {
         response.next();
         Attributes command = response.getCommand();
-        if (command.getInt(Tag.Status, 0) != 0) {
-            throw new IOException("Unable to print the image. DICOM response status: " + command.getInt(Tag.Status, 0)); //$NON-NLS-1$
+        int status = command.getInt(Tag.Status, 0);
+        if (status == Status.AttributeValueOutOfRange || status == Status.AttributeListError || status == 0xB600
+            || status == 0xB602 || status == 0xB604 || status == 0xB609 || status == 0xB60A) {
+            LOGGER.warn("DICOM Print warning status: {}", Integer.toHexString(status));
+        } else if (status != Status.Success) {
+            throw new IOException(
+                "Unable to print the image. DICOM response status: " + Integer.toHexString(status)); //$NON-NLS-1$
         }
     }
 
