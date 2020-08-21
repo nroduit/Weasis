@@ -12,7 +12,6 @@ package org.weasis.dicom.codec.utils;
 import java.awt.image.DataBuffer;
 import java.lang.reflect.Array;
 import java.util.Arrays;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.CvType;
@@ -47,11 +46,11 @@ public class DicomImageUtils {
             byte[] b = DicomImageUtils.lutData(ds, bDesc, Tag.BluePaletteColorLookupTableData,
                 Tag.SegmentedBluePaletteColorLookupTableData);
 
-            if (source.depth() <= CvType.CV_8S) {
+            if (source.depth() <= CvType.CV_8S && rDesc[1] == 0 && gDesc[1] == 0 && bDesc[1] == 0 ) {
                 // Replace the original image with the RGB image.
                 return ImageProcessor.applyLUT(source.toMat(), new byte[][] { b, g, r });
             } else {
-                LookupTableCV lookup = new LookupTableCV( new byte[][] { b, g, r });
+                LookupTableCV lookup = new LookupTableCV( new byte[][] { b, g, r }, new int[]{ bDesc[1], gDesc[1], rDesc[1]}, true);
                 return lookup.lookup(source.toMat());
             }
         }
@@ -577,7 +576,7 @@ public class DicomImageUtils {
         return desc;
     }
 
-    public static byte[] lutData(Attributes ds, int[] desc, int dataTag, int segmTag) {
+    private static byte[] lutData(Attributes ds, int[] desc, int dataTag, int segmTag) {
         int len = desc[0] == 0 ? 0x10000 : desc[0];
         int bits = desc[2];
         byte[] data = ds.getSafeBytes(dataTag);
@@ -590,107 +589,102 @@ public class DicomImageUtils {
                 throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8"); //$NON-NLS-1$
             }
             data = new byte[len];
-            inflateSegmentedLut(segm, data);
+            new InflateSegmentedLut(segm, 0, data, 0).inflate(-1, 0);
         } else if (bits == 16 || data.length != len) {
-            if (data.length != len << 1) {
-                lutLengthMismatch(data.length, len);
-            }
+            if (data.length != len << 1)
+                throw new IllegalArgumentException("Number of actual LUT entries: "
+                    + data.length +  " mismatch specified value: "
+                    + len + " in LUT Descriptor");
             int hilo = ds.bigEndian() ? 0 : 1;
-            if (bits == 8) {
+            if (bits == 8)
                 hilo = 1 - hilo; // padded high bits -> use low bits
-            }
-            byte[] bs = new byte[data.length >> 1];
-            for (int i = 0; i < bs.length; i++) {
-                bs[i] = data[(i << 1) | hilo];
-            }
-            data = bs;
+            data = halfLength(data, hilo);
         }
         return data;
     }
 
-    private static void inflateSegmentedLut(int[] in, byte[] out) {
-        int x = 0;
-        try {
-            for (int i = 0; i < in.length;) {
-                int op = in[i++];
-                int n = in[i++];
+    private static byte[] halfLength(byte[] data, int hilo) {
+        byte[] bs = new byte[data.length >> 1];
+        for (int i = 0; i < bs.length; i++)
+            bs[i] = data[(i<<1)|hilo];
+
+        return bs;
+    }
+
+    private static class InflateSegmentedLut {
+        final int[] segm;
+        final byte[] data;
+        int readPos;
+        int writePos;
+
+        private InflateSegmentedLut(int[] segm, int readPos, byte[] data, int writePos) {
+            this.segm = segm;
+            this.data = data;
+            this.readPos = readPos;
+            this.writePos = writePos;
+        }
+
+        private int inflate(int segs, int y0) {
+            while (segs < 0 ? (readPos < segm.length) : segs-- > 0) {
+                int segPos = readPos;
+                int op = read();
+                int n = read();
                 switch (op) {
                     case 0:
-                        while (n-- > 0) {
-                            out[x++] = (byte) in[i++];
-                        }
+                        y0 = discreteSegment(n);
                         break;
                     case 1:
-                        x = linearSegment(in[i++], out, x, n);
+                        if (writePos == 0)
+                            throw new IllegalArgumentException(
+                                "Linear segment cannot be the first segment");
+                        y0 = linearSegment(n, y0, read());
                         break;
-                    case 2: {
-                        int i2 = (in[i++] & 0xffff) | (in[i++] << 16);
-                        while (n-- > 0) {
-                            int op2 = in[i2++];
-                            int n2 = in[i2++] & 0xffff;
-                            switch (op2) {
-                                case 0:
-                                    while (n2-- > 0) {
-                                        out[x++] = (byte) in[i2++];
-                                    }
-                                    break;
-                                case 1:
-                                    x = linearSegment(in[i2++], out, x, n);
-                                    break;
-                                default:
-                                    illegalOpcode(op, i2 - 2);
-                            }
-                        }
-                    }
+                    case 2:
+                        if (segs >= 0)
+                            throw new IllegalArgumentException(
+                                "nested indirect segment at index " + segPos);
+                        y0 = indirectSegment(n, y0);
                         break;
                     default:
-                        illegalOpcode(op, i - 2);
+                        throw new IllegalArgumentException(
+                            "illegal op code " + op + " at index" + segPos);
                 }
             }
-        } catch (IndexOutOfBoundsException e) {
-            if (x > out.length) {
-                exceedsLutLength(out.length);
-            } else {
-                endOfSegmentedLut();
+            return y0;
+        }
+
+        private int read() {
+            if (readPos >= segm.length) {
+                throw new IllegalArgumentException(
+                    "Running out of data inflating segmented LUT");
             }
-        }
-        if (x < out.length) {
-            lutLengthMismatch(x, out.length);
-        }
-    }
-
-    private static void endOfSegmentedLut() {
-        throw new IllegalArgumentException("Running out of data inflating segmented LUT"); //$NON-NLS-1$
-    }
-
-    private static int linearSegment(int y1, byte[] out, int x, int n) {
-        if (x == 0) {
-            throw new IllegalArgumentException("Linear segment cannot be the first segment"); //$NON-NLS-1$
+            return segm[readPos++] & 0xffff;
         }
 
-        try {
-            int y0 = out[x - 1];
+        private void write(int y) {
+            if (writePos >= data.length) {
+                throw new IllegalArgumentException(
+                    "Number of entries in inflated segmented LUT exceeds specified value: "
+                        + data.length + " in LUT Descriptor");
+            }
+            data[writePos++] = (byte) (y >> 8);
+        }
+
+        private int discreteSegment(int n) {
+            while (n-- > 0) write(read());
+            return segm[readPos - 1] & 0xffff;
+        }
+
+        private int linearSegment(int n, int y0, int y1) {
             int dy = y1 - y0;
-            for (int j = 1; j <= n; j++) {
-                out[x++] = (byte) ((y0 + dy * j / n) >> 8);
-            }
-        } catch (IndexOutOfBoundsException e) {
-            exceedsLutLength(out.length);
+            for (int j = 1; j <= n; j++)
+                write(y0 + dy * j / n);
+            return y1;
         }
-        return x;
-    }
 
-    private static void exceedsLutLength(int descLen) {
-        throw new IllegalArgumentException("Number of entries in inflated segmented LUT exceeds specified value: " //$NON-NLS-1$
-            + descLen + " in LUT Descriptor"); //$NON-NLS-1$
-    }
-
-    private static void lutLengthMismatch(int lutLen, int descLen) {
-        throw new IllegalArgumentException("Number of actual LUT entries: " + lutLen + " mismatch specified value: " //$NON-NLS-1$ //$NON-NLS-2$
-            + descLen + " in LUT Descriptor"); //$NON-NLS-1$
-    }
-
-    private static void illegalOpcode(int op, int i) {
-        throw new IllegalArgumentException("illegal op code:" + op + ", index:" + i); //$NON-NLS-1$ //$NON-NLS-2$
+        private int indirectSegment(int n, int y0) {
+            int readPos = read() | (read() << 16);
+            return new InflateSegmentedLut(segm, readPos, data, writePos).inflate(n, y0);
+        }
     }
 }
