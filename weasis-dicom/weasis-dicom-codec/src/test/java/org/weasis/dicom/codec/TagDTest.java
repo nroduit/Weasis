@@ -126,25 +126,25 @@ public class TagDTest {
     @Test
     public void testGetDicomDateTime() throws Exception {
 
-         Date date = DateUtils.parseDA(null, "1993:08:22");
+         Date date = DateUtils.parseDA(null, "1993:08:22"); //$NON-NLS-1$
          LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
          assertEquals(LocalDate.of(1993, 8, 22), datetime.toLocalDate());
 
          DatePrecision precision = new DatePrecision();
-         date = DateUtils.parseTM(null, "070907.07 ", precision);
+         date = DateUtils.parseTM(null, "070907.07 ", precision); //$NON-NLS-1$
          datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
          assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-         LocalDateTime time = TagD.getDicomDateTime(null, "1953082711");
+         LocalDateTime time = TagD.getDicomDateTime(null, "1953082711"); //$NON-NLS-1$
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300");
+         time = TagD.getDicomDateTime(null,"19530827111300"); //$NON-NLS-1$
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300.0");
+         time = TagD.getDicomDateTime(null,"19530827111300.0"); //$NON-NLS-1$
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300.005");
+         time = TagD.getDicomDateTime(null,"19530827111300.005"); //$NON-NLS-1$
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
     }
 

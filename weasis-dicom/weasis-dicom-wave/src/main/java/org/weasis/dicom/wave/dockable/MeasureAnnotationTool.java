@@ -253,7 +253,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                         .getString(Tag.CodeMeaning);
                     addValueToModel(list, name, value);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot read AcquisitionContextSequence", e);
+                    LOGGER.error("Cannot read AcquisitionContextSequence", e); //$NON-NLS-1$
                 }
             }
         }
@@ -329,7 +329,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
                     }
 
                 } catch (Exception e) {
-                    LOGGER.error("Cannot read MeasurementUnitsCodeSequence", e);
+                    LOGGER.error("Cannot read MeasurementUnitsCodeSequence", e); //$NON-NLS-1$
                 }
             }
         }

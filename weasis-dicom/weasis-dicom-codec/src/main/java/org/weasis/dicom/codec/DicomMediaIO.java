@@ -762,8 +762,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
                 if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
                         && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
                     boolean ybr = true;
-                    if("RGB".equalsIgnoreCase(pmi.name())) {
-                        String[] list = BundleTools.SYSTEM_PREFERENCES.getProperty("jpeg.lossy.rgb.manufacturer.list", "").split(",");
+                    if("RGB".equalsIgnoreCase(pmi.name())) { //$NON-NLS-1$
+                        String[] list = BundleTools.SYSTEM_PREFERENCES.getProperty("jpeg.lossy.rgb.manufacturer.list", "").split(","); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         String manufacturer = getDicomObject().getString(Tag.Manufacturer);
                         for (int i = 0; i < list.length; i++) {
                             if(StringUtil.hasText(list[i]) && list[i].trim().equalsIgnoreCase(manufacturer)){

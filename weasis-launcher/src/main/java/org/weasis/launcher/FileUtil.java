@@ -241,7 +241,7 @@ public class FileUtil {
             while ((entry = zis.getNextEntry()) != null) { // NOSONAR cannot write outside the target directory
                 File file = new File(directory, entry.getName());
                 if (!file.getCanonicalPath().startsWith(canonicalDirPath + File.separator)) { // Security check
-                    throw new IllegalStateException("Entry is trying to leave the target dir: " + entry.getName());
+                    throw new IllegalStateException("Entry is trying to leave the target dir: " + entry.getName()); //$NON-NLS-1$
                 }
                 if (entry.isDirectory()) {
                     file.mkdirs(); // NOSONAR only create a folder in the target directory

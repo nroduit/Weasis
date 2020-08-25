@@ -566,7 +566,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         String sopInstanceUID) throws IOException {
         String addParams = wadoParameters.getAdditionnalParameters();
         if(StringUtil.hasText(addParams)) {
-            addParams = Arrays.stream(addParams.split("&")).filter(p -> !p.startsWith("transferSyntax") && !p.startsWith("anonymize")).collect(Collectors.joining("&"));
+            addParams = Arrays.stream(addParams.split("&")).filter(p -> !p.startsWith("transferSyntax") && !p.startsWith("anonymize")).collect(Collectors.joining("&")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         }
         // TODO set quality as a preference
         URL url =

@@ -367,7 +367,7 @@ public class DicomPrint {
         int status = command.getInt(Tag.Status, 0);
         if (status == Status.AttributeValueOutOfRange || status == Status.AttributeListError || status == 0xB600
             || status == 0xB602 || status == 0xB604 || status == 0xB609 || status == 0xB60A) {
-            LOGGER.warn("DICOM Print warning status: {}", Integer.toHexString(status));
+            LOGGER.warn("DICOM Print warning status: {}", Integer.toHexString(status)); //$NON-NLS-1$
         } else if (status != Status.Success) {
             throw new IOException(
                 "Unable to print the image. DICOM response status: " + Integer.toHexString(status)); //$NON-NLS-1$

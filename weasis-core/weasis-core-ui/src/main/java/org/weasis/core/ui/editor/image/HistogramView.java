@@ -389,7 +389,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                 pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(","))); //$NON-NLS-1$
             }
         } catch (FileNotFoundException e) {
-            LOGGER.error("", e);
+            LOGGER.error("", e); //$NON-NLS-1$
         }
     }
 

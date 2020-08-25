@@ -60,7 +60,7 @@ public class DicomWebNodeDialog extends JDialog {
         initComponents();
         this.nodesComboBox = nodeComboBox;
         if(dicomNode == null){
-            this.dicomNode = new DicomWebNode("", (DicomWebNode.WebType) comboBox.getSelectedItem(), null, null);
+            this.dicomNode = new DicomWebNode("", (DicomWebNode.WebType) comboBox.getSelectedItem(), null, null); //$NON-NLS-1$
             nodesComboBox.addItem(this.dicomNode);
             nodesComboBox.setSelectedItem(this.dicomNode);
         }
