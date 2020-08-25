@@ -1,6 +1,24 @@
 # Changelog
 
-## [v3.6.1](https://github.com/nroduit/weasis/tree/v3.6.1) (2020-06-27)
+## [v3.6.2](https://github.com/nroduit/weasis/tree/v3.6.2) (2020-08-26)
+
+[Full Changelog](https://github.com/nroduit/weasis/compare/v3.6.1...v3.6.2)
+
+**Implemented enhancements:**
+
+- Weasis shows green hues instead of black in JPEG-compressed Ultrasound images [\#140](https://github.com/nroduit/Weasis/issues/140)
+
+**Fixed bugs:**
+
+- Cannot read signed data with PaletteColor [\#148](https://github.com/nroduit/Weasis/issues/148)
+- DICOM Print: warning DICOM status is treated as an error [\#147](https://github.com/nroduit/Weasis/issues/147)
+- Cannot start MPR for series containing  ISO 2022 IR 149 charset [\#144](https://github.com/nroduit/Weasis/issues/144)
+- Not all colors are displayed correctly in DICOM PR graphics [\#143](https://github.com/nroduit/Weasis/issues/143)
+- Cannot add http headers when creating a new WEB Node [\#142](https://github.com/nroduit/Weasis/issues/142)
+- Poor image display with a more than 100% factor in the Window 10 display settings. [\#141](https://github.com/nroduit/Weasis/issues/141)
+- Cannot retrieve thumbnail with WADO-URI request [\#139](https://github.com/nroduit/Weasis/issues/139)
+
+## [v3.6.1](https://github.com/nroduit/weasis/tree/v3.6.1) (2020-07-03)
 
 [Full Changelog](https://github.com/nroduit/weasis/compare/v3.6.0...v3.6.1)
 
