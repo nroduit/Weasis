@@ -60,7 +60,7 @@ do
 echo "Usage: package-weasis.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the current platform with the minimal required parameters"
-echo "        package-weasis.sh --input /home/user/weasis-portable --jdk /home/user/jdk-15"
+echo "        package-weasis.sh --input /home/user/weasis-portable --jdk /home/user/jdk-16"
 echo ""
 echo "Options:"
 echo " --help -h
@@ -72,7 +72,7 @@ echo " --output -o
 Path of the base output directory.
 Default value is the current directory"
 echo " --jdk -j
-Path of the jdk with the jpackage module (>= jdk-14)"
+Path of the jdk with the jpackage module (>= jdk-16+12)"
 echo " --jdk-modules
 List of modules to build the Java Runtime
 If not set, a minimal default list is applied"
