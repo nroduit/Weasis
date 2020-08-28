@@ -600,7 +600,7 @@ public class TagD extends TagW {
     }
 
     private static int getVM(String val) {
-        if ("n".equals(val) || val.contains("n")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if ("n".equals(val) || val.toLowerCase().contains("n")) { //$NON-NLS-1$ //$NON-NLS-2$
             return Integer.MAX_VALUE;
         }
         return Integer.parseInt(val);
