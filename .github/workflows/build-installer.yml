@@ -1,0 +1,18 @@
+name: Build native installers
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 16-ea
+      uses: actions/setup-java@v1
+      with:
+        java-version: 16.0.0-ea.13
+
+    - name: Build with Maven
+      run: mvn clean install
