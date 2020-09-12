@@ -1,0 +1,23 @@
+name: Build native installers
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 16-ea
+      uses: actions/setup-java@v1
+      with:
+        java-version: 16.0.0-ea.13
+
+    - name: Build with Maven
+      run: mvn clean install
+      
+    - name: Retrieve version
+      run: |
+        echo ::set-env name=WEASIS_VERSION::$(awk -F'[<>]' '/<revision>/{print $3}' weasis-parent/pom.xml)$(awk -F'[<>]' '/<changelist>/{print $3}' weasis-parent/pom.xml)
