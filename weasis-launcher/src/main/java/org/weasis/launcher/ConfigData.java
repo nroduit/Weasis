@@ -193,6 +193,7 @@ public class ConfigData {
         appFolder.mkdirs();
         addProperty(P_WEASIS_PATH, appFolder.getPath());
         System.setProperty(P_WEASIS_PATH, appFolder.getPath());
+        LOGGER.log(Level.CONFIG,"Properties: " + properties);
     }
 
     private void filterConfigProperties(Properties felixConfig) {
