@@ -47,8 +47,8 @@
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.3p1</dockingframes.version>
 		<weasis-dicom-tools.version>5.22.4</weasis-dicom-tools.version>
-		<weasis.core.img.version>4.4.0.1</weasis.core.img.version>
-		<weasis.opencv.native.version>4.4.0-dcm</weasis.opencv.native.version>
+		<weasis.core.img.version>4.5.0</weasis.core.img.version>
+		<weasis.opencv.native.version>4.5.0-dcm</weasis.opencv.native.version>
 		<javax.json.version>1.1.6</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>

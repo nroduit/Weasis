@@ -793,11 +793,12 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
 
                 if (rawData) {
                     int bits = bitsStored <= 8 && bitsAllocated > 8 ? 9 : bitsStored; // Fix #94
+                    int streamVR= pixeldataVR == null ? 1 : pixeldataVR.vr.numEndianBytes();
                     MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
                         TagD.getTagValue(this, Tag.Columns, Integer.class),
                         TagD.getTagValue(this, Tag.Rows, Integer.class), 0,
                         TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bits,
-                        banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
+                        banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE, streamVR);
                     return ImageCV.toImageCV(Imgcodecs.dicomRawFileRead(orinigal.get().getAbsolutePath(), positions,
                         lengths, dicomparams, pmi.name()));
                 }
