@@ -56,6 +56,10 @@
 		<assertj.version>3.18.1</assertj.version>
 		<powermock.version>2.0.9</powermock.version>
 		<bean-matchers.version>0.12</bean-matchers.version>
+
+		<sonar.projectKey>weasis</sonar.projectKey>
+		<sonar.organization>nroduit-github</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 
 	<licenses>
