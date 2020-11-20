@@ -9,23 +9,64 @@
 
 package org.weasis.dicom.codec;
 
-import org.dcm4che3.data.*;
+import java.awt.image.DataBuffer;
+import java.awt.image.SampleModel;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.RandomAccessFile;
+import java.lang.ref.Reference;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.ByteOrder;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
+import javax.imageio.ImageIO;
+import javax.imageio.stream.ImageInputStream;
+import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
+import org.dcm4che3.data.Fragments;
+import org.dcm4che3.data.Implementation;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.data.VR;
 import org.dcm4che3.image.Overlays;
 import org.dcm4che3.image.PhotometricInterpretation;
-import org.dcm4che3.imageio.plugins.dcm.DicomImageReadParam;
-import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
 import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
 import org.dcm4che3.io.DicomInputStream;
 import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
 import org.dcm4che3.io.DicomOutputStream;
-import org.opencv.core.*;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
+import org.opencv.core.Mat;
+import org.opencv.core.MatOfDouble;
+import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.media.data.*;
+import org.weasis.core.api.media.data.Codec;
+import org.weasis.core.api.media.data.FileCache;
+import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.SimpleTagable;
+import org.weasis.core.api.media.data.SoftHashMap;
+import org.weasis.core.api.media.data.TagView;
+import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -44,24 +85,7 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReadParam;
-import javax.imageio.ImageReader;
-import javax.imageio.ImageTypeSpecifier;
-import javax.imageio.metadata.IIOMetadata;
-import javax.imageio.stream.ImageInputStream;
-import java.awt.image.*;
-import java.io.*;
-import java.lang.ref.Reference;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.ByteOrder;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
-
-public class DicomMediaIO extends ImageReader implements DcmMediaReader {
+public class DicomMediaIO implements DcmMediaReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomMediaIO.class);
 
@@ -222,8 +246,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         });
     }
 
-    static final DicomImageReaderSpi dicomImageReaderSpi = new DicomImageReaderSpi();
-
     private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
         new SoftHashMap<DicomMediaIO, DicomMetaData>() {
 
@@ -277,7 +299,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
     private final FileCache fileCache;
 
     public DicomMediaIO(URI uri) {
-        super(dicomImageReaderSpi);
         this.uri = Objects.requireNonNull(uri);
         this.numberOfFrame = 0;
         this.tags = new HashMap<>();
@@ -959,34 +980,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return (Series<MediaElement>) series;
     }
 
-    @Override
-    public int getHeight(int frameIndex) throws IOException {
-        checkIndex(frameIndex);
-        return TagD.getTagValue(this, Tag.Rows, Integer.class);
-    }
-
-    @Override
-    public int getWidth(int frameIndex) throws IOException {
-        checkIndex(frameIndex);
-        return TagD.getTagValue(this, Tag.Columns, Integer.class);
-    }
-
-    @Override
-    public ImageTypeSpecifier getRawImageType(int frameIndex) throws IOException {
-        readMetaData();
-        checkIndex(frameIndex);
-        return createImageType(bitsStored, dataType, false);
-    }
-
-    @Override
-    public Iterator<ImageTypeSpecifier> getImageTypes(int frameIndex) throws IOException {
-        readMetaData();
-        checkIndex(frameIndex);
-
-        ImageTypeSpecifier imageType = createImageType(bitsStored, dataType, false);
-        return Collections.singletonList(imageType).iterator();
-    }
-
     private boolean isRLELossless() {
         return dis == null ? false : dis.getTransferSyntax().equals(UID.RLELossless);
     }
@@ -1063,53 +1056,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return new ExtendSegmentedInputImageStream(fileCache.getOriginalFile().orElse(null), offsets, length);
     }
 
-    @Override
-    public boolean canReadRaster() {
-        return true;
-    }
-
-    @Override
-    public Raster readRaster(int frameIndex, ImageReadParam param) throws IOException {
-        readingImage = true;
-        try {
-            PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageConversion.toBufferedImage(img).getRaster();
-        } catch (Exception e) {
-            LOGGER.error("Reading image", e); //$NON-NLS-1$
-            return null;
-        } finally {
-            readingImage = false;
-        }
-    }
-
-    @Override
-    public BufferedImage read(int frameIndex, ImageReadParam param) throws IOException {
-        readingImage = true;
-        try {
-            PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageConversion.toBufferedImage(img);
-        } catch (Exception e) {
-            LOGGER.error("Reading image", e); //$NON-NLS-1$
-            return null;
-        } finally {
-            readingImage = false;
-        }
-    }
-
-    @Override
-    public RenderedImage readAsRenderedImage(int frameIndex, ImageReadParam param) throws IOException {
-        readingImage = true;
-        try {
-            PlanarImage img = getImageFragment(getSingleImage(frameIndex), frameIndex);
-            return ImageConversion.toBufferedImage(img);
-        } catch (Exception e) {
-            LOGGER.error("Reading image", e); //$NON-NLS-1$
-            return null;
-        } finally {
-            readingImage = false;
-        }
-    }
-
     public boolean isSkipLargePrivate() {
         return skipLargePrivate;
     }
@@ -1133,25 +1079,11 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         return null;
     }
 
-    @Override
-    public void setInput(Object input, boolean seekForwardOnly, boolean ignoreMetadata) {
-        super.setInput(input, seekForwardOnly, ignoreMetadata);
-        resetInternalState();
-        if (input != null) {
-            if (!(input instanceof ImageInputStream)) {
-                throw new IllegalArgumentException("Input not an ImageInputStream!"); //$NON-NLS-1$
-            }
-            this.iis = (ImageInputStream) input;
-        }
-    }
-
-    @Override
     public void dispose() {
         HEADER_CACHE.remove(this);
         readingHeader = false;
         readingImage = false;
         reset();
-        super.dispose();
     }
 
     @Override
@@ -1164,7 +1096,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
          * reading).
          */
         if (!readingHeader && !readingImage) {
-            super.reset();
             resetInternalState();
         }
     }
@@ -1176,44 +1107,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
         tsuid = null;
     }
 
-    private void checkIndex(int frameIndex) {
-        if (frameIndex < 0 || frameIndex >= numberOfFrame) {
-            throw new IndexOutOfBoundsException("imageIndex: " + frameIndex); //$NON-NLS-1$
-        }
-    }
-
-    @Override
-    public ImageReadParam getDefaultReadParam() {
-        return new DicomImageReadParam();
-    }
-
-    /**
-     * Return a DicomStreamMetaData object that includes the DICOM header. <b>WARNING:</b> If this class is used to read
-     * directly from a cache or other location that contains uncorrected data, the DICOM header will have the
-     * uncorrected data as well. That is, assume the DB has some fixes to patient demographics. These will not usually
-     * be applied to the DICOM files directly, so you can get the wrong information from the header. This is not an
-     * issue if you know the DICOM is up to date, or if you use the DB information as authoritative.
-     */
-    @Override
-    public IIOMetadata getStreamMetadata() throws IOException {
+    public DicomMetaData getStreamMetadata() throws IOException {
         return readMetaData();
-    }
-
-    /**
-     * Gets any image specific meta data. This should return the image specific blocks for enhanced multi-frame, but
-     * currently it merely returns null.
-     */
-    @Override
-    public IIOMetadata getImageMetadata(int imageIndex) throws IOException {
-        return null;
-    }
-
-    /**
-     * Returns the number of regular images in the study. This excludes overlays.
-     */
-    @Override
-    public int getNumImages(boolean allowSearch) throws IOException {
-        return numberOfFrame;
     }
 
     /**
@@ -1234,7 +1129,8 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             if (iis == null) {
                 Optional<File> file = fileCache.getOriginalFile();
                 if (file.isPresent()) {
-                    setInput(ImageIO.createImageInputStream(new File(uri)), false, false);
+                    resetInternalState();
+                    this.iis = ImageIO.createImageInputStream(new File(uri));
                 }
             }
 
@@ -1304,20 +1200,6 @@ public class DicomMediaIO extends ImageReader implements DcmMediaReader {
             iis = null;
 
         }
-    }
-
-    private SampleModel createSampleModel(int dataType, boolean banded) {
-        return pmi.createSampleModel(dataType, TagD.getTagValue(this, Tag.Columns, Integer.class),
-            TagD.getTagValue(this, Tag.Rows, Integer.class), TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class),
-            banded);
-    }
-
-    private ImageTypeSpecifier createImageType(int bits, int dataType, boolean banded) {
-        return new ImageTypeSpecifier(createColorModel(bits, dataType), createSampleModel(dataType, banded));
-    }
-
-    private ColorModel createColorModel(int bits, int dataType) {
-        return pmi.createColorModel(bits, dataType, getDicomObject());
     }
 
     private boolean decodeJpeg2000(ImageInputStream iis) throws IOException {

@@ -353,11 +353,11 @@ public class TagD extends TagW {
                 int[] ds = new int[ss.length];
                 for (int i = 0; i < ds.length; i++) {
                     String s = ss[i];
-                    ds[i] = (s != null && !s.isEmpty()) ? StringUtils.parseIS(s) : 0;
+                    ds[i] = (s != null && !s.isEmpty()) ? (int) StringUtils.parseIS(s) : 0;
                 }
                 value = ds;
             } else {
-                value = StringUtils.parseIS(data);
+                value = (int) StringUtils.parseIS(data);
             }
         } else if (TagType.FLOAT.equals(type)) {
             if (vmMax > 1) {

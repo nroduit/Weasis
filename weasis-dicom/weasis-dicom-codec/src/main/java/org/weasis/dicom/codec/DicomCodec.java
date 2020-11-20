@@ -21,6 +21,7 @@ import org.dcm4che3.data.ItemPointer;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -88,7 +89,7 @@ public class DicomCodec implements Codec {
         }
     };
 
-    private static final IIOServiceProvider[] dcm4cheCodecs = { new org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi(),
+    private static final IIOServiceProvider[] dcm4cheCodecs = { new DicomImageReaderSpi(), new org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi(),
         new org.dcm4che3.opencv.NativeJLSImageReaderSpi(), new  org.dcm4che3.opencv.NativeJPEGImageReaderSpi(),
         new  org.dcm4che3.opencv.NativeJ2kImageReaderSpi(), new org.dcm4che3.opencv.NativeJLSImageWriterSpi(),
         new org.dcm4che3.opencv.NativeJPEGImageWriterSpi(), new org.dcm4che3.opencv.NativeJ2kImageWriterSpi() };
@@ -165,8 +166,6 @@ public class DicomCodec implements Codec {
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
-        ImageioUtil.registerServiceProvider(DicomMediaIO.dicomImageReaderSpi);
-
         for (IIOServiceProvider p : dcm4cheCodecs) {
             ImageioUtil.registerServiceProvider(p);
         }
@@ -195,7 +194,6 @@ public class DicomCodec implements Codec {
     @Deactivate
     protected void deactivate(ComponentContext context) {
         LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
-        ImageioUtil.deregisterServiceProvider(DicomMediaIO.dicomImageReaderSpi);
         for (IIOServiceProvider p : dcm4cheCodecs) {
             ImageioUtil.deregisterServiceProvider(p);
         }

@@ -31,9 +31,9 @@
 
 		<osgi.cmpn.version>7.0.0</osgi.cmpn.version>
 
-		<felix.gogo.version>1.1.2</felix.gogo.version>
-		<felix.gogo.shell.version>1.1.2</felix.gogo.shell.version>
-		<felix.gogo.command.version>1.1.0</felix.gogo.command.version>
+		<felix.gogo.version>1.1.4</felix.gogo.version>
+		<felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
+		<felix.gogo.command.version>1.1.2</felix.gogo.command.version>
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
 		<felix.configadmin.version>1.9.18</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
@@ -46,15 +46,15 @@
 		<slf4j.version>1.7.30</slf4j.version>
 		<sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
 		<dockingframes.version>1.1.3p1</dockingframes.version>
-		<weasis-dicom-tools.version>5.22.4</weasis-dicom-tools.version>
+		<weasis-dicom-tools.version>5.22.6</weasis-dicom-tools.version>
 		<weasis.core.img.version>4.5.0</weasis.core.img.version>
 		<weasis.opencv.native.version>4.5.0-dcm</weasis.opencv.native.version>
 		<javax.json.version>1.1.6</javax.json.version>
 		<jaxb.osgi.version>2.3.2</jaxb.osgi.version>
 		<org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
 
-		<assertj.version>3.16.1</assertj.version>
-		<powermock.version>2.0.7</powermock.version>
+		<assertj.version>3.18.1</assertj.version>
+		<powermock.version>2.0.9</powermock.version>
 		<bean-matchers.version>0.12</bean-matchers.version>
 	</properties>
 
@@ -183,7 +183,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-surefire-plugin</artifactId>
-					<version>3.0.0-M3</version>
+					<version>3.0.0-M5</version>
 				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
@@ -203,7 +203,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-enforcer-plugin</artifactId>
-					<version>3.0.0-M2</version>
+					<version>3.0.0-M3</version>
 				</plugin>
 				<plugin>
 					<groupId>org.codehaus.mojo</groupId>

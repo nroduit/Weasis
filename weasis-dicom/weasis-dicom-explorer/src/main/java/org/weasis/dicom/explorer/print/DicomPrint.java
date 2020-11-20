@@ -265,10 +265,10 @@ public class DicomPrint {
         Attributes filmBoxAttrs = new Attributes();
         Attributes imageBoxAttrs = new Attributes();
         Attributes dicomImage = new Attributes();
-        final String printManagementSOPClass = printOptions.isColorPrint() ? UID.BasicColorPrintManagementMetaSOPClass
-            : UID.BasicGrayscalePrintManagementMetaSOPClass;
+        final String printManagementSOPClass = printOptions.isColorPrint() ? UID.BasicColorPrintManagementMeta
+            : UID.BasicGrayscalePrintManagementMeta;
         final String imageBoxSOPClass =
-            printOptions.isColorPrint() ? UID.BasicColorImageBoxSOPClass : UID.BasicGrayscaleImageBoxSOPClass;
+            printOptions.isColorPrint() ? UID.BasicColorImageBox : UID.BasicGrayscaleImageBox;
 
         storeRasterInDicom(image, dicomImage, printOptions.isColorPrint());
 
@@ -321,7 +321,7 @@ public class DicomPrint {
         final String filmSessionUID = UIDUtils.createUID();
         final String filmBoxUID = UIDUtils.createUID();
         Attributes filmSessionSequenceObject = new Attributes();
-        filmSessionSequenceObject.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSessionSOPClass);
+        filmSessionSequenceObject.setString(Tag.ReferencedSOPClassUID, VR.UI, UID.BasicFilmSession);
         filmSessionSequenceObject.setString(Tag.ReferencedSOPInstanceUID, VR.UI, filmSessionUID);
         seq = filmBoxAttrs.ensureSequence(Tag.ReferencedFilmSessionSequence, 1);
         seq.add(filmSessionSequenceObject);
@@ -334,10 +334,10 @@ public class DicomPrint {
         try {
             // See http://dicom.nema.org/medical/dicom/current/output/chtml/part02/sect_E.4.2.html
             // Create a Basic Film Session
-            dimseRSPHandler(as.ncreate(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID,
+            dimseRSPHandler(as.ncreate(printManagementSOPClass, UID.BasicFilmSession, filmSessionUID,
                 filmSessionAttrs, UID.ImplicitVRLittleEndian));
             // Create a Basic Film Box. We need to get the Image Box UID from the response
-            DimseRSP ncreateFilmBoxRSP = as.ncreate(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID,
+            DimseRSP ncreateFilmBoxRSP = as.ncreate(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID,
                 filmBoxAttrs, UID.ImplicitVRLittleEndian);
             dimseRSPHandler(ncreateFilmBoxRSP);
             ncreateFilmBoxRSP.next();
@@ -347,11 +347,11 @@ public class DicomPrint {
             dimseRSPHandler(as.nset(printManagementSOPClass, imageBoxSOPClass,
                 imageBoxSequence.getString(Tag.ReferencedSOPInstanceUID), imageBoxAttrs, UID.ImplicitVRLittleEndian));
             // Send N-ACTION message with the print action
-            dimseRSPHandler(as.naction(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID, 1, null,
+            dimseRSPHandler(as.naction(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID, 1, null,
                 UID.ImplicitVRLittleEndian));
             // The print action ends here. This will only delete the Film Box and Film Session
-            as.ndelete(printManagementSOPClass, UID.BasicFilmBoxSOPClass, filmBoxUID);
-            as.ndelete(printManagementSOPClass, UID.BasicFilmSessionSOPClass, filmSessionUID);
+            as.ndelete(printManagementSOPClass, UID.BasicFilmBox, filmBoxUID);
+            as.ndelete(printManagementSOPClass, UID.BasicFilmSession, filmSessionUID);
         } finally {
             if (as != null && as.isReadyForDataTransfer()) {
                 as.waitForOutstandingRSP();

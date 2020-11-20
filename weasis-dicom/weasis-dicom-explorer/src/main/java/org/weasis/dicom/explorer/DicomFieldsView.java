@@ -18,7 +18,6 @@ import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -39,7 +38,6 @@ import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.html.HTMLEditorKit;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Sequence;
@@ -59,7 +57,6 @@ import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -70,6 +67,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.util.RotatedIcon;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
@@ -167,7 +165,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 if (loader instanceof DicomMediaIO) {
                     DicomMetaData metaData = null;
                     try {
-                        metaData = (DicomMetaData) ((DicomMediaIO) loader).getStreamMetadata();
+                        metaData = ((DicomMediaIO) loader).getStreamMetadata();
                     } catch (IOException e) {
                         LOGGER.error("Get metadata", e); //$NON-NLS-1$
                     }
