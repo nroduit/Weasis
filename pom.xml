@@ -16,6 +16,11 @@
 		<developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git</developerConnection>
 		<url>https://github.com/nroduit/Weasis</url>
 	</scm>
+	<properties>
+		<sonar.projectKey>weasis</sonar.projectKey>
+		<sonar.organization>nroduit-github</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
+	</properties>
 	<modules>
 		<module>weasis-parent</module>
 		<module>weasis-opencv</module>
