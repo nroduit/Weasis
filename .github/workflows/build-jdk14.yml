@@ -1,4 +1,4 @@
-name: Build native installers
+name: Build installers jdk14
 on:
   workflow_dispatch:
 
