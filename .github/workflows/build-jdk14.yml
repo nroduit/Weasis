@@ -15,7 +15,7 @@ jobs:
     - name: Set up JDK for compilation
       uses: actions/setup-java@v1
       with:
-        java-version: 15.0.1
+        java-version: 14.0.2
   
     - name: Cache local Maven repository
       uses: actions/cache@v2
@@ -71,10 +71,10 @@ jobs:
       matrix:
         include:
       #  - { os: ubuntu-latest, name: GNU, cc: gcc, cxx: g++, platform: x86, wsystem: linux, warc: x86 }
-        - { os: ubuntu-latest, name: GNU, cc: gcc, cxx: g++, platform: x64, wsystem: linux, warc: x86-64 }
+      #  - { os: ubuntu-latest, name: GNU, cc: gcc, cxx: g++, platform: x64, wsystem: linux, warc: x86-64 }
       #  - { os: macos-latest, name: Clang, cc: clang, cxx: clang++, platform: x64, wsystem: macosx, warc: x86-64 }
-      #  - { os: windows-latest, name: VS2019, cc: cl, cxx: cl, platform: x86, wsystem: windows, warc: x86 }
-        - { os: windows-latest, name: VS2019, cc: cl, cxx: cl, platform: x64, wsystem: windows, warc: x86-64 }
+        - { os: windows-latest, name: VS2019, cc: cl, cxx: cl, platform: x86, wsystem: windows, warc: x86 }
+      # - { os: windows-latest, name: VS2019, cc: cl, cxx: cl, platform: x64, wsystem: windows, warc: x86-64 }
     
     steps:
     - name: Set output version from build
@@ -99,7 +99,7 @@ jobs:
     - name: Set up JDK for jpackage
       uses: actions/setup-java@v1
       with:
-        java-version: 15.0.1
+        java-version: 14.0.2
         architecture: ${{ matrix.platform }}
 
     - name: Download weasis-portable
@@ -168,7 +168,7 @@ jobs:
       run: |
         if [ "${{ matrix.wsystem }}" == "windows" ] ; then
           # Bug on Windows with splash screen
-          # JVM_ARGS="-splash:\$APPDIR\resources\images\about-round.png ${{ env.JVM_ARGS }}"
+          JVM_ARGS="-splash:\$APPDIR\resources\images\about-round.png ${{ env.JVM_ARGS }}"
         else
           JVM_ARGS="-splash:\$APPDIR/resources/images/about-round.png ${{ env.JVM_ARGS }}"
         fi
@@ -194,34 +194,30 @@ jobs:
         machine=${{ matrix.wsystem }}
         if [ "$machine" = "macosx" ] ; then
           OUT_APP="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/app"
+          APP_FOLDER_NAME="app"
         elif [ "$machine" = "windows" ] ; then
-          OUT_APP="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}/app"         
+          OUT_APP="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}/app"
+          APP_FOLDER_NAME="app"
         else
           OUT_APP="${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}/lib/app"
+          APP_FOLDER_NAME="lib\/app"
         fi
 
-        match="\[JavaOptions\]"
-        insertOptions='\
-        #java-options=-Daudit.log=true\
-        #java-options=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789\
-        java-options=--illegal-access=warn\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.http=ALL-UNNAMED\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.file=ALL-UNNAMED\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.https=ALL-UNNAMED\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.file=ALL-UNNAMED\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.ftp=ALL-UNNAMED\
-        java-options=--add-exports=java.base\/sun.net.www.protocol.jar=ALL-UNNAMED\
-        java-options=--add-exports=jdk.unsupported\/sun.misc=ALL-UNNAMED\
-        java-options=--add-opens=java.base\/java.net=ALL-UNNAMED\
-        java-options=--add-opens=java.base\/java.lang=ALL-UNNAMED\
-        java-options=--add-opens=java.base\/java.security=ALL-UNNAMED\
-        java-options=--add-opens=java.base\/java.io=ALL-UNNAMED\
-        java-options=--add-opens=java.desktop\/javax.imageio.stream=ALL-UNNAMED\
-        java-options=--add-opens=java.desktop\/javax.imageio=ALL-UNNAMED\
-        java-options=--add-opens=java.desktop\/com.sun.awt=ALL-UNNAMED'
-        sed -i.bck "s/$match/$match$insertOptions/" "$OUT_APP/${{ env.NAME }}.cfg"
-        sed -i.bck '/^java-options=--module-path/d' "$OUT_APP/${{ env.NAME }}.cfg"
-        sed -i.bck '/mods\r\{0,1\}/d' "$OUT_APP/${{ env.NAME }}.cfg"
+        if [ "$machine" = "windows" ] ; then
+          LAUNCHER_CP=";\$ROOTDIR\\\\$APP_FOLDER_NAME\\\\"
+        else
+          LAUNCHER_CP=":\$ROOTDIR\/$APP_FOLDER_NAME\/"
+        fi
+
+        match="app.name"
+        insertWeasis='app.splash=resources\/images\/about-round.png\
+        #app.memory=50%\
+        app.identifier='"$IDENTIFIER"'\
+        app.classpath='"${LAUNCHER_CP:1}"'felix.jar'"$LAUNCHER_CP"'substance.jar'"$LAUNCHER_CP"'weasis-launcher.jar\
+        '
+        sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
+        sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
+        sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
         rm -f "$OUT_APP/${{ env.NAME }}.cfg.bck"
 
         if [ "$machine" = "linux" ] ; then
