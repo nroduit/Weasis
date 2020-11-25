@@ -270,17 +270,18 @@ jobs:
           --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
           cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
         fi
+        echo "APP_ARTIFACT=weassis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
         
     - name: Build artifact for windows 32-bit msi
       shell: bash
-      if: ${{ failure() }} && matrix.wsystem == 'windows' && matrix.warc == 'x86'
+      if: ${{ failure() }}
       run: |
         cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.msi
         echo "APP_ARTIFACT=weassis-${{ matrix.wsystem }}-${{ matrix.warc }}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
     - name: Upload the final opencv binary
       uses: actions/upload-artifact@v2
-      if: ${{ success() }} || ${{ failure() }} && matrix.wsystem == 'windows' && matrix.warc == 'x86'
+      if: ${{ always() }}
       with:
         name: ${{ env.APP_ARTIFACT }}
         path: final-dist
