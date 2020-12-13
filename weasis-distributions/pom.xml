@@ -783,6 +783,13 @@
 					<name>jarsigner.alias</name>
 				</property>
 			</activation>
+
+            <properties>
+                <jarsigner.include.pattern>**/*.jar</jarsigner.include.pattern>
+                <!-- if only root "jar" files should be processed, those referenced for download by JavaWebStart, use the following pattern instead -->
+                <!-- <jarsigner.include.pattern>*.jar</jarsigner.include.pattern> -->
+            </properties>
+
 			<build>
 				<plugins>
 					<plugin>
@@ -807,7 +814,7 @@
 									<removeExistingSignatures>true</removeExistingSignatures>
 									<archiveDirectory>${tmp.dir}</archiveDirectory>
 									<includes>
-										<include>**/*.jar</include>
+                                        <include>${jarsigner.include.pattern}</include>
 									</includes>
 									<excludes>
 										<!-- exclude .original.jar files that will be excluded from final packaging -->
