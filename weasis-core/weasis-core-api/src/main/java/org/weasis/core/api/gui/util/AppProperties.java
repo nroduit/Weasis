@@ -42,13 +42,18 @@ public class AppProperties {
      * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
      * operating system session if the property is null)
      */
-    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN);
+    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN); // NON-NLS
 
     /**
      * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
      * property allows to have separated preferences (in a new directory).
      */
     public static final String WEASIS_PROFILE = System.getProperty("weasis.profile", "default"); // NON-NLS
+
+    /**
+     * The User-Agent header to be used  with HttpURLConnection
+     */
+    public static final String WEASIS_USER_AGENT = (System.getProperty("http.agent") + " Java/"+System.getProperty("java.version"));
 
     /**
      * The directory for writing temporary files

@@ -9,59 +9,22 @@
 
 package org.weasis.launcher;
 
-import static org.weasis.launcher.WeasisLauncher.CONFIG_DIRECTORY;
-import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_FILE_VALUE;
-import static org.weasis.launcher.WeasisLauncher.CONFIG_PROPERTIES_PROP;
-import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_FILE_VALUE;
-import static org.weasis.launcher.WeasisLauncher.EXTENDED_PROPERTIES_PROP;
-import static org.weasis.launcher.WeasisLauncher.P_HTTP_AUTHORIZATION;
-import static org.weasis.launcher.WeasisLauncher.P_OS_NAME;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_EXT_URL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_LOCAL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CODEBASE_URL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CONFIG_HASH;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_CONFIG_URL;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_NAME;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_PATH;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_PROFILE;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_SOURCE_ID;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_USER;
-import static org.weasis.launcher.WeasisLauncher.P_WEASIS_VERSION;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.PasswordAuthentication;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLConnection;
-import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.regex.Pattern;
+import org.apache.felix.framework.util.Util;
+import org.osgi.framework.Constants;
+import org.osgi.framework.Version;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
-import org.apache.felix.framework.util.Util;
-import org.osgi.framework.Constants;
-import org.osgi.framework.Version;
+import static org.weasis.launcher.WeasisLauncher.*;
 
 public class ConfigData {
     private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
@@ -113,6 +76,11 @@ public class ConfigData {
                 }
             }
         }
+
+        // Define the HttpUrlConnection userAgent (without Weasis Version) for the writeRequests() call that gets remote configuration files
+        System.setProperty("http.agent",
+                "Weasis" + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " + System.getProperty("os.arch")
+                        + "; " + System.getProperty("weasis.launch.type") + ")");
 
         // Add config and weasis properties from previously set Java System Properties
         // It avoids any given launch arguments from overloading them.
@@ -172,7 +140,7 @@ public class ConfigData {
         // Define the http user agent
         addProperty("http.agent",
             name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " // NON-NLS
-                + System.getProperty("os.arch") + ")"); // NON-NLS
+                + System.getProperty("os.arch") + "; " + profile + "; " + System.getProperty("weasis.launch.type") + ")"); // NON-NLS
 
         String portable = properties.getProperty("weasis.portable.dir");
         if (portable != null) {
@@ -205,7 +173,7 @@ public class ConfigData {
 
         // Perform variable substitution for system properties and convert to dictionary.
 
-        for (Enumeration<?> e = felixConfig.propertyNames(); e.hasMoreElements();) {
+        for (Enumeration<?> e = felixConfig.propertyNames(); e.hasMoreElements(); ) {
             String name = (String) e.nextElement();
             felixProps.put(name, Util.substVars(felixConfig.getProperty(name), name, null, felixConfig));
         }
@@ -235,9 +203,9 @@ public class ConfigData {
      * will be read from this URl. <br>
      * If none codebase/or weasis properties URLs are given from arguments, then default values will be set.<br>
      * Local path is considered when codebaseUrl is not defined.
-     * 
+     *
      * @note Any command launch argument takes priority over serviceConfig parameters. <br>
-     * 
+     *
      */
 
     private void applyConfigFromArguments() {
@@ -645,7 +613,7 @@ public class ConfigData {
 
         return felixConfig;
     }
-    
+
     private void checkMinimalVersion(Properties felixConfig) {
         String val = felixConfig.getProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION);
         if (Utils.hasText(val) && getProperty(P_WEASIS_CODEBASE_LOCAL) == null) {
@@ -660,7 +628,7 @@ public class ConfigData {
                     felixConfig.putAll(localProps);
                     propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
                     WeasisLauncher.readProperties(propURI, felixConfig);
-                    System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val); 
+                    System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val);
                 }
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e);
@@ -700,7 +668,7 @@ public class ConfigData {
     }
 
     private static String toHex(int val) {
-        final char[] hexDigit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        final char[] hexDigit = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
         char[] ch8 = new char[8];
         for (int i = 8; --i >= 0; val >>= 4) {
             ch8[i] = hexDigit[val & 0xf];
@@ -721,7 +689,7 @@ public class ConfigData {
         }
         if (jarLocation == null) {
             return new File(ConfigData.class.getProtectionDomain().getCodeSource().getLocation().getPath())
-                .getParentFile();
+                    .getParentFile();
         } else {
             return new File(new File(jarLocation).getAbsolutePath()).getParentFile();
         }

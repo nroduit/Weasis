@@ -181,9 +181,12 @@ public class WeasisLauncher {
     }
 
     public static void main(String[] argv) throws Exception {
+        final Type launchType =Type.DEFAULT;
+        System.setProperty("weasis.launch.type",launchType.name());
+
         setSystemProperties(argv);
         WeasisLauncher instance = new WeasisLauncher(new ConfigData(argv));
-        instance.launch(Type.DEFAULT);
+        instance.launch(launchType);
     }
 
     final public void launch(Type type) throws Exception {

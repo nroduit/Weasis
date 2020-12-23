@@ -97,11 +97,14 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     }
 
     public static void main(String[] argv) throws Exception {
+        final Type launchType =Type.JWS;
+        System.setProperty("weasis.launch.type",launchType.name());
+
         instance.configData.init(argv);
         // Remove the prefix "jnlp.weasis" of JNLP Properties
         // Workaround for having a fully trusted application with JWS,
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6653241
-        instance.launch(Type.JWS);
+        instance.launch(launchType);
     }
 
     private static void setJnlpSystemProperties() {

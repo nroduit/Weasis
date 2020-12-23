@@ -20,11 +20,14 @@ public class AppLauncher extends WeasisLauncher implements Singleton.SingletonAp
     }
 
     public static void main(String[] argv) throws Exception {
+        final Type launchType =Type.NATIVE;
+        System.setProperty("weasis.launch.type",launchType.name());
+
         ConfigData configData = new ConfigData(argv);
         if (!Singleton.invoke(configData)) {
             AppLauncher instance = new AppLauncher(configData);
             Singleton.start(instance, configData.getSourceID());
-            instance.launch(Type.NATIVE);
+            instance.launch(launchType);
         }
     }
 

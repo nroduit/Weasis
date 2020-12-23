@@ -9,26 +9,19 @@
 
 package org.weasis.core.api.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
+
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class NetworkUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(NetworkUtil.class);
@@ -72,11 +65,21 @@ public class NetworkUtil {
         return prepareConnection(url.openConnection(), urlParameters);
     }
 
+    private static Map<String, String> updateHeadersWithAppProperties(Map<String, String> headers) {
+        if (headers == null) headers = new LinkedHashMap<>();
+
+        headers.put("User-Agent", AppProperties.WEASIS_USER_AGENT);
+        headers.putIfAbsent("Weasis-User", AppProperties.WEASIS_USER);
+
+        return headers;
+    }
+
     private static ClosableURLConnection prepareConnection(URLConnection urlConnection, URLParameters urlParameters)
-        throws StreamIOException {
-        Map<String, String> headers = urlParameters.getHeaders();
+            throws StreamIOException {
+        Map<String, String> headers = updateHeadersWithAppProperties(urlParameters.getHeaders());
+
         if (headers != null && headers.size() > 0) {
-            for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
+            for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
                 Entry<String, String> element = iter.next();
                 urlConnection.setRequestProperty(element.getKey(), element.getValue());
             }
@@ -108,11 +111,11 @@ public class NetworkUtil {
     }
 
     public static URLConnection readResponse(HttpURLConnection httpURLConnection, Map<String, String> headers)
-        throws IOException {
+            throws IOException {
         int code = httpURLConnection.getResponseCode();
         if (code < HttpURLConnection.HTTP_OK || code >= HttpURLConnection.HTTP_MULT_CHOICE) {
             if (code == HttpURLConnection.HTTP_MOVED_TEMP || code == HttpURLConnection.HTTP_MOVED_PERM
-                || code == HttpURLConnection.HTTP_SEE_OTHER) {
+                    || code == HttpURLConnection.HTTP_SEE_OTHER) {
                 return applyRedirectionStream(httpURLConnection, headers);
             }
 
@@ -141,7 +144,7 @@ public class NetworkUtil {
     }
 
     public static URLConnection applyRedirectionStream(URLConnection urlConnection, Map<String, String> headers)
-        throws IOException {
+            throws IOException {
         URLConnection c = urlConnection;
         String redirect = c.getHeaderField("Location");
         for (int i = 0; i < MAX_REDIRECTS; i++) {
@@ -153,7 +156,7 @@ public class NetworkUtil {
                 c = new URL(redirect).openConnection();
                 c.setRequestProperty("Cookie", cookies);
                 if (headers != null && headers.size() > 0) {
-                    for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
+                    for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
                         Entry<String, String> element = iter.next();
                         c.addRequestProperty(element.getKey(), element.getValue());
                     }
