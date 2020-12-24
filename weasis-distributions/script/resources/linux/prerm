@@ -22,8 +22,7 @@ UTILITY_SCRIPTS
 case "$1" in
     remove|upgrade|deconfigure)
 DESKTOP_COMMANDS_UNINSTALL
-        uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
-        xdg-desktop-menu uninstall /opt/weasis/lib/weasis-Dicomizer.desktop
+      uninstall_default_mime_handler weasis-Weasis.desktop x-scheme-handler/weasis
 	    rm -f /etc/opt/chrome/policies/managed/weasis.json
 	    rm -f /etc/chromium/policies/managed/weasis.json
     ;;

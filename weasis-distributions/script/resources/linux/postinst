@@ -20,7 +20,6 @@ set -e
 case "$1" in
     configure)
 DESKTOP_COMMANDS_INSTALL
- 	    xdg-desktop-menu install /opt/weasis/lib/weasis-Dicomizer.desktop
 	    mkdir -p /etc/opt/chrome/policies/managed/
 	    echo '{
     "URLWhitelist": ["weasis://*"]

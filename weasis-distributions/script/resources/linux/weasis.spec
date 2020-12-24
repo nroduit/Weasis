@@ -53,7 +53,6 @@ cp -r %{_sourcedir}APPLICATION_DIRECTORY/* %{buildroot}APPLICATION_DIRECTORY
 
 %post
 DESKTOP_COMMANDS_INSTALL
-xdg-desktop-menu install /opt/weasis/lib/weasis-Dicomizer.desktop	
 mkdir -p /etc/opt/chrome/policies/managed/
     echo '{
     "URLWhitelist": ["weasis://*"]
@@ -64,7 +63,6 @@ cp /etc/opt/chrome/policies/managed/weasis.json /etc/chromium/policies/managed/w
 %preun
 UTILITY_SCRIPTS
 DESKTOP_COMMANDS_UNINSTALL
-xdg-desktop-menu uninstall /opt/weasis/lib/weasis-Dicomizer.desktop
 rm -f /etc/opt/chrome/policies/managed/weasis.json 
 rm -f /etc/chromium/policies/managed/weasis.json
 

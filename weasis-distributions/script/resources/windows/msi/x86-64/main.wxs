@@ -58,12 +58,9 @@
         IncludeMinimum="$(var.JpUpgradeVersionOnlyDetectDowngrade)" />
     </Upgrade>
 
-    <?ifdef JpAllowDowngrades ?>
     <?ifndef JpAllowUpgrades ?>
     <CustomAction Id="JpDisallowUpgrade" Error="!(loc.DisallowUpgradeErrorMessage)" />
     <?endif?>
-    <?endif?>
-
     <?ifndef JpAllowDowngrades ?>
     <CustomAction Id="JpDisallowDowngrade" Error="!(loc.DowngradeErrorMessage)" />
     <?endif?>
