@@ -16,7 +16,7 @@
 				<include>/*.jar</include>
 				<include>bundle/repository.xml</include>
 				<include>bundle/*.jar${xz.ext}</include>
-				<include>bundle-i18n/*.jar</include>
+				<include>bundle-i18n/*.xz</include>
 				<include>bundle-i18n/buildNumber.properties</include>
 			</includes>
 		</fileSet>
@@ -27,12 +27,12 @@
 				<include>viewer-win32.exe</include>
 			</includes>
 			<fileMode>0755</fileMode>
-			<outputDirectory></outputDirectory>
+			<outputDirectory/>
 		</fileSet>
 		<fileSet>
 			<!-- Direct resources copy -->
 			<directory>src/main/resources-portable</directory>
-			<outputDirectory></outputDirectory>
+			<outputDirectory/>
 			<fileMode>0755</fileMode>
 			<directoryMode>0755</directoryMode>
 		</fileSet>

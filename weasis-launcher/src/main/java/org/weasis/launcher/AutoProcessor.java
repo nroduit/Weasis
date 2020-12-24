@@ -351,7 +351,7 @@ public class AutoProcessor {
                     installedBundleMap.put(bundleName, b);
                 }
                 sl.setBundleStartLevel(b, bundle.getStartLevel());
-                loadTranslationBundle(context, b, installedBundleMap, modulesi18n);
+                loadTranslationBundle(context, b, installedBundleMap, modulesi18n, cache);
             } catch (Exception ex) {
                 if (bundleName.contains(System.getProperty("native.library.spec"))) { //$NON-NLS-1$
                     LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install a native bundle %s", bundleName)); //$NON-NLS-1$
@@ -408,15 +408,11 @@ public class AutoProcessor {
     }
 
     private static void loadTranslationBundle(BundleContext context, Bundle b,
-        final Map<String, Bundle> installedBundleMap, Properties modulesi18n) {
+        final Map<String, Bundle> installedBundleMap, Properties modulesi18n, boolean cache) {
         if (!modulesi18n.isEmpty()) {
             if (b != null) {
                 StringBuilder p = new StringBuilder(b.getSymbolicName());
-                p.append("-i18n-"); //$NON-NLS-1$
-                // From 2.0.0, i18n module can be plugged in any version. The date (the qualifier)
-                // will update the version.
-                p.append("2.0.0"); //$NON-NLS-1$
-                p.append(".jar"); //$NON-NLS-1$
+                p.append("-i18n.jar.xz"); //$NON-NLS-1$
                 String filename = p.toString();
                 String value = modulesi18n.getProperty(filename);
                 if (value != null) {
@@ -427,8 +423,7 @@ public class AutoProcessor {
                         try {
                             Bundle b2 = installedBundleMap.get(bundleName);
                             if (b2 == null) {
-                                b2 = context.installBundle(uri,
-                                    FileUtil.getAdaptedConnection(new URI(uri).toURL(), false).getInputStream());
+                                b2 = installBundle(context, uri, cache);
                                 installedBundleMap.put(bundleName, b);
                             }
                             if (b2 != null && !value.equals(b2.getVersion().getQualifier())) {
