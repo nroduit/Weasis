@@ -25,7 +25,7 @@
 
 		<app.version>${revision}${changelist}</app.version>
 		<javaws.version>1.6.0-17</javaws.version>
-		<felix.framework.version>6.0.3</felix.framework.version>
+		<felix.framework.version>6.0.4</felix.framework.version>
 		<substance.version>1.9.2</substance.version>
 		<xz.version>1.8</xz.version>
 
@@ -37,7 +37,7 @@
 		<felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
 		<felix.configadmin.version>1.9.18</felix.configadmin.version>
 		<felix.prefs.version>1.1.0</felix.prefs.version>
-		<felix.scr.version>2.1.20</felix.scr.version>
+		<felix.scr.version>2.1.24</felix.scr.version>
 		<osgi.promise.version>1.1.1</osgi.promise.version>
 		<osgi.function.version>1.1.0</osgi.function.version>
 		<felix.metatype.version>1.2.2</felix.metatype.version>
