@@ -391,7 +391,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             // remove in the data model
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
-            LOGGER.info("Remove Series (no dispose): {}", dicomSeries); //$NON-NLS-1$
+            LOGGER.info("Remove Series (no dispose): {}", dicomSeries);
         }
     }
 
@@ -407,7 +407,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
             removeHierarchyNode(studyGroup, dicomSeries);
             dicomSeries.dispose();
-            LOGGER.info("Remove Series: {}", dicomSeries); //$NON-NLS-1$
+            LOGGER.info("Remove Series: {}", dicomSeries);
         }
     }
 
@@ -427,7 +427,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             }
             MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
             removeHierarchyNode(patientGroup, studyGroup);
-            LOGGER.info("Remove Study: {}", studyGroup); //$NON-NLS-1$
+            LOGGER.info("Remove Study: {}", studyGroup);
         }
     }
 
@@ -458,7 +458,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
             }
             removeHierarchyNode(MediaSeriesGroupNode.rootNode, patientGroup);
-            LOGGER.info("Remove Patient: {}", patientGroup); //$NON-NLS-1$
+            LOGGER.info("Remove Patient: {}", patientGroup);
         }
     }
 
@@ -687,7 +687,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagW.ExplorerModel, this);
         s.setTag(TagW.WadoParameters, original.getTagValue(TagW.WadoParameters));
         addHierarchyNode(st, s);
-        LOGGER.info("Series splitting: {}", s); //$NON-NLS-1$
+        LOGGER.info("Series splitting: {}", s);
         return s;
     }
 
@@ -717,7 +717,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         s.setTag(TagW.WadoParameters, original.getTagValue(TagW.WadoParameters));
         addHierarchyNode(st, s);
         s.addMedia(media);
-        LOGGER.info("Replace Series: {}", s); //$NON-NLS-1$
+        LOGGER.info("Replace Series: {}", s);
     }
 
     private void rebuildSeries(DicomMediaIO dicomReader, MediaElement media) {
@@ -730,10 +730,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 pt = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
                 dicomReader.writeMetaData(pt);
                 addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-                LOGGER.info("Adding patient: {}", pt); //$NON-NLS-1$
+                LOGGER.info("Adding patient: {}", pt);
             } else {
                 pt = getParent(st, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam.");
             }
         }
 
@@ -752,7 +752,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             dicomReader.writeMetaData(dicomSeries);
             dicomSeries.setTag(TagW.ExplorerModel, this);
             addHierarchyNode(st, dicomSeries);
-            LOGGER.info("Series rebuilding: {}", dicomSeries); //$NON-NLS-1$
+            LOGGER.info("Series rebuilding: {}", dicomSeries);
         }
         dicomSeries.addMedia(media);
 
@@ -996,7 +996,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     }
 
                 } catch (Exception e) {
-                    LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
+                    LOGGER.info("ungzip manifest", e);
                 }
             }
             LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(xmlFiles, DicomModel.this));

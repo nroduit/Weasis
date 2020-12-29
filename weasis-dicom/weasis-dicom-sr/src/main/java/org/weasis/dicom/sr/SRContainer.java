@@ -270,7 +270,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e); //$NON-NLS-1$
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -291,7 +291,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }
@@ -345,13 +345,13 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                                 // try printing again but ignore the not-accepting-jobs attribute
                                 ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
                                 pj.print(aset);
-                                LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
+                                LOGGER.info("Bypass Printer is not accepting job");
                             } catch (PrinterException ex) {
-                                LOGGER.error("Printer exception", ex); //$NON-NLS-1$
+                                LOGGER.error("Printer exception", ex);
                             }
                         }
                     } else {
-                        LOGGER.error("Print exception", e); //$NON-NLS-1$
+                        LOGGER.error("Print exception", e);
                     }
                 }
             }

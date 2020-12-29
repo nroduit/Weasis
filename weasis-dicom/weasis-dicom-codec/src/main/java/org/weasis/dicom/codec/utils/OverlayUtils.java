@@ -74,7 +74,7 @@ public class OverlayUtils {
                     data = (byte[][]) o;
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot read serialized overlay", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read serialized overlay", e);
             } finally {
                 FileUtil.safeClose(objIn);
                 FileUtil.safeClose(fileIn);

@@ -81,7 +81,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                             this.add(media);
                             return;
                         } catch (Exception e) {
-                            LOGGER.error("Cannot extract video stream", e); //$NON-NLS-1$
+                            LOGGER.error("Cannot extract video stream", e);
                         } finally {
                             FileUtil.safeClose(out);
                             FileUtil.safeClose(in);

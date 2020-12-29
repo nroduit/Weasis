@@ -120,7 +120,7 @@ public class SplittingRules {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read series-splitting-rules.xml! ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read series-splitting-rules.xml! ", e);
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
@@ -144,7 +144,7 @@ public class SplittingRules {
                                 readModality(splitRules, xmler);
                                 rules.put(m, splitRules);
                             } catch (Exception e) {
-                                LOGGER.error("Modality {} cannot be read from series-splitting-rules.xml", //$NON-NLS-1$
+                                LOGGER.error("Modality {} cannot be read from series-splitting-rules.xml",
                                     name, e);
                             }
                         }
@@ -245,7 +245,7 @@ public class SplittingRules {
                 case XMLStreamConstants.END_ELEMENT:
                     if ("condition".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
                         if (tag == null || type == null || value == null) {
-                            LOGGER.error("Cannot read condition: {} {} {}", tag, type, value); //$NON-NLS-1$
+                            LOGGER.error("Cannot read condition: {} {} {}", tag, type, value);
                         }
                         if (lastConditions != null) {
                             lastConditions.addChild(new DefaultCondition(tag, type, value));
@@ -268,7 +268,7 @@ public class SplittingRules {
         if (StringUtil.hasText(extend)) {
             SplittingModalityRules val = rules.get(getModdality(extend));
             if (val == null) {
-                LOGGER.error("Modality {} doesn't exist! Cannot ihnerit the rules.", //$NON-NLS-1$
+                LOGGER.error("Modality {} doesn't exist! Cannot ihnerit the rules.",
                     extend);
             }
         }
@@ -287,7 +287,7 @@ public class SplittingRules {
         try {
             return Condition.Type.valueOf(type);
         } catch (Exception e) {
-            LOGGER.error("{} is not a valid condition type", type, e); //$NON-NLS-1$
+            LOGGER.error("{} is not a valid condition type", type, e);
         }
         return null;
     }
@@ -296,7 +296,7 @@ public class SplittingRules {
         try {
             return Modality.valueOf(name);
         } catch (Exception e) {
-            LOGGER.error("Modality reference of {} is missing", name, e); //$NON-NLS-1$
+            LOGGER.error("Modality reference of {} is missing", name, e);
         }
         return null;
     }
@@ -304,7 +304,7 @@ public class SplittingRules {
     private static TagW getTag(String tagKey) {
         TagW tag = TagW.get(tagKey);
         if (tag == null) {
-            LOGGER.error("Cannot find a tag with the keyword {}", tagKey); //$NON-NLS-1$
+            LOGGER.error("Cannot find a tag with the keyword {}", tagKey);
         }
         return tag;
     }

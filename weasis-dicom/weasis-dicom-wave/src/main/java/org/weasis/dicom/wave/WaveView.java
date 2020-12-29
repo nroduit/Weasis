@@ -176,7 +176,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 series.setSelected(true, null);
                 displayECG(s);
             } catch (Exception e) {
-                LOGGER.error("Cannot display Waveform", e); //$NON-NLS-1$
+                LOGGER.error("Cannot display Waveform", e);
             }
         }
 
@@ -307,7 +307,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StreamUtils.skipFully(in, bulkData.offset());
                 StreamUtils.copy(in, array, bulkData.length());
             } catch (Exception e) {
-                LOGGER.error("Reading Waveform data"); //$NON-NLS-1$
+                LOGGER.error("Reading Waveform data");
                 return;
             }
         } else {

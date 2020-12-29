@@ -55,7 +55,7 @@ public class SwingResources {
             try {
                 swingDialogs.load(inStream);
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Cannot read swing translations", e); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "Cannot read swing translations", e);
             } finally {
                 FileUtil.safeClose(inStream);
             }

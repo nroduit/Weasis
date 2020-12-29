@@ -202,7 +202,7 @@ public class AutoProcessor {
                     }
 
                 } catch (Exception ex) {
-                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Auto-deploy install %s", jar.getName())); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Auto-deploy install %s", jar.getName())); // NON-NLS
                     if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT
                         .equals(configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
                         // Reset all the old cache
@@ -282,7 +282,7 @@ public class AutoProcessor {
             try {
                 startLevel = Integer.parseInt(key.substring(key.lastIndexOf('.') + 1));
             } catch (NumberFormatException ex) {
-                LOGGER.log(Level.SEVERE, ex, () -> String.format("Invalid start level %s", key)); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, ex, () -> String.format("Invalid start level %s", key)); // NON-NLS
             }
             boolean canBeStarted = key.startsWith(AUTO_START_PROP);
             StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true); //$NON-NLS-1$
@@ -310,14 +310,14 @@ public class AutoProcessor {
                 if (b == null) {
                     if (!"System Bundle".equals(bundleName)) {//$NON-NLS-1$
                         bundles[i].uninstall();
-                        LOGGER.log(Level.INFO, "Uninstall unused bundle: {0}", bundleName); //$NON-NLS-1$
+                        LOGGER.log(Level.INFO, "Uninstall unused bundle: {0}", bundleName);
                     }
                     continue;
                 }
                 // Remove snapshot version to install it every time
                 if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) { //$NON-NLS-1$
                     bundles[i].uninstall();
-                    LOGGER.log(Level.INFO, "Uninstall SNAPSHOT bundle: {0}", bundleName); //$NON-NLS-1$
+                    LOGGER.log(Level.INFO, "Uninstall SNAPSHOT bundle: {0}", bundleName);
                     continue;
                 }
                 installedBundleMap.put(bundleName, bundles[i]);
@@ -353,10 +353,10 @@ public class AutoProcessor {
                 sl.setBundleStartLevel(b, bundle.getStartLevel());
                 loadTranslationBundle(context, b, installedBundleMap, modulesi18n, cache);
             } catch (Exception ex) {
-                if (bundleName.contains(System.getProperty("native.library.spec"))) { //$NON-NLS-1$
-                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install a native bundle %s", bundleName)); //$NON-NLS-1$
+                if (bundleName.contains(System.getProperty("native.library.spec"))) { 
+                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install a native bundle %s", bundleName)); // NON-NLS
                 } else {
-                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install bundle %s", bundleName)); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot install bundle %s", bundleName)); // NON-NLS
                     if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT
                         .equals(configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
                         // Reset all the old cache
@@ -391,7 +391,7 @@ public class AutoProcessor {
                         b.start();
                     }
                 } catch (Exception ex) {
-                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot start bundle %s", bundleName)); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot start bundle %s", bundleName)); // NON-NLS
                 }
             }
         }
@@ -517,7 +517,7 @@ public class AutoProcessor {
                 new XZInputStream(FileUtil.getAdaptedConnection(url, httpCache).getInputStream())) {
                 return context.installBundle(location, xzStream);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e, () -> String.format("Cannot install xz compressed bundle %s", url)); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, e, () -> String.format("Cannot install xz compressed bundle %s", url)); // NON-NLS
             }
         }
         return context.installBundle(location,

@@ -301,7 +301,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     public void reset(ResetTools action) {
-        AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
+        AuditLog.LOGGER.info("reset action:{}", action.name());
         if (ResetTools.ALL.equals(action)) {
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));

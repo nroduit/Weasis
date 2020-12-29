@@ -138,7 +138,7 @@ public class SeriesBuilder {
                             FileUtil.delete(raw.getFile());
                             raw = null;
                         }
-                        LOGGER.error("Writing MIP", e); //$NON-NLS-1$
+                        LOGGER.error("Writing MIP", e);
                     }
                     if (raw == null) {
                         return;

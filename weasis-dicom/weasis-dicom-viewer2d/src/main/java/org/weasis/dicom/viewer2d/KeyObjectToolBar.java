@@ -228,7 +228,7 @@ public class KeyObjectToolBar extends WtoolBar {
 
         if (selectedValue != null) {
             if (selectedValue.equals(deleteBtn)) {
-                LOGGER.info("Delete KeyObject {}", list.getSelectedValue()); //$NON-NLS-1$
+                LOGGER.info("Delete KeyObject {}", list.getSelectedValue());
 
                 DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
                 if (dicomModel != null) {
@@ -248,10 +248,10 @@ public class KeyObjectToolBar extends WtoolBar {
 
                 if (selectedValue.equals(createBtn)) {
                     newDicomKO = KOManager.createNewDicomKeyObject(selectedView2d.getImage(), selectedView2dContainer);
-                    LOGGER.info("Create new KeyObject"); //$NON-NLS-1$
+                    LOGGER.info("Create new KeyObject");
 
                 } else if (selectedValue.equals(copyBtn)) {
-                    LOGGER.info("Copy selected KeyObject: {}", list.getSelectedValue()); //$NON-NLS-1$
+                    LOGGER.info("Copy selected KeyObject: {}", list.getSelectedValue());
                     newDicomKO = KOManager.createNewDicomKeyObject(list.getSelectedValue(), selectedView2dContainer);
                 }
 

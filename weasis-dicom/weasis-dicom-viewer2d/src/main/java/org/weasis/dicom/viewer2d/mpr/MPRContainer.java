@@ -366,7 +366,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e); //$NON-NLS-1$
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -388,7 +388,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             return buildInstance(Class.forName(clazz));
 
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }
@@ -509,7 +509,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                         });
 
                     } catch (final Exception e) {
-                        LOGGER.error("Build MPR", e); //$NON-NLS-1$
+                        LOGGER.error("Build MPR", e);
                         // Following actions need to be executed in EDT thread
                         GuiExecutor.instance().execute(() -> showErrorMessage(view2ds, view, e.getMessage()));
                     }

@@ -374,7 +374,7 @@ public class PrGraphicUtil {
                     return XmlSerializer
                         .buildPresentationModel(dcmobj.getBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG));
                 } catch (Exception e) {
-                    LOGGER.error("Cannot extract binary model: ", e); //$NON-NLS-1$
+                    LOGGER.error("Cannot extract binary model: ", e);
                 }
             }
         }

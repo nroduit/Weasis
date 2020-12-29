@@ -371,7 +371,7 @@ public class ImageElement extends MediaElement {
         try {
             return getCacheImage(startImageLoading(), manager, findMinMax);
         } catch (OutOfMemoryError e1) {
-            LOGGER.warn("Out of MemoryError: {}", this, e1); //$NON-NLS-1$
+            LOGGER.warn("Out of MemoryError: {}", this, e1);
             
             mCache.expungeStaleEntries();
             CvUtil.runGarbageCollectorAndWait(100);
@@ -387,7 +387,7 @@ public class ImageElement extends MediaElement {
             } catch (Exception e) {
                 mCache.remove(this);
                 readable = false;
-                LOGGER.error("Cannot read image: {}", this, e); //$NON-NLS-1$
+                LOGGER.error("Cannot read image: {}", this, e);
             }
         }
         if (manager != null && cacheImage != null) {
@@ -411,7 +411,7 @@ public class ImageElement extends MediaElement {
     private PlanarImage startImageLoading() throws OutOfMemoryError {
         PlanarImage cacheImage;
         if ((cacheImage = mCache.get(this)) == null && readable && setAsLoading()) {
-            LOGGER.debug("Asking for reading image: {}", this); //$NON-NLS-1$
+            LOGGER.debug("Asking for reading image: {}", this);
             Load ref = new Load();
             Future<PlanarImage> future = IMAGE_LOADER.submit(ref);
             PlanarImage img = null;
@@ -428,7 +428,7 @@ public class ImageElement extends MediaElement {
                     throw (OutOfMemoryError) e.getCause();
                 } else {
                     readable = false;
-                    LOGGER.error("Cannot read pixel data!: {}", this, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot read pixel data!: {}", this, e);
                 }
             }
             if (img != null) {

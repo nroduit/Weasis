@@ -75,7 +75,7 @@ public class AppProperties {
             // Clean temp folder, necessary when the application has crashed.
             FileUtil.deleteDirectoryContents(APP_TEMP_DIR, 3, 0);
         } catch (Exception e) {
-            LOGGER.error("Error cleaning temporary files", e); //$NON-NLS-1$
+            LOGGER.error("Error cleaning temporary files", e);
         }
     }
 
@@ -127,7 +127,7 @@ public class AppProperties {
                 file.mkdirs();
                 return file;
             } catch (Exception e) {
-                LOGGER.error("Cannot build directory", e); //$NON-NLS-1$
+                LOGGER.error("Cannot build directory", e);
             }
         }
         return AppProperties.APP_TEMP_DIR;

@@ -217,7 +217,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                         file = f;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Cannot read {}", path); //$NON-NLS-1$
+                    LOGGER.error("Cannot read {}", path);
                 }
             }
         }
@@ -226,7 +226,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         if (loadSeries != null && !loadSeries.isEmpty()) {
             DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
         } else {
-            LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
+            LOGGER.error("Cannot import DICOM from {}", file);
 
             int response = JOptionPane.showConfirmDialog(this, Messages.getString("DicomExplorer.mes_import_manual"),
                 this.getTitle(), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
@@ -275,7 +275,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Error when reading device directories: {}", e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Error when reading device directories: {}", e.getMessage());
         }
 
         Collections.reverse(dvs);

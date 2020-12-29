@@ -73,7 +73,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
     protected void done() {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
+        LOGGER.info("End of loading DICOM locally");
     }
 
     public void addSelectionAndnotify(File[] file, boolean firstLevel) {
@@ -140,10 +140,10 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                     new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
                 dicomReader.writeMetaData(patient);
                 dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-                LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
+                LOGGER.info("Adding patient: {}", patient);
             } else {
                 patient = dicomModel.getParent(study, DicomModel.patient);
-                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam."); //$NON-NLS-1$
+                LOGGER.warn("DICOM patient attributes are inconsistent! Name or ID is different within an exam.");
             }
         }
 
@@ -247,7 +247,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Build DicomModel", e); //$NON-NLS-1$
+            LOGGER.error("Build DicomModel", e);
         } finally {
             // dicomReader.reset();
         }

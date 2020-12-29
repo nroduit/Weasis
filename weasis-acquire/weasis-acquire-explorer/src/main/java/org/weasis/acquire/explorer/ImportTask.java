@@ -61,7 +61,7 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
                     imagesToProcess.add(imageInfo);
                 }
             } catch (Exception ex) {
-                LOGGER.error("ImportTask process", ex); //$NON-NLS-1$
+                LOGGER.error("ImportTask process", ex);
             }
             setProgress(++nbImageProcessed * 100 / nbImageToProcess);
         }
@@ -75,10 +75,10 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
         try {
             AcquireManager.importImages(get(), searchedSeries, maxRangeInMinutes);
         } catch (InterruptedException doNothing) {
-            LOGGER.warn("Importing task Interruption"); //$NON-NLS-1$
+            LOGGER.warn("Importing task Interruption");
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            LOGGER.error("Importing task", e); //$NON-NLS-1$
+            LOGGER.error("Importing task", e);
         }
     }
 

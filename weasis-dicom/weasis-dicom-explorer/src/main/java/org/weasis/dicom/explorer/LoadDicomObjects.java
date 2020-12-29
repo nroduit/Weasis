@@ -74,7 +74,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
     protected void done() {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
+        LOGGER.info("End of loading DICOM locally");
     }
 
     public void addSelectionAndnotify() {
@@ -98,7 +98,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                     }
                 }
             } catch (URISyntaxException e) {
-                LOGGER.debug("", e); //$NON-NLS-1$
+                LOGGER.debug("", e);
             }
 
         }
@@ -122,7 +122,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                 new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
             dicomReader.writeMetaData(patient);
             dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
+            LOGGER.info("Adding patient: {}", patient);
         }
 
         String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
@@ -225,7 +225,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Build DICOM hierarchy", e); //$NON-NLS-1$
+            LOGGER.error("Build DICOM hierarchy", e);
         }
         return thumb;
     }

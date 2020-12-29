@@ -190,7 +190,7 @@ public class TagD extends TagW {
         try {
             return vr.vmOf(value);
         } catch (Exception e) {
-            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e); //$NON-NLS-1$
+            LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e);
         }
         return getValueMultiplicity(value);
     }
@@ -516,7 +516,7 @@ public class TagD extends TagW {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read dataelements.xml! ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read dataelements.xml! ", e);
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
@@ -576,14 +576,14 @@ public class TagD extends TagW {
                                 }
                                 TagW.addTag(t);
                             } catch (Exception e) {
-                                LOGGER.error("Cannot read {}", disp, e); //$NON-NLS-1$
+                                LOGGER.error("Cannot read {}", disp, e);
                             }
                         }
                     } else {
                         // Exclude delimitation tags
-                        if (tag == null || !tag.startsWith("FFFEE0")) { //$NON-NLS-1$
-                            LOGGER.error("Missing attribute: {} {} {} {}", //$NON-NLS-1$
-                                tag, keyword, vr, vm); // $NON-NLS-1$
+                        if (tag == null || !tag.startsWith("FFFEE0")) { 
+                            LOGGER.error("Missing attribute: {} {} {} {}",
+                                tag, keyword, vr, vm);
                         }
                     }
 
@@ -652,7 +652,7 @@ public class TagD extends TagW {
                 try {
                     return type.cast(tagable.getTagValue(tags.get(key)));
                 } catch (ClassCastException e) {
-                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e);
                 }
             }
         }
@@ -702,7 +702,7 @@ public class TagD extends TagW {
                 }
                 return LocalDate.parse(date, DICOM_DATE);
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM date", e); //$NON-NLS-1$
+                LOGGER.error("Parse DICOM date", e);
             }
         }
         return null;
@@ -719,7 +719,7 @@ public class TagD extends TagW {
                     time.chars().filter(i -> ':' != (char) i).forEachOrdered(i -> buf.append((char) i));
                     return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
                 } catch (Exception e1) {
-                    LOGGER.error("Parse DICOM time", e1); //$NON-NLS-1$
+                    LOGGER.error("Parse DICOM time", e1);
                 }
             }
         }
@@ -736,7 +736,7 @@ public class TagD extends TagW {
                 Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
             } catch (Exception e) {
-                LOGGER.error("Parse DICOM dateTime", e); //$NON-NLS-1$
+                LOGGER.error("Parse DICOM dateTime", e);
             }
         }
         return null;
@@ -849,7 +849,7 @@ public class TagD extends TagW {
                 unit = ChronoUnit.DAYS.toString();
                 break;
             default:
-                LOGGER.error("Get period format: \"{}\" is not valid", value); //$NON-NLS-1$
+                LOGGER.error("Get period format: \"{}\" is not valid", value);
                 return StringUtil.EMPTY_STRING;
         }
 

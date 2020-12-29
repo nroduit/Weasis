@@ -227,7 +227,7 @@ public abstract class AbstractDicomNode {
             writer.writeEndDocument();
             writer.flush();
         } catch (Exception e) {
-            LOGGER.error("Error on writing DICOM node file", e); //$NON-NLS-1$
+            LOGGER.error("Error on writing DICOM node file", e);
         } finally {
             FileUtil.safeClose(writer);
         }
@@ -255,7 +255,7 @@ public abstract class AbstractDicomNode {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Error on reading DICOM node file", e); //$NON-NLS-1$
+                LOGGER.error("Error on reading DICOM node file", e);
             } finally {
                 FileUtil.safeClose(xmler);
             }
@@ -310,7 +310,7 @@ public abstract class AbstractDicomNode {
 
                 list.add(node);
             } catch (Exception e) {
-                LOGGER.error("Cannot read DicomNode", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read DicomNode", e);
             }
         }
     }

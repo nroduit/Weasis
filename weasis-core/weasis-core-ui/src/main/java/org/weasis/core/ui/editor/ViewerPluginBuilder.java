@@ -275,7 +275,7 @@ public class ViewerPluginBuilder {
             }
 
         } catch (Exception e) {
-            LOGGER.error("Build series error", e); //$NON-NLS-1$
+            LOGGER.error("Build series error", e);
         } finally {
             reader.reset();
         }

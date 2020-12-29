@@ -135,7 +135,7 @@ public class Utils {
                 try {
                     result = FileUtil.gzipUncompressToByte(Base64.getDecoder().decode(value.getBytes()));
                 } catch (IOException e) {
-                    Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, "Get byte property", e); //$NON-NLS-1$
+                    Logger.getLogger(Utils.class.getName()).log(Level.SEVERE, "Get byte property", e);
                 }
             }
         }

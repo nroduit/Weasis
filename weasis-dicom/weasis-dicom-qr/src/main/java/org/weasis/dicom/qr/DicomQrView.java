@@ -244,7 +244,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         try {
             dcmListener = new DicomListener(tempDir);
         } catch (IOException e) {
-            LOGGER.error("Cannot creast DICOM listener", e); //$NON-NLS-1$
+            LOGGER.error("Cannot creast DICOM listener", e);
         }
         dicomListener = dcmListener;
     }
@@ -481,7 +481,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             if (state.getStatus() == Status.Success) {
                 displayResult(state);
             } else {
-                LOGGER.error("Dicom cfind error: {}", state.getMessage()); //$NON-NLS-1$
+                LOGGER.error("Dicom cfind error: {}", state.getMessage());
                 GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(basePanel, state.getMessage(), null,
                     JOptionPane.ERROR_MESSAGE));
             }
@@ -501,10 +501,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         if (items != null) {
             for (int i = 0; i < items.size(); i++) {
                 Attributes item = items.get(i);
-                LOGGER.trace("==========================================="); //$NON-NLS-1$
-                LOGGER.trace("CFind Item {}", (i + 1)); //$NON-NLS-1$
-                LOGGER.trace("==========================================="); //$NON-NLS-1$
-                LOGGER.trace("{}", item.toString(100, 150)); //$NON-NLS-1$
+                LOGGER.trace("===========================================");
+                LOGGER.trace("CFind Item {}", (i + 1));
+                LOGGER.trace("===========================================");
+                LOGGER.trace("{}", item.toString(100, 150));
 
                 PatientComparator patientComparator = new PatientComparator(item);
                 String patientPseudoUID = patientComparator.buildPatientPseudoUID();

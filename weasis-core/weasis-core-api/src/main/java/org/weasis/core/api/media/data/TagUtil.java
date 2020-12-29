@@ -48,7 +48,7 @@ public final class TagUtil {
                 }
                 return Date.from(Instant.from(t));
             } catch (Exception e) {
-                LOGGER.error("Date conversion", e); //$NON-NLS-1$
+                LOGGER.error("Date conversion", e);
             }
         }
         return null;
@@ -71,7 +71,7 @@ public final class TagUtil {
                 LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
                 return datetime.toLocalDate();
             } catch (Exception e) {
-                LOGGER.error("Date conversion", e); //$NON-NLS-1$
+                LOGGER.error("Date conversion", e);
             }
         }
         return null;
@@ -83,7 +83,7 @@ public final class TagUtil {
                 LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
                 return datetime.toLocalTime();
             } catch (Exception e) {
-                LOGGER.error("Time conversion", e); //$NON-NLS-1$
+                LOGGER.error("Time conversion", e);
             }
         }
         return null;
@@ -94,7 +94,7 @@ public final class TagUtil {
             try {
                 return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
             } catch (Exception e) {
-                LOGGER.error("DateTime conversion", e); //$NON-NLS-1$
+                LOGGER.error("DateTime conversion", e);
             }
         }
         return null;
@@ -179,7 +179,7 @@ public final class TagUtil {
                     return Boolean.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse boolean {} of {}", val, attribute); //$NON-NLS-1$
+                LOGGER.error("Cannot parse boolean {} of {}", val, attribute);
             }
         }
         return defaultValue;
@@ -193,7 +193,7 @@ public final class TagUtil {
                     return Integer.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse integer {} of {}", val, attribute); //$NON-NLS-1$
+                LOGGER.error("Cannot parse integer {} of {}", val, attribute);
             }
         }
         return defaultValue;
@@ -227,7 +227,7 @@ public final class TagUtil {
                     return Double.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse double {} of {}", val, attribute); //$NON-NLS-1$
+                LOGGER.error("Cannot parse double {} of {}", val, attribute);
             }
         }
         return defaultValue;
@@ -261,7 +261,7 @@ public final class TagUtil {
                     return Float.valueOf(val);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.error("Cannot parse float {} of {}", val, attribute); //$NON-NLS-1$
+                LOGGER.error("Cannot parse float {} of {}", val, attribute);
             }
         }
         return defaultValue;
@@ -301,7 +301,7 @@ public final class TagUtil {
                         return LocalDate.parse(val);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Parse date", e); //$NON-NLS-1$
+                    LOGGER.error("Parse date", e);
                 }
             }
         }
@@ -330,7 +330,7 @@ public final class TagUtil {
                             vals[i] = LocalDate.parse(strs[i]);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Parse date", e); //$NON-NLS-1$
+                        LOGGER.error("Parse date", e);
                     }
                 }
                 return vals;

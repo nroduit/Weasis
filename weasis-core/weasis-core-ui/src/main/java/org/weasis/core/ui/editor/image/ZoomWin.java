@@ -301,7 +301,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transform", e); //$NON-NLS-1$
+            LOGGER.error("Create inverse transform", e);
         }
     }
 

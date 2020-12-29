@@ -397,7 +397,7 @@ public class DicomMediaIO implements DcmMediaReader {
 
             } catch (Exception | OutOfMemoryError e) {
                 mimeType = UNREADABLE;
-                LOGGER.error("Cannot read DICOM:", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read DICOM:", e);
                 close();
                 return false;
             }
@@ -669,7 +669,7 @@ public class DicomMediaIO implements DcmMediaReader {
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
-                    LOGGER.error("Cannot write dicom file", e); //$NON-NLS-1$
+                    LOGGER.error("Cannot write dicom file", e);
                 }
             }
         }
@@ -687,7 +687,7 @@ public class DicomMediaIO implements DcmMediaReader {
     protected PlanarImage getImageFragment(MediaElement media, int frame) throws Exception {
         if (isReadableDicom()) {
             if (frame >= 0 && frame < numberOfFrame && hasPixel) {
-                LOGGER.debug("Start reading dicom image frame: {} sopUID: {}", //$NON-NLS-1$
+                LOGGER.debug("Start reading dicom image frame: {} sopUID: {}",
                     frame, TagD.getTagValue(this, Tag.SOPInstanceUID));
 
                 PlanarImage img = getUncacheImage(media, frame);
@@ -720,7 +720,7 @@ public class DicomMediaIO implements DcmMediaReader {
                                 objOut.writeObject(overlayData);
                                 media.setTag(TagW.OverlayBurninDataPath, file.getPath());
                             } catch (Exception e) {
-                                LOGGER.error("Cannot serialize overlay", e); //$NON-NLS-1$
+                                LOGGER.error("Cannot serialize overlay", e);
                             } finally {
                                 FileUtil.safeClose(objOut);
                                 FileUtil.safeClose(fileOut);
@@ -1071,7 +1071,7 @@ public class DicomMediaIO implements DcmMediaReader {
             return md.getAttributes();
         } catch (Exception e) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.error("Cannot read DICOM:", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read DICOM:", e);
             } else {
                 LOGGER.error(e.getMessage());
             }
@@ -1186,7 +1186,7 @@ public class DicomMediaIO implements DcmMediaReader {
                         this.pixeldataFragments = (Fragments) pixdata;
                         bigendian = pixeldataFragments.bigEndian();
                         if (bigendian) {
-                            LOGGER.error("Big endian fragments?"); //$NON-NLS-1$
+                            LOGGER.error("Big endian fragments?");
                         }
                     }
                 }

@@ -404,7 +404,7 @@ public class AcquireManager {
                     Messages.getString("AcquireManager.dcm_worklist"), calling, called);
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
-                LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
+                LOGGER.error("Cannot get items from worklist", e);
             }
         }
     }
@@ -577,22 +577,19 @@ public class AcquireManager {
                     byteArray = GzipManager.gzipUncompressToByte(byteArray);
                 }
             } catch (Exception e) {
-                LOGGER.error("Decode Patient Context", e); //$NON-NLS-1$
+                LOGGER.error("Decode Patient Context", e);
                 return null;
             }
         }
 
         try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Source XML :\n{}", new String(byteArray)); //$NON-NLS-1$
-            }
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); //$NON-NLS-1$
             factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, ""); //$NON-NLS-1$
             return factory.newDocumentBuilder().parse(inputStream);
         } catch (SAXException | IOException | ParserConfigurationException e) {
-            LOGGER.error("Parsing Patient Context XML", e); //$NON-NLS-1$
+            LOGGER.error("Parsing Patient Context XML", e);
         }
 
         return null;
@@ -643,14 +640,14 @@ public class AcquireManager {
                     uri = file.toURI();
                 }
             } catch (Exception e) {
-                LOGGER.error("{} is supposed to be a file URL but cannot be converted to a valid URI", urlStr, e); //$NON-NLS-1$
+                LOGGER.error("{} is supposed to be a file URL but cannot be converted to a valid URI", urlStr, e);
             }
         }
         if (uri == null) {
             try {
                 uri = new URL(urlStr).toURI();
             } catch (MalformedURLException | URISyntaxException e) {
-                LOGGER.error("getURIFromURL : {}", urlStr, e); //$NON-NLS-1$
+                LOGGER.error("getURIFromURL : {}", urlStr, e);
             }
         }
 
@@ -665,7 +662,7 @@ public class AcquireManager {
     private static byte[] getURIContent(URI uri) {
         try {
             URL url = Objects.requireNonNull(uri).toURL();
-            LOGGER.debug("Download from URL: {}", url); //$NON-NLS-1$
+            LOGGER.debug("Download from URL: {}", url);
             ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
             // note: fastest way to convert inputStream to string according to :
             // http://stackoverflow.com/questions/309424/read-convert-an-inputstream-to-a-string
@@ -679,7 +676,7 @@ public class AcquireManager {
                 return outputStream.toByteArray();
             }
         } catch (Exception e) {
-            LOGGER.error("Downloading URI content", e); //$NON-NLS-1$
+            LOGGER.error("Downloading URI content", e);
         }
 
         return null;

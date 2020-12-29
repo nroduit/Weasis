@@ -382,7 +382,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                                 XmlSerializer.writePresentation(img, destinationFile);
                             }
                         } else {
-                            LOGGER.error("Cannot export DICOM file to {}: {}", format, //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file to {}: {}", format,
                                 img.getFileCache().getOriginalFile().orElse(null));
                         }
                     } else if (node.getUserObject() instanceof MediaElement
@@ -408,7 +408,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
             }
         } catch (Exception e) {
-            LOGGER.error("Cannot extract media from DICOM", e); //$NON-NLS-1$
+            LOGGER.error("Cannot extract media from DICOM", e);
         }
     }
 
@@ -480,7 +480,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                         if (img.saveToFile(destinationFile)) {
                             writeInDicomDir(writer, img, node, iuid, destinationFile);
                         } else {
-                            LOGGER.error("Cannot export DICOM file: {}", //$NON-NLS-1$
+                            LOGGER.error("Cannot export DICOM file: {}",
                                 img.getFileCache().getOriginalFile().orElse(null));
                         }
                     } else if (node.getUserObject() instanceof MediaElement) {
@@ -520,7 +520,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         } catch (IOException e) {
             throw e;
         } catch (Exception e) {
-            LOGGER.error("Cannot export DICOM", e); //$NON-NLS-1$
+            LOGGER.error("Cannot export DICOM", e);
         } finally {
             if (writer != null) {
                 // Commit DICOMDIR changes and close the file
@@ -532,7 +532,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             try {
                 FileUtil.zip(writeDir, exportDir);
             } catch (Exception e) {
-                LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir, e); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM ZIP file: {}", exportDir, e);
             } finally {
                 FileUtil.recursiveDelete(writeDir);
             }
@@ -555,7 +555,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                     try {
                         writeInDicomDir(writer, prAttributes, node, outputFile.getName(), outputFile);
                     } catch (IOException e) {
-                        LOGGER.error("Writing DICOMDIR", e); //$NON-NLS-1$
+                        LOGGER.error("Writing DICOMDIR", e);
                     }
                 }
             }
@@ -624,7 +624,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         if (writer != null) {
             if (!(img.getMediaReader() instanceof DcmMediaReader)
                 || ((DcmMediaReader) img.getMediaReader()).getDicomObject() == null) {
-                LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
+                LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null));
                 return false;
             }
             return writeInDicomDir(writer, ((DcmMediaReader) img.getMediaReader()).getDicomObject(), node, iuid,

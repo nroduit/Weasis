@@ -32,7 +32,7 @@ public class UriListFlavor {
         try {
             return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader());
         } catch (Exception e) {
-            LOGGER.error("Build uri flavor", e); //$NON-NLS-1$
+            LOGGER.error("Build uri flavor", e);
             return null;
         }
     }
@@ -46,7 +46,7 @@ public class UriListFlavor {
                 try {
                     list.add(new File(new URI(s)));
                 } catch (Exception e) {
-                    LOGGER.error("Build file from URI", e); //$NON-NLS-1$
+                    LOGGER.error("Build file from URI", e);
                 }
             }
         }

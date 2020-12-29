@@ -107,7 +107,7 @@ public final class ImageFileHelper {
             try {
                 returnStr = fc.getSelectedFile().toString();
             } catch (SecurityException e) {
-                LOGGER.warn("system property value cannot be accessed", e); //$NON-NLS-1$
+                LOGGER.warn("system property value cannot be accessed", e);
             }
         }
         return returnStr;
@@ -127,7 +127,7 @@ public final class ImageFileHelper {
             try {
                 returnStr = fc.getSelectedFile().toString();
             } catch (SecurityException e) {
-                LOGGER.warn("system property value cannot be accessed", e); //$NON-NLS-1$
+                LOGGER.warn("system property value cannot be accessed", e);
             }
         }
         return returnStr;

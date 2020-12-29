@@ -60,7 +60,7 @@ public class Activator implements BundleActivator, ServiceListener {
                     registerSeriesViewerFactory(bundleContext.getService(service));
                 }
             } catch (InvalidSyntaxException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         });
 
@@ -93,14 +93,14 @@ public class Activator implements BundleActivator, ServiceListener {
             try {
                 viewerFactory = (SeriesViewerFactory) context.getService(service);
             } catch (Exception e) {
-                LOGGER.info("Cannot get service of {}", service.getBundle()); //$NON-NLS-1$
+                LOGGER.info("Cannot get service of {}", service.getBundle());
             }
             if (viewerFactory != null) {
                 if (event.getType() == ServiceEvent.REGISTERED) {
                     registerSeriesViewerFactory(viewerFactory);
                 } else if (event.getType() == ServiceEvent.UNREGISTERING) {
                     if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                        LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription()); //$NON-NLS-1$
+                        LOGGER.info("Unregister series viewer plug-in: {}", viewerFactory.getDescription());
                         UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
                     }
                     context.ungetService(service);
@@ -112,7 +112,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static void registerSeriesViewerFactory(SeriesViewerFactory factory) {
         if (factory != null && !UIManager.SERIES_VIEWER_FACTORIES.contains(factory)) {
             UIManager.SERIES_VIEWER_FACTORIES.add(factory);
-            LOGGER.info("Register series viewer plug-in: {}", factory.getDescription()); //$NON-NLS-1$
+            LOGGER.info("Register series viewer plug-in: {}", factory.getDescription());
         }
     }
 

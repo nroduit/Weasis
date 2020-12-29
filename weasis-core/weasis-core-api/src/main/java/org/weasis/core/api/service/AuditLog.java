@@ -94,7 +94,7 @@ public class AuditLog {
                         }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {
-                        LOGGER.error("Update log parameters", e); //$NON-NLS-1$
+                        LOGGER.error("Update log parameters", e);
                     }
                 }
             }
@@ -111,7 +111,7 @@ public class AuditLog {
                     logConfiguration = configs[0];
                 }
             } catch (InvalidSyntaxException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         }
         return logConfiguration;

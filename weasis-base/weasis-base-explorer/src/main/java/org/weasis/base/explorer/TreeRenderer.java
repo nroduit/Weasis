@@ -36,7 +36,7 @@ public class TreeRenderer extends DefaultTreeCellRenderer {
                 setIcon(JIUtility.getSystemIcon(selectedDir.toFile()));
                 setText(treeNode.toString());
             } catch (Exception e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         }
 

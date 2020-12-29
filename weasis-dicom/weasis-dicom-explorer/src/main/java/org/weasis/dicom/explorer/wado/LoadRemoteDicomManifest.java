@@ -83,7 +83,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
 
         if (DownloadManager.TASKS.isEmpty() || DownloadManager.TASKS.stream().allMatch(LoadSeries::isStopped)) {
             if (!loadSeriesList.isEmpty() && tryDownloadingAgain(null)) {
-                LOGGER.info("Try downloading ({}) the missing elements", retryNb.get()); //$NON-NLS-1$
+                LOGGER.info("Try downloading ({}) the missing elements", retryNb.get());
                 List<LoadSeries> oldList = new ArrayList<>(loadSeriesList);
                 loadSeriesList.clear();
                 dicomModel.removePropertyChangeListener(propertyChangeListener);
@@ -147,9 +147,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
                 downloadManifest(iter);
             }
         } catch (DownloadException e) {
-            LOGGER.error("Download failed", e); //$NON-NLS-1$
+            LOGGER.error("Download failed", e);
             if (tryDownloadingAgain(e)) {
-                LOGGER.info("Try donloaging again: {}", xmlFiles); //$NON-NLS-1$
+                LOGGER.info("Try donloaging again: {}", xmlFiles);
                 LoadRemoteDicomManifest mf = new LoadRemoteDicomManifest(xmlFiles, dicomModel);
                 mf.retryNb.set(retryNb.get());
                 mf.execute();
@@ -175,7 +175,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
                 startDownloadingSeries(wadoTasks, downloadImmediately);
             }
         } catch (URISyntaxException | MalformedURLException e) {
-            LOGGER.error("Loading manifest", e); //$NON-NLS-1$
+            LOGGER.error("Loading manifest", e);
         }
     }
 

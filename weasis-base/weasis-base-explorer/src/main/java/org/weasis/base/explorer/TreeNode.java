@@ -88,7 +88,7 @@ public class TreeNode extends DefaultMutableTreeNode {
                     StreamSupport.stream(stream.spliterator(), false).sorted(Comparator.comparing(Path::getFileName))
                         .forEachOrdered(p -> add(new TreeNode(p)));
                 } catch (IOException e) {
-                    LOGGER.error("Building child directories", e); //$NON-NLS-1$
+                    LOGGER.error("Building child directories", e);
                 }
             }
             this.explored = true;

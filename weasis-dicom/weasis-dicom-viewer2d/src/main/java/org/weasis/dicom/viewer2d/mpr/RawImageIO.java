@@ -79,7 +79,7 @@ public class RawImageIO implements DcmMediaReader {
             out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
             return tmpFile;
         } catch (IOException e) {
-            LOGGER.error("Cannot write dicom file", e); //$NON-NLS-1$
+            LOGGER.error("Cannot write dicom file", e);
         } finally {
             FileUtil.safeClose(out);
         }

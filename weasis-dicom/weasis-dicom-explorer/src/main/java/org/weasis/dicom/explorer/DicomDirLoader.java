@@ -89,7 +89,7 @@ public class DicomDirLoader {
                 dcmPatient = findNextSiblingRecord(dcmPatient, reader);
             }
         } catch (IOException e) {
-            LOGGER.error("Cannot read DICOMDIR !", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read DICOMDIR !", e);
         }
 
         if (patient != null) {
@@ -131,7 +131,7 @@ public class DicomDirLoader {
             }
             parseStudy(patient, dcmPatient, reader);
         } catch (Exception e) {
-            LOGGER.error("Cannot read DICOMDIR !", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read DICOMDIR !", e);
         }
         return patient;
     }
@@ -204,7 +204,7 @@ public class DicomDirLoader {
                                         iconInstance = instance.getNestedDataset(Tag.IconImageSequence);
                                     }
                                 } else {
-                                    LOGGER.error("Missing DICOMDIR entry: {}", file.getPath()); //$NON-NLS-1$
+                                    LOGGER.error("Missing DICOMDIR entry: {}", file.getPath());
                                 }
                             }
                         }
@@ -261,7 +261,7 @@ public class DicomDirLoader {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot read Icon in DICOMDIR!", e); //$NON-NLS-1$
+                LOGGER.error("Cannot read Icon in DICOMDIR!", e);
             }
         }
         return null;
@@ -271,7 +271,7 @@ public class DicomDirLoader {
         try {
             return reader.findLowerDirectoryRecordInUse(dcmObject, true);
         } catch (IOException e) {
-            LOGGER.error("Cannot read first DICOMDIR entry!", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read first DICOMDIR entry!", e);
         }
         return null;
     }
@@ -280,7 +280,7 @@ public class DicomDirLoader {
         try {
             return reader.findNextDirectoryRecordInUse(dcmObject, true);
         } catch (IOException e) {
-            LOGGER.error("Cannot read next DICOMDIR entry!", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read next DICOMDIR entry!", e);
         }
         return null;
     }
@@ -289,7 +289,7 @@ public class DicomDirLoader {
         try {
             return reader.findFirstRootDirectoryRecordInUse(true);
         } catch (IOException e) {
-            LOGGER.error("Cannot find Patient in DICOMDIR !", e); //$NON-NLS-1$
+            LOGGER.error("Cannot find Patient in DICOMDIR !", e);
         }
         return null;
     }

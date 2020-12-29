@@ -266,7 +266,7 @@ public class DownloadManager {
 
             ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
 
-            LOGGER.info("Downloading XML manifest: {}", path); //$NON-NLS-1$
+            LOGGER.info("Downloading XML manifest: {}", path);
             InputStream urlInputStream = urlConnection.getInputStream();
 
             if (path.endsWith(".gz")) { //$NON-NLS-1$
@@ -303,11 +303,11 @@ public class DownloadManager {
                 validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, StringUtil.EMPTY_STRING);
                 validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, StringUtil.EMPTY_STRING);
                 validator.validate(xmlFile);
-                LOGGER.info("[Validate with XSD schema] wado_query is valid"); //$NON-NLS-1$
+                LOGGER.info("[Validate with XSD schema] wado_query is valid");
             } catch (SAXException e) {
-                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e); //$NON-NLS-1$
+                LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e);
             } catch (Exception e) {
-                LOGGER.error("Error when validate XSD schema. Try to update JRE", e); //$NON-NLS-1$
+                LOGGER.error("Error when validate XSD schema. Try to update JRE", e);
             }
 
             ReaderParams params = new ReaderParams(model, seriesMap);
@@ -346,7 +346,7 @@ public class DownloadManager {
             throw new DownloadException(getErrorMessage(uri), e); // rethrow network issue
         } catch (Exception e) {
             String message = getErrorMessage(uri);
-            LOGGER.error("{}", message, e); //$NON-NLS-1$
+            LOGGER.error("{}", message, e);
             final int messageType = JOptionPane.ERROR_MESSAGE;
 
             GuiExecutor.instance().execute(() -> {
@@ -483,7 +483,7 @@ public class DownloadManager {
             }
 
             model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding new patient: {}", patient); //$NON-NLS-1$
+            LOGGER.info("Adding new patient: {}", patient);
         }
 
         final MediaSeriesGroup patient2 = patient;
@@ -554,7 +554,7 @@ public class DownloadManager {
                 // Should not happen
                 dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             } else if (!wado.getBaseURL().equals(wadoParameters.getBaseURL())) {
-                LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries); //$NON-NLS-1$
+                LOGGER.error("Wado parameters must be unique within a DICOM Series: {}", dicomSeries);
                 return dicomSeries;
             }
         }

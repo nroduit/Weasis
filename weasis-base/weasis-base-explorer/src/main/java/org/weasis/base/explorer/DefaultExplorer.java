@@ -130,7 +130,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         try {
             prefDir = Paths.get(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(P_LAST_DIR));
         } catch (InvalidPathException e) {
-            LOGGER.error("Get last dir path", e); //$NON-NLS-1$
+            LOGGER.error("Get last dir path", e);
         }
 
         if (prefDir == null) {

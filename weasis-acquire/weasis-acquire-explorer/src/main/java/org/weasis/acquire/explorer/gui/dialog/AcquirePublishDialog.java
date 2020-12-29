@@ -103,7 +103,7 @@ public class AcquirePublishDialog extends JDialog {
                 try {
                     return Resolution.valueOf(val);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot find Resolution: {}", val, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot find Resolution: {}", val, e);
                 }
             }
             return Resolution.ORIGINAL;
@@ -307,10 +307,10 @@ public class AcquirePublishDialog extends JDialog {
                         try {
                             exportDirDicom = dicomizeTask.get();
                         } catch (InterruptedException doNothing) {
-                            LOGGER.warn("Dicomizing task Interruption"); //$NON-NLS-1$
+                            LOGGER.warn("Dicomizing task Interruption");
                             Thread.currentThread().interrupt();
                         } catch (ExecutionException e) {
-                            LOGGER.error("Dicomizing task", e); //$NON-NLS-1$
+                            LOGGER.error("Dicomizing task", e);
                         }
 
                         if (exportDirDicom != null) {

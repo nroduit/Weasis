@@ -96,7 +96,7 @@ public final class Transform2Dicom {
             if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {
                 // out of memory ??
                 FileUtil.delete(imgFile);
-                LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName()); //$NON-NLS-1$
+                LOGGER.error("Cannot Transform to jpeg {}", imageElement.getName());
                 return false;
             }
         }
@@ -118,7 +118,7 @@ public final class Transform2Dicom {
             try {
                 Dicomizer.jpeg(attrs, imgFile, new File(exportDirDicom, sopInstanceUID), false);
             } catch (Exception e) {
-                LOGGER.error("Cannot Dicomize {}", imageElement.getName(), e); //$NON-NLS-1$
+                LOGGER.error("Cannot Dicomize {}", imageElement.getName(), e);
                 return false;
             }
 
@@ -144,7 +144,7 @@ public final class Transform2Dicom {
                 DicomPrSerializer.writePresentation(grModel, attrs, outputFile, seriesInstanceUID, prUid, offset);
             }
         } else {
-            LOGGER.error("Cannot read JPEG image {}", imageElement.getName()); //$NON-NLS-1$
+            LOGGER.error("Cannot read JPEG image {}", imageElement.getName());
             return false;
         }
 

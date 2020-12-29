@@ -72,7 +72,7 @@ public class CvUtil {
             g.drawImage(src, 0, 0, null);
             g.dispose();
         } catch (Exception e) {
-            LOGGER.error("Cannot create volatile image", e); //$NON-NLS-1$
+            LOGGER.error("Cannot create volatile image", e);
         }
         return dst;
     }

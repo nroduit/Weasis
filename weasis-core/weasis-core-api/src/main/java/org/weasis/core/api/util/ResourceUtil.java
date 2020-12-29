@@ -39,7 +39,7 @@ public class ResourceUtil {
         try {
             return url != null ? url.openStream() : null;
         } catch (IOException e) {
-            LOGGER.error("Cannot read resource", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read resource", e);
         }
         return null;
     }
@@ -78,7 +78,7 @@ public class ResourceUtil {
             try {
                 return new ImageIcon(file.toURI().toURL());
             } catch (Exception e) {
-                LOGGER.error("Cannot read logo image:{}", filename, e); //$NON-NLS-1$
+                LOGGER.error("Cannot read logo image:{}", filename, e);
             }
         }
         return null;

@@ -238,7 +238,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e); //$NON-NLS-1$
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;
@@ -259,7 +259,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             }
             return component;
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }

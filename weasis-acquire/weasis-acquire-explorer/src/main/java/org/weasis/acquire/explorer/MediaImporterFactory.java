@@ -65,7 +65,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
             try {
                 val = context.getBundleContext().getServiceReferences(serviceClassName, null);
             } catch (InvalidSyntaxException e) {
-                LOGGER.error("Get media importer services", e); //$NON-NLS-1$
+                LOGGER.error("Get media importer services", e);
             }
             if (val == null || val.length == 0) {
                 Dictionary<String, Object> dict = new Hashtable<>();

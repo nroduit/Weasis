@@ -297,7 +297,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         try {
             storeInStream(rootPrefs);
         } catch (IOException e) {
-            LOGGER.error("Cannot store preference file", e); //$NON-NLS-1$
+            LOGGER.error("Cannot store preference file", e);
         }
 
         String prefUrl = BundleTools.getServiceUrl();
@@ -305,7 +305,7 @@ public class StreamBackingStoreImpl implements BackingStore {
             try {
                 remoteStore(rootPrefs, prefUrl);
             } catch (BackingStoreException | IOException e) {
-                LOGGER.error("Cannot store preference file", e); //$NON-NLS-1$
+                LOGGER.error("Cannot store preference file", e);
             }
         }
     }

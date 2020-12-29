@@ -44,11 +44,11 @@ public class XmlSerializer {
                 int length = model.getModels().size();
                 model.getModels().removeIf(g -> g.getLayer() == null);
                 if (length > model.getModels().size()) {
-                    LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
+                    LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
                 }
                 return model;
             } catch (Exception e) {
-                LOGGER.error("Cannot load xml: ", e); //$NON-NLS-1$
+                LOGGER.error("Cannot load xml: ", e);
             }
         }
         return null;
@@ -69,7 +69,7 @@ public class XmlSerializer {
                 // jaxbMarshaller.marshal(model, System.out);
                 jaxbMarshaller.marshal(model, gpxFile);
             } catch (Exception e) {
-                LOGGER.error("Cannot save xml: ", e); //$NON-NLS-1$
+                LOGGER.error("Cannot save xml: ", e);
             }
         }
     }
@@ -88,7 +88,7 @@ public class XmlSerializer {
                 jaxbMarshaller.setProperty(Marshaller.JAXB_FRAGMENT, Boolean.TRUE);
                 jaxbMarshaller.marshal(model, writer);
             } catch (Exception e) {
-                LOGGER.error("Cannot write GraphicModel", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write GraphicModel", e);
             }
         }
     }
@@ -104,11 +104,11 @@ public class XmlSerializer {
             int length = model.getModels().size();
             model.getModels().removeIf(g -> g.getLayer() == null);
             if (length > model.getModels().size()) {
-                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
             }
             return model;
         } catch (Exception e) {
-            LOGGER.error("Cannot write GraphicModel", e); //$NON-NLS-1$
+            LOGGER.error("Cannot write GraphicModel", e);
         }
         return null;
     }
@@ -130,11 +130,11 @@ public class XmlSerializer {
             int length = model.getModels().size();
             model.getModels().removeIf(g -> g.getLayer() == null);
             if (length > model.getModels().size()) {
-                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length); //$NON-NLS-1$
+                LOGGER.error("Removing {} graphics wihout a attached layer", model.getModels().size() - length);
             }
             return model;
         } catch (Exception e) {
-            LOGGER.error("Cannot load xml graphic model: ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot load xml graphic model: ", e);
         }
         return null;
     }

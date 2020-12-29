@@ -46,7 +46,7 @@ public class PrintOptions {
                 try {
                     return DotPerInches.valueOf(val);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot find DotPerInches: {}", val, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot find DotPerInches: {}", val, e);
                 }
             }
             return defaultValue;

@@ -95,7 +95,7 @@ public class DicomPrSerializer {
                 saveToFile(outputFile, attributes);
                 return attributes;
             } catch (Exception e) {
-                LOGGER.error("Cannot write Presentation State : ", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write Presentation State : ", e);
             }
         }
         return null;
@@ -146,7 +146,7 @@ public class DicomPrSerializer {
             attributes.setBytes(PresentationStateReader.PR_MODEL_PRIVATE_TAG, VR.OB,
                 GzipManager.gzipCompressToByte(outputStream.toByteArray()));
         } catch (Exception | NoClassDefFoundError e) {
-            LOGGER.error("Cannot save xml: ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot save xml: ", e);
         }
     }
 
@@ -159,7 +159,7 @@ public class DicomPrSerializer {
         try {
             attributes.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
         } catch (UnknownHostException e) {
-            LOGGER.error("Cannot get host name: ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot get host name: ", e);
         }
         attributes.setString(Tag.SoftwareVersions, VR.LO, AppProperties.WEASIS_VERSION);
         attributes.setString(Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, gsps)); //$NON-NLS-1$
@@ -421,7 +421,7 @@ public class DicomPrSerializer {
                 out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                 return true;
             } catch (IOException e) {
-                LOGGER.error("Cannot write dicom PR into {}", output, e); //$NON-NLS-1$
+                LOGGER.error("Cannot write dicom PR into {}", output, e);
             }
         }
         return false;

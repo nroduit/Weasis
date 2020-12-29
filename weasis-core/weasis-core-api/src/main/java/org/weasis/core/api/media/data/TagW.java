@@ -451,7 +451,7 @@ public class TagW implements Serializable {
                         try {
                             str = new DecimalFormat(pattern, LocalUtil.getDecimalFormatSymbols()).format(Double.parseDouble(str));
                         } catch (NumberFormatException e) {
-                            LOGGER.warn("Cannot apply pattern to decimal value", e); //$NON-NLS-1$
+                            LOGGER.warn("Cannot apply pattern to decimal value", e);
                         }
                     }
                 } else if (format.charAt(index + fmLength) == 'l') {
@@ -466,7 +466,7 @@ public class TagW implements Serializable {
                                 str = str.substring(0, limit) + "..."; //$NON-NLS-1$
                             }
                         } catch (NumberFormatException e) {
-                            LOGGER.warn("Cannot apply pattern to decimal value", e); //$NON-NLS-1$
+                            LOGGER.warn("Cannot apply pattern to decimal value", e);
                         }
                     }
                 }
@@ -503,7 +503,7 @@ public class TagW implements Serializable {
             try {
                 return type.cast(tagable.getTagValue(tag));
             } catch (ClassCastException e) {
-                LOGGER.error("Cannot cast the value of \"{}\" into {}", tag.getKeyword(), type, e); //$NON-NLS-1$
+                LOGGER.error("Cannot cast the value of \"{}\" into {}", tag.getKeyword(), type, e);
             }
         }
         return null;

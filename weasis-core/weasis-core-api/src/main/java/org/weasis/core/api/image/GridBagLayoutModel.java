@@ -90,7 +90,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
             parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, ""); //$NON-NLS-1$
             parser.parse(stream, new SAXAdapter());
         } catch (Exception e) {
-            LOGGER.error("Loading layout xml", e); //$NON-NLS-1$
+            LOGGER.error("Loading layout xml", e);
         }
         this.icon = buildIcon();
     }

@@ -158,7 +158,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
                     }
                 });
         } catch (IOException e) {
-            LOGGER.error("Building child directories", e); //$NON-NLS-1$
+            LOGGER.error("Building child directories", e);
         }
     }
 

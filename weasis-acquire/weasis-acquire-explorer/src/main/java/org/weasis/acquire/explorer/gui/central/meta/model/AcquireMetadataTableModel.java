@@ -162,7 +162,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
             if (tag != null) {
                 list.add(tag);
             } else if (StringUtil.hasText(s)) {
-                LOGGER.warn("Cannot find the tag named {}", s.trim()); //$NON-NLS-1$
+                LOGGER.warn("Cannot find the tag named {}", s.trim());
             }
         }
         return list.toArray(new TagW[list.size()]);

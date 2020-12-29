@@ -207,7 +207,7 @@ public abstract class AbstractBufferHandler {
             flag = handleOpenDocument(fileInputstream);
         } catch (IOException e) {
             flag = false;
-            LOGGER.error("Cannot open {}", s, e); //$NON-NLS-1$
+            LOGGER.error("Cannot open {}", s, e);
         }
         return flag;
     }
@@ -218,7 +218,7 @@ public abstract class AbstractBufferHandler {
             flag = handleSaveDocument(fileoutputstream);
         } catch (IOException e) {
             flag = false;
-            LOGGER.error("Cannot save {}", s, e); //$NON-NLS-1$
+            LOGGER.error("Cannot save {}", s, e);
         }
         return flag;
     }

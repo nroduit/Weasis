@@ -65,7 +65,7 @@ public class ChangePathSelectionAction extends AbstractAction {
             try {
                 returnStr = fc.getSelectedFile().toString();
             } catch (SecurityException e) {
-                LOGGER.warn("directory cannot be accessed", e); //$NON-NLS-1$
+                LOGGER.warn("directory cannot be accessed", e);
             }
         }
         return returnStr;

@@ -86,7 +86,7 @@ public class RemotePrefService {
             try (InputStream is = prefSv.getInputStream()) {
                 props.load(is);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", remoteURL)); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", remoteURL)); // NON-NLS
             }
         }
     }

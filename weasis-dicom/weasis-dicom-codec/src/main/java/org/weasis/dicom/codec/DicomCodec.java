@@ -146,7 +146,7 @@ public class DicomCodec implements Codec {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate DicomCodec"); //$NON-NLS-1$
+        LOGGER.info("Activate DicomCodec");
 
         /**
          * Set value for dicom root UID which should be registered at the
@@ -186,14 +186,14 @@ public class DicomCodec implements Codec {
                     logConfiguration.update(loggingProperties);
                 }
             } catch (IOException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         }
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate DicomCodec"); //$NON-NLS-1$
+        LOGGER.info("Deactivate DicomCodec");
         for (IIOServiceProvider p : dcm4cheCodecs) {
             ImageioUtil.deregisterServiceProvider(p);
         }
@@ -205,9 +205,9 @@ public class DicomCodec implements Codec {
         for (String modality : factory.getModalities()) {
             DicomSpecialElementFactory prev = DicomMediaIO.DCM_ELEMENT_FACTORIES.put(modality, factory);
             if (prev != null) {
-                LOGGER.warn("{} factory has been replaced by {}", prev.getClass().getName(), name); //$NON-NLS-1$
+                LOGGER.warn("{} factory has been replaced by {}", prev.getClass().getName(), name);
             }
-            LOGGER.info("Register DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
+            LOGGER.info("Register DicomSpecialElementFactory: {} => {}", modality, name);
         }
     }
 
@@ -217,9 +217,9 @@ public class DicomCodec implements Codec {
             DicomSpecialElementFactory f = DicomMediaIO.DCM_ELEMENT_FACTORIES.get(modality);
             if (factory.equals(f)) {
                 DicomMediaIO.DCM_ELEMENT_FACTORIES.remove(modality);
-                LOGGER.info("Unregister DicomSpecialElementFactory: {} => {}", modality, name); //$NON-NLS-1$
+                LOGGER.info("Unregister DicomSpecialElementFactory: {} => {}", modality, name);
             } else {
-                LOGGER.warn("{}: Unregistering {} has no effect, {} is registered instead", modality, name, //$NON-NLS-1$
+                LOGGER.warn("{}: Unregistering {} has no effect, {} is registered instead", modality, name,
                     f.getClass().getName());
             }
         }

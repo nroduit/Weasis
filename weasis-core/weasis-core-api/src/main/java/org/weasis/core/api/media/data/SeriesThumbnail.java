@@ -211,7 +211,7 @@ public class SeriesThumbnail extends Thumbnail
             glassPane.setVisible(true);
             dge.startDrag(null, series, this);
         } catch (Exception e) {
-            LOGGER.error("Prepare to drag", e); //$NON-NLS-1$
+            LOGGER.error("Prepare to drag", e);
         }
 
     }

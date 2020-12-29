@@ -45,7 +45,7 @@ public class FileUtil {
             try {
                 object.close();
             } catch (Exception e) {
-                LOGGER.log(Level.WARNING, "Cannot close AutoCloseable", e); //$NON-NLS-1$
+                LOGGER.log(Level.WARNING, "Cannot close AutoCloseable", e);
             }
         }
     }
@@ -55,7 +55,7 @@ public class FileUtil {
             try {
                 xmler.close();
             } catch (XMLStreamException e) {
-                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e); //$NON-NLS-1$
+                LOGGER.log(Level.WARNING, "Cannot close XMLStreamReader", e);
             }
         }
     }
@@ -104,7 +104,7 @@ public class FileUtil {
         try {
             Files.delete(fileOrDirectory.toPath());
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Cannot delete", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot delete", e);
             return false;
         }
         return true;
@@ -138,7 +138,7 @@ public class FileUtil {
             }
             out.flush();
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Error when writing stream", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Error when writing stream", e);
         } finally {
             FileUtil.safeClose(inputStream);
             FileUtil.safeClose(out);
@@ -163,7 +163,7 @@ public class FileUtil {
                 props.load(fis);
                 return true;
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", propsFile.getPath())); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", propsFile.getPath())); // NON-NLS
             }
         }
         return false;
@@ -174,7 +174,7 @@ public class FileUtil {
             try (FileOutputStream fout = new FileOutputStream(propsFile)) {
                 props.store(fout, comments);
             } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "Error when writing properties", e); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "Error when writing properties", e);
             }
         }
     }

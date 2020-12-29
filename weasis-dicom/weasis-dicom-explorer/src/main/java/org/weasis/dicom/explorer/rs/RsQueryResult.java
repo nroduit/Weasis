@@ -119,7 +119,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     applyAllFilters(studies);
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS with PatientID {}", patientID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS with PatientID {}", patientID, e);
             }
         }
     }
@@ -143,7 +143,7 @@ public class RsQueryResult extends AbstractQueryResult {
             try {
                 lowerDateTime = DateUtil.parseXmlDateTime(rsQueryParams.getLowerDateTime()).getTime();
             } catch (Exception e) {
-                LOGGER.error("Cannot parse date: {}", rsQueryParams.getLowerDateTime(), e); //$NON-NLS-1$
+                LOGGER.error("Cannot parse date: {}", rsQueryParams.getLowerDateTime(), e);
             }
             if (lowerDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
@@ -164,7 +164,7 @@ public class RsQueryResult extends AbstractQueryResult {
             try {
                 upperDateTime = DateUtil.parseXmlDateTime(rsQueryParams.getUpperDateTime()).getTime();
             } catch (Exception e) {
-                LOGGER.error("Cannot parse date: {}", rsQueryParams.getUpperDateTime(), e); //$NON-NLS-1$
+                LOGGER.error("Cannot parse date: {}", rsQueryParams.getUpperDateTime(), e);
             }
             if (upperDateTime != null) {
                 for (int i = studies.size() - 1; i >= 0; i--) {
@@ -288,7 +288,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     fillSeries(studyDataSet, startDownloading);
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS with studyUID {}", studyInstanceUID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS with studyUID {}", studyInstanceUID, e);
             }
         }
     }
@@ -311,7 +311,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     fillSeries(studyDataSet, defaultStartDownloading);
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS with AccessionNumber {}", accessionNumber, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS with AccessionNumber {}", accessionNumber, e);
             }
         }
     }
@@ -347,7 +347,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     studyHashSet.add(dataset.getString(Tag.StudyInstanceUID));
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS with seriesUID {}", seriesInstanceUID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS with seriesUID {}", seriesInstanceUID, e);
             }
         }
         
@@ -388,7 +388,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS with sopInstanceUID {}", sopInstanceUID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS with sopInstanceUID {}", sopInstanceUID, e);
             }
         }
     }
@@ -416,7 +416,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS all series with studyUID {}", studyInstanceUID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS all series with studyUID {}", studyInstanceUID, e);
             }
         }
     }
@@ -443,7 +443,7 @@ public class RsQueryResult extends AbstractQueryResult {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("QIDO-RS all instances with seriesUID {}", serieInstanceUID, e); //$NON-NLS-1$
+                LOGGER.error("QIDO-RS all instances with seriesUID {}", serieInstanceUID, e);
             }
         }
     }
@@ -491,7 +491,7 @@ public class RsQueryResult extends AbstractQueryResult {
             }
 
             model.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding new patient: {}", patient); //$NON-NLS-1$
+            LOGGER.info("Adding new patient: {}", patient);
         }
         return patient;
     }

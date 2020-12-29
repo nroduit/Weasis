@@ -377,7 +377,7 @@ public class DicomImageElement extends ImageElement {
                         "Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied."); //$NON-NLS-1$
                 }
             } else {
-                LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding"); //$NON-NLS-1$
+                LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding");
             }
         }
 

@@ -47,10 +47,10 @@ public class GuiExecutor extends AbstractExecutorService {
             try {
                 SwingUtilities.invokeAndWait(r);
             } catch (InterruptedException e) {
-                LOGGER.warn("Interrupted Exception of {}", r); //$NON-NLS-1$
+                LOGGER.warn("Interrupted Exception of {}", r);
                 Thread.currentThread().interrupt();
             } catch (InvocationTargetException e) {
-                LOGGER.error("EDT invokeAndWait()", e); //$NON-NLS-1$
+                LOGGER.error("EDT invokeAndWait()", e);
             }
         }
     }

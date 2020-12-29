@@ -853,7 +853,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     }
 
     public void reset(ResetTools action) {
-        AuditLog.LOGGER.info("reset action:{}", action.name()); //$NON-NLS-1$
+        AuditLog.LOGGER.info("reset action:{}", action.name());
         if (ResetTools.ALL.equals(action)) {
             firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(getSelectedViewPane(), ActionW.RESET.cmd(), true));
@@ -1503,7 +1503,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Zoom command: {}", args.get(0), e); //$NON-NLS-1$
+            LOGGER.error("Zoom command: {}", args.get(0), e);
         }
     }
 
@@ -1532,7 +1532,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     levelAction.get().setSliderValue(level);
                 }
             } catch (Exception e) {
-                LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e); //$NON-NLS-1$
+                LOGGER.error("Window/level command: {} {}", args.get(0), args.get(1), e);
             }
         });
     }
@@ -1558,7 +1558,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     .ifPresent(a -> a.setPoint(new PanPoint(PanPoint.State.MOVE, valx, valy)));
 
             } catch (Exception e) {
-                LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e); //$NON-NLS-1$
+                LOGGER.error("Move (x,y) command: {} {}", args.get(0), args.get(1), e);
             }
         });
     }
@@ -1593,7 +1593,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Scroll command error:", e); //$NON-NLS-1$
+                LOGGER.error("Scroll command error:", e);
             }
         });
     }
@@ -1627,7 +1627,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Layout command error", e); //$NON-NLS-1$
+                LOGGER.error("Layout command error", e);
             }
         });
     }
@@ -1649,14 +1649,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             String command = args.get(0);
             if (command != null) {
                 try {
-                    if (command.startsWith("session")) { //$NON-NLS-1$
-                        AuditLog.LOGGER.info("source:telnet {}", command); //$NON-NLS-1$
+                    if (command.startsWith("session")) { //NON-NLS
+                        AuditLog.LOGGER.info("source:telnet {}", command);
                     } else {
-                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command); //$NON-NLS-1$
+                        AuditLog.LOGGER.info("source:telnet mouse:{} action:{}", MouseActions.T_LEFT, command);
                         excecuteMouseAction(command);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Mouse command: {}", command, e); //$NON-NLS-1$
+                    LOGGER.error("Mouse command: {}", command, e);
                 }
             }
         });
@@ -1711,7 +1711,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                             throw new IllegalArgumentException(command + " not found!"); //$NON-NLS-1$
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Synch command: {}", command, e); //$NON-NLS-1$
+                        LOGGER.error("Synch command: {}", command, e);
                     }
                 }
             }
@@ -1747,10 +1747,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                         } else if (ActionW.ROTATION.cmd().equals(command)) {
                             reset(ResetTools.ROTATION);
                         } else {
-                            LOGGER.warn("Reset command not found: {}", command); //$NON-NLS-1$
+                            LOGGER.warn("Reset command not found: {}", command);
                         }
                     } catch (Exception e) {
-                        LOGGER.error("Reset command: {}", command, e); //$NON-NLS-1$
+                        LOGGER.error("Reset command: {}", command, e);
                     }
                 }
             }

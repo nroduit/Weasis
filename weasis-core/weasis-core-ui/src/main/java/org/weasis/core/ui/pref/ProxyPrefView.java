@@ -162,7 +162,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                 }
             }
         } catch (Exception e) {
-            LOGGER.error("Cannot store the proxy password", e); //$NON-NLS-1$
+            LOGGER.error("Cannot store the proxy password", e);
         }
 
         proxyUser.setText(user);
@@ -387,7 +387,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                 p.putByteArrayProperty(PROXY_AUTH_PWD, null);
             }
         } catch (Exception ex) {
-            LOGGER.error("Cannot store the proxy user", ex); //$NON-NLS-1$
+            LOGGER.error("Cannot store the proxy user", ex);
         }
 
     }

@@ -196,7 +196,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             this.dicomSeries.setSeriesLoader(null);
             DownloadManager.removeLoadSeries(this, dicomModel);
 
-            LOGGER.info("{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}", //$NON-NLS-1$
+            LOGGER.info("{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}",
                 new Object[] { AuditLog.MARKER_PERF, getLoadType(), dicomSeries.getTagValue(dicomSeries.getTagID()),
                     TagD.getTagValue(dicomSeries, Tag.Modality, String.class), getImageNumber(),
                     (long) dicomSeries.getFileSize(), getDownloadTime() });
@@ -325,7 +325,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
         MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
         MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
-        LOGGER.info("Downloading series of {} [{}]", patient, dicomSeries); //$NON-NLS-1$
+        LOGGER.info("Downloading series of {} [{}]", patient, dicomSeries);
 
         WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
         if (wado == null) {
@@ -357,7 +357,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             // Test if SOPInstanceUID already exists
             if (isSOPInstanceUIDExist(study, dicomSeries, instance.getSopInstanceUID())) {
                 incrementProgressBarValue();
-                LOGGER.debug("DICOM instance {} already exists, skip.", instance.getSopInstanceUID()); //$NON-NLS-1$
+                LOGGER.debug("DICOM instance {} already exists, skip.", instance.getSopInstanceUID());
                 continue;
             }
 
@@ -394,7 +394,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             request.append(wado.getAdditionnalParameters());
             String url = request.toString();
 
-            LOGGER.debug("Download DICOM instance {} index {}.", url, k); //$NON-NLS-1$
+            LOGGER.debug("Download DICOM instance {} index {}.", url, k);
             Download ref = new Download(url);
             tasks.add(ref);
         }
@@ -469,7 +469,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             try {
                 file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
             } catch (Exception e) {
-                LOGGER.error("Downloading thumbnail", e); //$NON-NLS-1$
+                LOGGER.error("Downloading thumbnail", e);
             }
         } else {
             String thumURL = null;
@@ -505,7 +505,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                     }
                     file = outFile;
                 } catch (Exception e) {
-                    LOGGER.error("Downloading thumbnail with {}", thumURL, e); //$NON-NLS-1$
+                    LOGGER.error("Downloading thumbnail with {}", thumURL, e);
                 }
             }
         }
@@ -575,8 +575,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + Thumbnail.MAX_SIZE + "&columns=" + Thumbnail.MAX_SIZE + addParams);
 
         ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(url, urlParams);
-        File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
-        LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName()); //$NON-NLS-1$
+        File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR);
+        LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName());
         FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
         if (outFile.length() == 0) {
             throw new IllegalStateException("Thumbnail file is empty");
@@ -673,10 +673,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             } catch (StreamIOException es) {
                 hasError = true; // network issue (allow to retry)
                 error();
-                LOGGER.error("Downloading", es); //$NON-NLS-1$
+                LOGGER.error("Downloading", es);
             } catch (IOException | URISyntaxException e) {
                 error();
-                LOGGER.error("Downloading", e); //$NON-NLS-1$
+                LOGGER.error("Downloading", e);
             }
             return Boolean.TRUE;
         }
@@ -684,8 +684,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         // Solves missing tmp folder problem (on Windows).
         private File getDicomTmpDir() {
             if (!DICOM_TMP_DIR.exists()) {
-                LOGGER.info("DICOM tmp dir not foud. Re-creating it!"); //$NON-NLS-1$
-                AppProperties.buildAccessibleTempDirectory("downloading"); //$NON-NLS-1$
+                LOGGER.info("DICOM tmp dir not foud. Re-creating it!");
+                AppProperties.buildAccessibleTempDirectory("downloading"); //NON-NLS
             }
             return DICOM_TMP_DIR;
         }
@@ -718,10 +718,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
                 if (dicomSeries != null) {
                     if (cache) {
-                        LOGGER.debug("Start to download DICOM instance {} to {}.", url, tempFile.getName()); //$NON-NLS-1$
+                        LOGGER.debug("Start to download DICOM instance {} to {}.", url, tempFile.getName());
                         int bytesTransferred = downloadInFileCache(urlcon, tempFile);
                         if (bytesTransferred == -1) {
-                            LOGGER.info("End of downloading {} ", url); //$NON-NLS-1$
+                            LOGGER.info("End of downloading {} ", url);
                         } else if (bytesTransferred >= 0) {
                             return false;
                         }
@@ -809,7 +809,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             }
 
             if (bytesTransferred == Integer.MIN_VALUE) {
-                LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID"); //$NON-NLS-1$
+                LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID");
                 InputStream stream2 = replaceToDefaultTSUID().getInputStream();
                 if (overrideList == null) {
                     bytesTransferred =
@@ -876,14 +876,14 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 return -1;
             } catch (InterruptedIOException e) {
                 FileUtil.delete(tempFile);
-                LOGGER.error("Interruption when writing file: {}", e.getMessage()); //$NON-NLS-1$
+                LOGGER.error("Interruption when writing file: {}", e.getMessage());
                 return e.bytesTransferred;
             } catch (IOException e) {
                 FileUtil.delete(tempFile);
                 throw new StreamIOException(e);
             } catch (Exception e) {
                 FileUtil.delete(tempFile);
-                LOGGER.error("Writing DICOM temp file", e); //$NON-NLS-1$
+                LOGGER.error("Writing DICOM temp file", e);
                 return 0;
             } finally {
                 SafeClose.close(dos);

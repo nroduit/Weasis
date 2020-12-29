@@ -371,7 +371,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                     }
                 }
             } catch (Exception e) {
-                LOGGER.error("Build histogram", e); //$NON-NLS-1$
+                LOGGER.error("Build histogram", e);
             }
             histView.revalidate();
             histView.repaint();
@@ -389,7 +389,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                 pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(","))); //$NON-NLS-1$
             }
         } catch (FileNotFoundException e) {
-            LOGGER.error("", e); //$NON-NLS-1$
+            LOGGER.error("", e);
         }
     }
 

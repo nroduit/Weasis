@@ -51,7 +51,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Activate
     protected void activate(ComponentContext context) throws Exception {
-        LOGGER.info("DICOM Send is activated"); //$NON-NLS-1$
+        LOGGER.info("DICOM Send is activated");
         FileUtil.readProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
             EXPORT_PERSISTENCE);
@@ -59,7 +59,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("DICOM Send is deactivated"); //$NON-NLS-1$
+        LOGGER.info("DICOM Send is deactivated");
         FileUtil.storeProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
             EXPORT_PERSISTENCE, null);

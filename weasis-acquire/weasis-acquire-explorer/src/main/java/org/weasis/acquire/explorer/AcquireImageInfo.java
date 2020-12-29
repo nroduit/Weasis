@@ -453,7 +453,7 @@ public class AcquireImageInfo {
                     }
                 }
             } catch (ImageProcessingException | IOException e) {
-                LOGGER.error("Error when reading exif tags", e); //$NON-NLS-1$
+                LOGGER.error("Error when reading exif tags", e);
             }
             LocalDateTime dateTime = date == null
                 ? LocalDateTime

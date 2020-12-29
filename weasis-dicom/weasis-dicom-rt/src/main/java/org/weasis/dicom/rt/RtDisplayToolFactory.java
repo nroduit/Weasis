@@ -66,12 +66,12 @@ public class RtDisplayToolFactory implements InsertableFactory {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the RT panel"); //$NON-NLS-1$
+        LOGGER.info("Activate the RT panel");
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the RT panel"); //$NON-NLS-1$
+        LOGGER.info("Deactivate the RT panel");
     }
 
 }

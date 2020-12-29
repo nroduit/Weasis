@@ -116,7 +116,7 @@ public class ModalityView {
         try {
             return Modality.valueOf(name);
         } catch (Exception e) {
-            LOGGER.error("Modality reference of {} is missing", name, e); //$NON-NLS-1$
+            LOGGER.error("Modality reference of {} is missing", name, e);
         }
         return null;
     }
@@ -125,7 +125,7 @@ public class ModalityView {
         try {
             return CornerDisplay.valueOf(name);
         } catch (Exception e) {
-            LOGGER.error("CornerDisplay reference of {} doesn't exist", name, e); //$NON-NLS-1$
+            LOGGER.error("CornerDisplay reference of {} doesn't exist", name, e);
         }
         return null;
     }
@@ -137,7 +137,7 @@ public class ModalityView {
             for (String s : vals) {
                 TagW t = TagW.get(s);
                 if (t == null) {
-                    LOGGER.warn("Cannot find tag \"{}\"", s); //$NON-NLS-1$
+                    LOGGER.warn("Cannot find tag \"{}\"", s);
                 } else {
                     list.add(t);
                 }
@@ -177,7 +177,7 @@ public class ModalityView {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read attributes-view.xml! ", e); //$NON-NLS-1$
+            LOGGER.error("Cannot read attributes-view.xml! ", e);
         } finally {
             FileUtil.safeClose(xmler);
         }
@@ -198,7 +198,7 @@ public class ModalityView {
                                 readModality(data, xmler);
                                 MODALITY_VIEW_MAP.put(m, data);
                             } catch (Exception e) {
-                                LOGGER.error("Modality {} cannot be read from attributes-view.xml", //$NON-NLS-1$
+                                LOGGER.error("Modality {} cannot be read from attributes-view.xml",
                                     name, e);
                             }
                         }

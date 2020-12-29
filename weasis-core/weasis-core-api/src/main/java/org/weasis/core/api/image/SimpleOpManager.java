@@ -90,7 +90,7 @@ public class SimpleOpManager implements OpManager {
             }
             if (k > 2) {
                 action.setName(title);
-                LOGGER.warn("This name already exists, rename to {}.", title); //$NON-NLS-1$
+                LOGGER.warn("This name already exists, rename to {}.", title);
             }
             nodes.put(title, action);
             if (positionRef != null) {
@@ -225,7 +225,7 @@ public class SimpleOpManager implements OpManager {
                         op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Image {} failed", op.getParam(Param.NAME), e); //$NON-NLS-1$
+                    LOGGER.error("Image {} failed", op.getParam(Param.NAME), e);
                     op.setParam(Param.OUTPUT_IMG, op.getParam(Param.INPUT_IMG));
                 }
             }

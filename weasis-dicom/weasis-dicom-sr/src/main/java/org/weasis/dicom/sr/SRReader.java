@@ -253,7 +253,7 @@ public class SRReader {
                                     imgRef.addGraphic(graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                LOGGER.error("Cannot build graphic from SR", e); //$NON-NLS-1$
+                                LOGGER.error("Cannot build graphic from SR", e);
                             }
 
                             html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$

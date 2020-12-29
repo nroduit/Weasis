@@ -109,7 +109,7 @@ public class ZoomToolBar extends WtoolBar {
                          */
                         eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
                             new SynchEvent(null, ActionW.ZOOM.cmd(), -100.0));
-                        AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
+                        AuditLog.LOGGER.info("action:{} val:-100.0", ActionW.ZOOM.cmd());
                     });
                     list.add(realSizeMenu);
                 }
@@ -123,7 +123,7 @@ public class ZoomToolBar extends WtoolBar {
             // otherwise the value is adjusted by the BoundedRangeModel
             eventManager.firePropertyChange(ActionW.SYNCH.cmd(), null,
                 new SynchEvent(null, ActionW.ZOOM.cmd(), -200.0));
-            AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd()); //$NON-NLS-1$
+            AuditLog.LOGGER.info("action:{} val:-200.0", ActionW.ZOOM.cmd());
         });
         list.add(bestFitMenu);
 

@@ -1099,7 +1099,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             // Up to now nothing has to be done in the explorer view about specialModality
             return;
         }
-        LOGGER.info("Add series: {}", series); //$NON-NLS-1$
+        LOGGER.info("Add series: {}", series);
         MediaSeriesGroup study = model.getParent(series, DicomModel.study);
         MediaSeriesGroup patient = model.getParent(series, DicomModel.patient);
         final PatientPane patientPane = createPatientPane(patient);
@@ -1368,10 +1368,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         try {
             result = future.get();
         } catch (InterruptedException e) {
-            LOGGER.warn("Building Series thumbnail task Interruption"); //$NON-NLS-1$
+            LOGGER.warn("Building Series thumbnail task Interruption");
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            LOGGER.error("Building Series thumbnail task", e); //$NON-NLS-1$
+            LOGGER.error("Building Series thumbnail task", e);
         }
         return result;
     }

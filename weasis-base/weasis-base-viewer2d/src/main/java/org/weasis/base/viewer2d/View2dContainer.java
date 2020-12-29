@@ -370,7 +370,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             return buildInstance(Class.forName(clazz));
 
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }
@@ -397,7 +397,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view type", e); //$NON-NLS-1$
+                LOGGER.error("Checking view type", e);
             }
         }
         return false;

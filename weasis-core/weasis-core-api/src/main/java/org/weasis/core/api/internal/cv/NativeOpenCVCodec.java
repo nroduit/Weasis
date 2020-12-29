@@ -91,7 +91,7 @@ public class NativeOpenCVCodec implements Codec {
         // Load the native OpenCV library
         OpenCVNativeLoader loader = new OpenCVNativeLoader();
         loader.init();
-        LOGGER.info("Native OpenCV is activated"); //$NON-NLS-1$
+        LOGGER.info("Native OpenCV is activated");
     }
 
     @Deactivate

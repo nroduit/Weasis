@@ -151,7 +151,7 @@ public class DicomSpecialElement extends MediaElement {
                     out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
                     return true;
                 } catch (IOException e) {
-                    LOGGER.error("Cannot write dicom ({}) into {}", getLabel(), output, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot write dicom ({}) into {}", getLabel(), output, e);
                 }
             }
         }

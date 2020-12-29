@@ -62,7 +62,7 @@ public class BundlePreferences {
                     return context.getService(serviceRef);
                 }
             } catch (Exception e) {
-                LOGGER.error("Cannot get OSGI service from {}", clazz, e); //$NON-NLS-1$
+                LOGGER.error("Cannot get OSGI service from {}", clazz, e);
             }
         }
         return null;
@@ -114,7 +114,7 @@ public class BundlePreferences {
                 try {
                     result = Double.parseDouble(s);
                 } catch (NumberFormatException ignore) {
-                    LOGGER.error("Cannot parse {} into double", s); //$NON-NLS-1$
+                    LOGGER.error("Cannot parse {} into double", s);
                 }
             }
             // Update only if the value is different to avoid setting the changeSet to true
@@ -133,7 +133,7 @@ public class BundlePreferences {
                 try {
                     result = Float.parseFloat(s);
                 } catch (NumberFormatException ignore) {
-                    LOGGER.error("Cannot parse {} into float", s); //$NON-NLS-1$
+                    LOGGER.error("Cannot parse {} into float", s);
                 }
             }
             // Update only if the value is different to avoid setting the changeSet to true
@@ -152,7 +152,7 @@ public class BundlePreferences {
                 try {
                     result = Integer.parseInt(s);
                 } catch (NumberFormatException ignore) {
-                    LOGGER.error("Cannot parse {} into int", s); //$NON-NLS-1$
+                    LOGGER.error("Cannot parse {} into int", s);
                 }
             }
             // Update only if the value is different to avoid setting the changeSet to true
@@ -171,7 +171,7 @@ public class BundlePreferences {
                 try {
                     result = Long.parseLong(s);
                 } catch (NumberFormatException ignore) {
-                    LOGGER.error("Cannot parse {} into long", s); //$NON-NLS-1$
+                    LOGGER.error("Cannot parse {} into long", s);
                 }
             }
             // Update only if the value is different to avoid setting the changeSet to true

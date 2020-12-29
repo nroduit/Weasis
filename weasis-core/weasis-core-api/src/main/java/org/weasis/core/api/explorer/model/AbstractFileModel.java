@@ -167,7 +167,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
                 it.next().dispose();
             }
             removeHierarchyNode(MediaSeriesGroupNode.rootNode, topGroup);
-            LOGGER.info("Remove Group: {}", topGroup); //$NON-NLS-1$
+            LOGGER.info("Remove Group: {}", topGroup);
         }
     }
 
@@ -180,7 +180,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
             MediaSeriesGroup topGroup = getParent(seriesGroup, AbstractFileModel.group);
             removeHierarchyNode(topGroup, seriesGroup);
             seriesGroup.dispose();
-            LOGGER.info("Remove Series/Image: {}", seriesGroup); //$NON-NLS-1$
+            LOGGER.info("Remove Series/Image: {}", seriesGroup);
         }
     }
 

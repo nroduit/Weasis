@@ -212,7 +212,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter implements
         boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
         if (triggerAction && ajusting) {
             stateChanged(model);
-            AuditLog.LOGGER.info("action:{} val:{} min:{} max:{}", //$NON-NLS-1$
+            AuditLog.LOGGER.info("action:{} val:{} min:{} max:{}",
                 basicState.getActionW().cmd(), model.getValue(), model.getMinimum(), model.getMaximum());
         }
 

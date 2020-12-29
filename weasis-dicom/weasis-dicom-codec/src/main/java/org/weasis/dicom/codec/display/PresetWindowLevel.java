@@ -313,7 +313,7 @@ public class PresetWindowLevel {
         }
 
         catch (Exception e) {
-            LOGGER.error("Cannot read presets file! " + e); //$NON-NLS-1$
+            LOGGER.error("Cannot read presets file! " + e);
         } finally {
             FileUtil.safeClose(xmler);
             FileUtil.safeClose(stream);
@@ -348,7 +348,7 @@ public class PresetWindowLevel {
                     }
                     presetList.add(preset);
                 } catch (Exception e) {
-                    LOGGER.error("Preset {} cannot be read from xml file", name, e); //$NON-NLS-1$
+                    LOGGER.error("Preset {} cannot be read from xml file", name, e);
                 }
             }
         }

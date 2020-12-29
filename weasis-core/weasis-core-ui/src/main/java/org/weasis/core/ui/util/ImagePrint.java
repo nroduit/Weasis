@@ -117,13 +117,13 @@ public class ImagePrint implements Printable {
                             // try printing again but ignore the not-accepting-jobs attribute
                             ForcedAcceptPrintService.setupPrintJob(pj); // add secret ingredient
                             pj.print(aset);
-                            LOGGER.info("Bypass Printer is not accepting job"); //$NON-NLS-1$
+                            LOGGER.info("Bypass Printer is not accepting job");
                         } catch (PrinterException ex) {
-                            LOGGER.error("Printer exception", ex); //$NON-NLS-1$
+                            LOGGER.error("Printer exception", ex);
                         }
                     }
                 } else {
-                    LOGGER.error("Print exception", e); //$NON-NLS-1$
+                    LOGGER.error("Print exception", e);
                 }
             }
         }

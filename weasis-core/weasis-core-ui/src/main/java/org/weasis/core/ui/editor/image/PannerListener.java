@@ -65,7 +65,7 @@ public abstract class PannerListener extends MouseActionAdapter implements Actio
         if (point != null) {
             this.point = point;
             pointChanged(point);
-            AuditLog.LOGGER.info("action:{} val:{},{}", //$NON-NLS-1$
+            AuditLog.LOGGER.info("action:{} val:{},{}",
                 new Object[] { getActionW().cmd(), point.getX(), point.getY() });
         }
     }

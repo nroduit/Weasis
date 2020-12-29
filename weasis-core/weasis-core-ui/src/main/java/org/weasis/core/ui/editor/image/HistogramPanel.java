@@ -334,7 +334,7 @@ public class HistogramPanel extends JPanel {
                 pw.println(buf.toString());
             }
         } catch (IOException e) {
-            LOGGER.error("Cannot save histogram values", e); //$NON-NLS-1$
+            LOGGER.error("Cannot save histogram values", e);
         }
     }
 

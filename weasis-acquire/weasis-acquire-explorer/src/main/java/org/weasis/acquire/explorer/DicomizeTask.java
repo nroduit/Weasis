@@ -66,7 +66,7 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
                 publish(imageInfo);
             }
         } catch (Exception ex) {
-            LOGGER.error("Dicomize process", ex); //$NON-NLS-1$
+            LOGGER.error("Dicomize process", ex);
             FileUtil.recursiveDelete(exportDirDicom);
             return null;
         } finally {

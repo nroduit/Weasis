@@ -612,7 +612,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         // frame.setVisible(true);
 
         if (series != null) {
-            AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(), //$NON-NLS-1$
+            AuditLog.LOGGER.info("open:series nb:{} modality:{}", series.getSeriesNumber(),
                 TagD.getTagValue(series, Tag.Modality));
         }
 
@@ -756,7 +756,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     graphicManager.addGraphic(graphic);
                     return true;
                 } catch (InvalidShapeException e) {
-                    LOGGER.error("Building crossline", e); //$NON-NLS-1$
+                    LOGGER.error("Building crossline", e);
                 }
             }
         }
@@ -914,7 +914,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
                 graphicManager.addGraphic(graphic);
             } catch (InvalidShapeException e) {
-                LOGGER.error("Add crosshair line", e); //$NON-NLS-1$
+                LOGGER.error("Add crosshair line", e);
             }
 
         }
@@ -932,7 +932,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 graphicManager.addGraphic(graphic);
 
             } catch (InvalidShapeException e) {
-                LOGGER.error("Add rectangle", e); //$NON-NLS-1$
+                LOGGER.error("Add rectangle", e);
             }
         }
     }
@@ -1299,7 +1299,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable files", e); //$NON-NLS-1$
+                    LOGGER.error("Get dragable files", e);
                 }
                 return dropDicomFiles(files);
             }
@@ -1312,7 +1312,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable URIs", e); //$NON-NLS-1$
+                    LOGGER.error("Get dragable URIs", e);
                 }
                 return dropDicomFiles(files);
             }
@@ -1367,7 +1367,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                     return false;
                 }
             } catch (Exception e) {
-                LOGGER.error("Get dragable series", e); //$NON-NLS-1$
+                LOGGER.error("Get dragable series", e);
                 return false;
             } finally {
                 if (selList != null) {

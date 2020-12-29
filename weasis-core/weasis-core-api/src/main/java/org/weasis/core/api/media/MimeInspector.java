@@ -64,7 +64,7 @@ public class MimeInspector {
             fileStream = MimeInspector.class.getResourceAsStream("/mime-types.properties"); //$NON-NLS-1$
             mimeTypes.load(fileStream);
         } catch (IOException e) {
-            LOGGER.error("Error when reading mime-types", e); //$NON-NLS-1$
+            LOGGER.error("Error when reading mime-types", e);
         } finally {
             FileUtil.safeClose(fileStream);
         }
@@ -75,7 +75,7 @@ public class MimeInspector {
             try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) { 
                 MimeInspector.parse(streamReader);
             } catch (Exception e) {
-                LOGGER.error("Parse magic mime-types", e); //$NON-NLS-1$
+                LOGGER.error("Parse magic mime-types", e);
             }
         }
     }
@@ -97,7 +97,7 @@ public class MimeInspector {
                     return true;
                 }
             } catch (IOException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         }
         return false;
@@ -114,7 +114,7 @@ public class MimeInspector {
                     return true;
                 }
             } catch (IOException e) {
-                LOGGER.error("", e); //$NON-NLS-1$
+                LOGGER.error("", e);
             }
         }
         return false;
@@ -132,7 +132,7 @@ public class MimeInspector {
         try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {//$NON-NLS-1$
             mimeType = MimeInspector.getMagicMimeType(raf);
         } catch (IOException e) {
-            LOGGER.error("Error when getting mime-type", e); //$NON-NLS-1$
+            LOGGER.error("Error when getting mime-type", e);
         }
         return mimeType;
     }
@@ -209,7 +209,7 @@ public class MimeInspector {
             MagicMimeEntry magicEntry = new MagicMimeEntry(aStringArray);
             mMagicMimeEntries.add(magicEntry);
         } catch (InvalidMagicMimeEntryException e) {
-            LOGGER.error("Error when adding mime {}", aStringArray, e); //$NON-NLS-1$
+            LOGGER.error("Error when adding mime {}", aStringArray, e);
         }
     }
 

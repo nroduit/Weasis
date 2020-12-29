@@ -131,7 +131,7 @@ public class ImageRegionStatistics {
                     data.add(new HistogramData(histValues, displut[i], i, colorModel, null, pixMin, pixMax, layer));
                 }
             } catch (Exception e) {
-                LOGGER.error("Build histogram", e); //$NON-NLS-1$
+                LOGGER.error("Build histogram", e);
             }
             return data;
         }

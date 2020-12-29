@@ -75,7 +75,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                     media.setDocument(file);
                     this.add(media);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot extract encapsulated document", e); //$NON-NLS-1$
+                    LOGGER.error("Cannot extract encapsulated document", e);
                 } finally {
                     FileUtil.safeClose(out);
                     FileUtil.safeClose(in);

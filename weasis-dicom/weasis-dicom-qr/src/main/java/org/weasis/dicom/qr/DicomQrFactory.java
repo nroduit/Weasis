@@ -49,7 +49,7 @@ public class DicomQrFactory implements DicomImportFactory {
 
     @Activate
     protected void activate(ComponentContext context) throws Exception {
-        LOGGER.info("DICOM Q/R is activated"); //$NON-NLS-1$
+        LOGGER.info("DICOM Q/R is activated");
         FileUtil.readProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
             IMPORT_PERSISTENCE);
@@ -59,7 +59,7 @@ public class DicomQrFactory implements DicomImportFactory {
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("DICOM Q/R is deactivated"); //$NON-NLS-1$
+        LOGGER.info("DICOM Q/R is deactivated");
         FileUtil.storeProperties(
             new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
             IMPORT_PERSISTENCE, null);

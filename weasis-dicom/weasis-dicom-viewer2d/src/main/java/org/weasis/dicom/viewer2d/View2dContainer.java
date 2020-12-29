@@ -610,7 +610,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 Class<?> clazz = Class.forName(type);
                 return defaultClass.isAssignableFrom(clazz);
             } catch (Exception e) {
-                LOGGER.error("Checking view", e); //$NON-NLS-1$
+                LOGGER.error("Checking view", e);
             }
         }
         return false;
@@ -631,7 +631,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             // FIXME use classloader.loadClass or injection
             return buildInstance(Class.forName(clazz));
         } catch (Exception e) {
-            LOGGER.error("Cannot create {}", clazz, e); //$NON-NLS-1$
+            LOGGER.error("Cannot create {}", clazz, e);
         }
         return null;
     }

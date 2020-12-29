@@ -193,7 +193,7 @@ public class WeasisWinListener implements MainWindowListener {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the main window PropertyChangeListener"); //$NON-NLS-1$
+        LOGGER.info("Activate the main window PropertyChangeListener");
         // Register default model
         ViewerPluginBuilder.DefaultDataModel.addPropertyChangeListener(this);
         mainWindow = BundlePreferences.getService(context.getBundleContext(), WeasisWin.class);
@@ -203,7 +203,7 @@ public class WeasisWinListener implements MainWindowListener {
     protected void deactivate(ComponentContext context) {
         // UnRegister default model
         ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(this);
-        LOGGER.info("Deactivate the main window PropertyChangeListener"); //$NON-NLS-1$
+        LOGGER.info("Deactivate the main window PropertyChangeListener");
     }
 
     @Reference(service = DataExplorerViewFactory.class, cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "removeDataExplorer")
@@ -231,7 +231,7 @@ public class WeasisWinListener implements MainWindowListener {
                     .forEach(v -> v.getToolBar().removeIf(b -> b.getComponent().getAttachedInsertable() == explorer));
 
                 explorer.dispose();
-                LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
+                LOGGER.info("Unregister data explorer Plug-in: {}", explorer.getUIName());
             }
         });
     }
@@ -244,7 +244,7 @@ public class WeasisWinListener implements MainWindowListener {
                 final DockableTool dockable = (DockableTool) explorer;
                 dockable.showDockable();
             }
-            LOGGER.info("Register data explorer Plug-in: {}", explorer.getUIName()); //$NON-NLS-1$
+            LOGGER.info("Register data explorer Plug-in: {}", explorer.getUIName());
         }
     }
 

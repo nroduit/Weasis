@@ -199,7 +199,7 @@ public class WeasisWin {
             }
         } catch (InstanceNotFoundException ignored) {
         } catch (JMException e) {
-            LOGGER.debug("Error while receiving main window", e); //$NON-NLS-1$
+            LOGGER.debug("Error while receiving main window", e);
         }
 
         if (container == null || container instanceof JFrame) {
@@ -683,7 +683,7 @@ public class WeasisWin {
         } else {
             b = new Rectangle(new Point(0, 0), kit.getScreenSize());
         }
-        LOGGER.debug("Max main screen bound: {}", b); //$NON-NLS-1$
+        LOGGER.debug("Max main screen bound: {}", b);
 
         // Do not apply to JApplet
         if (frame == rootPaneContainer) {
@@ -699,7 +699,7 @@ public class WeasisWin {
                 frame.setVisible(true);
             }
         }
-        LOGGER.info("End of loading the GUI..."); //$NON-NLS-1$
+        LOGGER.info("End of loading the GUI...");
     }
 
     private JMenuBar createMenuBar() {
@@ -745,7 +745,7 @@ public class WeasisWin {
             URL url = new URL(ref);
             JMVUtils.openInDefaultBrowser(c, url);
         } catch (MalformedURLException e) {
-            LOGGER.error("Open URL in default browser", e); //$NON-NLS-1$
+            LOGGER.error("Open URL in default browser", e);
         }
     }
 
@@ -1016,7 +1016,7 @@ public class WeasisWin {
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable files", e); //$NON-NLS-1$
+                    LOGGER.error("Get dragable files", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -1029,7 +1029,7 @@ public class WeasisWin {
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Get dragable URIs", e); //$NON-NLS-1$
+                    LOGGER.error("Get dragable URIs", e);
                 }
                 return dropFiles(files, support.getDropLocation());
             }
@@ -1061,7 +1061,7 @@ public class WeasisWin {
                 }
 
             } catch (Exception e) {
-                LOGGER.error("Open series", e); //$NON-NLS-1$
+                LOGGER.error("Open series", e);
                 return false;
             }
             return true;

@@ -79,7 +79,7 @@ public class ImageFiler extends AbstractBufferHandler {
         try (OutputStream os = new FileOutputStream(file)) {
             writeJPG(os, source, quality);
         } catch (OutOfMemoryError | IOException e) {
-            LOGGER.error("", e); //$NON-NLS-1$
+            LOGGER.error("", e);
             return false;
         }
         return true;
@@ -100,7 +100,7 @@ public class ImageFiler extends AbstractBufferHandler {
                 }
             }
         } catch (OutOfMemoryError | IOException e) {
-            LOGGER.error("", e); //$NON-NLS-1$
+            LOGGER.error("", e);
             return false;
         } finally {
             if (writer != null) {

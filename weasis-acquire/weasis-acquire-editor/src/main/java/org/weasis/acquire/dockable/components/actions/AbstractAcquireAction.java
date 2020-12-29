@@ -60,7 +60,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
                 reset(e);
                 break;
             default:
-                LOGGER.warn("Unknown command : " + e.getActionCommand()); //$NON-NLS-1$
+                LOGGER.warn("Unknown command : {}", e.getActionCommand());
                 break;
         }
     }

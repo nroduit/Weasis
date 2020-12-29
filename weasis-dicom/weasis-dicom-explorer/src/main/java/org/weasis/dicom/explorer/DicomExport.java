@@ -108,7 +108,7 @@ public class DicomExport extends AbstractWizardDialog {
                 }
             }
         } catch (InvalidSyntaxException e) {
-            LOGGER.error("Insert DICOM export plugins", e); //$NON-NLS-1$
+            LOGGER.error("Insert DICOM export plugins", e);
         }
 
         InsertableUtil.sortInsertable(list);
@@ -170,14 +170,14 @@ public class DicomExport extends AbstractWizardDialog {
         try {
             object = jScrollPanePage.getViewport().getComponent(0);
         } catch (Exception e) {
-            LOGGER.debug("Failed to extract DICOM export", e); //$NON-NLS-1$
+            LOGGER.debug("Failed to extract DICOM export", e);
         }
         if (object instanceof ExportDicom) {
             final ExportDicom selectedPage = (ExportDicom) object;
             try {
                 selectedPage.exportDICOM(treeModel, null);
             } catch (IOException e) {
-                LOGGER.error("DICOM export failed", e); //$NON-NLS-1$
+                LOGGER.error("DICOM export failed", e);
             }
         }
     }

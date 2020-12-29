@@ -92,7 +92,7 @@ public final class DefaultThumbnailList<E extends MediaElement> extends Abstract
 
             }
         } catch (Exception ex) {
-            LOGGER.error("Build context menu", ex); //$NON-NLS-1$
+            LOGGER.error("Build context menu", ex);
         } finally {
             e.consume();
         }

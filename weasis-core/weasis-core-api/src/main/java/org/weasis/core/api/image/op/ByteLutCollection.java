@@ -150,7 +150,7 @@ public class ByteLutCollection {
                         byte[][] lut = readLutFile(scan);
                         luts.add(new ByteLut(FileUtil.nameWithoutExtension(files[i].getName()), lut));
                     } catch (Exception e) {
-                        LOGGER.error("Reading LUT file {}", files[i], e); //$NON-NLS-1$
+                        LOGGER.error("Reading LUT file {}", files[i], e);
                     }
                 }
             }

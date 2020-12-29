@@ -127,7 +127,7 @@ public class JMVUtils {
             window.setLocation(bound.x + (bound.width - window.getWidth()) / 2,
                 bound.y + (bound.height - window.getHeight()) / 2);
         } catch (Exception e) {
-            LOGGER.error("Cannot center the window to the screen", e); //$NON-NLS-1$
+            LOGGER.error("Cannot center the window to the screen", e);
         }
         window.setVisible(true);
     }
@@ -195,7 +195,7 @@ public class JMVUtils {
                     textField.commitEdit(); // so use it.
                     textField.postActionEvent(); // stop editing //for DefaultCellEditor
                 } catch (java.text.ParseException pe) {
-                    LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe); //$NON-NLS-1$
+                    LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe);
                 }
                 textField.setValue(textField.getValue());
             }
@@ -226,14 +226,14 @@ public class JMVUtils {
                 // to be sure that the value is commit (by default it is when the JFormattedTextField losing the focus)
                 textField.commitEdit();
             } catch (ParseException pe) {
-                LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe); //$NON-NLS-1$
+                LOGGER.error("Exception when commit value in {}", textField.getClass().getName(), pe);
             }
         }
         Number val = null;
         try {
             val = (Number) textField.getValue();
         } catch (Exception e) {
-            LOGGER.error("Cannot get number form textField", e); //$NON-NLS-1$
+            LOGGER.error("Cannot get number form textField", e);
         }
         return val;
     }
@@ -302,7 +302,7 @@ public class JMVUtils {
                     jButtonHelp,
                     new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic)); //$NON-NLS-1$
               } catch (MalformedURLException e1) {
-                LOGGER.error("Cannot open online help", e1); //$NON-NLS-1$
+                LOGGER.error("Cannot open online help", e1);
               }
             });
 
@@ -369,7 +369,7 @@ public class JMVUtils {
                     String cmd = String.format("xdg-open %s", url); //$NON-NLS-1$
                     Runtime.getRuntime().exec(cmd);
                 } catch (IOException e) {
-                    LOGGER.error("Cannot open URL to the system browser", e); //$NON-NLS-1$
+                    LOGGER.error("Cannot open URL to the system browser", e);
                 }
             } else if (Desktop.isDesktopSupported()) {
                 final Desktop desktop = Desktop.getDesktop();
@@ -377,7 +377,7 @@ public class JMVUtils {
                     try {
                         desktop.browse(url.toURI());
                     } catch (IOException | URISyntaxException e) {
-                        LOGGER.error("Cannot open URL to the desktop browser", e); //$NON-NLS-1$
+                        LOGGER.error("Cannot open URL to the desktop browser", e);
                     }
                 }
             } else {

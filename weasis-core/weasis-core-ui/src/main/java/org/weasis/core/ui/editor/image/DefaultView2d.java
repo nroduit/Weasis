@@ -600,8 +600,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         }
                         String pixSize = String.join(",", elements); //$NON-NLS-1$
 
-                        AuditLog.LOGGER.info("open:image size:{},{} depth:{}", //$NON-NLS-1$
-                            new Object[] { image.width(), image.height(), pixSize });
+                        AuditLog.LOGGER.info("open:image size:{},{} depth:{}", image.width(), image.height(), pixSize);
                     }
                 }
             }
@@ -827,7 +826,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         graphicManager.fireGraphicsSelectionChanged(imageLayer);
 
         if (selected && series != null) {
-            AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
+            AuditLog.LOGGER.info("select:series nb:{}", series.getSeriesNumber());
         }
     }
 
@@ -995,7 +994,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         try {
             inverseTransform.setTransform(affineTransform.createInverse());
         } catch (NoninvertibleTransformException e) {
-            LOGGER.error("Create inverse transform", e); //$NON-NLS-1$
+            LOGGER.error("Create inverse transform", e);
         }
     }
 
@@ -1080,14 +1079,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         imgElement = series.getNearestImage(location, tileOffset,
                             (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
 
-                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
+                        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
                     }
                 } else {
                     // When no 3D information on the slice position
                     imgElement = series.getMedia(value.getSeriesIndex() + tileOffset,
                         (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()), getCurrentSortComparator());
 
-                    AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber()); //$NON-NLS-1$
+                    AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
                 }
 
                 Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());

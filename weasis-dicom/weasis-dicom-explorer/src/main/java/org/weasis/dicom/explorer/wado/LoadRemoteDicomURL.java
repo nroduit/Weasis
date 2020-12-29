@@ -48,7 +48,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
                 try {
                     urlRef[i] = new URL(urls[i]);
                 } catch (MalformedURLException e) {
-                    LOGGER.error("Not a valid URL", e); //$NON-NLS-1$
+                    LOGGER.error("Not a valid URL", e);
                 }
             }
         }

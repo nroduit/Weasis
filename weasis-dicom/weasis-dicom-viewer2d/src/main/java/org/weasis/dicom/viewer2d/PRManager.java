@@ -354,7 +354,7 @@ public class PRManager {
                                     AbstractGraphicModel.addGraphicToModel(view, layer, graphic);
                                 }
                             } catch (InvalidShapeException e) {
-                                LOGGER.error("Cannot create graphic: " + e.getMessage(), e); //$NON-NLS-1$
+                                LOGGER.error("Cannot create graphic: " + e.getMessage(), e);
                             }
                         }
                     }
@@ -436,7 +436,7 @@ public class PRManager {
                                     g.setLabel(textLines, view);
                                     AbstractGraphicModel.addGraphicToModel(view, layer, g);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
+                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e);
                                 }
                             } else if (rect != null) {
                                 try {
@@ -449,7 +449,7 @@ public class PRManager {
                                     pt.setShape(null, null);
                                     pt.setLabel(textLines, view, point);
                                 } catch (InvalidShapeException e) {
-                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e); //$NON-NLS-1$
+                                    LOGGER.error("Cannot create annotation: " + e.getMessage(), e);
                                 }
                             }
                         }

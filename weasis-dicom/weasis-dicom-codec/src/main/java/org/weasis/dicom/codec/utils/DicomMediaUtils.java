@@ -202,9 +202,9 @@ public class DicomMediaUtils {
         int[] descriptor = DicomMediaUtils.getIntAyrrayFromDicomElement(dicomLutObject, Tag.LUTDescriptor, null);
 
         if (descriptor == null) {
-            LOGGER.debug("Missing LUT Descriptor"); //$NON-NLS-1$
+            LOGGER.debug("Missing LUT Descriptor");
         } else if (descriptor.length != 3) {
-            LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length); //$NON-NLS-1$
+            LOGGER.debug("Illegal number of LUT Descriptor values \"{}\"", descriptor.length);
         } else {
 
             // First value is the number of entries in the lookup table.
@@ -224,7 +224,7 @@ public class DicomMediaUtils {
             try {
                 bData = dicomLutObject.getBytes(Tag.LUTData);
             } catch (IOException e) {
-                LOGGER.error("Cannot get byte[] of {}", TagUtils.toString(Tag.LUTData), e); //$NON-NLS-1$
+                LOGGER.error("Cannot get byte[] of {}", TagUtils.toString(Tag.LUTData), e);
                 return null;
             }
 
@@ -268,12 +268,12 @@ public class DicomMediaUtils {
 
                 }
             } else {
-                LOGGER.debug("Illegal number of bits for each entry in the LUT Data"); //$NON-NLS-1$
+                LOGGER.debug("Illegal number of bits for each entry in the LUT Data");
             }
 
             if (lookupTable != null) {
                 if (dataLength != numEntries) {
-                    LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ", //$NON-NLS-1$
+                    LOGGER.debug("LUT Data length \"{}\" mismatch number of entries \"{}\" in LUT Descriptor ",
                         dataLength, numEntries);
                 }
                 if (dataLength > (1 << numBits)) {
@@ -418,7 +418,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getFloat(privateCreatorID, tag, defaultValue == null ? 0.0F : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse Float of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -435,7 +435,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getInt(privateCreatorID, tag, defaultValue == null ? 0 : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse Integer of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -452,7 +452,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getDouble(privateCreatorID, tag, defaultValue == null ? 0.0 : defaultValue);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse Double of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -469,7 +469,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getInts(privateCreatorID, tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse int[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -486,7 +486,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getFloats(privateCreatorID, tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse float[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -503,7 +503,7 @@ public class DicomMediaUtils {
         try {
             return dicom.getDoubles(privateCreatorID, tag);
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage()); //$NON-NLS-1$
+            LOGGER.error("Cannot parse double[] of {}: {} ", TagUtils.toString(tag), e.getMessage());
         }
         return defaultValue;
     }
@@ -531,7 +531,7 @@ public class DicomMediaUtils {
             try {
                 result = ByteUtils.bytesToUShortLE(ds.getBytes(tag), 0);
             } catch (IOException e) {
-                LOGGER.error("Cannot read {} ", TagUtils.toString(tag), e); //$NON-NLS-1$
+                LOGGER.error("Cannot read {} ", TagUtils.toString(tag), e);
             }
             if (signed && (result & (1 << (stored - 1))) != 0) {
                 int andmask = (1 << stored) - 1;
@@ -825,7 +825,7 @@ public class DicomMediaUtils {
                 }
 
             } else if (seqParentTag != null) {
-                LOGGER.warn("Cannot apply Modality LUT from {} with inconsistent attributes", //$NON-NLS-1$
+                LOGGER.warn("Cannot apply Modality LUT from {} with inconsistent attributes",
                     TagUtils.toString(seqParentTag));
             }
 
@@ -878,14 +878,14 @@ public class DicomMediaUtils {
 
                 if (tagable.getTagValue(TagW.ModalityLUTData) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
-                        LOGGER.trace("Modality LUT Sequence shall NOT be present if Rescale Intercept is present"); //$NON-NLS-1$
+                        LOGGER.trace("Modality LUT Sequence shall NOT be present if Rescale Intercept is present");
                     }
                     if (TagD.getTagValue(tagable, Tag.ModalityLUTType) == null) {
-                        LOGGER.trace("Modality Type is required if Modality LUT Sequence is present."); //$NON-NLS-1$
+                        LOGGER.trace("Modality Type is required if Modality LUT Sequence is present.");
                     }
                 } else if (TagD.getTagValue(tagable, Tag.RescaleIntercept) != null) {
                     if (TagD.getTagValue(tagable, Tag.RescaleSlope) == null) {
-                        LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present."); //$NON-NLS-1$
+                        LOGGER.debug("Modality Rescale Slope is required if Rescale Intercept is present.");
                     }
                 }
             }
@@ -949,7 +949,7 @@ public class DicomMediaUtils {
                         voiLUTsData[i] = createLut(voiLUTobj);
                         voiLUTsExplanation[i] = getStringFromDicomElement(voiLUTobj, Tag.LUTExplanation);
                     } else {
-                        LOGGER.info("Cannot read VOI LUT Data [{}]", i); //$NON-NLS-1$
+                        LOGGER.info("Cannot read VOI LUT Data [{}]", i);
                     }
                 }
 
@@ -969,11 +969,11 @@ public class DicomMediaUtils {
                 double[] windowWidth = TagD.getTagValue(tagable, Tag.WindowWidth, double[].class);
 
                 if (windowCenter == null && windowWidth != null) {
-                    LOGGER.debug("VOI Window Center is required if Window Width is present"); //$NON-NLS-1$
+                    LOGGER.debug("VOI Window Center is required if Window Width is present");
                 } else if (windowCenter != null && windowWidth == null) {
-                    LOGGER.debug("VOI Window Width is required if Window Center is present"); //$NON-NLS-1$
+                    LOGGER.debug("VOI Window Width is required if Window Center is present");
                 } else if (windowCenter != null && windowWidth.length != windowCenter.length) {
-                    LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} => {}", //$NON-NLS-1$
+                    LOGGER.debug("VOI Window Center and Width attributes have different number of values : {} => {}",
                         windowCenter.length, windowWidth.length);
                 }
             }
@@ -1333,7 +1333,7 @@ public class DicomMediaUtils {
         }
 
         catch (XMLStreamException e) {
-            LOGGER.error("Reading KO Codes", e); //$NON-NLS-1$
+            LOGGER.error("Reading KO Codes", e);
             codeByValue = null;
         } finally {
             FileUtil.safeClose(xmler);

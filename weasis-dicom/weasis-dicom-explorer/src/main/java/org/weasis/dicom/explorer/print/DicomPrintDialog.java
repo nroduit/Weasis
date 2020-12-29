@@ -101,7 +101,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
                 try {
                     return FilmSize.valueOf(val);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot find FilmSize: {}", val, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot find FilmSize: {}", val, e);
                 }
             }
             return defaultValue;

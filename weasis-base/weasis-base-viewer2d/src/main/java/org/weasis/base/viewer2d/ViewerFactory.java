@@ -132,7 +132,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                         val++;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Checking view type", e); //$NON-NLS-1$
+                    LOGGER.error("Checking view type", e);
                 }
             }
         }

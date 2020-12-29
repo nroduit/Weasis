@@ -81,7 +81,7 @@ public class Singleton {
                     siServer = new SingletonServer(id);
                     siServer.start();
                 } catch (Exception e) {
-                    LOGGER.log(Level.SEVERE, "Create a Singleton serveur", e); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Create a Singleton serveur", e);
                     return;
                 }
                 siApp = sia;
@@ -92,7 +92,7 @@ public class Singleton {
 
     public static void stop() {
         if (siApp == null) {
-            LOGGER.log(Level.WARNING, "Singleton.stop() called when not running, id: {0}", stringId); //$NON-NLS-1$
+            LOGGER.log(Level.WARNING, "Singleton.stop() called when not running, id: {0}", stringId);
             return;
         }
 
@@ -112,7 +112,7 @@ public class Singleton {
                     out.flush();
                     serverStarted = false;
                 } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Stopping Singleton server", e); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Stopping Singleton server", e);
                 }
                 return null;
             });
@@ -122,7 +122,7 @@ public class Singleton {
     }
 
     public static boolean running(String id) {
-        LOGGER.log(Level.FINE, "Check if another instance running for id: {0}", id); //$NON-NLS-1$
+        LOGGER.log(Level.FINE, "Check if another instance running for id: {0}", id);
         String[] fList = SI_FILEDIR.list();
         if (fList != null) {
             for (String file : fList) {
@@ -131,7 +131,7 @@ public class Singleton {
                     try {
                         currPort = Integer.parseInt(file.substring(file.lastIndexOf('_') + 1));
                     } catch (NumberFormatException nfe) {
-                        LOGGER.log(Level.SEVERE, "Cannot parse port", nfe); //$NON-NLS-1$
+                        LOGGER.log(Level.SEVERE, "Cannot parse port", nfe);
                         return false;
                     }
 
@@ -140,10 +140,10 @@ public class Singleton {
                     try (BufferedReader br = new BufferedReader(new FileReader(siFile))) {
                         randomNumberString = br.readLine();
                     } catch (IOException ioe) {
-                        LOGGER.log(Level.SEVERE, "Cannot read random numbrer from file {0}", siFile.getPath()); //$NON-NLS-1$
+                        LOGGER.log(Level.SEVERE, "Cannot read random numbrer from file {0}", siFile.getPath());
                     }
                     stringId = id;
-                    LOGGER.log(Level.CONFIG, "Singleton server {0} already running on port {1}", //$NON-NLS-1$
+                    LOGGER.log(Level.CONFIG, "Singleton server {0} already running on port {1}",
                         new Object[] { stringId, currPort });
                     return true;
                 }
@@ -164,10 +164,10 @@ public class Singleton {
      * Returns true if we connect successfully to the server for the stringId
      */
     static boolean connectToServer(ConfigData configData) {
-        LOGGER.log(Level.CONFIG, "Connect to {0} on port {1}", new Object[] { stringId, currPort }); //$NON-NLS-1$
+        LOGGER.log(Level.CONFIG, "Connect to {0} on port {1}", new Object[] { stringId, currPort });
         if (randomNumberString == null) {
             // should not happen
-            LOGGER.log(Level.SEVERE, "MAGIC number is null, cannot connect."); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "MAGIC number is null, cannot connect.");
             return false;
         }
 
@@ -202,14 +202,14 @@ public class Singleton {
             out.flush();
 
             // wait for ACK (OK) response
-            LOGGER.log(Level.FINE, "Waiting for ACK"); //$NON-NLS-1$
+            LOGGER.log(Level.FINE, "Waiting for ACK");
             final int tries = 5;
 
             // try to listen for ACK
             for (int i = 0; i < tries; i++) {
                 String str = br.readLine();
                 if (SI_ACK.equals(str)) {
-                    LOGGER.log(Level.FINE, "Got ACK"); //$NON-NLS-1$
+                    LOGGER.log(Level.FINE, "Got ACK");
                     return true;
                 } else if (SI_EXIT.equals(str)) {
                     File file = getSiFile(stringId, currPort);
@@ -217,11 +217,11 @@ public class Singleton {
                     return false;
                 }
             }
-            LOGGER.log(Level.SEVERE, "No ACK from server"); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "No ACK from server");
         } catch (java.net.SocketException se) {
-            LOGGER.log(Level.SEVERE, "No server is running", se); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "No server is running", se);
         } catch (Exception ioe) {
-            LOGGER.log(Level.SEVERE, "Cannot connect to server", ioe); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot connect to server", ioe);
         }
         return false;
     }
@@ -230,7 +230,7 @@ public class Singleton {
         int loop = 0;
         boolean runLoop = true;
         while (runLoop) {
-            LOGGER.log(Level.INFO, "Wait 100 ms to start a the new instance once the previous has stopped"); //$NON-NLS-1$
+            LOGGER.log(Level.INFO, "Wait 100 ms to start a the new instance once the previous has stopped");
             try {
                 if (!file.exists()) {
                     break;
@@ -238,7 +238,7 @@ public class Singleton {
                 TimeUnit.MILLISECONDS.sleep(100);
                 loop++;
                 if (loop > 300) { // Let 30s max to setup Felix framework
-                    LOGGER.log(Level.SEVERE, "The pid of the singleton still exists. Try to start the new instance."); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "The pid of the singleton still exists. Try to start the new instance.");
                     runLoop = false;
                 }
             } catch (InterruptedException e) {
@@ -304,7 +304,7 @@ public class Singleton {
 
             // get the port number
             port = ss.getLocalPort();
-            LOGGER.log(Level.CONFIG, "Local port of the Singleton server: {0}", port); //$NON-NLS-1$
+            LOGGER.log(Level.CONFIG, "Local port of the Singleton server: {0}", port);
 
             // create the single instance file with canonical home and port num
             createSingletonFile(stringId, port);
@@ -312,7 +312,7 @@ public class Singleton {
 
         private void removeSiFile() {
             File file = getSiFile(stringId, port);
-            LOGGER.log(Level.CONFIG, "Removing SingletonFile: {0}", file); //$NON-NLS-1$
+            LOGGER.log(Level.CONFIG, "Removing SingletonFile: {0}", file);
             FileUtil.delete(file);
         }
 
@@ -324,7 +324,7 @@ public class Singleton {
                 if (fList != null) {
                     for (String file : fList) {
                         if (file.startsWith(id)) {
-                            LOGGER.log(Level.CONFIG, "Remove file with same prefix {0}", file); //$NON-NLS-1$
+                            LOGGER.log(Level.CONFIG, "Remove file with same prefix {0}", file);
                             FileUtil.delete(new File(SI_FILEDIR, file));
                         }
                     }
@@ -336,7 +336,7 @@ public class Singleton {
                     randomNumber = random.nextInt();
                     out.print(randomNumber);
                 } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Cannot add random number to file", e); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Cannot add random number to file", e);
                 }
                 return null;
             });
@@ -356,7 +356,7 @@ public class Singleton {
             } else if (encoding == ENCODING_UNICODE) {
                 return ENCODING_UNICODE_NAME;
             } else {
-                LOGGER.log(Level.SEVERE, "Unknown encoding: {0}", encoding); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "Unknown encoding: {0}", encoding);
                 return null;
             }
         }
@@ -367,16 +367,16 @@ public class Singleton {
                                 InputStream is = s.getInputStream();
                                 InputStreamReader isr = new InputStreamReader(is, getStreamEncoding(is));
                                 BufferedReader in = new BufferedReader(isr);) {
-                    LOGGER.log(Level.FINE, "Singleton server is waiting a connection"); //$NON-NLS-1$
+                    LOGGER.log(Level.FINE, "Singleton server is waiting a connection");
 
                     // First read the random number
                     String line = in.readLine();
                     if (line.equals(String.valueOf(randomNumber))) {
                         line = in.readLine();
 
-                        LOGGER.log(Level.FINE, "Recieve message: {0}", line); //$NON-NLS-1$
+                        LOGGER.log(Level.FINE, "Recieve message: {0}", line);
                         if (SI_MAGICWORD.equals(line)) {
-                            LOGGER.log(Level.FINE, "Got Magic work"); //$NON-NLS-1$
+                            LOGGER.log(Level.FINE, "Got Magic work");
                             List<String> recvArgs = new ArrayList<>();
                             Properties props = new Properties();
                             boolean arg = false;
@@ -400,19 +400,19 @@ public class Singleton {
                                         }
                                     }
                                 } catch (IOException ioe1) {
-                                    LOGGER.log(Level.SEVERE, "Reading singleton lock file", ioe1); //$NON-NLS-1$
+                                    LOGGER.log(Level.SEVERE, "Reading singleton lock file", ioe1);
                                 }
                             }
                             if (siApp.canStartNewActivation(props)) {
                                 siApp.newActivation(recvArgs);
-                                LOGGER.log(Level.FINE, "Sending ACK"); //$NON-NLS-1$
+                                LOGGER.log(Level.FINE, "Sending ACK");
                                 try (OutputStream os = s.getOutputStream();
                                                 PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
                                     ps.println(SI_ACK);
                                     ps.flush();
                                 }
                             } else {
-                                LOGGER.log(Level.FINE, "Sending EXIT"); //$NON-NLS-1$
+                                LOGGER.log(Level.FINE, "Sending EXIT");
                                 try (OutputStream os = s.getOutputStream();
                                                 PrintStream ps = new PrintStream(os, true, isr.getEncoding())) {
                                     ps.println(SI_EXIT);
@@ -431,11 +431,11 @@ public class Singleton {
                         removeSiFile();
                         ss.close();
                         serverStarted = false;
-                        LOGGER.log(Level.SEVERE, "Unexpected error: Singleton {0} disabled", stringId); //$NON-NLS-1$
+                        LOGGER.log(Level.SEVERE, "Unexpected error: Singleton {0} disabled", stringId);
                         return null;
                     }
                 } catch (IOException ex) {
-                    LOGGER.log(Level.SEVERE, "Starting Singleton server", ex); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Starting Singleton server", ex);
                 }
             }
             return null;

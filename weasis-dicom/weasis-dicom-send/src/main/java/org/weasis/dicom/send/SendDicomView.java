@@ -206,7 +206,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
                     showErrorMessage(null, null, state);
                 } else {
-                    LOGGER.info("Dicom send: {}", state.getMessage()); //$NON-NLS-1$
+                    LOGGER.info("Dicom send: {}", state.getMessage());
                 }
             } else if (selectedItem instanceof DicomWebNode) {
                 DicomWebNode destination = (DicomWebNode) selectedItem;
@@ -259,7 +259,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
                     File destinationFile = new File(destinationDir, iuid);
                     if (!img.saveToFile(destinationFile)) {
-                        LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null)); //$NON-NLS-1$
+                        LOGGER.error("Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null));
                     }
                 } else if (node.getUserObject() instanceof MediaElement) {
                     MediaElement dcm = (MediaElement) node.getUserObject();

@@ -167,7 +167,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     try {
                         metaData = ((DicomMediaIO) loader).getStreamMetadata();
                     } catch (IOException e) {
-                        LOGGER.error("Get metadata", e); //$NON-NLS-1$
+                        LOGGER.error("Get metadata", e);
                     }
                     if (metaData != null) {
                         printAttribute(metaData.getFileMetaInformation(), doc);
@@ -180,7 +180,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 doc.remove(0, 1);
             }
         } catch (BadLocationException e) {
-            LOGGER.error("Clear document", e); //$NON-NLS-1$
+            LOGGER.error("Clear document", e);
         }
         oldCaretPosition = oldCaretPosition > doc.getLength() ? doc.getLength() : oldCaretPosition;
         jTextPaneAll.setCaretPosition(oldCaretPosition);
@@ -304,7 +304,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             // clear previous text
             doc.remove(0, doc.getLength());
         } catch (BadLocationException e) {
-            LOGGER.error("Clear document", e); //$NON-NLS-1$
+            LOGGER.error("Clear document", e);
         }
         if (series != null && media != null) {
             Object tagValue = series.getTagValue(TagW.ExplorerModel);
@@ -355,7 +355,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                             break;
                         }
                     } catch (BadLocationException e) {
-                        LOGGER.error("Writing textissue", e); //$NON-NLS-1$
+                        LOGGER.error("Writing textissue", e);
                     }
                 }
             }
@@ -365,7 +365,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 String formatTitle = insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n";
                 doc.insertString(insertTitle, formatTitle, doc.getStyle("title"));  //NON-NLS
             } catch (BadLocationException e) {
-                LOGGER.error("Writing text issue", e); //$NON-NLS-1$
+                LOGGER.error("Writing text issue", e);
             }
         }
     }
@@ -436,7 +436,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
                         textComponent.requestFocusInWindow();
                     } catch (BadLocationException e) {
-                        LOGGER.error("Scroll to highight", e); //$NON-NLS-1$
+                        LOGGER.error("Scroll to highight", e);
                     }
                 }
             });
@@ -509,7 +509,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                         pos += patternUp.length();
                     }
                 } catch (BadLocationException e) {
-                    LOGGER.error("Highight result of search", e); //$NON-NLS-1$
+                    LOGGER.error("Highight result of search", e);
                 }
             }
         }
@@ -543,7 +543,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                     }
                     textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
                 } catch (BadLocationException e) {
-                    LOGGER.error("Highight result of search", e); //$NON-NLS-1$
+                    LOGGER.error("Highight result of search", e);
                 }
             }
         }

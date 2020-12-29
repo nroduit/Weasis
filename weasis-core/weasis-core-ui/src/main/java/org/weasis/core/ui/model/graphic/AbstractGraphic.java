@@ -113,7 +113,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
             initCopy(graphic);
             buildGraphic(ptsList);
         } catch (InvalidShapeException e) {
-            LOGGER.error("Building graphic", e); //$NON-NLS-1$
+            LOGGER.error("Building graphic", e);
         }
     }
 

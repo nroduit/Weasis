@@ -116,7 +116,7 @@ public class NetworkUtil {
                 return applyRedirectionStream(httpURLConnection, headers);
             }
 
-            LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());// $NON-NLS-1$ //$NON-NLS-1$
+            LOGGER.warn("http Status {} - {}", code, httpURLConnection.getResponseMessage());
 
             // Following is only intended LOG more info about Http Server Error
             if (LOGGER.isTraceEnabled()) {
@@ -178,7 +178,7 @@ public class NetworkUtil {
                 }
                 String errorDescription = stringBuilder.toString();
                 if (StringUtil.hasText(errorDescription)) {
-                    LOGGER.trace("HttpURLConnection ERROR, server response: {}", //$NON-NLS-1$
+                    LOGGER.trace("HttpURLConnection ERROR, server response: {}",
                         errorDescription);
                 }
             }

@@ -83,7 +83,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         try {
             return new DataFlavor(mt, prn, Series.class.getClassLoader());
         } catch (Exception e) {
-            LOGGER.error("Build series flavor", e); //$NON-NLS-1$
+            LOGGER.error("Build series flavor", e);
             return null;
         }
     }

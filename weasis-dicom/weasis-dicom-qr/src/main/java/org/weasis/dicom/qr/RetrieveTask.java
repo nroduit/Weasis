@@ -111,7 +111,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         try {
                             url = sopClass.toURI().toURL();
                         } catch (MalformedURLException e) {
-                            LOGGER.error("SOP Class url conversion", e); //$NON-NLS-1$
+                            LOGGER.error("SOP Class url conversion", e);
                         }
                     }
                     state = CGet.process(params, callingNode.getDicomNodeWithOnlyAET(), node.getDicomNode(), progress,
@@ -205,7 +205,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                             xmlFiles.add(tempFile.getPath());
 
                         } catch (Exception e) {
-                            LOGGER.info("ungzip manifest", e); //$NON-NLS-1$
+                            LOGGER.info("ungzip manifest", e);
                         }
 
                         return new LoadRemoteDicomManifest(xmlFiles, explorerDcmModel);
@@ -223,7 +223,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     if (!StringUtil.hasText(errorMessage)) {
                         errorMessage = Messages.getString("RetrieveTask.msg_unexpected_error");
                     }
-                    LOGGER.error("Dicom retrieve error: {}", errorMessage); //$NON-NLS-1$
+                    LOGGER.error("Dicom retrieve error: {}", errorMessage);
                 }
 
                 loadingTask =
@@ -258,10 +258,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 DicomModel.LOADING_EXECUTOR.execute(task);
             }
         } catch (InterruptedException e) {
-            LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
+            LOGGER.warn("Retrieving task Interruption");
             Thread.currentThread().interrupt();
         } catch (ExecutionException e) {
-            LOGGER.error("Retrieving task", e); //$NON-NLS-1$
+            LOGGER.error("Retrieving task", e);
         }
     }
 

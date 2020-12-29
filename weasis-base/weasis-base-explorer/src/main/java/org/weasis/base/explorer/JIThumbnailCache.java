@@ -69,7 +69,7 @@ public final class JIThumbnailCache {
             }
         }
         if (r != null && !queue.remove(r)) {
-            LOGGER.error("Cannot remove thumbnail from the queue"); //$NON-NLS-1$
+            LOGGER.error("Cannot remove thumbnail from the queue");
         }
     }
 
@@ -82,7 +82,7 @@ public final class JIThumbnailCache {
             }
 
         } catch (final Exception e) {
-            LOGGER.error("", e); //$NON-NLS-1$
+            LOGGER.error("", e);
         }
         if (!diskObject.isLoading()) {
             loadThumbnail(diskObject, aThumbnailList, index);

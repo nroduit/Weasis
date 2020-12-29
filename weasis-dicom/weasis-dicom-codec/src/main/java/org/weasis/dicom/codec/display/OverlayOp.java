@@ -96,7 +96,7 @@ public class OverlayOp extends AbstractOp {
                             }
                         }
                     } catch (IOException e) {
-                        LOGGER.error("Applying overlays", e); //$NON-NLS-1$
+                        LOGGER.error("Applying overlays", e);
                     }
                 }
             }

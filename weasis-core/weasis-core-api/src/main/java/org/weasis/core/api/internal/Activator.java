@@ -66,7 +66,7 @@ public class Activator implements BundleActivator, ServiceListener {
         try {
             codec = (Codec) context.getService(sRef);
         } catch (RuntimeException e) {
-            LOGGER.error("Cannot get service of {}", sRef.getBundle(), e); //$NON-NLS-1$
+            LOGGER.error("Cannot get service of {}", sRef.getBundle(), e);
         }
         if (codec == null) {
             return;
@@ -77,7 +77,7 @@ public class Activator implements BundleActivator, ServiceListener {
             registerCodecPlugins(codec);
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
             if (BundleTools.CODEC_PLUGINS.contains(codec)) {
-                LOGGER.info("Unregister Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+                LOGGER.info("Unregister Image Codec Plug-in: {}", codec.getCodecName());
                 BundleTools.CODEC_PLUGINS.remove(codec);
             }
             // Unget service object and null references.
@@ -88,7 +88,7 @@ public class Activator implements BundleActivator, ServiceListener {
     private static void registerCodecPlugins(Codec codec) {
         if (codec != null && !BundleTools.CODEC_PLUGINS.contains(codec)) {
             BundleTools.CODEC_PLUGINS.add(codec);
-            LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName()); //$NON-NLS-1$
+            LOGGER.info("Register Image Codec Plug-in: {}", codec.getCodecName());
         }
     }
 

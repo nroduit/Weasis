@@ -113,7 +113,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             jbInit();
             initialize(true);
         } catch (Exception e) {
-            LOGGER.error("Cannot initialize GeneralSetting", e); //$NON-NLS-1$
+            LOGGER.error("Cannot initialize GeneralSetting", e);
         }
     }
 
@@ -134,7 +134,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
                     UIManager.setLookAndFeel(finalLafClassName);
                     SwingUtilities.updateComponentTreeUI(dialog);
                 } catch (Exception e1) {
-                    LOGGER.error("Can't change look and feel", e1); //$NON-NLS-1$
+                    LOGGER.error("Can't change look and feel", e1);
                 }
             };
             GuiExecutor.instance().execute(runnable);
@@ -403,7 +403,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
                     }
 
                 } catch (Exception e) {
-                    LOGGER.error("Can't change look and feel", e); //$NON-NLS-1$
+                    LOGGER.error("Can't change look and feel", e);
                 }
             };
             GuiExecutor.instance().execute(runnable);
@@ -466,7 +466,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             UIManager.setLookAndFeel(laf);
         } catch (Exception e) {
             laf = UIManager.getSystemLookAndFeelClassName();
-            LOGGER.error("Unable to set the Look&Feel", e); //$NON-NLS-1$
+            LOGGER.error("Unable to set the Look&Feel", e);
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
         setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12));

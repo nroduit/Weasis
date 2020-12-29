@@ -83,7 +83,7 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
                 manifest.append(">"); //$NON-NLS-1$
 
             } catch (Exception e) {
-                LOGGER.error("Cannot write Key Object Selection: ", e); //$NON-NLS-1$
+                LOGGER.error("Cannot write Key Object Selection: ", e);
             }
         }
     }

@@ -67,7 +67,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
         if (point != null) {
             this.point = point;
             pointChanged(point);
-            AuditLog.LOGGER.info("action:{} val:{},{}", //$NON-NLS-1$
+            AuditLog.LOGGER.info("action:{} val:{},{}",
                     new Object[] { basicState.getActionW().cmd(), point.getX(), point.getY() });
         }
     }

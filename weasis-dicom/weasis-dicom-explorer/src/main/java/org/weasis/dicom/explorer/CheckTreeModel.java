@@ -226,7 +226,7 @@ public class CheckTreeModel {
                         }
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Display tooltip", e); //$NON-NLS-1$
+                    LOGGER.error("Display tooltip", e);
                 }
             }
             return null;

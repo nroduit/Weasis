@@ -99,7 +99,7 @@ public enum TransferSyntax {
         try {
             return TransferSyntax.valueOf(tsuid);
         } catch (Exception e) {
-            LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e); //$NON-NLS-1$
+            LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e);
         }
         return NONE;
     }

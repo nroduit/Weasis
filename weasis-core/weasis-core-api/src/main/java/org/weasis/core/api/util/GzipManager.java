@@ -37,7 +37,7 @@ public class GzipManager {
         try (FileOutputStream out = new FileOutputStream(gzipFilename)) {
             return gzipCompress(in, out);
         } catch (IOException e) {
-            LOGGER.error("Cannot gzip compress", e); //$NON-NLS-1$
+            LOGGER.error("Cannot gzip compress", e);
             return false;
         } finally {
             FileUtil.safeClose(in);
@@ -56,7 +56,7 @@ public class GzipManager {
             gzipOut.finish();
             return true;
         } catch (IOException e) {
-            LOGGER.error("Cannot gzip compress", e); //$NON-NLS-1$
+            LOGGER.error("Cannot gzip compress", e);
             return false;
         } finally {
             FileUtil.safeClose(in);

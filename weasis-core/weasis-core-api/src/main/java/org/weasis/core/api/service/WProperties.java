@@ -209,7 +209,7 @@ public class WProperties extends Properties {
                 }
                 this.put(key, val);
             } catch (IOException e) {
-                LOGGER.error("Set byte property", e); //$NON-NLS-1$
+                LOGGER.error("Set byte property", e);
             }
         }
     }
@@ -222,7 +222,7 @@ public class WProperties extends Properties {
                 try {
                     result = GzipManager.gzipUncompressToByte(Base64.getDecoder().decode(value.getBytes()));
                 } catch (IOException e) {
-                    LOGGER.error("Get byte property", e); //$NON-NLS-1$
+                    LOGGER.error("Get byte property", e);
                 }
             }
         }
@@ -252,7 +252,7 @@ public class WProperties extends Properties {
                 intValue |= Integer.parseInt(hexColor, 16);
             }
         } catch (NumberFormatException e) {
-            LOGGER.error("Cannot parse color {} into int", hexColor); //$NON-NLS-1$
+            LOGGER.error("Cannot parse color {} into int", hexColor);
         }
         return new Color(intValue, true);
     }

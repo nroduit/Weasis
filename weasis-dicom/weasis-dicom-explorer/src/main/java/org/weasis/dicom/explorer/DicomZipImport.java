@@ -116,7 +116,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             try {
                 FileUtil.unzip(file, dir);
             } catch (IOException e) {
-                LOGGER.error("unzipping", e); //$NON-NLS-1$
+                LOGGER.error("unzipping", e);
             }
             File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
             if (dicomdir.canRead()) {
@@ -125,7 +125,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                 if (loadSeries != null && !loadSeries.isEmpty()) {
                     DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
                 } else {
-                    LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
+                    LOGGER.error("Cannot import DICOM from {}", file);
                 }
             } else {
                 LoadLocalDicom dicom = new LoadLocalDicom(new File[] { dir }, true, dicomModel);
@@ -148,7 +148,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
                     FileUtil.writeStreamWithIOException(urlConnection.getInputStream(), tempFile);
                 }
             } catch (Exception e) {
-                LOGGER.error("Loading DICOM Zip", e); //$NON-NLS-1$
+                LOGGER.error("Loading DICOM Zip", e);
             }
             loadDicomZip(tempFile, dicomModel);
         }

@@ -265,12 +265,12 @@ public class DicomSeries extends Series<DicomImageElement> {
                     try {
                         img.getImage();
                     } catch (OutOfMemoryError e) {
-                        LOGGER.error("Out of memory when loading image: {}", img, e); //$NON-NLS-1$
+                        LOGGER.error("Out of memory when loading image: {}", img, e);
                         CvUtil.runGarbageCollectorAndWait(50);
                         return;
                     }
                     long stop = System.currentTimeMillis();
-                    LOGGER.debug("Reading time: {} ms of image: {}", stop - start, img); //$NON-NLS-1$
+                    LOGGER.debug("Reading time: {} ms of image: {}", stop - start, img);
                     if (model != null) {
                         model.firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.ADD, model, null,
                             new SeriesEvent(SeriesEvent.Action.PRELOADING, series, img)));

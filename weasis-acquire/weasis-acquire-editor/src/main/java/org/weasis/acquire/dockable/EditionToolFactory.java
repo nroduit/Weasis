@@ -111,12 +111,12 @@ public class EditionToolFactory implements InsertableFactory {
 
     @Activate
     protected void activate(ComponentContext context) {
-        LOGGER.info("Activate the TransformationTool panel"); //$NON-NLS-1$
+        LOGGER.info("Activate the TransformationTool panel");
     }
 
     @Deactivate
     protected void deactivate(ComponentContext context) {
-        LOGGER.info("Deactivate the TransformationTool panel"); //$NON-NLS-1$
+        LOGGER.info("Deactivate the TransformationTool panel");
     }
 
 }

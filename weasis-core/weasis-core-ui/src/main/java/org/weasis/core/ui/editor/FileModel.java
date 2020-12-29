@@ -42,11 +42,11 @@ public class FileModel extends AbstractFileModel {
         File outFile = null;
         try (ClosableURLConnection http = NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
                         InputStream in = http.getInputStream()) {
-            outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR); // $NON-NLS-2$ //$NON-NLS-1$
-            LOGGER.debug("Start to download image {} to {}.", url, outFile.getName()); //$NON-NLS-1$
+            outFile = File.createTempFile("img_", FileUtil.getExtension(url), IMAGE_CACHE_DIR);
+            LOGGER.debug("Start to download image {} to {}.", url, outFile.getName());
             FileUtil.writeStreamWithIOException(in, outFile);
         } catch (IOException e) {
-            LOGGER.error("Dowloading image", e); //$NON-NLS-1$
+            LOGGER.error("Dowloading image", e);
             return null;
         }
         return outFile;

@@ -84,16 +84,16 @@ public class AcquirePublishPanel extends JPanel {
                     SwingWorker<DicomState, File> publishDicomTask = (SwingWorker<DicomState, File>) evt.getSource();
                     final DicomState dicomState = publishDicomTask.get();
                     if (dicomState.getStatus() != Status.Success && dicomState.getStatus() != Status.Cancel) {
-                        LOGGER.error("Dicom send error: {}", dicomState.getMessage()); //$NON-NLS-1$
+                        LOGGER.error("Dicom send error: {}", dicomState.getMessage());
                         JOptionPane.showMessageDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
                             dicomState.getMessage(), null,
                             JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (InterruptedException e) {
-                    LOGGER.warn("Retrieving task Interruption"); //$NON-NLS-1$
+                    LOGGER.warn("Retrieving task Interruption");
                     Thread.currentThread().interrupt();
                 } catch (ExecutionException e) {
-                    LOGGER.error("Retrieving task", e); //$NON-NLS-1$
+                    LOGGER.error("Retrieving task", e);
                 }
                 publishBtn.setEnabled(true);
                 progressBar.setVisible(false);

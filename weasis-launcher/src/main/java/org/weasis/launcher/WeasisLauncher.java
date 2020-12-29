@@ -215,7 +215,7 @@ public class WeasisLauncher {
                     null, JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null, null, null);
 
                 if (response != 0) {
-                    LOGGER.log(Level.SEVERE, "Do not continue the launch with the local version"); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Do not continue the launch with the local version");
                     System.exit(-1);
                 }
             });
@@ -261,7 +261,7 @@ public class WeasisLauncher {
 
             String logActivatation = serverProp.get("org.apache.sling.commons.log.file"); //$NON-NLS-1$
             if (Utils.hasText(logActivatation)) {
-                LOGGER.log(Level.INFO, "Logs has been delegated to the OSGI service and can be read in {0}", //$NON-NLS-1$
+                LOGGER.log(Level.INFO, "Logs has been delegated to the OSGI service and can be read in {0}",
                     logActivatation);
             }
 
@@ -277,11 +277,11 @@ public class WeasisLauncher {
             System.exit(0);
         } catch (Throwable ex) {
             exitStatus = -1;
-            LOGGER.log(Level.SEVERE, "Cannot not start framework.", ex); //$NON-NLS-1$
-            LOGGER.log(Level.SEVERE, "Weasis cache will be cleaned at next launch."); //$NON-NLS-1$
-            LOGGER.log(Level.SEVERE, "State of the framework:"); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot not start framework.", ex);
+            LOGGER.log(Level.SEVERE, "Weasis cache will be cleaned at next launch.");
+            LOGGER.log(Level.SEVERE, "State of the framework:");
             for (Bundle b : mFelix.getBundleContext().getBundles()) {
-                LOGGER.log(Level.SEVERE, " * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                LOGGER.log(Level.SEVERE, " * " + b.getSymbolicName() + "-" + b.getVersion().toString() + " "
                     + State.valueOf(b.getState()));
             }
             resetBundleCache();
@@ -423,7 +423,7 @@ public class WeasisLauncher {
                             System.getProperty(P_WEASIS_SOURCE_ID) + ".properties"); //$NON-NLS-1$
                         // delete the properties file to ask again
                         FileUtil.delete(file);
-                        LOGGER.log(Level.SEVERE, "Refusing the disclaimer"); //$NON-NLS-1$
+                        LOGGER.log(Level.SEVERE, "Refusing the disclaimer");
                         System.exit(-1);
                     }
                 });
@@ -446,7 +446,7 @@ public class WeasisLauncher {
                         System.setProperty(P_WEASIS_VERSION_RELEASE, vNew.toString());
                     }
                 } catch (Exception e2) {
-                    LOGGER.log(Level.SEVERE, "Cannot read version", e2); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Cannot read version", e2);
                     return;
                 }
                 final String releaseNotesUrl = serverProp.get("weasis.releasenotes"); //$NON-NLS-1$
@@ -477,7 +477,7 @@ public class WeasisLauncher {
                                     String cmd = String.format("xdg-open %s", e.getURL()); //$NON-NLS-1$
                                     Runtime.getRuntime().exec(cmd);
                                 } catch (IOException e1) {
-                                    LOGGER.log(Level.SEVERE, "Unable to launch the WEB browser"); //$NON-NLS-1$
+                                    LOGGER.log(Level.SEVERE, "Unable to launch the WEB browser");
                                 }
                             } else if (Desktop.isDesktopSupported()) {
                                 final Desktop desktop = Desktop.getDesktop();
@@ -486,7 +486,7 @@ public class WeasisLauncher {
                                         desktop.browse(e.getURL().toURI());
 
                                     } catch (Exception ex) {
-                                        LOGGER.log(Level.SEVERE, "Unable to launch the WEB browser"); //$NON-NLS-1$
+                                        LOGGER.log(Level.SEVERE, "Unable to launch the WEB browser");
                                     }
                                 }
                             }
@@ -534,7 +534,7 @@ public class WeasisLauncher {
             // Since the services returned by the tracker could become
             // invalid at any moment, we will catch all exceptions, log
             // a message, and then ignore faulty services.
-            LOGGER.log(Level.SEVERE, "Create a command session", ex); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Create a command session", ex);
         }
 
         return null;
@@ -568,7 +568,7 @@ public class WeasisLauncher {
             });
             nameMethod.invoke(commandProcessor, listener);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Add command session listener", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Add command session listener", e);
         }
     }
 
@@ -586,7 +586,7 @@ public class WeasisLauncher {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Init command session", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Init command session", e);
         }
         return false;
     }
@@ -603,7 +603,7 @@ public class WeasisLauncher {
             Method nameMethod = commandSession.getClass().getMethod("get", parameterTypes); //$NON-NLS-1$
             return nameMethod.invoke(commandSession, arguments);
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Invoke a command", ex); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Invoke a command", ex);
         }
 
         return null;
@@ -618,7 +618,7 @@ public class WeasisLauncher {
             nameMethod.invoke(commandSession);
             return true;
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Close command session", ex); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Close command session", ex);
         }
 
         return false;
@@ -636,7 +636,7 @@ public class WeasisLauncher {
             Method nameMethod = commandSession.getClass().getMethod("execute", parameterTypes); //$NON-NLS-1$
             return nameMethod.invoke(commandSession, arguments);
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, "Execute command", ex); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Execute command", ex);
         }
 
         return null;
@@ -650,7 +650,7 @@ public class WeasisLauncher {
         try (InputStream is = FileUtil.getAdaptedConnection(propURI.toURL(), false).getInputStream()) {
             props.load(is);
         } catch (Exception ex) {
-            LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot read properties file: %s", propURI)); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, ex, () -> String.format("Cannot read properties file: %s", propURI)); // NON-NLS
         }
     }
 
@@ -673,7 +673,7 @@ public class WeasisLauncher {
             serverProp.put(key, value);
             serverProp.put("def." + key, defaultVal); //$NON-NLS-1$
         }
-        LOGGER.log(Level.CONFIG, "Config of {0} = {1}", new Object[] { key, value }); //$NON-NLS-1$
+        LOGGER.log(Level.CONFIG, "Config of {0} = {1}", new Object[] { key, value });
         return value;
     }
 
@@ -697,7 +697,7 @@ public class WeasisLauncher {
             prefDir.mkdirs();
         } catch (Exception e) {
             prefDir = new File(dir);
-            LOGGER.log(Level.SEVERE, "Cannot create preferences folders", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot create preferences folders", e);
         }
         localPrefsDir = prefDir.getPath();
         serverProp.put("weasis.pref.dir", prefDir.getPath()); //$NON-NLS-1$
@@ -837,11 +837,11 @@ public class WeasisLauncher {
                     mainFrame.setRootPaneContainer(new JFrame());
                     ManagementFactory.getPlatformMBeanServer().registerMBean(mainFrame, objectName2);
                 } catch (Exception e1) {
-                    LOGGER.log(Level.SEVERE, "Cannot register the main frame", e1); //$NON-NLS-1$
+                    LOGGER.log(Level.SEVERE, "Cannot register the main frame", e1);
                 }
             });
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel {0}", look); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel {0}", look);
         }
         currentProps.put(P_WEASIS_LOOK, look);
 
@@ -879,7 +879,7 @@ public class WeasisLauncher {
             }
         } catch (Exception e) {
             cacheDir = null;
-            LOGGER.log(Level.SEVERE, "Loads the resource folder", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Loads the resource folder", e);
         }
 
         if (cacheDir == null) {
@@ -921,13 +921,13 @@ public class WeasisLauncher {
             serverProp.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
             localSourceProp.remove(P_WEASIS_CLEAN_CACHE);
             update = true;
-            LOGGER.log(Level.INFO, "Clean plug-in cache because Weasis has crashed during the previous launch"); //$NON-NLS-1$
+            LOGGER.log(Level.INFO, "Clean plug-in cache because Weasis has crashed during the previous launch");
         }
         // Clean cache when version has changed
         else if (cleanCache && versionNew != null && !versionNew.equals(versionOld)) {
-            LOGGER.log(Level.INFO, "Clean previous Weasis version: {0}", versionOld); //$NON-NLS-1$
+            LOGGER.log(Level.INFO, "Clean previous Weasis version: {0}", versionOld);
             serverProp.put(Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
-            LOGGER.log(Level.INFO, "Clean plug-in cache because the version has changed"); //$NON-NLS-1$
+            LOGGER.log(Level.INFO, "Clean plug-in cache because the version has changed");
         }
 
         if (update) {
@@ -1030,7 +1030,7 @@ public class WeasisLauncher {
                 System.setProperty("weasis.languages", modulesi18n.getProperty("languages", "")); // NON-NLS
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Cannot load translation modules", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot load translation modules", e);
         }
     }
 
@@ -1048,7 +1048,7 @@ public class WeasisLauncher {
         try {
             UIManager.setLookAndFeel(laf);
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
             laf = UIManager.getSystemLookAndFeelClassName();
         }
         // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
@@ -1123,9 +1123,9 @@ public class WeasisLauncher {
             Class.forName("sun.misc.SignalHandler"); //$NON-NLS-1$
             sun.misc.Signal.handle(new sun.misc.Signal("TERM"), signal -> shutdownHook()); //$NON-NLS-1$
         } catch (IllegalArgumentException e) {
-            LOGGER.log(Level.SEVERE, "Register shutdownHook", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Register shutdownHook", e);
         } catch (ClassNotFoundException e) {
-            LOGGER.log(Level.SEVERE, "Cannot find sun.misc.Signal for shutdown hook exstension", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Cannot find sun.misc.Signal for shutdown hook exstension", e);
         }
     }
 
@@ -1159,7 +1159,7 @@ public class WeasisLauncher {
                     }
                 }
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "JWS shutdownHook", e); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "JWS shutdownHook", e);
             }
         }
     }

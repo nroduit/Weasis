@@ -83,7 +83,7 @@ public class RectifyAction extends AbstractAcquireAction {
                 double viewportHeight = view.getJComponent().getHeight() - 1.0;
                 view.zoom(Math.min(viewportWidth / modelArea.getWidth(), viewportHeight / modelArea.getHeight()));
             } catch (InvalidShapeException e) {
-                LOGGER.error("Build crop graphic", e); //$NON-NLS-1$
+                LOGGER.error("Build crop graphic", e);
             }
         }
     }

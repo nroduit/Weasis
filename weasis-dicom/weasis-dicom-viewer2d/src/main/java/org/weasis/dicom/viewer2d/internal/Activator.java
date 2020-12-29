@@ -65,7 +65,7 @@ public class Activator implements BundleActivator, ServiceListener {
             bundleContext.addServiceListener(Activator.this, "(" + Constants.OBJECTCLASS + "="
                 + InsertableFactory.class.getName() + ")"); 
         } catch (InvalidSyntaxException e) {
-            LOGGER.error("Add service listener", e); //$NON-NLS-1$
+            LOGGER.error("Add service listener", e);
         }
     }
 
@@ -122,7 +122,7 @@ public class Activator implements BundleActivator, ServiceListener {
                 }
             }
         } catch (InvalidSyntaxException e1) {
-            LOGGER.error("Register tool and toolbar", e1); //$NON-NLS-1$
+            LOGGER.error("Register tool and toolbar", e1);
         }
     }
 
@@ -143,7 +143,7 @@ public class Activator implements BundleActivator, ServiceListener {
             Toolbar bar = (Toolbar) instance;
             View2dContainer.TOOLBARS.add(bar);
             updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
-            LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName()); //$NON-NLS-1$
+            LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
         }
     }
 
@@ -155,7 +155,7 @@ public class Activator implements BundleActivator, ServiceListener {
             if (view instanceof View2dContainer) {
                 tool.showDockable();
             }
-            LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName()); //$NON-NLS-1$
+            LOGGER.debug("Add Tool [{}] for {}", tool, View2dContainer.class.getName());
         }
     }
 

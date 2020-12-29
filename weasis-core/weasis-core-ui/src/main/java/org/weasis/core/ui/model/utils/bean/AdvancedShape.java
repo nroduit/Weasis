@@ -314,7 +314,7 @@ public class AdvancedShape implements Shape {
                 }
 
             } catch (Exception e) {
-                LOGGER.error("This shape cannot be drawn, the graphic is deleted.", e); //$NON-NLS-1$
+                LOGGER.error("This shape cannot be drawn, the graphic is deleted.", e);
                 graphic.fireRemoveAction();
             }
             if (strokedArea != null) {

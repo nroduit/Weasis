@@ -76,7 +76,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
                 }
             }
         } catch (InvalidSyntaxException e) {
-            LOGGER.error("Get Preference pages from service", e); //$NON-NLS-1$
+            LOGGER.error("Get Preference pages from service", e);
         }
 
         InsertableUtil.sortInsertable(list);

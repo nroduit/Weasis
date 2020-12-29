@@ -148,7 +148,7 @@ public class ImageCVIO implements MediaReader {
     private PlanarImage readImageIOImage(File file) throws IOException {
         ImageReader reader = getDefaultReader(mimeType);
         if (reader == null) {
-            LOGGER.info("Cannot find a reader for the mime type: {}", mimeType); //$NON-NLS-1$
+            LOGGER.info("Cannot find a reader for the mime type: {}", mimeType);
             return null;
         }
 
@@ -371,7 +371,7 @@ public class ImageCVIO implements MediaReader {
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);
-                LOGGER.error("Uncompress temporary image", e); //$NON-NLS-1$
+                LOGGER.error("Uncompress temporary image", e);
             }
         }
         return null;

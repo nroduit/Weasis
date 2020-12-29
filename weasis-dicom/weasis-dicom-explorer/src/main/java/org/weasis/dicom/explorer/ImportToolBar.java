@@ -73,7 +73,7 @@ public class ImportToolBar extends WtoolBar {
             if (loadSeries != null && !loadSeries.isEmpty()) {
                 DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model));
             } else {
-                LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
+                LOGGER.error("Cannot import DICOM from {}", file);
 
                 int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(parent),
                     Messages.getString("DicomExplorer.mes_import_manual"),

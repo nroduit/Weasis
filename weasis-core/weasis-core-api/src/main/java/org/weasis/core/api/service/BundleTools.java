@@ -81,7 +81,7 @@ public class BundleTools {
             try {
                 propsFile.createNewFile();
             } catch (IOException e) {
-                LOGGER.error("Cannot write {}", propsFile.getPath(), e); //$NON-NLS-1$
+                LOGGER.error("Cannot write {}", propsFile.getPath(), e);
             }
         }
         String code = BundleTools.SYSTEM_PREFERENCES.getProperty(BundleTools.P_FORMAT_CODE);
@@ -151,7 +151,7 @@ public class BundleTools {
                 try {
                     storeLauncherPref(SYSTEM_PREFERENCES, remotePrefURL);
                 } catch (Exception e) {
-                    LOGGER.error("Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e); //$NON-NLS-1$
+                    LOGGER.error("Cannot store Launcher preference for user: {}", AppProperties.WEASIS_USER, e);
                 }
             }
             INIT_SYSTEM_PREFERENCES.clear();

@@ -35,7 +35,7 @@ public abstract class ComboItemListener<T> extends BasicActionState implements L
     public void contentsChanged(ListDataEvent e) {
         Object val = model.getSelectedItem();
         itemStateChanged(val);
-        AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val); //$NON-NLS-1$
+        AuditLog.LOGGER.info("action:{} val:{}", action.cmd(), val);
     }
 
     @Override

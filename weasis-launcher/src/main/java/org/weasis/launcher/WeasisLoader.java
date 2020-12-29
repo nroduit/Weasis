@@ -205,7 +205,7 @@ public class WeasisLoader {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (InvocationTargetException e) {
-            LOGGER.log(Level.SEVERE, "Display splashscreen", e); //$NON-NLS-1$
+            LOGGER.log(Level.SEVERE, "Display splashscreen", e);
         }
     }
 
@@ -238,7 +238,7 @@ public class WeasisLoader {
 
                 container.setLocation(x, y);
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Set splashscreen location", e); //$NON-NLS-1$
+                LOGGER.log(Level.SEVERE, "Set splashscreen location", e);
             }
             container.setVisible(true);
         }

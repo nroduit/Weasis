@@ -123,7 +123,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                 try {
                     files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
                 } catch (Exception e) {
-                    LOGGER.error("Drop image file", e); //$NON-NLS-1$
+                    LOGGER.error("Drop image file", e);
                 }
                 return dropDFiles(files);
             }
@@ -136,7 +136,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     String val = (String) transferable.getTransferData(UriListFlavor.flavor);
                     files = UriListFlavor.textURIListToFileList(val);
                 } catch (Exception e) {
-                    LOGGER.error("Drop image URI", e); //$NON-NLS-1$
+                    LOGGER.error("Drop image URI", e);
                 }
                 return dropDFiles(files);
             }
@@ -149,7 +149,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
                     addToSerie(media);
                 }
             } catch (UnsupportedFlavorException | IOException e) {
-                LOGGER.error("Drop thumnail", e); //$NON-NLS-1$
+                LOGGER.error("Drop thumnail", e);
             }
 
             return true;

@@ -139,7 +139,7 @@ public class View2dFactory implements SeriesViewerFactory {
                         val++;
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Checking view", e); //$NON-NLS-1$
+                    LOGGER.error("Checking view", e);
                 }
             }
         }
