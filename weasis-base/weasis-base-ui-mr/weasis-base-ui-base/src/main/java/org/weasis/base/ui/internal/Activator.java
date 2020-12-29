@@ -15,12 +15,11 @@ import java.util.Hashtable;
 import javax.swing.LookAndFeel;
 
 import org.apache.felix.service.command.CommandProcessor;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.FrameworkUtil;
+import org.osgi.annotation.bundle.Header;
+import org.osgi.framework.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.base.ui.gui.MainWindowListener;
 import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
@@ -29,6 +28,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.pref.GeneralSetting;
 
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator {
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 

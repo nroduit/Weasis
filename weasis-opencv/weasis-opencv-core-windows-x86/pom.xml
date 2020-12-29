@@ -9,22 +9,42 @@
     <relativePath>../pom.xml</relativePath>
   </parent>
   <modelVersion>4.0.0</modelVersion>
-  <packaging>bundle</packaging>
+  <packaging>jar</packaging>
   <artifactId>weasis-opencv-core-windows-x86</artifactId>
   <name>OpenCV native Windows x86</name>
   <version>${weasis.opencv.native.version}</version>
   <properties>
-    <bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-    <native.configuration>lib/opencv_java.dll; processor=x86; osname=win32</native.configuration>
+    <native.configuration>opencv_java.dll; processor=x86; osname=win32</native.configuration>
   </properties>
-  <dependencies>
-    <dependency>
-      <groupId>org.weasis.thirdparty.org.opencv</groupId>
-      <artifactId>opencv_java</artifactId>
-      <version>${weasis.opencv.native.version}</version>
-      <type>dll</type>
-      <classifier>windows-x86</classifier>
-      <scope>compile</scope>
-    </dependency>
-  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependency</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.weasis.thirdparty.org.opencv</groupId>
+                  <artifactId>opencv_java</artifactId>
+                  <version>${weasis.opencv.native.version}</version>
+                  <type>dll</type>
+                  <classifier>windows-x86</classifier>
+                  <overWrite>true</overWrite>
+                  <outputDirectory>target/classes</outputDirectory>
+                  <destFileName>opencv_java.dll</destFileName>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

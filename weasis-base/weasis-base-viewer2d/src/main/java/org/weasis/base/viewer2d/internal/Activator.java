@@ -12,6 +12,7 @@ package org.weasis.base.viewer2d.internal;
 import java.util.Arrays;
 import java.util.List;
 
+import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
@@ -41,6 +42,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
 
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator, ServiceListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);

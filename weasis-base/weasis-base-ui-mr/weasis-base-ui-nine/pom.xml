@@ -18,6 +18,15 @@
 		<maven.install.skip>true</maven.install.skip>
 	</properties>
 
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.weasis.base</groupId>

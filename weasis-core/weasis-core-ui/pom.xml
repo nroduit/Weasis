@@ -10,33 +10,23 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-core-ui</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
-
-	<properties>
-		<bundle.namespace>org.weasis.core.ui</bundle.namespace>
-	</properties>
 
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
-					<instructions>
-						<!-- Force to import jaxb binding classes (supports jaxb inside or outside jdk) -->
-						<Import-Package>com.sun.xml.internal.bind;resolution:=optional,
-							javax.xml.bind;version=!,
-							javax.xml.bind.annotation;version=!,
-							javax.xml.bind.annotation.adapters;version=!,
-							com.sun.xml.bind.v2;resolution:=optional,
-							!sun.swing,*</Import-Package>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<!-- add for Xchart: ,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.* -->
-						<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,org.knowm.xchart.*,org.knowm.xchart.style.*,org.knowm.xchart.style.colors.*,org.knowm.xchart.style.lines.*,org.knowm.xchart.style.markers.*,de.erichseifert.*</Export-Package>
-						<!-- Import only classes, will exclude *.RSA and *.SF files to avoid invalid signature issue. -->
-						<Embed-Dependency>*;scope=compile;inline=org.**|it.**</Embed-Dependency>
-					</instructions>
+					<bnd>
+						Import-Package: com.sun.xml.internal.bind;resolution:=optional,javax.xml.bind;version=!,\
+						javax.xml.bind.annotation;version=!,javax.xml.bind.annotation.adapters;version=!,\
+						com.sun.xml.bind.v2;resolution:=optional,!sun.swing,*
+						Export-Package: !org.weasis.core.ui.internal,org.weasis.core.ui.*,it.cnr.imaa.*,\
+						org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,\
+						org.knowm.xchart.*,de.erichseifert.*
+					</bnd>
 				</configuration>
 			</plugin>
 		</plugins>

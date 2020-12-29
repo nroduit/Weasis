@@ -10,12 +10,8 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-explorer</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>DICOM Data Explorer [${project.artifactId}]</name>
-
-	<properties>
-		<bundle.namespace>org.weasis.dicom.explorer</bundle.namespace>
-	</properties>
 
 	<build>
 		<plugins>
@@ -24,14 +20,13 @@
 				<artifactId>maven-scr-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
-					<instructions>
-						<!-- Force to import jaxb binding classes (supports jaxb inside or outside jdk) -->
-						<Import-Package>javax.xml.bind;version=!,*</Import-Package>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-					</instructions>
+					<bnd>
+						Import-Package: javax.xml.bind;version=!,*
+						Export-Package:!org.weasis.dicom.explorer.internal,org.weasis.dicom.explorer.*
+					</bnd>
 				</configuration>
 			</plugin>
 		</plugins>

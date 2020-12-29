@@ -5,7 +5,7 @@
 		<artifactId>weasis-parent</artifactId>
 		<groupId>org.weasis</groupId>
 		<!--suppress MavenPropertyInParent -->
-    <version>${revision}${changelist}</version>
+		<version>${revision}${changelist}</version>
 		<relativePath>../weasis-parent/pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
@@ -25,22 +25,28 @@
 	<properties>
 		<native.configuration>changeMeInChildModule</native.configuration>
 	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
-					<instructions>
-						<Bundle-NativeCode>${native.configuration}</Bundle-NativeCode>
-						<!-- Version must be change with major version change of weasis-core-img -->
-						<Fragment-Host>weasis-core-img;bundle-version="${weasis.core.img.version}"</Fragment-Host>
-						<Embed-StripVersion>true</Embed-StripVersion>
-						<!-- Do not inline native libs -->
-						<Embed-Dependency>*;scope=compile;inline=false</Embed-Dependency>
-					</instructions>
+					<bnd>
+						Bundle-NativeCode: ${native.configuration}
+						Fragment-Host: weasis-core-img;bundle-version="${weasis.core.img.version}"
+					</bnd>
 				</configuration>
 			</plugin>
 		</plugins>
 	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.weasis.core</groupId>
+			<artifactId>weasis-core-img</artifactId>
+			<version>${weasis.core.img.version}</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
 </project>

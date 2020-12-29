@@ -7,7 +7,7 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package org.weasis.base.ui.internal;
+package org.weasis.base.ui.gui;
 
 import java.beans.PropertyChangeListener;
 

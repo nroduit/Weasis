@@ -10,11 +10,9 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-sr</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>DICOM Structured Report Viewer [${project.artifactId}]</name>
-	<properties>
-		<bundle.namespace>org.weasis.dicom.sr</bundle.namespace>
-	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
@@ -22,8 +20,8 @@
 				<artifactId>maven-scr-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

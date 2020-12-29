@@ -9,22 +9,42 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
 	<name>OpenCV native Mac amd64</name>
 	<version>${weasis.opencv.native.version}</version>
 	<properties>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
-		<native.configuration>lib/libopencv_java.jnilib; processor=x86-64; osname=MacOSX</native.configuration>
+		<native.configuration>libopencv_java.jnilib; processor=x86-64; osname=MacOSX</native.configuration>
 	</properties>
-	<dependencies>
-		<dependency>
-			<groupId>org.weasis.thirdparty.org.opencv</groupId>
-			<artifactId>libopencv_java</artifactId>
-			<version>${weasis.opencv.native.version}</version>
-			<type>jnilib</type>
-			<classifier>macosx-x86-64</classifier>
-			<scope>compile</scope>
-		</dependency>
-	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependency</id>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.weasis.thirdparty.org.opencv</groupId>
+									<artifactId>libopencv_java</artifactId>
+									<version>${weasis.opencv.native.version}</version>
+									<type>jnilib</type>
+									<classifier>macosx-x86-64</classifier>
+									<overWrite>true</overWrite>
+									<outputDirectory>target/classes</outputDirectory>
+									<destFileName>libopencv_java.jnilib</destFileName>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
 </project>

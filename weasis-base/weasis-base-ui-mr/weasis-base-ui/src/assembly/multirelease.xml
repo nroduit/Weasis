@@ -10,9 +10,9 @@
 	<moduleSets>
 		<moduleSet>
 			<useAllReactorProjects>true</useAllReactorProjects>
-			 <includeSubModules>false</includeSubModules>
+			<includeSubModules>false</includeSubModules>
 			<includes>
-				<include>org.weasis.base:weasis-base-ui-base:bundle:</include>
+				<include>org.weasis.base:weasis-base-ui-base:jar:</include>
 			</includes>
 			<binaries>
 				<unpack>true</unpack>

@@ -11,7 +11,7 @@
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-dicom-send</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>${project.artifactId}</name>
 	<description>DICOM Send</description>
 
@@ -22,8 +22,8 @@
 				<artifactId>maven-scr-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
 	</build>

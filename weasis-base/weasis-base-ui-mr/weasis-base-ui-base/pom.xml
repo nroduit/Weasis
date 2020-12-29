@@ -9,12 +9,10 @@
     <version>${revision}${changelist}</version>
 	</parent>
 	<artifactId>weasis-base-ui-base</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>Weasis Base UI [${project.artifactId}]</name>
 
 	<properties>
-		<bundle.symbolicName>weasis-base-ui</bundle.symbolicName>
-		<bundle.namespace>org.weasis.base.ui</bundle.namespace>
 		<maven.install.skip>true</maven.install.skip>
 	</properties>
 
@@ -25,13 +23,14 @@
 				<artifactId>maven-scr-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
-					<instructions>
-						<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>
-						<Multi-Release>true</Multi-Release>
-					</instructions>
+					<bnd>
+						Bundle-SymbolicName: weasis-base-ui
+						Multi-Release: true
+						Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
+					</bnd>
 				</configuration>
 			</plugin>
 		</plugins>

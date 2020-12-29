@@ -12,8 +12,10 @@ package org.weasis.dicom.explorer.internal;
 import java.io.File;
 import java.util.Properties;
 
+import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.util.FileUtil;
@@ -22,6 +24,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator {
 
     public static final Properties IMPORT_EXPORT_PERSISTENCE = new Properties();

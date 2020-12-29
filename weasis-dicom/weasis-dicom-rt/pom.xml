@@ -10,11 +10,10 @@
 		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
 	</parent>
 	<artifactId>weasis-dicom-rt</artifactId>
-	<packaging>bundle</packaging>
+	<packaging>jar</packaging>
 	<name>Weasis DICOM-RT Tool panel [${project.artifactId}]</name>
 	<properties>
-		<bundle.namespace>org.weasis.dicom.rt</bundle.namespace>
-		<bundle.symbolicName>${project.artifactId}</bundle.symbolicName>
+		<math3.version>3.6.1</math3.version>
 	</properties>
 	<build>
 		<plugins>
@@ -23,16 +22,28 @@
 				<artifactId>maven-scr-plugin</artifactId>
 			</plugin>
 			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<!--<configuration>-->
-					<!--<instructions>-->
-						<!--&lt;!&ndash; Force to import jaxb binding classes &ndash;&gt;-->
-						<!--<Import-Package>com.sun.xml.internal.bind,*</Import-Package>-->
-						<!--<Bundle-Activator>${bundle.namespace}.internal.Activator</Bundle-Activator>-->
-						<!--<Export-Package>!${bundle.namespace}.internal.*,${bundle.namespace}.*,com.xeiam.xchart.*,com.xeiam.xchart.internal.markers.*,de.erichseifert.*</Export-Package>-->
-					<!--</instructions>-->
-				<!--</configuration>-->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependency</id>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeArtifactIds>commons-math3</includeArtifactIds>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>biz.aQute.bnd</groupId>
+				<artifactId>bnd-maven-plugin</artifactId>
+				<configuration>
+					<bnd>
+						-includeresource: lib/=target/dependency/commons-math3-${math3.version}.jar;lib:=true
+					</bnd>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>
@@ -76,7 +87,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-math3</artifactId>
-			<version>3.6.1</version>
+			<version>${math3.version}</version>
 		</dependency>
 	</dependencies>
 </project>
