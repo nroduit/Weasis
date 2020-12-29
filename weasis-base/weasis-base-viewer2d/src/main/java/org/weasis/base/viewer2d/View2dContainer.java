@@ -85,8 +85,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
         Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo = new GridBagLayoutModel(
-        View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), "layout_histo", //$NON-NLS-1$ //$NON-NLS-2$
-        Messages.getString("View2dContainer.histogram")); //$NON-NLS-1$
+        View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), "layout_histo", // NON-NLS
+        Messages.getString("View2dContainer.histogram"));
     // Unmodifiable list of the default layout elements
     public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
         Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1, VIEWS_2x1_r1xc2_histo, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x2);
@@ -406,7 +406,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(1);
-        final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
+        final String title = Messages.getString("View2dContainer.print_layout");
         Consumer<ActionEvent> event = e -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
             PrintDialog<?> dialog =

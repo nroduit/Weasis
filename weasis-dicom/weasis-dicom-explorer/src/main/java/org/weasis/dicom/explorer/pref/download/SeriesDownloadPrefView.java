@@ -31,15 +31,15 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
     public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately"; //$NON-NLS-1$
 
     private JCheckBox downloadImmediatelyCheckbox =
-        new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox")); //$NON-NLS-1$
+        new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));
 
     public SeriesDownloadPrefView() {
-        super(Messages.getString("SeriesDownloadPrefView.title")); //$NON-NLS-1$
+        super(Messages.getString("SeriesDownloadPrefView.title"));
         setBorder(new EmptyBorder(15, 10, 10, 10));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(null, org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"), //$NON-NLS-1$
+        panel.setBorder(new TitledBorder(null, org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"),
             TitledBorder.LEADING, TitledBorder.TOP, null, null));
         add(panel);
         GridBagLayout gblPanel = new GridBagLayout();
@@ -72,7 +72,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
     }

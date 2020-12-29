@@ -45,7 +45,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
                 String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //$NON-NLS-1$
                 Runtime.getRuntime().exec(cmd);
             } catch (IOException e) {
-                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
+                LOGGER.error(ERROR_MSG, file, e);
             }
         }
     }
@@ -55,7 +55,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
             try {
                 Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
             } catch (IOException e) {
-                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
+                LOGGER.error(ERROR_MSG, file, e);
             }
         }
     }
@@ -65,7 +65,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
             try {
                 desktop.open(file);
             } catch (IOException e) {
-                LOGGER.error(ERROR_MSG, file, e); // $NON-NLS-1$
+                LOGGER.error(ERROR_MSG, file, e);
             }
         }
     }

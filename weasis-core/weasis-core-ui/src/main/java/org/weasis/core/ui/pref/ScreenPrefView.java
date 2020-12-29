@@ -53,7 +53,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     private final JPanel panelList = new JPanel();
 
     public ScreenPrefView() {
-        super(Messages.getString("ScreenPrefView.monitors")); //$NON-NLS-1$
+        super(Messages.getString("ScreenPrefView.monitors"));
         setComponentPosition(100);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         BorderLayout borderLayout = new BorderLayout();
@@ -66,12 +66,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING, //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null, Messages.getString("ScreenPrefView.settings"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.NORTH);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -116,7 +116,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             }
             p.add(new JLabel(buf.toString()));
 
-            JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib")); //$NON-NLS-1$
+            JButton realZoomButton = new JButton(Messages.getString("ScreenPrefView.sp_calib"));
             realZoomButton.addActionListener(e -> {
                 final CalibDialog dialog = new CalibDialog(WinUtil.getParentFrame((Component) e.getSource()), title,
                     ModalityType.APPLICATION_MODAL, monitor);
@@ -124,7 +124,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 dialog.setVisible(true);
 
             });
-            realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real")); //$NON-NLS-1$
+            realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real"));
             p.add(realZoomButton);
 
             panelList.add(p);
@@ -147,7 +147,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         panel3.setAlignmentY(Component.TOP_ALIGNMENT);
         panel3.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel3.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 3));
-        final JLabel presetsLabel = new JLabel(Messages.getString("ScreenPrefView.def_monitor") + StringUtil.COLON); //$NON-NLS-1$
+        final JLabel presetsLabel = new JLabel(Messages.getString("ScreenPrefView.def_monitor") + StringUtil.COLON);
         panel3.add(presetsLabel);
         panel3.add(defMonitorComboBox);
         panelList.add(panel3);
@@ -248,8 +248,8 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         private final Cross cross;
         private final JFormattedTextField jTextFieldLineWidth = new JFormattedTextField(LocalUtil.getIntegerInstance());
         private final JComboBox<String> jComboBoxType =
-            new JComboBox<>(new String[] { Messages.getString("ScreenPrefView.horiz_line"), //$NON-NLS-1$
-                Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") }); //$NON-NLS-1$ //$NON-NLS-2$
+            new JComboBox<>(new String[] { Messages.getString("ScreenPrefView.horiz_line"),
+                Messages.getString("ScreenPrefView.vertical_line"), Messages.getString("ScreenPrefView.screen_size") });
         private final JComboBox<Unit> jComboBoxUnit =
             new JComboBox<>(new Unit[] { Unit.MILLIMETER, Unit.CENTIMETER, Unit.MILLIINCH, Unit.INCH });
 
@@ -266,12 +266,12 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             final JPanel inputPanel = new JPanel();
             jTextFieldLineWidth.setValue(0L);
             JMVUtils.setPreferredWidth(jTextFieldLineWidth, 100);
-            inputPanel.add(new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON)); //$NON-NLS-1$
+            inputPanel.add(new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON));
             inputPanel.add(jComboBoxType);
             inputPanel.add(jTextFieldLineWidth);
             inputPanel.add(jComboBoxUnit);
             inputPanel.add(Box.createHorizontalStrut(15));
-            JButton apply = new JButton(Messages.getString("ScreenPrefView.apply")); //$NON-NLS-1$
+            JButton apply = new JButton(Messages.getString("ScreenPrefView.apply"));
             apply.addActionListener(e -> computeScaleFactor());
             inputPanel.add(apply);
 
@@ -307,8 +307,8 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                     }
                 }
                 cross.repaint();
-                JOptionPane.showMessageDialog(this, Messages.getString("ScreenPrefView.calib_desc"), //$NON-NLS-1$
-                    Messages.getString("ScreenPrefView.sp_calib"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                JOptionPane.showMessageDialog(this, Messages.getString("ScreenPrefView.calib_desc"),
+                    Messages.getString("ScreenPrefView.sp_calib"), JOptionPane.WARNING_MESSAGE);
 
                 StringBuilder buf = new StringBuilder("screen."); //$NON-NLS-1$
                 buf.append(monitor.getMonitorID());

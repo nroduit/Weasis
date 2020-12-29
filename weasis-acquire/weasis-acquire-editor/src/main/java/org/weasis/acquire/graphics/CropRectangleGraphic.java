@@ -92,7 +92,7 @@ public class CropRectangleGraphic extends RectangleGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("CropRectangleGraphic.crop_img"); //$NON-NLS-1$
+        return Messages.getString("CropRectangleGraphic.crop_img");
     }
 
     @Override

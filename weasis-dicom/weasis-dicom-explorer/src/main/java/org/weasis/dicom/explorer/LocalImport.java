@@ -42,7 +42,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     private File[] files;
 
     public LocalImport() {
-        super(Messages.getString("LocalImport.local_dev")); //$NON-NLS-1$
+        super(Messages.getString("LocalImport.local_dev"));
         setComponentPosition(0);
         initGUI();
         initialize(true);
@@ -51,10 +51,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(null, Messages.getString("LocalImport.imp_files") + StringUtil.COLON, //$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("LocalImport.imp_files") + StringUtil.COLON,
             TitledBorder.LEADING, TitledBorder.TOP, null, null));
 
-        lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON); //$NON-NLS-1$
+        lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
@@ -82,7 +82,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         gbc_button.gridy = 0;
         add(button, gbc_button);
 
-        chckbxSearch = new JCheckBox(Messages.getString("LocalImport.recursive")); //$NON-NLS-1$
+        chckbxSearch = new JCheckBox(Messages.getString("LocalImport.recursive"));
         chckbxSearch.setSelected(true);
         GridBagConstraints gbc_chckbxSearch = new GridBagConstraints();
         gbc_chckbxSearch.gridwidth = 3;
@@ -129,7 +129,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             } else {
                 files = selectedFiles;
                 lastDir = files[0].getParent();
-                textField.setText(Messages.getString("LocalImport.multi_dir")); //$NON-NLS-1$
+                textField.setText(Messages.getString("LocalImport.multi_dir"));
             }
             if (StringUtil.hasText(lastDir)) {
                 Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDirKey, lastDir);
@@ -159,7 +159,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
     private String getImportPath() {
         String path = textField.getText().trim();
-        if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (path != null && !path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) {
             return path;
         }
         return null;

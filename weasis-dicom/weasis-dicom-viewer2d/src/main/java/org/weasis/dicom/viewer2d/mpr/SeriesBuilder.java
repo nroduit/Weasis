@@ -101,7 +101,7 @@ public class SeriesBuilder {
 
                         Double tilt = TagD.getTagValue(img, Tag.GantryDetectorTilt, Double.class);
                         if (tilt != null && MathUtil.isDifferentFromZero(tilt)) {
-                            confirmMessage(view, Messages.getString("SeriesBuilder.gantry"), abort); //$NON-NLS-1$
+                            confirmMessage(view, Messages.getString("SeriesBuilder.gantry"), abort);
                         }
                         Map<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
                         if (tags != null) {
@@ -338,8 +338,8 @@ public class SeriesBuilder {
 
         Arrays.sort(COPIED_ATTRS);
         final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
-        cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MPR]"); //$NON-NLS-1$ //$NON-NLS-2$
-        cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "MPR"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MPR]"); // NON-NLS
+        cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "MPR"); // NON-NLS
         cpTags.setString(Tag.FrameOfReferenceUID, VR.UI, params.frameOfReferenceUID);
 
         int last = newSeries.length;
@@ -456,14 +456,14 @@ public class SeriesBuilder {
                 double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
                 boolean validSp = sp != null && sp.length == 3;
                 if (!validSp && !abort[1]) {
-                    confirmMessage(view, Messages.getString("SeriesBuilder.space_missing"), abort); //$NON-NLS-1$
+                    confirmMessage(view, Messages.getString("SeriesBuilder.space_missing"), abort);
                 } else if (validSp) {
                     double pos = sp[0] + sp[1] + sp[2];
                     if (index > 0) {
                         double space = Math.abs(pos - lastPos);
                         if (!abort[1]
                             && (MathUtil.isEqualToZero(space) || (index > 1 && lastSpace - space > epsilon))) {
-                            confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort); //$NON-NLS-1$
+                            confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort);
                         }
                         lastSpace = space;
                     }
@@ -517,7 +517,7 @@ public class SeriesBuilder {
                 File dir = new File(MPR_CACHE_DIR, params.seriesUID);
                 dir.mkdirs();
                 for (int i = 0; i < newSeries.length; i++) {
-                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));//$NON-NLS-1$ //$NON-NLS-2$
+                    newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv"));// NON-NLS
                     builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
                 }
             }
@@ -543,7 +543,7 @@ public class SeriesBuilder {
 
     public static void confirmMessage(final Component view, final String message, final boolean[] abort) {
         GuiExecutor.instance().invokeAndWait(() -> {
-            int usrChoice = JOptionPane.showConfirmDialog(view, message + Messages.getString("SeriesBuilder.add_warn"), //$NON-NLS-1$
+            int usrChoice = JOptionPane.showConfirmDialog(view, message + Messages.getString("SeriesBuilder.add_warn"),
                 MPRFactory.NAME, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
             if (usrChoice == JOptionPane.NO_OPTION) {
                 abort[0] = true;

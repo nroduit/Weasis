@@ -16,7 +16,7 @@ import org.weasis.dicom.codec.Messages;
 
 public enum Modality {
 
-    DEFAULT(Messages.getString("Modality.default")), //$NON-NLS-1$
+    DEFAULT(Messages.getString("Modality.default")),
 
     AU("Audio"), //$NON-NLS-1$
 

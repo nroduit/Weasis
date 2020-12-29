@@ -32,11 +32,11 @@ public final class LutShape {
      * Other LUT functions have their own custom implementation
      */
     public enum eFunction {
-        LINEAR(Messages.getString("LutShape.linear")), // //$NON-NLS-1$
-        SIGMOID(Messages.getString("LutShape.sigmoid")), // //$NON-NLS-1$
-        SIGMOID_NORM(Messages.getString("LutShape.sig_norm")), // //$NON-NLS-1$
-        LOG(Messages.getString("LutShape.log")), // //$NON-NLS-1$
-        LOG_INV(Messages.getString("LutShape.log_inv")); //$NON-NLS-1$
+        LINEAR(Messages.getString("LutShape.linear")), //
+        SIGMOID(Messages.getString("LutShape.sigmoid")), //
+        SIGMOID_NORM(Messages.getString("LutShape.sig_norm")), //
+        LOG(Messages.getString("LutShape.log")), //
+        LOG_INV(Messages.getString("LutShape.log_inv"));
 
         final String explanation;
 

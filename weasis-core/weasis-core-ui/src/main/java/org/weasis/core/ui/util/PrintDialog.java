@@ -62,7 +62,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         getContentPane().setLayout(gridBagLayout);
         positionLabel = new javax.swing.JLabel();
 
-        positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON); //$NON-NLS-1$
+        positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON);
         GridBagConstraints gbcPositionLabel = new GridBagConstraints();
         gbcPositionLabel.anchor = GridBagConstraints.EAST;
         gbcPositionLabel.insets = new Insets(15, 20, 10, 5);
@@ -72,7 +72,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         positionComboBox = new javax.swing.JComboBox<>();
 
         positionComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(
-            new String[] { Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") })); //$NON-NLS-1$ //$NON-NLS-2$
+            new String[] { Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top") }));
         GridBagConstraints gbcPositionComboBox = new GridBagConstraints();
         gbcPositionComboBox.anchor = GridBagConstraints.WEST;
         gbcPositionComboBox.insets = new Insets(15, 0, 10, 5);
@@ -81,7 +81,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         getContentPane().add(positionComboBox, gbcPositionComboBox);
 
         label = new JLabel();
-        label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON); //$NON-NLS-1$
+        label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON);
         GridBagConstraints gbcLabel = new GridBagConstraints();
         gbcLabel.anchor = GridBagConstraints.EAST;
         gbcLabel.insets = new Insets(0, 20, 10, 5);
@@ -100,7 +100,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         getContentPane().add(comboBoxDPI, gbcComboBoxDPI);
 
         annotationsCheckBox = new javax.swing.JCheckBox();
-        annotationsCheckBox.setText(Messages.getString("PrintDialog.annotate")); //$NON-NLS-1$
+        annotationsCheckBox.setText(Messages.getString("PrintDialog.annotate"));
         annotationsCheckBox.setSelected(true);
         GridBagConstraints gbcAnnotationsCheckBox = new GridBagConstraints();
         gbcAnnotationsCheckBox.anchor = GridBagConstraints.WEST;
@@ -112,16 +112,16 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
         cancelButton = new javax.swing.JButton();
 
-        cancelButton.setText(Messages.getString("PrintDialog.cancel")); //$NON-NLS-1$
+        cancelButton.setText(Messages.getString("PrintDialog.cancel"));
         cancelButton.addActionListener(e -> dispose());
 
         printButton = new javax.swing.JButton();
 
-        printButton.setText(Messages.getString("PrintDialog.print")); //$NON-NLS-1$
+        printButton.setText(Messages.getString("PrintDialog.print"));
         printButton.addActionListener(e -> printAction());
 
         if (layout) {
-            chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view")); //$NON-NLS-1$
+            chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
             GridBagConstraints gbcChckbxNewCheckBox = new GridBagConstraints();
             gbcChckbxNewCheckBox.anchor = GridBagConstraints.WEST;
             gbcChckbxNewCheckBox.gridwidth = 3;
@@ -152,7 +152,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
         PrintOptions printOptions = new PrintOptions();
         printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
         printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
-        if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) { //$NON-NLS-1$
+        if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) {
             printOptions.setCenter(true);
         } else {
             printOptions.setCenter(false);
@@ -162,7 +162,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
         List<ViewCanvas<I>> views = container.getImagePanels();
         if (views.isEmpty()) {
-            JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null, //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("PrintDialog.no_print"), null,
                 JOptionPane.ERROR_MESSAGE);
             dispose();
             return;

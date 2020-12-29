@@ -14,15 +14,15 @@ import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 
 public enum ResetTools {
-    ALL(Messages.getString("ResetTools.all")), //$NON-NLS-1$
+    ALL(Messages.getString("ResetTools.all")),
 
-    WL(Messages.getString("ResetTools.wl")), //$NON-NLS-1$
+    WL(Messages.getString("ResetTools.wl")),
 
-    ZOOM(Messages.getString("ResetTools.zoom")), //$NON-NLS-1$
+    ZOOM(Messages.getString("ResetTools.zoom")),
 
-    ROTATION(Messages.getString("ResetTools.rotation")), //$NON-NLS-1$
+    ROTATION(Messages.getString("ResetTools.rotation")),
 
-    PAN(Messages.getString("ResetTools.pan")); //$NON-NLS-1$
+    PAN(Messages.getString("ResetTools.pan"));
 
     private final String name;
 
@@ -37,7 +37,7 @@ public enum ResetTools {
 
     public static JMenu createUnregisteredJMenu() {
         ButtonGroup group = new ButtonGroup();
-        JMenu menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+        JMenu menu = new JMenu(Messages.getString("ResetTools.reset"));
         for (final ResetTools action : values()) {
             final JMenuItem item = new JMenuItem(action.toString());
             item.addActionListener(e -> EventManager.getInstance().reset(action));

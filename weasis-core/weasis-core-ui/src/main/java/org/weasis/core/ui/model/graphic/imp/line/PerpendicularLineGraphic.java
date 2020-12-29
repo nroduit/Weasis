@@ -47,11 +47,11 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
         new ImageIcon(PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
 
     public static final Measurement LINE_LENGTH =
-        new Measurement(Messages.getString("measure.length"), 1, true, true, true); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.length"), 1, true, true, true);
     public static final Measurement ORIENTATION =
-        new Measurement(Messages.getString("measure.orientation"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.orientation"), 2, true, true, false);
     public static final Measurement AZIMUTH =
-        new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.azimuth"), 3, true, true, false);
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
     static {
@@ -90,7 +90,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("measure.perpendicular"); //$NON-NLS-1$
+        return Messages.getString("measure.perpendicular");
     }
 
     @Override
@@ -225,11 +225,11 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
                 }
                 if (ORIENTATION.getComputed()) {
                     measVal.add(new MeasureItem(ORIENTATION, MathUtil.getOrientation(ptC, ptD),
-                        Messages.getString("measure.deg"))); //$NON-NLS-1$
+                        Messages.getString("measure.deg")));
                 }
                 if (AZIMUTH.getComputed()) {
                     measVal.add(
-                        new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages.getString("measure.deg"))); //$NON-NLS-1$
+                        new MeasureItem(AZIMUTH, MathUtil.getAzimuth(ptC, ptD), Messages.getString("measure.deg")));
                 }
                 return measVal;
             }

@@ -40,14 +40,14 @@ public class Singleton {
 
     private static final String LOCALHOST = "127.0.0.1"; //$NON-NLS-1$
     private static final File SI_FILEDIR =
-        new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    private static final String SI_MAGICWORD = "si.init"; //$NON-NLS-1$
-    private static final String SI_ARG = "si.arg"; //$NON-NLS-1$
-    private static final String SI_PROP = "si.prop"; //$NON-NLS-1$
-    private static final String SI_ACK = "si.ack"; //$NON-NLS-1$
-    private static final String SI_EXIT = "si.exit"; //$NON-NLS-1$
-    private static final String SI_STOP = "si.stop"; //$NON-NLS-1$
-    private static final String SI_EOF = "si.EOF"; //$NON-NLS-1$
+        new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton"); // NON-NLS
+    private static final String SI_MAGICWORD = "si.init";
+    private static final String SI_ARG = "si.arg";
+    private static final String SI_PROP = "si.prop";
+    private static final String SI_ACK = "si.ack";
+    private static final String SI_EXIT = "si.exit";
+    private static final String SI_STOP = "si.stop";
+    private static final String SI_EOF = "si.EOF";
     private static final int ENCODING_PLATFORM = 1;
     private static final int ENCODING_UNICODE = 2;
 
@@ -157,7 +157,7 @@ public class Singleton {
     }
 
     private static void printProperty(PrintStream out, String key, Properties p) {
-        out.println(String.format("%s=%s", key,p.getProperty(key, ""))); //$NON-NLS-1$ //$NON-NLS-2$
+        out.println(String.format("%s=%s", key,p.getProperty(key, ""))); // NON-NLS
     }
 
     /**
@@ -258,15 +258,15 @@ public class Singleton {
         private final Thread thread;
 
         SingletonServer(SingletonServerRunnable runnable) throws Exception {
-            if ("1.8".equals(System.getProperty("java.specification.version"))) { //$NON-NLS-1$ //$NON-NLS-2$
-                thread = new Thread(null, runnable, "SIThread", 0); //$NON-NLS-1$
+            if ("1.8".equals(System.getProperty("java.specification.version"))) { // NON-NLS
+                thread = new Thread(null, runnable, "SIThread", 0);
             } else {
                 // TODO call directly the constructor when Java 8 will be dropped
                 // thread = new Thread(null, runnable, "SIThread", 0, false);
                 Class<?> clazz = Class.forName("java.lang.Thread"); //$NON-NLS-1$
                 Constructor<?> constructor =
-                    clazz.getConstructor(ThreadGroup.class, Runnable.class, String.class, long.class, boolean.class); // $NON-NLS-1$
-                thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false); //$NON-NLS-1$
+                    clazz.getConstructor(ThreadGroup.class, Runnable.class, String.class, long.class, boolean.class);
+                thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false);
             }
 
             thread.setDaemon(true);

@@ -66,12 +66,12 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         JPanel panel1 = new JPanel();
-        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING, //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null, Messages.getString("LabelsPrefView.geometric1"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
         add(panel1, BorderLayout.CENTER);
         panel1.setLayout(new BorderLayout(0, 0));
@@ -82,7 +82,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         flowLayout.setHgap(5);
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        JLabel lblNewLabel = new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel lblNewLabel = new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);
         panel.add(lblNewLabel);
         ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
         tools.remove(0);

@@ -94,7 +94,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
             DefaultDicomNode callingNode = (DefaultDicomNode) dicomQrView.getComboCallingNode().getSelectedItem();
             if (callingNode == null) {
-                errorMessage = Messages.getString("RetrieveTask.no_calling_node"); //$NON-NLS-1$
+                errorMessage = Messages.getString("RetrieveTask.no_calling_node");
             } else {
                 final DicomState state;
                 RetrieveType type = (RetrieveType) dicomQrView.getComboDicomRetrieveType().getSelectedItem();
@@ -120,10 +120,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     DicomListener dicomListener = dicomQrView.getDicomListener();
                     try {
                         if (dicomListener == null) {
-                            errorMessage = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
+                            errorMessage = Messages.getString("RetrieveTask.msg_start_listener");
                         } else {
                             if (dicomListener.isRunning()) {
-                                errorMessage = Messages.getString("RetrieveTask.msg_running_listener"); //$NON-NLS-1$
+                                errorMessage = Messages.getString("RetrieveTask.msg_running_listener");
                             } else {
                                 ListenerParams lparams = new ListenerParams(params, true);
                                 dicomListener.start(callingNode.getDicomNode(), lparams);
@@ -165,7 +165,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     if (wadoURLs.isEmpty()) {
                         GuiExecutor.instance()
                             .execute(() -> JOptionPane.showMessageDialog(dicomQrView.getBasePanel(),
-                                Messages.getString("RetrieveTask.no_wado_url_match"), //$NON-NLS-1$
+                                Messages.getString("RetrieveTask.no_wado_url_match"),
                                 RetrieveType.WADO.toString(), JOptionPane.ERROR_MESSAGE));
                         return null;
                     }
@@ -173,7 +173,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         GuiExecutor.instance().invokeAndWait(() -> {
                             Object[] options = wadoURLs.toArray();
                             Object response = JOptionPane.showInputDialog(dicomQrView.getBasePanel(),
-                                Messages.getString("RetrieveTask.several_wado_urls"), RetrieveType.WADO.toString(), //$NON-NLS-1$
+                                Messages.getString("RetrieveTask.several_wado_urls"), RetrieveType.WADO.toString(),
                                 JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 
                             if (response != null) {
@@ -195,11 +195,11 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                     String wadoXmlGenerated = arquery.xmlManifest(null);
                     if (wadoXmlGenerated == null) {
                         state = new DicomState(Status.UnableToProcess,
-                            Messages.getString("RetrieveTask.msg_build_manifest"), null); //$NON-NLS-1$
+                            Messages.getString("RetrieveTask.msg_build_manifest"), null);
                     } else {
                         List<String> xmlFiles = new ArrayList<>(1);
                         try {
-                            File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR);
                             FileUtil.writeStreamWithIOException(
                                 new ByteArrayInputStream(wadoXmlGenerated.getBytes(StandardCharsets.UTF_8)), tempFile);
                             xmlFiles.add(tempFile.getPath());
@@ -211,7 +211,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         return new LoadRemoteDicomManifest(xmlFiles, explorerDcmModel);
                     }
                 } else {
-                    state = new DicomState(Status.UnableToProcess, Messages.getString("RetrieveTask.msg_retrieve_type"), //$NON-NLS-1$
+                    state = new DicomState(Status.UnableToProcess, Messages.getString("RetrieveTask.msg_retrieve_type"),
                         null);
                 }
 
@@ -221,7 +221,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         DicomState.buildMessage(state, null, null);
                     }
                     if (!StringUtil.hasText(errorMessage)) {
-                        errorMessage = Messages.getString("RetrieveTask.msg_unexpected_error"); //$NON-NLS-1$
+                        errorMessage = Messages.getString("RetrieveTask.msg_unexpected_error");
                     }
                     LOGGER.error("Dicom retrieve error: {}", errorMessage); //$NON-NLS-1$
                 }
@@ -233,7 +233,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         } else if (selectedItem instanceof DicomWebNode) {
             throw new IllegalAccessError("Not implemented yet"); //$NON-NLS-1$
         } else {
-            errorMessage = Messages.getString("RetrieveTask.no_calling_node"); //$NON-NLS-1$
+            errorMessage = Messages.getString("RetrieveTask.no_calling_node");
         }
 
         if (errorMessage != null) {
@@ -266,8 +266,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     }
 
     private static String getHostname(String host) {
-        if ("127.0.0.1".equals(host) || "127.0.1.1".equals(host) || "::1".equals(host)) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            return "localhost"; //$NON-NLS-1$
+        if ("127.0.0.1".equals(host) || "127.0.1.1".equals(host) || "::1".equals(host)) { // NON-NLS
+            return "localhost";  //NON-NLS
         }
         return host;
     }

@@ -66,15 +66,15 @@ public class SRReader {
     public void readDocumentGeneralModule(StringBuilder html, Map<String, SRImageReference> map) {
         if (dcmItems != null) {
             SRDocumentContentModule content = new SRDocumentContentModule(dcmItems);
-            addCodeMeaning(html, content.getConceptNameCode(), "<h1>", "</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
+            addCodeMeaning(html, content.getConceptNameCode(), "<h1>", "</h1>"); // NON-NLS
 
             String instName = dcmItems.getString(Tag.InstitutionName);
             String instDepName = dcmItems.getString(Tag.InstitutionalDepartmentName);
             String stationName = dcmItems.getString(Tag.StationName);
             LocalDateTime contentDateTime = TagD.dateTime(Tag.ContentDateAndTime, dcmItems);
             if (instName != null) {
-                html.append(Messages.getString("SRReader.by")); //$NON-NLS-1$
-                html.append(" "); //$NON-NLS-1$
+                html.append(Messages.getString("SRReader.by"));
+                html.append(" ");
                 html.append(instName);
                 if (instDepName != null) {
                     html.append(" ("); //$NON-NLS-1$
@@ -84,9 +84,9 @@ public class SRReader {
             }
             if (stationName != null) {
                 if (instName != null) {
-                    html.append(" "); //$NON-NLS-1$
-                    html.append(Messages.getString("SRReader.on")); //$NON-NLS-1$
-                    html.append(" "); //$NON-NLS-1$
+                    html.append(" ");
+                    html.append(Messages.getString("SRReader.on"));
+                    html.append(" ");
                 }
                 html.append(stationName);
             }
@@ -149,7 +149,7 @@ public class SRReader {
                     html.append(level);
                     html.append(" </B>"); //$NON-NLS-1$
                     Code code = c.getConceptNameCode();
-                    addCodeMeaning(html, code, "<B>", "</B>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    addCodeMeaning(html, code, "<B>", "</B>"); // NON-NLS
                     convertContentToHTML(html, c, false, code == null, map, level);
                     html.append("<BR>"); //$NON-NLS-1$
                     addContent(html, c, map, level);
@@ -175,8 +175,8 @@ public class SRReader {
             } else if ("PNAME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
                 convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
-            } else if ("NUM".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : " = "); //$NON-NLS-1$ //$NON-NLS-2$
+            } else if ("NUM".equals(type)) {
+                html.append(continuous || noCodeName ? " " : " = ");
                 Attributes val = c.getMeasuredValue();
                 if (val != null) {
                     html.append(val.getFloat(Tag.NumericValue, 0.0f));
@@ -197,9 +197,9 @@ public class SRReader {
                 if (imgRef != null) {
                     html.append("<a href=\"http://"); //$NON-NLS-1$
                     html.append(level);
-                    html.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
-                    html.append(Messages.getString("SRReader.show_img")); //$NON-NLS-1$
-                    html.append("</a>"); //$NON-NLS-1$
+                    html.append("\" style=\"color:#FF9900\">"); //NON-NLS
+                    html.append(Messages.getString("SRReader.show_img")); //NON-NLS
+                    html.append("</a>"); //NON-NLS
                 }
             } else if ("DATETIME".equals(type)) { //$NON-NLS-1$
                 html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
@@ -276,21 +276,21 @@ public class SRReader {
             } else if (type != null) {
                 html.append("<i>"); //$NON-NLS-1$
                 html.append(type);
-                html.append(" "); //$NON-NLS-1$
-                html.append(Messages.getString("SRReader.tag_missing")); //$NON-NLS-1$
-                html.append("</i>"); //$NON-NLS-1$
+                html.append(" ");
+                html.append(Messages.getString("SRReader.tag_missing"));
+                html.append("</i>");
 
             }
 
             int[] refs = c.getReferencedContentItemIdentifier();
             if (refs != null) {
-                html.append(Messages.getString("SRReader.content_ref") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+                html.append(Messages.getString("SRReader.content_ref") + StringUtil.COLON_AND_SPACE);
                 String id = getReferencedContentItemIdentifier(refs);
                 html.append("<a href=\"#"); //$NON-NLS-1$
                 html.append(id);
-                html.append("\">"); //$NON-NLS-1$
-                html.append(Messages.getString("SRReader.node")); //$NON-NLS-1$
-                html.append(" "); //$NON-NLS-1$
+                html.append("\">");
+                html.append(Messages.getString("SRReader.node"));
+                html.append(" ");
                 html.append(id);
                 html.append("</a>"); //$NON-NLS-1$
 
@@ -333,23 +333,23 @@ public class SRReader {
         if (cts != null) {
             boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent()); //$NON-NLS-1$
             if (!continuity) {
-                html.append("<OL>"); //$NON-NLS-1$
+                html.append("<OL>");
             }
             for (int i = 0; i < cts.size(); i++) {
                 SRDocumentContent srContent = new SRDocumentContent(cts.get(i));
-                html.append(continuity ? " " : "<LI>"); //$NON-NLS-1$ //$NON-NLS-2$
+                html.append(continuity ? " " : "<LI>");
                 Code code = null;
                 if (!continuity) {
                     code = srContent.getConceptNameCode();
-                    addCodeMeaning(html, code, "<B>", "</B>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    addCodeMeaning(html, code, "<B>", "</B>");
                 }
-                String level2 = level + "." + (i + 1); //$NON-NLS-1$
+                String level2 = level + "." + (i + 1);
                 convertContentToHTML(html, srContent, continuity, code == null, map, level2);
                 addContent(html, srContent, map, level2);
-                html.append(continuity ? " " : "</LI>"); //$NON-NLS-1$ //$NON-NLS-2$
+                html.append(continuity ? " " : "</LI>");
             }
             if (!continuity) {
-                html.append("</OL>"); //$NON-NLS-1$
+                html.append("</OL>");
             }
         }
     }
@@ -408,9 +408,9 @@ public class SRReader {
         if (html != null && dcmItems != null) {
             Sequence seq = dcmItems.getSequence(Tag.VerifyingObserverSequence);
             if (seq != null && !seq.isEmpty()) {
-                html.append("<B>"); //$NON-NLS-1$
-                html.append(Messages.getString("SRReader.ver_observer")); //$NON-NLS-1$
-                html.append("</B>"); //$NON-NLS-1$
+                html.append("<B>");
+                html.append(Messages.getString("SRReader.ver_observer"));
+                html.append("</B>");
                 html.append(StringUtil.COLON);
                 html.append("<BR>"); //$NON-NLS-1$
                 for (Attributes v : seq) {

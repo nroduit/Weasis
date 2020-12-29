@@ -43,7 +43,7 @@ public class AuFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return Messages.getString("AuFactory.dcm_audio"); //$NON-NLS-1$
+        return Messages.getString("AuFactory.dcm_audio");
     }
 
     @Override

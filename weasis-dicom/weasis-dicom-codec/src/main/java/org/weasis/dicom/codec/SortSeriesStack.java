@@ -32,7 +32,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return Messages.getString("SortSeriesStack.inst"); //$NON-NLS-1$
+            return Messages.getString("SortSeriesStack.inst");
         }
     };
     public static final SeriesComparator<DicomImageElement> slicePosition = new SeriesComparator<DicomImageElement>() {
@@ -49,7 +49,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return Messages.getString("SortSeriesStack.pos_orient"); //$NON-NLS-1$
+            return Messages.getString("SortSeriesStack.pos_orient");
         }
     };
 
@@ -67,7 +67,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return Messages.getString("SortSeriesStack.location"); //$NON-NLS-1$
+            return Messages.getString("SortSeriesStack.location");
         }
     };
 
@@ -86,7 +86,7 @@ public final class SortSeriesStack {
 
             @Override
             public String toString() {
-                return Messages.getString("SortSeriesStack.time"); //$NON-NLS-1$
+                return Messages.getString("SortSeriesStack.time");
             }
         };
     public static final SeriesComparator<DicomImageElement> contentTime = new SeriesComparator<DicomImageElement>() {
@@ -103,7 +103,7 @@ public final class SortSeriesStack {
 
         @Override
         public String toString() {
-            return Messages.getString("SortSeriesStack.content_time"); //$NON-NLS-1$
+            return Messages.getString("SortSeriesStack.content_time");
         }
     };
 
@@ -122,7 +122,7 @@ public final class SortSeriesStack {
 
             @Override
             public String toString() {
-                return Messages.getString("SortSeriesStack.dvalue"); //$NON-NLS-1$
+                return Messages.getString("SortSeriesStack.dvalue");
             }
         };
 

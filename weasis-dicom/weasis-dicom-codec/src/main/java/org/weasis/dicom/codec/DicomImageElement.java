@@ -61,13 +61,13 @@ public class DicomImageElement extends ImageElement {
 
         double[] val = null;
         String modality = TagD.getTagValue(mediaIO, Tag.Modality, String.class);
-        if (!"SC".equals(modality) && !"OT".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (!"SC".equals(modality) && !"OT".equals(modality)) { // NON-NLS
             // Physical distance in mm between the center of each pixel (ratio in mm)
             val = TagD.getTagValue(mediaIO, Tag.PixelSpacing, double[].class);
             if (val == null || val.length != 2) {
                 val = TagD.getTagValue(mediaIO, Tag.ImagerPixelSpacing, double[].class);
                 // Follows D. Clunie recommendations
-                pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector"); //$NON-NLS-1$
+                pixelSizeCalibrationDescription = val == null ? null : Messages.getString("DicomImageElement.detector");
 
             } else {
                 pixelSizeCalibrationDescription =
@@ -178,7 +178,7 @@ public class DicomImageElement extends ImageElement {
         if (prLUTShape == null) {
             prLUTShape = TagD.getTagValue(this, Tag.PresentationLUTShape, String.class);
         }
-        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" //$NON-NLS-1$ //$NON-NLS-2$
+        return prLUTShape != null ? "INVERSE".equals(prLUTShape) : "MONOCHROME1" // NON-NLS
             .equalsIgnoreCase(getPhotometricInterpretation());
     }
 
@@ -473,7 +473,7 @@ public class DicomImageElement extends ImageElement {
 
     public synchronized List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
         if (windowingPresetCollection == null && isImageAvailable()) {
-            String type = Messages.getString("PresetWindowLevel.dcm_preset"); //$NON-NLS-1$
+            String type = Messages.getString("PresetWindowLevel.dcm_preset");
             windowingPresetCollection = PresetWindowLevel.getPresetCollection(this, this, pixelPadding, type);
         }
         return windowingPresetCollection;

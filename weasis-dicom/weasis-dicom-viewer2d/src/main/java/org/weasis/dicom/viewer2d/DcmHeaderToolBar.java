@@ -23,7 +23,7 @@ import org.weasis.dicom.explorer.DicomFieldsView;
 public class DcmHeaderToolBar extends WtoolBar {
 
     public DcmHeaderToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
-        super(Messages.getString("DcmHeaderToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("DcmHeaderToolBar.title"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

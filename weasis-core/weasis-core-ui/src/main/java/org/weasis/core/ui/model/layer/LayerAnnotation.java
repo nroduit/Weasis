@@ -18,19 +18,19 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public interface LayerAnnotation extends Layer {
 
-    String ANNOTATIONS = Messages.getString("AnnotationsLayer.anno"); //$NON-NLS-1$
-    String MIN_ANNOTATIONS = Messages.getString("LayerAnnotation.min_anot"); //$NON-NLS-1$
-    String ANONYM_ANNOTATIONS = Messages.getString("AnnotationsLayer.anonym"); //$NON-NLS-1$
-    String SCALE = Messages.getString("AnnotationsLayer.scale"); //$NON-NLS-1$
-    String LUT = Messages.getString("AnnotationsLayer.lut"); //$NON-NLS-1$
-    String IMAGE_ORIENTATION = Messages.getString("AnnotationsLayer.or"); //$NON-NLS-1$
-    String WINDOW_LEVEL = Messages.getString("AnnotationsLayer.wl"); //$NON-NLS-1$
-    String ZOOM = Messages.getString("AnnotationsLayer.zoom"); //$NON-NLS-1$
-    String ROTATION = Messages.getString("AnnotationsLayer.rot"); //$NON-NLS-1$
-    String FRAME = Messages.getString("AnnotationsLayer.fr"); //$NON-NLS-1$
-    String PIXEL = Messages.getString("AnnotationsLayer.pix"); //$NON-NLS-1$
-    String PRELOADING_BAR = Messages.getString("AnnotationsLayer.preload_bar"); //$NON-NLS-1$
-    String KEY_OBJECT = Messages.getString("AnnotationsLayer.ko"); //$NON-NLS-1$
+    String ANNOTATIONS = Messages.getString("AnnotationsLayer.anno");
+    String MIN_ANNOTATIONS = Messages.getString("LayerAnnotation.min_anot");
+    String ANONYM_ANNOTATIONS = Messages.getString("AnnotationsLayer.anonym");
+    String SCALE = Messages.getString("AnnotationsLayer.scale");
+    String LUT = Messages.getString("AnnotationsLayer.lut");
+    String IMAGE_ORIENTATION = Messages.getString("AnnotationsLayer.or");
+    String WINDOW_LEVEL = Messages.getString("AnnotationsLayer.wl");
+    String ZOOM = Messages.getString("AnnotationsLayer.zoom");
+    String ROTATION = Messages.getString("AnnotationsLayer.rot");
+    String FRAME = Messages.getString("AnnotationsLayer.fr");
+    String PIXEL = Messages.getString("AnnotationsLayer.pix");
+    String PRELOADING_BAR = Messages.getString("AnnotationsLayer.preload_bar");
+    String KEY_OBJECT = Messages.getString("AnnotationsLayer.ko");
 
     Boolean getDisplayPreferences(String item);
 

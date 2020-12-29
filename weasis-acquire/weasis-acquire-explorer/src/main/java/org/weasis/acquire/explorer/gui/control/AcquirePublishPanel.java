@@ -39,7 +39,7 @@ import org.weasis.dicom.param.DicomState;
 public class AcquirePublishPanel extends JPanel {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 
-    private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish")); //$NON-NLS-1$
+    private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish"));
     private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
 
     public static final ExecutorService PUBLISH_DICOM = ThreadUtil.buildNewSingleThreadExecutor("Publish Dicom"); //$NON-NLS-1$
@@ -86,7 +86,7 @@ public class AcquirePublishPanel extends JPanel {
                     if (dicomState.getStatus() != Status.Success && dicomState.getStatus() != Status.Cancel) {
                         LOGGER.error("Dicom send error: {}", dicomState.getMessage()); //$NON-NLS-1$
                         JOptionPane.showMessageDialog(WinUtil.getParentWindow(AcquirePublishPanel.this),
-                            dicomState.getMessage(), null, // $NON-NLS-1$
+                            dicomState.getMessage(), null,
                             JOptionPane.ERROR_MESSAGE);
                     }
                 } catch (InterruptedException e) {

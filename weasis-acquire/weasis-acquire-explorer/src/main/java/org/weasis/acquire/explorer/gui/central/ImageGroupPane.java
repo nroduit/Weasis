@@ -88,7 +88,7 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
             // item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID),
             // UIDUtils.createUID()));
             // menuRoot.add(item);
-            JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all")); //$NON-NLS-1$
+            JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all"));
             item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
             menuRoot.add(item2);
         }

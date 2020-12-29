@@ -81,7 +81,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     private static DataFlavor createConstant(String mt, String prn) {
         try {
-            return new DataFlavor(mt, prn, Series.class.getClassLoader()); // $NON-NLS-1$
+            return new DataFlavor(mt, prn, Series.class.getClassLoader());
         } catch (Exception e) {
             LOGGER.error("Build series flavor", e); //$NON-NLS-1$
             return null;
@@ -334,7 +334,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
             ImageElement image = (ImageElement) media;
             PlanarImage img = image.getImage();
             if (img != null) {
-                toolTips.append(Messages.getString("Series.img_size")); //$NON-NLS-1$
+                toolTips.append(Messages.getString("Series.img_size"));
                 toolTips.append(StringUtil.COLON_AND_SPACE);
                 toolTips.append(img.width());
                 toolTips.append('x');

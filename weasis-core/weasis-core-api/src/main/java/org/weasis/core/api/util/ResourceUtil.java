@@ -65,11 +65,11 @@ public class ResourceUtil {
     }
 
     public static ImageIcon getLargeLogo() {
-        return getLogo("images" + File.separator + "about.png"); //$NON-NLS-1$ //$NON-NLS-2$
+        return getLogo("images" + File.separator + "about.png"); // NON-NLS
     }
 
     public static ImageIcon getIconLogo64() {
-        return getLogo("images" + File.separator + "logo-button.png"); //$NON-NLS-1$ //$NON-NLS-2$
+        return getLogo("images" + File.separator + "logo-button.png"); // NON-NLS
     }
 
     public static ImageIcon getLogo(String filename) {

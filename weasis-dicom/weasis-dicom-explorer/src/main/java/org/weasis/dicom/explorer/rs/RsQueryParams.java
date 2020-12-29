@@ -57,7 +57,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
 
     public RsQueryParams(DicomModel dicomModel, Properties properties, Map<String, List<String>> requestMap,
         Map<String, String> queryHeaders, Map<String, String> retrieveHeaders) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true);
         this.dicomModel = Objects.requireNonNull(dicomModel);
         this.properties = Objects.requireNonNull(properties);
         this.requestMap = Objects.requireNonNull(requestMap);
@@ -122,11 +122,11 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         fillPatientList();
         WadoParameters wp = new WadoParameters("", true, true); //$NON-NLS-1$
         getRetrieveHeaders().forEach(wp::addHttpTag);
-        wp.addHttpTag("Accept", "image/jpeg"); //$NON-NLS-1$ //$NON-NLS-2$
+        wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
         
         for (final LoadSeries loadSeries : seriesMap.values()) {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
             if (!ps) {
                 loadSeries.startDownloadImageReference(wp);
             }
@@ -154,8 +154,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                     arcConfig.buildFromStudyInstanceUID(Arrays.asList(stuID));
 
                 } else {
-                    LOGGER.error("Not ID found for STUDY request type: {}", requestType); //$NON-NLS-1$
-                    showErrorMessage(Messages.getString("RsQueryParams.missing_study_uid"), Messages.getString("RsQueryParams.no_sudy_uid")); //$NON-NLS-1$ //$NON-NLS-2$
+                    LOGGER.error("Not ID found for STUDY request type: {}", requestType);
+                    showErrorMessage(Messages.getString("RsQueryParams.missing_study_uid"), Messages.getString("RsQueryParams.no_sudy_uid"));
                 }
             } else if (InvokeImageDisplay.PATIENT_LEVEL.equals(requestType)) {
                 String patID = getReqPatientID();
@@ -163,8 +163,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                     arcConfig.buildFromPatientID(Arrays.asList(patID));
                 }
             } else if (requestType != null) {
-                LOGGER.error("Not supported IID request type: {}", requestType); //$NON-NLS-1$
-                showErrorMessage(Messages.getString("RsQueryParams.unexpect_req"), Messages.getString("RsQueryParams.idd_type") + requestType); //$NON-NLS-1$ //$NON-NLS-2$
+                LOGGER.error("Not supported IID request type: {}", requestType);
+                showErrorMessage(Messages.getString("RsQueryParams.unexpect_req"), Messages.getString("RsQueryParams.idd_type") + requestType);
             } else {
                 arcConfig.buildFromSopInstanceUID(getReqObjectUIDs());
                 arcConfig.buildFromSeriesInstanceUID(getReqSeriesUIDs());
@@ -173,8 +173,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
                 arcConfig.buildFromPatientID(getReqPatientIDs());
             }
         } catch (Exception e) {
-            LOGGER.error("Error when building the patient list", e); //$NON-NLS-1$
-            showErrorMessage(Messages.getString("RsQueryParams.unexpect_error"), Messages.getString("RsQueryParams.error_build_mf") + StringUtil.COLON + "\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            LOGGER.error("Error when building the patient list", e);
+            showErrorMessage(Messages.getString("RsQueryParams.unexpect_error"), Messages.getString("RsQueryParams.error_build_mf") + StringUtil.COLON + "\n"
                 + StringUtil.getTruncatedString(e.getMessage(), 130, Suffix.THREE_PTS));
         }
     }

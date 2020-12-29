@@ -85,7 +85,7 @@ public class MipPopup {
         ChangeListener scrollListerner;
 
         public MipDialog(MipView view) {
-            super(SwingUtilities.getWindowAncestor(view), Messages.getString("MipPopup.title"), //$NON-NLS-1$
+            super(SwingUtilities.getWindowAncestor(view), Messages.getString("MipPopup.title"),
                 ModalityType.APPLICATION_MODAL);
             this.view = view;
             this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -99,15 +99,15 @@ public class MipPopup {
             panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
             final JPanel framePanel = new JPanel();
-            framePanel.setBorder(new TitledBorder(null, Messages.getString("MipPopup.projection"), TitledBorder.LEADING, //$NON-NLS-1$
+            framePanel.setBorder(new TitledBorder(null, Messages.getString("MipPopup.projection"), TitledBorder.LEADING,
                 TitledBorder.TOP, null, null));
             final ButtonGroup ratioGroup = new ButtonGroup();
 
-            JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min")); //$NON-NLS-1$
+            JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min"));
             framePanel.add(rdbtnMinProjection);
-            JRadioButton rdbtnMeanProjection = new JRadioButton(Messages.getString("MipPopup.mean")); //$NON-NLS-1$
+            JRadioButton rdbtnMeanProjection = new JRadioButton(Messages.getString("MipPopup.mean"));
             framePanel.add(rdbtnMeanProjection);
-            JRadioButton rdbtnMaxProjection = new JRadioButton(Messages.getString("MipPopup.max")); //$NON-NLS-1$
+            JRadioButton rdbtnMaxProjection = new JRadioButton(Messages.getString("MipPopup.max"));
             framePanel.add(rdbtnMaxProjection);
             panel_1.add(framePanel);
             ratioGroup.add(rdbtnMinProjection);
@@ -185,7 +185,7 @@ public class MipPopup {
             panel.setBorder(new EmptyBorder(20, 15, 10, 15));
             getContentPane().add(panel);
 
-            JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.rebuild_series")); //$NON-NLS-1$
+            JButton btnExitMipMode = new JButton(Messages.getString("MipPopup.rebuild_series"));
             btnExitMipMode.addActionListener(e -> {
                 MipView.buildMip(view, true);
                 dispose();
@@ -195,7 +195,7 @@ public class MipPopup {
             Component horizontalStrut = Box.createHorizontalStrut(20);
             panel.add(horizontalStrut);
 
-            JButton btnClose = new JButton(Messages.getString("MipPopup.close")); //$NON-NLS-1$
+            JButton btnClose = new JButton(Messages.getString("MipPopup.close"));
             btnClose.addActionListener(close);
             panel.add(btnClose);
         }

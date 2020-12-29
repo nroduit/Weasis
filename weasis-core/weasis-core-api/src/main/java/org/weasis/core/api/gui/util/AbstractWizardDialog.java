@@ -61,7 +61,7 @@ public abstract class AbstractWizardDialog extends JDialog {
         jPanelMain.setLayout(borderLayout2);
 
         jButtonClose.addActionListener(e -> cancel());
-        jButtonClose.setText(Messages.getString("AbstractWizardDialog.close")); //$NON-NLS-1$
+        jButtonClose.setText(Messages.getString("AbstractWizardDialog.close"));
 
         jPanelRootPanel.setLayout(borderLayout3);
         jPanelButtom.setLayout(gridBagLayout1);

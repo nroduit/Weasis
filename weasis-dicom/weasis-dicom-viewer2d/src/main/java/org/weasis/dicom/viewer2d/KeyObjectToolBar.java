@@ -78,7 +78,7 @@ public class KeyObjectToolBar extends WtoolBar {
     }
 
     public KeyObjectToolBar(int index) {
-        super(Messages.getString("KeyObjectToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("KeyObjectToolBar.title"), index);
 
         final EventManager evtMgr = EventManager.getInstance();
 
@@ -176,9 +176,9 @@ public class KeyObjectToolBar extends WtoolBar {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         JScrollPane scrollList = new JScrollPane(list);
-        final JButton deleteBtn = new JButton(Messages.getString("KeyObjectToolBar.delete")); //$NON-NLS-1$
-        final JButton createBtn = new JButton(Messages.getString("KeyObjectToolBar.new")); //$NON-NLS-1$
-        final JButton copyBtn = new JButton(Messages.getString("KeyObjectToolBar.copy")); //$NON-NLS-1$
+        final JButton deleteBtn = new JButton(Messages.getString("KeyObjectToolBar.delete"));
+        final JButton createBtn = new JButton(Messages.getString("KeyObjectToolBar.new"));
+        final JButton copyBtn = new JButton(Messages.getString("KeyObjectToolBar.copy"));
 
         int maxBtnWidth = 0;
         maxBtnWidth = Math.max(maxBtnWidth, deleteBtn.getPreferredSize().width);
@@ -189,7 +189,7 @@ public class KeyObjectToolBar extends WtoolBar {
         createBtn.setPreferredSize(new Dimension(maxBtnWidth, createBtn.getPreferredSize().height));
         copyBtn.setPreferredSize(new Dimension(maxBtnWidth, copyBtn.getPreferredSize().height));
 
-        Object[] message = { Messages.getString("KeyObjectToolBar.k0_list"), scrollList }; //$NON-NLS-1$
+        Object[] message = { Messages.getString("KeyObjectToolBar.k0_list"), scrollList };
 
         final JOptionPane pane = new JOptionPane(message, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_OPTION, null,
             new JButton[] { deleteBtn, createBtn }, createBtn);
@@ -217,7 +217,7 @@ public class KeyObjectToolBar extends WtoolBar {
         deleteBtn.setEnabled(!list.isSelectionEmpty());
 
         pane.setComponentOrientation(selectedView2dContainer.getComponentOrientation());
-        JDialog dialog = pane.createDialog(selectedView2dContainer, Messages.getString("KeyObjectToolBar.edit")); //$NON-NLS-1$
+        JDialog dialog = pane.createDialog(selectedView2dContainer, Messages.getString("KeyObjectToolBar.edit"));
 
         pane.selectInitialValue();
 

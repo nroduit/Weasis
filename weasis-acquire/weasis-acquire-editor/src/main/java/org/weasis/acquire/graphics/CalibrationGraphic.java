@@ -59,7 +59,7 @@ public class CalibrationGraphic extends LineGraphic {
         if (!getResizingOrMoving()) {
             CalibrationView calibrationDialog = new CalibrationView(this, view, false);
             int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog,
-                Messages.getString("CalibrationGraphic.calib"), //$NON-NLS-1$
+                Messages.getString("CalibrationGraphic.calib"),
                 JOptionPane.OK_CANCEL_OPTION);
             if (res == JOptionPane.OK_OPTION) {
                 calibrationDialog.applyNewCalibration();
@@ -98,7 +98,7 @@ public class CalibrationGraphic extends LineGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("CalibrationGraphic.calib_line"); //$NON-NLS-1$
+        return Messages.getString("CalibrationGraphic.calib_line");
     }
 
     @Override

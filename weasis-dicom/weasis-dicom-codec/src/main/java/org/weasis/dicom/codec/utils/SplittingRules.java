@@ -100,7 +100,7 @@ public class SplittingRules {
             // disable external entities for security
             factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
             factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-            stream = new FileInputStream(file); // $NON-NLS-1$
+            stream = new FileInputStream(file);
             xmler = factory.createXMLStreamReader(stream);
 
             int eventType;
@@ -253,7 +253,7 @@ public class SplittingRules {
                         tag = null;
                         type = null;
                         value = null;
-                    } else if (endElement.equals(xmler.getName().getLocalPart())) { // $NON-NLS-1$
+                    } else if (endElement.equals(xmler.getName().getLocalPart())) {
                         state = false;
                     }
                     break;

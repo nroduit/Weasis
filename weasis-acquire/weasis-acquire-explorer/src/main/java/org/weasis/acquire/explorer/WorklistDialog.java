@@ -104,12 +104,12 @@ public class WorklistDialog extends JDialog {
         okButton = new JButton();
         footPanel.add(okButton);
 
-        okButton.setText(Messages.getString("WorklistDialog.apply")); //$NON-NLS-1$
+        okButton.setText(Messages.getString("WorklistDialog.apply"));
         okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
-        cancelButton.setText(Messages.getString("WorklistDialog.cancel")); //$NON-NLS-1$
+        cancelButton.setText(Messages.getString("WorklistDialog.cancel"));
         cancelButton.addActionListener(e -> dispose());
     }
 

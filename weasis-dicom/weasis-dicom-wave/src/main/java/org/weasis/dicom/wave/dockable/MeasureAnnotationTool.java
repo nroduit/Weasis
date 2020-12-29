@@ -178,7 +178,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
             for (int i = 0; i < labels.length; i++) {
                 labels[i] = list.get(i);
             }
-            String[] headers = { Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") }; //$NON-NLS-1$ //$NON-NLS-2$
+            String[] headers = { Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") };
             jtableTag.setModel(new SimpleTableModel(headers, labels));
             jtableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
             createTableHeaders(jtableTag);
@@ -203,7 +203,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
             for (int i = 0; i < labels.length; i++) {
                 labels[i] = list.get(i);
             }
-            String[] headers = { Messages.getString("MeasureAnnotationTool.lead"), Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            String[] headers = { Messages.getString("MeasureAnnotationTool.lead"), Messages.getString("MeasureAnnotationTool.tag"), Messages.getString("MeasureAnnotationTool.value") };
             jtableMarker.setModel(new SimpleTableModel(headers, labels));
             jtableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
             createTableHeaders(jtableMarker);

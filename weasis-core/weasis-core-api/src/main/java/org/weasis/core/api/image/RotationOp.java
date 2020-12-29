@@ -18,7 +18,7 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class RotationOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("RotationOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("RotationOperation.title");
 
     /**
      * Set the clockwise angle value in degree (Required parameter).

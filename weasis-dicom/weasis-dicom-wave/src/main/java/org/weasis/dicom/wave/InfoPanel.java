@@ -119,14 +119,14 @@ class InfoPanel extends JPanel {
     }
 
     public void setMinMax(double minimum, double maximum) {
-        StringBuilder min = new StringBuilder(Messages.getString("InfoPanel.min")); //$NON-NLS-1$
+        StringBuilder min = new StringBuilder(Messages.getString("InfoPanel.min"));
         min.append(StringUtil.COLON_AND_SPACE);
         min.append("##.#### mV;"); //$NON-NLS-1$
         min.append(Messages.getString("InfoPanel.min")); //$NON-NLS-1$
         min.append(StringUtil.COLON_AND_SPACE);
         min.append("-##.#### mV"); //$NON-NLS-1$
         
-        StringBuilder max = new StringBuilder(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
+        StringBuilder max = new StringBuilder(Messages.getString("InfoPanel.max"));
         max.append(StringUtil.COLON_AND_SPACE);
         max.append("##.#### mV;"); //$NON-NLS-1$
         max.append(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
@@ -140,7 +140,7 @@ class InfoPanel extends JPanel {
         if (sec < 0) {
             clearValue(currentLabel, seconds, miliVolt);
         } else {
-            currentLabel.setText(Messages.getString("InfoPanel.cursor")); //$NON-NLS-1$
+            currentLabel.setText(Messages.getString("InfoPanel.cursor"));
             seconds.setText(MarkerAnnotation.secondFormatter.format(sec));
             miliVolt.setText(MarkerAnnotation.mVFormatter.format(mV));
         }

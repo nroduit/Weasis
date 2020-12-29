@@ -145,11 +145,11 @@ import bibliothek.util.Colors;
 public class WeasisWin {
     private static final Logger LOGGER = LoggerFactory.getLogger(WeasisWin.class);
 
-    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList( "info", "ui" )); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList( "info", "ui" )); // NON-NLS
 
-    private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file")); //$NON-NLS-1$
-    private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display")); //$NON-NLS-1$
-    private final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { //$NON-NLS-1$
+    private final JMenu menuFile = new JMenu(Messages.getString("WeasisWin.file"));
+    private final JMenu menuView = new JMenu(Messages.getString("WeasisWin.display"));
+    private final DynamicMenu menuSelectedPlugin = new DynamicMenu("") { 
 
         @Override
         public void popupMenuWillBecomeVisible() {
@@ -229,8 +229,8 @@ public class WeasisWin {
         rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
         if (frame != null) {
-            frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); //$NON-NLS-1$
-            ImageIcon icon =  AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") :  ResourceUtil.getIconLogo64(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION);  //NON-NLS
+            ImageIcon icon =  AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") :  ResourceUtil.getIconLogo64(); // NON-NLS
             if (icon != null) {
                 frame.setIconImage(icon.getImage());
             }
@@ -256,8 +256,8 @@ public class WeasisWin {
             // TODO add a message, Please wait or kill
             return false;
         }
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) { //$NON-NLS-1$
-            int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes")); //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) { 
+            int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
             if (option == JOptionPane.YES_OPTION) {
                 return closeAllRunnable();
             }
@@ -711,25 +711,25 @@ public class WeasisWin {
         menuBar.add(menuSelectedPlugin);
         menuSelectedPlugin.addPopupMenuListener();
 
-        final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help")); //$NON-NLS-1$
-        final String helpURL = System.getProperty("weasis.help.url"); //$NON-NLS-1$
+        final JMenu helpMenuItem = new JMenu(Messages.getString("WeasisWin.help"));
+        final String helpURL = System.getProperty("weasis.help.url"); 
         if (helpURL != null) {
-            final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide")); //$NON-NLS-1$
+            final JMenuItem helpContentMenuItem = new JMenuItem(Messages.getString("WeasisWin.guide"));
             helpContentMenuItem.addActionListener(e -> openBrowser(helpContentMenuItem, helpURL));
             helpMenuItem.add(helpContentMenuItem);
         }
 
-        final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts")); //$NON-NLS-1$
+        final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts"));
         webMenuItem.addActionListener(
             e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); //$NON-NLS-1$
         helpMenuItem.add(webMenuItem);
 
-        final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online")); //$NON-NLS-1$
+        final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online"));
         websiteMenuItem.addActionListener(
             e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); //$NON-NLS-1$
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
-            new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME)); //$NON-NLS-1$
+            new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));
         aboutMenuItem.addActionListener(e -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(rootPaneContainer);
             WeasisAboutBox about = new WeasisAboutBox(getFrame());
@@ -857,7 +857,7 @@ public class WeasisWin {
         toolBarMenu.addPopupMenuListener();
         menuView.add(toolBarMenu);
 
-        DynamicMenu toolMenu = new DynamicMenu(Messages.getString("WeasisWin.tools")) { //$NON-NLS-1$
+        DynamicMenu toolMenu = new DynamicMenu(Messages.getString("WeasisWin.tools")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -918,7 +918,7 @@ public class WeasisWin {
 
     private void buildMenuFile() {
         menuFile.removeAll();
-        DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) { //$NON-NLS-1$
+        DynamicMenu openMenu = new DynamicMenu(Messages.getString("WeasisWin.open")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -949,7 +949,7 @@ public class WeasisWin {
 
         menuFile.add(exportMenu);
         menuFile.add(new JSeparator());
-        DynamicMenu printMenu = new DynamicMenu(Messages.getString("WeasisWin.print")) { //$NON-NLS-1$
+        DynamicMenu printMenu = new DynamicMenu(Messages.getString("WeasisWin.print")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -966,14 +966,14 @@ public class WeasisWin {
             ColorLayerUI.showCenterScreen(dialog, layer);
         };
         DefaultAction preferencesAction =
-            new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"), //$NON-NLS-1$
+            new DefaultAction(org.weasis.core.ui.Messages.getString("OpenPreferencesAction.title"),
                 prefAction);
         preferencesAction.putValue(Action.ACCELERATOR_KEY,
             KeyStroke.getKeyStroke(KeyEvent.VK_P, InputEvent.ALT_DOWN_MASK));
         menuFile.add(new JMenuItem(preferencesAction));
 
         menuFile.add(new JSeparator());
-        DefaultAction exitAction = new DefaultAction(Messages.getString("ExitAction.title"), //$NON-NLS-1$
+        DefaultAction exitAction = new DefaultAction(Messages.getString("ExitAction.title"),
             e -> closeWindow());
         menuFile.add(new JMenuItem(exitAction));
     }
@@ -1177,10 +1177,10 @@ public class WeasisWin {
     }
 
     public void info(String[] argv) throws IOException {
-        final String[] usage = { "Show information about Weasis", "Usage: weasis:info (-v | -a)", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -v --version    show version", //$NON-NLS-1$
-            "  -a --all        show weasis specifications", //$NON-NLS-1$
-            "  -? --help       show help" }; //$NON-NLS-1$
+        final String[] usage = { "Show information about Weasis", "Usage: weasis:info (-v | -a)", // NON-NLS
+            "  -v --version    show version",  //NON-NLS
+            "  -a --all        show weasis specifications",  //NON-NLS
+            "  -? --help       show help" };  //NON-NLS
 
         Option opt = Options.compile(usage).parse(argv);
 
@@ -1188,28 +1188,28 @@ public class WeasisWin {
             System.out.println(AppProperties.WEASIS_VERSION);
         } else if (opt.isSet("all")) { //$NON-NLS-1$
             PrintStream out = System.out;
-            out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION); //$NON-NLS-1$ //$NON-NLS-2$
-            out.println("  Installation path: " + AppProperties.WEASIS_PATH); //$NON-NLS-1$
-            out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR); //$NON-NLS-1$
-            out.println("  Profile: " + AppProperties.WEASIS_PROFILE); //$NON-NLS-1$
-            out.println("  User: " + AppProperties.WEASIS_USER); //$NON-NLS-1$
-            out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); //$NON-NLS-1$ //$NON-NLS-2$
-            out.format("  Operating system: %s %s %s", System.getProperty("os.name"), System.getProperty("os.version"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                System.getProperty("os.arch")); //$NON-NLS-1$
+            out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION);
+            out.println("  Installation path: " + AppProperties.WEASIS_PATH);  //NON-NLS
+            out.println("  Path for temporary files: " + AppProperties.APP_TEMP_DIR);  //NON-NLS
+            out.println("  Profile: " + AppProperties.WEASIS_PROFILE);  //NON-NLS
+            out.println("  User: " + AppProperties.WEASIS_USER);  //NON-NLS
+            out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); // NON-NLS
+            out.format("  Operating system: %s %s %s", System.getProperty("os.name"), System.getProperty("os.version"), // NON-NLS
+                System.getProperty("os.arch")); 
             out.println();
-            out.println("  Java vendor: " + System.getProperty("java.vendor")); //$NON-NLS-1$ //$NON-NLS-2$
-            out.println("  Java version: " + System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
-            out.println("  Java Path: " + System.getProperty("java.home")); //$NON-NLS-1$ //$NON-NLS-2$
+            out.println("  Java vendor: " + System.getProperty("java.vendor")); // NON-NLS
+            out.println("  Java version: " + System.getProperty("java.version")); // NON-NLS
+            out.println("  Java Path: " + System.getProperty("java.home")); // NON-NLS
         } else {
             opt.usage();
         }
     }
 
     public void ui(String[] argv) throws IOException {
-        final String[] usage = { "Manage user interface", "Usage: weasis:ui (-q | -v)", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -q --quit        shutdown Weasis", //$NON-NLS-1$
-            "  -v --visible     set window on top", //$NON-NLS-1$
-            "  -? --help        show help" }; //$NON-NLS-1$
+        final String[] usage = { "Manage user interface", "Usage: weasis:ui (-q | -v)", //NON-NLS
+            "  -q --quit        shutdown Weasis",  //NON-NLS
+            "  -v --visible     set window on top",  //NON-NLS
+            "  -? --help        show help" };  //NON-NLS
 
         Option opt = Options.compile(usage).parse(argv);
         if (opt.isSet("quit")) { //$NON-NLS-1$

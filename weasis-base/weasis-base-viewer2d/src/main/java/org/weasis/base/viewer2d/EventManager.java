@@ -229,7 +229,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             if (view != null) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
                 PrintDialog<?> dialog = new PrintDialog<>(SwingUtilities.getWindowAncestor(view),
-                    Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
+                    Messages.getString("View2dContainer.print_layout"), this);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
@@ -484,8 +484,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         JMenu menu = null;
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             ButtonGroup group = new ButtonGroup();
-            menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
+            menu = new JMenu(Messages.getString("ResetTools.reset"));
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
             menu.setEnabled(getSelectedSeries() != null);
 
             if (menu.isEnabled()) {
@@ -527,25 +527,25 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION, SliderChangeListener.class);
             if (rotateAction.isPresent()) {
-                menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+                menu = new JMenu(Messages.getString("View2dContainer.orientation"));
                 menu.setIcon(ActionW.ROTATION.getSmallIcon());
                 menu.setEnabled(rotateAction.get().isActionEnabled());
 
                 if (rotateAction.get().isActionEnabled()) {
-                    JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+                    JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset"));
                     menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
                     menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
                     menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+180"));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 180) % 360));
                     menu.add(menuItem);
@@ -554,7 +554,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                     if (flipAction.isPresent()) {
                         menu.add(new JSeparator());
                         menuItem = flipAction.get()
-                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h")); //$NON-NLS-1$
+                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"));
                         menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
                         menu.add(menuItem);
                     }
@@ -604,7 +604,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             Optional<ComboItemListener> filterAction = getAction(ActionW.FILTER, ComboItemListener.class);
             if (filterAction.isPresent()) {
-                menu = filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
+                menu = filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter"));
             }
         }
         return menu;

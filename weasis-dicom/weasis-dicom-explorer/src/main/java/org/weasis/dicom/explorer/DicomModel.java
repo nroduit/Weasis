@@ -500,7 +500,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     public static boolean isSpecialModality(MediaSeries<?> series) {
         String modality = (series == null) ? null : TagD.getTagValue(series, Tag.Modality, String.class);
-        return modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+        return modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
     }
 
     public static Collection<KOSpecialElement> getEditableKoSpecialElements(MediaSeriesGroup group) {
@@ -669,14 +669,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
         int k = 1;
         while (true) {
-            String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+            String uid = "#" + k + "." + seriesUID;
             MediaSeriesGroup group = getHierarchyNode(st, uid);
             if (group == null) {
                 break;
             }
             k++;
         }
-        String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+        String uid = "#" + k + "." + seriesUID;
         Series s = dicomReader.buildSeries(uid);
         dicomReader.writeMetaData(s);
         Object val = original.getTagValue(TagW.SplitSeriesNumber);
@@ -697,14 +697,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         int k = 1;
         while (true) {
-            String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+            String uid = "#" + k + "." + seriesUID;
             MediaSeriesGroup group = getHierarchyNode(st, uid);
             if (group == null) {
                 break;
             }
             k++;
         }
-        String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+        String uid = "#" + k + "." + seriesUID;
         Series s = dicomReader.buildSeries(uid);
         dicomReader.writeMetaData(s);
         Object val = original.getTagValue(TagW.SplitSeriesNumber);
@@ -794,7 +794,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     if (specialElementList == null) {
                         specialElementList = new CopyOnWriteArrayList<>();
                         initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
-                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { //$NON-NLS-1$ //$NON-NLS-2$
+                    } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { // NON-NLS
                         // Split SR series to have only one object by series
                         Series s = splitSeries(dicomReader, initialSeries);
                         specialElementList = new CopyOnWriteArrayList<>();
@@ -831,7 +831,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     MediaSeriesGroup study = getParent(initialSeries, DicomModel.study);
                     int k = 1;
                     while (true) {
-                        String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+                        String uid = "#" + k + "." + seriesUID;
                         MediaSeriesGroup group = getHierarchyNode(study, uid);
                         if (group instanceof DicomSeries) {
                             if (isSimilar(rules, (DicomSeries) group, media)) {
@@ -891,7 +891,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             MediaSeriesGroup study = getParent(original, DicomModel.study);
             int k = 1;
             while (true) {
-                String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+                String uid = "#" + k + "." + seriesUID;
                 MediaSeriesGroup group = getHierarchyNode(study, uid);
                 if (group instanceof Series) {
                     if (isSimilar(rules, (Series) group, media)) {
@@ -990,7 +990,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             List<String> xmlFiles = new ArrayList<>(iargs.size());
             for (int i = 0; i < iargs.size(); i++) {
                 try {
-                    File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                    File tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); // NON-NLS
                     if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(iargs.get(i)), tempFile)) {
                         xmlFiles.add(tempFile.getPath());
                     }
@@ -1118,7 +1118,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         final List<String> yargs = opt.getList("study"); //$NON-NLS-1$
         final List<String> sargs = opt.getList("series"); //$NON-NLS-1$
 
-        if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
             opt.usage();
             return;
         }
@@ -1155,7 +1155,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 // Remove all the split series
                 int k = 1;
                 while (true) {
-                    String uid = "#" + k + "." + seriesUID; //$NON-NLS-1$ //$NON-NLS-2$
+                    String uid = "#" + k + "." + seriesUID;
                     MediaSeriesGroup group = getHierarchyNode(stGroup, uid);
                     if (group != null) {
                         removeSeries(group);

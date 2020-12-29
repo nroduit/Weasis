@@ -111,14 +111,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         actions.put(ActionW.LUT.cmd(), true);
         actions.put(ActionW.INVERT_LUT.cmd(), true);
         actions.put(ActionW.FILTER.cmd(), true);
-        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.STACK, //$NON-NLS-1$ //$NON-NLS-2$
-            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
+        DEFAULT_MPR = new SynchView("MPR synch", "mpr", SynchData.Mode.STACK, // NON-NLS
+            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); 
 
         SYNCH_LIST.add(DEFAULT_MPR);
     }
 
     public static final GridBagLayoutModel VIEWS_2x1_mpr = new GridBagLayoutModel(
-        new LinkedHashMap<LayoutConstraints, Component>(3), "mpr", Messages.getString("MPRContainer.title")); //$NON-NLS-1$ //$NON-NLS-2$
+            new LinkedHashMap<>(3), "mpr", Messages.getString("MPRContainer.title")); // NON-NLS
 
     static {
         Map<LayoutConstraints, Component> constraints = VIEWS_2x1_mpr.getConstraints();
@@ -406,7 +406,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(1);
-        final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
+        final String title = Messages.getString("View2dContainer.print_layout");
         DefaultAction printStd = new DefaultAction(title,
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
@@ -416,7 +416,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             });
         actions.add(printStd);
 
-        final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
+        final String title2 = Messages.getString("View2dContainer.dcm_print");
         DefaultAction printStd2 = new DefaultAction(title2, null, event -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
             DicomPrintDialog<?> dialog =
@@ -471,7 +471,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
                 this.setPluginName(StringUtil.getTruncatedString(title, 25, Suffix.THREE_PTS));
             }
             view.repaint();
-            process = new Thread(Messages.getString("MPRContainer.build")) { //$NON-NLS-1$
+            process = new Thread(Messages.getString("MPRContainer.build")) {
                 @Override
                 public void run() {
                     try {
@@ -518,7 +518,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             };
             process.start();
         } else {
-            showErrorMessage(view2ds, null, Messages.getString("MPRContainer.mesg_missing_3d")); //$NON-NLS-1$
+            showErrorMessage(view2ds, null, Messages.getString("MPRContainer.mesg_missing_3d"));
         }
     }
 

@@ -27,7 +27,7 @@ import org.weasis.core.util.StringUtil;
  */
 public class Options implements Option {
 
-    public static final String NL = System.getProperty("line.separator", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final String NL = System.getProperty("line.separator", "\n"); // NON-NLS
 
     // Note: need to double \ within ""
     private static final String REGEX = "(?x)\\s*" + "(?:-([^-]))?" + // 1: short-opt-1 //$NON-NLS-1$ //$NON-NLS-2$
@@ -101,8 +101,8 @@ public class Options implements Option {
         if (opt.isSet("count")) { //$NON-NLS-1$
             System.out.println("count = " + opt.getNumber("count")); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        System.out.println("--directories specified: " + opt.isSet("directories")); //$NON-NLS-1$ //$NON-NLS-2$
-        System.out.println("directories=" + opt.get("directories")); //$NON-NLS-1$ //$NON-NLS-2$
+        System.out.println("--directories specified: " + opt.isSet("directories")); // NON-NLS
+        System.out.println("directories=" + opt.get("directories")); // NON-NLS
     }
 
     public static Option compile(String[] optSpec) {
@@ -219,7 +219,7 @@ public class Options implements Option {
             }
             return 0;
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("option '" + name + "' not Number: " + number); //$NON-NLS-1$ //$NON-NLS-2$
+            throw new IllegalArgumentException("option '" + name + "' not Number: " + number); // NON-NLS
         }
     }
 
@@ -422,7 +422,7 @@ public class Options implements Option {
                 addArg(needArg, oarg);
                 needArg = null;
                 needOpt = null;
-            } else if (!arg.startsWith("-") || "-".equals(oarg)) { //$NON-NLS-1$ //$NON-NLS-2$
+            } else if (!arg.startsWith("-") || "-".equals(oarg)) { // NON-NLS
                 if (optionsFirst) {
                     endOpt = true;
                 }
@@ -457,7 +457,7 @@ public class Options implements Option {
                                     needArg = name;
                                 }
                             } else if (value != null) {
-                                throw usageError("option '--" + name + "' doesn't allow an argument"); //$NON-NLS-1$ //$NON-NLS-2$
+                                throw usageError("option '--" + name + "' doesn't allow an argument"); // NON-NLS
                             }
                             break;
 
@@ -467,11 +467,11 @@ public class Options implements Option {
                                 xargs.add(oarg);
                                 break;
                             } else {
-                                throw usageError("invalid option '--" + name + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+                                throw usageError("invalid option '--" + name + "'"); // NON-NLS
                             }
 
                         default:
-                            throw usageError("option '--" + name + "' is ambiguous: " + names); //$NON-NLS-1$ //$NON-NLS-2$
+                            throw usageError("option '--" + name + "' is ambiguous: " + names); // NON-NLS
                     }
                 } else {
                     for (int i = 1; i < arg.length(); i++) {
@@ -494,7 +494,7 @@ public class Options implements Option {
                                 xargs.add("-" + c); //$NON-NLS-1$
                                 endOpt = true;
                             } else {
-                                throw usageError("invalid option '" + c + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+                                throw usageError("invalid option '" + c + "'"); // NON-NLS
                             }
                         }
                     }
@@ -524,7 +524,7 @@ public class Options implements Option {
 
     @Override
     public String toString() {
-        return "isSet" + optSet + "\nArg" + optArg + "\nargs" + xargs; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return "isSet" + optSet + "\nArg" + optArg + "\nargs" + xargs; // NON-NLS
     }
 
 }

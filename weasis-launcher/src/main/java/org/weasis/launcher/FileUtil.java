@@ -149,12 +149,12 @@ public class FileUtil {
         String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
         File tdir;
         if (tempDir == null || tempDir.length() == 1) {
-            String dir = System.getProperty("user.home", ""); //$NON-NLS-1$ //$NON-NLS-2$
+            String dir = System.getProperty("user.home", ""); // NON-NLS
             tdir = new File(dir);
         } else {
             tdir = new File(tempDir);
         }
-        return new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return new File(tdir, "weasis-" + System.getProperty("user.name", "tmp")); // NON-NLS
     }
 
     public static boolean readProperties(File propsFile, Properties props) {
@@ -201,15 +201,15 @@ public class FileUtil {
         connection.setUseCaches(useCaches);
         // Support for http proxy authentication.
         String p = url.getProtocol();
-        String pauth = System.getProperty("http.proxyAuth", null); //$NON-NLS-1$
-        if (Utils.hasText(pauth) && ("http".equals(p) || "https".equals(p))) { //$NON-NLS-1$ //$NON-NLS-2$
+        String pauth = System.getProperty("http.proxyAuth", null);
+        if (Utils.hasText(pauth) && ("http".equals(p) || "https".equals(p))) { // NON-NLS
             String base64 = Util.base64Encode(pauth);
-            connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); //$NON-NLS-1$ //$NON-NLS-2$
+            connection.setRequestProperty("Proxy-Authorization", "Basic " + base64); // NON-NLS
         }
 
-        String auth = System.getProperty("http.authorization", null); //$NON-NLS-1$
-        if (Utils.hasText(auth) && ("http".equals(p) || "https".equals(p))) { //$NON-NLS-1$ //$NON-NLS-2$
-            connection.setRequestProperty("Authorization", auth); //$NON-NLS-1$
+        String auth = System.getProperty("http.authorization", null);
+        if (Utils.hasText(auth) && ("http".equals(p) || "https".equals(p))) { // NON-NLS
+            connection.setRequestProperty("Authorization", auth);
         }
 
         return connection;
@@ -265,7 +265,7 @@ public class FileUtil {
         long th = (long) (Math.pow(unit, exp) * (unit - 0.05));
         if (exp < 6 && absBytes >= th - ((th & 0xfff) == 0xd00 ? 52 : 0))
             exp++;
-        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String pre = (si ? "kMGTPE" : "KMGTPE").charAt(exp - 1) + (si ? "" : "i"); // NON-NLS
         if (exp > 4) {
             bytes /= unit;
             exp -= 1;

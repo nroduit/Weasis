@@ -19,7 +19,7 @@ import java.util.logging.LogRecord;
 public class ConsoleFormatter extends Formatter {
     
     private static final MessageFormat messageFormat = new MessageFormat(System
-        .getProperty("org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}") + "\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        .getProperty("org.apache.sling.commons.log.pattern", "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}") + "\n"); // NON-NLS
 
     public ConsoleFormatter() {
         super();

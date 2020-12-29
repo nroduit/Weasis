@@ -157,8 +157,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
     public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
 
-    public static final Cursor EDIT_CURSOR = DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final Cursor HAND_CURSOR = DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final Cursor EDIT_CURSOR = DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); // NON-NLS
+    public static final Cursor HAND_CURSOR = DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); // NON-NLS
     public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
     public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
     public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
@@ -350,9 +350,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (image != null) {
             int channels = CvType.channels(image.type());
             if (channels == 3) {
-                return new String[] { Messages.getString("DefaultView2d.blue"), Messages.getString("DefaultView2d.green"), Messages.getString("DefaultView2d.red") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                return new String[] { Messages.getString("DefaultView2d.blue"), Messages.getString("DefaultView2d.green"), Messages.getString("DefaultView2d.red") };
             } else if (channels == 1) {
-                return new String[] { Messages.getString("DefaultView2d.gray") }; //$NON-NLS-1$
+                return new String[] { Messages.getString("DefaultView2d.gray") };
             }
         }
         return null;
@@ -1385,7 +1385,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             PixelInfo pixelInfo =
                 getPixelInfo(new Point((int) Math.floor(pModel.getX()), (int) Math.floor(pModel.getY())));
             oldBound.width = Math.max(oldBound.width, this.getGraphics().getFontMetrics(getLayerFont())
-                .stringWidth(Messages.getString("DefaultView2d.pix") + StringUtil.COLON_AND_SPACE + pixelInfo) + 4); //$NON-NLS-1$
+                .stringWidth(Messages.getString("DefaultView2d.pix") + StringUtil.COLON_AND_SPACE + pixelInfo) + 4);
             infoLayer.setPixelInfo(pixelInfo);
             repaint(oldBound);
         }
@@ -1461,7 +1461,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         List<Action> list = new ArrayList<>();
 
         AbstractAction exportToClipboardAction =
-            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")), event -> { //$NON-NLS-1$ //$NON-NLS-2$
+            new DefaultAction(Messages.getString("DefaultView2d.clipboard"), new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")), event -> {
                 final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
                 imageTransferHandler.exportToClipboard(DefaultView2d.this,
                     Toolkit.getDefaultToolkit().getSystemClipboard(), TransferHandler.COPY);
@@ -1471,7 +1471,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         list.add(exportToClipboardAction);
 
         // TODO exclude big images?
-        exportToClipboardAction = new DefaultAction(Messages.getString("DefaultView2d.clipboard_real"), event -> { //$NON-NLS-1$
+        exportToClipboardAction = new DefaultAction(Messages.getString("DefaultView2d.clipboard_real"), event -> {
             final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
             imageTransferHandler.exportToClipboard(DefaultView2d.this, Toolkit.getDefaultToolkit().getSystemClipboard(),
                 TransferHandler.COPY);

@@ -91,22 +91,22 @@ public class LoadingTaskPanel extends JPanel {
                 }
             });
 
-            globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all")); //$NON-NLS-1$
+            globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all"));
             globalResumeButton.addActionListener(e -> DownloadManager.resume());
             this.add(globalResumeButton);
-            globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all")); //$NON-NLS-1$
+            globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all"));
             globalStopButton.addActionListener(e -> DownloadManager.stop());
             this.add(globalStopButton);
         } else {
             JButton cancelButton =
                 new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); //$NON-NLS-1$
             cancelButton.addActionListener(e -> {
-                message.setText(Messages.getString("LoadingTaskPanel.abording")); //$NON-NLS-1$
+                message.setText(Messages.getString("LoadingTaskPanel.abording"));
                 if (task != null) {
                     task.cancel();
                 }
             });
-            cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process")); //$NON-NLS-1$
+            cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process"));
             this.add(cancelButton);
             if (task != null) {
                 CircularProgressBar globalProgress = task.getBar();

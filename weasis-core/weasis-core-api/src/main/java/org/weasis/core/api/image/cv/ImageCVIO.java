@@ -208,7 +208,7 @@ public class ImageCVIO implements MediaReader {
             sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
         }
         MediaSeries<MediaElement> series =
-            new Series<MediaElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) { // $NON-NLS-1$
+            new Series<MediaElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) {
 
                 @Override
                 public String getMimeType() {
@@ -278,7 +278,7 @@ public class ImageCVIO implements MediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION }; //$NON-NLS-1$ //$NON-NLS-2$
+        return new String[] { "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION }; // NON-NLS
     }
 
     public ImageReader getDefaultReader(String mimeType) {

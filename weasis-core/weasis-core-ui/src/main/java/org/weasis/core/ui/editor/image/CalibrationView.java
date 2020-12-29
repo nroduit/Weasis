@@ -62,11 +62,11 @@ public class CalibrationView extends JPanel {
     private final JLabel jLabelKnownDist = new JLabel();
     private final BorderLayout borderLayout1 = new BorderLayout();
     private final GridBagLayout gridBagLayout2 = new GridBagLayout();
-    private final JLabel lblApplyTo = new JLabel(Messages.getString("CalibrationView.apply") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel lblApplyTo = new JLabel(Messages.getString("CalibrationView.apply") + StringUtil.COLON);
     private final JPanel panel = new JPanel();
     private final ButtonGroup ratioGroup = new ButtonGroup();
-    private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series")); //$NON-NLS-1$
-    private final JRadioButton radioButtonImage = new JRadioButton(Messages.getString("CalibrationView.current")); //$NON-NLS-1$
+    private final JRadioButton radioButtonSeries = new JRadioButton(Messages.getString("CalibrationView.series"));
+    private final JRadioButton radioButtonImage = new JRadioButton(Messages.getString("CalibrationView.current"));
 
     public CalibrationView(LineGraphic line, ViewCanvas<?> view2d, boolean selectSeries) {
         this.line = line;
@@ -95,7 +95,7 @@ public class CalibrationView extends JPanel {
         jTextFieldLineWidth.setValue(1.0);
         JMVUtils.addCheckAction(jTextFieldLineWidth);
 
-        jLabelKnownDist.setText(Messages.getString("CalibrationView.known") + StringUtil.COLON); //$NON-NLS-1$
+        jLabelKnownDist.setText(Messages.getString("CalibrationView.known") + StringUtil.COLON);
         this.setLayout(borderLayout1);
 
         this.add(jPanelMode, BorderLayout.CENTER);
@@ -141,7 +141,7 @@ public class CalibrationView extends JPanel {
                 gbcTextPane.gridy = 0;
                 gbcTextPane.weightx = 1.0;
                 gbcTextPane.weighty = 1.0;
-                JScrollPane scroll = new JScrollPane(createArea(Messages.getString("CalibrationView.warn"), //$NON-NLS-1$
+                JScrollPane scroll = new JScrollPane(createArea(Messages.getString("CalibrationView.warn"),
                     true, 0));
                 scroll.setPreferredSize(new Dimension(300, 75));
                 jPanelMode.add(scroll, gbcTextPane);

@@ -91,7 +91,7 @@ public class DicomWebNodeDialog extends JDialog {
         gbcDescriptionLabel.gridy = 0;
         content.add(descriptionLabel, gbcDescriptionLabel);
 
-        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON); //$NON-NLS-1$
+        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
         descriptionTf = new JTextField();
         GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
         gbcDescriptionTf.anchor = GridBagConstraints.LINE_START;
@@ -101,7 +101,7 @@ public class DicomWebNodeDialog extends JDialog {
         content.add(descriptionTf, gbcDescriptionTf);
         descriptionTf.setColumns(20);
 
-        lblType = new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON); //$NON-NLS-1$
+        lblType = new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON);
         GridBagConstraints gbcLblType = new GridBagConstraints();
         gbcLblType.anchor = GridBagConstraints.EAST;
         gbcLblType.insets = new Insets(0, 0, 5, 5);
@@ -140,7 +140,7 @@ public class DicomWebNodeDialog extends JDialog {
 
         this.getContentPane().add(content, BorderLayout.CENTER);
         
-        btnHttpHeaders = new JButton(Messages.getString("DicomWebNodeDialog.httpHeaders")); //$NON-NLS-1$
+        btnHttpHeaders = new JButton(Messages.getString("DicomWebNodeDialog.httpHeaders"));
         GridBagConstraints gbcBtnHttpHeaders = new GridBagConstraints();
         gbcBtnHttpHeaders.anchor = GridBagConstraints.WEST;
         gbcBtnHttpHeaders.insets = new Insets(2, 0, 7, 0);
@@ -159,12 +159,12 @@ public class DicomWebNodeDialog extends JDialog {
         okButton = new JButton();
         footPanel.add(okButton);
 
-        okButton.setText(Messages.getString("PrinterDialog.ok")); //$NON-NLS-1$
+        okButton.setText(Messages.getString("PrinterDialog.ok"));
         okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
-        cancelButton.setText(Messages.getString("PrinterDialog.cancel")); //$NON-NLS-1$
+        cancelButton.setText(Messages.getString("PrinterDialog.cancel"));
         cancelButton.addActionListener(e -> dispose());
     }
 
@@ -179,8 +179,8 @@ public class DicomWebNodeDialog extends JDialog {
         DicomWebNode.WebType webType = (DicomWebNode.WebType) comboBox.getSelectedItem();
 
         if (!StringUtil.hasText(desc) || !StringUtil.hasText(url)) {
-            JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
-                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"),
+                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -188,8 +188,8 @@ public class DicomWebNodeDialog extends JDialog {
         try {
             validUrl = new URL(url);
         } catch (MalformedURLException e) {
-            LOGGER.warn("Non valid url", e); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(this, "This URL is not valid", Messages.getString("PrinterDialog.error"), //$NON-NLS-1$//$NON-NLS-2$
+            LOGGER.warn("Non valid url", e);
+            JOptionPane.showMessageDialog(this, Messages.getString("this.url.is.not.valid"), Messages.getString("PrinterDialog.error"),
                 JOptionPane.ERROR_MESSAGE);
             return;
         }

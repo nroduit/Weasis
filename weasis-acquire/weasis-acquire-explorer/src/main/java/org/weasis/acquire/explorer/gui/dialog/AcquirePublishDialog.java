@@ -72,10 +72,10 @@ public class AcquirePublishDialog extends JDialog {
     public static final String PREFERENCE_NODE = "publish"; //$NON-NLS-1$
 
     public enum Resolution {
-        ORIGINAL(Messages.getString("AcquirePublishDialog.original"), Integer.MAX_VALUE), //$NON-NLS-1$
-        ULTRA_HD(Messages.getString("AcquirePublishDialog.high_res"), 3840), //$NON-NLS-1$
-        FULL_HD(Messages.getString("AcquirePublishDialog.med_res"), 1920), //$NON-NLS-1$
-        HD_DVD(Messages.getString("AcquirePublishDialog.low_res"), 1280); //$NON-NLS-1$
+        ORIGINAL(Messages.getString("AcquirePublishDialog.original"), Integer.MAX_VALUE),
+        ULTRA_HD(Messages.getString("AcquirePublishDialog.high_res"), 3840),
+        FULL_HD(Messages.getString("AcquirePublishDialog.med_res"), 1920),
+        HD_DVD(Messages.getString("AcquirePublishDialog.low_res"), 1280);
 
         private String title;
         private int maxSize;
@@ -123,7 +123,7 @@ public class AcquirePublishDialog extends JDialog {
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public AcquirePublishDialog(AcquirePublishPanel publishPanel) {
-        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"), //$NON-NLS-1$
+        super(WinUtil.getParentWindow(publishPanel), Messages.getString("AcquirePublishDialog.publication"),
             ModalityType.APPLICATION_MODAL);
         this.publishPanel = publishPanel;
 
@@ -148,7 +148,7 @@ public class AcquirePublishDialog extends JDialog {
         contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
         contentPane.setLayout(new BorderLayout());
 
-        JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub")); //$NON-NLS-1$
+        JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
         questionLabel.setFont(FontTools.getFont12Bold());
 
         contentPane.add(questionLabel, BorderLayout.NORTH);
@@ -173,7 +173,7 @@ public class AcquirePublishDialog extends JDialog {
         resolutionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
 
         JLabel resolutionLabel =
-            new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            new JLabel(Messages.getString("AcquirePublishDialog.resolution") + StringUtil.COLON_AND_SPACE);
         resolutionPane.add(resolutionLabel);
 
         resolutionCombo = new JComboBox<>(Resolution.values());
@@ -197,16 +197,16 @@ public class AcquirePublishDialog extends JDialog {
         JPanel bottomPane = new JPanel(new BorderLayout());
         JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
 
-        publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish")); //$NON-NLS-1$
+        publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
         publishButton.addActionListener(e -> publishAction());
 
-        cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel")); //$NON-NLS-1$
+        cancelButton = new JButton(Messages.getString("AcquirePublishDialog.cancel"));
         clearAndHideActionListener = e -> clearAndHide();
         cancelButton.addActionListener(clearAndHideActionListener);
 
         JPanel destPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 10));
         JLabel lblDestination =
-            new JLabel(Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON); //$NON-NLS-1$
+            new JLabel(Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
         destPane.add(lblDestination);
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
@@ -235,10 +235,10 @@ public class AcquirePublishDialog extends JDialog {
     }
 
     private static AbstractDicomNode getDestinationConfiguration() {
-        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); //$NON-NLS-1$ //$NON-NLS-2$
-        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); //$NON-NLS-1$ //$NON-NLS-2$
-        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); //$NON-NLS-1$ //$NON-NLS-2$
-        return new DefaultDicomNode(Messages.getString("AcquirePublishDialog.def_archive"), aet, host, //$NON-NLS-1$
+        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host", "localhost"); // NON-NLS
+        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.aet", "DCM4CHEE"); // NON-NLS
+        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.port", "11112"); // NON-NLS
+        return new DefaultDicomNode(Messages.getString("AcquirePublishDialog.def_archive"), aet, host,
             Integer.parseInt(port), UsageType.BOTH);
     }
 
@@ -246,7 +246,7 @@ public class AcquirePublishDialog extends JDialog {
         List<AcquireImageInfo> toPublish = getSelectedImages(publishTree);
 
         if (toPublish.isEmpty()) {
-            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"), //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.select_one_msg"),
                 this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -265,7 +265,7 @@ public class AcquirePublishDialog extends JDialog {
             }
         }
         if (!publishable) {
-            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"), //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("AcquirePublishDialog.pub_warn_msg"),
                 this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return;
         }
@@ -321,8 +321,8 @@ public class AcquirePublishDialog extends JDialog {
                             }
                         } else {
                             JOptionPane.showMessageDialog(this,
-                                Messages.getString("AcquirePublishDialog.dicomize_error_msg"), //$NON-NLS-1$
-                                Messages.getString("AcquirePublishDialog.dicomize_error_title"), //$NON-NLS-1$
+                                Messages.getString("AcquirePublishDialog.dicomize_error_msg"),
+                                Messages.getString("AcquirePublishDialog.dicomize_error_title"),
                                 JOptionPane.ERROR_MESSAGE);
                         }
                     }

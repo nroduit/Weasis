@@ -59,7 +59,7 @@ public class AnnotationOptionsPanel extends JPanel {
     public AnnotationOptionsPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBorder(BorderFactory.createCompoundBorder(spaceY,
-            new TitledBorder(null, Messages.getString("AnnotationOptionsPanel.options"), //$NON-NLS-1$
+            new TitledBorder(null, Messages.getString("AnnotationOptionsPanel.options"),
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, TITLE_FONT, TITLE_COLOR)));
 
         lineStylePanel = createLineStylePanel();
@@ -76,10 +76,10 @@ public class AnnotationOptionsPanel extends JPanel {
         panel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
         panel.setBorder(border);
 
-        JLabel label = new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel label = new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
         panel.add(label);
 
-        JButton button = new JButton(org.weasis.core.ui.Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
+        JButton button = new JButton(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
         button.setBackground(MeasureTool.viewSetting.getLineColor());
         button.addActionListener(pickColorAction);
         panel.add(button);
@@ -113,7 +113,7 @@ public class AnnotationOptionsPanel extends JPanel {
 
         ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
         if (spUnitAction instanceof ComboItemListener) {
-            JLabel label = new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
+            JLabel label = new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
             panel.add(label);
             @SuppressWarnings("unchecked")
             JComboBox<Unit> unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
@@ -137,7 +137,7 @@ public class AnnotationOptionsPanel extends JPanel {
     private ActionListener pickColorAction = e -> {
         JButton button = (JButton) e.getSource();
         Color newColor = JColorChooser.showDialog(SwingUtilities.getWindowAncestor(AnnotationOptionsPanel.this),
-            org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
+            org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
             button.getBackground());
         if (newColor != null) {
             button.setBackground(newColor);

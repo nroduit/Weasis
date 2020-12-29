@@ -123,15 +123,15 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
         transform.add(panel);
 
-        JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
         panel.add(label);
 
-        JButton button = new JButton(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
+        JButton button = new JButton(Messages.getString("MeasureTool.pick"));
         button.setBackground(viewSetting.getLineColor());
         button.addActionListener(e -> {
             JButton btn = (JButton) e.getSource();
             Color newColor = JColorChooser.showDialog(SwingUtilities.getWindowAncestor(MeasureTool.this),
-                Messages.getString("MeasureTool.pick_color"), //$NON-NLS-1$
+                Messages.getString("MeasureTool.pick_color"),
                 btn.getBackground());
             if (newColor != null) {
                 btn.setBackground(newColor);
@@ -168,7 +168,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel1);
         JCheckBox chckbxBasicImageStatistics =
-            new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics()); //$NON-NLS-1$
+            new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics());
         chckbxBasicImageStatistics.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel1.add(chckbxBasicImageStatistics);
         chckbxBasicImageStatistics.addActionListener(e -> {
@@ -200,7 +200,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         if (spUnitAction instanceof ComboItemListener) {
             final JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
             final JLabel lutLabel = new JLabel();
-            lutLabel.setText(Messages.getString("MeasureTool.unit") + StringUtil.COLON); //$NON-NLS-1$
+            lutLabel.setText(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
             panel4.add(lutLabel);
             final JComboBox unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
             unitComboBox.setSelectedItem(Unit.PIXEL);
@@ -211,7 +211,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         transform.add(Box.createVerticalStrut(5));
         JPanel panel2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         transform.add(panel2);
-        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options")); //$NON-NLS-1$
+        final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
         btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel2.add(btnGerenralOptions);
         btnGerenralOptions.addActionListener(e -> {
@@ -239,7 +239,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         transform.setAlignmentX(Component.LEFT_ALIGNMENT);
         transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
         transform.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(null, Messages.getString("MeasureTool.sel"), //$NON-NLS-1$
+            new TitledBorder(null, Messages.getString("MeasureTool.sel"),
                 TitledBorder.DEFAULT_JUSTIFICATION, TitledBorder.DEFAULT_POSITION, FontTools.getFont12Bold(),
                 Color.GRAY)));
 
@@ -309,7 +309,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
         // just clear tableContainer if measList is null
         if (measList != null) {
-            String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+            String[] headers = { Messages.getString("MeasureTool.param"), Messages.getString("MeasureTool.val") };
             jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
             jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
             createTableHeaders(jtable);

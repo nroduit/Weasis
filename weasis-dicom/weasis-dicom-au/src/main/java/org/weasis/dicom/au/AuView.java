@@ -183,7 +183,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         // Get the clip length in microseconds and convert to milliseconds
         audioLength = (int) (clip.getMicrosecondLength() / 1000);
 
-        play = new JButton(Messages.getString("AuView.play")); // Play/stop button //$NON-NLS-1$
+        play = new JButton(Messages.getString("AuView.play")); // Play/stop button
         progress = new JSlider(0, audioLength, 0); // Shows position in sound
         time = new JLabel("0"); // Shows position as a # //$NON-NLS-1$
 
@@ -222,7 +222,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         addSampledControls();
 
-        JButton export = new JButton(Messages.getString("AuView.export_audio")); //$NON-NLS-1$
+        JButton export = new JButton(Messages.getString("AuView.export_audio"));
         export.addActionListener(e -> saveAudioFile(media));
 
         this.add(Box.createVerticalStrut(15));
@@ -237,16 +237,16 @@ public class AuView extends JPanel implements SeriesViewerListener {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setAcceptAllFileFilterUsed(false);
-            FileFormatFilter filter = new FileFormatFilter("au", "AU"); //$NON-NLS-1$ //$NON-NLS-2$
+            FileFormatFilter filter = new FileFormatFilter("au", "AU"); // NON-NLS
             fileChooser.addChoosableFileFilter(filter);
-            fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); //$NON-NLS-1$ //$NON-NLS-2$
+            fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); // NON-NLS
             fileChooser.setFileFilter(filter);
 
             if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
                 if (fileChooser.getSelectedFile() != null) {
                     File file = fileChooser.getSelectedFile();
                     filter = (FileFormatFilter) fileChooser.getFileFilter();
-                    String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); //$NON-NLS-1$ //$NON-NLS-2$
+                    String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); // NON-NLS
                     String filename = file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
 
                     try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(),
@@ -270,7 +270,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         clip.start();
 
         timer.start();
-        play.setText(Messages.getString("AuView.stop")); //$NON-NLS-1$
+        play.setText(Messages.getString("AuView.stop"));
         playing = true;
     }
 
@@ -280,7 +280,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         clip.stop();
 
-        play.setText(Messages.getString("AuView.play")); //$NON-NLS-1$
+        play.setText(Messages.getString("AuView.play"));
         playing = false;
     }
 
@@ -398,7 +398,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                         // US: unsigned 16 bit linear
 
                         AudioFormat audioFormat;
-                        if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { //$NON-NLS-1$ //$NON-NLS-2$
+                        if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { // NON-NLS
                             int frameSize =
                                 (numChannels == AudioSystem.NOT_SPECIFIED || bitsPerSample == AudioSystem.NOT_SPECIFIED)
                                     ? AudioSystem.NOT_SPECIFIED : ((bitsPerSample + 7) / 8) * numChannels;
@@ -407,7 +407,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                                 attributes.bigEndian());
                         } else {
                             boolean signed =
-                                "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; //$NON-NLS-1$ //$NON-NLS-2$
+                                "UB".equals(spInterpretation) || "US".equals(spInterpretation) ? false : true; // NON-NLS
                             audioFormat = new AudioFormat((float) sampleRate, bitsPerSample, numChannels, signed,
                                 attributes.bigEndian());
                         }

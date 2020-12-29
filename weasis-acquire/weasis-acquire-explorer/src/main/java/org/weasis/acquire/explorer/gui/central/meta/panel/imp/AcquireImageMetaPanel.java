@@ -18,9 +18,9 @@ import org.weasis.core.util.StringUtil;
 public class AcquireImageMetaPanel extends AcquireMetadataPanel {
     private static final long serialVersionUID = -2751941971479265507L;
 
-    private static final String NO_IMAGE = Messages.getString("AcquireImageMetaPanel.no_img"); //$NON-NLS-1$
+    private static final String NO_IMAGE = Messages.getString("AcquireImageMetaPanel.no_img");
     private static final String IMAGE_PREFIX =
-        Messages.getString("AcquireImageMetaPanel.img") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
+        Messages.getString("AcquireImageMetaPanel.img") + StringUtil.COLON_AND_SPACE;
 
     public AcquireImageMetaPanel(String title) {
         super(title);

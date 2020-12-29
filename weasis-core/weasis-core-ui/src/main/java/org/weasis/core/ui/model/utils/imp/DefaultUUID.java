@@ -67,6 +67,6 @@ public class DefaultUUID implements UUIDable {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + "[" + this.uuid + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+        return this.getClass().getSimpleName() + "[" + this.uuid + "]";
     }
 }

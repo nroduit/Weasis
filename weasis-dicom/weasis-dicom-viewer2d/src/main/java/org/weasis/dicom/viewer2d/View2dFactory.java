@@ -58,10 +58,10 @@ import org.weasis.dicom.explorer.DicomModel;
 public class View2dFactory implements SeriesViewerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 
-    public static final String NAME = Messages.getString("View2dFactory.title"); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("View2dFactory.title");
 
     private static final DefaultAction preferencesAction =
-        new DefaultAction(Messages.getString("OpenDicomAction.title"), View2dFactory::getOpenImageAction); //$NON-NLS-1$
+        new DefaultAction(Messages.getString("OpenDicomAction.title"), View2dFactory::getOpenImageAction);
 
     public View2dFactory() {
         super();
@@ -193,12 +193,12 @@ public class View2dFactory implements SeriesViewerFactory {
     }
 
     private static void getOpenImageAction(ActionEvent e) {
-        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.dicom.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.dicom.dir", "");// NON-NLS
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         fileChooser.setMultiSelectionEnabled(true);
-        FileFormatFilter filter = new FileFormatFilter(new String[] { "dcm", "dicm" }, "DICOM"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        FileFormatFilter filter = new FileFormatFilter(new String[] { "dcm", "dicm" }, "DICOM"); // NON-NLS
         fileChooser.addChoosableFileFilter(filter);
         fileChooser.setAcceptAllFileFilterUsed(true);
         fileChooser.setFileFilter(filter);
@@ -238,8 +238,8 @@ public class View2dFactory implements SeriesViewerFactory {
                         true);
                 } else {
                     Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                    JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"), //$NON-NLS-1$
-                        Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                    JOptionPane.showMessageDialog(c, Messages.getString("OpenDicomAction.open_err_msg"),
+                        Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE);
                 }
             }
             BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$

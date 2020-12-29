@@ -40,7 +40,7 @@ public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
         COMPLETE_OBJECT.setLabelHeight(13.125);
         COMPLETE_OBJECT.setLabelWidth(93.140625);
         COMPLETE_OBJECT.setLabelBounds(new Rectangle2D.Double(1294.9296875, 1042.3125, 105.140625, 51.375));
-        COMPLETE_OBJECT.setLabels(new String[] { "Lorem ipsum", "Test 2", "weasis blablabla" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        COMPLETE_OBJECT.setLabels(new String[] { "Lorem ipsum", "Test 2", "weasis blablabla" }); // NON-NLS
     }
 
     @Override

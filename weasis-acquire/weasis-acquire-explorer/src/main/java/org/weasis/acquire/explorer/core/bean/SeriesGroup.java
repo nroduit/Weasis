@@ -38,7 +38,7 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
 
     public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
 
-    public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other"); //$NON-NLS-1$
+    public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other");
 
     public SeriesGroup() {
         this(Type.NONE);

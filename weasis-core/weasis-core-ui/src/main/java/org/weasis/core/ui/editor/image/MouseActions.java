@@ -68,11 +68,11 @@ public class MouseActions {
 
     @Override
     public String toString() {
-        return left + "/" + right + "/" + wheel; //$NON-NLS-1$ //$NON-NLS-2$
+        return left + "/" + right + "/" + wheel;
     }
 
     public String getToolTips() {
-        return "<html>Left: " + left + "<br>Right: " + right + "<br>Wheel: " + wheel + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        return "<html>Left: " + left + "<br>Right: " + right + "<br>Wheel: " + wheel + "</html>"; // NON-NLS
     }
 
     public String getLeft() {

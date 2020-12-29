@@ -50,7 +50,7 @@ public class ModalityInfoData {
 
     @Override
     public String toString() {
-        String desc = StringUtil.hasText(modality.getDescription()) ? " (" + modality.getDescription() + ")" : ""; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        String desc = StringUtil.hasText(modality.getDescription()) ? " (" + modality.getDescription() + ")" : "";
         return modality.toString() + desc;
     }
 }

@@ -24,7 +24,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class RotationToolBar extends WtoolBar {
 
     public RotationToolBar(final ImageViewerEventManager<?> eventManager, int index) {
-        super(Messages.getString("RotationToolBar.rotationBar"), index); //$NON-NLS-1$
+        super(Messages.getString("RotationToolBar.rotationBar"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }

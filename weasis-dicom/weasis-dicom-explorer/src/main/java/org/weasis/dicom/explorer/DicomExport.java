@@ -50,12 +50,12 @@ public class DicomExport extends AbstractWizardDialog {
     private final CheckTreeModel treeModel;
 
     public DicomExport(Window parent, final DicomModel dicomModel) {
-        super(parent, Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+        super(parent, Messages.getString("DicomExport.exp_dicom"), ModalityType.APPLICATION_MODAL,
             new Dimension(640, 480));
         this.dicomModel = dicomModel;
         this.treeModel = new CheckTreeModel(dicomModel);
 
-        final JButton exportandClose = new JButton(Messages.getString("DicomExport.exp_close")); //$NON-NLS-1$
+        final JButton exportandClose = new JButton(Messages.getString("DicomExport.exp_close"));
         exportandClose.addActionListener(e -> {
             exportSelection();
             cancel();
@@ -71,7 +71,7 @@ public class DicomExport extends AbstractWizardDialog {
 
         final JButton exportButton = new JButton();
         exportButton.addActionListener(e -> exportSelection());
-        exportButton.setText(Messages.getString("DicomExport.exp")); //$NON-NLS-1$
+        exportButton.setText(Messages.getString("DicomExport.exp"));
         final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
         gridBagConstraints1.insets = new Insets(10, 15, 10, 0);
         gridBagConstraints1.anchor = GridBagConstraints.EAST;

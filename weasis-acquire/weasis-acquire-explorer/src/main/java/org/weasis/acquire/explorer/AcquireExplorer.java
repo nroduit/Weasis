@@ -46,10 +46,10 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 public class AcquireExplorer extends PluginTool implements DataExplorerView {
     private static final long serialVersionUID = 661412595299625116L;
 
-    public static final String BUTTON_NAME = "dicomizer"; //$NON-NLS-1$
-    public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition"); //$NON-NLS-1$
-    public static final String P_LAST_DIR = "acquire.explorer.last.dir"; //$NON-NLS-1$
-    public static final String PREFERENCE_NODE = "importer"; //$NON-NLS-1$
+    public static final String BUTTON_NAME = "dicomizer"; //NON-NLS
+    public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition");
+    public static final String P_LAST_DIR = "acquire.explorer.last.dir";
+    public static final String PREFERENCE_NODE = "importer"; //NON-NLS
 
     public static final int MEDIASOURCELIST_MAX = 5;
 
@@ -66,7 +66,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         setDockableWidth(400);
 
         JIThumbnailCache thumbCache = new JIThumbnailCache();
-        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album"), thumbCache); //$NON-NLS-1$
+        centralPane = new ImageGroupPane(Messages.getString("AcquireExplorer.album"), thumbCache);
 
         browsePanel = new BrowsePanel(this);
         acquireThumbnailListPane = new AcquireThumbnailListPane<>(thumbCache);
@@ -117,10 +117,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                 if (ObservableEvent.BasicAction.REPLACE.equals(((ObservableEvent) evt).getActionCommand())) {
 
                     String newPatientName = Optional.ofNullable(evt.getNewValue()).filter(String.class::isInstance)
-                        .map(String.class::cast).orElse(Messages.getString("AcquireExplorer.album")); //$NON-NLS-1$
+                        .map(String.class::cast).orElse(Messages.getString("AcquireExplorer.album"));
 
                     if (TagW.NO_VALUE.equals(newPatientName)) {
-                        newPatientName = Messages.getString("AcquireExplorer.album"); //$NON-NLS-1$
+                        newPatientName = Messages.getString("AcquireExplorer.album");
                     }
 
                     centralPane.setPluginName(newPatientName);

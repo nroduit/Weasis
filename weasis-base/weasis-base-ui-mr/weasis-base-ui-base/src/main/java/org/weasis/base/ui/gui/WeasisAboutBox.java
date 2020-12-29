@@ -66,9 +66,9 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     private final JScrollPane jScrollPane3 = new JScrollPane();
 
     public WeasisAboutBox(Frame owner) {
-        super(owner, String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true); //$NON-NLS-1$
-        sysTable = new JTable(new SimpleTableModel(new String[] { Messages.getString("WeasisAboutBox.prop"), //$NON-NLS-1$
-            Messages.getString("WeasisAboutBox.val") }, //$NON-NLS-1$
+        super(owner, String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME), true);
+        sysTable = new JTable(new SimpleTableModel(new String[] { Messages.getString("WeasisAboutBox.prop"),
+            Messages.getString("WeasisAboutBox.val") },
             createSysInfo()));
         sysTable.getColumnModel().setColumnMargin(5);
         JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
@@ -85,7 +85,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
         flowLayout1.setHgap(15);
         flowLayout1.setVgap(10);
 
-        jButtonclose.setText(Messages.getString("WeasisAboutBox.close")); //$NON-NLS-1$
+        jButtonclose.setText(Messages.getString("WeasisAboutBox.close"));
 
         jButtonclose.addActionListener(this);
         jPanelInfoSys.setBorder(border1);
@@ -99,14 +99,14 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
         final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
         message.append(AppProperties.WEASIS_NAME);
-        message.append(" "); //$NON-NLS-1$
+        message.append(" ");
         message.append(AppProperties.WEASIS_VERSION);
         message.append("</H2>"); //$NON-NLS-1$
 
-        String rn = Messages.getString("WeasisWin.release"); //$NON-NLS-1$
-        message.append(String.format("<a href=\"%s", //$NON-NLS-1$
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); //$NON-NLS-1$ //$NON-NLS-2$
-        message.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
+        String rn = Messages.getString("WeasisWin.release");
+        message.append(String.format("<a href=\"%s", //NON-NLS
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); // NON-NLS
+        message.append("\" style=\"color:#FF9900\">"); //NON-NLS
         message.append(rn);
         message.append("</a>");//$NON-NLS-1$
         message.append("<BR>"); //$NON-NLS-1$
@@ -123,7 +123,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
         jPanel1.add(jLabel1, null);
         jPanel3.add(jScrollPane3, BorderLayout.CENTER);
         jScrollPane3.getViewport().add(jTextPane1, null);
-        jTabbedPane1.add(jPanelInfoSys, Messages.getString("WeasisAboutBox.sys")); //$NON-NLS-1$
+        jTabbedPane1.add(jPanelInfoSys, Messages.getString("WeasisAboutBox.sys"));
         jPanelInfoSys.add(jScrollPane1, BorderLayout.CENTER);
         jScrollPane1.setPreferredSize(new Dimension(320, 270));
         jScrollPane1.getViewport().add(sysTable, null);

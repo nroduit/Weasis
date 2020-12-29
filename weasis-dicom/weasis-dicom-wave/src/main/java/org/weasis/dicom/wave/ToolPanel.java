@@ -91,7 +91,7 @@ class ToolPanel extends JPanel {
     }
 
     private void init() {
-        JLabel zoomLabel = new JLabel(Messages.getString("ToolPanel.zoom")); //$NON-NLS-1$
+        JLabel zoomLabel = new JLabel(Messages.getString("ToolPanel.zoom"));
         this.add(zoomLabel);
 
         JComboBox<Speed> speed = new JComboBox<>(Speed.values());
@@ -112,7 +112,7 @@ class ToolPanel extends JPanel {
     }
 
     private void addDisplayFormatComponent() {
-        formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON); //$NON-NLS-1$
+        formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON);
         this.add(formatLabel);
 
         formatCombo = new JComboBox<>(Format.values());

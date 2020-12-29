@@ -315,19 +315,19 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         public static String[] getBodyPartValues(String property) {
             String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, null);
             if (values == null || !StringUtil.hasText(values)) {
-                return new String[] { "ABDOMEN", "ABDOMENPELVIS", "ADRENAL", "ANKLE", "AORTA", "ARM", "AXILLA", "BACK", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
-                    "BLADDER", "BRAIN", "BREAST", "BRONCHUS", "BUTTOCK", "CALCANEUS", "CALF", "CAROTID", "CEREBELLUM", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
-                    "CERVIX", "CHEEK", "CHEST", "CHESTABDOMEN", "CHESTABDPELVIS", "CIRCLEOFWILLIS", "CLAVICLE", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
-                    "COCCYX", "COLON", "CORNEA", "CORONARYARTERY", "CSPINE", "CTSPINE", "DUODENUM", "EAR", "ELBOW", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
-                    "ESOPHAGUS", "EXTREMITY", "EYE", "EYELID", "FACE", "FEMUR", "FINGER", "FOOT", "GALLBLADDER", "HAND", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                    "HEAD", "HEADNECK", "HEART", "HIP", "HUMERUS", "IAC", "ILEUM", "ILIUM", "JAW", "JEJUNUM", "KIDNEY", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$
-                    "KNEE", "LARYNX", "LEG", "LIVER", "LSPINE", "LSSPINE", "LUNG", "MAXILLA", "MEDIASTINUM", "MOUTH", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                    "NECK", "NECKCHEST", "NECKCHESTABDOMEN", "NECKCHESTABDPELV", "NOSE", "ORBIT", "OVARY", "PANCREAS", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
-                    "PAROTID", "PATELLA", "PELVIS", "PENIS", "PHARYNX", "PROSTATE", "RADIUS", "RADIUSULNA", "RECTUM", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
-                    "RIB", "SCALP", "SCAPULA", "SCLERA", "SCROTUM", "SHOULDER", "SKULL", "SPINE", "SPLEEN", "SSPINE", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                    "STERNUM", "STOMACH", "SUBMANDIBULAR", "TESTIS", "THIGH", "THUMB", "THYMUS", "THYROID", "TIBIA", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
-                    "TIBIAFIBULA", "TLSPINE", "TMJ", "TOE", "TONGUE", "TRACHEA", "TSPINE", "ULNA", "URETER", "URETHRA", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
-                    "UTERUS", "VAGINA", "VULVA", "WHOLEBODY", "WRIST", "ZYGOMA" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                return new String[] { "ABDOMEN", "ABDOMENPELVIS", "ADRENAL", "ANKLE", "AORTA", "ARM", "AXILLA", "BACK", // NON-NLS
+                    "BLADDER", "BRAIN", "BREAST", "BRONCHUS", "BUTTOCK", "CALCANEUS", "CALF", "CAROTID", "CEREBELLUM", // NON-NLS
+                    "CERVIX", "CHEEK", "CHEST", "CHESTABDOMEN", "CHESTABDPELVIS", "CIRCLEOFWILLIS", "CLAVICLE", // NON-NLS
+                    "COCCYX", "COLON", "CORNEA", "CORONARYARTERY", "CSPINE", "CTSPINE", "DUODENUM", "EAR", "ELBOW", // NON-NLS
+                    "ESOPHAGUS", "EXTREMITY", "EYE", "EYELID", "FACE", "FEMUR", "FINGER", "FOOT", "GALLBLADDER", "HAND", // NON-NLS
+                    "HEAD", "HEADNECK", "HEART", "HIP", "HUMERUS", "IAC", "ILEUM", "ILIUM", "JAW", "JEJUNUM", "KIDNEY", // NON-NLS
+                    "KNEE", "LARYNX", "LEG", "LIVER", "LSPINE", "LSSPINE", "LUNG", "MAXILLA", "MEDIASTINUM", "MOUTH", // NON-NLS
+                    "NECK", "NECKCHEST", "NECKCHESTABDOMEN", "NECKCHESTABDPELV", "NOSE", "ORBIT", "OVARY", "PANCREAS", // NON-NLS
+                    "PAROTID", "PATELLA", "PELVIS", "PENIS", "PHARYNX", "PROSTATE", "RADIUS", "RADIUSULNA", "RECTUM", // NON-NLS
+                    "RIB", "SCALP", "SCAPULA", "SCLERA", "SCROTUM", "SHOULDER", "SKULL", "SPINE", "SPLEEN", "SSPINE", // NON-NLS
+                    "STERNUM", "STOMACH", "SUBMANDIBULAR", "TESTIS", "THIGH", "THUMB", "THYMUS", "THYROID", "TIBIA", // NON-NLS
+                    "TIBIAFIBULA", "TLSPINE", "TMJ", "TOE", "TONGUE", "TRACHEA", "TSPINE", "ULNA", "URETER", "URETHRA", // NON-NLS
+                    "UTERUS", "VAGINA", "VULVA", "WHOLEBODY", "WRIST", "ZYGOMA" }; // NON-NLS
             }
             String[] val = values.split(","); //$NON-NLS-1$
             List<String> list = new ArrayList<>(val.length);

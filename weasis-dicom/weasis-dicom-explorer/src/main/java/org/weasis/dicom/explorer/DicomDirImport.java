@@ -53,7 +53,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     private JCheckBox chckbxWriteInCache;
 
     public DicomDirImport() {
-        super(Messages.getString("DicomDirImport.dicomdir")); //$NON-NLS-1$
+        super(Messages.getString("DicomDirImport.dicomdir"));
         setComponentPosition(5);
         initGUI();
         initialize(true);
@@ -62,10 +62,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     public void initGUI() {
         GridBagLayout gridBagLayout = new GridBagLayout();
         setLayout(gridBagLayout);
-        setBorder(new TitledBorder(null, Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING, //$NON-NLS-1$
+        setBorder(new TitledBorder(null, Messages.getString("DicomDirImport.dicomdir"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
 
-        lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON); //$NON-NLS-1$
+        lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);
         GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
         gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
         gbc_lblImportAFolder.insets = new Insets(5, 5, 5, 5);
@@ -93,8 +93,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_button.gridy = 0;
         add(btnSearch, gbc_button);
 
-        btncdrom = new JButton(Messages.getString("DicomDirImport.detect"), //$NON-NLS-1$
-            new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png"))); //$NON-NLS-1$
+        btncdrom = new JButton(Messages.getString("DicomDirImport.detect"),
+            new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png"))); 
         btncdrom.addActionListener(e -> {
             File dcmdir = getDcmDirFromMedia();
             if (dcmdir != null) {
@@ -156,7 +156,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 if (f.isDirectory()) {
                     return true;
                 }
-                if (f.getName().equalsIgnoreCase("dicomdir") || f.getName().equalsIgnoreCase("dicomdir.")) { //$NON-NLS-1$ //$NON-NLS-2$
+                if (f.getName().equalsIgnoreCase("dicomdir") || f.getName().equalsIgnoreCase("dicomdir.")) { // NON-NLS
                     return true;
                 }
                 return false;
@@ -228,7 +228,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         } else {
             LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 
-            int response = JOptionPane.showConfirmDialog(this, Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
+            int response = JOptionPane.showConfirmDialog(this, Messages.getString("DicomExplorer.mes_import_manual"),
                 this.getTitle(), JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
@@ -236,7 +236,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 if (dialog instanceof DicomImport) {
                     DicomImport dcmImport = (DicomImport) dialog;
                     dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
-                    dcmImport.showPage(Messages.getString("DicomImport.imp_dicom")); //$NON-NLS-1$
+                    dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
                     if (file != null) {
                         AbstractItemDialogPage page = dcmImport.getCurrentPage();
                         if (page instanceof LocalImport) {
@@ -279,7 +279,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         }
 
         Collections.reverse(dvs);
-        String[] dicomdir = { "DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir." }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String[] dicomdir = { "DICOMDIR", "dicomdir", "DICOMDIR.", "dicomdir." }; // NON-NLS
 
         for (File drive : dvs) {
             // Detect read-only media

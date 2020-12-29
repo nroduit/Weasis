@@ -30,7 +30,7 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
     public static final CalibrationGraphic CALIBRATION_LINE_GRAPHIC = new CalibrationGraphic();
 
     public CalibrationPanel() {
-        add(new JLabel(Messages.getString("CalibrationPanel.draw_line"))); //$NON-NLS-1$
+        add(new JLabel(Messages.getString("CalibrationPanel.draw_line")));
     }
 
     @Override

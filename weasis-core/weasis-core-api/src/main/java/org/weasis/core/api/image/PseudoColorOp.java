@@ -23,7 +23,7 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class PseudoColorOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("PseudoColorOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("PseudoColorOperation.title");
 
     /**
      * Set the lookup table (Required parameter).

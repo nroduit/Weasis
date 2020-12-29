@@ -20,7 +20,7 @@ import org.weasis.opencv.op.ImageProcessor;
 public class CropOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
 
-    public static final String OP_NAME = Messages.getString("CropOperation.name"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("CropOperation.name");
 
     /**
      * Set the area to crop (Required parameter).

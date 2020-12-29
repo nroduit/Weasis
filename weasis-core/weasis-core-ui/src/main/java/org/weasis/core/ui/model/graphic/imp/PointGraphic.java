@@ -71,7 +71,7 @@ public class PointGraphic extends AbstractGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("PointGraphic.point"); //$NON-NLS-1$
+        return Messages.getString("PointGraphic.point");
     }
 
     public Point2D getPoint() {

@@ -51,38 +51,38 @@ public final class DefaultThumbnailList<E extends MediaElement> extends Abstract
             } else {
                 JPopupMenu popupMenu = new JPopupMenu();
                 TitleMenuItem itemTitle =
-                    new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets()); //$NON-NLS-1$
+                    new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets());
                 popupMenu.add(itemTitle);
                 popupMenu.addSeparator();
 
                 if (selMedias.size() == 1) {
-                    JMenuItem menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open"), //$NON-NLS-1$
+                    JMenuItem menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open"),
                         event -> openSelection(selMedias, true, true, false)));
                     popupMenu.add(menuItem);
 
-                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open_win"), //$NON-NLS-1$
+                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open_win"),
                         event -> openSelection(selMedias, false, true, false)));
                     popupMenu.add(menuItem);
 
-                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open_sel_win"), //$NON-NLS-1$
+                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.open_sel_win"),
                         event -> openSelection(selMedias, true, false, true)));
                     popupMenu.add(menuItem);
                 } else {
-                    JMenu menu = new JMenu(Messages.getString("JIThumbnailList.open_win")); //$NON-NLS-1$
+                    JMenu menu = new JMenu(Messages.getString("JIThumbnailList.open_win"));
                     JMenuItem menuItem =
-                        new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.stack_mode"), //$NON-NLS-1$
+                        new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.stack_mode"),
                             event -> openGroup(selMedias, false, true, false, false)));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.layout_mode"), //$NON-NLS-1$
+                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.layout_mode"),
                         event -> openGroup(selMedias, false, true, true, false)));
                     menu.add(menuItem);
                     popupMenu.add(menu);
 
-                    menu = new JMenu(Messages.getString("JIThumbnailList.open_sel_win")); //$NON-NLS-1$
-                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.stack_mode"), //$NON-NLS-1$
+                    menu = new JMenu(Messages.getString("JIThumbnailList.open_sel_win"));
+                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.stack_mode"),
                         event -> openGroup(selMedias, true, false, false, true)));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.layout_mode"), //$NON-NLS-1$
+                    menuItem = new JMenuItem(new DefaultAction(Messages.getString("JIThumbnailList.layout_mode"),
                         event -> openGroup(selMedias, true, false, true, true)));
                     menu.add(menuItem);
                     popupMenu.add(menu);

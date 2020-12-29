@@ -117,7 +117,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
 
     protected synchronized void buildThumbnail(MediaElement media, boolean keepMediaCache, OpManager opManager) {
         Icon icon = MimeInspector.unknownIcon;
-        String type = Messages.getString("Thumbnail.unknown"); //$NON-NLS-1$
+        String type = Messages.getString("Thumbnail.unknown");
         if (media != null) {
             String mime = media.getMimeType();
             if (mime != null) {
@@ -142,8 +142,8 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                 } else if (mime.equals("wf/dicom")) { //$NON-NLS-1$
                     type = "ECG"; //$NON-NLS-1$
                     icon = MimeInspector.ecgIcon;
-                } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    type = Messages.getString("Thumbnail.audio"); //$NON-NLS-1$
+                } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { // NON-NLS
+                    type = Messages.getString("Thumbnail.audio");
                     icon = MimeInspector.audioIcon;
                 } else {
                     type = mime;
@@ -261,7 +261,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                         final PlanarImage thumb = createThumbnail(img);
                         if (thumb != null) {
                             try {
-                                file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); // NON-NLS
                             } catch (IOException e) {
                                 LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
                             }

@@ -72,7 +72,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
                         FileInputStream in = null;
                         FileOutputStream out = null;
                         try {
-                            File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                            File videoFile = File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); // NON-NLS
                             in = new FileInputStream(media.getFile());
                             out = new FileOutputStream(videoFile);
                             StreamUtils.skipFully(in, bulkData.offset());
@@ -102,15 +102,15 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
 
     @Override
     public String getToolTips() {
-        StringBuilder toolTips = new StringBuilder("<html>"); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
-        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate), TagD.get(Tag.SeriesTime)); //$NON-NLS-1$
+        StringBuilder toolTips = new StringBuilder("<html>");
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName));
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality));
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber));
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription));
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription));
+        addToolTipsElement(toolTips, Messages.getString("DicomSeries.date"), TagD.get(Tag.SeriesDate), TagD.get(Tag.SeriesTime));
 
-        toolTips.append(Messages.getString("DicomVideo.video_l")); //$NON-NLS-1$
+        toolTips.append(Messages.getString("DicomVideo.video_l"));
         toolTips.append(StringUtil.COLON_AND_SPACE);
         Integer speed = TagD.getTagValue(this, Tag.CineRate, Integer.class);
         if (speed == null) {

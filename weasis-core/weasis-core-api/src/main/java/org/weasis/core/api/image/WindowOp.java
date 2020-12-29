@@ -19,7 +19,7 @@ import org.weasis.opencv.data.PlanarImage;
 
 public class WindowOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("WindowLevelOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("WindowLevelOperation.title");
 
     public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
     public static final String P_FILL_OUTSIDE_LUT = "fill.outside.lut"; //$NON-NLS-1$

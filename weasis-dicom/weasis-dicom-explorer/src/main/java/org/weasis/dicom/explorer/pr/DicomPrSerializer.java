@@ -244,7 +244,7 @@ public class DicomPrSerializer {
         Attributes dcm = new Attributes(5);
         dcm.setString(Tag.GraphicAnnotationUnits, VR.CS, PIXEL);
         dcm.setInt(Tag.GraphicDimensions, VR.US, 2);
-        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N"); //$NON-NLS-1$ //$NON-NLS-2$
+        dcm.setString(Tag.GraphicFilled, VR.CS, graphic.getFilled() ? "Y" : "N"); // NON-NLS
 
         Sequence style = dcm.newSequence(Tag.LineStyleSequence, 1);
         Attributes styles = new Attributes();

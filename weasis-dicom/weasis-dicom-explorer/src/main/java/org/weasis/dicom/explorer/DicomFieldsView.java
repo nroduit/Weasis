@@ -97,7 +97,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        addTab(Messages.getString("DicomFieldsView.limited"), null, panel, null); //$NON-NLS-1$
+        addTab(Messages.getString("DicomFieldsView.limited"), null, panel, null);
         panel.add(new SearchPanel(jTextPaneLimited), BorderLayout.NORTH);
         panel.add(limitedPane, BorderLayout.CENTER);
         jTextPaneLimited.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -111,7 +111,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         JPanel dump = new JPanel();
         dump.setLayout(new BorderLayout());
         dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        addTab(Messages.getString("DicomFieldsView.all"), null, dump, null); //$NON-NLS-1$
+        addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
         dump.add(new SearchPanel(jTextPaneAll), BorderLayout.NORTH);
         dump.add(allPane, BorderLayout.CENTER);
         jTextPaneAll.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -362,8 +362,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
         if (exist) {
             try {
-                String formatTitle = insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                doc.insertString(insertTitle, formatTitle, doc.getStyle("title")); //$NON-NLS-1$
+                String formatTitle = insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n";
+                doc.insertString(insertTitle, formatTitle, doc.getStyle("title"));  //NON-NLS
             } catch (BadLocationException e) {
                 LOGGER.error("Writing text issue", e); //$NON-NLS-1$
             }
@@ -389,7 +389,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     public static void showHeaderDialog(SeriesViewer<?> container, MediaSeries<? extends MediaElement> series,
         MediaElement dcm) {
         if (container != null && series != null && dcm != null) {
-            JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo")); //$NON-NLS-1$
+            JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo"));
             frame.setSize(500, 630);
             DicomFieldsView view = new DicomFieldsView(container);
             view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
@@ -425,7 +425,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         }
 
         private void init() {
-            this.add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE)); //$NON-NLS-1$
+            this.add(new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE));
             final JTextField tf = new JTextField();
             JMVUtils.setPreferredWidth(tf, 300, 100);
             tf.addActionListener(evt -> {
@@ -441,14 +441,14 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 }
             });
             this.add(tf);
-            JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png"))); //$NON-NLS-1$
-            up.setToolTipText(Messages.getString("DicomFieldsView.previous")); //$NON-NLS-1$
+            JButton up = new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png"))); 
+            up.setToolTipText(Messages.getString("DicomFieldsView.previous"));
             up.addActionListener(evt -> previous());
             this.add(up);
             JButton down =
                 new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), //$NON-NLS-1$
                     RotatedIcon.Rotate.UPSIDE_DOWN));
-            down.setToolTipText(Messages.getString("DicomFieldsView.next")); //$NON-NLS-1$
+            down.setToolTipText(Messages.getString("DicomFieldsView.next"));
             down.addActionListener(evt -> next());
             this.add(down);
             textComponent.addKeyListener(new KeyListener() {

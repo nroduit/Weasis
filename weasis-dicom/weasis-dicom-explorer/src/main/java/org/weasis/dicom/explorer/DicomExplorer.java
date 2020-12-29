@@ -104,14 +104,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(DicomExplorer.class);
 
-    public static final String NAME = Messages.getString("DicomExplorer.title"); //$NON-NLS-1$
-    public static final String PREFERENCE_NODE = "dicom.explorer"; //$NON-NLS-1$
-    public static final String BUTTON_NAME = Messages.getString("DicomExplorer.btn_title"); //$NON-NLS-1$
-    public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc"); //$NON-NLS-1$
-    public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat"); //$NON-NLS-1$
-    public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st"); //$NON-NLS-1$
-    public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png")); //$NON-NLS-1$
-    public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png")); // $NON-NLS-0$ //$NON-NLS-1$
+    public static final String NAME = Messages.getString("DicomExplorer.title");
+    public static final String PREFERENCE_NODE = "dicom.explorer";
+    public static final String BUTTON_NAME = Messages.getString("DicomExplorer.btn_title");
+    public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc");
+    public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat");
+    public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st");
+    public static final Icon PATIENT_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png"));
+    public static final Icon KO_ICON = new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png"));
 
     private JPanel panel = null;
     private PatientPane selectedPatient = null;
@@ -152,10 +152,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     };
     private final JSlider slider = new JSlider(Thumbnail.MIN_SIZE, Thumbnail.MAX_SIZE, Thumbnail.DEFAULT_SIZE);
     private JPanel panelMain = null;
-    private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt")); //$NON-NLS-1$
+    private final JToggleButton btnMoreOptions = new JToggleButton(Messages.getString("DicomExplorer.more_opt"));
     private boolean verticalLayout = true;
 
-    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON); //$NON-NLS-1$
+    private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON);
 
     public DicomExplorer() {
         this(null);
@@ -880,7 +880,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             final JPanel palenSlider1 = new JPanel();
             palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
             palenSlider1
-                .setBorder(new TitledBorder(Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue())); //$NON-NLS-1$ //$NON-NLS-2$
+                .setBorder(new TitledBorder(Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue()));
 
             slider.setPaintTicks(true);
             slider.setSnapToTicks(true);
@@ -888,7 +888,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             slider.addChangeListener(e -> {
                 JSlider source = (JSlider) e.getSource();
                 if (!source.getValueIsAdjusting()) {
-                    ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages.getString("DicomExplorer.thmb_size") //$NON-NLS-1$
+                    ((TitledBorder) palenSlider1.getBorder()).setTitle(Messages.getString("DicomExplorer.thmb_size")
                         + StringUtil.COLON_AND_SPACE + source.getValue());
                     palenSlider1.repaint();
                     updateThumbnailSize();
@@ -1392,9 +1392,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public List<Action> getOpenImportDialogAction() {
         ArrayList<Action> actions = new ArrayList<>(2);
         actions.add(ImportToolBar.buildImportAction(this, model, BUTTON_NAME));
-        DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"), //$NON-NLS-1$
-            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")), //$NON-NLS-1$
-            event -> ImportToolBar.openImportDicomCdAction(this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
+        DefaultAction importCDAction = new DefaultAction(Messages.getString("DicomExplorer.dcmCD"),
+            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")),
+            event -> ImportToolBar.openImportDicomCdAction(this, model, Messages.getString("DicomExplorer.dcmCD")));
         actions.add(importCDAction);
         return actions;
     }

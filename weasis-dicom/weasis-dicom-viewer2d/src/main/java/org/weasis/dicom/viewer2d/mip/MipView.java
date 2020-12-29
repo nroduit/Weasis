@@ -54,7 +54,7 @@ public class MipView extends View2d {
         new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
     public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
     public static final ActionW MIP_THICKNESS =
-        new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); //$NON-NLS-1$//$NON-NLS-2$
+        new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); // NON-NLS
 
     public enum Type {
         MIN, MEAN, MAX;
@@ -175,7 +175,7 @@ public class MipView extends View2d {
             }
         };
 
-        view.process = new Thread(runnable, Messages.getString("MipView.build")); //$NON-NLS-1$
+        view.process = new Thread(runnable, Messages.getString("MipView.build"));
         view.process.start();
 
     }

@@ -50,7 +50,7 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
         JPanel panel = new JPanel();
         panel.setLayout(new BorderLayout());
 
-        JLabel question = new JLabel(Messages.getString("AcquireNewSerieDialog.enter_name")); //$NON-NLS-1$
+        JLabel question = new JLabel(Messages.getString("AcquireNewSerieDialog.enter_name"));
         panel.add(question, BorderLayout.NORTH);
 
         panel.add(serieName, BorderLayout.CENTER);
@@ -68,8 +68,8 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
                     acquireTabPanel.moveElements(new SeriesGroup(serieName.getText()),
                         AcquireManager.toAcquireImageInfo(medias));
                 } else {
-                    JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
-                        Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                    JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"),
+                        Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE);
                     optionPane.setValue(AcquireImportDialog.REVALIDATE);
                     close = false;
                 }

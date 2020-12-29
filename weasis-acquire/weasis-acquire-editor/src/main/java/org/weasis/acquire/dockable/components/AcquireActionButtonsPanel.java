@@ -45,11 +45,11 @@ public class AcquireActionButtonsPanel extends JPanel {
 
         this.editionTool = editionTool;
 
-        setSelected(addNewButton(Messages.getString("AcquireActionButtonsPanel.metadata"), new MetadataAction(this))); //$NON-NLS-1$
-        addNewButton(Messages.getString("AcquireActionButtonsPanel.rectify"), new RectifyAction(this)); //$NON-NLS-1$
-        addNewButton(Messages.getString("AcquireActionButtonsPanel.contrast"), new ContrastAction(this)); //$NON-NLS-1$
-        addNewButton(Messages.getString("AcquireActionButtonsPanel.calib"), new CalibrationAction(this)); //$NON-NLS-1$
-        addNewButton(Messages.getString("AcquireActionButtonsPanel.annotation"), new AnnotateAction(this)); //$NON-NLS-1$
+        setSelected(addNewButton(Messages.getString("AcquireActionButtonsPanel.metadata"), new MetadataAction(this)));
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.rectify"), new RectifyAction(this));
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.contrast"), new ContrastAction(this));
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.calib"), new CalibrationAction(this));
+        addNewButton(Messages.getString("AcquireActionButtonsPanel.annotation"), new AnnotateAction(this));
     }
 
     private AcquireActionButton addNewButton(String title, AcquireAction action) {

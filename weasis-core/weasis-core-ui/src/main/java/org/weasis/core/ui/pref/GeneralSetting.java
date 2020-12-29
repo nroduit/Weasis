@@ -55,7 +55,7 @@ import org.weasis.core.ui.Messages;
 public class GeneralSetting extends AbstractItemDialogPage {
     private static final Logger LOGGER = LoggerFactory.getLogger(GeneralSetting.class);
 
-    public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen"); //$NON-NLS-1$
+    public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen");
 
     private LookInfo oldUILook;
     private final GridBagLayout gridBagLayout1 = new GridBagLayout();
@@ -64,7 +64,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     private final JTextPane txtpnNote = new JTextPane();
     private final JLabel labelLocale2 =
-        new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON); //$NON-NLS-1$
+        new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON);
     @SuppressWarnings("serial")
     private final JLocaleFormat comboBoxFormat = new JLocaleFormat() {
         @Override
@@ -73,7 +73,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         }
     };
 
-    private final JLabel labelLocale = new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel labelLocale = new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON);
     @SuppressWarnings("serial")
     private final JLocaleLanguage comboBoxLang = new JLocaleLanguage() {
         @Override
@@ -83,25 +83,25 @@ public class GeneralSetting extends AbstractItemDialogPage {
     };
 
     private final JCheckBox chckbxConfirmClosing =
-        new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation")); //$NON-NLS-1$
+        new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));
 
-    private final JButton button = new JButton(Messages.getString("GeneralSetting.show")); //$NON-NLS-1$
-    private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log")); //$NON-NLS-1$
+    private final JButton button = new JButton(Messages.getString("GeneralSetting.show"));
+    private final JCheckBox chckbxFileLog = new JCheckBox(Messages.getString("GeneralSetting.rol_log"));
     private final JPanel panel = new JPanel();
-    private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel lblLogLevel = new JLabel(Messages.getString("GeneralSetting.log_level") + StringUtil.COLON);
     private final JComboBox<LEVEL> comboBoxLogLevel = new JComboBox<>(LEVEL.values());
     private final Component horizontalStrut = Box.createHorizontalStrut(10);
-    private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel labelNumber = new JLabel(Messages.getString("GeneralSetting.log_nb") + StringUtil.COLON);
     private final JSpinner spinner = new JSpinner();
-    private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel labelSize = new JLabel(Messages.getString("GeneralSetting.log_size") + StringUtil.COLON);
     private final JSpinner spinner1 = new JSpinner();
     private final Component horizontalStrut1 = Box.createHorizontalStrut(10);
     private final Component horizontalStrut2 = Box.createHorizontalStrut(10);
     private final JPanel panel1 = new JPanel();
     private final JLabel lblStacktraceLimit =
-        new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON); //$NON-NLS-1$
+        new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON);
     private final JComboBox<String> comboBoxStackLimit =
-        new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" }); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+        new JComboBox<>(new String[] { "", "0", "1", "3", "5", "10", "20", "50", "100" }); // NON-NLS
 
     public GeneralSetting() {
         super(PAGE_NAME);
@@ -119,7 +119,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     private void jbInit() {
         this.setLayout(gridBagLayout1);
-        jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON); //$NON-NLS-1$
+        jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON);
 
         GridBagConstraints gbcButton = new GridBagConstraints();
         gbcButton.insets = new Insets(7, 5, 5, 15);
@@ -247,8 +247,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcPanel2.gridx = 0;
         gbcPanel2.gridy = 7;
         add(panel2, gbcPanel2);
-        JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
-        panel2.add(JMVUtils.createHelpButton("locale", true)); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(Messages.getString("restore.values"));
+        panel2.add(JMVUtils.createHelpButton("locale", true));  //NON-NLS
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> {
             resetoDefaultValues();
@@ -259,7 +259,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     private static String getText() {
         ZonedDateTime now = ZonedDateTime.now();
-        return String.format(Messages.getString("GeneralSetting.txtNote"), //$NON-NLS-1$
+        return String.format(Messages.getString("GeneralSetting.txtNote"),
             LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
             LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
             LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
@@ -306,7 +306,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
             && limit != 100) {
             comboBoxStackLimit.addItem(Integer.toString(limit));
         }
-        comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");// $NON-NLS-1$ //$NON-NLS-1$
+        comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : ""); 
         panel1.add(comboBoxStackLimit);
         chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
@@ -365,8 +365,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_ACTIVATION,
             String.valueOf(chckbxFileLog.isSelected()));
         String logFile =
-            chckbxFileLog.isSelected() ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator //$NON-NLS-1$
-                + "default.log" : ""; //$NON-NLS-1$ //$NON-NLS-2$
+            chckbxFileLog.isSelected() ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator 
+                + "default.log" : ""; // NON-NLS
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
         String fileNb = null;
         String fileSize = null;
@@ -379,7 +379,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         String pattern = BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
             "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}"); //$NON-NLS-1$
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, //$NON-NLS-1$ //$NON-NLS-2$
+        AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, // NON-NLS
             pattern, fileNb, fileSize, limit);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
@@ -421,7 +421,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); //$NON-NLS-1$
         BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); //$NON-NLS-1$
 
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
         // Reset cache of locale format
         LocalUtil.setLocaleFormat(null);
         // Reset format to the config.properties value or null (default system value)

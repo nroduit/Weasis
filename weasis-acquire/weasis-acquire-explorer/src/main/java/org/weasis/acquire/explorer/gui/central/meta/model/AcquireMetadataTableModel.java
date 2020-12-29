@@ -33,7 +33,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     private static final long serialVersionUID = -2336248192936430413L;
 
     protected String[] headers =
-        { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+        { Messages.getString("AcquireMetadataTableModel.tag"), Messages.getString("AcquireMetadataTableModel.val") };
     protected Optional<Tagable> tagable;
     private final TagW[] tagsToDisplay;
     private final TagW[] tagsEditable;

@@ -114,8 +114,8 @@ public class Activator implements BundleActivator, ServiceListener {
                         logConfiguration = confAdmin
                             .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                         Dictionary<String, Object> loggingProperties = new Hashtable<>();
-                        loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); //$NON-NLS-1$ //$NON-NLS-2$
-                        loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); //$NON-NLS-1$
+                        loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); // NON-NLS
+                        loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); 
                         // add this property to give us something unique to re-find this configuration
                         loggingProperties.put(loggerKey, loggerVal[0]);
                         logConfiguration.update(loggingProperties);

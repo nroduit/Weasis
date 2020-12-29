@@ -173,7 +173,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
             List<Action> actions = getPrintActions();
             if (actions != null) {
-                JMenu printMenu = new JMenu(Messages.getString("SRContainer.print")); //$NON-NLS-1$
+                JMenu printMenu = new JMenu(Messages.getString("SRContainer.print"));
                 for (Action action : actions) {
                     JMenuItem item = new JMenuItem(action);
                     printMenu.add(item);
@@ -303,7 +303,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
 
     @Override
     public List<Action> getPrintActions() {
-        final String title = Messages.getString("SRContainer.print_layout"); //$NON-NLS-1$
+        final String title = Messages.getString("SRContainer.print_layout");
         return Arrays.asList(
             new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), //$NON-NLS-1$
                 event -> printCurrentView()));
@@ -336,8 +336,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                         // recommend prompting the user at this point if they want to force it
                         // so they'll know there may be a problem.
                         int response = JOptionPane.showConfirmDialog(null,
-                            org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"), //$NON-NLS-1$
-                            org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
+                            org.weasis.core.ui.Messages.getString("ImagePrint.issue_desc"),
+                            org.weasis.core.ui.Messages.getString("ImagePrint.status"), JOptionPane.YES_NO_OPTION,
                             JOptionPane.WARNING_MESSAGE);
 
                         if (response == 0) {

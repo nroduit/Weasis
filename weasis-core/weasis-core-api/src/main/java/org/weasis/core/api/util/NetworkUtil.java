@@ -169,7 +169,7 @@ public class NetworkUtil {
     private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {
         InputStream errorStream = httpURLConnection.getErrorStream();
         if (errorStream != null) {
-            try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8); // $NON-NLS-1$
+            try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8);
                             BufferedReader reader = new BufferedReader(inputStream)) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;

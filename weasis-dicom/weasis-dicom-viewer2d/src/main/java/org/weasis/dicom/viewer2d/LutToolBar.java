@@ -33,7 +33,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 public class LutToolBar extends WtoolBar {
 
     public LutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
-        super(Messages.getString("LutToolBar.lookupbar"), index); //$NON-NLS-1$
+        super(Messages.getString("LutToolBar.lookupbar"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -53,7 +53,7 @@ public class LutToolBar extends WtoolBar {
             }
         };
 
-        presetButton.setToolTipText(Messages.getString("LutToolBar.presets")); //$NON-NLS-1$
+        presetButton.setToolTipText(Messages.getString("LutToolBar.presets"));
         add(presetButton);
         if (presetAction != null) {
             presetAction.registerActionState(presetButton);
@@ -74,7 +74,7 @@ public class LutToolBar extends WtoolBar {
             }
         };
 
-        lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection")); //$NON-NLS-1$
+        lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection"));
         add(lutButton);
         if (lutAction != null) {
             lutAction.registerActionState(lutButton);

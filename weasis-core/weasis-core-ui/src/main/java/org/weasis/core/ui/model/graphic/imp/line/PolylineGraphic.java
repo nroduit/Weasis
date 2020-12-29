@@ -43,7 +43,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
     public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
 
     public static final Measurement LINE_LENGTH =
-        new Measurement(Messages.getString("measure.length"), 5, true, true, true); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.length"), 5, true, true, true);
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
     static {
@@ -70,7 +70,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.polyline"); //$NON-NLS-1$
+        return Messages.getString("MeasureToolBar.polyline");
     }
 
     @Override

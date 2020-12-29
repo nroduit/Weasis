@@ -650,7 +650,7 @@ public class RtSet {
                 // Max and standard levels 102, 100, 98, 95, 90, 80, 70, 50, 30
                 if (doseMaxLevel > 0) {
                     dose.getIsoDoseSet().put(doseMaxLevel, new IsoDoseLayer(
-                        new IsoDose(doseMaxLevel, new Color(120, 0, 0, isoFillTransparency), "Max", plan.getRxDose())));
+                        new IsoDose(doseMaxLevel, new Color(120, 0, 0, isoFillTransparency), "Max", plan.getRxDose()))); // NON-NLS
                     dose.getIsoDoseSet().put(102, new IsoDoseLayer(
                         new IsoDose(102, new Color(170, 0, 0, isoFillTransparency), "", plan.getRxDose())));
                     dose.getIsoDoseSet().put(100, new IsoDoseLayer(
@@ -720,7 +720,7 @@ public class RtSet {
 
                                 isoContour.setPoints(newContour);
                                 isoContour.setContourPoints(newContour.length);
-                                isoContour.setGeometricType("CLOSED_PLANAR");
+                                isoContour.setGeometricType("CLOSED_PLANAR"); // NON-NLS
 
                                 // For lookup from GUI use specific image UID
                                 if (StringUtil.hasText(uidKey)) {

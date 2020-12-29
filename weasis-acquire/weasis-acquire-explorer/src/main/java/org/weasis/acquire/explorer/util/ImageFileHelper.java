@@ -41,7 +41,7 @@ public final class ImageFileHelper {
         for (String extension : ImageIO.getReaderFileSuffixes()) {
             if (extension.length() > 0) {
                 extension = extension.toLowerCase(Locale.ENGLISH);
-                String description = extension.toUpperCase(Locale.ENGLISH) + " - Image Files (." + extension + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                String description = extension.toUpperCase(Locale.ENGLISH) + " - Image Files (." + extension + ")"; // NON-NLS
                 extensionMap.put(extension, description);
             }
         }

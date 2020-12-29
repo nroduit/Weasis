@@ -52,10 +52,10 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
-    public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("ViewerFactory.img_viewer");
 
-    private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"), //$NON-NLS-1$
-        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")), //$NON-NLS-1$
+    private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"),
+        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")), 
         ViewerFactory::getOpenImageAction);
 
     public ViewerFactory() {
@@ -184,7 +184,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     }
 
     static void getOpenImageAction(ActionEvent e) {
-        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
+        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", "");// NON-NLS
         JFileChooser fileChooser = new JFileChooser(directory);
 
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -225,8 +225,8 @@ public class ViewerFactory implements SeriesViewerFactory {
                     false);
             } else {
                 Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), //$NON-NLS-1$
-                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"),
+                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE);
             }
             BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
         }

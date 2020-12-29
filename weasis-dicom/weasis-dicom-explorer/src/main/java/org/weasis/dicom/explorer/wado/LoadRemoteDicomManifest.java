@@ -68,7 +68,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     };
 
     public LoadRemoteDicomManifest(List<String> xmlFiles, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true);
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -107,7 +107,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
         boolean[] ret = { false };
         GuiExecutor.instance().invokeAndWait(() -> {
             int confirm = JOptionPane.showConfirmDialog(UIManager.getApplicationWindow(), getErrorMessage(e),
-                Messages.getString("LoadRemoteDicomManifest.net_err_msg"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
+                Messages.getString("LoadRemoteDicomManifest.net_err_msg"), JOptionPane.YES_NO_OPTION);
             ret[0] = JOptionPane.YES_OPTION == confirm;
         });
         return ret[0];
@@ -116,21 +116,21 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     private static String getErrorMessage(DownloadException e) {
         StringBuilder buf = new StringBuilder();
         if (e == null) { // images
-            buf.append(Messages.getString("LoadRemoteDicomManifest.cannot_download")); //$NON-NLS-1$
+            buf.append(Messages.getString("LoadRemoteDicomManifest.cannot_download"));
         } else { // xml manifest
             buf.append(StringUtil.getTruncatedString(e.getMessage(), 130, Suffix.THREE_PTS));
             if (e.getCause() instanceof StreamIOException) {
                 String serverMessage = e.getCause().getMessage();
                 if (StringUtil.hasText(serverMessage)) {
-                    buf.append("\n"); //$NON-NLS-1$
-                    buf.append(Messages.getString("LoadRemoteDicomManifest.server_resp")); //$NON-NLS-1$
+                    buf.append("\n");
+                    buf.append(Messages.getString("LoadRemoteDicomManifest.server_resp"));
                     buf.append(StringUtil.COLON_AND_SPACE);
                     buf.append(StringUtil.getTruncatedString(serverMessage, 100, Suffix.THREE_PTS));
                 }
             }
         }
-        buf.append("\n\n"); //$NON-NLS-1$
-        buf.append(Messages.getString("LoadRemoteDicomManifest.download_again")); //$NON-NLS-1$
+        buf.append("\n\n");
+        buf.append(Messages.getString("LoadRemoteDicomManifest.download_again"));
         return buf.toString();
     }
 

@@ -42,8 +42,8 @@ public class ChannelHistogramPanel extends JPanel {
     private final JCheckBox jCheckAccumulate;
     private final JCheckBox jCheckLogarithmic;
     private final JCheckBox jCheckShowIntensity;
-    private final JButton jButtonReset = new JButton(Messages.getString("ChannelHistogramPanel.reset")); //$NON-NLS-1$
-  //  private final JButton jButtonSave = new JButton(Messages.getString("ChannelHistogramPanel.save")); //$NON-NLS-1$
+    private final JButton jButtonReset = new JButton(Messages.getString("ChannelHistogramPanel.reset"));
+    // private final JButton jButtonSave = new JButton(Messages.getString("ChannelHistogramPanel.save"));
     private final JPanel panel = new JPanel();
 
     public ChannelHistogramPanel(String name) {
@@ -51,9 +51,9 @@ public class ChannelHistogramPanel extends JPanel {
     }
 
     public ChannelHistogramPanel(String name, boolean accumulate, boolean logarithmic, boolean showIntensity) {
-        this.jCheckAccumulate = new JCheckBox(Messages.getString("ChannelHistogramPanel.accu"), accumulate); //$NON-NLS-1$
-        this.jCheckLogarithmic = new JCheckBox(Messages.getString("ChannelHistogramPanel.log"), logarithmic); //$NON-NLS-1$
-        this.jCheckShowIntensity = new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity); //$NON-NLS-1$
+        this.jCheckAccumulate = new JCheckBox(Messages.getString("ChannelHistogramPanel.accu"), accumulate);
+        this.jCheckLogarithmic = new JCheckBox(Messages.getString("ChannelHistogramPanel.log"), logarithmic);
+        this.jCheckShowIntensity = new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity);
         this.jPanelHistogram = new HistogramPanel();
         this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png"))); //$NON-NLS-1$
         this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png"))); //$NON-NLS-1$
@@ -70,10 +70,10 @@ public class ChannelHistogramPanel extends JPanel {
         panel.setLayout(new FlowLayout(FlowLayout.LEADING, 5, 5));
         panel.add(jButtonHistoMinus);
 
-        jButtonHistoMinus.setToolTipText(Messages.getString("ChannelHistogramPanel.shrink")); //$NON-NLS-1$
+        jButtonHistoMinus.setToolTipText(Messages.getString("ChannelHistogramPanel.shrink"));
         jButtonHistoMinus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
         panel.add(jButtonHistoPlus);
-        jButtonHistoPlus.setToolTipText(Messages.getString("ChannelHistogramPanel.strech")); //$NON-NLS-1$
+        jButtonHistoPlus.setToolTipText(Messages.getString("ChannelHistogramPanel.strech"));
         jButtonHistoPlus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
 
         panel.add(Box.createHorizontalStrut(15));

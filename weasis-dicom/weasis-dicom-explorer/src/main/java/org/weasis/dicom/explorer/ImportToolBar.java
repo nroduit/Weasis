@@ -33,27 +33,27 @@ public class ImportToolBar extends WtoolBar {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportToolBar.class);
 
     public ImportToolBar(int index, DicomExplorer explorer) {
-        super(Messages.getString("ImportToolBar.dcm_import_bar"), index); //$NON-NLS-1$
+        super(Messages.getString("ImportToolBar.dcm_import_bar"), index);
         setAttachedInsertable(explorer);
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
 
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
             final JButton btnImport =
-                new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png"))); //$NON-NLS-1$
-            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm")); //$NON-NLS-1$
+                new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png")));
+            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
             btnImport.addActionListener(
-                e -> showAction(ImportToolBar.this, model, Messages.getString("LocalImport.local_dev"), false) //$NON-NLS-1$
+                e -> showAction(ImportToolBar.this, model, Messages.getString("LocalImport.local_dev"), false)
             );
             add(btnImport);
         }
 
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
             final JButton btnImport =
-                new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import-cd.png"))); //$NON-NLS-1$
-            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd")); //$NON-NLS-1$
+                new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import-cd.png")));
+            btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd"));
             btnImport.addActionListener(
-                e -> openImportDicomCdAction(ImportToolBar.this, model, Messages.getString("DicomExplorer.dcmCD"))); //$NON-NLS-1$
+                e -> openImportDicomCdAction(ImportToolBar.this, model, Messages.getString("DicomExplorer.dcmCD")));
             add(btnImport);
         }
     }
@@ -62,11 +62,11 @@ public class ImportToolBar extends WtoolBar {
         File file = DicomDirImport.getDcmDirFromMedia();
         if (file == null) {
             int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(parent),
-                Messages.getString("ImportToolBar.import_cd_question"), actionName, //$NON-NLS-1$
+                Messages.getString("ImportToolBar.import_cd_question"), actionName,
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
             if (response == JOptionPane.YES_OPTION) {
-                showAction(parent, model, Messages.getString("DicomDirImport.dicomdir"), false); //$NON-NLS-1$
+                showAction(parent, model, Messages.getString("DicomDirImport.dicomdir"), false);
             }
         } else {
             List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
@@ -76,12 +76,12 @@ public class ImportToolBar extends WtoolBar {
                 LOGGER.error("Cannot import DICOM from {}", file); //$NON-NLS-1$
 
                 int response = JOptionPane.showConfirmDialog(SwingUtilities.getWindowAncestor(parent),
-                    Messages.getString("DicomExplorer.mes_import_manual"), //$NON-NLS-1$
+                    Messages.getString("DicomExplorer.mes_import_manual"),
                     actionName, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == JOptionPane.YES_OPTION) {
                     AbstractWizardDialog dialog =
-                        showAction(parent, model, Messages.getString("LocalImport.local_dev"), false); //$NON-NLS-1$
+                        showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
                     AbstractItemDialogPage page = dialog.getCurrentPage();
                     if (page instanceof LocalImport) {
                         ((LocalImport) page).setImportPath(file.getParent());
@@ -107,7 +107,7 @@ public class ImportToolBar extends WtoolBar {
                     showAction(parent, model, Messages.getString("LocalImport.local_dev"), false); //$NON-NLS-1$
                 } else {
                     JOptionPane.showMessageDialog((Component) event.getSource(),
-                        Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
+                        Messages.getString("DicomExplorer.export_perm"));
                 }
             });
     }

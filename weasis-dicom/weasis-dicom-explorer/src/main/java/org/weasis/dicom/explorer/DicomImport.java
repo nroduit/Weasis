@@ -34,11 +34,11 @@ public class DicomImport extends AbstractWizardDialog {
     private final DicomModel dicomModel;
 
     public DicomImport(Window parent, final DicomModel dicomModel) {
-        super(parent, Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+        super(parent, Messages.getString("DicomImport.imp_dicom"), ModalityType.APPLICATION_MODAL,
             new Dimension(640, 480));
         this.dicomModel = dicomModel;
 
-        final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0")); //$NON-NLS-1$
+        final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0"));
         importandClose.addActionListener(e -> {
             importSelection();
             cancel();
@@ -53,7 +53,7 @@ public class DicomImport extends AbstractWizardDialog {
 
         final JButton importButton = new JButton();
         importButton.addActionListener(e -> importSelection());
-        importButton.setText(Messages.getString("DicomImport.imp")); //$NON-NLS-1$
+        importButton.setText(Messages.getString("DicomImport.imp"));
         final GridBagConstraints gridBagConstraints1 = new GridBagConstraints();
         gridBagConstraints1.insets = new Insets(10, 15, 10, 0);
         gridBagConstraints1.anchor = GridBagConstraints.EAST;

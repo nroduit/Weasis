@@ -55,9 +55,9 @@ public class LocalUtil {
     }
 
     public static Locale getSystemLocale() {
-        String language = System.getProperty("user.language", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-        String country = System.getProperty("user.country", ""); //$NON-NLS-1$ //$NON-NLS-2$
-        String variant = System.getProperty("user.variant", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        String language = System.getProperty("user.language", "en"); // NON-NLS
+        String country = System.getProperty("user.country", ""); // NON-NLS
+        String variant = System.getProperty("user.variant", ""); // NON-NLS
         return new Locale(language, country, variant);
     }
 

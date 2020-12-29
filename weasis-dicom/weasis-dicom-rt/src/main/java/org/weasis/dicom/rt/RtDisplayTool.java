@@ -80,28 +80,31 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(RtDisplayTool.class);
 
-    public static final String BUTTON_NAME = "RT Tool";
+    public static final String BUTTON_NAME = Messages.getString("rt.tool");
 
     private static final SoftHashMap<String, RtSet> RtSet_Cache = new SoftHashMap<>();
+    public static final String BR = "<br>";
+    public static final String HTML2 = "</html>";
+    public static final String HTML1 = "<html>";
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JScrollPane rootPane;
-    private final JButton btnLoad = new JButton("Load RT");
-    private final JCheckBox cbDvhRecalculate = new JCheckBox("DVH recalculate");
+    private final JButton btnLoad = new JButton(Messages.getString("load.rt"));
+    private final JCheckBox cbDvhRecalculate = new JCheckBox(Messages.getString("dvh.recalculate"));
 
     private final CheckboxTree treeStructures;
     private final CheckboxTree treeIsodoses;
     private boolean initPathSelection;
-    private DefaultMutableTreeNode rootNodeStructures = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
-    private DefaultMutableTreeNode rootNodeIsodoses = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
-    private final JLabel lblRtStructureSet = new JLabel("Structure Set:");
+    private final DefaultMutableTreeNode rootNodeStructures = new DefaultMutableTreeNode("rootNode", true);  // NON-NLS
+    private final DefaultMutableTreeNode rootNodeIsodoses = new DefaultMutableTreeNode("rootNode", true);  // NON-NLS
+    private final JLabel lblRtStructureSet = new JLabel(Messages.getString("structure.set") + StringUtil.COLON);
     private final JComboBox<RtSpecialElement> comboRtStructureSet = new JComboBox<>();
-    private final JLabel lblRtPlan = new JLabel("Plan:");
+    private final JLabel lblRtPlan = new JLabel(Messages.getString("plan") + StringUtil.COLON);
     private final JComboBox<RtSpecialElement> comboRtPlan = new JComboBox<>();
     private final JLabel lblRtPlanName = new JLabel();
-    private final JLabel lblRtPlanDose = new JLabel("Dose:");
+    private final JLabel lblRtPlanDose = new JLabel(Messages.getString("dose") + StringUtil.COLON);
     private final JTextField txtRtPlanDoseValue = new JTextField();
-    private final JLabel lblRtPlanDoseUnit = new JLabel("cGy");
+    private final JLabel lblRtPlanDoseUnit = new JLabel("cGy"); // NON-NLS
     private final DefaultMutableTreeNode nodeStructures;
     private final DefaultMutableTreeNode nodeIsodoses;
     private final CircularProgressBar progressBar = new CircularProgressBar();
@@ -128,11 +131,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         this.rootPane = new JScrollPane();
         this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
         this.setDockableWidth(350);
-        this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
+        this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
         // By default recalculate DVH only when it is missing for structure
         this.cbDvhRecalculate.setSelected(false);
-        this.cbDvhRecalculate
-            .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
+        this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
         this.lblRtStructureSet.setVisible(false);
         this.comboRtStructureSet.setVisible(false);
         this.lblRtPlan.setVisible(false);
@@ -183,8 +185,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             }
         };
         treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
-        this.nodeStructures = new DefaultMutableTreeNode("Structures", true);
-        this.nodeIsodoses = new DefaultMutableTreeNode("Isodoses", true);
+        this.nodeStructures = new DefaultMutableTreeNode(Messages.getString("structures"), true);
+        this.nodeIsodoses = new DefaultMutableTreeNode(Messages.getString("isodoses"), true);
         this.initData();
     }
 
@@ -215,9 +217,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     progressBar.setIndeterminate(false);
                     progressBar.setVisible(false);
                     btnLoad.setEnabled(false);
-                    btnLoad.setToolTipText("RT objects from loaded DICOM study have been already created");
+                    btnLoad.setToolTipText(Messages.getString("rt.objects.from.loaded"));
                     cbDvhRecalculate.setEnabled(false);
-                    cbDvhRecalculate.setToolTipText("DVH calculation cannot be modified after the RT objects creation");
+                    cbDvhRecalculate.setToolTipText(Messages.getString("dvh.calculation"));
                     lblRtStructureSet.setVisible(true);
                     comboRtStructureSet.setVisible(true);
                     lblRtPlan.setVisible(true);
@@ -261,7 +263,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         panelHead = new JPanel();
         add(panelHead, BorderLayout.NORTH);
         panelHead.setLayout(new BoxLayout(panelHead, BoxLayout.Y_AXIS));
-        this.btnLoad.setToolTipText("Populate RT objects from loaded DICOM study");
+        this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
         this.comboRtStructureSet.setVisible(false);
         this.comboRtPlan.setVisible(false);
 
@@ -309,10 +311,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         // By default recalculate DVH only when it is missing for structure
         panelDvh.add(cbDvhRecalculate);
         this.cbDvhRecalculate.setSelected(false);
-        this.cbDvhRecalculate
-            .setToolTipText("When enabled recalculate DVH for all structures, otherwise recalculate only missing DVH");
+        this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
 
-        btnShowDvh = new JButton("Display DVH chart");
+        btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
         btnShowDvh.addActionListener(e -> showDvhChart());
         panelDvh.add(btnShowDvh);
 
@@ -329,8 +330,8 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         if (rt != null) {
             List<StructureLayer> structs = getStructureSelection();
             if (!structs.isEmpty()) {
-                XYChart dvhChart = new XYChartBuilder().width(800).height(500).title("DVH").xAxisTitle("Dose (cGy)")
-                    .yAxisTitle("Volume (%)").build();
+                XYChart dvhChart = new XYChartBuilder().width(800).height(500).title("DVH").xAxisTitle(Messages.getString("dose.cgy"))
+                    .yAxisTitle(Messages.getString("volume") + " (%)").build();
                 dvhChart.getStyler().setDefaultSeriesRenderStyle(XYSeries.XYSeriesRenderStyle.Line);
                 for (StructureLayer structureLayer : structs) {
                     Structure structure = structureLayer.getStructure();
@@ -338,7 +339,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
                     structureDvh.appendChart(structure, dvhChart);
                 }
 
-                JDialog d = new JDialog(WinUtil.getParentWindow(this), "DVH Chart");
+                JDialog d = new JDialog(WinUtil.getParentWindow(this), Messages.getString("dvh.chart"));
                 XChartPanel<XYChart> chartPanel = new XChartPanel<>(dvhChart);
                 d.getContentPane().add(chartPanel, BorderLayout.CENTER);
                 d.pack();
@@ -407,7 +408,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
         final JPanel panelSlider1 = new JPanel();
         panelSlider1.setLayout(new BoxLayout(panelSlider1, BoxLayout.Y_AXIS));
-        panelSlider1.setBorder(new TitledBorder("Graphic Opacity"));
+        panelSlider1.setBorder(new TitledBorder(Messages.getString("graphic.opacity")));
         DefaultBoundedRangeModel model = new DefaultBoundedRangeModel(50, 0, 0, 100);
         JSliderW s = new JSliderW(model);
         s.setLabelDivision(labelDivision);
@@ -731,7 +732,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
                 Plan plan = rtSet.getPlan(selectedPlan);
                 this.lblRtPlanName.setText(plan.getName());
-                this.txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose()));
+                this.txtRtPlanDoseValue.setText(String.format("%.0f", plan.getRxDose())); // NON-NLS
 
                 Dose planDose = plan.getFirstDose();
                 if (planDose != null) {
@@ -865,13 +866,15 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         buf.append(",");
         buf.append(c.getBlue());
         // Other square: u2B1B
-        buf.append(")'> \u2588 </font>");
+        buf.append(")'> \u2588 </font>");  // NON-NLS
         buf.append(label);
-        buf.append("</html>"); //$NON-NLS-1$
+        buf.append(HTML2);
         return buf.toString();
     }
 
     static class StructToolTipTreeNode extends DefaultMutableTreeNode {
+
+        public static final String FORMAT = "%.3f %%"; // NON-NLS
 
         public StructToolTipTreeNode(StructureLayer userObject, boolean allowsChildren) {
             super(Objects.requireNonNull(userObject), allowsChildren);
@@ -885,25 +888,48 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             Dvh structureDvh = layer.getStructure().getDvh();
 
             StringBuilder buf = new StringBuilder();
-            buf.append("<html>");
-            buf.append("Structure Information:<br>");
+            buf.append(HTML1);
+            buf.append(Messages.getString("structure.information"));
+            buf.append(StringUtil.COLON);
+            buf.append(BR);
             if (StringUtil.hasText(layer.getStructure().getRoiObservationLabel())) {
-                buf.append("Observation Label: ");
+                buf.append(Messages.getString("observation.label"));
+                buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append(layer.getStructure().getRoiObservationLabel());
-                buf.append("<br>");
+                buf.append(BR);
             }
-            buf.append(String.format("Thickness: %.2f<br>", layer.getStructure().getThickness()));
-            buf.append(String.format(source + " Volume: %.4f cm^3<br>", volume));
+            buf.append(Messages.getString("thickness"));
+            buf.append(StringUtil.COLON_AND_SPACE);
+            buf.append(String.format("%.2f", layer.getStructure().getThickness())); // NON-NLS
+            buf.append(BR);
+            buf.append(Messages.getString("volume"));
+            buf.append(StringUtil.COLON_AND_SPACE);
+            buf.append(String.format("%.4f cm^3", volume)); // NON-NLS
+            buf.append(BR);
 
             if (structureDvh != null) {
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Min Dose: %.3f %%<br>", RtSet
-                    .calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())));
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Max Dose: %.3f %%<br>", RtSet
-                    .calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())));
-                buf.append(String.format(structureDvh.getDvhSource().toString() + " Mean Dose: %.3f %%<br>",
-                    RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(structureDvh.getDvhSource().toString());
+                buf.append(" ");
+                buf.append(Messages.getString("min.dose"));
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(String.format(FORMAT, RtSet
+                        .calculateRelativeDose(structureDvh.getDvhMinimumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(BR);
+                buf.append(structureDvh.getDvhSource().toString());
+                buf.append(" ");
+                buf.append(Messages.getString("max.dose"));
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(String.format(FORMAT,  RtSet
+                        .calculateRelativeDose(structureDvh.getDvhMaximumDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(BR);
+                buf.append(structureDvh.getDvhSource().toString());
+                buf.append(" ");
+                buf.append(Messages.getString("mean.dose"));
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(String.format(FORMAT, RtSet.calculateRelativeDose(structureDvh.getDvhMeanDoseCGy(), structureDvh.getPlan().getRxDose())));
+                buf.append(BR);
             }
-            buf.append("</html>");
+            buf.append(HTML2);
 
             return buf.toString();
         }
@@ -925,13 +951,21 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
             IsoDoseLayer layer = (IsoDoseLayer) getUserObject();
 
             StringBuilder buf = new StringBuilder();
-            buf.append("<html>");
-            buf.append("Isodose Information:<br>");
+            buf.append(HTML1);
+            buf.append(Messages.getString("isodose.information"));
+            buf.append(StringUtil.COLON);
+            buf.append(BR);
             if (layer.getIsoDose() != null) {
-                buf.append(String.format("Level: %d %%<br>", layer.getIsoDose().getLevel()));
-                buf.append(String.format("Thickness: %.2f<br>", layer.getIsoDose().getThickness()));
+                buf.append(Messages.getString("level"));
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(String.format("%d %%", layer.getIsoDose().getLevel())); // NON-NLS
+                buf.append(BR);
+                buf.append(Messages.getString("thickness"));
+                buf.append(StringUtil.COLON_AND_SPACE);
+                buf.append(String.format("%.2f", layer.getIsoDose().getThickness())); // NON-NLS
+                buf.append(BR);
             }
-            buf.append("</html>");
+            buf.append(HTML2);
 
             return buf.toString();
         }

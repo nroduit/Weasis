@@ -64,13 +64,13 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     private final void initGUI() {
         setBorder(new EmptyBorder(15, 10, 10, 10));
-        labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low"))); //$NON-NLS-1$
-        labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid"))); //$NON-NLS-1$
-        labels.put(100, new JLabel(Messages.getString("ViewerPrefView.high"))); //$NON-NLS-1$
+        labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low")));
+        labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid")));
+        labels.put(100, new JLabel(Messages.getString("ViewerPrefView.high")));
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
         JPanel panel = new JPanel();
-        panel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.mouse_sens"), TitledBorder.LEADING, //$NON-NLS-1$
+        panel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.mouse_sens"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
         add(panel);
         GridBagLayout gblpanel = new GridBagLayout();
@@ -82,11 +82,11 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         JPanel panel1 = new JPanel();
         ((FlowLayout) panel1.getLayout()).setAlignment(FlowLayout.LEADING);
-        panel1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING, //$NON-NLS-1$
+        panel1.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.zoom"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
         add(panel1);
 
-        JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel lblInterpolation = new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
         panel1.add(lblInterpolation);
         EventManager eventManager = EventManager.getInstance();
 
@@ -95,7 +95,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         panel1.add(comboBoxInterpolation);
 
         final JPanel winLevelPanel = new JPanel();
-        winLevelPanel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING, //$NON-NLS-1$
+        winLevelPanel.setBorder(new TitledBorder(null, Messages.getString("ViewerPrefView.other"), TitledBorder.LEADING,
             TitledBorder.TOP, null, null));
         add(winLevelPanel);
         GridBagLayout gblwinLevelPanel = new GridBagLayout();
@@ -104,7 +104,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         winLevelPanel.setLayout(gblwinLevelPanel);
 
         checkBoxWLcolor =
-            new JCheckBox(Messages.getString("ViewerPrefView.wl_color"), eventManager.getOptions().getBooleanProperty( //$NON-NLS-1$
+            new JCheckBox(Messages.getString("ViewerPrefView.wl_color"), eventManager.getOptions().getBooleanProperty(
                 WindowOp.P_APPLY_WL_COLOR, true));
         GridBagConstraints gbccheckBoxWLcolor = new GridBagConstraints();
         gbccheckBoxWLcolor.anchor = GridBagConstraints.WEST;
@@ -112,7 +112,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbccheckBoxWLcolor.gridy = 0;
         winLevelPanel.add(checkBoxWLcolor, gbccheckBoxWLcolor);
 
-        checkBoxLevelInverse = new JCheckBox(Messages.getString("ViewerPrefView.inverse_wl"), //$NON-NLS-1$
+        checkBoxLevelInverse = new JCheckBox(Messages.getString("ViewerPrefView.inverse_wl"),
             eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
         GridBagConstraints gbccheckBoxLevelInverse = new GridBagConstraints();
         gbccheckBoxLevelInverse.anchor = GridBagConstraints.WEST;
@@ -120,7 +120,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         gbccheckBoxLevelInverse.gridy = 1;
         winLevelPanel.add(checkBoxLevelInverse, gbccheckBoxLevelInverse);
 
-        checkBoxApplyPR = new JCheckBox(Messages.getString("ViewerPrefView.apply_pr"), //$NON-NLS-1$
+        checkBoxApplyPR = new JCheckBox(Messages.getString("ViewerPrefView.apply_pr"),
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
         GridBagConstraints gbccheckBoxapplyPR = new GridBagConstraints();
         gbccheckBoxapplyPR.insets = new Insets(0, 0, 5, 0);
@@ -137,13 +137,13 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
 
         ActionState winAction = eventManager.getAction(ActionW.WINDOW);
         if (winAction instanceof MouseActionAdapter) {
-            JLabel lblWindow = new JLabel(Messages.getString("ViewerPrefView.win")); //$NON-NLS-1$
+            JLabel lblWindow = new JLabel(Messages.getString("ViewerPrefView.win"));
             GridBagConstraints gbclblWindow = new GridBagConstraints();
             gbclblWindow.anchor = GridBagConstraints.NORTHEAST;
             gbclblWindow.insets = new Insets(5, 0, 0, 0);
@@ -165,7 +165,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         ActionState levelAction = eventManager.getAction(ActionW.LEVEL);
         if (levelAction instanceof MouseActionAdapter) {
-            JLabel lblLevel = new JLabel(Messages.getString("ViewerPrefView.level")); //$NON-NLS-1$
+            JLabel lblLevel = new JLabel(Messages.getString("ViewerPrefView.level"));
             GridBagConstraints gbclblLevel = new GridBagConstraints();
             gbclblLevel.anchor = GridBagConstraints.NORTHEAST;
             gbclblLevel.insets = new Insets(5, 15, 0, 0);
@@ -187,7 +187,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         ActionState zoomlAction = eventManager.getAction(ActionW.ZOOM);
         if (zoomlAction instanceof MouseActionAdapter) {
-            JLabel lblZoom = new JLabel(Messages.getString("ViewerPrefView.zoom")); //$NON-NLS-1$
+            JLabel lblZoom = new JLabel(Messages.getString("ViewerPrefView.zoom"));
             GridBagConstraints gbclblZoom = new GridBagConstraints();
             gbclblZoom.anchor = GridBagConstraints.NORTHEAST;
             gbclblZoom.insets = new Insets(5, 0, 0, 0);
@@ -209,7 +209,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
         if (rotateAction instanceof MouseActionAdapter) {
-            JLabel lblRotation = new JLabel(Messages.getString("ResetTools.rotation")); //$NON-NLS-1$
+            JLabel lblRotation = new JLabel(Messages.getString("ResetTools.rotation"));
             GridBagConstraints gbclblRotation = new GridBagConstraints();
             gbclblRotation.anchor = GridBagConstraints.NORTHEAST;
             gbclblRotation.insets = new Insets(5, 15, 0, 0);
@@ -231,7 +231,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
         ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
         if (seqAction instanceof MouseActionAdapter) {
-            JLabel lblImageScroll = new JLabel(Messages.getString("ViewerPrefView.scrool")); //$NON-NLS-1$
+            JLabel lblImageScroll = new JLabel(Messages.getString("ViewerPrefView.scrool"));
             GridBagConstraints gbclblImageScroll = new GridBagConstraints();
             gbclblImageScroll.anchor = GridBagConstraints.NORTHEAST;
             gbclblImageScroll.insets = new Insets(5, 0, 5, 5);

@@ -248,7 +248,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         toolTips.append(FileUtil.humanReadableByte(item.getLength(), false));
         toolTips.append("<br>"); //$NON-NLS-1$
 
-        toolTips.append(Messages.getString("JIThumbnailList.date")); //$NON-NLS-1$
+        toolTips.append(Messages.getString("JIThumbnailList.date"));
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagUtil.formatDateTime(Instant.ofEpochMilli(item.getLastModified())));
         toolTips.append("<br>"); //$NON-NLS-1$
@@ -519,7 +519,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
     public Action buildRefreshAction() {
         // TODO set this action in toolbar
-        return new DefaultAction(Messages.getString("JIThumbnailList.refresh_list"), event -> { //$NON-NLS-1$
+        return new DefaultAction(Messages.getString("JIThumbnailList.refresh_list"), event -> {
             final Thread runner = new Thread(AbstractThumbnailList.this.getThumbnailListModel()::reload);
             runner.start();
         });

@@ -1012,7 +1012,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
         if (selected != null) {
             final JPopupMenu popupMenu = new JPopupMenu();
-            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets()); //$NON-NLS-1$
+            TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets());
             popupMenu.add(itemTitle);
             popupMenu.addSeparator();
             boolean graphicComplete = true;
@@ -1035,11 +1035,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
                             final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
                             if (ptIndex >= 0) {
-                                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt")); //$NON-NLS-1$
+                                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rmv_pt"));
                                 menuItem.addActionListener(e -> absgraph.removeHandlePoint(ptIndex, mouseEvt));
                                 popupMenu.add(menuItem);
 
-                                menuItem = new JMenuItem(Messages.getString("View2d.draw_pt")); //$NON-NLS-1$
+                                menuItem = new JMenuItem(Messages.getString("View2d.draw_pt"));
                                 menuItem.addActionListener(e -> {
                                     absgraph.forceToAddPoints(ptIndex);
                                     MouseEventDouble evt2 =
@@ -1052,7 +1052,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                             }
                         } else if (graphicMouseHandler.getDragSequence() != null
                             && Objects.equals(absgraph.getPtsNumber(), Graphic.UNDEFINED)) {
-                            final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw")); //$NON-NLS-1$
+                            final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw"));
                             item2.addActionListener(e -> {
                                 MouseEventDouble event =
                                     new MouseEventDouble(View2d.this, 0, 0, 16, 0, 0, 0, 0, 2, true, 1);
@@ -1067,18 +1067,18 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
 
             if (graphicComplete) {
-                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel")); //$NON-NLS-1$
+                JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.delete_sel"));
                 menuItem
                     .addActionListener(e -> View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, true));
                 popupMenu.add(menuItem);
 
-                menuItem = new JMenuItem(Messages.getString("View2d.cut")); //$NON-NLS-1$
+                menuItem = new JMenuItem(Messages.getString("View2d.cut"));
                 menuItem.addActionListener(e -> {
                     DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected);
                     View2d.this.getGraphicManager().deleteSelectedGraphics(View2d.this, false);
                 });
                 popupMenu.add(menuItem);
-                menuItem = new JMenuItem(Messages.getString("View2d.copy")); //$NON-NLS-1$
+                menuItem = new JMenuItem(Messages.getString("View2d.copy"));
                 menuItem.addActionListener(e -> DefaultView2d.GRAPHIC_CLIPBOARD.setGraphics(selected));
                 popupMenu.add(menuItem);
                 popupMenu.add(new JSeparator());
@@ -1094,19 +1094,19 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
             if (selected.size() == 1) {
                 final Graphic graph = selected.get(0);
-                JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front")); //$NON-NLS-1$
+                JMenuItem item = new JMenuItem(Messages.getString("View2d.to_front"));
                 item.addActionListener(e -> graph.toFront());
                 popupMenu.add(item);
-                item = new JMenuItem(Messages.getString("View2d.to_back")); //$NON-NLS-1$
+                item = new JMenuItem(Messages.getString("View2d.to_back"));
                 item.addActionListener(e -> graph.toBack());
                 popupMenu.add(item);
                 popupMenu.add(new JSeparator());
 
                 if (graphicComplete && graph instanceof LineGraphic) {
 
-                    final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib")); //$NON-NLS-1$
+                    final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.chg_calib"));
                     calibMenu.addActionListener(e -> {
-                        String title = Messages.getString("View2d.clibration"); //$NON-NLS-1$
+                        String title = Messages.getString("View2d.clibration");
                         CalibrationView calibrationDialog = new CalibrationView((LineGraphic) graph, View2d.this, true);
                         ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                         int res = JOptionPane.showConfirmDialog(ColorLayerUI.getContentPane(layer), calibrationDialog,
@@ -1124,7 +1124,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             }
 
             if (!list.isEmpty()) {
-                JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop")); //$NON-NLS-1$
+                JMenuItem properties = new JMenuItem(Messages.getString("View2d.draw_prop"));
                 properties.addActionListener(e -> {
                     ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                     JDialog dialog = new MeasureDialog(View2d.this, list);
@@ -1140,7 +1140,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     protected JPopupMenu buildContexMenu(final MouseEvent evt) {
         JPopupMenu popupMenu = new JPopupMenu();
         TitleMenuItem itemTitle =
-            new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets()); //$NON-NLS-1$
+            new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets());
         popupMenu.add(itemTitle);
         popupMenu.setLabel(MouseActions.T_LEFT);
         String action = eventManager.getMouseActions().getLeft();
@@ -1184,7 +1184,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
 
         if (DefaultView2d.GRAPHIC_CLIPBOARD.hasGraphics()) {
-            JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw")); //$NON-NLS-1$
+            JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.paste_draw"));
             menuItem.addActionListener(e -> copyGraphicsFromClipboard());
             popupMenu.add(menuItem);
         }
@@ -1218,8 +1218,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset")); //$NON-NLS-1$
         }
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) { //$NON-NLS-1$
-            JMenuItem close = new JMenuItem(Messages.getString("View2d.close")); //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
+            JMenuItem close = new JMenuItem(Messages.getString("View2d.close"));
             close.addActionListener(e -> View2d.this.setSeries(null, null));
             popupMenu.add(close);
         }

@@ -387,7 +387,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             g2d.draw(getOutLine(line));
             line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
             g2d.draw(getOutLine(line));
-            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
+            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5;
             double midThick = thickLength * 2.0 / 3.0;
             double smallThick = thickLength / 3.0;
             double divSquare = scaleSizex / divisor;
@@ -459,7 +459,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
             g2d.draw(getOutLine(line));
             line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
             g2d.draw(getOutLine(line));
-            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5; //$NON-NLS-1$ //$NON-NLS-2$
+            int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5;
             double divSquare = scaleSizeY / divisor;
             double midThick = thickLength * 2.0 / 3.0;
             double smallThick = thickLength / 3.0;

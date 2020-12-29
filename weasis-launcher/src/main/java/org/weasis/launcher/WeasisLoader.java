@@ -41,12 +41,12 @@ public class WeasisLoader {
 
     private static final Logger LOGGER = Logger.getLogger(WeasisLoader.class.getName());
 
-    public static final String P_DIALOG = "Dialog"; //$NON-NLS-1$
-    public static final String LBL_LOADING = Messages.getString("WebStartLoader.load"); //$NON-NLS-1$
-    public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download"); //$NON-NLS-1$
+    public static final String P_DIALOG = "Dialog"; //NON-NLS
+    public static final String LBL_LOADING = Messages.getString("WebStartLoader.load");
+    public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download");
     public static final String FRM_TITLE =
-        String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name")); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end"); //$NON-NLS-1$
+        String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name"));
+    public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end");
 
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel loadingLabel;
@@ -70,9 +70,9 @@ public class WeasisLoader {
      */
     public void initGUI() {
         loadingLabel = new javax.swing.JLabel();
-        loadingLabel.setFont(new Font(P_DIALOG, Font.PLAIN, 10)); // $NON-NLS-1$
+        loadingLabel.setFont(new Font(P_DIALOG, Font.PLAIN, 10));
         downloadProgress = new javax.swing.JProgressBar();
-        Font font = new Font(P_DIALOG, Font.PLAIN, 12); // $NON-NLS-1$
+        Font font = new Font(P_DIALOG, Font.PLAIN, 12);
         downloadProgress.setFont(font);
         cancelButton = new javax.swing.JButton();
         cancelButton.setFont(font);
@@ -96,13 +96,13 @@ public class WeasisLoader {
         downloadProgress.setStringPainted(true);
         downloadProgress.setString(LBL_LOADING);
 
-        cancelButton.setText(Messages.getString("WebStartLoader.cancel")); //$NON-NLS-1$
+        cancelButton.setText(Messages.getString("WebStartLoader.cancel"));
         cancelButton.addActionListener(evt -> closing());
 
         Icon icon;
         File iconFile = null;
         if (resPath != null) {
-            iconFile = new File(resPath, "images" + File.separator + "about.png"); //$NON-NLS-1$ //$NON-NLS-2$
+            iconFile = new File(resPath, "images" + File.separator + "about.png"); // NON-NLS
             if (!iconFile.canRead()) {
                 iconFile = null;
             }
@@ -130,7 +130,7 @@ public class WeasisLoader {
         }
 
         JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
-        imagePane.setFont(new Font(P_DIALOG, Font.BOLD, 16)); // $NON-NLS-1$
+        imagePane.setFont(new Font(P_DIALOG, Font.BOLD, 16));
         imagePane.setVerticalTextPosition(SwingConstants.TOP);
         imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
         imagePane.setFocusable(false);

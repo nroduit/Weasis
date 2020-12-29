@@ -28,10 +28,10 @@ import org.weasis.core.api.media.data.ImageElement;
 public class AcquireCentralInfoPanel extends JPanel {
 
     private AcquireMetadataPanel globalInfoPanel =
-        new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global")); //$NON-NLS-1$
+        new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global"));
     private AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
     private AcquireMetadataPanel imageInfoPanel =
-        new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image")); //$NON-NLS-1$
+        new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image"));
 
     private AcquireImageInfo imageInfo;
 

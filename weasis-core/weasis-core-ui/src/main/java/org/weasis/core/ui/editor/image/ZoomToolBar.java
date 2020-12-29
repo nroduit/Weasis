@@ -36,7 +36,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ZoomToolBar extends WtoolBar {
 
     public ZoomToolBar(final ImageViewerEventManager<?> eventManager, int index, boolean showLens) {
-        super(Messages.getString("ZoomToolBar.zoomBar"), index); //$NON-NLS-1$
+        super(Messages.getString("ZoomToolBar.zoomBar"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -49,7 +49,7 @@ public class ZoomToolBar extends WtoolBar {
                 return getZoomPopupMenuButton(this, eventManager);
             }
         };
-        zoom.setToolTipText(Messages.getString("ZoomToolBar.zoom_type")); //$NON-NLS-1$
+        zoom.setToolTipText(Messages.getString("ZoomToolBar.zoom_type"));
         add(zoom);
 
         ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
@@ -59,8 +59,8 @@ public class ZoomToolBar extends WtoolBar {
 
         if (showLens) {
             final JToggleButton jButtonLens =
-                new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png"))); //$NON-NLS-1$
-            jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens")); //$NON-NLS-1$
+                new JToggleButton(new ImageIcon(MouseActions.class.getResource("/icon/32x32/zoom-lens.png")));
+            jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens"));
             ActionState lens = eventManager.getAction(ActionW.LENS);
             if (lens instanceof ToggleButtonListener) {
                 ((ToggleButtonListener) lens).registerActionState(jButtonLens);
@@ -81,8 +81,8 @@ public class ZoomToolBar extends WtoolBar {
     public static List<JMenuItem> getZoomListMenuItems(final ImageViewerEventManager<?> eventManager) {
 
         List<JMenuItem> list = new ArrayList<>();
-        final JMenuItem actualZoomMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_1"), //$NON-NLS-1$
-            new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png"))); //$NON-NLS-1$
+        final JMenuItem actualZoomMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_1"),
+            new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-original.png")));
         actualZoomMenu.addActionListener(e -> {
             ActionState zoom = eventManager.getAction(ActionW.ZOOM);
             if (zoom instanceof SliderChangeListener) {
@@ -100,8 +100,8 @@ public class ZoomToolBar extends WtoolBar {
                 double realFactor = monitor.getRealScaleFactor();
                 if (realFactor > 0.0) {
                     final JMenuItem realSizeMenu =
-                        new JMenuItem(Messages.getString("ZoomToolBar.real_zoom"), new ImageIcon( //$NON-NLS-1$
-                            MouseActions.class.getResource("/icon/22x22/zoom-real.png"))); //$NON-NLS-1$
+                        new JMenuItem(Messages.getString("ZoomToolBar.real_zoom"), new ImageIcon(
+                            MouseActions.class.getResource("/icon/22x22/zoom-real.png")));
                     realSizeMenu.addActionListener(e -> {
                         /*
                          * Pass the value -100.0 (convention: -100.0 => real world size) directly to the property
@@ -116,8 +116,8 @@ public class ZoomToolBar extends WtoolBar {
             }
         }
 
-        final JMenuItem bestFitMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_b"), //$NON-NLS-1$
-            new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png"))); //$NON-NLS-1$
+        final JMenuItem bestFitMenu = new JMenuItem(Messages.getString("ViewerToolBar.zoom_b"),
+            new ImageIcon(MouseActions.class.getResource("/icon/22x22/zoom-bestfit.png")));
         bestFitMenu.addActionListener(e -> {
             // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the property change,
             // otherwise the value is adjusted by the BoundedRangeModel

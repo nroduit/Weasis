@@ -21,11 +21,11 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class AffineTransformOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op");
 
     public static final String[] INTERPOLATIONS =
-        { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.lanczos") }; //$NON-NLS-1$ //$NON-NLS-2$
+        { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"),
+            Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.lanczos") };
 
     public static final double[] identityMatrix = new double[] { 1.0, 0.0, 0.0, 0.0, 1.0, 0.0 };
     /**

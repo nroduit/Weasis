@@ -60,9 +60,9 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     private final JTextField serieName = new JTextField();
     private final ButtonGroup btnGrp = new ButtonGroup();
 
-    private final JRadioButton btn1 = new JRadioButton(Messages.getString("AcquireImportDialog.no_grp")); //$NON-NLS-1$
-    private final JRadioButton btn2 = new JRadioButton(Messages.getString("AcquireImportDialog.date_grp")); //$NON-NLS-1$
-    private final JRadioButton btn3 = new JRadioButton(Messages.getString("AcquireImportDialog.name_grp")); //$NON-NLS-1$
+    private final JRadioButton btn1 = new JRadioButton(Messages.getString("AcquireImportDialog.no_grp"));
+    private final JRadioButton btn2 = new JRadioButton(Messages.getString("AcquireImportDialog.date_grp"));
+    private final JRadioButton btn3 = new JRadioButton(Messages.getString("AcquireImportDialog.name_grp"));
     private final JSpinner spinner;
 
     private JOptionPane optionPane;
@@ -97,7 +97,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         panel.setBorder(new EmptyBorder(10, 10, 20, 15));
         panel.setLayout(new GridBagLayout());
 
-        JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON); //$NON-NLS-1$
+        JLabel question = new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON);
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(0, 0, 15, 0);
         c.gridx = 0;
@@ -135,7 +135,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
         c.gridy = 2;
         c.gridwidth = GridBagConstraints.REMAINDER;
         c.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel(Messages.getString("AcquireImportDialog.max_range_min")), c); //$NON-NLS-1$
+        panel.add(new JLabel(Messages.getString("AcquireImportDialog.max_range_min")), c);
 
         c = new GridBagConstraints();
         c.gridx = 0;
@@ -210,8 +210,8 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
                         serieType = new SeriesGroup(serieName.getText());
                         serieType.setNeedUpateFromGlobaTags(true);
                     } else {
-                        JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"), //$NON-NLS-1$
-                            Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(this, Messages.getString("AcquireImportDialog.add_name_msg"),
+                            Messages.getString("AcquireImportDialog.add_name_title"), JOptionPane.ERROR_MESSAGE);
                         optionPane.setValue(REVALIDATE);
                         close = false;
                     }

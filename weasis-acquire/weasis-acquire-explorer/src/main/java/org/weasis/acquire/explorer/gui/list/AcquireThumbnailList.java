@@ -59,7 +59,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
             JPopupMenu popupMenu = new JPopupMenu();
 
             popupMenu
-                .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireThumbnailList.import_sel"), event -> { //$NON-NLS-1$
+                .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireThumbnailList.import_sel"), event -> {
                     AcquireImportDialog dialog = new AcquireImportDialog(importPanel, medias);
                     JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
                 })));

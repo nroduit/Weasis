@@ -51,7 +51,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
     private boolean openPlugin;
 
     public LoadLocalDicom(File[] files, boolean recursive, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"), false); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), false);
         if (files == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

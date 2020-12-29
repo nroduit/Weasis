@@ -83,7 +83,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
 
     public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
-        super(Messages.getString("SendDicomView.title")); //$NON-NLS-1$
+        super(Messages.getString("SendDicomView.title"));
         this.dicomModel = dicomModel;
         this.exportTree = new ExportTree(treeModel);
         initGUI();
@@ -96,7 +96,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         FlowLayout flowLayout = (FlowLayout) panel.getLayout();
         flowLayout.setAlignment(FlowLayout.LEFT);
 
-        final JLabel lblDest = new JLabel(Messages.getString("SendDicomView.destination") + StringUtil.COLON); //$NON-NLS-1$
+        final JLabel lblDest = new JLabel(Messages.getString("SendDicomView.destination") + StringUtil.COLON);
         panel.add(lblDest);
         AbstractDicomNode.addTooltipToComboList(comboNode);
         panel.add(comboNode);
@@ -171,7 +171,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         throws IOException {
         dicomModel
             .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, t));
-        File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send")); //$NON-NLS-1$ //$NON-NLS-2$
+        File exportDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "send")); // NON-NLS
         try {
             writeDicom(t, exportDir, model);
 
@@ -179,7 +179,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 return false;
             }
 
-            String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); //$NON-NLS-1$ //$NON-NLS-2$
+            String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
 
             List<String> files = new ArrayList<>();
             files.add(exportDir.getAbsolutePath());
@@ -225,7 +225,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private void showErrorMessage(String title, Exception e, DicomState state) {
         if (e != null) {
-            LOGGER.error(title, e.getMessage()); // $NON-NLS-1$
+            LOGGER.error(title, e.getMessage());
         }
         GuiExecutor.instance().execute(() -> JOptionPane.showMessageDialog(exportTree,
             state == null ? e.getMessage() : state.getMessage(), getTitle(), JOptionPane.ERROR_MESSAGE));

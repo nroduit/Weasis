@@ -33,7 +33,7 @@ public class Image {
         Attributes dcmItems = image.getMediaReader().getDicomObject();
         this.patientPosition = dcmItems.getString(Tag.PatientPosition).toLowerCase();
         this.prone = patientPosition.contains("p") ? -1 : 1;
-        this.feetFirst = patientPosition.contains("ff") ? -1 : 1;
+        this.feetFirst = patientPosition.contains("ff") ? -1 : 1; // NON-NLS
 
         // Get the image pixel spacing
         this.imageSpacing = image.getSliceGeometry().getVoxelSpacingArray();

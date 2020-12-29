@@ -34,7 +34,7 @@ import org.weasis.dicom.viewer2d.mpr.MPRFactory;
 public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
 
     public Basic3DToolBar(int index) {
-        super(Messages.getString("Basic3DToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("Basic3DToolBar.title"), index);
 
         final JButton mprButton = new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));//$NON-NLS-1$
         mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr")); //$NON-NLS-1$

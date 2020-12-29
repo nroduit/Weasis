@@ -397,11 +397,11 @@ public class AcquireManager {
         if (StringUtil.hasText(aet) && StringUtil.hasText(host) && StringUtil.hasText(port)) {
             DicomNode called = new DicomNode(aet, host, Integer.parseInt(port));
             DicomNode calling = new DicomNode(
-                BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL")); //$NON-NLS-1$ //$NON-NLS-2$
+                BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.station.aet", "WEASIS-WL"));
 
             try {
                 WorklistDialog dialog = new WorklistDialog(UIManager.getApplicationWindow(),
-                    Messages.getString("AcquireManager.dcm_worklist"), calling, called); //$NON-NLS-1$
+                    Messages.getString("AcquireManager.dcm_worklist"), calling, called);
                 JMVUtils.showCenterScreen(dialog);
             } catch (Exception e) {
                 LOGGER.error("Cannot get items from worklist", e); //$NON-NLS-1$
@@ -506,8 +506,8 @@ public class AcquireManager {
             } else {
                 if (!isAcquireImagesAllPublished()) {
                     if (JOptionPane.showConfirmDialog(getExplorerViewComponent(),
-                        Messages.getString("AcquireManager.new_patient_load_warn"), //$NON-NLS-1$
-                        Messages.getString("AcquireManager.new_patient_load_title"), //$NON-NLS-1$
+                        Messages.getString("AcquireManager.new_patient_load_warn"),
+                        Messages.getString("AcquireManager.new_patient_load_title"),
                         JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) != JOptionPane.OK_OPTION) {
                         return;
                     }
@@ -607,8 +607,8 @@ public class AcquireManager {
         byte[] byteArray = getURIContent(Objects.requireNonNull(uri));
         String uriPath = uri.getPath();
 
-        if (uriPath.endsWith(".gz") || !(uriPath.endsWith(".xml") //$NON-NLS-1$ //$NON-NLS-2$
-            && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) { //$NON-NLS-1$
+        if (uriPath.endsWith(".gz") || !(uriPath.endsWith(".xml")
+            && MimeInspector.isMatchingMimeTypeFromMagicNumber(byteArray, "application/x-gzip"))) { // NON-NLS
             return getPatientContext(byteArray, OPT_ZIP);
         } else {
             return getPatientContext(byteArray, OPT_NONE);

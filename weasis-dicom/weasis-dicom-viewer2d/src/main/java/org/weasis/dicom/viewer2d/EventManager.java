@@ -124,7 +124,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
     private static final Logger LOGGER = LoggerFactory.getLogger(EventManager.class);
 
     public static final List<String> functions = Collections
-        .unmodifiableList(Arrays.asList("zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+        .unmodifiableList(Arrays.asList("zoom", "wl", "move", "scroll", "layout", "mouseLeftAction", "synch", "reset")); // NON-NLS
 
     /** The single instance of this singleton class. */
     private static EventManager instance;
@@ -764,7 +764,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             if (view != null) {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(view);
                 PrintDialog dialog = new PrintDialog(SwingUtilities.getWindowAncestor(view),
-                    Messages.getString("View2dContainer.print_layout"), this); //$NON-NLS-1$
+                    Messages.getString("View2dContainer.print_layout"), this);
                 ColorLayerUI.showCenterScreen(dialog, layer);
             }
         } else {
@@ -1302,8 +1302,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         JMenu menu = null;
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             ButtonGroup group = new ButtonGroup();
-            menu = new JMenu(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
-            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png"))); //$NON-NLS-1$
+            menu = new JMenu(Messages.getString("ResetTools.reset"));
+            menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
             menu.setEnabled(getSelectedSeries() != null);
 
             if (menu.isEnabled()) {
@@ -1375,25 +1375,25 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION, SliderChangeListener.class);
             if (rotateAction.isPresent()) {
-                menu = new JMenu(Messages.getString("View2dContainer.orientation")); //$NON-NLS-1$
+                menu = new JMenu(Messages.getString("View2dContainer.orientation"));
                 menu.setIcon(ActionW.ROTATION.getSmallIcon());
                 menu.setEnabled(rotateAction.get().isActionEnabled());
 
                 if (rotateAction.get().isActionEnabled()) {
-                    JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset")); //$NON-NLS-1$
+                    JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset"));
                     menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.-90")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
                     menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 270) % 360));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+90")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
                     menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 90) % 360));
                     menu.add(menuItem);
-                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+180")); //$NON-NLS-1$
+                    menuItem = new JMenuItem(Messages.getString("View2dContainer.+180"));
                     menuItem.addActionListener(
                         e -> rotateAction.get().setSliderValue((rotateAction.get().getSliderValue() + 180) % 360));
                     menu.add(menuItem);
@@ -1402,7 +1402,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
                     if (flipAction.isPresent()) {
                         menu.add(new JSeparator());
                         menuItem = flipAction.get()
-                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h")); //$NON-NLS-1$
+                            .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.flip_h"));
                         menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
                         menu.add(menuItem);
                     }
@@ -1418,13 +1418,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             Optional<ComboItemListener> sortStackAction = getAction(ActionW.SORTSTACK, ComboItemListener.class);
             if (sortStackAction.isPresent()) {
                 menu =
-                    sortStackAction.get().createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack")); //$NON-NLS-1$
+                    sortStackAction.get().createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
                 Optional<ToggleButtonListener> inverseStackAction =
                     getAction(ActionW.INVERSESTACK, ToggleButtonListener.class);
                 if (inverseStackAction.isPresent()) {
                     menu.add(new JSeparator());
                     menu.add(inverseStackAction.get()
-                        .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+                        .createUnregiteredJCheckBoxMenuItem(Messages.getString("View2dContainer.inv_stack")));
                 }
             }
         }
@@ -1458,7 +1458,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             Optional<ComboItemListener> filterAction = getAction(ActionW.FILTER, ComboItemListener.class);
             if (filterAction.isPresent()) {
-                menu = filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter")); //$NON-NLS-1$
+                menu = filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter"));
             }
         }
         return menu;
@@ -1476,7 +1476,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
             opt.usage();
             return;
         }
@@ -1572,7 +1572,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "  -? --help             show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("set", "increase", "decrease")) { // NON-NLS
             opt.usage();
             return;
         }
@@ -1606,7 +1606,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
             "  -? --help           show help" }; //$NON-NLS-1$
         final Option opt = Options.compile(usage).parse(argv);
 
-        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { // NON-NLS
             opt.usage();
             return;
         }
@@ -1727,7 +1727,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement> imp
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty() && !opt.isSet("all")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("help") || args.isEmpty() && !opt.isSet("all")) { // NON-NLS
             opt.usage();
             return;
         }

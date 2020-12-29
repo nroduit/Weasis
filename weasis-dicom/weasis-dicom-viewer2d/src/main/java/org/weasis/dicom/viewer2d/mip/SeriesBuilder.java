@@ -90,8 +90,8 @@ public class SeriesBuilder {
 
             Arrays.sort(COPIED_ATTRS);
             final Attributes cpTags = new Attributes(attributes, COPIED_ATTRS);
-            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); //$NON-NLS-1$ //$NON-NLS-2$
-            cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "PROJECTION IMAGE"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            cpTags.setString(Tag.SeriesDescription, VR.LO, attributes.getString(Tag.SeriesDescription, "") + " [MIP]"); // NON-NLS
+            cpTags.setString(Tag.ImageType, VR.CS, "DERIVED", "SECONDARY", "PROJECTION IMAGE"); // NON-NLS
             String seriesUID = UIDUtils.createUID();
 
             for (int index = minImg; index <= maxImg; index++) {
@@ -128,8 +128,8 @@ public class SeriesBuilder {
                     FileRawImage raw = null;
                     try {
                         File mipDir =
-                            AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
-                        raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir));//$NON-NLS-1$ //$NON-NLS-2$
+                            AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip");  //NON-NLS
+                        raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir));// NON-NLS
                         if (!raw.write(curImage)) {
                             raw = null;
                         }

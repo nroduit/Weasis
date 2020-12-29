@@ -235,7 +235,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     private static URLParameters getURLParameters(boolean post) {
         Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
-        map.put(post ? "Content-Type" : "Accept", "application/xml"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        map.put(post ? "Content-Type" : "Accept", "application/xml"); // NON-NLS
         return new URLParameters(map, post);
     }
 
@@ -268,7 +268,7 @@ public class StreamBackingStoreImpl implements BackingStore {
             eventType = xmler.next();
             if (eventType == XMLStreamConstants.START_ELEMENT) {
                 String key = xmler.getName().getLocalPart();
-                if (PREFS_TAG.equals(key)) { // $NON-NLS-1$
+                if (PREFS_TAG.equals(key)) {
                     while (xmler.hasNext()) {
                         eventType = xmler.next();
                         if (eventType == XMLStreamConstants.START_ELEMENT) {
@@ -345,9 +345,9 @@ public class StreamBackingStoreImpl implements BackingStore {
         XMLStreamWriter writer = null;
         try (final OutputStream output = getOutputStream(rootPrefs.getDescription())) {
             XMLOutputFactory factory = XMLOutputFactory.newInstance();
-            writer = factory.createXMLStreamWriter(output, "UTF-8"); //$NON-NLS-1$
-            writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
-            writer.writeStartElement(PREFS_TAG); // $NON-NLS-1$
+            writer = factory.createXMLStreamWriter(output, "UTF-8"); //NON-NLS
+            writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS
+            writer.writeStartElement(PREFS_TAG);
             write(rootPrefs, writer);
             writer.writeEndElement();
             writer.writeEndDocument();

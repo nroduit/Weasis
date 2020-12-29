@@ -294,7 +294,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         }
 
         private double getDoubleValue(String val) {
-            if (!StringUtil.hasText(val)) { // $NON-NLS-1$
+            if (!StringUtil.hasText(val)) {
                 return 0.0;
             }
             // handle fraction format

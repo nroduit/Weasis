@@ -644,7 +644,7 @@ public class DicomMediaUtils {
         Area shape = null;
         String shutterShape = getStringFromDicomElement(dcmObject, Tag.ShutterShape);
         if (shutterShape != null) {
-            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (shutterShape.contains("RECTANGULAR") || shutterShape.contains("RECTANGLE")) { // NON-NLS
                 Rectangle2D rect = new Rectangle2D.Double();
                 rect.setFrameFromDiagonal(getIntegerFromDicomElement(dcmObject, Tag.ShutterLeftVerticalEdge, 0),
                     getIntegerFromDicomElement(dcmObject, Tag.ShutterUpperHorizontalEdge, 0),
@@ -807,8 +807,8 @@ public class DicomMediaUtils {
             // Overrides Modality LUT Transformation attributes only if sequence is consistent
             if (containsRequiredModalityLUTAttributes(mLutItems)) {
                 String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
-                if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    || "PT".equals(modlality)) { //$NON-NLS-1$
+                if ("MR".equals(modlality) || "XA".equals(modlality) || "XRF".equals(modlality) // NON-NLS
+                    || "PT".equals(modlality)) {
                     /*
                      * IHE BIR: 4.16.4.2.2.5.4
                      *
@@ -842,11 +842,11 @@ public class DicomMediaUtils {
             if (mLutItems != null && containsRequiredModalityLUTDataAttributes(mLutItems)) {
                 boolean canApplyMLUT = true;
                 String modality = TagD.getTagValue(tagable, Tag.Modality, String.class);
-                if ("XA".equals(modality) || "XRF".equals(modality)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if ("XA".equals(modality) || "XRF".equals(modality)) { // NON-NLS
                     // See PS 3.4 N.2.1.2.
                     String pixRel = mLutItems.getParent() == null ? null
                         : mLutItems.getParent().getString(Tag.PixelIntensityRelationship);
-                    if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { //$NON-NLS-1$ //$NON-NLS-2$
+                    if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { // NON-NLS
                         canApplyMLUT = false;
                         LOGGER.debug(
                             "Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
@@ -915,8 +915,8 @@ public class DicomMediaUtils {
                     Double ri = getDoubleFromDicomElement(mLutItems, Tag.RescaleIntercept, null);
                     String modality = TagD.getTagValue(tagable, Tag.Modality, String.class);
                     if (ww != null && wc != null && rs != null && ri != null
-                        && ("MR".equals(modality) || "XA".equals(modality) || "XRF".equals(modality) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            || "PT".equals(modality))) { //$NON-NLS-1$
+                        && ("MR".equals(modality) || "XA".equals(modality) || "XRF".equals(modality) // NON-NLS
+                            || "PT".equals(modality))) {
                         int windowLevelDefaultCount = (ww.length == wc.length) ? ww.length : 0;
                         for (int i = 0; i < windowLevelDefaultCount; i++) {
                             ww[i] = ww[i] / rs;
@@ -1027,7 +1027,7 @@ public class DicomMediaUtils {
         String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
         if ("PT".equals(modlality)) { //$NON-NLS-1$
             String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
-            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { // NON-NLS
                 double suvFactor = 0.0;
                 String units = dicomObject.getString(Tag.Units);
                 // DICOM $C.8.9.1.1.3 Units

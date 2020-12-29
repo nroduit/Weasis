@@ -268,7 +268,7 @@ public class JMVUtils {
         String look = UIManager.getLookAndFeel().getName();
         if ("CDE/Motif".equalsIgnoreCase(look)) { //$NON-NLS-1$
             return new Dimension(46, 42);
-        } else if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
+        } else if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { // NON-NLS
             return new Dimension(36, 36);
         } else {
             return new Dimension(34, 34);
@@ -277,7 +277,7 @@ public class JMVUtils {
 
     public static Dimension getBigIconToogleButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { // NON-NLS
             return new Dimension(36, 36);
         } else {
             return new Dimension(30, 30);
@@ -382,8 +382,8 @@ public class JMVUtils {
                 }
             } else {
                 JOptionPane.showMessageDialog(parent,
-                    Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url, //$NON-NLS-1$
-                    Messages.getString("JMVUtils.error"), //$NON-NLS-1$
+                    Messages.getString("JMVUtils.browser") + StringUtil.COLON_AND_SPACE + url,
+                    Messages.getString("JMVUtils.error"),
                     JOptionPane.ERROR_MESSAGE);
             }
         }
@@ -425,14 +425,14 @@ public class JMVUtils {
         if (color == null) {
             return ""; //$NON-NLS-1$
         }
-        return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); // NON-NLS
     }
 
     public static String getValueRGBasText2(Color color) {
         if (color == null) {
             return ""; //$NON-NLS-1$
         }
-        return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue(); //$NON-NLS-1$ //$NON-NLS-2$
+        return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue();
     }
 
 }

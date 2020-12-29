@@ -36,7 +36,7 @@ public class MeasureDialog extends PropertiesDialog {
     private ViewCanvas<?> view2D;
 
     public MeasureDialog(ViewCanvas<?> view2d, List<DragGraphic> selectedGraphic) {
-        super(SwingUtilities.getWindowAncestor(view2d.getJComponent()), Messages.getString("MeasureDialog.draw_props")); //$NON-NLS-1$
+        super(SwingUtilities.getWindowAncestor(view2d.getJComponent()), Messages.getString("MeasureDialog.draw_props"));
         this.view2D = view2d;
         this.graphics = Objects.requireNonNull(selectedGraphic);
         iniGraphicDialog();
@@ -90,7 +90,7 @@ public class MeasureDialog extends PropertiesDialog {
                 JScrollPane panel = new JScrollPane();
 
                 panel.setBorder(new CompoundBorder(new EmptyBorder(10, 15, 5, 15),
-                    new TitledBorder(null, Messages.getString("MeasureDialog.text"), //$NON-NLS-1$
+                    new TitledBorder(null, Messages.getString("MeasureDialog.text"),
                         TitledBorder.LEADING, TitledBorder.TOP, null, null)));
                 panel.setPreferredSize(new Dimension(400, 140));
                 StringBuilder buf = new StringBuilder();

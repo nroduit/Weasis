@@ -47,7 +47,7 @@ public class MPRFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return Messages.getString("MPRFactory.desc"); //$NON-NLS-1$
+        return Messages.getString("MPRFactory.desc");
     }
 
     @Override

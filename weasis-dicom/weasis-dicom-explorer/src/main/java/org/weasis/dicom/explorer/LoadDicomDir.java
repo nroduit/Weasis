@@ -21,7 +21,7 @@ public class LoadDicomDir extends ExplorerTask<Boolean, String> {
     private final DicomModel dicomModel;
 
     public LoadDicomDir(List<LoadSeries> loadSeries, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true);
         if (loadSeries == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }

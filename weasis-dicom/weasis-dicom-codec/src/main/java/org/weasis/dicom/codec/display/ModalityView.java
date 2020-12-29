@@ -54,38 +54,38 @@ public class ModalityView {
         TagView[] disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.TOP_LEFT).getInfos();
         disElements[0] = new TagView(TagD.get(Tag.PatientName));
         disElements[1] = new TagView(TagD.get(Tag.PatientBirthDate));
-        disElements[2] = new TagView(Messages.getString("ModalityView.id"), TagD.get(Tag.PatientID)); //$NON-NLS-1$
-        disElements[3] = new TagView(Messages.getString("ModalityView.sex"), TagD.get(Tag.PatientSex)); //$NON-NLS-1$
+        disElements[2] = new TagView(Messages.getString("ModalityView.id"), TagD.get(Tag.PatientID));
+        disElements[3] = new TagView(Messages.getString("ModalityView.sex"), TagD.get(Tag.PatientSex));
         disElements[4] = new TagView(TagD.get(Tag.PatientAge));
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.TOP_RIGHT).getInfos();
         disElements[0] = new TagView(TagD.get(Tag.InstitutionName));
-        disElements[1] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.StudyDescription)); //$NON-NLS-1$
-        disElements[2] = new TagView(Messages.getString("ModalityView.study"), TagD.get(Tag.StudyID)); //$NON-NLS-1$
-        disElements[3] = new TagView(Messages.getString("ModalityView.ac_nb"), TagD.get(Tag.AccessionNumber)); //$NON-NLS-1$
+        disElements[1] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.StudyDescription));
+        disElements[2] = new TagView(Messages.getString("ModalityView.study"), TagD.get(Tag.StudyID));
+        disElements[3] = new TagView(Messages.getString("ModalityView.ac_nb"), TagD.get(Tag.AccessionNumber));
         // else content date, else Series date, else Study date
-        disElements[4] = new TagView(Messages.getString("ModalityView.acq"), //$NON-NLS-1$
+        disElements[4] = new TagView(Messages.getString("ModalityView.acq"),
             TagD.getTagFromIDs(Tag.AcquisitionDate, Tag.ContentDate, Tag.DateOfSecondaryCapture, Tag.SeriesDate,
                 Tag.StudyDate));
         // else content time, else Series time, else Study time
-        disElements[5] = new TagView(Messages.getString("ModalityView.acq"), //$NON-NLS-1$
+        disElements[5] = new TagView(Messages.getString("ModalityView.acq"),
             TagD.getTagFromIDs(Tag.AcquisitionTime, Tag.ContentTime, Tag.TimeOfSecondaryCapture, Tag.SeriesTime,
                 Tag.StudyTime));
 
         disElements = DEFAULT_MODALITY_VIEW.getCornerInfo(CornerDisplay.BOTTOM_RIGHT).getInfos();
-        disElements[1] = new TagView(Messages.getString("ModalityView.series_nb"), TagD.get(Tag.SeriesNumber)); //$NON-NLS-1$
+        disElements[1] = new TagView(Messages.getString("ModalityView.series_nb"), TagD.get(Tag.SeriesNumber));
         disElements[2] =
-            new TagView(Messages.getString("ModalityView.laterality"), TagD.getTagFromIDs(Tag.FrameLaterality, //$NON-NLS-1$
+            new TagView(Messages.getString("ModalityView.laterality"), TagD.getTagFromIDs(Tag.FrameLaterality,
                 Tag.ImageLaterality, Tag.Laterality));
 
         // TODO add sequence
         // derived from Contrast/Bolus Agent Sequence (0018,0012), if
         // present, else Contrast/Bolus Agent (0018,0010)
         // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.4b.html
-        disElements[3] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.ContrastBolusAgent)); //$NON-NLS-1$
-        disElements[4] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.SeriesDescription)); //$NON-NLS-1$
-        disElements[5] = new TagView(Messages.getString("ModalityView.thick"), TagD.get(Tag.SliceThickness)); //$NON-NLS-1$
-        disElements[6] = new TagView(Messages.getString("ModalityView.location"), TagD.get(Tag.SliceLocation)); //$NON-NLS-1$
+        disElements[3] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.ContrastBolusAgent));
+        disElements[4] = new TagView(Messages.getString("ModalityView.desc25"), TagD.get(Tag.SeriesDescription));
+        disElements[5] = new TagView(Messages.getString("ModalityView.thick"), TagD.get(Tag.SliceThickness));
+        disElements[6] = new TagView(Messages.getString("ModalityView.location"), TagD.get(Tag.SliceLocation));
         /*
          * Spacing Between Slices (0018,0088), if present, else a value derived from successive values of Image Position
          * (Patient) (0020,0032) perpendicular to the Image Orientation (Patient) (0020,0037)

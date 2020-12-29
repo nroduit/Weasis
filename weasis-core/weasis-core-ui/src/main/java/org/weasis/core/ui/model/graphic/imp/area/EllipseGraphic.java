@@ -35,16 +35,16 @@ public class EllipseGraphic extends RectangleGraphic {
 
     public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true);
     public static final Measurement PERIMETER =
-        new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.perimeter"), 2, true, true, false);
     public static final Measurement CENTER_X =
-        new Measurement(Messages.getString("measure.centerx"), 3, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.centerx"), 3, true, true, false);
     public static final Measurement CENTER_Y =
-        new Measurement(Messages.getString("measure.centery"), 4, true, true, false); //$NON-NLS-1$
-    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 5, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.centery"), 4, true, true, false);
+    public static final Measurement WIDTH = new Measurement(Messages.getString("measure.width"), 5, true, true, false);
     public static final Measurement HEIGHT =
-        new Measurement(Messages.getString("measure.height"), 6, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.height"), 6, true, true, false);
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
     static {
@@ -76,7 +76,7 @@ public class EllipseGraphic extends RectangleGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("MeasureToolBar.ellipse"); //$NON-NLS-1$
+        return Messages.getString("MeasureToolBar.ellipse");
     }
 
     @Override
@@ -121,7 +121,7 @@ public class EllipseGraphic extends RectangleGraphic {
 
                 if (AREA.getComputed()) {
                     Double val = Math.PI * rect.getWidth() * ratio * rect.getHeight() * ratio / 4.0;
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; // NON-NLS
                     measVal.add(new MeasureItem(AREA, val, unit));
                 }
                 if (PERIMETER.getComputed()) {

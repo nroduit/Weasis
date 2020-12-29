@@ -76,14 +76,14 @@ public class RsQueryResult extends AbstractQueryResult {
         this.wadoParameters = new WadoParameters("", true, true); //$NON-NLS-1$
         rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
         // Accept only multipart/related and retrieve dicom at the stored syntax
-        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM //$NON-NLS-1$ //$NON-NLS-2$
-            + "\";" + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT)); //$NON-NLS-1$
+        wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM // NON-NLS
+            + "\";" + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));
         defaultStartDownloading =
             BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(SeriesDownloadPrefView.DOWNLOAD_IMMEDIATELY, true);
     }
 
     private static String multiParams(String query) {
-        return multipleParams ? query.replace(",", "&includefield=") : query; //$NON-NLS-1$ //$NON-NLS-2$
+        return multipleParams ? query.replace(",", "&includefield=") : query; // NON-NLS
     }
 
     @Override
@@ -253,7 +253,7 @@ public class RsQueryResult extends AbstractQueryResult {
                 }
             }
             if (date1 == null && date2 == null) {
-                return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, "")); //$NON-NLS-1$ //$NON-NLS-2$
+                return o1.getString(Tag.StudyInstanceUID, "").compareTo(o2.getString(Tag.StudyInstanceUID, ""));
             } else {
                 if (date1 == null) {
                     return 1;

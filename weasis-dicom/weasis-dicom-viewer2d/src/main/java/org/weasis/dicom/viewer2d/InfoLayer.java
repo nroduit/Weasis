@@ -130,13 +130,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         float drawY = bound.height - border - 1.5f; // -1.5 for outline
 
         if (!image.isReadable()) {
-            String message = Messages.getString("InfoLayer.msg_not_read"); //$NON-NLS-1$
+            String message = Messages.getString("InfoLayer.msg_not_read");
             float y = midy;
             AbstractGraphicLabel.paintColorFontOutline(g2, message,
                 midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
             String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
             if (StringUtil.hasText(tsuid)) {
-                tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid; //$NON-NLS-1$
+                tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
                 y += fontHeight;
                 AbstractGraphicLabel.paintColorFontOutline(g2, tsuid,
                     midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F, y, Color.RED);
@@ -209,7 +209,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
 
         if (getDisplayPreferences(PIXEL) && hideMin) {
-            StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel")); //$NON-NLS-1$
+            StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pixel"));
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
@@ -258,7 +258,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM) && hideMin) {
-            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE
                 + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }
@@ -271,7 +271,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
 
         if (getDisplayPreferences(FRAME) && hideMin) {
-            StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.frame")); //$NON-NLS-1$
+            StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.frame"));
             buf.append(StringUtil.COLON_AND_SPACE);
             if (image != null) {
                 Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
@@ -383,7 +383,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             positions[2] = new Point2D.Float((float) bound.width - border, drawY - 5);
 
             // Boolean synchLink = (Boolean) view2DPane.getActionValue(ActionW.SYNCH_LINK);
-            // String str = synchLink != null && synchLink ? "linked" : "unlinked"; //$NON-NLS-1$ //$NON-NLS-2$
+            // String str = synchLink != null && synchLink ? "linked" : "unlinked"; // NON-NLS
             // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER, drawY);
 
             double[] v = TagD.getTagValue(image, Tag.ImageOrientationPatient, double[].class);

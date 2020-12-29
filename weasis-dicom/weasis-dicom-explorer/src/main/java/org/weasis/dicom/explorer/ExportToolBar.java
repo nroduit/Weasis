@@ -22,7 +22,7 @@ import org.weasis.core.ui.util.WtoolBar;
 public class ExportToolBar extends WtoolBar {
 
     public ExportToolBar(int index, DicomExplorer explorer) {
-        super(Messages.getString("ExportToolBar.dcm_export_bar"), index); //$NON-NLS-1$
+        super(Messages.getString("ExportToolBar.dcm_export_bar"), index);
         setAttachedInsertable(explorer);
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
@@ -32,7 +32,7 @@ public class ExportToolBar extends WtoolBar {
                 new JButton(new ImageIcon(ExportToolBar.class.getResource("/icon/32x32/dcm-export.png"))); //$NON-NLS-1$
             btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm")); //$NON-NLS-1$
             btnExport.addActionListener(e -> ImportToolBar.showAction(ExportToolBar.this, model,
-                Messages.getString("LocalExport.local_dev"), true)); //$NON-NLS-1$
+                Messages.getString("LocalExport.local_dev"), true));
             add(btnExport);
         }
     }
@@ -44,7 +44,7 @@ public class ExportToolBar extends WtoolBar {
                     ImportToolBar.showAction(parent, model, Messages.getString("LocalExport.local_dev"), true); //$NON-NLS-1$
                 } else {
                     JOptionPane.showMessageDialog((Component) event.getSource(),
-                        Messages.getString("DicomExplorer.export_perm")); //$NON-NLS-1$
+                        Messages.getString("DicomExplorer.export_perm"));
                 }
             });
     }

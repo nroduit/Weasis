@@ -94,8 +94,8 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
 
         if (dirty) {
             int confirm = JOptionPane.showConfirmDialog((Component) e.getSource(),
-                Messages.getString("AbstractAcquireAction.reset_msg"), //$NON-NLS-1$
-                "", JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
+                Messages.getString("AbstractAcquireAction.reset_msg"),
+                "", JOptionPane.YES_NO_OPTION);
             if (confirm == 0) {
                 centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
             }

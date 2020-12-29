@@ -17,6 +17,7 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.Insertable;
@@ -42,7 +43,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 public class EditionToolFactory implements InsertableFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
-    public static final ActionW EDITON = new ActionW("Edit", "draw.edition", KeyEvent.VK_G, 0, null) { //$NON-NLS-1$ //$NON-NLS-2$
+    public static final ActionW EDITON = new ActionW(Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
         @Override
         public boolean isDrawingAction() {
             return true;

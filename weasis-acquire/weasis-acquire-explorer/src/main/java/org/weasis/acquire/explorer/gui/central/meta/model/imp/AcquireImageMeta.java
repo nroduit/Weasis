@@ -18,10 +18,10 @@ public class AcquireImageMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
     private static final TagW[] TAGS_TO_DISPLAY =
-        getTags("weasis.acquire.meta.image.display", "ImageComments,ContentDate,ContentTime"); //$NON-NLS-1$ //$NON-NLS-2$
+        getTags("weasis.acquire.meta.image.display", "ImageComments,ContentDate,ContentTime"); // NON-NLS
     private static final TagW[] TAGS_EDITABLE =
-        getTags("weasis.acquire.meta.image.edit", "ImageComments,ContentDate,ContentTime"); //$NON-NLS-1$ //$NON-NLS-2$
-    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.image.required", "ContentDate"); //$NON-NLS-1$ //$NON-NLS-2$
+        getTags("weasis.acquire.meta.image.edit", "ImageComments,ContentDate,ContentTime"); // NON-NLS
+    private static final TagW[] TAGS_TO_PUBLISH = getTags("weasis.acquire.meta.image.required", "ContentDate"); // NON-NLS
 
     public AcquireImageMeta(AcquireImageInfo imageInfo) {
         super((imageInfo == null) ? null : imageInfo.getImage(), TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);

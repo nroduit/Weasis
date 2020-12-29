@@ -73,7 +73,7 @@ public class MagicMimeEntry {
 
     @Override
     public String toString() {
-        return "MimeMagicType: " + checkBytesFrom + ", " + type + ", " + content + ", " + mimeType + ", " + mimeEnc; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        return "MimeMagicType: " + checkBytesFrom + ", " + type + ", " + content + ", " + mimeType + ", " + mimeEnc;  // NON-NLS
     }
 
     private int howManyGreaterThans(String aLine) {
@@ -97,8 +97,8 @@ public class MagicMimeEntry {
     // We will attempt to handle the case for space deliniation here so that we can parse
     // as much of the file as possible.
     void addEntry(String aLine) {
-        String trimmed = aLine.replaceAll("^>*", ""); //$NON-NLS-1$ //$NON-NLS-2$
-        String[] tokens = trimmed.split("\t"); //$NON-NLS-1$
+        String trimmed = aLine.replaceAll("^>*", "");
+        String[] tokens = trimmed.split("\t");
 
         // Now strip the empty entries
         List<String> entries = new ArrayList<>();
@@ -119,7 +119,7 @@ public class MagicMimeEntry {
                 }
             } catch (NumberFormatException e) {
                 // We could have a space delinitaed entry so lets try to handle this anyway
-                addEntry(trimmed.replaceAll("  ", "\t")); //$NON-NLS-1$ //$NON-NLS-2$
+                addEntry(trimmed.replaceAll("  ", "\t"));
                 return;
             }
         }

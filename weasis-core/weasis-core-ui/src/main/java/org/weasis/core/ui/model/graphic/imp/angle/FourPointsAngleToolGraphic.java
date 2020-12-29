@@ -47,9 +47,9 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
     public static final Icon ICON =
         new ImageIcon(FourPointsAngleToolGraphic.class.getResource("/icon/22x22/draw-4p-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
+    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true);
     public static final Measurement COMPLEMENTARY_ANGLE =
-        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false);
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
     static {
@@ -117,7 +117,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("measure.four_pt_angle"); //$NON-NLS-1$
+        return Messages.getString("measure.four_pt_angle");
     }
 
     @Override
@@ -212,12 +212,12 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
                     double positiveAngle = Math.abs(angleDeg);
 
                     if (ANGLE.getComputed()) {
-                        measVal.add(new MeasureItem(ANGLE, positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
+                        measVal.add(new MeasureItem(ANGLE, positiveAngle, Messages.getString("measure.deg")));
                     }
 
                     if (COMPLEMENTARY_ANGLE.getComputed()) {
                         measVal.add(new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle,
-                            Messages.getString("measure.deg"))); //$NON-NLS-1$
+                            Messages.getString("measure.deg")));
                     }
                 }
                 return measVal;

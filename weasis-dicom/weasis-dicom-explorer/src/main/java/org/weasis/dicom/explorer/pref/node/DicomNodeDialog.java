@@ -97,7 +97,7 @@ public class DicomNodeDialog extends JDialog {
         gbcDescriptionLabel.gridy = 0;
         content.add(descriptionLabel, gbcDescriptionLabel);
 
-        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON); //$NON-NLS-1$
+        descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
         descriptionTf = new JTextField();
         GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
         gbcDescriptionTf.insets = new Insets(0, 0, 5, 5);
@@ -107,7 +107,7 @@ public class DicomNodeDialog extends JDialog {
         descriptionTf.setColumns(15);
 
         aeTitleLabel = new JLabel();
-        aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON); //$NON-NLS-1$
+        aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON);
         GridBagConstraints gbcAeTitleLabel = new GridBagConstraints();
         gbcAeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
         gbcAeTitleLabel.insets = new Insets(0, 0, 5, 5);
@@ -124,7 +124,7 @@ public class DicomNodeDialog extends JDialog {
         content.add(aeTitleTf, gbcAeTitleTf);
         hostnameLabel = new JLabel();
 
-        hostnameLabel.setText(Messages.getString("PrinterDialog.host") + StringUtil.COLON); //$NON-NLS-1$
+        hostnameLabel.setText(Messages.getString("PrinterDialog.host") + StringUtil.COLON);
         GridBagConstraints gbcHostnameLabel = new GridBagConstraints();
         gbcHostnameLabel.anchor = GridBagConstraints.EAST;
         gbcHostnameLabel.insets = new Insets(0, 0, 5, 5);
@@ -142,7 +142,7 @@ public class DicomNodeDialog extends JDialog {
         content.add(hostnameTf, gbcHostnameTf);
         portLabel = new JLabel();
 
-        portLabel.setText(Messages.getString("PrinterDialog.port") + StringUtil.COLON); //$NON-NLS-1$
+        portLabel.setText(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
         GridBagConstraints gbcPortLabel = new GridBagConstraints();
         gbcPortLabel.anchor = GridBagConstraints.WEST;
         gbcPortLabel.insets = new Insets(0, 0, 5, 5);
@@ -203,12 +203,12 @@ public class DicomNodeDialog extends JDialog {
         okButton = new JButton();
         footPanel.add(okButton);
 
-        okButton.setText(Messages.getString("PrinterDialog.ok")); //$NON-NLS-1$
+        okButton.setText(Messages.getString("PrinterDialog.ok"));
         okButton.addActionListener(e -> okButtonActionPerformed());
         cancelButton = new JButton();
         footPanel.add(cancelButton);
 
-        cancelButton.setText(Messages.getString("PrinterDialog.cancel")); //$NON-NLS-1$
+        cancelButton.setText(Messages.getString("PrinterDialog.cancel"));
         cancelButton.addActionListener(e -> dispose());
     }
 
@@ -220,14 +220,14 @@ public class DicomNodeDialog extends JDialog {
 
         if (!StringUtil.hasText(desc) || !StringUtil.hasText(aeTitle) || !StringUtil.hasText(hostname)
             || port == null) {
-            JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"), //$NON-NLS-1$
-                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("PrinterDialog.fill_message"),
+                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 
         if (aeTitle.length() > 16) {
-            JOptionPane.showMessageDialog(this, Messages.getString("DicomNodeDialog.long_aet_msg"), //$NON-NLS-1$
-                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("DicomNodeDialog.long_aet_msg"),
+                Messages.getString("PrinterDialog.error"), JOptionPane.ERROR_MESSAGE);
             return;
         }
 

@@ -26,13 +26,13 @@ import org.weasis.core.api.media.data.MediaReader;
 public class NativeOpenCVCodec implements Codec {
     private static final Logger LOGGER = LoggerFactory.getLogger(NativeOpenCVCodec.class);
 
-    private static final String[] readerMIMETypes = { "image/bmp", "image/x-bmp", "image/x-windows-bmp", "image/jpeg", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "image/pjpeg", "image/png", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-greymap", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-        "image/x-portable-pixmap", "image/x-portable-anymap", "application/x-portable-anymap", "image/cmu-raster", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        "application/x-cmu-raster", "image/x-cmu-raster", "image/tiff", "image/x-tiff", "image/hdr", "image/jp2", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-        "image/jp2k", "image/j2k", "image/j2c" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    private static final String[] readerFileSuffixes = { "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
-        "pbm", "pgm", "ppm", "pxm", "pnm", "ras", "rast", "tiff", "tif", "hdr", "jp2", "jp2k", "j2k", "j2c" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$ //$NON-NLS-11$ //$NON-NLS-12$ //$NON-NLS-13$ //$NON-NLS-14$
+    private static final String[] readerMIMETypes = { "image/bmp", "image/x-bmp", "image/x-windows-bmp", "image/jpeg", // NON-NLS
+        "image/pjpeg", "image/png", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-greymap", // NON-NLS
+        "image/x-portable-pixmap", "image/x-portable-anymap", "application/x-portable-anymap", "image/cmu-raster", // NON-NLS
+        "application/x-cmu-raster", "image/x-cmu-raster", "image/tiff", "image/x-tiff", "image/hdr", "image/jp2", // NON-NLS
+        "image/jp2k", "image/j2k", "image/j2c" }; // NON-NLS
+    private static final String[] readerFileSuffixes = { "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", // NON-NLS
+        "pbm", "pgm", "ppm", "pxm", "pnm", "ras", "rast", "tiff", "tif", "hdr", "jp2", "jp2k", "j2k", "j2c" }; // NON-NLS
 
     private static final String[] writerMIMETypes = {};
     private static final String[] writerFileSuffixes = {};

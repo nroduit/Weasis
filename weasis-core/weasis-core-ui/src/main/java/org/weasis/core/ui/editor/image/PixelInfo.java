@@ -77,7 +77,7 @@ public class PixelInfo {
                 for (int i = 0; i < values.length; i++) {
                     text.append(" ");//$NON-NLS-1$
                     text.append((channelNames == null || i >= channelNames.length)
-                        ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0, //$NON-NLS-1$
+                        ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0,
                             1));
                     text.append("=");//$NON-NLS-1$
                     text.append(DecFormater.twoDecimal(values[i]));
@@ -85,7 +85,7 @@ public class PixelInfo {
                 return text.toString();
             }
         }
-        return Messages.getString("PixelInfo.no_val"); //$NON-NLS-1$
+        return Messages.getString("PixelInfo.no_val");
     }
 
     public Unit getPixelSpacingUnit() {

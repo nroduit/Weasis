@@ -66,7 +66,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
     private static final long serialVersionUID = -5804430771962614157L;
 
-    public static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2"); //$NON-NLS-1$
+    public static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2");
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class<?> view2dClass = ViewCanvas.class;
@@ -458,7 +458,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         if (grid.getComponentCount() == 1) {
             Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
             if (fullscreenDialog != null
-                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) { //$NON-NLS-1$
+                && fullscreenDialog.getTitle().equals(Messages.getString("ImageViewerPlugin.fullscreen"))) {
                 maximizedSelectedImagePane(viewCanvas, null);
             }
         }
@@ -489,7 +489,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
             v.getJComponent().removeFocusListener(v);
         }
 
-        String titleDialog = Messages.getString("ImageViewerPlugin.fullscreen"); //$NON-NLS-1$
+        String titleDialog = Messages.getString("ImageViewerPlugin.fullscreen");
         Dialog fullscreenDialog = WinUtil.getParentDialog(grid);
         // Handle the case when the dialog is a detached window and not the fullscreen window.
         final boolean detachedWindow = fullscreenDialog != null && !titleDialog.equals(fullscreenDialog.getTitle());

@@ -275,7 +275,7 @@ public class DownloadManager {
                 stream = urlInputStream;
             } else {
                 // In case wado file has no extension
-                File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); // NON-NLS
                 FileUtil.writeStreamWithIOException(urlInputStream, outFile);
                 if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
                     stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
@@ -285,10 +285,10 @@ public class DownloadManager {
             }
 
             File tempFile = null;
-            if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { // NON-NLS
                 tempFile = new File(path);
             } else {
-                tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                tempFile = File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); // NON-NLS
                 FileUtil.writeStreamWithIOException(stream, tempFile);
             }
             xmler = factory.createXMLStreamReader(new FileInputStream(tempFile));
@@ -366,7 +366,7 @@ public class DownloadManager {
     }
 
     private static String getErrorMessage(URI uri) {
-        StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml")); //$NON-NLS-1$
+        StringBuilder buf = new StringBuilder(Messages.getString("DownloadManager.error_load_xml"));
         buf.append(StringUtil.COLON_AND_SPACE);
         buf.append(uri.toString());
         return buf.toString();
@@ -415,9 +415,9 @@ public class DownloadManager {
                 final String title = TagUtil.getTagAttribute(xmler, "title", null); //$NON-NLS-1$
                 final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
                 if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
-                    String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); //$NON-NLS-1$ //$NON-NLS-2$
-                    final int messageType = "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE //$NON-NLS-1$
-                        : "INFO" //$NON-NLS-1$
+                    String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); // NON-NLS
+                    final int messageType = "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE
+                        : "INFO"
                             .equals(severity) ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE;
 
                     GuiExecutor.instance().execute(() -> {
@@ -449,7 +449,7 @@ public class DownloadManager {
         }
         for (LoadSeries loadSeries : params.getSeriesMap().values()) {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
             if (!ps) {
                 loadSeries.startDownloadImageReference(wadoParameters);
             }

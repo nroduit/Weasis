@@ -32,7 +32,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {
 
-    public static final String BUTTON_NAME = Messages.getString("MiniToolDockable.title"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("MiniToolDockable.title");
 
     private SliderChangeListener currentAction;
     private final JSliderW slider;
@@ -60,7 +60,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
                 return getPopupMenuScroll(this);
             }
         };
-        button.setToolTipText(Messages.getString("MiniToolDockable.change")); //$NON-NLS-1$
+        button.setToolTipText(Messages.getString("MiniToolDockable.change"));
         WtoolBar.installButtonUI(button);
         WtoolBar.configureButton(button);
 

@@ -60,15 +60,15 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR //$NON-NLS-1$
 
     private final JRadioButton directConnectionRadio =
-        new JRadioButton(Messages.getString("ProxyPrefView.direct")); //$NON-NLS-1$
-    private final JRadioButton proxyConnectionRadio = new JRadioButton(Messages.getString("ProxyPrefView.manual")); //$NON-NLS-1$
+        new JRadioButton(Messages.getString("ProxyPrefView.direct"));
+    private final JRadioButton proxyConnectionRadio = new JRadioButton(Messages.getString("ProxyPrefView.manual"));
     private final ButtonGroup buttonGroup = new ButtonGroup();
 
-    private final JLabel lblType = new JLabel(Messages.getString("ProxyPrefView.type")); //$NON-NLS-1$
-    private final JLabel lblAddress = new JLabel(Messages.getString("ProxyPrefView.host")); //$NON-NLS-1$
-    private final JLabel lblPort = new JLabel(Messages.getString("ProxyPrefView.port")); //$NON-NLS-1$
+    private final JLabel lblType = new JLabel(Messages.getString("ProxyPrefView.type"));
+    private final JLabel lblAddress = new JLabel(Messages.getString("ProxyPrefView.host"));
+    private final JLabel lblPort = new JLabel(Messages.getString("ProxyPrefView.port"));
 
-    private final JCheckBox proxyAuthCheckBox = new JCheckBox(Messages.getString("ProxyPrefView.authentication")); //$NON-NLS-1$
+    private final JCheckBox proxyAuthCheckBox = new JCheckBox(Messages.getString("ProxyPrefView.authentication"));
 
     private final JTextField proxyHostHttp = new JTextField(20);
     private final JFormattedTextField proxyPortHttp = new JFormattedTextField();
@@ -80,21 +80,21 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     private final JFormattedTextField proxyPortSocks = new JFormattedTextField();
     private final JTextField proxyExceptions = new JTextField(27);
 
-    private final JLabel proxyLabelHttp = new JLabel("HTTP" + StringUtil.COLON); //$NON-NLS-1$
-    private final JLabel proxyLabelSecure = new JLabel(Messages.getString("ProxyPrefView.secure") + StringUtil.COLON); //$NON-NLS-1$
-    private final JLabel proxyLabelFtp = new JLabel("FTP" + StringUtil.COLON); //$NON-NLS-1$
-    private final JLabel proxyLabelSocks = new JLabel("SOCKS" + StringUtil.COLON); //$NON-NLS-1$
-    private final JLabel proxyLabelExceptions = new JLabel(Messages.getString("ProxyPrefView.exceptions") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel proxyLabelHttp = new JLabel("HTTP" + StringUtil.COLON); 
+    private final JLabel proxyLabelSecure = new JLabel(Messages.getString("ProxyPrefView.secure") + StringUtil.COLON);
+    private final JLabel proxyLabelFtp = new JLabel("FTP" + StringUtil.COLON); 
+    private final JLabel proxyLabelSocks = new JLabel("SOCKS" + StringUtil.COLON); 
+    private final JLabel proxyLabelExceptions = new JLabel(Messages.getString("ProxyPrefView.exceptions") + StringUtil.COLON);
 
-    private final JLabel userLabel = new JLabel(Messages.getString("ProxyPrefView.user") + StringUtil.COLON); //$NON-NLS-1$
-    private final JLabel passLabel = new JLabel(Messages.getString("ProxyPrefView.pwd") + StringUtil.COLON); //$NON-NLS-1$
+    private final JLabel userLabel = new JLabel(Messages.getString("ProxyPrefView.user") + StringUtil.COLON);
+    private final JLabel passLabel = new JLabel(Messages.getString("ProxyPrefView.pwd") + StringUtil.COLON);
     private final JTextField proxyUser = new JTextField(15);
     private final JPasswordField proxyPass = new JPasswordField(15);
 
     private final JPanel dataPanel = new JPanel();
 
     public ProxyPrefView() {
-        super(Messages.getString("ProxyPrefView.proxy")); //$NON-NLS-1$
+        super(Messages.getString("ProxyPrefView.proxy"));
         initialize();
     }
 
@@ -118,8 +118,8 @@ public class ProxyPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(bottomPanel, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values")); //$NON-NLS-1$
-        bottomPanel.add(JMVUtils.createHelpButton("proxy", true)); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
+        bottomPanel.add(JMVUtils.createHelpButton("proxy", true));  //NON-NLS
         bottomPanel.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
 

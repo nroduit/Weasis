@@ -52,7 +52,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
     private boolean openPlugin = true;
 
     public LoadDicomObjects(DataExplorerModel explorerModel, Attributes... dcmObjects) {
-        super(Messages.getString("DicomExplorer.loading"), false); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), false);
 
         if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$

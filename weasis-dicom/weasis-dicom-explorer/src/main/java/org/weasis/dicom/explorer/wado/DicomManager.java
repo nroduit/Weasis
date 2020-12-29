@@ -76,13 +76,13 @@ public class DicomManager {
 
         TagView[] imgAcq = { new TagView(TagD.get(Tag.KVP)), new TagView(TagD.get(Tag.ContrastBolusAgent)) };
 
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.pat"), patient, TagD.Level.PATIENT)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.station"), station, TagD.Level.SERIES)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.study"), study, TagD.Level.STUDY)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.series"), series, TagD.Level.SERIES)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.object"), image, TagD.Level.INSTANCE)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.plane"), imgPlane, TagD.Level.INSTANCE)); //$NON-NLS-1$
-        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.acqu"), imgAcq, TagD.Level.INSTANCE)); //$NON-NLS-1$
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.pat"), patient, TagD.Level.PATIENT));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.station"), station, TagD.Level.SERIES));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.study"), study, TagD.Level.STUDY));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.series"), series, TagD.Level.SERIES));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.object"), image, TagD.Level.INSTANCE));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.plane"), imgPlane, TagD.Level.INSTANCE));
+        limitedDicomTags.add(new DicomData(Messages.getString("DicomFieldsView.acqu"), imgAcq, TagD.Level.INSTANCE));
     }
 
     public List<DicomData> getLimitedDicomTags() {

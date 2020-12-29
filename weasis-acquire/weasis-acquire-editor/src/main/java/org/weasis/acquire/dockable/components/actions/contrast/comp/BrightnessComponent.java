@@ -28,13 +28,13 @@ public class BrightnessComponent extends AbstractSliderComponent {
     private static final Hashtable<Integer, JLabel> labels = new Hashtable<>();
 
     static {
-        labels.put(BRIGHTNESS_MIN, new JLabel(Messages.getString("BrightnessComponent.low") + BRIGHTNESS_MIN)); //$NON-NLS-1$
+        labels.put(BRIGHTNESS_MIN, new JLabel(Messages.getString("BrightnessComponent.low") + BRIGHTNESS_MIN));
         labels.put(BRIGHTNESS_VALUE, new JLabel(String.valueOf(BRIGHTNESS_VALUE)));
-        labels.put(BRIGHTNESS_MAX, new JLabel(Messages.getString("BrightnessComponent.high") + BRIGHTNESS_MAX)); //$NON-NLS-1$
+        labels.put(BRIGHTNESS_MAX, new JLabel(Messages.getString("BrightnessComponent.high") + BRIGHTNESS_MAX));
     }
 
     public BrightnessComponent(ContrastPanel panel) {
-        super(panel, Messages.getString("BrightnessComponent.brightness")); //$NON-NLS-1$
+        super(panel, Messages.getString("BrightnessComponent.brightness"));
         addChangeListener(panel);
     }
 

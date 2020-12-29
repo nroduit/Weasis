@@ -82,7 +82,7 @@ public abstract class CrosshairListener extends MouseActionAdapter implements Ac
     }
 
     public String getValueToDisplay() {
-        return "x:" + point.getX() + ", y:" + point.getY(); //$NON-NLS-1$ //$NON-NLS-2$
+        return "x:" + point.getX() + ", y:" + point.getY(); // NON-NLS
     }
 
     public abstract void pointChanged(Point2D point);

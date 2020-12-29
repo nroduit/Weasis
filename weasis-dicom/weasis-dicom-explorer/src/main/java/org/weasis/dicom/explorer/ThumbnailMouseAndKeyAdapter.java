@@ -129,7 +129,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 JMenu menuFactory = new JMenu(viewerFactory.getUIName());
                 menuFactory.setIcon(viewerFactory.getIcon());
 
-                JMenuItem item4 = new JMenuItem(Messages.getString("DicomExplorer.open")); //$NON-NLS-1$
+                JMenuItem item4 = new JMenuItem(Messages.getString("DicomExplorer.open"));
                 item4.addActionListener(e -> {
                     selList.setOpenningSeries(true);
                     ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true, true);
@@ -139,7 +139,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
                 // Exclude system factory
                 if (viewerFactory.canExternalizeSeries()) {
-                    item4 = new JMenuItem(Messages.getString("DicomExplorer.open_win")); //$NON-NLS-1$
+                    item4 = new JMenuItem(Messages.getString("DicomExplorer.open_win"));
                     item4.addActionListener(e -> {
                         selList.setOpenningSeries(true);
                         ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, false, true);
@@ -150,7 +150,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
                     final GraphicsDevice[] gd = ge.getScreenDevices();
                     if (gd.length > 0) {
-                        JMenu subMenu = new JMenu(Messages.getString("DicomExplorer.open_screen")); //$NON-NLS-1$
+                        JMenu subMenu = new JMenu(Messages.getString("DicomExplorer.open_screen"));
                         for (int i = 0; i < gd.length; i++) {
                             GraphicsConfiguration config = gd[i].getDefaultConfiguration();
                             final Rectangle b = config.getBounds();
@@ -168,7 +168,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 }
 
                 if (viewerFactory.canAddSeries()) {
-                    item4 = new JMenuItem(Messages.getString("DicomExplorer.add")); //$NON-NLS-1$
+                    item4 = new JMenuItem(Messages.getString("DicomExplorer.add"));
                     item4.addActionListener(e -> {
                         selList.setOpenningSeries(true);
                         ViewerPluginBuilder.openSequenceInPlugin(viewerFactory, seriesList, dicomModel, true, false);
@@ -180,7 +180,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 popupMenu.add(menuFactory);
 
                 if (viewerFactory instanceof MimeSystemAppFactory) {
-                    final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null); //$NON-NLS-1$
+                    final JMenuItem item5 = new JMenuItem(Messages.getString("DicomExplorer.open_info"), null);
                     item5.addActionListener(e -> {
                         SeriesViewer<?> viewer = viewerFactory.createSeriesViewer(null);
                         MediaElement dcm =  series.getMedia(MEDIA_POSITION.FIRST, null, null);
@@ -192,7 +192,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
             if (series instanceof DicomSeries) {
                 if (selList.size() == 1) {
                     popupMenu.add(new JSeparator());
-                    JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series")); //$NON-NLS-1$
+                    JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series"));
                     item2.addActionListener(e -> {
                         String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         if (fruid != null) {
@@ -212,7 +212,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                         }
                     });
                     popupMenu.add(item2);
-                    item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis")); //$NON-NLS-1$
+                    item2 = new JMenuItem(Messages.getString("DicomExplorer.sel_rel_series_axis"));
                     item2.addActionListener(e -> {
                         String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
                         if (fruid != null) {
@@ -238,12 +238,12 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 if (selList.size() == 1 && loadSeries != null) {
                     if (loadSeries.isStopped()) {
                         popupMenu.add(new JSeparator());
-                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume")); //$NON-NLS-1$
+                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume"));
                         item3.addActionListener(e -> loadSeries.resume());
                         popupMenu.add(item3);
                     } else if (!loadSeries.isDone()) {
                         popupMenu.add(new JSeparator());
-                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop")); //$NON-NLS-1$
+                        JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop"));
                         item3.addActionListener(e -> loadSeries.stop());
                         popupMenu.add(item3);
                     }
@@ -263,7 +263,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                     }
                     if (sameOrigin) {
                         popupMenu.add(new JSeparator());
-                        JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.merge")); //$NON-NLS-1$
+                        JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.merge"));
                         item2.addActionListener(e -> {
                             selList.clear();
                             dicomModel.mergeSeries(seriesList);
@@ -273,7 +273,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 }
             }
             popupMenu.add(new JSeparator());
-            JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series")); //$NON-NLS-1$
+            JMenuItem item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_series"));
             item2.addActionListener(e -> {
                 for (int i = selList.size() - 1; i >= 0; i--) {
                     dicomModel.removeSeries(selList.get(i));
@@ -282,14 +282,14 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
             });
             popupMenu.add(item2);
             if (selList.size() == 1) {
-                item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study")); //$NON-NLS-1$
+                item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_study"));
                 item2.addActionListener(e -> {
                     MediaSeriesGroup studyGroup = dicomModel.getParent(series, DicomModel.study);
                     dicomModel.removeStudy(studyGroup);
                     selList.clear();
                 });
                 popupMenu.add(item2);
-                item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat")); //$NON-NLS-1$
+                item2 = new JMenuItem(Messages.getString("DicomExplorer.rem_pat"));
                 item2.addActionListener(e -> {
                     MediaSeriesGroup patientGroup =
                         dicomModel.getParent(dicomModel.getParent(series, DicomModel.study), DicomModel.patient);
@@ -300,8 +300,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                 if (series.size(null) > 1) {
                     if (series.getMedia(0, null, null) instanceof ImageElement) {
                         popupMenu.add(new JSeparator());
-                        JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb")); //$NON-NLS-1$
-                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_1")); //$NON-NLS-1$
+                        JMenu menu = new JMenu(Messages.getString("DicomExplorer.build_thumb"));
+                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_1"));
                         item2.addActionListener(e -> {
                             SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                             if (t != null) {
@@ -309,7 +309,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                             }
                         });
                         menu.add(item2);
-                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_mid")); //$NON-NLS-1$
+                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_mid"));
                         item2.addActionListener(e -> {
                             SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                             if (t != null) {
@@ -317,7 +317,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
                             }
                         });
                         menu.add(item2);
-                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_last")); //$NON-NLS-1$
+                        item2 = new JMenuItem(Messages.getString("DicomExplorer.from_last"));
                         item2.addActionListener(e -> {
                             SeriesThumbnail t = (SeriesThumbnail) series.getTagValue(TagW.Thumbnail);
                             if (t != null) {

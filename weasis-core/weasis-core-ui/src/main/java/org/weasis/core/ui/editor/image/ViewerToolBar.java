@@ -70,7 +70,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     private final DropDownButton synchButton;
 
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager, int activeMouse, WProperties props, int index) {
-        super(Messages.getString("ViewerToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("ViewerToolBar.title"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -81,7 +81,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         if ((activeMouse & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
             mouseLeft = buildMouseButton(actions, MouseActions.T_LEFT);
             mouseLeft.setToolTipText(
-                Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                Messages.getString("ViewerToolBar.change") + " " + Messages.getString("ViewerToolBar.m_action"));
             add(mouseLeft);
         } else {
             mouseLeft = null;
@@ -110,7 +110,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                     return getPopupMenuScroll(this);
                 }
             };
-            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1$
+            mouseWheel.setToolTipText(Messages.getString("ViewerToolBar.change"));
             add(mouseWheel);
         } else {
             mouseWheel = null;
@@ -130,7 +130,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                         return getLayoutPopupMenuButton(this);
                     }
                 };
-            layout.setToolTipText(Messages.getString("ViewerToolBar.layout")); //$NON-NLS-1$
+            layout.setToolTipText(Messages.getString("ViewerToolBar.layout"));
             add(layout);
         }
 
@@ -166,7 +166,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             }
         };
         button.setActionCommand(action);
-        button.setToolTipText(Messages.getString("ViewerToolBar.change")); //$NON-NLS-1$
+        button.setToolTipText(Messages.getString("ViewerToolBar.change"));
         return button;
     }
 
@@ -355,7 +355,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             }
 
         };
-        button.setToolTipText(Messages.getString("ViewerToolBar.synch")); //$NON-NLS-1$
+        button.setToolTipText(Messages.getString("ViewerToolBar.synch"));
         if (synch != null) {
             synch.registerActionState(button);
         }

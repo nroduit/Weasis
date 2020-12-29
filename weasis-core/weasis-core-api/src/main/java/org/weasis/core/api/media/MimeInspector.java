@@ -72,8 +72,8 @@ public class MimeInspector {
         // Parse and initialize the magic.mime rules
         InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime"); //$NON-NLS-1$
         if (is != null) {
-            try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) { //$NON-NLS-1$
-                MimeInspector.parse(streamReader); // $NON-NLS-1$
+            try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) { 
+                MimeInspector.parse(streamReader);
             } catch (Exception e) {
                 LOGGER.error("Parse magic mime-types", e); //$NON-NLS-1$
             }

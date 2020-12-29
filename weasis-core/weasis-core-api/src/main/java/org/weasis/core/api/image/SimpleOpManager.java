@@ -24,7 +24,7 @@ import org.weasis.opencv.data.PlanarImage;
 public class SimpleOpManager implements OpManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimpleOpManager.class);
 
-    public static final String IMAGE_OP_NAME = Messages.getString("SimpleOpManager.img_op"); //$NON-NLS-1$
+    public static final String IMAGE_OP_NAME = Messages.getString("SimpleOpManager.img_op");
 
     public enum Position {
         BEFORE, AFTER

@@ -30,7 +30,7 @@ public class UriListFlavor {
 
     private static DataFlavor createConstant(String mt, String prn) {
         try {
-            return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader()); // $NON-NLS-1$
+            return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader());
         } catch (Exception e) {
             LOGGER.error("Build uri flavor", e); //$NON-NLS-1$
             return null;

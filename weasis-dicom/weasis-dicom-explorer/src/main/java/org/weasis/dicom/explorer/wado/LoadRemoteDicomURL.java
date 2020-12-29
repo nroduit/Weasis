@@ -38,7 +38,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     private final DicomModel dicomModel;
 
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true);
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -57,7 +57,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     }
 
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
-        super(Messages.getString("DicomExplorer.loading"), true); //$NON-NLS-1$
+        super(Messages.getString("DicomExplorer.loading"), true);
         if (urls == null || !(explorerModel instanceof DicomModel)) {
             throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
         }
@@ -108,7 +108,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
 
             if (!seriesInstanceList.isEmpty()) {
                 String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
-                boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+                boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
                 final LoadSeries loadSeries = new LoadSeries(dicomSeries, dicomModel,
                     BundleTools.SYSTEM_PREFERENCES.getIntProperty(LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4), true);
                 if (!ps) {

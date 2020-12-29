@@ -45,9 +45,9 @@ public class PixelInfoGraphic extends AnnotationGraphic {
     public static final Icon ICON = new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png")); //$NON-NLS-1$
 
     public static final Measurement ANCHOR_POINT_X =
-        new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false);
     public static final Measurement ANCHOR_POINT_Y =
-        new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("PixelInfoGraphic.y"), 2, true, true, false);
 
     private PixelInfo pixelInfo;
 
@@ -79,7 +79,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("Tools.pixelInfo"); //$NON-NLS-1$
+        return Messages.getString("Tools.pixelInfo");
     }
 
     @Override
@@ -147,7 +147,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
             lbs = labels;
         }
         if (lbs == null) {
-            lbs = new String[] { Messages.getString("PixelInfoGraphic.no_val") }; //$NON-NLS-1$
+            lbs = new String[] { Messages.getString("PixelInfoGraphic.no_val") };
         }
         super.setLabel(lbs, view2d, pos);
         // MeasurableLayer layer = view2d == null ? null : view2d.getMeasurableLayer();
@@ -210,7 +210,7 @@ public class PixelInfoGraphic extends AnnotationGraphic {
                     if (Objects.nonNull(values)) {
                         for (int i = 0; i < values.length; i++) {
                             Measurement m = new Measurement((channelNames == null || i >= channelNames.length)
-                                ? Messages.getString("PixelInfoGraphic.unknown") //$NON-NLS-1$
+                                ? Messages.getString("PixelInfoGraphic.unknown")
                                 : channelNames[i], i + 2, true, true, false);
                             measVal.add(new MeasureItem(m, values[i], pixelInfo.getPixelValueUnit()));
                         }

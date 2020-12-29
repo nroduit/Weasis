@@ -21,7 +21,7 @@ import org.weasis.dicom.explorer.DicomFieldsView;
 public class SrToolBar extends WtoolBar {
 
     public SrToolBar(int index) {
-        super(Messages.getString("SrToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("SrToolBar.title"), index);
 
         final JButton printButton =
             new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$

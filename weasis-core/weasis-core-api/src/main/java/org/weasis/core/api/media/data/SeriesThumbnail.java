@@ -331,7 +331,7 @@ public class SeriesThumbnail extends Thumbnail
                 g2d.drawString(nb, sx, y + fontHeight - 3);
             }
 
-            String nbImg = "[" + series.size(null) + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+            String nbImg = "[" + series.size(null) + "]";
             int hbleft = y + height - 3;
             int w = g2d.getFontMetrics().stringWidth(nbImg);
             g2d.setPaint(Color.BLACK);

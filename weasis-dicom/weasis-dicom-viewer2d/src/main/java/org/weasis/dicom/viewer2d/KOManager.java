@@ -83,12 +83,12 @@ public final class KOManager {
 
             if (validKOSelection != null) {
 
-                String message = Messages.getString("KOManager.select_KO_msg"); //$NON-NLS-1$
+                String message = Messages.getString("KOManager.select_KO_msg");
                 Object[] options =
-                    { Messages.getString("KOManager.select_last_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { Messages.getString("KOManager.select_last_ko"), Messages.getString("KOManager.new_ko") };
 
                 int response = JOptionPane.showOptionDialog(view2d.getJComponent(), message,
-                    Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                    Messages.getString("KOManager.ko_title"),
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
@@ -113,12 +113,12 @@ public final class KOManager {
                     newKOSelection = currentSelectedKO;
                 } else {
 
-                    String message = Messages.getString("KOManager.no_ko_msg"); //$NON-NLS-1$
+                    String message = Messages.getString("KOManager.no_ko_msg");
                     Object[] options =
-                        { Messages.getString("KOManager.use_ko"), Messages.getString("KOManager.new_ko") }; //$NON-NLS-1$ //$NON-NLS-2$
+                        { Messages.getString("KOManager.use_ko"), Messages.getString("KOManager.new_ko") };
 
                     int response = JOptionPane.showOptionDialog(view2d.getJComponent(), message,
-                        Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                        Messages.getString("KOManager.ko_title"),
                         JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                     if (response == 0) {
@@ -132,12 +132,12 @@ public final class KOManager {
 
             } else {
 
-                String message = Messages.getString("KOManager.ko_readonly"); //$NON-NLS-1$
+                String message = Messages.getString("KOManager.ko_readonly");
                 Object[] options =
-                    { Messages.getString("KOManager.new_ko"), Messages.getString("KOManager.new_ko_from") }; //$NON-NLS-1$ //$NON-NLS-2$
+                    { Messages.getString("KOManager.new_ko"), Messages.getString("KOManager.new_ko_from") };
 
                 int response = JOptionPane.showOptionDialog(view2d.getJComponent(), message,
-                    Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                    Messages.getString("KOManager.ko_title"),
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[0]);
 
                 if (response == 0) {
@@ -188,11 +188,11 @@ public final class KOManager {
         if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DcmMediaReader) {
             Attributes dicomSourceAttribute = ((DcmMediaReader) dicomMediaElement.getMediaReader()).getDicomObject();
 
-            String message = Messages.getString("KOManager.ko_desc"); //$NON-NLS-1$
-            String defautDescription = Messages.getString("KOManager.ko_name"); //$NON-NLS-1$
+            String message = Messages.getString("KOManager.ko_desc");
+            String defautDescription = Messages.getString("KOManager.ko_name");
 
             String description =
-                (String) JOptionPane.showInputDialog(parentComponent, message, Messages.getString("KOManager.ko_title"), //$NON-NLS-1$
+                (String) JOptionPane.showInputDialog(parentComponent, message, Messages.getString("KOManager.ko_title"),
                     JOptionPane.INFORMATION_MESSAGE, null, null, defautDescription);
 
             // description==null means the user canceled the input

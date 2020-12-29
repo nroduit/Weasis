@@ -370,16 +370,16 @@ public class HistogramPanel extends JPanel {
                 int val2 = (int) Math.floor((i + 1) * (max - min) / histValues.length + min);
 
                 StringBuilder buf = new StringBuilder();
-                buf.append("<html>"); //$NON-NLS-1$
-                buf.append(Messages.getString("HistogramPanel.intensity")); //$NON-NLS-1$
+                buf.append("<html>");
+                buf.append(Messages.getString("HistogramPanel.intensity"));
                 buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append(val);
                 if (val2 != val && val2 < max) {
                     buf.append("..."); //$NON-NLS-1$
                     buf.append(val2);
                 }
-                buf.append("<br>"); //$NON-NLS-1$
-                buf.append(Messages.getString("HistogramPanel.pixels")); //$NON-NLS-1$
+                buf.append("<br>");
+                buf.append(Messages.getString("HistogramPanel.pixels"));
                 buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append((int) histValues[i]);
                 JLabel text = new JLabel(buf.toString());

@@ -95,9 +95,9 @@ public abstract class AbstractBufferHandler {
         if (!handleOpenDocument(s)) {
             File f = new File(s);
             JOptionPane.showMessageDialog(getParentComponent(),
-                String.format(Messages.getString("AbstractBufferHandler.unable_open"), f.getName()) + "\n" //$NON-NLS-1$ //$NON-NLS-2$
+                String.format(Messages.getString("AbstractBufferHandler.unable_open"), f.getName()) + "\n"
                     + addOpenMessage,
-                Messages.getString("AbstractBufferHandler.open"), 0); //$NON-NLS-1$
+                Messages.getString("AbstractBufferHandler.open"), 0);
             setPath(null);
             addOpenMessage = ""; //$NON-NLS-1$
             return false;
@@ -113,8 +113,8 @@ public abstract class AbstractBufferHandler {
         } else {
             if (!handleSaveDocument(getPath())) {
                 JOptionPane.showMessageDialog(getParentComponent(),
-                    Messages.getString("AbstractBufferHandler.unable_save"), //$NON-NLS-1$
-                    Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$
+                    Messages.getString("AbstractBufferHandler.unable_save"),
+                    Messages.getString("AbstractBufferHandler.save"), 0);
                 File file = new File(getPath());
                 file.delete();
                 return false;
@@ -147,8 +147,8 @@ public abstract class AbstractBufferHandler {
         file = new File(filename);
         if (file.exists()) {
             int i = JOptionPane.showConfirmDialog(getParentComponent(),
-                String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()), //$NON-NLS-1$
-                Messages.getString("AbstractBufferHandler.save_as"), //$NON-NLS-1$
+                String.format(Messages.getString("AbstractBufferHandler.exist"), file.getName()),
+                Messages.getString("AbstractBufferHandler.save_as"),
                 0);
             if (i != 0) {
                 return false;
@@ -157,8 +157,8 @@ public abstract class AbstractBufferHandler {
         setPath(file.getPath());
         fileFilter = jfilechooser.getFileFilter();
         if (!handleSaveDocument(getPath())) {
-            JOptionPane.showMessageDialog(getParentComponent(), Messages.getString("AbstractBufferHandler.unable_save"), //$NON-NLS-1$
-                Messages.getString("AbstractBufferHandler.save"), 0); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(getParentComponent(), Messages.getString("AbstractBufferHandler.unable_save"),
+                Messages.getString("AbstractBufferHandler.save"), 0);
             file.delete();
             return false;
         } else {
@@ -170,8 +170,8 @@ public abstract class AbstractBufferHandler {
     protected boolean canCloseDocument() {
         if (isDirty) {
             int i = JOptionPane.showConfirmDialog(getParentComponent(),
-                Messages.getString("AbstractBufferHandler.unsave_msg"), //$NON-NLS-1$
-                Messages.getString("AbstractBufferHandler.unsave_t"), 1); //$NON-NLS-1$
+                Messages.getString("AbstractBufferHandler.unsave_msg"),
+                Messages.getString("AbstractBufferHandler.unsave_t"), 1);
             if (i == 0) {
                 return saveDocument();
             }

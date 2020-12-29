@@ -192,7 +192,7 @@ public class BundleTools {
     
     private static URLParameters getURLParameters(boolean post) {
         Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
-        map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); // NON-NLS
         return new URLParameters(map, post);
     }
 }

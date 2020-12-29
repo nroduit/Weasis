@@ -82,16 +82,16 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
             JPopupMenu popupMenu = new JPopupMenu();
 
             popupMenu.add(new JMenuItem(
-                new DefaultAction(Messages.getString("AcquireCentralThumnailList.edit"), event -> openSelection()))); //$NON-NLS-1$
+                new DefaultAction(Messages.getString("AcquireCentralThumnailList.edit"), event -> openSelection())));
 
             popupMenu
-                .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.remove"), event -> { //$NON-NLS-1$
+                .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.remove"), event -> {
                     clearSelection();
                     AcquireManager.getInstance().removeMedias(medias);
                     repaint();
                 })));
 
-            JMenu moveToMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.moveto")); //$NON-NLS-1$
+            JMenu moveToMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.moveto"));
 
             moveToOther(moveToMenu, medias);
             moveToMenu.addSeparator();
@@ -101,11 +101,11 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
             }
             moveToNewSerie(moveToMenu, medias);
 
-            JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations")); //$NON-NLS-1$
-            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate") //$NON-NLS-1$
-                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.plus90"), 90); //$NON-NLS-1$
-            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate") //$NON-NLS-1$
-                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.min90"), 270); //$NON-NLS-1$
+            JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations"));
+            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate")
+                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.plus90"), 90);
+            operationRotate(operationsMenu, medias, Messages.getString("AcquireCentralThumnailList.rotate")
+                + StringUtil.COLON_AND_SPACE + Messages.getString("AcquireCentralThumnailList.min90"), 270);
 
             popupMenu.add(moveToMenu);
             // TODO need do better
@@ -142,7 +142,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
 
     private void moveToNewSerie(JMenu moveToMenu, final List<E> medias) {
         moveToMenu
-            .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.new_series"), event -> { //$NON-NLS-1$
+            .add(new JMenuItem(new DefaultAction(Messages.getString("AcquireCentralThumnailList.new_series"), event -> {
                 JDialog dialog = new AcquireNewSerieDialog(AcquireCentralThumnailList.this.acquireTabPanel,
                     AcquireManager.toImageElement(medias));
                 JMVUtils.showCenterScreen(dialog, AcquireCentralThumnailList.this.acquireTabPanel);

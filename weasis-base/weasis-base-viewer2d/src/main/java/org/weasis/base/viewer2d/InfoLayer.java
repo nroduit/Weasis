@@ -81,7 +81,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         float drawY = bound.height - border - 1.5f; // -1.5 for outline
 
         if (!image.isReadable()) {
-            String message = Messages.getString("InfoLayer.error_msg"); //$NON-NLS-1$
+            String message = Messages.getString("InfoLayer.error_msg");
             float y = midy;
             AbstractGraphicLabel.paintColorFontOutline(g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
                 y, Color.RED);
@@ -104,7 +104,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         }
 
         if (getDisplayPreferences(PIXEL)) {
-            StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pix")); //$NON-NLS-1$
+            StringBuilder sb = new StringBuilder(Messages.getString("InfoLayer.pix"));
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
@@ -133,7 +133,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ZOOM)) {
-            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.zoom") + StringUtil.COLON_AND_SPACE
                 + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()), border, drawY);
             drawY -= fontHeight;
         }

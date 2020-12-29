@@ -207,8 +207,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel implem
             init(new MenuOnlySimpleAction(this));
             this.dockable = dockable;
             this.closeAll = closeAll;
-            setText(closeAll ? Messages.getString("ViewerPlugin.close_all") //$NON-NLS-1$
-                : Messages.getString("ViewerPlugin.close_other")); //$NON-NLS-1$
+            setText(closeAll ? Messages.getString("ViewerPlugin.close_all")
+                : Messages.getString("ViewerPlugin.close_other"));
         }
 
         @Override

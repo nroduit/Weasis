@@ -18,7 +18,7 @@ import org.weasis.core.ui.Messages;
 public class SimpleTableModel extends AbstractTableModel {
 
     private String[] columnNames =
-        { Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val") }; //$NON-NLS-1$ //$NON-NLS-2$
+        { Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val") };
     private final Object[][] data;
     private final boolean editable;
 

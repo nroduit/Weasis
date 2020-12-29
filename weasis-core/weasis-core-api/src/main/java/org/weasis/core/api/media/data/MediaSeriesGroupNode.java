@@ -68,7 +68,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
     @Override
     public String toString() {
         String val = displayTag.getFormattedText(false, this);
-        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") : val; //$NON-NLS-1$
+        return val == null ? Messages.getString("MediaSeriesGroupNode.no_val") : val;
     }
 
     @Override

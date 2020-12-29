@@ -274,7 +274,7 @@ public class DicomPrint {
 
         // writeDICOM(new File("/tmp/print.dcm"), dicomImage);
 
-        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); //$NON-NLS-1$ //$NON-NLS-2$
+        String weasisAet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE"); // NON-NLS
 
         Device device = new Device(weasisAet);
         ApplicationEntity ae = new ApplicationEntity(weasisAet);
@@ -380,7 +380,7 @@ public class DicomPrint {
             dcmObj.setInt(Tag.Columns, VR.US, image.getWidth());
             dcmObj.setInt(Tag.Rows, VR.US, image.getHeight());
             dcmObj.setInt(Tag.PixelRepresentation, VR.US, 0);
-            dcmObj.setString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2"); //$NON-NLS-1$ //$NON-NLS-2$
+            dcmObj.setString(Tag.PhotometricInterpretation, VR.CS, printInColor ? "RGB" : "MONOCHROME2"); // NON-NLS
             dcmObj.setInt(Tag.SamplesPerPixel, VR.US, printInColor ? 3 : 1);
             dcmObj.setInt(Tag.BitsAllocated, VR.US, 8);
             dcmObj.setInt(Tag.BitsStored, VR.US, 8);

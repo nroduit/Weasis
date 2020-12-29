@@ -19,7 +19,7 @@ import org.weasis.opencv.data.PlanarImage;
 public class FilterOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FilterOp.class);
 
-    public static final String OP_NAME = Messages.getString("FilterOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("FilterOperation.title");
 
     /**
      * Set the filter kernel (Required parameter).

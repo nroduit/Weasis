@@ -39,9 +39,9 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
+    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true);
     public static final Measurement COMPLEMENTARY_ANGLE =
-        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false);
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
@@ -73,7 +73,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("measure.coobs"); //$NON-NLS-1$
+        return Messages.getString("measure.coobs");
     }
 
     @Override

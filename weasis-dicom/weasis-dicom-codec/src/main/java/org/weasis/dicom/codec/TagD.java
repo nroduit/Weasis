@@ -69,9 +69,9 @@ public class TagD extends TagW {
         .appendFraction(ChronoField.MICRO_OF_SECOND, 0, 6, true).toFormatter();
 
     public enum Sex {
-        SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), //$NON-NLS-1$ //$NON-NLS-2$
-        SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), //$NON-NLS-1$ //$NON-NLS-2$
-        SEX_OTHER("O", org.weasis.core.api.Messages.getString("TagW.other")); //$NON-NLS-1$ //$NON-NLS-2$
+        SEX_MALE("M", org.weasis.core.api.Messages.getString("TagW.Male")), // NON-NLS
+        SEX_FEMALE("F", org.weasis.core.api.Messages.getString("TagW.female")), // NON-NLS
+        SEX_OTHER("O", org.weasis.core.api.Messages.getString("TagW.other")); // NON-NLS
 
         private final String value;
         private final String displayValue;
@@ -94,8 +94,8 @@ public class TagD extends TagW {
             Sex s = Sex.SEX_OTHER;
             if (StringUtil.hasText(sex)) {
                 // Sex attribute can have the following values: M(male), F(female), or O(other)
-                return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE //$NON-NLS-1$
-                    : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; //$NON-NLS-1$
+                return sex.toUpperCase().startsWith("F") ? Sex.SEX_FEMALE // NON-NLS
+                    : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; // NON-NLS
             }
             return s;
         }
@@ -600,7 +600,7 @@ public class TagD extends TagW {
     }
 
     private static int getVM(String val) {
-        if ("n".equals(val) || val.toLowerCase().contains("n")) { //$NON-NLS-1$ //$NON-NLS-2$
+        if ("n".equals(val) || val.toLowerCase().contains("n")) { // NON-NLS
             return Integer.MAX_VALUE;
         }
         return Integer.parseInt(val);
@@ -854,8 +854,8 @@ public class TagD extends TagW {
         }
 
         // Remove the last character and leading 0
-        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", "")); //$NON-NLS-1$ //$NON-NLS-2$
-        builder.append(" "); //$NON-NLS-1$
+        StringBuilder builder = new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", ""));
+        builder.append(" "); 
         builder.append(unit);
         return builder.toString();
     }

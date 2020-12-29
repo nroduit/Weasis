@@ -93,11 +93,11 @@ public class Utils {
     }
 
     public static String removeEnglobingQuotes(String value) {
-        return value.replaceAll("(?:^\")|(?:\"$)", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        return value.replaceAll("(?:^\")|(?:\"$)", "");
     }
 
     public static String adaptPathToUri(String value) {
-        return value.replace("\\", "/").replace(" ", "%20"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        return value.replace("\\", "/").replace(" ", "%20");
     }
 
     public static List<String> splitSpaceExceptInQuotes(String s) {

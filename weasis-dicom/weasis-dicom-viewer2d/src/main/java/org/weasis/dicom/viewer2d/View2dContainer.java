@@ -102,11 +102,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
-        new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("View2dContainer.layout_dump")); //$NON-NLS-1$
+        new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModel.xml"), "layout_dump", // NON-NLS
+            Messages.getString("View2dContainer.layout_dump"));
     public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo =
-        new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), "layout_histo", //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("View2dContainer.histogram")); //$NON-NLS-1$
+        new GridBagLayoutModel(View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), "layout_histo", // NON-NLS
+            Messages.getString("View2dContainer.histogram"));
     // Unmodifiable list of the default layout elements
     public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST = Arrays.asList(VIEWS_1x1, VIEWS_1x2, VIEWS_2x1,
         VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_2x1_r1xc2_dump, VIEWS_2x1_r1xc2_histo, VIEWS_2x2);
@@ -281,17 +281,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
             menuRoot.removeAll();
             if (eventManager instanceof EventManager) {
                 EventManager manager = (EventManager) eventManager;
-                JMenu menu = new JMenu(Messages.getString("View2dContainer.3d")); //$NON-NLS-1$
+                JMenu menu = new JMenu(Messages.getString("View2dContainer.3d"));
                 ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
                 menu.setEnabled(
                     manager.getSelectedSeries() != null && (scrollAction != null && scrollAction.isActionEnabled()));
 
                 if (menu.isEnabled()) {
-                    JMenuItem mpr = new JMenuItem(Messages.getString("View2dContainer.mpr")); //$NON-NLS-1$
+                    JMenuItem mpr = new JMenuItem(Messages.getString("View2dContainer.mpr"));
                     mpr.addActionListener(Basic3DToolBar.getMprAction());
                     menu.add(mpr);
 
-                    JMenuItem mip = new JMenuItem(Messages.getString("View2dContainer.mip")); //$NON-NLS-1$
+                    JMenuItem mip = new JMenuItem(Messages.getString("View2dContainer.mip"));
                     mip.addActionListener(Basic3DToolBar.getMipAction());
                     menu.add(mip);
                 }
@@ -651,7 +651,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
     @Override
     public List<Action> getPrintActions() {
         ArrayList<Action> actions = new ArrayList<>(2);
-        final String title = Messages.getString("View2dContainer.print_layout"); //$NON-NLS-1$
+        final String title = Messages.getString("View2dContainer.print_layout");
         DefaultAction printStd = new DefaultAction(title,
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
@@ -662,7 +662,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
 
-        final String title2 = Messages.getString("View2dContainer.dcm_print"); //$NON-NLS-1$
+        final String title2 = Messages.getString("View2dContainer.dcm_print");
         DefaultAction printStd2 = new DefaultAction(title2, null, event -> {
             ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
             DicomPrintDialog<DicomImageElement> dialog =

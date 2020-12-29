@@ -54,7 +54,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     public void updateSliderProoperties(JSliderW slider) {
         JPanel panel = (JPanel) slider.getParent();
         int rate = getCurrentCineRate();
-        StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img")); //$NON-NLS-1$
+        StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img"));
         buffer.append(StringUtil.COLON_AND_SPACE);
         buffer.append(getValueToDisplay());
 
@@ -65,11 +65,11 @@ public abstract class SliderCineListener extends SliderChangeListener {
                 buffer.append(StringUtil.COLON_AND_SPACE);
                 buffer.append(rate);
                 if (TIME.SECOND.equals(time)) {
-                    buffer.append(Messages.getString("SliderCineListener.fps")); //$NON-NLS-1$
+                    buffer.append(Messages.getString("SliderCineListener.fps"));
                 } else if (TIME.MINUTE.equals(time)) {
-                    buffer.append(Messages.getString("SliderCineListener.fpm")); //$NON-NLS-1$
+                    buffer.append(Messages.getString("SliderCineListener.fpm"));
                 } else if (TIME.HOUR.equals(time)) {
-                    buffer.append(Messages.getString("SliderCineListener.fph")); //$NON-NLS-1$
+                    buffer.append(Messages.getString("SliderCineListener.fph"));
                 }
             }
             ((TitledBorder) panel.getBorder()).setTitleColor(

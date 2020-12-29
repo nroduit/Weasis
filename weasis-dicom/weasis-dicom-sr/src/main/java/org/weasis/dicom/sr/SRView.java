@@ -238,8 +238,8 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                         }
                     } else {
                         // TODO try to download if IHE IID has been configured
-                        JOptionPane.showMessageDialog(this, Messages.getString("SRView.msg"), //$NON-NLS-1$
-                            Messages.getString("SRView.open"), //$NON-NLS-1$
+                        JOptionPane.showMessageDialog(this, Messages.getString("SRView.msg"),
+                            Messages.getString("SRView.open"),
                             JOptionPane.WARNING_MESSAGE);
                     }
 

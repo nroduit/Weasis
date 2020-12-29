@@ -548,8 +548,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             int response = 0;
             if (warningMessage) {
                 response = JOptionPane.showConfirmDialog(canvas.getJComponent(),
-                    String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()), //$NON-NLS-1$
-                    Messages.getString("AbstractLayerModel.del_graphs"), JOptionPane.YES_NO_OPTION, //$NON-NLS-1$
+                    String.format(Messages.getString("AbstractLayerModel.del_conf"), list.size()),
+                    Messages.getString("AbstractLayerModel.del_graphs"), JOptionPane.YES_NO_OPTION,
                     JOptionPane.WARNING_MESSAGE);
             }
             if (Objects.equals(response, 0)) {
@@ -676,8 +676,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         GraphicLayer layer = getOrBuildLayer(canvas, newGraphic.getLayerType());
 
         if (!layer.getVisible() || !(Boolean) canvas.getActionValue(ActionW.DRAWINGS.cmd())) {
-            JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"), //$NON-NLS-1$
-                Messages.getString("AbstractLayerModel.draw"), //$NON-NLS-1$
+            JOptionPane.showMessageDialog(canvas.getJComponent(), Messages.getString("AbstractLayerModel.msg_not_vis"),
+                Messages.getString("AbstractLayerModel.draw"),
                 JOptionPane.ERROR_MESSAGE);
             return null;
         } else {

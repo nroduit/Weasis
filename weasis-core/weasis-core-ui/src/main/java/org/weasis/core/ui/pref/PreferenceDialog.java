@@ -37,7 +37,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(PreferenceDialog.class);
 
     public PreferenceDialog(Window parentWin) {
-        super(parentWin, Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL, //$NON-NLS-1$
+        super(parentWin, Messages.getString("OpenPreferencesAction.title"), ModalityType.APPLICATION_MODAL,
             new Dimension(700, 520));
         initializePages();
         pack();
@@ -55,7 +55,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     @Override
     protected void initializePages() {
         Hashtable<String, Object> properties = new Hashtable<>();
-        properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); // NON-NLS
 
         ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
         list.add(new GeneralSetting());

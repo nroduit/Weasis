@@ -33,7 +33,7 @@ public class WPropertiesTest {
         Assert.assertEquals("different string", "test!", prop.getProperty("string", null)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         prop.setProperty("string", null); //$NON-NLS-1$
         // Return the previous value
-        Assert.assertEquals("different string", "test!", prop.getProperty("string", null)); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        Assert.assertEquals("different string", "test!", prop.getProperty("string", null)); // NON-NLS
     }
 
     @Test
@@ -92,7 +92,7 @@ public class WPropertiesTest {
         Assert.assertEquals("different color", Color.GREEN, prop.getColorProperty("color")); //$NON-NLS-1$ //$NON-NLS-2$
         prop.putColorProperty("color", null); //$NON-NLS-1$
         // Return the previous value
-        Assert.assertEquals("different color", Color.GREEN, prop.getColorProperty("color")); //$NON-NLS-1$ //$NON-NLS-2$
+        Assert.assertEquals("different color", Color.GREEN, prop.getColorProperty("color")); // NON-NLS
     }
 
     @Test

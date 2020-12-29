@@ -55,7 +55,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     private final OrientationSliderComponent orientationPanel;
     private final AbstractRectifyButton rotate90btn;
     private final AbstractRectifyButton rotate270btn;
-    private final JCheckBox flipCheckBox = new JCheckBox(Messages.getString("RectifyPanel.flip_hz")); //$NON-NLS-1$
+    private final JCheckBox flipCheckBox = new JCheckBox(Messages.getString("RectifyPanel.flip_hz"));
 
     private final RectifyAction rectifyAction;
     private final FlipActionListener flipActionListener;

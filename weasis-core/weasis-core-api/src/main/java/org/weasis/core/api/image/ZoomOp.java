@@ -19,11 +19,11 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class ZoomOp extends AbstractOp {
 
-    public static final String OP_NAME = Messages.getString("ZoomOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("ZoomOperation.title");
 
     public static final String[] INTERPOLATIONS =
-        { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.lanczos") }; //$NON-NLS-1$ //$NON-NLS-2$
+        { Messages.getString("ZoomOperation.nearest"), Messages.getString("ZoomOperation.bilinear"),
+            Messages.getString("ZoomOperation.bicubic"), Messages.getString("ZoomOperation.lanczos") };
 
     /**
      * Set a zoom factor in x-axis (Required parameter).

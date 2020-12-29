@@ -118,7 +118,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("Tools.Anno"); //$NON-NLS-1$
+        return Messages.getString("Tools.Anno");
     }
 
     @XmlElementWrapper(name = "labels")
@@ -230,7 +230,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     }
 
     protected String getInitialText(ViewCanvas<?> view) {
-        return Messages.getString("AnnotationGraphic.text_box"); //$NON-NLS-1$
+        return Messages.getString("AnnotationGraphic.text_box");
     }
 
     @Override

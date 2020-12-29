@@ -33,7 +33,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
     private final Map<JCheckBox, Measurement> map = new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
 
     public StatisticsPrefView() {
-        super(Messages.getString("MeasureTool.pix_stats")); //$NON-NLS-1$
+        super(Messages.getString("MeasureTool.pix_stats"));
         setComponentPosition(10);
         setBorder(new EmptyBorder(15, 10, 10, 10));
         init();
@@ -70,7 +70,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2, BorderLayout.SOUTH);
 
-        JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
     }

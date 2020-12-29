@@ -144,7 +144,7 @@ public class XmlSerializer {
     }
 
     public static JAXBContext getJaxbContext(Map<String, Object> properties, Class<?>... clazz) throws JAXBException {
-        if("1.8".equals(System.getProperty("java.specification.version"))){ //$NON-NLS-1$ //$NON-NLS-2$
+        if("1.8".equals(System.getProperty("java.specification.version"))){ // NON-NLS
             return JAXBContext.newInstance(clazz, properties);
         }
         return ContextFactory.createContext(clazz, properties);

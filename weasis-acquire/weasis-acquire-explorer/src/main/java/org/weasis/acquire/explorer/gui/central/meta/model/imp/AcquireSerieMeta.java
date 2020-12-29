@@ -20,9 +20,9 @@ public class AcquireSerieMeta extends AcquireMetadataTableModel {
     private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.series.display", //$NON-NLS-1$
         "Modality,OperatorsName,ReferringPhysicianName,BodyPartExamined,SeriesDescription"); //$NON-NLS-1$
     private static final TagW[] TAGS_EDITABLE =
-        getTags("weasis.acquire.meta.series.edit", "ReferringPhysicianName,BodyPartExamined,SeriesDescription"); //$NON-NLS-1$ //$NON-NLS-2$
+        getTags("weasis.acquire.meta.series.edit", "ReferringPhysicianName,BodyPartExamined,SeriesDescription"); // NON-NLS
     private static final TagW[] TAGS_TO_PUBLISH =
-        getTags("weasis.acquire.meta.series.required", "Modality,SeriesDescription"); //$NON-NLS-1$ //$NON-NLS-2$
+        getTags("weasis.acquire.meta.series.required", "Modality,SeriesDescription"); // NON-NLS
 
     public AcquireSerieMeta(SeriesGroup seriesGroup) {
         super(seriesGroup, TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);

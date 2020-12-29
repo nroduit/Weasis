@@ -52,7 +52,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
-    public static final String BUTTON_NAME = Messages.getString("DisplayTool.display"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
     private final JCheckBox applyAllViews = new JCheckBox("Apply to all views", true); //$NON-NLS-1$
     private final CheckboxTree tree;
@@ -80,9 +80,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     public void iniTree() {
         tree.getCheckingModel().setCheckingMode(CheckingMode.SIMPLE);
 
-        image = new DefaultMutableTreeNode(Messages.getString("DisplayTool.img"), true); //$NON-NLS-1$
+        image = new DefaultMutableTreeNode(Messages.getString("DisplayTool.img"), true);
         rootNode.add(image);
-        info = new DefaultMutableTreeNode(Messages.getString("DisplayTool.annotations"), true); //$NON-NLS-1$
+        info = new DefaultMutableTreeNode(Messages.getString("DisplayTool.annotations"), true);
         info.add(new DefaultMutableTreeNode(LayerAnnotation.ANNOTATIONS, true));
         info.add(new DefaultMutableTreeNode(LayerAnnotation.SCALE, true));
         info.add(new DefaultMutableTreeNode(LayerAnnotation.LUT, true));

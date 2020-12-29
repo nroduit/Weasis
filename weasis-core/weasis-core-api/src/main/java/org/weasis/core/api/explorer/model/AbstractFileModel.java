@@ -38,7 +38,7 @@ import org.weasis.core.api.service.BundleTools;
 public abstract class AbstractFileModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFileModel.class);
 
-    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("get", "close")); //$NON-NLS-1$ //$NON-NLS-2$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("get", "close")); // NON-NLS
 
     public static final String NAME = "All Files"; //$NON-NLS-1$
     public static final TreeModelNode group =
@@ -201,7 +201,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
         final List<String> gargs = opt.getList("group"); //$NON-NLS-1$
         final List<String> iargs = opt.getList("series"); //$NON-NLS-1$
 
-        if (opt.isSet("help") || (gargs.isEmpty() && iargs.isEmpty() && !opt.isSet("all"))) { //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("help") || (gargs.isEmpty() && iargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
             opt.usage();
             return;
         }

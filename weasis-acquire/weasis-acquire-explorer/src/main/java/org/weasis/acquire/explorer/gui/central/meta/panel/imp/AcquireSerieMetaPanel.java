@@ -19,9 +19,9 @@ import org.weasis.core.util.StringUtil;
 public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     private static final long serialVersionUID = -2751941971479265507L;
 
-    private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series"); //$NON-NLS-1$
+    private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series");
     private static final String SERIE_PREFIX =
-        Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE; //$NON-NLS-1$
+        Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE;
 
     protected SeriesGroup seriesGroup;
 

@@ -217,7 +217,7 @@ public class Contour {
                     + (points[i * 3 + 2] - tlhc.z) * column.z) / voxelSpacing.y;
                 path.lineTo(x, y);
             }
-            if ("CLOSED_PLANAR".equals(geometricType)) {
+            if ("CLOSED_PLANAR".equals(geometricType)) { // NON-NLS
                 path.closePath();
             }
             return new NonEditableGraphic(path);

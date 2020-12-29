@@ -370,7 +370,7 @@ public class AutoProcessor {
 
         }
 
-        weasisLoader.writeLabel(Messages.getString("AutoProcessor.start")); //$NON-NLS-1$
+        weasisLoader.writeLabel(Messages.getString("AutoProcessor.start"));
         // Now loop through the auto-start bundles and start them.
         for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator(); iter.hasNext();) {
             Entry<String, BundleElement> element = iter.next();
@@ -418,7 +418,7 @@ public class AutoProcessor {
                 if (value != null) {
                     String baseURL = System.getProperty(WeasisLauncher.P_WEASIS_I18N);
                     if (baseURL != null) {
-                        String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename); //$NON-NLS-1$ //$NON-NLS-2$
+                        String uri = baseURL + (baseURL.endsWith("/") ? filename : "/" + filename);
                         String bundleName = getBundleNameFromLocation(filename);
                         try {
                             Bundle b2 = installedBundleMap.get(bundleName);

@@ -30,7 +30,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class SRFactory implements SeriesViewerFactory {
 
-    public static final String NAME = Messages.getString("SRFactory.viewer"); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("SRFactory.viewer");
 
     public SRFactory() {
         super();
@@ -48,7 +48,7 @@ public class SRFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return Messages.getString("SRFactory.sr"); //$NON-NLS-1$
+        return Messages.getString("SRFactory.sr");
     }
 
     @Override

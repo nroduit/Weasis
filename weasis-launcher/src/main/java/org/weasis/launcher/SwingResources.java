@@ -111,7 +111,7 @@ public class SwingResources {
     }
 
     static String getTextFromProperty(String text) {
-        return text.replace("&", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        return text.replace("&", "");
     }
 
     static String getMnemonicFromProperty(String text) {

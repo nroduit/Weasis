@@ -46,11 +46,11 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     public static final Icon ICON = new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png")); //$NON-NLS-1$
 
-    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true); //$NON-NLS-1$
+    public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true);
     public static final Measurement COMPLEMENTARY_ANGLE =
-        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.complement_angle"), 2, true, true, false);
     public static final Measurement REFLEX_ANGLE =
-        new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("AngleToolGraphic.reflex_angle"), 3, true, true, false);
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
 
     static {
@@ -165,16 +165,16 @@ public class AngleToolGraphic extends AbstractDragGraphic {
                 double positiveAngle = Math.abs(angleDeg);
 
                 if (ANGLE.getComputed()) {
-                    measVal.add(new MeasureItem(ANGLE, positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
+                    measVal.add(new MeasureItem(ANGLE, positiveAngle, Messages.getString("measure.deg")));
                 }
 
                 if (COMPLEMENTARY_ANGLE.getComputed()) {
                     measVal.add(
-                        new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
+                        new MeasureItem(COMPLEMENTARY_ANGLE, 180.0 - positiveAngle, Messages.getString("measure.deg")));
                 }
                 if (REFLEX_ANGLE.getComputed()) {
                     measVal
-                        .add(new MeasureItem(REFLEX_ANGLE, 360.0 - positiveAngle, Messages.getString("measure.deg"))); //$NON-NLS-1$
+                        .add(new MeasureItem(REFLEX_ANGLE, 360.0 - positiveAngle, Messages.getString("measure.deg")));
                 }
                 return measVal;
             }
@@ -194,7 +194,7 @@ public class AngleToolGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return Messages.getString("measure.angle"); //$NON-NLS-1$
+        return Messages.getString("measure.angle");
     }
 
     @Override

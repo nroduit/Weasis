@@ -45,9 +45,9 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
     protected File doInBackground() throws Exception {
 
         File exportDirDicom =
-            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "dcm")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "dcm")); // NON-NLS
         File exportDirImage =
-            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "dicomize", "img")); // NON-NLS
 
         final int nbImageToProcess = toDicomize.size();
         int nbImageProcessed = 0;

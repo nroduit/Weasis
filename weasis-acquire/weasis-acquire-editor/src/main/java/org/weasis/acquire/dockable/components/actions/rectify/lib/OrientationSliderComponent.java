@@ -41,7 +41,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
     private final RectifyOrientationChangeListener listener;
 
     public OrientationSliderComponent(RectifyPanel panel) {
-        super(panel, Messages.getString("OrientationSliderComponent.orientation")); //$NON-NLS-1$
+        super(panel, Messages.getString("OrientationSliderComponent.orientation"));
         listener = new RectifyOrientationChangeListener(panel.getRectifyAction());
         addChangeListener(listener);
     }
@@ -72,6 +72,6 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
 
     @Override
     public String getDisplayTitle() {
-        return super.getDisplayTitle() + Messages.getString("OrientationSliderComponent.deg_symb"); //$NON-NLS-1$
+        return super.getDisplayTitle() + Messages.getString("OrientationSliderComponent.deg_symb");
     }
 }

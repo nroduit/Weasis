@@ -30,7 +30,7 @@ public class DicomWebNode extends AbstractDicomNode {
     private static final String T_HEADER = "headers"; //$NON-NLS-1$
     
     public enum WebType {
-        STOWRS("STOW-RS"), WADO("WADO"), WADORS("WADO-RS"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        STOWRS("STOW-RS"), WADO("WADO"), WADORS("WADO-RS"); // NON-NLS
 
         String title;
 

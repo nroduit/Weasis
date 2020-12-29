@@ -18,7 +18,7 @@ import org.weasis.opencv.op.ImageProcessor;
 public class FlipOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(FlipOp.class);
 
-    public static final String OP_NAME = Messages.getString("FlipOperation.title"); //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("FlipOperation.title");
 
     /**
      * Set whether the image is flip horizontally (Required parameter).

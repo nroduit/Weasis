@@ -48,8 +48,8 @@ import org.weasis.imageio.codec.ImageioUtil;
 public class DicomCodec implements Codec {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomCodec.class);
 
-    public static final String NAME = "dcm4che"; //$NON-NLS-1$
-    public static final String[] FILE_EXTENSIONS = { "dcm", "dic", "dicm", "dicom" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    public static final String NAME = "dcm4che"; //NON-NLS
+    public static final String[] FILE_EXTENSIONS = { "dcm", "dic", "dicm", "dicom" }; // NON-NLS
 
     private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
     private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
@@ -179,8 +179,8 @@ public class DicomCodec implements Codec {
                     logConfiguration = confAdmin
                         .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
                     Dictionary<String, Object> loggingProperties = new Hashtable<>();
-                    loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); //$NON-NLS-1$ //$NON-NLS-2$
-                    loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL); //$NON-NLS-1$
+                    loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); // NON-NLS
+                    loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);
                     // add this property to give us something unique to re-find this configuration
                     loggingProperties.put(LOGGER_KEY, LOGGER_VAL);
                     logConfiguration.update(loggingProperties);

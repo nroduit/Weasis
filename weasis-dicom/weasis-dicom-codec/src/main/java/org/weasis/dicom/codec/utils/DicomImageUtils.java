@@ -642,12 +642,12 @@ public class DicomImageUtils {
                     case 2:
                         if (segs >= 0)
                             throw new IllegalArgumentException(
-                                "nested indirect segment at index " + segPos); //$NON-NLS-1$
+                                "nested indirect segment at index " + segPos);
                         y0 = indirectSegment(n, y0);
                         break;
                     default:
                         throw new IllegalArgumentException(
-                            "illegal op code " + op + " at index" + segPos); //$NON-NLS-1$ //$NON-NLS-2$
+                            "illegal op code " + op + " at index" + segPos);
                 }
             }
             return y0;
@@ -656,7 +656,7 @@ public class DicomImageUtils {
         private int read() {
             if (readPos >= segm.length) {
                 throw new IllegalArgumentException(
-                    "Running out of data inflating segmented LUT"); //$NON-NLS-1$
+                    "Running out of data inflating segmented LUT");
             }
             return segm[readPos++] & 0xffff;
         }

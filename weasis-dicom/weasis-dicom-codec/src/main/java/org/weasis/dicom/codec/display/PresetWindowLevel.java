@@ -164,7 +164,7 @@ public class PresetWindowLevel {
         if (levelList != null && windowList != null) {
 
             int windowLevelDefaultCount = (levelList.length == windowList.length) ? levelList.length : 0;
-            String defaultExplanation = Messages.getString("PresetWindowLevel.default"); //$NON-NLS-1$
+            String defaultExplanation = Messages.getString("PresetWindowLevel.default");
 
             int k = 1;
 
@@ -195,7 +195,7 @@ public class PresetWindowLevel {
         String[] voiLUTsExplanation = (String[]) tagable.getTagValue(TagW.VOILUTsExplanation); // optional attribute
 
         if (voiLUTsData != null) {
-            String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut"); //$NON-NLS-1$
+            String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut");
 
             for (int i = 0; i < voiLUTsData.length; i++) {
                 String explanation = defaultExplanation + " " + i; //$NON-NLS-1$
@@ -222,7 +222,7 @@ public class PresetWindowLevel {
             }
         }
 
-        PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"), //$NON-NLS-1$
+        PresetWindowLevel autoLevel = new PresetWindowLevel(Messages.getString("PresetWindowLevel.full"),
             image.getFullDynamicWidth(tagable, pixelPadding), image.getFullDynamicCenter(tagable, pixelPadding),
             defaultLutShape);
         // Set O shortcut for auto levels
@@ -292,7 +292,7 @@ public class PresetWindowLevel {
             // disable external entities for security
             factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
             factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-            stream = new FileInputStream(file); // $NON-NLS-1$
+            stream = new FileInputStream(file);
             xmler = factory.createXMLStreamReader(stream);
 
             int eventType;

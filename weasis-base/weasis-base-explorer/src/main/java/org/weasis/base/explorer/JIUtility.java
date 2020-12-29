@@ -61,7 +61,7 @@ public final class JIUtility {
         if (f != null && f.exists()) {
             return FileSystemView.getFileSystemView().getSystemIcon(f);
         } else {
-            return FileSystemView.getFileSystemView().getSystemIcon(USER_HOME); // $NON-NLS-1$
+            return FileSystemView.getFileSystemView().getSystemIcon(USER_HOME);
         }
     }
 

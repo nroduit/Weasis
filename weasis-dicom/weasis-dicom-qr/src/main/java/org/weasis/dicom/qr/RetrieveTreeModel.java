@@ -94,7 +94,7 @@ public class RetrieveTreeModel {
     public static synchronized DefaultTreeModel buildModel(DicomModel dicomModel) {
         Collection<MediaSeriesGroup> patients = dicomModel.getChildren(MediaSeriesGroupNode.rootNode);
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(
-            patients.isEmpty() ? Messages.getString("RetrieveTreeModel.no_pat") : DicomExplorer.ALL_PATIENTS); //$NON-NLS-1$
+            patients.isEmpty() ? Messages.getString("RetrieveTreeModel.no_pat") : DicomExplorer.ALL_PATIENTS);
         for (MediaSeriesGroup pt : patients) {
             DefaultMutableTreeNode patientNode = new DefaultMutableTreeNode(pt, true);
             for (MediaSeriesGroup study : dicomModel.getChildren(pt)) {

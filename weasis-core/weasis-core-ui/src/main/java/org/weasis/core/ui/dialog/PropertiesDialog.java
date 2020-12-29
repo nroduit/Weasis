@@ -49,7 +49,7 @@ public abstract class PropertiesDialog extends JDialog {
     protected final JButton jButtonColor = new JButton();
     protected final JCheckBox jCheckBoxFilled = new JCheckBox();
     protected final JLabel lbloverridesmultipleValues =
-        new JLabel(Messages.getString("PropertiesDialog.header_override")); //$NON-NLS-1$
+        new JLabel(Messages.getString("PropertiesDialog.header_override"));
     protected final JCheckBox checkBoxColor = new JCheckBox();
     protected final JCheckBox checkBoxWidth = new JCheckBox();
     protected final JCheckBox checkBoxFill = new JCheckBox();
@@ -62,21 +62,21 @@ public abstract class PropertiesDialog extends JDialog {
     private void init() {
         panel1.setBorder(new EmptyBorder(0, 15, 0, 15));
         panel1.setLayout(borderLayout1);
-        jButtonOk.setText(Messages.getString("PropertiesDialog.ok")); //$NON-NLS-1$
+        jButtonOk.setText(Messages.getString("PropertiesDialog.ok"));
         jButtonOk.addActionListener(e -> okAction());
-        jButtonCancel.setText(Messages.getString("PropertiesDialog.cancel")); //$NON-NLS-1$
+        jButtonCancel.setText(Messages.getString("PropertiesDialog.cancel"));
         jButtonCancel.addActionListener(e -> quitWithoutSaving());
         jPanelFooter.setLayout(gridBagLayout2);
 
         jPanel1.setLayout(gridBagLayout1);
         JMVUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
-        jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width") + StringUtil.COLON); //$NON-NLS-1$
-        jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color") + StringUtil.COLON); //$NON-NLS-1$
-        jButtonColor.setText(Messages.getString("MeasureTool.pick")); //$NON-NLS-1$
+        jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width") + StringUtil.COLON);
+        jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color") + StringUtil.COLON);
+        jButtonColor.setText(Messages.getString("MeasureTool.pick"));
 
         jButtonColor.addActionListener(e -> openColorChooser((JButton) e.getSource()));
 
-        jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape")); //$NON-NLS-1$
+        jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape"));
         getContentPane().add(panel1);
         panel1.add(jPanelFooter, BorderLayout.SOUTH);
         jPanelFooter.add(jButtonCancel, new GridBagConstraints(1, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
@@ -153,7 +153,7 @@ public abstract class PropertiesDialog extends JDialog {
     public static void openColorChooser(JButton button) {
         if (button != null) {
             Color newColor =
-                JColorChooser.showDialog(button, Messages.getString("MeasureTool.pick_color"), button.getBackground()); //$NON-NLS-1$
+                JColorChooser.showDialog(button, Messages.getString("MeasureTool.pick_color"), button.getBackground());
             if (newColor != null) {
                 button.setBackground(newColor);
             }

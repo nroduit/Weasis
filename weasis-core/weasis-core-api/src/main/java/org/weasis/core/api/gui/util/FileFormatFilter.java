@@ -111,7 +111,7 @@ public class FileFormatFilter extends FileFilter {
     public String getDescription() {
         if (fFullDescription == null) {
             if (fDescription == null || isExtensionListInDescription()) {
-                fFullDescription = fDescription != null ? fDescription + " (" : "("; //$NON-NLS-1$ //$NON-NLS-2$
+                fFullDescription = fDescription != null ? fDescription + " (" : "(";
                 Set<String> extensions = fExtensions.keySet();
                 Iterator<String> it = extensions.iterator();
                 if (it.hasNext()) {
@@ -147,9 +147,9 @@ public class FileFormatFilter extends FileFilter {
         List<String> namesList = BundleTools.CODEC_PLUGINS.stream().flatMap(c -> Arrays.asList(c.getReaderExtensions()).stream())
             .distinct().sorted().collect(Collectors.toList());
         // Remove DICOM extensions
-        namesList.removeAll(Arrays.asList("dcm", "dic", "dicm", "dicom")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        namesList.removeAll(Arrays.asList("dcm", "dic", "dicm", "dicom")); // NON-NLS
         Iterator<String> it = namesList.iterator();
-        String desc = Messages.getString("FileFormatFilter.all_supported"); //$NON-NLS-1$
+        String desc = Messages.getString("FileFormatFilter.all_supported");
         ArrayList<String> names = new ArrayList<>();
         do {
             if (!it.hasNext()) {

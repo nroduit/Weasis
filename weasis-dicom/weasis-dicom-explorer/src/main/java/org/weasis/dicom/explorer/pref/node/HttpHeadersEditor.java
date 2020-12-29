@@ -52,7 +52,7 @@ public class HttpHeadersEditor extends JDialog {
     private DicomWebNode node;
 
     public HttpHeadersEditor(Window parent, DicomWebNode node) {
-        super(parent, Messages.getString("DicomWebNodeDialog.httpHeaders"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
+        super(parent, Messages.getString("DicomWebNodeDialog.httpHeaders"), ModalityType.APPLICATION_MODAL);
         this.node = node;
         jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         jbInit();
@@ -77,20 +77,20 @@ public class HttpHeadersEditor extends JDialog {
             BorderFactory.createEmptyBorder(5, 5, 5, 5));
         panel1.setLayout(borderLayout1);
 
-        jButtonClose.setText(Messages.getString("HttpHeadersEditor.close")); //$NON-NLS-1$
+        jButtonClose.setText(Messages.getString("HttpHeadersEditor.close"));
         jButtonClose.addActionListener(e -> cancel());
         jPanelComponentBar.setLayout(gridBagLayout3);
         jList1.setBorder(border2);
         jList1.setSelectionModel(selctedModel);
         jPanelComponentAction.setLayout(gridBagLayout2);
         jButtonDelete.addActionListener(e -> deleteSelectedComponents());
-        jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete")); //$NON-NLS-1$
+        jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete"));
 
-        jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit")); //$NON-NLS-1$
+        jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit"));
         jButtonEdit.addActionListener(e -> editHeader());
 
         jButtonAdd.addActionListener(e -> add());
-        jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add")); //$NON-NLS-1$
+        jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add"));
 
         jScrollPane1.setBorder(border1);
         jScrollPane1.setPreferredSize(new Dimension(300, 150));
@@ -158,14 +158,14 @@ public class HttpHeadersEditor extends JDialog {
         if (selItems.size() == 1) {
             modifiy(selItems.get(0));
         } else {
-            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_onlyone"), this.getTitle(), //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_onlyone"), this.getTitle(),
                 JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private boolean isNoComponentSelected() {
         if (selctedModel.isSelectionEmpty()) {
-            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_noheader"), this.getTitle(), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_noheader"), this.getTitle(), JOptionPane.ERROR_MESSAGE);
             return true;
         }
         return false;
@@ -177,7 +177,7 @@ public class HttpHeadersEditor extends JDialog {
 
     private void modifiy(String input) {
         String property =
-            (String) JOptionPane.showInputDialog(this, Messages.getString("HttpHeadersEditor.msg_keyValue"), //$NON-NLS-1$
+            (String) JOptionPane.showInputDialog(this, Messages.getString("HttpHeadersEditor.msg_keyValue"),
                 this.getTitle(), JOptionPane.PLAIN_MESSAGE, null, null, input);
         if (StringUtil.hasLength(property)) {
             String[] kv = property.split(":", 2); //$NON-NLS-1$

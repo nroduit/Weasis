@@ -45,7 +45,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel implements ChangeL
     private final AbstractSliderComponent brightnessPanel;
     private final AutoLevelListener autoLevelListener;
 
-    private JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto")); //$NON-NLS-1$
+    private JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
 
     public ContrastPanel() {
         super();

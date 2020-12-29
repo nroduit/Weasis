@@ -36,7 +36,7 @@ public class ContrastComponent extends AbstractSliderComponent {
     }
 
     public ContrastComponent(ContrastPanel panel) {
-        super(panel, Messages.getString("ContrastComponent.contrast")); //$NON-NLS-1$
+        super(panel, Messages.getString("ContrastComponent.contrast"));
         addChangeListener(panel);
     }
 

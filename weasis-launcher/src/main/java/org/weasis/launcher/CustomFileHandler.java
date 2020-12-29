@@ -15,7 +15,7 @@ import java.util.logging.FileHandler;
 
 public class CustomFileHandler extends FileHandler {
     static {
-        new File(System.getProperty("user.home", "") + File.separator + ".weasis" + File.separator + "log").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        new File(System.getProperty("user.home", "") + File.separator + ".weasis" + File.separator + "log").mkdirs(); // NON-NLS
     }
     
     public CustomFileHandler() throws IOException {

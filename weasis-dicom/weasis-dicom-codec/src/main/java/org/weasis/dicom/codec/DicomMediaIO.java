@@ -714,7 +714,7 @@ public class DicomMediaIO implements DcmMediaReader {
                                     overlayData[i] = OverlayUtils.extractOverlay(embeddedOverlayGroupOffsets[i],
                                         ImageConversion.toBufferedImage(img).getRaster(), ds);
                                 }
-                                File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                                File file = File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); // NON-NLS
                                 fileOut = new FileOutputStream(file);
                                 objOut = new ObjectOutputStream(fileOut);
                                 objOut.writeObject(overlayData);
@@ -780,11 +780,11 @@ public class DicomMediaIO implements DcmMediaReader {
                 // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error made by some
                 // constructors). RGB color model doesn't make sense for lossy jpeg.
                 // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
-                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) //$NON-NLS-1$ //$NON-NLS-2$
+                if (pmi.name().startsWith("YBR") || ("RGB".equalsIgnoreCase(pmi.name()) // NON-NLS
                         && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
                     boolean ybr = true;
-                    if("RGB".equalsIgnoreCase(pmi.name())) { //$NON-NLS-1$
-                        String[] list = BundleTools.SYSTEM_PREFERENCES.getProperty("jpeg.lossy.rgb.manufacturer.list", "").split(","); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    if("RGB".equalsIgnoreCase(pmi.name())) {
+                        String[] list = BundleTools.SYSTEM_PREFERENCES.getProperty("jpeg.lossy.rgb.manufacturer.list", "").split(","); // NON-NLS
                         String manufacturer = getDicomObject().getString(Tag.Manufacturer);
                         for (int i = 0; i < list.length; i++) {
                             if(StringUtil.hasText(list[i]) && list[i].trim().equalsIgnoreCase(manufacturer)){

@@ -108,7 +108,7 @@ public class DicomDirLoader {
         }
         for (LoadSeries loadSeries : seriesList) {
             String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); //$NON-NLS-1$ //$NON-NLS-2$
+            boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
             if (!ps) {
                 loadSeries.startDownloadImageReference(wadoParameters);
             }
@@ -242,7 +242,7 @@ public class DicomDirLoader {
             try {
                 pixelData = iconInstance.getBytes(Tag.PixelData);
                 if (pixelData != null) {
-                    File thumbnailPath = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); //$NON-NLS-1$ //$NON-NLS-2$
+                    File thumbnailPath = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); // NON-NLS
                     if (thumbnailPath != null) {
                         int width = iconInstance.getInt(Tag.Columns, 0);
                         int height = iconInstance.getInt(Tag.Rows, 0);

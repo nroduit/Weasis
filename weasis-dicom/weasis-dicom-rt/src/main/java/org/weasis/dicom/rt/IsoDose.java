@@ -79,7 +79,7 @@ public class IsoDose {
     }
 
     public String getLabel() {
-        String result = this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy";
+        String result = this.level + " % / " + String.format("%.6g", this.absoluteDose) + " cGy"; // NON-NLS
         if (this.name != null && !this.name.equals("")) {
             result += " [" + this.name + "]";
         }

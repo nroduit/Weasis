@@ -166,7 +166,7 @@ public class MeasureToolBar extends WtoolBar {
 
     @SuppressWarnings("rawtypes")
     public MeasureToolBar(final ImageViewerEventManager<?> eventManager, int index) {
-        super(Messages.getString("MeasureToolBar.title"), index); //$NON-NLS-1$
+        super(Messages.getString("MeasureToolBar.title"), index);
         if (eventManager == null) {
             throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
         }
@@ -240,7 +240,7 @@ public class MeasureToolBar extends WtoolBar {
         action.registerActionState(dropDownButton);
 
         dropDownButton.setToolTipText(
-            draw ? Messages.getString("MeasureToolBar.drawing_tools") : Messages.getString("MeasureToolBar.tools")); //$NON-NLS-1$//$NON-NLS-2$
+            draw ? Messages.getString("MeasureToolBar.drawing_tools") : Messages.getString("MeasureToolBar.tools"));
 
         // when user press the measure icon, set the action to measure
         dropDownButton.addActionListener(e -> {

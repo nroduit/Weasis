@@ -153,8 +153,8 @@ public class ConfigData {
         String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
         addProperty(P_WEASIS_PROFILE, profile);
 
-        String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis"); //$NON-NLS-1$
-        addProperty(P_WEASIS_NAME, name); // $NON-NLS-1$
+        String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis");
+        addProperty(P_WEASIS_NAME, name);
 
         String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
         addProperty(P_WEASIS_VERSION, version);
@@ -164,15 +164,15 @@ public class ConfigData {
 
         String user = properties.getProperty(P_WEASIS_USER);
         if (!Utils.hasText(user)) {
-            user = System.getProperty("user.name", "unknown"); //$NON-NLS-1$ //$NON-NLS-2$
+            user = System.getProperty("user.name", "unknown"); // NON-NLS
             addProperty(P_WEASIS_USER, user);
             addProperty("weasis.pref.local.session", Boolean.TRUE.toString()); //$NON-NLS-1$
         }
 
         // Define the http user agent
-        addProperty("http.agent", //$NON-NLS-1$
-            name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                + System.getProperty("os.arch") + ")"); //$NON-NLS-1$ //$NON-NLS-2$
+        addProperty("http.agent",
+            name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " // NON-NLS
+                + System.getProperty("os.arch") + ")"); // NON-NLS
 
         String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
         if (portable != null) {
@@ -193,12 +193,12 @@ public class ConfigData {
         appFolder.mkdirs();
         addProperty(P_WEASIS_PATH, appFolder.getPath());
         System.setProperty(P_WEASIS_PATH, appFolder.getPath());
-        LOGGER.log(Level.CONFIG,"Properties: " + properties);
+        LOGGER.log(Level.CONFIG,"Properties: {0}", properties);
     }
 
     private void filterConfigProperties(Properties felixConfig) {
         // Only required for dev purposes (running the app in IDE)
-        String mvnRepo = System.getProperty("maven.localRepository", felixConfig.getProperty("maven.local.repo")); //$NON-NLS-1$ //$NON-NLS-2$
+        String mvnRepo = System.getProperty("maven.localRepository", felixConfig.getProperty("maven.local.repo")); // NON-NLS
         if (mvnRepo != null) {
             System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$
         }
@@ -277,7 +277,7 @@ public class ConfigData {
         try {
             addProperty(P_WEASIS_CODEBASE_LOCAL, localCodebase.getAbsolutePath());
             addProperty(P_WEASIS_CODEBASE_URL, baseURI);
-            baseURI += "/" + CONFIG_DIRECTORY + "/"; //$NON-NLS-1$ //$NON-NLS-2$
+            baseURI += "/" + CONFIG_DIRECTORY + "/";
             addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
             addProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
 
@@ -402,28 +402,28 @@ public class ConfigData {
             String val = p.getProperty("proxy.http.host"); //$NON-NLS-1$
             applyProxyProperty("http.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
-                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
+                applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy); // NON-NLS
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
             }
 
             val = p.getProperty("proxy.https.host"); //$NON-NLS-1$
             applyProxyProperty("https.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
-                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
+                applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy); // NON-NLS
+                applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
             }
 
             val = p.getProperty("proxy.ftp.host"); //$NON-NLS-1$
             applyProxyProperty("ftp.proxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
-                applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy); //$NON-NLS-1$
+                applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy); // NON-NLS
+                applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy);
             }
 
             val = p.getProperty("proxy.socks.host"); //$NON-NLS-1$
             applyProxyProperty("socksProxyHost", val, mproxy); //$NON-NLS-1$
             if (Utils.hasText(val)) {
-                applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); //$NON-NLS-1$ //$NON-NLS-2$
+                applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); // NON-NLS
             }
 
             boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth")); //$NON-NLS-1$
@@ -492,7 +492,7 @@ public class ConfigData {
                     }
 
                 }
-                arguments.add("dicom:get -l \"" + val + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                arguments.add("dicom:get -l \"" + val + "\""); // NON-NLS
             }
         }
     }
@@ -552,9 +552,9 @@ public class ConfigData {
             } else {
                 URLConnection urlConnection = FileUtil.getAdaptedConnection(new URI(configServicePath).toURL(), false);
 
-                urlConnection.setRequestProperty("Accept", "application/xml"); //$NON-NLS-1$ //$NON-NLS-2$
-                urlConnection.setConnectTimeout(Integer.valueOf(System.getProperty("UrlConnectionTimeout", "1000"))); //$NON-NLS-1$ //$NON-NLS-2$
-                urlConnection.setReadTimeout(Integer.valueOf((System.getProperty("UrlReadTimeout", "2000")))); //$NON-NLS-1$ //$NON-NLS-2$
+                urlConnection.setRequestProperty("Accept", "application/xml"); // NON-NLS
+                urlConnection.setConnectTimeout(Integer.valueOf(System.getProperty("UrlConnectionTimeout", "1000"))); // NON-NLS
+                urlConnection.setReadTimeout(Integer.valueOf((System.getProperty("UrlReadTimeout", "2000")))); // NON-NLS
 
                 if (urlConnection instanceof HttpURLConnection) {
                     HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
@@ -653,8 +653,8 @@ public class ConfigData {
                 URI propURI = getLocalPropertiesURI(CONFIG_PROPERTIES_PROP, CONFIG_PROPERTIES_FILE_VALUE);
                 Properties localProps = new Properties();
                 WeasisLauncher.readProperties(propURI, localProps);
-                Version loc = new Version(localProps.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
-                Version min = new Version(val.replaceFirst("-", ".")); //$NON-NLS-1$ //$NON-NLS-2$
+                Version loc = new Version(localProps.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
+                Version min = new Version(val.replaceFirst("-", "."));
                 if (loc.compareTo(min) < 0) {
                     felixConfig.clear();
                     felixConfig.putAll(localProps);
@@ -745,32 +745,32 @@ public class ConfigData {
                 // All Windows versions with a specific processor architecture (x86 or x86-64) are grouped under
                 // windows. If you need to make different native libraries for the Windows versions, define it in the
                 // Bundle-NativeCode tag of the bundle fragment.
-                osName = "windows"; //$NON-NLS-1$
-            } else if (osName.equals(WeasisLauncher.MAC_OS_X)) { // $NON-NLS-1$
-                osName = "macosx"; //$NON-NLS-1$
-            } else if (osName.equals("SymbianOS")) { //$NON-NLS-1$
-                osName = "epoc32"; //$NON-NLS-1$
-            } else if (osName.equals("hp-ux")) { //$NON-NLS-1$
-                osName = "hpux"; //$NON-NLS-1$
-            } else if (osName.equals("Mac OS")) { //$NON-NLS-1$
-                osName = "macos"; //$NON-NLS-1$
-            } else if (osName.equals("OS/2")) { //$NON-NLS-1$
-                osName = "os2"; //$NON-NLS-1$
-            } else if (osName.equals("procnto")) { //$NON-NLS-1$
-                osName = "qnx"; //$NON-NLS-1$
+                osName = "windows"; //NON-NLS
+            } else if (osName.equals(WeasisLauncher.MAC_OS_X)) {
+                osName = "macosx"; //NON-NLS
+            } else if (osName.equals("SymbianOS")) {
+                osName = "epoc32"; //NON-NLS
+            } else if (osName.equals("hp-ux")) {
+                osName = "hpux"; //NON-NLS
+            } else if (osName.equals("Mac OS")) { //NON-NLS
+                osName = "macos"; //NON-NLS
+            } else if (osName.equals("OS/2")) {
+                osName = "os2"; //NON-NLS
+            } else if (osName.equals("procnto")) {
+                osName = "qnx"; //NON-NLS
             } else {
                 osName = osName.toLowerCase();
             }
 
-            if (osArch.equals("pentium") || osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                || osArch.equals("i686")) { //$NON-NLS-1$
-                osArch = "x86"; //$NON-NLS-1$
-            } else if (osArch.equals("amd64") || osArch.equals("em64t") || osArch.equals("x86_64")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                osArch = "x86-64"; //$NON-NLS-1$
-            } else if (osArch.equals("power ppc")) { //$NON-NLS-1$
-                osArch = "powerpc"; //$NON-NLS-1$
-            } else if (osArch.equals("psc1k")) { //$NON-NLS-1$
-                osArch = "ignite"; //$NON-NLS-1$
+            if (osArch.equals("pentium") || osArch.equals("i386") || osArch.equals("i486") || osArch.equals("i586") // NON-NLS
+                || osArch.equals("i686")) {
+                osArch = "x86"; //NON-NLS
+            } else if (osArch.equals("amd64") || osArch.equals("em64t") || osArch.equals("x86_64")) { // NON-NLS
+                osArch = "x86-64"; //NON-NLS
+            } else if (osArch.equals("power ppc")) {
+                osArch = "powerpc"; //NON-NLS
+            } else if (osArch.equals("psc1k")) {
+                osArch = "ignite"; //NON-NLS
             } else {
                 osArch = osArch.toLowerCase();
             }

@@ -41,9 +41,9 @@ import org.weasis.core.ui.model.GraphicModel;
 public class LabelPrefView extends AbstractItemDialogPage {
     private static final long serialVersionUID = -189458600074707084L;
 
-    private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
+    private static final String[] fontSize = { "8", "9", "10", "11", "12", "13", "14", "15", "16" }; // NON-NLS
 
-    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default"); //$NON-NLS-1$
+    private static final String DEFAULT_LABEL = Messages.getString("LabelPrefView.default");
 
     private final JButton jButtonApply = new JButton();
     private final JPanel jPanel2 = new JPanel();
@@ -58,7 +58,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     private final Component verticalStrut = Box.createVerticalStrut(20);
 
     public LabelPrefView(ViewSetting viewSetting) {
-        super(Messages.getString("LabelPrefView.font")); //$NON-NLS-1$
+        super(Messages.getString("LabelPrefView.font"));
         if (viewSetting == null) {
             throw new IllegalArgumentException("ViewSetting cannot be null"); //$NON-NLS-1$
         }
@@ -77,11 +77,11 @@ public class LabelPrefView extends AbstractItemDialogPage {
         this.setLayout(new BorderLayout());
         this.add(jPanel2, BorderLayout.CENTER);
         jPanel2.setLayout(gridBagLayout1);
-        jLabelFont.setText(Messages.getString("LabelPrefView.name") + StringUtil.COLON); //$NON-NLS-1$
-        jLabelSize.setText(Messages.getString("LabelPrefView.size") + StringUtil.COLON); //$NON-NLS-1$
-        jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font"))); //$NON-NLS-1$
-        jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold")); //$NON-NLS-1$
-        jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic")); //$NON-NLS-1$
+        jLabelFont.setText(Messages.getString("LabelPrefView.name") + StringUtil.COLON);
+        jLabelSize.setText(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
+        jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font")));
+        jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold"));
+        jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic"));
         jPanel2.add(jComboSize, new GridBagConstraints(1, 1, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
             GridBagConstraints.NONE, new Insets(5, 2, 5, 5), 0, 0));
         jPanel2.add(jLabelFont, new GridBagConstraints(0, 0, 2, 1, 0.0, 0.0, GridBagConstraints.WEST,
@@ -109,10 +109,10 @@ public class LabelPrefView extends AbstractItemDialogPage {
         flowLayout1.setVgap(7);
         add(panel2, BorderLayout.SOUTH);
         panel2.add(jButtonApply);
-        jButtonApply.setText(Messages.getString("LabelPrefView.apply")); //$NON-NLS-1$
+        jButtonApply.setText(Messages.getString("LabelPrefView.apply"));
         jButtonApply.addActionListener(e -> apply());
 
-        JButton btnNewButton = new JButton(Messages.getString("restore.values")); //$NON-NLS-1$
+        JButton btnNewButton = new JButton(Messages.getString("restore.values"));
         panel2.add(btnNewButton);
         btnNewButton.addActionListener(e -> resetoDefaultValues());
     }

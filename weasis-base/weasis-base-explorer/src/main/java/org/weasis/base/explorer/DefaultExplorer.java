@@ -66,10 +66,10 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     private static final JIExplorerContext treeContext = new JIExplorerContext();
 
-    public static final String BUTTON_NAME = "Explorer"; //$NON-NLS-1$
-    public static final String NAME = Messages.getString("DefaultExplorer.name"); //$NON-NLS-1$
-    public static final String P_LAST_DIR = "default.explorer.last.dir"; //$NON-NLS-1$
-    private static final String PREFERENCE_NODE = "view"; //$NON-NLS-1$
+    public static final String BUTTON_NAME = "Explorer"; //NON-NLS
+    public static final String NAME = Messages.getString("DefaultExplorer.name");
+    public static final String P_LAST_DIR = "default.explorer.last.dir";
+    private static final String PREFERENCE_NODE = "view"; //NON-NLS
 
     protected FileTreeModel model;
     protected TreePath clickedPath;
@@ -91,7 +91,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         this.changed = false;
 
         this.model = model;
-        tree.putClientProperty("JTree.lineStyle", "Angled"); //$NON-NLS-1$ //$NON-NLS-2$
+        tree.putClientProperty("JTree.lineStyle", "Angled"); // NON-NLS
 
         final TreeRenderer renderer = new TreeRenderer();
         tree.setCellRenderer(renderer);
@@ -313,7 +313,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         try {
             JPopupMenu popupMenu = new JPopupMenu();
             TitleMenuItem itemTitle =
-                new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets()); //$NON-NLS-1$
+                new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets());
             popupMenu.add(itemTitle);
             popupMenu.addSeparator();
 
@@ -325,8 +325,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             }
 
             JMenuItem menuItem =
-                new JMenuItem(new DefaultAction(tree.isExpanded(path) ? Messages.getString("DefaultExplorer.collapse") //$NON-NLS-1$
-                    : Messages.getString("DefaultExplorer.expand"), event -> { //$NON-NLS-1$
+                new JMenuItem(new DefaultAction(tree.isExpanded(path) ? Messages.getString("DefaultExplorer.collapse")
+                    : Messages.getString("DefaultExplorer.expand"), event -> {
                         if (DefaultExplorer.this.clickedPath == null) {
                             return;
                         }
@@ -338,7 +338,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
                     }));
             popupMenu.add(menuItem);
 
-            menuItem = new JMenuItem(new DefaultAction(Messages.getString("DefaultExplorer.refresh"), event -> { //$NON-NLS-1$
+            menuItem = new JMenuItem(new DefaultAction(Messages.getString("DefaultExplorer.refresh"), event -> {
                 repaint();
                 refresh();
             }));
@@ -346,8 +346,8 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
             popupMenu.addSeparator();
 
             boolean importAction = false;
-            JMenu scan = new JMenu(Messages.getString("DefaultExplorer.import_to")); //$NON-NLS-1$
-            JMenu scansub = new JMenu(Messages.getString("DefaultExplorer.import_sub")); //$NON-NLS-1$
+            JMenu scan = new JMenu(Messages.getString("DefaultExplorer.import_to"));
+            JMenu scansub = new JMenu(Messages.getString("DefaultExplorer.import_sub"));
 
             synchronized (UIManager.EXPLORER_PLUGINS) {
                 for (final DataExplorerView dataExplorerView : UIManager.EXPLORER_PLUGINS) {

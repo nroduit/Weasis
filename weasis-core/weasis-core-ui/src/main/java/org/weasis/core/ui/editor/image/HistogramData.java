@@ -48,20 +48,20 @@ public class HistogramData {
     private LookupTableCV voiLut;
 
     public enum Model {
-        GRAY(Messages.getString("HistogramData.lum"), buildLut(ByteLutCollection.Lut.GRAY)), //$NON-NLS-1$
+        GRAY(Messages.getString("HistogramData.lum"), buildLut(ByteLutCollection.Lut.GRAY)),
 
-        RGB(Messages.getString("HistogramData.rgb"), buildLut(ByteLutCollection.Lut.RED), buildLut(ByteLutCollection.Lut.GREEN), //$NON-NLS-1$
+        RGB(Messages.getString("HistogramData.rgb"), buildLut(ByteLutCollection.Lut.RED), buildLut(ByteLutCollection.Lut.GREEN),
                         buildLut(ByteLutCollection.Lut.BLUE)),
-        HSV(Messages.getString("HistogramData.hsv"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY), //$NON-NLS-1$ //$NON-NLS-2$
-                        buildLut(Messages.getString("HistogramData.val"), ByteLutCollection.Lut.GRAY)), //$NON-NLS-1$
-        HLS(Messages.getString("HistogramData.hls"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.lightness"), ByteLutCollection.Lut.GRAY), //$NON-NLS-1$ //$NON-NLS-2$
-                        buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY)); //$NON-NLS-1$
+        HSV(Messages.getString("HistogramData.hsv"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY),
+                        buildLut(Messages.getString("HistogramData.val"), ByteLutCollection.Lut.GRAY)),
+        HLS(Messages.getString("HistogramData.hls"), buildLut(ByteLutCollection.Lut.HUE), buildLut(Messages.getString("HistogramData.lightness"), ByteLutCollection.Lut.GRAY),
+                        buildLut(Messages.getString("HistogramData.saturation"), ByteLutCollection.Lut.GRAY));
 
         private final ByteLut[] byteLut;
         private final String title;
 
         private Model(String name, ByteLut... luts) {
-            this.title = name + " (" + Arrays.stream(luts).map(ByteLut::getName).collect(Collectors.joining(",")) + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            this.title = name + " (" + Arrays.stream(luts).map(ByteLut::getName).collect(Collectors.joining(",")) + ")";
             this.byteLut = luts;
         }
 

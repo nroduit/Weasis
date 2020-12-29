@@ -53,11 +53,11 @@ public abstract class AbstractDicomNode {
     protected static final String T_TSUID = "tsuid"; //$NON-NLS-1$
 
     public enum Type {
-        DICOM(Messages.getString("AbstractDicomNode.dcm_node"), "dicomNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$
-        DICOM_CALLING(Messages.getString("AbstractDicomNode.dcm_calling_node"), "dicomCallingNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$
-        PRINTER(Messages.getString("AbstractDicomNode.dcm_printer"), "dicomPrinterNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$
-        WEB(Messages.getString("AbstractDicomNode.dcm_web_node"), "dicomWebNodes.xml"), //$NON-NLS-1$ //$NON-NLS-2$
-        WEB_QIDO(Messages.getString("AbstractDicomNode.dcm_rs_node"), "dicomWebQidoNodes.xml"); //$NON-NLS-1$ //$NON-NLS-2$
+        DICOM(Messages.getString("AbstractDicomNode.dcm_node"), "dicomNodes.xml"),
+        DICOM_CALLING(Messages.getString("AbstractDicomNode.dcm_calling_node"), "dicomCallingNodes.xml"),
+        PRINTER(Messages.getString("AbstractDicomNode.dcm_printer"), "dicomPrinterNodes.xml"),
+        WEB(Messages.getString("AbstractDicomNode.dcm_web_node"), "dicomWebNodes.xml"),
+        WEB_QIDO(Messages.getString("AbstractDicomNode.dcm_rs_node"), "dicomWebQidoNodes.xml");
 
         final String title;
         final String filename;
@@ -78,8 +78,8 @@ public abstract class AbstractDicomNode {
     }
 
     public enum UsageType {
-        STORAGE(Messages.getString("AbstractDicomNode.storage")), //$NON-NLS-1$
-        RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")), BOTH(Messages.getString("AbstractDicomNode.both")); //$NON-NLS-1$ //$NON-NLS-2$
+        STORAGE(Messages.getString("AbstractDicomNode.storage")),
+        RETRIEVE(Messages.getString("AbstractDicomNode.retrieve")), BOTH(Messages.getString("AbstractDicomNode.both"));
 
         final String title;
 
@@ -94,7 +94,7 @@ public abstract class AbstractDicomNode {
     }
 
     public enum RetrieveType {
-        CMOVE("C-MOVE"), CGET("C-GET"), WADO("WADO"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        CMOVE("C-MOVE"), CGET("C-GET"), WADO("WADO"); // NON-NLS
 
         String title;
 
@@ -213,7 +213,7 @@ public abstract class AbstractDicomNode {
             writer = factory.createXMLStreamWriter(
                 new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //$NON-NLS-1$
 
-            writer.writeStartDocument("UTF-8", "1.0"); //$NON-NLS-1$ //$NON-NLS-2$
+            writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS
             writer.writeStartElement(T_NODES);
             for (int i = 0; i < comboBox.getItemCount(); i++) {
                 AbstractDicomNode node = comboBox.getItemAt(i);
@@ -342,8 +342,8 @@ public abstract class AbstractDicomNode {
                 }
                 JMVUtils.showCenterScreen(dialog, comboBox);
             } else {
-                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"), //$NON-NLS-1$
-                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"),
+                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -354,7 +354,7 @@ public abstract class AbstractDicomNode {
             AbstractDicomNode node = comboBox.getItemAt(index);
             if (node.isLocal()) {
                 int response = JOptionPane.showConfirmDialog(comboBox,
-                    String.format(Messages.getString("AbstractDicomNode.delete_msg"), node), Type.DICOM.toString(), //$NON-NLS-1$
+                    String.format(Messages.getString("AbstractDicomNode.delete_msg"), node), Type.DICOM.toString(),
                     JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
                 if (response == 0) {
@@ -362,8 +362,8 @@ public abstract class AbstractDicomNode {
                     AbstractDicomNode.saveDicomNodes(comboBox, node.getType());
                 }
             } else {
-                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"), //$NON-NLS-1$
-                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
+                JOptionPane.showMessageDialog(comboBox, Messages.getString("AbstractDicomNode.only_usr_cr_msg"),
+                    Messages.getString("DicomPrintDialog.error"), JOptionPane.ERROR_MESSAGE);
             }
         }
     }

@@ -14,9 +14,9 @@ import org.weasis.core.api.Messages;
 public interface ActionState {
 
     enum NoneLabel {
-        NONE(Messages.getString("ActionState.none")), //$NON-NLS-1$
+        NONE(Messages.getString("ActionState.none")),
 
-        NONE_SERIES(Messages.getString("ActionState.none_all")); //$NON-NLS-1$
+        NONE_SERIES(Messages.getString("ActionState.none_all"));
 
         private final String title;
 

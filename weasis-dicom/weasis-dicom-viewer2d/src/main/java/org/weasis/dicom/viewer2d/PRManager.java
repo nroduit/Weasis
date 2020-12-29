@@ -100,8 +100,8 @@ public class PRManager {
                 PresetWindowLevel autoImg = getAutoLevelPreset(presetList);
                 if (!autoPR.equals(autoImg)) {
                     // It happens when PR contains a new Modality LUT
-                    String name = org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full"); //$NON-NLS-1$
-                    presets.add(new PresetWindowLevel(name + " [PR]", autoPR.getWindow(), autoPR.getLevel(), //$NON-NLS-1$
+                    String name = org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full");
+                    presets.add(new PresetWindowLevel(name + " [PR]", autoPR.getWindow(), autoPR.getLevel(), //NON-NLS
                         autoPR.getShape()));
                 }
             }

@@ -43,17 +43,17 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     public static final Icon ICON =
         new ImageIcon(ThreePointsCircleGraphic.class.getResource("/icon/22x22/draw-circle.png")); //$NON-NLS-1$
 
-    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true); //$NON-NLS-1$
+    public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true);
     public static final Measurement DIAMETER =
-        new Measurement(Messages.getString("measure.diameter"), 2, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.diameter"), 2, true, true, false);
     public static final Measurement PERIMETER =
-        new Measurement(Messages.getString("measure.perimeter"), 3, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.perimeter"), 3, true, true, false);
     public static final Measurement CENTER_X =
-        new Measurement(Messages.getString("measure.centerx"), 4, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.centerx"), 4, true, true, false);
     public static final Measurement CENTER_Y =
-        new Measurement(Messages.getString("measure.centery"), 5, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.centery"), 5, true, true, false);
     public static final Measurement RADIUS =
-        new Measurement(Messages.getString("measure.radius"), 6, true, true, false); //$NON-NLS-1$
+        new Measurement(Messages.getString("measure.radius"), 6, true, true, false);
 
     protected static final List<Measurement> MEASUREMENT_LIST = new ArrayList<>();
     static {
@@ -88,7 +88,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
 
     @Override
     public String getUIName() {
-        return Messages.getString("measure.three_pt_angle"); //$NON-NLS-1$
+        return Messages.getString("measure.three_pt_angle");
     }
 
     @Override
@@ -146,7 +146,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
                     measVal.add(new MeasureItem(DIAMETER, ratio * radiusPt * 2.0, adapter.getUnit()));
                 }
                 if (AREA.getComputed()) {
-                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; //$NON-NLS-1$ //$NON-NLS-2$
+                    String unit = "pix".equals(adapter.getUnit()) ? adapter.getUnit() : adapter.getUnit() + "2"; // NON-NLS
                     measVal.add(new MeasureItem(AREA, Math.PI * radiusPt * radiusPt * ratio * ratio, unit));
                 }
 
