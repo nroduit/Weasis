@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.geom.Point2D;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +73,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         deserializedGraphic = deserialize(serializationGraphic, getGraphicClass());
         assertThat(deserializedGraphic).isInstanceOfAny(Graphic.class, AbstractGraphic.class, getGraphicClass());
         assertThat(deserializedGraphic.getUuid()).isEqualTo(graphic.getUuid());
-        assertThat(deserializedGraphic).isEqualToComparingFieldByFieldRecursively(graphic);
+        assertThat(deserializedGraphic).usingRecursiveComparison().isEqualTo(graphic);
     }
 
     @SuppressWarnings("unchecked")
@@ -85,8 +86,8 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     public E createNewInstance() {
         try {
-            return getGraphicClass().newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
+            return getGraphicClass().getDeclaredConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Assert.fail("Cannot create instance");
         }
         return null;
@@ -136,7 +137,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         assertThat(expected).isNotNull();
 
         assertThat(result.getUuid()).isNotEmpty().isEqualTo(expected.getUuid());
-        assertThat(result).isEqualToComparingFieldByFieldRecursively(expected);
+        assertThat(result).usingRecursiveComparison().isEqualTo(expected);
 
         checkGraphicInterfaceFields(result, expected);
 
