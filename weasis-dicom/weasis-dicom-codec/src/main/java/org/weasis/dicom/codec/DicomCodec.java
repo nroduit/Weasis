@@ -51,8 +51,8 @@ public class DicomCodec implements Codec {
     public static final String NAME = "dcm4che"; //NON-NLS
     public static final String[] FILE_EXTENSIONS = { "dcm", "dic", "dicm", "dicom" }; // NON-NLS
 
-    private static final String LOGGER_KEY = "always.info.ItemParser"; //$NON-NLS-1$
-    private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser"; //$NON-NLS-1$
+    private static final String LOGGER_KEY = "always.info.ItemParser";
+    private static final String LOGGER_VAL = "org.dcm4che3.imageio.ItemParser";
 
     public static final BulkDataDescriptor BULKDATA_DESCRIPTOR = new BulkDataDescriptor() {
 
@@ -158,11 +158,11 @@ public class DicomCodec implements Codec {
          *      http://www.itu.int/ITU-T/asn1/uuid.html<br>
          *      http://healthcaresecprivacy.blogspot.ch/2011/02/creating-and-using-unique-id-uuid-oid.html
          */
-        String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot()); //$NON-NLS-1$
+        String weasisRootUID = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.dicom.root.uid", UIDUtils.getRoot());
         UIDUtils.setRoot(weasisRootUID);
 
         // Set the default encoding (must contain ASCII)
-        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); //$NON-NLS-1$
+        SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); //NON-NLS
 
         // Register SPI in imageio registry with the classloader of this bundle (provides also the classpath for
         // discovering the SPI files). Here are the codecs:
@@ -177,7 +177,7 @@ public class DicomCodec implements Codec {
                 Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, LOGGER_KEY, LOGGER_VAL);
                 if (logConfiguration == null) {
                     logConfiguration = confAdmin
-                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                        .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null);
                     Dictionary<String, Object> loggingProperties = new Hashtable<>();
                     loggingProperties.put("org.apache.sling.commons.log.level", "INFO"); // NON-NLS
                     loggingProperties.put("org.apache.sling.commons.log.names", LOGGER_VAL);

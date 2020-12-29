@@ -29,7 +29,7 @@ import org.weasis.dicom.explorer.DicomModel;
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class AuFactory implements SeriesViewerFactory {
 
-    public static final String NAME = "DICOM AU"; //$NON-NLS-1$
+    public static final String NAME = "DICOM AU";  //NON-NLS
 
     @Override
     public Icon getIcon() {

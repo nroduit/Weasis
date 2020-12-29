@@ -27,17 +27,17 @@ public class TagWTest {
     public static final int VM_MAX_1 = 20;
     public static final int VM_MAX_2 = -20;
 
-    public static final String DISPLAY_NAME_1 = "lorem ipsum"; //$NON-NLS-1$
-    public static final String KEYWORD_1 = "TagWTest"; //$NON-NLS-1$
-    public static final String KEYWORD_2 = "TagWTestSecond"; //$NON-NLS-1$
+    public static final String DISPLAY_NAME_1 = "lorem ipsum"; //NON-NLS
+    public static final String KEYWORD_1 = "TagWTest";
+    public static final String KEYWORD_2 = "TagWTestSecond";
 
-    public static final String STRING_VALUE_1 = "a string value"; //$NON-NLS-1$
+    public static final String STRING_VALUE_1 = "a string value"; //NON-NLS
     public static final Integer INTEGER_VALUE_1 = 123456789;
-    public static final String[] STRING_ARRAY = { "1", "2" }; //$NON-NLS-1$ //$NON-NLS-2$
-    public static final Object[] OBJECT_ARRAY = { "1", Boolean.TRUE }; //$NON-NLS-1$
+    public static final String[] STRING_ARRAY = { "1", "2" }; // NON-NLS
+    public static final Object[] OBJECT_ARRAY = { "1", Boolean.TRUE };
 
-    public static final String[] RESPONSE_STRING_ARRAY = { "Lorem", "ipsum", "dolor" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-    public static final String RESPONSE_STRING = "Lorem Ipsum Dolor sit amet"; //$NON-NLS-1$
+    public static final String[] RESPONSE_STRING_ARRAY = { "Lorem", "ipsum", "dolor" }; // NON-NLS
+    public static final String RESPONSE_STRING = "Lorem Ipsum Dolor sit amet"; //NON-NLS
 
     private TagW tag;
 
@@ -49,11 +49,11 @@ public class TagWTest {
     @Test
     public void test_constructors() throws Exception {
         try {
-            new TagW(ID_1, KEYWORD_1, DISPLAY_NAME_1, null, VM_MIN_2, VM_MAX_2, new String[] { "value1", "value2" }); //$NON-NLS-1$ //$NON-NLS-2$
-            Assert.fail("Must throws an exception"); //$NON-NLS-1$
+            new TagW(ID_1, KEYWORD_1, DISPLAY_NAME_1, null, VM_MIN_2, VM_MAX_2, new String[] { "value1", "value2" }); // NON-NLS
+            Assert.fail("Must throws an exception");
         } catch (Exception e) {
             assertThat(e).isExactlyInstanceOf(IllegalArgumentException.class)
-                .hasMessage("defaultValue is not compliant to the tag type"); //$NON-NLS-1$
+                .hasMessage("defaultValue is not compliant to the tag type"); //NON-NLS
         }
 
         tag = new TagW(ID_1, KEYWORD_1, DISPLAY_NAME_1, TagType.STRING, VM_MIN_1, VM_MAX_1, null);
@@ -78,7 +78,7 @@ public class TagWTest {
         assertThat(tag).isNotNull().hashCode();
         assertThat(tag.getId()).isEqualTo(ID_2);
         assertThat(tag.getKeyword()).isEqualTo(KEYWORD_1);
-        assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo("Tag W Test"); //$NON-NLS-1$
+        assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo("Tag W Test"); //NON-NLS
         assertThat(tag.getType()).isEqualTo(TagType.STRING);
         assertThat(tag.getValueMultiplicity()).isEqualTo(tag.vmMax).isEqualTo(VM_MAX_1);
         assertThat(tag.vmMin).isEqualTo(VM_MIN_1);
@@ -87,7 +87,7 @@ public class TagWTest {
         assertThat(tag).isNotNull().hashCode();
         assertThat(tag.getId()).isEqualTo(ID_2);
         assertThat(tag.getKeyword()).isEqualTo(KEYWORD_1);
-        assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo("Tag W Test"); //$NON-NLS-1$
+        assertThat(tag.getDisplayedName()).isEqualTo(tag.toString()).isEqualTo("Tag W Test"); //NON-NLS
         assertThat(tag.getType()).isEqualTo(TagType.BOOLEAN);
         assertThat(tag.getValueMultiplicity()).isEqualTo(tag.vmMax).isEqualTo(1);
         assertThat(tag.vmMin).isEqualTo(1);
@@ -211,34 +211,34 @@ public class TagWTest {
     @Test
     public void test_getFormattedText() throws Exception {
         assertThat(TagW.getFormattedText(null, null)).isEmpty();
-        assertThat(TagW.getFormattedText("", null)).isEmpty(); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText("", null)).isEmpty();
         assertThat(TagW.getFormattedText(STRING_VALUE_1, null)).isEqualTo(STRING_VALUE_1);
-        assertThat(TagW.getFormattedText(RESPONSE_STRING_ARRAY, null)).isEqualTo("Lorem\\ipsum\\dolor"); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText(RESPONSE_STRING_ARRAY, null)).isEqualTo("Lorem\\ipsum\\dolor"); //NON-NLS
 
         float[] floatValues = { 1.23f, 4.56f, 7.89f };
-        assertThat(TagW.getFormattedText(floatValues, null)).isEqualTo("1.23, 4.56, 7.89"); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText(floatValues, null)).isEqualTo("1.23, 4.56, 7.89");
 
         double[] doubleValues = { 9.8765d, 4.3210d };
-        assertThat(TagW.getFormattedText(doubleValues, null)).isEqualTo("9.8765, 4.321"); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText(doubleValues, null)).isEqualTo("9.8765, 4.321");
 
         int[] intValues = { 1234, 567, 890 };
-        assertThat(TagW.getFormattedText(intValues, null)).isEqualTo("1234, 567, 890"); //$NON-NLS-1$
+        assertThat(TagW.getFormattedText(intValues, null)).isEqualTo("1234, 567, 890");
 
         assertThat(TagW.getFormattedText(Boolean.TRUE, null)).isEqualTo(Boolean.TRUE.toString());
     }
 
     @Test
     public void test_getFormattedText_with_pattern() throws Exception {
-        String value = "Lorem Ipsum"; //$NON-NLS-1$
-        assertThat(TagW.getFormattedText(value, "")).isEqualTo(value); //$NON-NLS-1$
-        assertThat(TagW.getFormattedText(value, "$V")).isEqualTo(value); //$NON-NLS-1$
-        assertThat(TagW.getFormattedText(value, "$V  ")).isEqualTo(value); //$NON-NLS-1$
-        assertThat(TagW.getFormattedText(value, "  $V")).isEqualTo(value); //$NON-NLS-1$
-        assertThat(TagW.getFormattedText(value, "test: $V")).isEqualTo("test: " + value); //$NON-NLS-1$ //$NON-NLS-2$
-        assertThat(TagW.getFormattedText(value, "test: $V and $V")).isEqualTo("test: " + value + " and $V"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        String value = "Lorem Ipsum"; //NON-NLS
+        assertThat(TagW.getFormattedText(value, "")).isEqualTo(value);
+        assertThat(TagW.getFormattedText(value, "$V")).isEqualTo(value);
+        assertThat(TagW.getFormattedText(value, "$V  ")).isEqualTo(value); //NON-NLS
+        assertThat(TagW.getFormattedText(value, "  $V")).isEqualTo(value); //NON-NLS
+        assertThat(TagW.getFormattedText(value, "test: $V")).isEqualTo("test: " + value); // NON-NLS
+        assertThat(TagW.getFormattedText(value, "test: $V and $V")).isEqualTo("test: " + value + " and $V"); // NON-NLS
 
-        assertThat(TagW.getFormattedText(STRING_ARRAY, "test: $V and $V plus $V")) //$NON-NLS-1$
-            .isEqualTo("test: " + STRING_ARRAY[0] + "\\" + STRING_ARRAY[1] + " and $V plus $V"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        assertThat(TagW.getFormattedText(STRING_ARRAY, "test: $V and $V plus $V")) //NON-NLS
+            .isEqualTo("test: " + STRING_ARRAY[0] + "\\" + STRING_ARRAY[1] + " and $V plus $V"); // NON-NLS
     }
 
 }

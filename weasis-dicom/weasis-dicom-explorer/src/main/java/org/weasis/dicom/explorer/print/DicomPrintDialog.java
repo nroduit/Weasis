@@ -57,11 +57,11 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         IN11X14("11INX14IN", 11, 14), IN11X17("11INX17IN", 11, 17), IN14X14("14INX14IN", 14, 14), // NON-NLS
         IN14X17("14INX17IN", //NON-NLS
                         14, 17),
-        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //$NON-NLS-1$
-        CM24X30("24CMX30CM", convertMM2Inch(240), //$NON-NLS-1$
+        CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), //NON-NLS
+        CM24X30("24CMX30CM", convertMM2Inch(240), //NON-NLS
                         convertMM2Inch(300)),
-        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //$NON-NLS-1$
-        A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //$NON-NLS-1$
+        A4("A4", convertMM2Inch(210), convertMM2Inch(297)), //NON-NLS
+        A3("A3", convertMM2Inch(297), convertMM2Inch(420)); //NON-NLS
 
         private final String name;
         private final double width;

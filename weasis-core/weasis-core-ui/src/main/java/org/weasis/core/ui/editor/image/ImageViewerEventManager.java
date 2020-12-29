@@ -285,7 +285,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
             @Override
             public String getValueToDisplay() {
-                return getSliderValue() + " \u00b0"; //$NON-NLS-1$
+                return getSliderValue() + " \u00b0";
             }
         };
     }

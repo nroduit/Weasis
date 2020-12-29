@@ -62,9 +62,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
         Rectangle2D canvas =
             new Rectangle2D.Double(0, 0, view2d.getJComponent().getWidth(), view2d.getJComponent().getHeight());
-        actionsInView.put("origin.image.bound", canvas); //$NON-NLS-1$
-        actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd())); //$NON-NLS-1$
-        actionsInView.put("origin.center.offset", new Point2D.Double(model.getModelOffsetX(), model.getModelOffsetY())); //$NON-NLS-1$
+        actionsInView.put("origin.image.bound", canvas);
+        actionsInView.put("origin.zoom", view2d.getActionValue(ActionW.ZOOM.cmd()));
+        actionsInView.put("origin.center.offset", new Point2D.Double(model.getModelOffsetX(), model.getModelOffsetY()));
         // Do not use setSeries() because the view will be reset
         this.series = view2d.getSeries();
         setImage(view2d.getImage());
@@ -122,7 +122,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
         
         // TODO fix rotation issue
         Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
-        if ((rotationAngle == null || rotationAngle == 0) && g2d.getClass().getName().contains("print")) { //$NON-NLS-1$
+        if ((rotationAngle == null || rotationAngle == 0) && g2d.getClass().getName().contains("print")) {
             imageLayer.drawImageForPrinter(g2d, imagePrintingResolution, this);
         } else {
             imageLayer.drawImage(g2d);

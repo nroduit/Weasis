@@ -140,7 +140,7 @@ public class PresetWindowLevel {
             return null;
         }
 
-        String dicomKeyWord = " " + type; //$NON-NLS-1$
+        String dicomKeyWord = " " + type;
 
         ArrayList<PresetWindowLevel> presetList = new ArrayList<>();
 
@@ -154,9 +154,9 @@ public class PresetWindowLevel {
         LutShape defaultLutShape = LutShape.LINEAR; // Implicitly defined as default function in DICOM standard
 
         if (lutFunctionDescriptor != null) {
-            if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) { //$NON-NLS-1$
+            if ("SIGMOID".equalsIgnoreCase(lutFunctionDescriptor)) {
                 defaultLutShape = new LutShape(eFunction.SIGMOID, eFunction.SIGMOID + dicomKeyWord);
-            } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) { //$NON-NLS-1$
+            } else if ("LINEAR".equalsIgnoreCase(lutFunctionDescriptor)) {
                 defaultLutShape = new LutShape(eFunction.LINEAR, eFunction.LINEAR + dicomKeyWord);
             }
         }
@@ -169,7 +169,7 @@ public class PresetWindowLevel {
             int k = 1;
 
             for (int i = 0; i < windowLevelDefaultCount; i++) {
-                String explanation = defaultExplanation + " " + k; //$NON-NLS-1$
+                String explanation = defaultExplanation + " " + k;
                 if (wlExplanationList != null && i < wlExplanationList.length) {
                     if (StringUtil.hasText(wlExplanationList[i])) {
                         explanation = wlExplanationList[i]; // optional attribute
@@ -198,7 +198,7 @@ public class PresetWindowLevel {
             String defaultExplanation = Messages.getString("PresetWindowLevel.voi_lut");
 
             for (int i = 0; i < voiLUTsData.length; i++) {
-                String explanation = defaultExplanation + " " + i; //$NON-NLS-1$
+                String explanation = defaultExplanation + " " + i;
 
                 if (voiLUTsExplanation != null && i < voiLUTsExplanation.length) {
                     if (StringUtil.hasText(voiLUTsExplanation[i])) {
@@ -230,7 +230,7 @@ public class PresetWindowLevel {
         presetList.add(autoLevel);
 
         // Exclude Secondary Capture CT and when PR preset
-        if (image.getBitsStored() > 8 && !"[PR]".equals(type)) { //$NON-NLS-1$
+        if (image.getBitsStored() > 8 && !"[PR]".equals(type)) { //NON-NLS
             List<PresetWindowLevel> modPresets = presetListByModality.get(TagD.getTagValue(image, Tag.Modality));
             if (modPresets != null) {
                 presetList.addAll(modPresets);
@@ -284,7 +284,7 @@ public class PresetWindowLevel {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            File file = ResourceUtil.getResource("presets.xml"); //$NON-NLS-1$
+            File file = ResourceUtil.getResource("presets.xml");
             if (!file.canRead()) {
                 return Collections.emptyMap();
             }
@@ -300,7 +300,7 @@ public class PresetWindowLevel {
                 eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
-                        if ("presets".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                        if ("presets".equals(xmler.getName().getLocalPart())) { //NON-NLS
                             while (xmler.hasNext()) {
                                 readPresetListByModality(xmler, presets);
                             }
@@ -327,14 +327,14 @@ public class PresetWindowLevel {
         String key;
         if (eventType == XMLStreamConstants.START_ELEMENT) {
             key = xmler.getName().getLocalPart();
-            if ("preset".equals(key) && xmler.getAttributeCount() >= 4) { //$NON-NLS-1$
-                String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+            if ("preset".equals(key) && xmler.getAttributeCount() >= 4) { //NON-NLS
+                String name = xmler.getAttributeValue(null, "name"); //NON-NLS
                 try {
-                    String modality = xmler.getAttributeValue(null, "modality");//$NON-NLS-1$
-                    double window = Double.parseDouble(xmler.getAttributeValue(null, "window")); //$NON-NLS-1$
-                    double level = Double.parseDouble(xmler.getAttributeValue(null, "level")); //$NON-NLS-1$
-                    String shape = xmler.getAttributeValue(null, "shape");//$NON-NLS-1$
-                    Integer keyCode = TagUtil.getIntegerTagAttribute(xmler, "key", null);//$NON-NLS-1$
+                    String modality = xmler.getAttributeValue(null, "modality"); //NON-NLS
+                    double window = Double.parseDouble(xmler.getAttributeValue(null, "window")); //NON-NLS
+                    double level = Double.parseDouble(xmler.getAttributeValue(null, "level"));
+                    String shape = xmler.getAttributeValue(null, "shape"); //NON-NLS
+                    Integer keyCode = TagUtil.getIntegerTagAttribute(xmler, "key", null); //NON-NLS
                     LutShape lutShape = LutShape.getLutShape(shape);
                     PresetWindowLevel preset =
                         new PresetWindowLevel(name, window, level, lutShape == null ? LutShape.LINEAR : lutShape);

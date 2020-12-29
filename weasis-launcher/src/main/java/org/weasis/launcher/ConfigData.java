@@ -67,12 +67,12 @@ public class ConfigData {
     private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
 
     // Params, see https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
-    public static final String PARAM_CONFIG_URL = "wcfg"; //$NON-NLS-1$
-    public static final String PARAM_ARGUMENT = "arg"; //$NON-NLS-1$
-    public static final String PARAM_PROPERTY = "pro"; //$NON-NLS-1$
-    public static final String PARAM_CODEBASE = "cdb"; //$NON-NLS-1$
-    public static final String PARAM_CODEBASE_EXT = "cdb-ext"; //$NON-NLS-1$
-    public static final String PARAM_AUTHORIZATION = "auth"; //$NON-NLS-1$
+    public static final String PARAM_CONFIG_URL = "wcfg"; //NON-NLS
+    public static final String PARAM_ARGUMENT = "arg"; //NON-NLS
+    public static final String PARAM_PROPERTY = "pro"; //NON-NLS
+    public static final String PARAM_CODEBASE = "cdb"; //NON-NLS
+    public static final String PARAM_CODEBASE_EXT = "cdb-ext"; //NON-NLS
+    public static final String PARAM_AUTHORIZATION = "auth"; //NON-NLS
 
     private final List<String> arguments = new ArrayList<>();
     private final Properties properties = new Properties();
@@ -132,7 +132,7 @@ public class ConfigData {
         applyJavaProperty(CONFIG_PROPERTIES_PROP);
         applyJavaProperty(EXTENDED_PROPERTIES_PROP);
         for (String propertyName : System.getProperties().stringPropertyNames()) {
-            if (propertyName.startsWith("weasis.")) { //$NON-NLS-1$
+            if (propertyName.startsWith("weasis.")) { //NON-NLS
                 applyJavaProperty(propertyName);
             }
         }
@@ -150,13 +150,13 @@ public class ConfigData {
         // Set system property for dynamically loading only native libraries corresponding of the current platform
         setOsgiNativeLibSpecification();
 
-        String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default"); //$NON-NLS-1$
+        String profile = felixConfig.getProperty(P_WEASIS_PROFILE, "default");
         addProperty(P_WEASIS_PROFILE, profile);
 
         String name = felixConfig.getProperty(P_WEASIS_NAME, "Weasis");
         addProperty(P_WEASIS_NAME, name);
 
-        String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0"); //$NON-NLS-1$
+        String version = felixConfig.getProperty(P_WEASIS_VERSION, "0.0.0");
         addProperty(P_WEASIS_VERSION, version);
 
         String codebase = properties.getProperty(P_WEASIS_CODEBASE_URL);
@@ -166,7 +166,7 @@ public class ConfigData {
         if (!Utils.hasText(user)) {
             user = System.getProperty("user.name", "unknown"); // NON-NLS
             addProperty(P_WEASIS_USER, user);
-            addProperty("weasis.pref.local.session", Boolean.TRUE.toString()); //$NON-NLS-1$
+            addProperty("weasis.pref.local.session", Boolean.TRUE.toString());
         }
 
         // Define the http user agent
@@ -174,7 +174,7 @@ public class ConfigData {
             name + "/" + version + " (" + System.getProperty(P_OS_NAME) + "; " + System.getProperty("os.version") + "; " // NON-NLS
                 + System.getProperty("os.arch") + ")"); // NON-NLS
 
-        String portable = properties.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+        String portable = properties.getProperty("weasis.portable.dir");
         if (portable != null) {
             LOGGER.log(Level.INFO, "Starting portable version");
             String pkey = "weasis.portable.dicom.directory";
@@ -200,7 +200,7 @@ public class ConfigData {
         // Only required for dev purposes (running the app in IDE)
         String mvnRepo = System.getProperty("maven.localRepository", felixConfig.getProperty("maven.local.repo")); // NON-NLS
         if (mvnRepo != null) {
-            System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo)); //$NON-NLS-1$
+            System.setProperty("maven.localRepository", Utils.adaptPathToUri(mvnRepo));
         }
 
         // Perform variable substitution for system properties and convert to dictionary.
@@ -213,13 +213,13 @@ public class ConfigData {
 
     private void extractArgFromUri(String uri) {
         try {
-            String url = URLDecoder.decode(uri, "UTF-8"); //$NON-NLS-1$
-            String[] cmds = url.split("\\$"); //$NON-NLS-1$
-            boolean windows = System.getProperty( P_OS_NAME,"").toLowerCase().startsWith("win"); //$NON-NLS-1$ //$NON-NLS-2$
+            String url = URLDecoder.decode(uri, "UTF-8"); //NON-NLS
+            String[] cmds = url.split("\\$");
+            boolean windows = System.getProperty( P_OS_NAME,"").toLowerCase().startsWith("win"); // NON-NLS
             if (cmds.length > 0) {
                 for (int i = 1; i < cmds.length; i++) {
                     // Fix Windows issue (add a trailing slash)
-                    if (windows && i == cmds.length - 1 && cmds[i].endsWith("/")) { //$NON-NLS-1$
+                    if (windows && i == cmds.length - 1 && cmds[i].endsWith("/")) {
                         cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
                     }
                     arguments.add(cmds[i]);
@@ -245,33 +245,33 @@ public class ConfigData {
         applyConfigParams(getConfigParamsFromArgs(configArgs));
         applyConfigParams(getConfigParamsFromServicePath());
 
-        String codeBaseUrl = properties.getProperty(P_WEASIS_CODEBASE_URL, ""); //$NON-NLS-1$
+        String codeBaseUrl = properties.getProperty(P_WEASIS_CODEBASE_URL, "");
         if (!Utils.hasText(codeBaseUrl)) {
             applyLocalCodebase();
         }
 
         if (!properties.containsKey(CONFIG_PROPERTIES_PROP) && Utils.hasText(codeBaseUrl)) {
-            String configProp = String.format("%s/%s/%s", codeBaseUrl, CONFIG_DIRECTORY, CONFIG_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
+            String configProp = String.format("%s/%s/%s", codeBaseUrl, CONFIG_DIRECTORY, CONFIG_PROPERTIES_FILE_VALUE); //NON-NLS
             addProperty(CONFIG_PROPERTIES_PROP, configProp);
         }
 
-        String codeBaseExtUrl = properties.getProperty(P_WEASIS_CODEBASE_EXT_URL, ""); //$NON-NLS-1$
+        String codeBaseExtUrl = properties.getProperty(P_WEASIS_CODEBASE_EXT_URL, "");
         if (!properties.containsKey(EXTENDED_PROPERTIES_PROP) && Utils.hasText(codeBaseExtUrl)) {
             String extConfigProp =
-                String.format("%s/%s/%s", codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE); //$NON-NLS-1$
+                String.format("%s/%s/%s", codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE); //NON-NLS
             addProperty(EXTENDED_PROPERTIES_PROP, extConfigProp);
         }
 
-        configOutput.append("\n  Application local codebase = "); //$NON-NLS-1$
+        configOutput.append("\n  Application local codebase = "); //NON-NLS
         configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_LOCAL));
-        configOutput.append("\n  Application codebase URL = "); //$NON-NLS-1$
+        configOutput.append("\n  Application codebase URL = "); //NON-NLS
         configOutput.append(properties.getProperty(P_WEASIS_CODEBASE_URL));
     }
 
     private String applyLocalCodebase() {
         File localCodebase = findLocalCodebase();
         String baseURI = localCodebase.toURI().toString();
-        if (baseURI.endsWith("/")) { //$NON-NLS-1$
+        if (baseURI.endsWith("/")) {
             baseURI = baseURI.substring(0, baseURI.length() - 1);
         }
         try {
@@ -282,10 +282,10 @@ public class ConfigData {
             addProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
 
             // Allow export feature for local/portable version
-            addProperty("weasis.export.dicom", Boolean.TRUE.toString()); //$NON-NLS-1$
-            addProperty("weasis.export.dicom.send", Boolean.TRUE.toString()); //$NON-NLS-1$
-            addProperty("weasis.import.dicom", Boolean.TRUE.toString()); //$NON-NLS-1$
-            addProperty("weasis.import.dicom.qr", Boolean.TRUE.toString()); //$NON-NLS-1$
+            addProperty("weasis.export.dicom", Boolean.TRUE.toString());
+            addProperty("weasis.export.dicom.send", Boolean.TRUE.toString());
+            addProperty("weasis.import.dicom", Boolean.TRUE.toString());
+            addProperty("weasis.import.dicom.qr", Boolean.TRUE.toString());
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Apply Codebase", e);
         }
@@ -351,7 +351,7 @@ public class ConfigData {
     }
 
     private void addProperties(Collection<String> properties) {
-        Pattern pattern = Pattern.compile("\\s+"); //$NON-NLS-1$
+        Pattern pattern = Pattern.compile("\\s+");
 
         properties.forEach(value -> {
             String[] result = pattern.split(value, 2);
@@ -388,57 +388,57 @@ public class ConfigData {
     }
 
     public void applyProxy(String dir) {
-        File file = new File(dir, "persitence.properties"); //$NON-NLS-1$
+        File file = new File(dir, "persitence.properties");
         if (!file.canRead()) {
             return;
         }
         Properties p = new Properties();
         FileUtil.readProperties(file, p);
 
-        boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual")); //$NON-NLS-1$
+        boolean mproxy = Utils.getEmptytoFalse(p.getProperty("proxy.manual"));
 
         if (mproxy) {
-            String exceptions = p.getProperty("proxy.exceptions"); //$NON-NLS-1$
-            String val = p.getProperty("proxy.http.host"); //$NON-NLS-1$
-            applyProxyProperty("http.proxyHost", val, mproxy); //$NON-NLS-1$
+            String exceptions = p.getProperty("proxy.exceptions");
+            String val = p.getProperty("proxy.http.host");
+            applyProxyProperty("http.proxyHost", val, mproxy);
             if (Utils.hasText(val)) {
                 applyProxyProperty("http.proxyPort", p.getProperty("proxy.http.port"), mproxy); // NON-NLS
                 applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
             }
 
-            val = p.getProperty("proxy.https.host"); //$NON-NLS-1$
-            applyProxyProperty("https.proxyHost", val, mproxy); //$NON-NLS-1$
+            val = p.getProperty("proxy.https.host");
+            applyProxyProperty("https.proxyHost", val, mproxy);
             if (Utils.hasText(val)) {
                 applyProxyProperty("https.proxyPort", p.getProperty("proxy.https.port"), mproxy); // NON-NLS
                 applyProxyProperty("http.nonProxyHosts", exceptions, mproxy);
             }
 
-            val = p.getProperty("proxy.ftp.host"); //$NON-NLS-1$
-            applyProxyProperty("ftp.proxyHost", val, mproxy); //$NON-NLS-1$
+            val = p.getProperty("proxy.ftp.host");
+            applyProxyProperty("ftp.proxyHost", val, mproxy);
             if (Utils.hasText(val)) {
                 applyProxyProperty("ftp.proxyPort", p.getProperty("proxy.ftp.port"), mproxy); // NON-NLS
                 applyProxyProperty("ftp.nonProxyHosts", exceptions, mproxy);
             }
 
-            val = p.getProperty("proxy.socks.host"); //$NON-NLS-1$
-            applyProxyProperty("socksProxyHost", val, mproxy); //$NON-NLS-1$
+            val = p.getProperty("proxy.socks.host");
+            applyProxyProperty("socksProxyHost", val, mproxy);
             if (Utils.hasText(val)) {
                 applyProxyProperty("socksProxyPort", p.getProperty("proxy.socks.port"), mproxy); // NON-NLS
             }
 
-            boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth")); //$NON-NLS-1$
+            boolean auth = Utils.getEmptytoFalse(p.getProperty("proxy.auth"));
             if (auth) {
-                String authUser = p.getProperty("proxy.auth.user"); //$NON-NLS-1$
+                String authUser = p.getProperty("proxy.auth.user");
                 String authPassword;
                 try {
-                    byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null); //$NON-NLS-1$
+                    byte[] pwd = Utils.getByteArrayProperty(p, "proxy.auth.pwd", null);
                     if (pwd != null) {
-                        pwd = Utils.decrypt(pwd, "proxy.auth"); //$NON-NLS-1$
+                        pwd = Utils.decrypt(pwd, "proxy.auth");
                         if (pwd != null && pwd.length > 0) {
                             authPassword = new String(pwd);
                             applyPasswordAuthentication(authUser, authPassword);
-                            applyProxyProperty("http.proxyUser", authUser, mproxy); //$NON-NLS-1$
-                            applyProxyProperty("http.proxyPassword", authPassword, mproxy); //$NON-NLS-1$
+                            applyProxyProperty("http.proxyUser", authUser, mproxy);
+                            applyProxyProperty("http.proxyPassword", authPassword, mproxy);
                         }
                     }
                 } catch (Exception e) {
@@ -467,11 +467,11 @@ public class ConfigData {
         boolean files = true;
         int length = args.length;
         for (int i = 0; i < length; i++) {
-            if (args[i].startsWith("$") && args[i].length() > 1) { //$NON-NLS-1$
+            if (args[i].startsWith("$") && args[i].length() > 1) {
                 files = false;
                 StringBuilder command = new StringBuilder(args[i].substring(1));
                 // look for parameters
-                while (i + 1 < length && !args[i + 1].startsWith("$")) { //$NON-NLS-1$
+                while (i + 1 < length && !args[i + 1].startsWith("$")) {
                     i++;
                     command.append(' ');
                     command.append(args[i]);
@@ -484,7 +484,7 @@ public class ConfigData {
             for (int i = 0; i < args.length; i++) {
                 String val = args[i];
                 // DICOM files
-                if (val.startsWith("file:")) { //$NON-NLS-1$
+                if (val.startsWith("file:")) { //NON-NLS
                     try {
                         val = new File(new URI(args[i])).getPath();
                     } catch (URISyntaxException e) {
@@ -498,7 +498,7 @@ public class ConfigData {
     }
 
     private List<String> extractWeasisConfigArguments() {
-        String configCmd = "weasis:config"; //$NON-NLS-1$
+        String configCmd = "weasis:config"; //NON-NLS
         for (String cmd : arguments) {
             if (cmd.startsWith(configCmd) && cmd.length() > configCmd.length() + 2) {
                 arguments.remove(cmd);
@@ -519,7 +519,7 @@ public class ConfigData {
             return;
         }
 
-        String[] vals = argument.split("=", 2); //$NON-NLS-1$
+        String[] vals = argument.split("=", 2);
         if (vals.length != 2) {
             return;
         }
@@ -547,7 +547,7 @@ public class ConfigData {
         try {
             URI configServiceUri = new URI(configServicePath);
 
-            if (configServiceUri.getScheme().startsWith("file")) { //$NON-NLS-1$
+            if (configServiceUri.getScheme().startsWith("file")) {
                 stream = new FileInputStream(new File(configServiceUri));
             } else {
                 URLConnection urlConnection = FileUtil.getAdaptedConnection(new URI(configServicePath).toURL(), false);
@@ -596,12 +596,12 @@ public class ConfigData {
             switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
                     switch (xmler.getLocalName()) {
-                        case "property": //$NON-NLS-1$
-                            String name = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
-                            String value = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
-                            addConfigParam(configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); //$NON-NLS-1$
+                        case "property": //NON-NLS
+                            String name = xmler.getAttributeValue(null, "name"); //NON-NLS
+                            String value = xmler.getAttributeValue(null, "value"); //NON-NLS
+                            addConfigParam(configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); //NON-NLS
                             break;
-                        case "argument": //$NON-NLS-1$
+                        case "argument": //NON-NLS
                             addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
                             break;
                     }
@@ -619,7 +619,7 @@ public class ConfigData {
         Properties felixConfig = new Properties();
         // Read the properties file
         if (propURI != null) {
-            configOutput.append("\n  Application configuration file = "); //$NON-NLS-1$
+            configOutput.append("\n  Application configuration file = "); //NON-NLS
             configOutput.append(propURI);
             WeasisLauncher.readProperties(propURI, felixConfig);
 
@@ -629,7 +629,7 @@ public class ConfigData {
 
         propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
         if (propURI != null) {
-            configOutput.append("\n  Application extension configuration file = "); //$NON-NLS-1$
+            configOutput.append("\n  Application extension configuration file = "); //NON-NLS
             configOutput.append(propURI);
             // Extended properties, add or override existing properties
             WeasisLauncher.readProperties(propURI, felixConfig);
@@ -637,7 +637,7 @@ public class ConfigData {
         checkMinimalVersion(felixConfig);
 
         if (felixConfig.isEmpty()) {
-            throw new IllegalStateException("Cannot load weasis config!"); //$NON-NLS-1$
+            throw new IllegalStateException("Cannot load weasis config!");
         }
 
         // Build a hash the properties just after reading. It will allow to compare with a new app instance.
@@ -674,7 +674,7 @@ public class ConfigData {
         String custom = properties.getProperty(configProp);
         if (Utils.hasText(custom)) {
             try {
-                if (custom.startsWith("file:conf/")) { //$NON-NLS-1$
+                if (custom.startsWith("file:conf/")) { //NON-NLS
                     propURL = new File(findLocalCodebase(), custom.substring(5)).toURI();
                 } else {
                     propURL = new URI(custom);
@@ -712,10 +712,10 @@ public class ConfigData {
         // Determine where the configuration directory is by figuring
         // out where weasis-launcher.jar is located on the system class path.
         String jarLocation = null;
-        String classpath = System.getProperty("java.class.path"); //$NON-NLS-1$
+        String classpath = System.getProperty("java.class.path");
         String[] vals = classpath.split(File.pathSeparator);
         for (String cp : vals) {
-            if (cp.endsWith("weasis-launcher.jar")) { //$NON-NLS-1$
+            if (cp.endsWith("weasis-launcher.jar")) { //NON-NLS
                 jarLocation = cp;
             }
         }
@@ -739,9 +739,9 @@ public class ConfigData {
         // Follows the OSGI specification to use Bundle-NativeCode in the bundle fragment :
         // http://www.osgi.org/Specifications/Reference
         String osName = System.getProperty(P_OS_NAME);
-        String osArch = System.getProperty("os.arch"); //$NON-NLS-1$
+        String osArch = System.getProperty("os.arch");
         if (Utils.hasText(osName) && Utils.hasText(osArch)) {
-            if (osName.toLowerCase().startsWith("win")) { //$NON-NLS-1$
+            if (osName.toLowerCase().startsWith("win")) {
                 // All Windows versions with a specific processor architecture (x86 or x86-64) are grouped under
                 // windows. If you need to make different native libraries for the Windows versions, define it in the
                 // Bundle-NativeCode tag of the bundle fragment.
@@ -774,7 +774,7 @@ public class ConfigData {
             } else {
                 osArch = osArch.toLowerCase();
             }
-            System.setProperty(WeasisLauncher.P_NATIVE_LIB_SPEC, osName + "-" + osArch); //$NON-NLS-1$
+            System.setProperty(WeasisLauncher.P_NATIVE_LIB_SPEC, osName + "-" + osArch);
         }
     }
 

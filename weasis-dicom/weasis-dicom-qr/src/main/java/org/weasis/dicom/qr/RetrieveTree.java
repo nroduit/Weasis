@@ -61,7 +61,7 @@ public class RetrieveTree extends JPanel {
         };
 
         // Register tooltips
-        checkboxTree.setToolTipText(""); //$NON-NLS-1$
+        checkboxTree.setToolTipText("");
 
         /**
          * At this point checking Paths are supposed to be binded at Series Level but depending on the CheckingMode it
@@ -106,7 +106,7 @@ public class RetrieveTree extends JPanel {
             }
 
         }
-        throw new IllegalStateException("CheckboxTree cannot be null"); //$NON-NLS-1$
+        throw new IllegalStateException("CheckboxTree cannot be null");
     }
 
 }

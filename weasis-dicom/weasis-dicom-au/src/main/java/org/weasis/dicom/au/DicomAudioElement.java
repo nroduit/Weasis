@@ -14,7 +14,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 
 public class DicomAudioElement extends DicomSpecialElement {
 
-    public static final String AUDIO_MIMETYPE = "audio/basic"; //$NON-NLS-1$
+    public static final String AUDIO_MIMETYPE = "audio/basic";
 
     public DicomAudioElement(DicomMediaIO mediaIO) {
         super(mediaIO);

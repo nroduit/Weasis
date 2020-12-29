@@ -15,9 +15,9 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 
 @org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class, immediate = false)
 public class AuElementFactory implements DicomSpecialElementFactory {
-    private static final String[] modalities = { "AU" }; //$NON-NLS-1$
+    private static final String[] modalities = { "AU" };
 
-    public static final String SERIES_AU_MIMETYPE = "au/dicom"; //$NON-NLS-1$
+    public static final String SERIES_AU_MIMETYPE = "au/dicom"; //NON-NLS
 
     @Override
     public String getSeriesMimeType() {

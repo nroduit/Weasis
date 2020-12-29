@@ -19,13 +19,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class ParallelLineGraphicTest extends GraphicTester<ParallelLineGraphic> {
-    private static final String XML_0 = "/graphic/parallelLine/parallelLine.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/parallelLine/parallelLine.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/parallelLine/parallelLine.graphic.0.xml";  //NON-NLS
+    private static final String XML_1 = "/graphic/parallelLine/parallelLine.graphic.1.xml";  //NON-NLS
 
-    static final String BASIC_TPL = "<parallelLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</parallelLine>"; //$NON-NLS-1$
+    static final String BASIC_TPL = "<parallelLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"  //NON-NLS
+        + "<paint rgb=\"%s\"/>"  //NON-NLS
+        + "<pts/>"  //NON-NLS
+        + "</parallelLine>";  //NON-NLS
 
     public static final ParallelLineGraphic COMPLETE_OBJECT = new ParallelLineGraphic();
     static {

@@ -22,14 +22,14 @@ import org.weasis.core.api.media.data.Tagable;
 import org.weasis.dicom.codec.TagD;
 
 public class GlobalHelper extends MockHelper {
-    protected static String patientIdValue = "12345"; //$NON-NLS-1$
-    protected static String patientNameValue = "John DOE"; //$NON-NLS-1$
-    protected static String issuerOfPatientIdValue = "6789"; //$NON-NLS-1$
-    protected static String patientBirthDateValue = "19850216"; //$NON-NLS-1$
-    protected static String patientSexValue = "M"; //$NON-NLS-1$
-    protected static String studyDateValue = "20160603"; //$NON-NLS-1$
-    protected static String studyInstanceUIDValue = "2.25.35.13108031698769009477890994130583367923"; //$NON-NLS-1$
-    protected static String modalityValue = "CR"; //$NON-NLS-1$
+    protected static String patientIdValue = "12345"; 
+    protected static String patientNameValue = "John DOE";  //NON-NLS
+    protected static String issuerOfPatientIdValue = "6789"; 
+    protected static String patientBirthDateValue = "19850216"; 
+    protected static String patientSexValue = "M";  //NON-NLS
+    protected static String studyDateValue = "20160603"; 
+    protected static String studyInstanceUIDValue = "2.25.35.13108031698769009477890994130583367923"; 
+    protected static String modalityValue = "CR"; 
 
     @Mock
     protected static Tagable tagable;

@@ -102,11 +102,11 @@ public class TagD extends TagW {
     }
 
     public enum Level {
-        PATIENT("Patient"), //$NON-NLS-1$
-        STUDY("Study"), //$NON-NLS-1$
-        SERIES("Series"), //$NON-NLS-1$
-        INSTANCE("Instance"), //$NON-NLS-1$
-        FRAME("Frame"); //$NON-NLS-1$
+        PATIENT("Patient"),  //NON-NLS
+        STUDY("Study"),  //NON-NLS
+        SERIES("Series"),  //NON-NLS
+        INSTANCE("Instance"),  //NON-NLS
+        FRAME("Frame");  //NON-NLS
 
         private final String tag;
 
@@ -412,7 +412,7 @@ public class TagD extends TagW {
         if (TagType.DICOM_PERSON_NAME.equals(type)) {
             if (value instanceof String[]) {
                 return Arrays.asList((String[]) value).stream().map(TagD::getDicomPersonName)
-                    .collect(Collectors.joining(", ")); //$NON-NLS-1$
+                    .collect(Collectors.joining(", ")); 
             }
             return getDicomPersonName(value.toString());
         } else if (TagType.DICOM_PERIOD.equals(type)) {
@@ -484,7 +484,7 @@ public class TagD extends TagW {
             // disable external entities for security
             factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
             factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-            stream = TagD.class.getResourceAsStream("/dataelements.xml"); //$NON-NLS-1$
+            stream = TagD.class.getResourceAsStream("/dataelements.xml");  //NON-NLS
             xmler = factory.createXMLStreamReader(stream);
 
             int eventType;
@@ -493,13 +493,13 @@ public class TagD extends TagW {
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        if ("dataelements".equals(key)) { //$NON-NLS-1$
+                        if ("dataelements".equals(key)) {  //NON-NLS
                             while (xmler.hasNext()) {
                                 eventType = xmler.next();
                                 switch (eventType) {
                                     case XMLStreamConstants.START_ELEMENT:
                                         key = xmler.getName().getLocalPart();
-                                        if ("el".equals(key)) { //$NON-NLS-1$
+                                        if ("el".equals(key)) { 
                                             readElement(xmler, map);
                                         }
                                         break;
@@ -526,11 +526,11 @@ public class TagD extends TagW {
 
     private static void readElement(XMLStreamReader xmler, Map<Integer, TagD> map) throws XMLStreamException {
 
-        String tag = xmler.getAttributeValue(null, "tag");//$NON-NLS-1$
-        String keyword = xmler.getAttributeValue(null, "keyword");//$NON-NLS-1$
-        String vr = xmler.getAttributeValue(null, "vr");//$NON-NLS-1$
-        String vm = xmler.getAttributeValue(null, "vm");//$NON-NLS-1$
-        String retired = xmler.getAttributeValue(null, "retired");//$NON-NLS-1$
+        String tag = xmler.getAttributeValue(null, "tag"); //NON-NLS
+        String keyword = xmler.getAttributeValue(null, "keyword"); //NON-NLS
+        String vr = xmler.getAttributeValue(null, "vr"); //NON-NLS
+        String vm = xmler.getAttributeValue(null, "vm"); //NON-NLS
+        String retired = xmler.getAttributeValue(null, "retired"); //NON-NLS
 
         int eventType;
         boolean state = true;
@@ -542,12 +542,12 @@ public class TagD extends TagW {
                         String disp = xmler.getText();
                         if (StringUtil.hasText(disp)) {
                             try {
-                                if (tag.startsWith("F")) { //$NON-NLS-1$
+                                if (tag.startsWith("F")) {  //NON-NLS
                                     return;
                                 }
                                 int tagID = Integer.parseInt(tag.replace('x', '0'), 16);
 
-                                String[] vms = vm.split("-", 2); //$NON-NLS-1$
+                                String[] vms = vm.split("-", 2); 
                                 int vmMin;
                                 int vmMax;
                                 if (vms.length == 1) {
@@ -589,7 +589,7 @@ public class TagD extends TagW {
 
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("el".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                    if ("el".equals(xmler.getName().getLocalPart())) { 
                         state = false;
                     }
                     break;
@@ -798,7 +798,7 @@ public class TagD extends TagW {
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); 
     }
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
@@ -831,7 +831,7 @@ public class TagD extends TagW {
         // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
         // For ex: DICOM (0010,1010) = 031Y
         if (value.length() < 2) {
-            return ""; //$NON-NLS-1$
+            return ""; 
         }
 
         String unit;
@@ -876,24 +876,24 @@ public class TagD extends TagW {
          * (0x3d) characters.
          */
         StringBuilder buf = new StringBuilder();
-        String[] names = name.split("="); //$NON-NLS-1$
+        String[] names = name.split("="); 
         for (int k = 0; k < names.length; k++) {
             if (k > 0) {
-                buf.append("="); //$NON-NLS-1$
+                buf.append("="); 
             }
             /*
              * In DICOM “family name^given name^middle name^prefix^suffix”
              *
              * In HL7 “family name^given name^middle name^suffix^prefix^ degree”
              */
-            String[] vals = names[k].split("\\^"); //$NON-NLS-1$
+            String[] vals = names[k].split("\\^"); 
 
             for (int i = 0; i < vals.length; i++) {
                 if (StringUtil.hasText(vals[i])) {
                     if (i == 1 || i >= 3) {
-                        buf.append(", "); //$NON-NLS-1$
+                        buf.append(", "); 
                     } else {
-                        buf.append(" "); //$NON-NLS-1$
+                        buf.append(" "); 
                     }
                     buf.append(vals[i]);
                 }

@@ -48,7 +48,7 @@ public class ImageInfoHelper {
             return BigDecimal.valueOf(expectedImageSize / currentImageSize).setScale(5, RoundingMode.HALF_UP)
                 .doubleValue();
         } catch (NullPointerException e) {
-            LOGGER.warn("An error occurs when calculate ratio for : " + imgInfo + ", resolution=> " + resolution, e); //$NON-NLS-1$ //$NON-NLS-2$
+            LOGGER.warn("An error occurs when calculate ratio for : " + imgInfo + ", resolution=> " + resolution, e);
             return null;
         }
     }

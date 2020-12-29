@@ -44,7 +44,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     public static final Integer POINTS_NUMBER = 6;
 
     public static final Icon ICON =
-        new ImageIcon(ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png")); //$NON-NLS-1$
+        new ImageIcon(ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png"));
 
     public static final Measurement DISTANCE =
         new Measurement(Messages.getString("measure.distance"), 1, true, true, true);
@@ -100,7 +100,7 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn");
         }
         buildShape(null);
     }

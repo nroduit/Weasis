@@ -43,7 +43,7 @@ public class Activator implements BundleActivator {
         if (bundle != null) {
             bundle.start();
         }
-        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look"); //$NON-NLS-1$
+        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
         if (StringUtil.hasText(className)) {
             LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
             if (lf == null || !className.equals(lf.getClass().getName())) {
@@ -56,7 +56,7 @@ public class Activator implements BundleActivator {
             final WeasisWin mainWindow = new WeasisWin();
             // Register "weasis" command
             Dictionary<String, Object> dict = new Hashtable<>();
-            dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //$NON-NLS-1$
+            dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //NON-NLS
             dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisWin.functions.toArray(new String[WeasisWin.functions.size()]));
             bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
             try {
@@ -64,7 +64,7 @@ public class Activator implements BundleActivator {
                 mainWindow.showWindow();
             } catch (Exception ex) {
                 // It is better to exit than to let run a zombie process
-                LOGGER.error("Cannot start GUI", ex);//$NON-NLS-1$
+                LOGGER.error("Cannot start GUI", ex);
                 System.exit(-1);
             }
             MainWindowListener listener = BundlePreferences.getService(bundleContext, MainWindowListener.class);

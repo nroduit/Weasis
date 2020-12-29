@@ -155,7 +155,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
         if (values == null) {
             return new TagW[0];
         }
-        String[] val = values.split(","); //$NON-NLS-1$
+        String[] val = values.split(",");
         List<TagW> list = new ArrayList<>(val.length);
         for (String s : val) {
             TagW tag = TagD.get(s.trim());

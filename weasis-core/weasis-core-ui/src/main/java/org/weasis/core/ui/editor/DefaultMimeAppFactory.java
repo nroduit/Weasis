@@ -23,8 +23,8 @@ import org.weasis.core.ui.Messages;
 
 public class DefaultMimeAppFactory implements SeriesViewerFactory {
 
-    public static final String NAME = Messages.getString("DefaultMimeAppFactory.sys_app"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("DefaultMimeAppFactory.sys_app");
+    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png"));
     public static final MimeSystemAppViewer MimeSystemViewer = new MimeSystemAppViewer() {
 
         @Override
@@ -41,9 +41,9 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
                         // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
                         // in KDE session, but actually does not support it.
                         // http://bugs.sun.com/view_bug.do?bug_id=6486393
-                        if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+                        if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //NON-NLS
                             startAssociatedProgramFromLinux(m.getFile());
-                        } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                        } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //NON-NLS
                             // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
                             startAssociatedProgramFromWinCMD(m.getFile());
                         } else if (Desktop.isDesktopSupported()) {
@@ -83,7 +83,7 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return "";
     }
 
     @Override

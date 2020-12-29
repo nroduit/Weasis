@@ -38,7 +38,7 @@ public class ImportToolBar extends WtoolBar {
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
             final JButton btnImport =
                 new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png")));
             btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
@@ -48,7 +48,7 @@ public class ImportToolBar extends WtoolBar {
             add(btnImport);
         }
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
             final JButton btnImport =
                 new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import-cd.png")));
             btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd"));
@@ -102,9 +102,9 @@ public class ImportToolBar extends WtoolBar {
 
     public static DefaultAction buildImportAction(Component parent, DicomModel model, String actionName) {
         return new DefaultAction(actionName,
-            new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")), event -> { //$NON-NLS-1$
-                if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) { //$NON-NLS-1$
-                    showAction(parent, model, Messages.getString("LocalImport.local_dev"), false); //$NON-NLS-1$
+            new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")), event -> {
+                if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
+                    showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
                 } else {
                     JOptionPane.showMessageDialog((Component) event.getSource(),
                         Messages.getString("DicomExplorer.export_perm"));

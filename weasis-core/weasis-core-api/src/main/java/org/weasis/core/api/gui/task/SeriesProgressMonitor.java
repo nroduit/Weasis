@@ -22,7 +22,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesProgressMonitor extends FilterInputStream {
-    private static final String INTERUPTION_LABEL = "progress";//$NON-NLS-1$
+    private static final String INTERUPTION_LABEL = "progress"; //NON-NLS
     protected final Series<?> series;
     protected int nread = 0;
     protected int size = 0;

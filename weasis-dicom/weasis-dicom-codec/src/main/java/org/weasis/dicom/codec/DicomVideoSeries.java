@@ -123,9 +123,9 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         if (frames != null) {
             toolTips.append(convertSecondsInTime(frames / speed));
         }
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>");
 
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>");
         return toolTips.toString();
     }
 
@@ -133,7 +133,7 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         int hours = totalSecs / 3600;
         int minutes = (totalSecs % 3600) / 60;
         int seconds = totalSecs % 60;
-        return String.format("%02d:%02d:%02d", hours, minutes, seconds); //$NON-NLS-1$
+        return String.format("%02d:%02d:%02d", hours, minutes, seconds); //NON-NLS
     }
 
     @Override

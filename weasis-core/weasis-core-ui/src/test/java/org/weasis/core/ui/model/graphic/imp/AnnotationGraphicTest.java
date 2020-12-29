@@ -22,13 +22,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
-    private static final String XML_0 = "/graphic/annotation/annotation.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/annotation/annotation.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/annotation/annotation.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/annotation/annotation.graphic.1.xml"; //NON-NLS
 
-    static final String BASIC_TPL = "<annotation fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</annotation>"; //$NON-NLS-1$
+    static final String BASIC_TPL = "<annotation fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</annotation>"; //NON-NLS
 
     public static final AnnotationGraphic COMPLETE_OBJECT = new AnnotationGraphic();
     static {

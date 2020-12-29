@@ -39,7 +39,7 @@ public final class JIThumbnailCache {
     private final LinkedBlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     // Set only one concurrent thread. The time consuming part is in loading image thread (see ImageElement)
     private final ExecutorService qExecutor =
-        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache")); //$NON-NLS-1$
+        new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, queue, ThreadUtil.getThreadFactory("Thumbnail Cache")); //NON-NLS
 
     private final Map<URI, ThumbnailIcon> cachedThumbnails;
 
@@ -146,8 +146,8 @@ public final class JIThumbnailCache {
 
             // Get the final that contain the thumbnail when the uncompress mode is activated
             File file = diskObject.getFile();
-            if (file != null && file.getName().endsWith(".wcv")) { //$NON-NLS-1$
-                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg")); //$NON-NLS-1$
+            if (file != null && file.getName().endsWith(".wcv")) {
+                File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
                 if (thumbFile.canRead()) {
                     img = ImageProcessor.readImage(thumbFile);
                 }

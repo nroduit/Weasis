@@ -150,7 +150,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
     }
 
-    public static final String PROP_LAYER_OFFSET = "layer.offset"; //$NON-NLS-1$
+    public static final String PROP_LAYER_OFFSET = "layer.offset";
 
     public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
@@ -339,7 +339,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         pixelInfo.setChannelNames(getChannelNames(image));
                     }
                 } catch (Exception e) {
-                    LOGGER.error("Get pixel value", e);//$NON-NLS-1$
+                    LOGGER.error("Get pixel value", e);
                 }
             }
         }
@@ -451,7 +451,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                 setImage(media);
             }
         } catch (Exception e) {
-            AuditLog.logError(LOGGER, e, "Unexpected error:"); //$NON-NLS-1$
+            AuditLog.logError(LOGGER, e, "Unexpected error:"); //NON-NLS
             imageLayer.setImage(null, null);
             closeLens();
         } finally {
@@ -516,9 +516,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             // Get the displayed width (adapted in case of the aspect ratio is not 1/1)
             boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
             int width = source == null || nosquarePixel
-                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.width(); //$NON-NLS-1$
+                ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) : source.width(); //NON-NLS
             int height = source == null || nosquarePixel
-                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.height(); //$NON-NLS-1$
+                ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) : source.height(); //NON-NLS
             return new Rectangle(0, 0, width, height);
         }
         return new Rectangle(0, 0, 512, 512);
@@ -598,7 +598,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                         for (int i = 0; i < elements.length; i++) {
                             elements[i] = Integer.toString(bpp);
                         }
-                        String pixSize = String.join(",", elements); //$NON-NLS-1$
+                        String pixSize = String.join(",", elements);
 
                         AuditLog.LOGGER.info("open:image size:{},{} depth:{}", image.width(), image.height(), pixSize);
                     }
@@ -841,7 +841,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         int fontSize =
             // Set font size according to the view size
             (int) Math
-                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0) //$NON-NLS-1$
+                .ceil(10 / ((this.getGraphics().getFontMetrics(FontTools.getFont12()).stringWidth("0123456789") * 7.0)
                     / getWidth()));
         fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
         return new Font(Font.SANS_SERIF, 0, fontSize);
@@ -1531,7 +1531,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Rectangle2D area = getViewModel().getModelArea();
             if (graphs.stream().anyMatch(g -> !g.getBounds(null).intersects(area))) {
                 int option = JOptionPane.showConfirmDialog(this,
-                    "At least one graphic is outside the image.\n Do you want to continue?"); //$NON-NLS-1$
+                    "At least one graphic is outside the image.\n Do you want to continue?"); //NON-NLS
                 if (option != JOptionPane.YES_OPTION) {
                     return;
                 }
@@ -1550,7 +1550,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {
         Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-        ImageIcon icon = new ImageIcon(DefaultView2d.class.getResource("/icon/cursor/" + filename)); //$NON-NLS-1$
+        ImageIcon icon = new ImageIcon(DefaultView2d.class.getResource("/icon/cursor/" + filename));
         Dimension bestCursorSize = defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
         Point hotSpot = new Point((hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
             (hotSpotY * bestCursorSize.height) / icon.getIconHeight());

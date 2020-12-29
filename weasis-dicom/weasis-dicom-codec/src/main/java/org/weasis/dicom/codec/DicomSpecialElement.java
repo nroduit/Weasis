@@ -100,13 +100,13 @@ public class DicomSpecialElement extends MediaElement {
         String modality = TagD.getTagValue(this, Tag.Modality, String.class);
         if (modality != null) {
             buf.append(modality);
-            buf.append(" "); //$NON-NLS-1$
+            buf.append(" ");
         }
         Integer val = TagD.getTagValue(this, Tag.InstanceNumber, Integer.class);
         if (val != null) {
-            buf.append("["); //$NON-NLS-1$
+            buf.append("[");
             buf.append(val);
-            buf.append("] "); //$NON-NLS-1$
+            buf.append("] ");
         }
         return buf.toString();
     }
@@ -163,7 +163,7 @@ public class DicomSpecialElement extends MediaElement {
         List<DicomSpecialElement> filteredList = new ArrayList<>();
         if (studyElements != null && seriesUID != null && sopUID != null) {
             for (DicomSpecialElement dicom : studyElements) {
-                if (dicom != null && "PR".equals(TagD.getTagValue(dicom, Tag.Modality))) { //$NON-NLS-1$
+                if (dicom != null && "PR".equals(TagD.getTagValue(dicom, Tag.Modality))) {
                     Attributes[] seq = TagD.getTagValue(dicom, Tag.ReferencedSeriesSequence, Attributes[].class);
                     if (isSopuidInReferencedSeriesSequence(seq, seriesUID, sopUID, frameNumber)) {
                         filteredList.add(dicom);

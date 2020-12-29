@@ -27,10 +27,10 @@ public class ExportToolBar extends WtoolBar {
         
         final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { 
             final JButton btnExport =
-                new JButton(new ImageIcon(ExportToolBar.class.getResource("/icon/32x32/dcm-export.png"))); //$NON-NLS-1$
-            btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm")); //$NON-NLS-1$
+                new JButton(new ImageIcon(ExportToolBar.class.getResource("/icon/32x32/dcm-export.png"))); 
+            btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm"));
             btnExport.addActionListener(e -> ImportToolBar.showAction(ExportToolBar.this, model,
                 Messages.getString("LocalExport.local_dev"), true));
             add(btnExport);
@@ -39,9 +39,9 @@ public class ExportToolBar extends WtoolBar {
 
     public static DefaultAction buildExportAction(Component parent, DicomModel model, String actionName) {
         return new DefaultAction(actionName,
-            new ImageIcon(ExportToolBar.class.getResource("/icon/16x16/dcm-export.png")), event -> { //$NON-NLS-1$
-                if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { //$NON-NLS-1$
-                    ImportToolBar.showAction(parent, model, Messages.getString("LocalExport.local_dev"), true); //$NON-NLS-1$
+            new ImageIcon(ExportToolBar.class.getResource("/icon/16x16/dcm-export.png")), event -> { 
+                if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom", true)) { 
+                    ImportToolBar.showAction(parent, model, Messages.getString("LocalExport.local_dev"), true);
                 } else {
                     JOptionPane.showMessageDialog((Component) event.getSource(),
                         Messages.getString("DicomExplorer.export_perm"));

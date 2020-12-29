@@ -17,10 +17,10 @@ public class InvalidMagicMimeEntryException extends Exception {
     private static final long serialVersionUID = -1765168312253063736L;
 
     public InvalidMagicMimeEntryException(Throwable cause) {
-        super("Invalid Magic Mime Entry: Unknown entry", cause); //$NON-NLS-1$
+        super("Invalid Magic Mime Entry: Unknown entry", cause); 
     }
 
     public InvalidMagicMimeEntryException(List<String> mimeMagicEntry, Throwable cause) {
-        super("Invalid Magic Mime Entry: " + mimeMagicEntry.toString(), cause); //$NON-NLS-1$
+        super("Invalid Magic Mime Entry: " + mimeMagicEntry.toString(), cause); 
     }
 }

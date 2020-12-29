@@ -30,21 +30,21 @@ public class ZoomOp extends AbstractOp {
      *
      * Double value.
      */
-    public static final String P_RATIO_X = "ratio.x"; //$NON-NLS-1$
+    public static final String P_RATIO_X = "ratio.x"; 
 
     /**
      * Set a zoom factor in y-axis (Required parameter).
      *
      * Double value.
      */
-    public static final String P_RATIO_Y = "ratio.y"; //$NON-NLS-1$
+    public static final String P_RATIO_Y = "ratio.y"; 
 
     /**
      * Set the interpolation type (Optional parameter).
      *
      * Integer value. Default value is bilinear interpolation. See javax.media.jai.Interpolation.
      */
-    public static final String P_INTERPOLATION = "interpolation"; //$NON-NLS-1$
+    public static final String P_INTERPOLATION = "interpolation";  //NON-NLS
 
     public ZoomOp() {
         setName(OP_NAME);

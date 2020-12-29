@@ -33,7 +33,7 @@ public class SampleToolBar<E extends ImageElement> extends WtoolBar {
 
         final JButton helpButton = new JButton();
         helpButton.setToolTipText("User Guide");
-        helpButton.setIcon(new ImageIcon(SampleToolBar.class.getResource("/icon/32x32/help-browser.png"))); //${symbol_dollar}NON-NLS-1${symbol_dollar}
+        helpButton.setIcon(new ImageIcon(SampleToolBar.class.getResource("/icon/32x32/help-browser.png")));
         helpButton.addActionListener(new ActionListener() {
 
             @Override
@@ -41,7 +41,7 @@ public class SampleToolBar<E extends ImageElement> extends WtoolBar {
                 if (e.getSource() instanceof Component) {
                     URL url;
                     try {
-                        url = new URL("http://www.dcm4che.org/confluence/display/WEA/User+Guide"); //${symbol_dollar}NON-NLS-1${symbol_dollar}
+                        url = new URL("http://www.dcm4che.org/confluence/display/WEA/User+Guide");
                         JMVUtils.openInDefaultBrowser((Component) e.getSource(), url);
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();

@@ -29,7 +29,7 @@ public class SynchData implements Copyable<SynchData> {
 
     public SynchData(Mode mode, Map<String, Boolean> actions) {
         if (actions == null) {
-            throw new IllegalArgumentException("A parameter is null!"); //$NON-NLS-1$
+            throw new IllegalArgumentException("A parameter is null!");
         }
         this.actions = actions;
         this.mode = mode;

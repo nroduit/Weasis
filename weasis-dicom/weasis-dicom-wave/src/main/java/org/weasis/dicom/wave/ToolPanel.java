@@ -35,9 +35,9 @@ class ToolPanel extends JPanel {
         @Override
         public String toString() {
             if (this == AUTO) {
-                return "auto mm/s"; //$NON-NLS-1$
+                return "auto mm/s"; //NON-NLS
             }
-            return DecFormater.allNumber(value) + " mm/s"; //$NON-NLS-1$
+            return DecFormater.allNumber(value) + " mm/s"; //NON-NLS
         }
         
         public static Speed fromValue(double value) {
@@ -66,9 +66,9 @@ class ToolPanel extends JPanel {
         @Override
         public String toString() {
             if (this == AUTO) {
-                return "auto mm/mV"; //$NON-NLS-1$
+                return "auto mm/mV"; //NON-NLS
             }
-            return String.format("%d mm/mV", value); //$NON-NLS-1$
+            return String.format("%d mm/mV", value); //NON-NLS
         }
 
         public static Amplitude fromValue(int value) {

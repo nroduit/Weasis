@@ -37,9 +37,9 @@ public class OverlayOp extends AbstractOp {
 
     public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
 
-    public static final String P_SHOW = "overlay"; //$NON-NLS-1$
-    public static final String P_PR_ELEMENT = "pr.element"; //$NON-NLS-1$
-    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
+    public static final String P_SHOW = "overlay";  //NON-NLS
+    public static final String P_PR_ELEMENT = "pr.element"; 
+    public static final String P_IMAGE_ELEMENT = "img.element"; 
 
     public OverlayOp() {
         setName(OP_NAME);

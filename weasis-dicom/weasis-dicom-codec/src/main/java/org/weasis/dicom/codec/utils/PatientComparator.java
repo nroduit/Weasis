@@ -62,27 +62,27 @@ public class PatientComparator {
 
     public String buildPatientPseudoUID() {
 
-        String property = BundleTools.SYSTEM_PREFERENCES.getProperty("patientComparator.buildPatientPseudoUID", null); //$NON-NLS-1$
+        String property = BundleTools.SYSTEM_PREFERENCES.getProperty("patientComparator.buildPatientPseudoUID", null);
 
         if (StringUtil.hasText(property)) {
 
             StringBuilder buffer = new StringBuilder();
-            String[] split = property.split(","); //$NON-NLS-1$
+            String[] split = property.split(",");
             for (String string : split) {
                 switch (string) {
-                    case "issuerOfPatientID": //$NON-NLS-1$
+                    case "issuerOfPatientID":
                         buffer.append(issuerOfPatientID);
                         break;
-                    case "patientId": //$NON-NLS-1$
+                    case "patientId":
                         buffer.append(patientId);
                         break;
-                    case "patientName": //$NON-NLS-1$
+                    case "patientName":
                         buffer.append(name);
                         break;
-                    case "patientBirthdate": //$NON-NLS-1$
+                    case "patientBirthdate":
                         buffer.append(birthdate);
                         break;
-                    case "patientSex": //$NON-NLS-1$
+                    case "patientSex":
                         buffer.append(sex);
                         break;
                 }

@@ -54,7 +54,7 @@ public class Activator implements BundleActivator, ServiceListener {
     public void start(final BundleContext bundleContext) throws Exception {
 
         Dictionary<String, Object> dict = new Hashtable<>();
-        dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); //$NON-NLS-1$
+        dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d");  //NON-NLS
         dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions.toArray(new String[EventManager.functions.size()]));
         bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
 

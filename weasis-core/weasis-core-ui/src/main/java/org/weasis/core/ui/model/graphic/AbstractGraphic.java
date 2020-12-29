@@ -71,7 +71,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     private static final long serialVersionUID = -8152071576417041112L;
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphic.class);
 
-    protected static final String NULL_MSG = "Null is not allowed"; //$NON-NLS-1$
+    protected static final String NULL_MSG = "Null is not allowed"; //NON-NLS
 
     protected Integer pointNumber;
     protected List<Point2D.Double> pts;
@@ -292,7 +292,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     @Override
     public String getDescription() {
-        return ""; //$NON-NLS-1$
+        return "";
     }
 
     @Override
@@ -717,7 +717,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
 
     protected void fireDrawingChanged(Shape oldShape) {
-        firePropertyChange("bounds", oldShape, shape); //$NON-NLS-1$
+        firePropertyChange("bounds", oldShape, shape); //NON-NLS
     }
 
     protected void firePropertyChange(String s, Object obj, Object obj1) {
@@ -737,7 +737,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
 
     protected void fireLabelChanged(GraphicLabel oldLabel) {
-        firePropertyChange("graphicLabel", oldLabel, graphicLabel); //$NON-NLS-1$
+        firePropertyChange("graphicLabel", oldLabel, graphicLabel);
     }
 
     @Override
@@ -808,11 +808,11 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
                             if (item.getLabelExtension() != null) {
                                 sb.append(item.getLabelExtension());
                             }
-                            sb.append(" : "); //$NON-NLS-1$
+                            sb.append(" : ");
                             if (value instanceof Number) {
                                 sb.append(DecFormater.allNumber((Number) value));
                                 if (unit != null) {
-                                    sb.append(" ").append(unit); //$NON-NLS-1$
+                                    sb.append(" ").append(unit);
                                 }
                             } else if (value != null) {
                                 sb.append(value.toString());
@@ -904,7 +904,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     protected void fireMoveAction() {
         if (isGraphicComplete()) {
-            firePropertyChange("move", null, this); //$NON-NLS-1$
+            firePropertyChange("move", null, this); //NON-NLS
         }
     }
 

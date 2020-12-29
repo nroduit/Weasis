@@ -34,7 +34,7 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 class InfoPanel extends JPanel {
     private static final long serialVersionUID = -470038831713011257L;
 
-    private JLabel lead = new JLabel(" "); //$NON-NLS-1$
+    private JLabel lead = new JLabel(" ");
     private JLabel maximum = new JLabel();
     private JLabel minimum = new JLabel();
 
@@ -121,17 +121,17 @@ class InfoPanel extends JPanel {
     public void setMinMax(double minimum, double maximum) {
         StringBuilder min = new StringBuilder(Messages.getString("InfoPanel.min"));
         min.append(StringUtil.COLON_AND_SPACE);
-        min.append("##.#### mV;"); //$NON-NLS-1$
-        min.append(Messages.getString("InfoPanel.min")); //$NON-NLS-1$
+        min.append("##.#### mV;"); //NON-NLS
+        min.append(Messages.getString("InfoPanel.min"));
         min.append(StringUtil.COLON_AND_SPACE);
-        min.append("-##.#### mV"); //$NON-NLS-1$
+        min.append("-##.#### mV"); //NON-NLS
         
         StringBuilder max = new StringBuilder(Messages.getString("InfoPanel.max"));
         max.append(StringUtil.COLON_AND_SPACE);
-        max.append("##.#### mV;"); //$NON-NLS-1$
-        max.append(Messages.getString("InfoPanel.max")); //$NON-NLS-1$
+        max.append("##.#### mV;"); //NON-NLS
+        max.append(Messages.getString("InfoPanel.max"));
         max.append(StringUtil.COLON_AND_SPACE);
-        max.append("-##.#### mV"); //$NON-NLS-1$
+        max.append("-##.#### mV"); //NON-NLS
         this.minimum.setText(new DecimalFormat(min.toString(), LocalUtil.getDecimalFormatSymbols()).format(minimum));
         this.maximum.setText(new DecimalFormat(max.toString(), LocalUtil.getDecimalFormatSymbols()).format(maximum));
     }
@@ -149,7 +149,7 @@ class InfoPanel extends JPanel {
     private void clearValue(JLabel... labels) {
         if (labels != null) {
             for (JLabel l : labels) {
-                l.setText(""); //$NON-NLS-1$
+                l.setText("");
             }
         }
     }

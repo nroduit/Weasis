@@ -76,8 +76,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public static final List<GridBagLayoutModel> LAYOUT_LIST =
         Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
-    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, SRView.class.getName()); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1",  //NON-NLS
+        "1x1", 1, 1, SRView.class.getName());  //NON-NLS
 
     static {
         LAYOUT_LIST.add(VIEWS_1x1);
@@ -139,7 +139,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             String bundleName = context.getBundle().getSymbolicName();
             String componentName = InsertableUtil.getCName(this.getClass());
-            String key = "enable"; //$NON-NLS-1$
+            String key = "enable";  //NON-NLS
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImportToolBar.class), key, true)) {
@@ -305,7 +305,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
     public List<Action> getPrintActions() {
         final String title = Messages.getString("SRContainer.print_layout");
         return Arrays.asList(
-            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), //$NON-NLS-1$
+            new DefaultAction(title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), 
                 event -> printCurrentView()));
     }
 
@@ -332,7 +332,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement> implements
                     pj.print();
                 } catch (PrinterException e) {
                     // check for the annoying 'Printer is not accepting job' error.
-                    if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
+                    if (e.getMessage().indexOf("accepting job") != -1) {  //NON-NLS
                         // recommend prompting the user at this point if they want to force it
                         // so they'll know there may be a problem.
                         int response = JOptionPane.showConfirmDialog(null,

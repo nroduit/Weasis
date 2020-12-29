@@ -40,7 +40,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     public static final Integer POINTS_NUMBER = UNDEFINED;
 
-    public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png"));
 
     public static final Measurement LINE_LENGTH =
         new Measurement(Messages.getString("measure.length"), 5, true, true, true);
@@ -96,7 +96,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
                 setPointNumber(pts.size());
             }
             if (!isShapeValid() || pts.size() < 2) {
-                throw new IllegalStateException("This Polyline cannot be drawn"); //$NON-NLS-1$
+                throw new IllegalStateException("This Polyline cannot be drawn");
             }
             buildShape(null);
         }

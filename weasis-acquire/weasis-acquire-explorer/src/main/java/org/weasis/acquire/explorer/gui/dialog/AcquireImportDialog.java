@@ -47,15 +47,15 @@ import org.weasis.core.api.util.ThreadUtil;
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {
     private static final long serialVersionUID = -8736946182228791444L;
 
-    private static final String P_MAX_RANGE = "maxMinuteRange"; //$NON-NLS-1$
+    private static final String P_MAX_RANGE = "maxMinuteRange"; 
 
     private final ImportPanel importPanel;
 
-    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage"); //$NON-NLS-1$
+    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage"); 
 
     static final Object[] OPTIONS =
-        { Messages.getString("AcquireImportDialog.validate"), Messages.getString("AcquireImportDialog.cancel") }; //$NON-NLS-1$ //$NON-NLS-2$
-    static final String REVALIDATE = "ReValidate"; //$NON-NLS-1$
+        { Messages.getString("AcquireImportDialog.validate"), Messages.getString("AcquireImportDialog.cancel") };
+    static final String REVALIDATE = "ReValidate"; 
 
     private final JTextField serieName = new JTextField();
     private final ButtonGroup btnGrp = new ButtonGroup();

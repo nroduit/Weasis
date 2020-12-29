@@ -42,10 +42,10 @@ public class Activator implements BundleActivator, ServiceListener {
             registerCodecPlugins(bundleContext.getService(service));
         }
 
-        bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName()));//$NON-NLS-1$
+        bundleContext.addServiceListener(this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName())); //NON-NLS
 
         // Allows to connect through a proxy initialized by Java Webstart
-        if (!LangUtil.geEmptytoTrue(System.getProperty("http.bundle.cache"))) { //$NON-NLS-1$
+        if (!LangUtil.geEmptytoTrue(System.getProperty("http.bundle.cache"))) { 
             ProxyUtils.setProxyFromJavaWebStart();
         }
 
@@ -94,15 +94,15 @@ public class Activator implements BundleActivator, ServiceListener {
 
     private static void initLoggerAndAudit(BundleContext bundleContext) throws IOException {
         // Audit log for giving statistics about usage of Weasis
-        String loggerKey = "audit.log"; //$NON-NLS-1$
-        String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; //$NON-NLS-1$
+        String loggerKey = "audit.log"; 
+        String[] loggerVal = new String[] { "org.weasis.core.api.service.AuditLog" }; 
         // Activate audit log by adding an entry "audit.log=true" in Weasis.
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(loggerKey, false)) {
-            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", //$NON-NLS-1$
-                AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" //$NON-NLS-1$ //$NON-NLS-2$
-                    + AppProperties.WEASIS_USER + ".log", //$NON-NLS-1$
-                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); //$NON-NLS-1$ //$NON-NLS-2$
-            AuditLog.LOGGER.info("Start audit log session"); //$NON-NLS-1$
+            AuditLog.createOrUpdateLogger(bundleContext, loggerKey, loggerVal, "DEBUG", 
+                AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "audit-" // NON-NLS
+                    + AppProperties.WEASIS_USER + ".log", 
+                "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", null, null, "0"); // NON-NLS
+            AuditLog.LOGGER.info("Start audit log session");
         } else {
             ServiceReference<ConfigurationAdmin> configurationAdminReference =
                 bundleContext.getServiceReference(ConfigurationAdmin.class);
@@ -112,7 +112,7 @@ public class Activator implements BundleActivator, ServiceListener {
                     Configuration logConfiguration = AuditLog.getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                     if (logConfiguration == null) {
                         logConfiguration = confAdmin
-                            .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                            .createFactoryConfiguration("org.apache.sling.commons.log.LogManager.factory.config", null); 
                         Dictionary<String, Object> loggingProperties = new Hashtable<>();
                         loggingProperties.put("org.apache.sling.commons.log.level", "ERROR"); // NON-NLS
                         loggingProperties.put("org.apache.sling.commons.log.names", loggerVal); 

@@ -21,10 +21,10 @@ public class WaveformToolBar extends WtoolBar {
     protected final JButton jButtondelete = new JButton();
 
     public WaveformToolBar(int index) {
-        super("Main Bar", index); //$NON-NLS-1$
+        super("Main Bar", index); //NON-NLS
 
         final JButton printButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png")));
         printButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
             if (container instanceof WaveContainer) {
@@ -34,7 +34,7 @@ public class WaveformToolBar extends WtoolBar {
         add(printButton);
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")));
         metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
@@ -44,8 +44,8 @@ public class WaveformToolBar extends WtoolBar {
         });
         add(metaButton);
 
-        jButtondelete.setToolTipText(Messages.getString("WaveformToolBar.delete")); //$NON-NLS-1$
-        jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png"))); //$NON-NLS-1$
+        jButtondelete.setToolTipText(Messages.getString("WaveformToolBar.delete"));
+        jButtondelete.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png")));
         jButtondelete.addActionListener(e -> {
             ImageViewerPlugin<?> container = WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
             if (container instanceof WaveContainer) {

@@ -92,27 +92,27 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
             StringBuilder buf = new StringBuilder();
             buf.append(i + 1);
-            buf.append(". "); //$NON-NLS-1$
-            buf.append(Messages.getString("ScreenPrefView.monitor")); //$NON-NLS-1$
+            buf.append(". ");
+            buf.append(Messages.getString("ScreenPrefView.monitor"));
             buf.append(StringUtil.COLON_AND_SPACE);
             buf.append(monitor.getMonitorID());
-            buf.append("."); //$NON-NLS-1$
+            buf.append(".");
             buf.append(mb.width);
-            buf.append("x"); //$NON-NLS-1$
+            buf.append("x"); //NON-NLS
             buf.append(mb.height);
             final String title = buf.toString();
             defMonitorComboBox.addItem(title);
 
             if (monitor.getRealScaleFactor() > 0) {
-                buf.append(" ("); //$NON-NLS-1$
+                buf.append(" (");
                 buf.append(
                     (int) Math.round(mb.width * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-                buf.append("x"); //$NON-NLS-1$
+                buf.append("x"); //NON-NLS
                 buf.append(
                     (int) Math.round(mb.height * Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())));
-                buf.append(" "); //$NON-NLS-1$
+                buf.append(" ");
                 buf.append(Unit.MILLIMETER.getAbbreviation());
-                buf.append(")"); //$NON-NLS-1$
+                buf.append(")");
             }
             p.add(new JLabel(buf.toString()));
 
@@ -139,7 +139,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
         defMonitorComboBox.addItemListener(e -> {
             if (e.getStateChange() == ItemEvent.SELECTED) {
                 JComboBox<?> comboBox = (JComboBox<?>) e.getSource();
-                BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("default.monitor", comboBox.getSelectedIndex()); //$NON-NLS-1$
+                BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("default.monitor", comboBox.getSelectedIndex());
             }
         });
 
@@ -154,7 +154,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     }
 
     public static int getDefaultMonitor() {
-        return BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("default.monitor", 0); //$NON-NLS-1$
+        return BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("default.monitor", 0);
     }
 
     @Override
@@ -220,9 +220,9 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             if (monitor.getRealScaleFactor() > 0) {
                 String hlength = DecFormater
                     .allNumber(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * horizontalLength)
-                    + " " + Unit.MILLIMETER.getAbbreviation(); //$NON-NLS-1$
+                    + " " + Unit.MILLIMETER.getAbbreviation();
                 String vlength = DecFormater
-                    .allNumber(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * verticalLength) + " " //$NON-NLS-1$
+                    .allNumber(Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor()) * verticalLength) + " "
                     + Unit.MILLIMETER.getAbbreviation();
                 g2d.drawString(hlength, x2 - 70, y2 + 15);
                 g2d.drawString(vlength, xv1 + 10, yv2 - 5);
@@ -310,14 +310,14 @@ public class ScreenPrefView extends AbstractItemDialogPage {
                 JOptionPane.showMessageDialog(this, Messages.getString("ScreenPrefView.calib_desc"),
                     Messages.getString("ScreenPrefView.sp_calib"), JOptionPane.WARNING_MESSAGE);
 
-                StringBuilder buf = new StringBuilder("screen."); //$NON-NLS-1$
+                StringBuilder buf = new StringBuilder("screen."); //NON-NLS
                 buf.append(monitor.getMonitorID());
                 Rectangle b = monitor.getBounds();
-                buf.append("."); //$NON-NLS-1$
+                buf.append(".");
                 buf.append(b.width);
-                buf.append("x"); //$NON-NLS-1$
+                buf.append("x"); //NON-NLS
                 buf.append(b.height);
-                buf.append(".pitch"); //$NON-NLS-1$
+                buf.append(".pitch");
                 BundleTools.LOCAL_UI_PERSISTENCE.putDoubleProperty(buf.toString(), monitor.getRealScaleFactor());
             }
         }

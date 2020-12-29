@@ -58,7 +58,7 @@ public class ImageTool extends PluginTool {
 
     public ImageTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 20);
-        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); 
         setDockableWidth(290);
         jbInit();
 
@@ -142,8 +142,8 @@ public class ImageTool extends PluginTool {
             final JButton startButton = new JButton();
             startButton.setActionCommand(ActionW.CINESTART.cmd());
             startButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
-            startButton.setToolTipText(Messages.getString("ImageTool.cine_start")); //$NON-NLS-1$
-            startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png"))); //$NON-NLS-1$
+            startButton.setToolTipText(Messages.getString("ImageTool.cine_start"));
+            startButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png"))); 
             startButton.addActionListener(EventManager.getInstance());
             panel3.add(startButton);
             cineAction.registerActionState(startButton);
@@ -151,8 +151,8 @@ public class ImageTool extends PluginTool {
             final JButton stopButton = new JButton();
             stopButton.setActionCommand(ActionW.CINESTOP.cmd());
             stopButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
-            stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop")); //$NON-NLS-1$
-            stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png"))); //$NON-NLS-1$
+            stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop"));
+            stopButton.setIcon(new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png"))); 
             stopButton.addActionListener(EventManager.getInstance());
             panel3.add(stopButton);
             cineAction.registerActionState(stopButton);

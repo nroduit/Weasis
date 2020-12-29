@@ -72,10 +72,10 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
             return;
         }
         int byteOffset;
-        if (b.length > 132 && "DICM".equals(new String(b, 128, 4))) { //$NON-NLS-1$
+        if (b.length > 132 && "DICM".equals(new String(b, 128, 4))) { 
             byteOffset = 132;
         } else {
-            InterruptedIOException exc = new InterruptedIOException("Not a DICOM file"); //$NON-NLS-1$
+            InterruptedIOException exc = new InterruptedIOException("Not a DICOM file"); 
             exc.bytesTransferred = progress.nread;
             progress.series.setFileSize(progress.series.getFileSize() - progress.nread);
             progress.nread = 0;

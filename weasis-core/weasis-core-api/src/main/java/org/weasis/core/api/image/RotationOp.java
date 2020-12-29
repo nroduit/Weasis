@@ -25,7 +25,7 @@ public class RotationOp extends AbstractOp {
      *
      * Integer value.
      */
-    public static final String P_ROTATE = "rotate"; //$NON-NLS-1$
+    public static final String P_ROTATE = "rotate"; //NON-NLS
 
     public RotationOp() {
         setName(OP_NAME);

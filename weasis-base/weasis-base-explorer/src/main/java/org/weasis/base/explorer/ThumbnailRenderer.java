@@ -39,11 +39,11 @@ import org.weasis.core.util.LangUtil;
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel implements ListCellRenderer<E> {
 
     public static final Dimension ICON_DIM = new Dimension(150, 150);
-    public static final Icon ICON_CHECKED = new ImageIcon(ThumbnailRenderer.class.getResource("/icon/24x24/tick.png")); //$NON-NLS-1$
+    public static final Icon ICON_CHECKED = new ImageIcon(ThumbnailRenderer.class.getResource("/icon/24x24/tick.png"));
 
-    private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
+    private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
     private final JLabel iconCheckedLabel = new JLabel((Icon) null);
-    private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER); //$NON-NLS-1$
+    private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
     private static final Color back = new Color(242, 242, 242);
 
     public ThumbnailRenderer() {

@@ -24,7 +24,7 @@ import org.weasis.core.util.FileUtil;
  *
  */
 public class AppProperties {
-    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
+    private static final String UNKNOWN = "unknown"; //NON-NLS
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AppProperties.class);
 
@@ -42,7 +42,7 @@ public class AppProperties {
      * The current user of the application (defined either in JNLP by the property "weasis.user" or by the user of the
      * operating system session if the property is null)
      */
-    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN); //$NON-NLS-1$
+    public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN);
 
     /**
      * The name of the configuration profile (defined in config-ext.properties). The value is “default” if null. This
@@ -56,7 +56,7 @@ public class AppProperties {
     public static final File APP_TEMP_DIR;
 
     static {
-        String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
+        String tempDir = System.getProperty("java.io.tmpdir");
         File tdir;
         if (tempDir == null || tempDir.length() == 1) {
             String dir = System.getProperty("user.home", ""); // NON-NLS
@@ -85,9 +85,9 @@ public class AppProperties {
     public static final String WEASIS_PATH =
         System.getProperty("weasis.path", System.getProperty("user.home") + File.separator + ".weasis"); // NON-NLS
 
-    public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //$NON-NLS-1$
+    public static final File FILE_CACHE_DIR = buildAccessibleTempDirectory("cache"); //NON-NLS
 
-    public static final String OPERATING_SYSTEM = System.getProperty("os.name", UNKNOWN).toLowerCase(); //$NON-NLS-1$
+    public static final String OPERATING_SYSTEM = System.getProperty("os.name", UNKNOWN).toLowerCase();
 
     public static final GhostGlassPane glassPane = new GhostGlassPane();
 
@@ -112,7 +112,7 @@ public class AppProperties {
         if (context == null) {
             return null;
         }
-        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+        return new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName());
     }
 
     public static File buildAccessibleTempDirectory(String... subFolderName) {

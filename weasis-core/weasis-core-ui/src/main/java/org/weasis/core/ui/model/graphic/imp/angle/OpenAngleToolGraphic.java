@@ -45,7 +45,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     public static final Integer POINTS_NUMBER = 4;
 
     public static final Icon ICON =
-        new ImageIcon(OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png")); //$NON-NLS-1$
+        new ImageIcon(OpenAngleToolGraphic.class.getResource("/icon/22x22/draw-open-angle.png"));
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true);
     public static final Measurement COMPLEMENTARY_ANGLE =
@@ -118,7 +118,7 @@ public class OpenAngleToolGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn");
         }
         buildShape(null);
     }

@@ -28,7 +28,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeSystemAppViewer.class);
 
-    private static final String ERROR_MSG = "Cannot open {} with the default system application"; //$NON-NLS-1$
+    private static final String ERROR_MSG = "Cannot open {} with the default system application"; //NON-NLS
 
     @Override
     public void close() {
@@ -42,7 +42,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
     public static void startAssociatedProgramFromLinux(File file) {
         if (file != null && file.canRead()) {
             try {
-                String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //$NON-NLS-1$
+                String cmd = String.format("xdg-open %s", file.getAbsolutePath()); //NON-NLS
                 Runtime.getRuntime().exec(cmd);
             } catch (IOException e) {
                 LOGGER.error(ERROR_MSG, file, e);
@@ -53,7 +53,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
     public static void startAssociatedProgramFromWinCMD(File file) {
         if (file != null && file.canRead()) {
             try {
-                Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //$NON-NLS-1$
+                Runtime.getRuntime().exec("cmd /c \"" + file + '"'); //NON-NLS
             } catch (IOException e) {
                 LOGGER.error(ERROR_MSG, file, e);
             }

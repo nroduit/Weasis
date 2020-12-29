@@ -99,9 +99,9 @@ public class DicomSeries extends Series<DicomImageElement> {
             toolTips.append(Messages.getString("DicomSeries.size"));
             toolTips.append(StringUtil.COLON_AND_SPACE);
             toolTips.append(FileUtil.humanReadableByte(getFileSize(), false));
-            toolTips.append("<br>"); //$NON-NLS-1$
+            toolTips.append("<br>");
         }
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>");
         return toolTips.toString();
     }
 
@@ -109,8 +109,8 @@ public class DicomSeries extends Series<DicomImageElement> {
     public String getSeriesNumber() {
         Integer splitNb = (Integer) getTagValue(TagW.SplitSeriesNumber);
         Integer val = TagD.getTagValue(this, Tag.SeriesNumber, Integer.class);
-        String result = val == null ? "" : val.toString(); //$NON-NLS-1$
-        return splitNb == null ? result : result + "-" + splitNb.toString(); //$NON-NLS-1$
+        String result = val == null ? "" : val.toString();
+        return splitNb == null ? result : result + "-" + splitNb.toString();
     }
 
     @Override

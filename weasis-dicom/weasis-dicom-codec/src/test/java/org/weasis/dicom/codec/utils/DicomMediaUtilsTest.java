@@ -49,8 +49,8 @@ public class DicomMediaUtilsTest {
         assertEquals("012Y", DicomMediaUtils.getPeriod(TagD.getDicomDate("20000228"), TagD.getDicomDate("20120229")));
 
         try {
-            assertEquals("050Y", //$NON-NLS-1$
-                DicomMediaUtils.getPeriod(TagD.getDicomDate("19612506"), TagD.getDicomDate("20122406"))); //$NON-NLS-1$ //$NON-NLS-2$
+            assertEquals("050Y", 
+                DicomMediaUtils.getPeriod(TagD.getDicomDate("19612506"), TagD.getDicomDate("20122406")));
         } catch (Exception e) {
             assertThat(e).isInstanceOf(NullPointerException.class);
         }
@@ -59,7 +59,7 @@ public class DicomMediaUtilsTest {
     @Test
     public void testGetStringFromDicomElement() throws Exception {
 
-        assertEquals("RECTANGULAR\\CIRCULAR\\POLYGONAL", //$NON-NLS-1$
+        assertEquals("RECTANGULAR\\CIRCULAR\\POLYGONAL", 
             DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterShape));
         assertEquals(null, DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterPresentationValue));
     }

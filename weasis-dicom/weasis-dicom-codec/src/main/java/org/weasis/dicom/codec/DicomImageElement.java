@@ -100,8 +100,8 @@ public class DicomImageElement extends ImageElement {
                 // For some other modalities like PET
                 pixelValueUnit = TagD.getTagValue(this, Tag.Units, String.class);
             }
-            if (pixelValueUnit == null && "CT".equals(modality)) { //$NON-NLS-1$
-                pixelValueUnit = "HU"; //$NON-NLS-1$
+            if (pixelValueUnit == null && "CT".equals(modality)) {
+                pixelValueUnit = "HU";
             }
 
         }
@@ -272,8 +272,8 @@ public class DicomImageElement extends ImageElement {
         String photometricInterpretation = getPhotometricInterpretation();
 
         return photometricInterpretation != null && //
-            ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation) //$NON-NLS-1$
-                || "MONOCHROME2" //$NON-NLS-1$
+            ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
+                || "MONOCHROME2"
                     .equalsIgnoreCase(photometricInterpretation));
     }
 
@@ -374,7 +374,7 @@ public class DicomImageElement extends ImageElement {
                     // Remove MLut as it cannot be used.
                     tags.remove(TagW.ModalityLUTData);
                     LOGGER.warn(
-                        "Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied."); //$NON-NLS-1$
+                        "Pixel values doesn't match to Modality LUT sequence table. So the Modality LUT is not applied.");
                 }
             } else {
                 LOGGER.warn("Cannot apply Modality LUT sequence and Pixel Padding");

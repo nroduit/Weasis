@@ -18,13 +18,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class OpenAngleToolGraphicTest extends GraphicTester<OpenAngleToolGraphic> {
-    private static final String XML_0 = "/graphic/openAngle/openAngle.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/openAngle/openAngle.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/openAngle/openAngle.graphic.0.xml";  //NON-NLS
+    private static final String XML_1 = "/graphic/openAngle/openAngle.graphic.1.xml";  //NON-NLS
 
-    public static final String BASIC_TPL = "<openAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</openAngle>"; //$NON-NLS-1$
+    public static final String BASIC_TPL = "<openAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"  //NON-NLS
+        + "<paint rgb=\"%s\"/>"  //NON-NLS
+        + "<pts/>"  //NON-NLS
+        + "</openAngle>";  //NON-NLS
 
     public static final OpenAngleToolGraphic COMPLETE_OBJECT = new OpenAngleToolGraphic();
     static {

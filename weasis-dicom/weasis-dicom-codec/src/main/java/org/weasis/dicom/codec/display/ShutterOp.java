@@ -44,12 +44,12 @@ public class ShutterOp extends AbstractOp {
      *
      * Boolean value.
      */
-    public static final String P_SHOW = "show"; //$NON-NLS-1$
-    public static final String P_SHAPE = "shape"; //$NON-NLS-1$
-    public static final String P_RGB_COLOR = "rgb.color"; //$NON-NLS-1$
-    public static final String P_PS_VALUE = "ps.value"; //$NON-NLS-1$
-    public static final String P_PR_ELEMENT = "pr.element"; //$NON-NLS-1$
-    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
+    public static final String P_SHOW = "show";  //NON-NLS
+    public static final String P_SHAPE = "shape";  //NON-NLS
+    public static final String P_RGB_COLOR = "rgb.color"; 
+    public static final String P_PS_VALUE = "ps.value"; 
+    public static final String P_PR_ELEMENT = "pr.element"; 
+    public static final String P_IMAGE_ELEMENT = "img.element"; 
 
     public ShutterOp() {
         setName(OP_NAME);

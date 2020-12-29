@@ -350,9 +350,9 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
                         name.append(StringUtil.SPACE);
                         name.append(Messages.getString("HistogramView.histo"));
                         if (StringUtil.hasText(layer.getPixelValueUnit())) {
-                            name.append(" ["); //$NON-NLS-1$
+                            name.append(" ["); 
                             name.append(layer.getPixelValueUnit());
-                            name.append("]"); //$NON-NLS-1$
+                            name.append("]"); 
                         }
                         if (i >= old.length || old[i] == null) {
                             chartPanel = new ChannelHistogramPanel(name.toString());
@@ -386,7 +386,7 @@ public class HistogramView extends JComponent implements SeriesViewerListener, G
             for (int i = 0; i < imageSource.height(); i++) {
                 imageSource.get(i, 0, pix);
                 IntStream is = IntStream.range(0, pix.length).map(k -> pix[k]);
-                pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(","))); //$NON-NLS-1$
+                pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(","))); 
             }
         } catch (FileNotFoundException e) {
             LOGGER.error("", e);

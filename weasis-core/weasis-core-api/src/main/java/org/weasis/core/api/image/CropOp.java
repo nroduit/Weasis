@@ -27,7 +27,7 @@ public class CropOp extends AbstractOp {
      *
      * java.awt.Rectangle value.
      */
-    public static final String P_AREA = "area"; //$NON-NLS-1$
+    public static final String P_AREA = "area";  //NON-NLS
 
     public CropOp() {
         setName(OP_NAME);

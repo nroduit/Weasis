@@ -50,7 +50,7 @@ public class EditionToolFactory implements InsertableFactory {
         }
     };
     // Starting cmd by "draw.sub." defines a drawing action with a derivative action
-    public static final ActionW DRAW_EDITON = new ActionW("", ActionW.DRAW_CMD_PREFIX + EDITON.cmd(), 0, 0, null); //$NON-NLS-1$
+    public static final ActionW DRAW_EDITON = new ActionW("", ActionW.DRAW_CMD_PREFIX + EDITON.cmd(), 0, 0, null);
 
     private EditionTool toolPane = null;
 

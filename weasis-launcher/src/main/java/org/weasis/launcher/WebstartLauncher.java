@@ -39,7 +39,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     static {
         try {
             SingleInstanceService singleInstanceService =
-                (SingleInstanceService) ServiceManager.lookup("javax.jnlp.SingleInstanceService"); //$NON-NLS-1$
+                (SingleInstanceService) ServiceManager.lookup("javax.jnlp.SingleInstanceService"); 
             singleInstanceService.addSingleInstanceListener(instance);
         } catch (UnavailableServiceException e) {
             LOGGER.log(Level.SEVERE, "Unable to get SingleInstanceService", e);
@@ -57,7 +57,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
             Iterator<?> providers = registry.getServiceProviders(class1, false);
             while (providers.hasNext()) {
                 Object provider = providers.next();
-                if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) { //$NON-NLS-1$
+                if (provider.getClass().getPackage().getName().startsWith("com.sun.media")) { 
                     toRemove.add(provider);
                 }
             }
@@ -105,7 +105,7 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     }
 
     private static void setJnlpSystemProperties() {
-        final String PREFIX = "jnlp.weasis."; //$NON-NLS-1$
+        final String PREFIX = "jnlp.weasis.";  //NON-NLS
         final int PREFIX_LENGTH = PREFIX.length();
 
         Properties properties = System.getProperties();

@@ -14,8 +14,8 @@ import java.text.DecimalFormat;
 import org.weasis.core.api.util.LocalUtil;
 
 public class MarkerAnnotation {
-    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
-    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
+    public static final DecimalFormat secondFormatter = new DecimalFormat("##.#### s", LocalUtil.getDecimalFormatSymbols()); //NON-NLS
+    public static final DecimalFormat mVFormatter = new DecimalFormat("##.#### mV", LocalUtil.getDecimalFormatSymbols()); //NON-NLS
 
     private final Lead lead;
 

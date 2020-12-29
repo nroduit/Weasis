@@ -43,7 +43,7 @@ public class LineGraphic extends AbstractDragGraphic {
 
     public static final Integer POINTS_NUMBER = 2;
 
-    public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png")); 
 
     public static final Measurement FIRST_POINT_X =
         new Measurement(Messages.getString("measure.firstx"), 1, true, true, false);
@@ -94,7 +94,7 @@ public class LineGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn"); 
         }
         buildShape(null);
     }

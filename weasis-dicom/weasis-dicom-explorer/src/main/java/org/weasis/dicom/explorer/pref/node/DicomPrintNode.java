@@ -21,22 +21,22 @@ import org.weasis.dicom.explorer.print.DicomPrintOptions;
 
 public class DicomPrintNode extends DefaultDicomNode {
 
-    private static final String T_MEDIUM_TYPE = "mediumType"; //$NON-NLS-1$
-    private static final String T_PRIORITY = "priority"; //$NON-NLS-1$
-    private static final String T_FILM_DEST = "filmDestination"; //$NON-NLS-1$
-    private static final String T_NUM_COPIES = "numberOfCopies";//$NON-NLS-1$
-    private static final String T_COLOR = "colorPrint";//$NON-NLS-1$
-    private static final String T_FILM_ORIENTATION = "filmOrientation"; //$NON-NLS-1$
-    private static final String T_FILM_SIZE = "filmSizeId";//$NON-NLS-1$
-    private static final String T_IMG_DISP_FORMAT = "imageDisplayFormat"; //$NON-NLS-1$
-    private static final String T_MAGNIFICATION_TYPE = "magnificationType"; //$NON-NLS-1$
-    private static final String T_SMOOTHING_TYPE = "smoothingType"; //$NON-NLS-1$
-    private static final String T_BORDER_DENSITY = "borderDensity"; //$NON-NLS-1$
-    private static final String T_TRIM = "trim"; //$NON-NLS-1$
-    private static final String T_EMPTY_DENSITY = "emptyDensity"; //$NON-NLS-1$
-    private static final String T_SHOW_ANNOTATIONS = "showingAnnotations"; //$NON-NLS-1$
-    private static final String T_PRINT_SEL_VIEW = "printOnlySelectedView"; //$NON-NLS-1$
-    private static final String T_DPI = "dpi"; //$NON-NLS-1$
+    private static final String T_MEDIUM_TYPE = "mediumType"; 
+    private static final String T_PRIORITY = "priority";  //NON-NLS
+    private static final String T_FILM_DEST = "filmDestination"; 
+    private static final String T_NUM_COPIES = "numberOfCopies";
+    private static final String T_COLOR = "colorPrint";
+    private static final String T_FILM_ORIENTATION = "filmOrientation"; 
+    private static final String T_FILM_SIZE = "filmSizeId";
+    private static final String T_IMG_DISP_FORMAT = "imageDisplayFormat"; 
+    private static final String T_MAGNIFICATION_TYPE = "magnificationType"; 
+    private static final String T_SMOOTHING_TYPE = "smoothingType"; 
+    private static final String T_BORDER_DENSITY = "borderDensity"; 
+    private static final String T_TRIM = "trim";  //NON-NLS
+    private static final String T_EMPTY_DENSITY = "emptyDensity"; 
+    private static final String T_SHOW_ANNOTATIONS = "showingAnnotations"; 
+    private static final String T_PRINT_SEL_VIEW = "printOnlySelectedView"; 
+    private static final String T_DPI = "dpi";  //NON-NLS
 
     private final DicomPrintOptions printOptions;
 

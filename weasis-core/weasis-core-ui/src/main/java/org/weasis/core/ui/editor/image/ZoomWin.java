@@ -68,8 +68,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZoomWin.class);
 
-    public static final String SYNCH_CMD = "synchronize"; //$NON-NLS-1$
-    public static final String FREEZE_CMD = "freeze"; //$NON-NLS-1$
+    public static final String SYNCH_CMD = "synchronize"; //NON-NLS
+    public static final String FREEZE_CMD = "freeze"; //NON-NLS
 
     public enum SyncType {
         NONE, PARENT_IMAGE, PARENT_PARAMETERS
@@ -116,7 +116,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane implements Ima
         actionsInView.put(ActionW.DRAWINGS.cmd(), z.isLensShowDrawings());
         actionsInView.put(FREEZE_CMD, SyncType.NONE);
 
-        Color bckColor = UIManager.getColor("Panel.background"); //$NON-NLS-1$
+        Color bckColor = UIManager.getColor("Panel.background");
         this.setLensDecoration(z.getLensLineWidth(), z.getLensLineColor(), bckColor, z.isLensRound());
         this.setSize(z.getLensWidth(), z.getLensHeight());
         this.setLocation(-1, -1);

@@ -21,8 +21,8 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 
 public class SynchView implements GUIEntry {
-    public static final SynchView NONE = new SynchView(Messages.getString("SynchView.none"), "None", Mode.NONE, //$NON-NLS-1$ //$NON-NLS-2$
-        new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<String, Boolean>()); //$NON-NLS-1$
+    public static final SynchView NONE = new SynchView(Messages.getString("SynchView.none"), "None", Mode.NONE, // NON-NLS
+        new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")), new HashMap<String, Boolean>()); 
     public static final SynchView DEFAULT_TILE;
     public static final SynchView DEFAULT_STACK;
 
@@ -43,8 +43,8 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.INVERSESTACK.cmd(), true);
         actions.put(ActionW.SORTSTACK.cmd(), true);
         actions.put(ActionW.SPATIAL_UNIT.cmd(), true);
-        DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), "Tile", Mode.TILE, //$NON-NLS-1$ //$NON-NLS-2$
-            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); //$NON-NLS-1$
+        DEFAULT_TILE = new SynchView(Messages.getString("SynchView.def_t"), "Tile", Mode.TILE, // NON-NLS
+            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")), actions); 
 
         actions = new HashMap<>();
         actions.put(ActionW.SCROLL_SERIES.cmd(), true);
@@ -54,8 +54,8 @@ public class SynchView implements GUIEntry {
         actions.put(ActionW.FLIP.cmd(), true);
         actions.put(ActionW.SPATIAL_UNIT.cmd(), true);
         DEFAULT_STACK =
-            new SynchView(Messages.getString("SynchView.def_s"), "Stack", Mode.STACK, new ImageIcon(SynchView.class //$NON-NLS-1$ //$NON-NLS-2$
-                .getResource("/icon/22x22/sequence.png")), actions); //$NON-NLS-1$
+            new SynchView(Messages.getString("SynchView.def_s"), "Stack", Mode.STACK, new ImageIcon(SynchView.class // NON-NLS
+                .getResource("/icon/22x22/sequence.png")), actions); 
     }
 
     private final String name;
@@ -65,7 +65,7 @@ public class SynchView implements GUIEntry {
 
     public SynchView(String name, String command, Mode mode, Icon icon, Map<String, Boolean> actions) {
         if (name == null) {
-            throw new IllegalArgumentException("A parameter is null!"); //$NON-NLS-1$
+            throw new IllegalArgumentException("A parameter is null!"); 
         }
         this.synchData = new SynchData(mode, actions);
         this.name = name;

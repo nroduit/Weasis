@@ -18,13 +18,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngleToolGraphic> {
-    private static final String XML_0 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/fourPointsAngle/fourPointsAngle.graphic.1.xml"; //NON-NLS
 
-    public static final String BASIC_TPL = "<fourPointsAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</fourPointsAngle>"; //$NON-NLS-1$
+    public static final String BASIC_TPL = "<fourPointsAngle fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</fourPointsAngle>"; //NON-NLS
 
     public static final FourPointsAngleToolGraphic COMPLETE_OBJECT = new FourPointsAngleToolGraphic();
     static {

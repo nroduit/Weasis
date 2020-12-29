@@ -21,10 +21,10 @@ import org.weasis.dicom.explorer.DicomFieldsView;
 public class AuToolBar extends WtoolBar {
 
     public AuToolBar(int index) {
-        super("Main Bar", index); //$NON-NLS-1$
+        super("Main Bar", index); //NON-NLS
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")));
         metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(e -> {
             ImageViewerPlugin<?> container = AuContainer.AU_EVENT_MANAGER.getSelectedView2dContainer();

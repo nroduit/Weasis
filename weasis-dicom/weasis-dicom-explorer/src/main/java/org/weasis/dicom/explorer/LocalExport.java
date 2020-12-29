@@ -78,12 +78,12 @@ import org.weasis.opencv.op.ImageProcessor;
 public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalExport.class);
 
-    public static final String LAST_DIR = "lastExportDir";//$NON-NLS-1$
-    public static final String INC_DICOMDIR = "exp.include.dicomdir";//$NON-NLS-1$
-    public static final String KEEP_INFO_DIR = "exp.keep.dir.name";//$NON-NLS-1$
-    public static final String IMG_QUALITY = "exp.img.quality";//$NON-NLS-1$
-    public static final String IMG_16_BIT = "exp.16-bit";//$NON-NLS-1$
-    public static final String CD_COMPATIBLE = "exp.cd";//$NON-NLS-1$
+    public static final String LAST_DIR = "lastExportDir";
+    public static final String INC_DICOMDIR = "exp.include.dicomdir";
+    public static final String KEEP_INFO_DIR = "exp.keep.dir.name";
+    public static final String IMG_QUALITY = "exp.img.quality";
+    public static final String IMG_16_BIT = "exp.16-bit"; //NON-NLS
+    public static final String CD_COMPATIBLE = "exp.cd";
 
     public static final String[] EXPORT_FORMAT = { "DICOM", "DICOM ZIP", "JPEG", "PNG" }; // NON-NLS
 
@@ -193,7 +193,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     }
 
     public void browseImgFile(String format) {
-        String targetDirectoryPath = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DIR, "");//$NON-NLS-1$
+        String targetDirectoryPath = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DIR, "");
 
         boolean isSaveFileMode = EXPORT_FORMAT[1].equals(format);
 
@@ -247,8 +247,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             return;
         } else {
             if (isSaveFileMode) {
-                outputFolder = ".zip".equals(FileUtil.getExtension(selectedFile.getName())) ? selectedFile //$NON-NLS-1$
-                    : new File(selectedFile + ".zip"); //$NON-NLS-1$
+                outputFolder = ".zip".equals(FileUtil.getExtension(selectedFile.getName())) ? selectedFile
+                    : new File(selectedFile + ".zip");
             } else {
                 outputFolder = selectedFile.isDirectory() ? selectedFile : selectedFile.getParentFile();
             }
@@ -414,9 +414,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
     private static String getExtension(String format) {
         if (EXPORT_FORMAT[3].equals(format)) {
-            return ".png"; //$NON-NLS-1$
+            return ".png";
         }
-        return ".jpg"; //$NON-NLS-1$
+        return ".jpg";
     }
 
     private void writeDicom(ExplorerTask task, File exportDir, CheckTreeModel model, boolean zipFile)
@@ -444,7 +444,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         try {
 
             if (writeDicomdir) {
-                File dcmdirFile = new File(writeDir, "DICOMDIR"); //$NON-NLS-1$
+                File dcmdirFile = new File(writeDir, "DICOMDIR");
                 writer = DicomDirLoader.open(dcmdirFile);
             }
 
@@ -577,7 +577,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             }
         } else {
             if (cdCompatible) {
-                buffer.append("DICOM"); //$NON-NLS-1$
+                buffer.append("DICOM");
                 buffer.append(File.separator);
             }
             buffer.append(makeFileIDs((String) img.getTagValue(TagW.PatientPseudoUID)));
@@ -616,7 +616,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     private static String buildFolderName(String str, int length) {
         String value = FileUtil.getValidFileNameWithoutHTML(str);
         value = StringUtil.getTruncatedString(value, length, Suffix.UNDERSCORE).trim();
-        return value.endsWith(".") ? value.substring(0, value.length() - 1) : value; //$NON-NLS-1$
+        return value.endsWith(".") ? value.substring(0, value.length() - 1) : value;
     }
 
     private static boolean writeInDicomDir(DicomDirWriter writer, MediaElement img, DefaultMutableTreeNode node,
@@ -723,13 +723,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
         String pmi = TagD.getTagValue(image, Tag.PhotometricInterpretation, String.class);
         if (thumbnail.channels() >= 3) {
-            pmi = "PALETTE COLOR"; //$NON-NLS-1$
+            pmi = "PALETTE COLOR"; //NON-NLS
         }
 
         byte[] iconPixelData = new byte[w * h];
         Attributes iconItem = new Attributes();
 
-        if ("PALETTE COLOR".equals(pmi)) { //$NON-NLS-1$
+        if ("PALETTE COLOR".equals(pmi)) { //NON-NLS
             BufferedImage bi =
                 ImageConversion.convertTo(ImageConversion.toBufferedImage(thumbnail), BufferedImage.TYPE_BYTE_INDEXED);
             IndexColorModel cm = (IndexColorModel) bi.getColorModel();
@@ -754,7 +754,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                 }
             }
         } else {
-            pmi = "MONOCHROME2"; //$NON-NLS-1$
+            pmi = "MONOCHROME2";
             thumbnail.get(0, 0, iconPixelData);
         }
         iconItem.setString(Tag.PhotometricInterpretation, VR.CS, pmi);

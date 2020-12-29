@@ -21,14 +21,14 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
-    private static final String XML_0 = "/graphic/lineWithGap/lineWithGap.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/lineWithGap/lineWithGap.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/lineWithGap/lineWithGap.graphic.0.xml";  //NON-NLS
+    private static final String XML_1 = "/graphic/lineWithGap/lineWithGap.graphic.1.xml";  //NON-NLS
 
     static final String BASIC_TPL =
-        "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-            + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-            + "<pts/>" //$NON-NLS-1$
-            + "</lineWithGap>"; //$NON-NLS-1$
+        "<lineWithGap gapSize=\"%s\" fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"  //NON-NLS
+            + "<paint rgb=\"%s\"/>"  //NON-NLS
+            + "<pts/>"  //NON-NLS
+            + "</lineWithGap>";  //NON-NLS
 
     public static final LineWithGapGraphic COMPLETE_OBJECT = new LineWithGapGraphic();
     static {

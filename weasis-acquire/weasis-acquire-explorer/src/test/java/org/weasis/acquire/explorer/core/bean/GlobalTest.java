@@ -101,7 +101,7 @@ public class GlobalTest extends GlobalHelper {
         Object value;
 
         if (tag.type.equals(TagType.DATE)) {
-            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value); //$NON-NLS-1$
+            value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value); 
         } else {
             value = tag.value;
         }

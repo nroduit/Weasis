@@ -70,7 +70,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
 
     public GridBagLayoutModel(Map<LayoutConstraints, Component> constraints, String id, String title) {
         if (constraints == null) {
-            throw new IllegalArgumentException("constraints cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("constraints cannot be null");
         }
         this.title = title;
         this.id = id;
@@ -86,8 +86,8 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
             SAXParserFactory factory = SAXParserFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
             SAXParser parser = factory.newSAXParser();
-            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, ""); //$NON-NLS-1$
-            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, ""); //$NON-NLS-1$
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            parser.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             parser.parse(stream, new SAXAdapter());
         } catch (Exception e) {
             LOGGER.error("Loading layout xml", e);
@@ -261,28 +261,28 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attributes)
             throws SAXException {
-            if ("element".equals(qName)) { //$NON-NLS-1$
-                type = attributes.getValue("type"); //$NON-NLS-1$
-                x = Integer.parseInt(attributes.getValue("x")); //$NON-NLS-1$
-                y = Integer.parseInt(attributes.getValue("y")); //$NON-NLS-1$
-                width = Integer.parseInt(attributes.getValue("width")); //$NON-NLS-1$
-                height = Integer.parseInt(attributes.getValue("height")); //$NON-NLS-1$
-                weightx = getDoubleValue(attributes.getValue("weightx")); //$NON-NLS-1$
-                weighty = getDoubleValue(attributes.getValue("weighty")); //$NON-NLS-1$
-                position = Integer.parseInt(attributes.getValue("position")); //$NON-NLS-1$
-                expand = Integer.parseInt(attributes.getValue("expand")); //$NON-NLS-1$
-                String ctype = attributes.getValue("typeColor"); //$NON-NLS-1$
+            if ("element".equals(qName)) { //NON-NLS
+                type = attributes.getValue("type");
+                x = Integer.parseInt(attributes.getValue("x")); //NON-NLS
+                y = Integer.parseInt(attributes.getValue("y")); //NON-NLS
+                width = Integer.parseInt(attributes.getValue("width")); //NON-NLS
+                height = Integer.parseInt(attributes.getValue("height")); //NON-NLS
+                weightx = getDoubleValue(attributes.getValue("weightx")); //NON-NLS
+                weighty = getDoubleValue(attributes.getValue("weighty")); //NON-NLS
+                position = Integer.parseInt(attributes.getValue("position")); //NON-NLS
+                expand = Integer.parseInt(attributes.getValue("expand")); //NON-NLS
+                String ctype = attributes.getValue("typeColor");
                 if (StringUtil.hasText(ctype)) {
                     color = WProperties.hexadecimal2Color(ctype);
                 }
-            } else if (title == null && "layoutModel".equals(qName)) { //$NON-NLS-1$
-                title = attributes.getValue("name"); //$NON-NLS-1$
+            } else if (title == null && "layoutModel".equals(qName)) {
+                title = attributes.getValue("name"); //NON-NLS
             }
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            if ("element".equals(qName)) { //$NON-NLS-1$
+            if ("element".equals(qName)) { //NON-NLS
                 increment++;
                 LayoutConstraints c =
                     new LayoutConstraints(type, increment, x, y, width, height, weightx, weighty, position, expand);

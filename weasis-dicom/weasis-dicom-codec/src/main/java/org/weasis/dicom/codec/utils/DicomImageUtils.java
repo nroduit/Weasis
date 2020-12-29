@@ -561,17 +561,17 @@ public class DicomImageUtils {
     public static int[] lutDescriptor(Attributes ds, int descTag) {
         int[] desc = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, descTag, null);
         if (desc == null) {
-            throw new IllegalArgumentException("Missing LUT Descriptor!"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Missing LUT Descriptor!");
         }
         if (desc.length != 3) {
-            throw new IllegalArgumentException("Illegal number of LUT Descriptor values: " + desc.length); //$NON-NLS-1$
+            throw new IllegalArgumentException("Illegal number of LUT Descriptor values: " + desc.length);
         }
         if (desc[0] < 0) {
-            throw new IllegalArgumentException("Illegal LUT Descriptor: len=" + desc[0]); //$NON-NLS-1$
+            throw new IllegalArgumentException("Illegal LUT Descriptor: len=" + desc[0]);
         }
         int bits = desc[2];
         if (bits != 8 && bits != 16) {
-            throw new IllegalArgumentException("Illegal LUT Descriptor: bits=" + bits); //$NON-NLS-1$
+            throw new IllegalArgumentException("Illegal LUT Descriptor: bits=" + bits);
         }
         return desc;
     }
@@ -583,18 +583,18 @@ public class DicomImageUtils {
         if (data == null) {
             int[] segm = DicomMediaUtils.getIntAyrrayFromDicomElement(ds, segmTag, null);
             if (segm == null) {
-                throw new IllegalArgumentException("Missing LUT Data!"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Missing LUT Data!");
             }
             if (bits == 8) {
-                throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Segmented LUT Data with LUT Descriptor: bits=8");
             }
             data = new byte[len];
             new InflateSegmentedLut(segm, 0, data, 0).inflate(-1, 0);
         } else if (bits == 16 || data.length != len) {
             if (data.length != len << 1)
-                throw new IllegalArgumentException("Number of actual LUT entries: " //$NON-NLS-1$
-                    + data.length +  " mismatch specified value: " //$NON-NLS-1$
-                    + len + " in LUT Descriptor"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Number of actual LUT entries: "
+                    + data.length +  " mismatch specified value: "
+                    + len + " in LUT Descriptor");
             int hilo = ds.bigEndian() ? 0 : 1;
             if (bits == 8)
                 hilo = 1 - hilo; // padded high bits -> use low bits
@@ -636,7 +636,7 @@ public class DicomImageUtils {
                     case 1:
                         if (writePos == 0)
                             throw new IllegalArgumentException(
-                                "Linear segment cannot be the first segment"); //$NON-NLS-1$
+                                "Linear segment cannot be the first segment");
                         y0 = linearSegment(n, y0, read());
                         break;
                     case 2:
@@ -664,8 +664,8 @@ public class DicomImageUtils {
         private void write(int y) {
             if (writePos >= data.length) {
                 throw new IllegalArgumentException(
-                    "Number of entries in inflated segmented LUT exceeds specified value: " //$NON-NLS-1$
-                        + data.length + " in LUT Descriptor"); //$NON-NLS-1$
+                    "Number of entries in inflated segmented LUT exceeds specified value: "
+                        + data.length + " in LUT Descriptor");
             }
             data[writePos++] = (byte) (y >> 8);
         }

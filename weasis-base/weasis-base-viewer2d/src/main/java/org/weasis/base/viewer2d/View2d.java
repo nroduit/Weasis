@@ -460,23 +460,23 @@ public class View2d extends DefaultView2d<ImageElement> {
 
         if (eventManager instanceof EventManager) {
             EventManager manager = (EventManager) eventManager;
-            JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut")); //$NON-NLS-1$
-            JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut")); //$NON-NLS-1$
-            JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter")); //$NON-NLS-1$
+            JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
 
             if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
                 count = popupMenu.getComponentCount();
             }
 
-            JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom")); //$NON-NLS-1$
-            JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation")); //$NON-NLS-1$
+            JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
+            JMVUtils.addItemToMenu(popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
 
             if (count < popupMenu.getComponentCount()) {
                 popupMenu.add(new JSeparator());
             }
 
-            JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset")); //$NON-NLS-1$
+            JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
         }
 
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
@@ -519,7 +519,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     private class SequenceHandler extends TransferHandler {
 
         public SequenceHandler() {
-            super("series"); //$NON-NLS-1$
+            super("series"); //NON-NLS
         }
 
         @Override

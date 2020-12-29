@@ -56,7 +56,7 @@ public class UIManager {
 
     public static final CControl DOCKING_CONTROL = new CControl();
     public static final CContentArea BASE_AREA = DOCKING_CONTROL.getContentArea();
-    public static final CWorkingArea MAIN_AREA = DOCKING_CONTROL.createWorkingArea("mainArea"); //$NON-NLS-1$
+    public static final CWorkingArea MAIN_AREA = DOCKING_CONTROL.createWorkingArea("mainArea");
 
     // public static final CContentArea WEST_AREA = DOCKING_CONTROL.createContentArea("westArea");
 

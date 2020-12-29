@@ -68,7 +68,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn"); 
         }
         buildShape(null);
     }
@@ -111,7 +111,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
 
     @Override
     public String getUIName() {
-        return ""; //$NON-NLS-1$
+        return ""; 
     }
 
     @Override

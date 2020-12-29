@@ -33,11 +33,11 @@ public class DicomQrFactory implements DicomImportFactory {
 
     // public static final ArrayList<SearchParameters> SEARCH_ITEMS = new ArrayList<>();
 
-    private static final String PREFERENCE_NODE = "qr.prefs"; //$NON-NLS-1$
+    private static final String PREFERENCE_NODE = "qr.prefs";
 
     @Override
     public ImportDicom createDicomImportPage(Hashtable<String, Object> properties) {
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom.qr", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom.qr", true)) {
             return new DicomQrView();
         }
         return null;
@@ -51,7 +51,7 @@ public class DicomQrFactory implements DicomImportFactory {
     protected void activate(ComponentContext context) throws Exception {
         LOGGER.info("DICOM Q/R is activated");
         FileUtil.readProperties(
-            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
+            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"),
             IMPORT_PERSISTENCE);
 
         // SEARCH_ITEMS.clear();
@@ -61,7 +61,7 @@ public class DicomQrFactory implements DicomImportFactory {
     protected void deactivate(ComponentContext context) {
         LOGGER.info("DICOM Q/R is deactivated");
         FileUtil.storeProperties(
-            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"), //$NON-NLS-1$
+            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "import.properties"),
             IMPORT_PERSISTENCE, null);
 
         // Preferences prefs = BundlePreferences.getDefaultPreferences(context.getBundleContext());

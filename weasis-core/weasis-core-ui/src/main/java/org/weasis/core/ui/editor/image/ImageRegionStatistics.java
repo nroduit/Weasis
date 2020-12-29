@@ -85,8 +85,8 @@ public class ImageRegionStatistics {
             }
 
             // Always apply pixel padding (deactivate in Display has no effect in statistics)
-            Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue")); //$NON-NLS-1$
-            Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit")); //$NON-NLS-1$
+            Integer paddingValue = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingValue"));
+            Integer paddingLimit = (Integer) layer.getSourceTagValue(TagW.get("PixelPaddingRangeLimit"));
             return ImageProcessor.getMaskImage(image.toMat(), roi, paddingValue, paddingLimit);
         }
         return Collections.emptyList();
@@ -169,7 +169,7 @@ public class ImageRegionStatistics {
             if (channelIndex == null) {
                 measVal.add(new MeasureItem(measure, val, unit));
             } else {
-                measVal.add(new MeasureItem(measure, " " + (channelIndex + 1), val, unit)); //$NON-NLS-1$
+                measVal.add(new MeasureItem(measure, " " + (channelIndex + 1), val, unit));
             }
         }
     }
@@ -245,7 +245,7 @@ public class ImageRegionStatistics {
 
             Double suv = (Double) layer.getSourceTagValue(TagW.SuvFactor);
             if (channelIndex == null && Objects.nonNull(suv)) {
-                unit = "SUVbw"; //$NON-NLS-1$
+                unit = "SUVbw";
                 addMeasure(measList, IMAGE_MIN, channelIndex, min * suv, unit);
                 addMeasure(measList, IMAGE_MAX, channelIndex, max * suv, unit);
                 addMeasure(measList, IMAGE_MEAN, channelIndex, mean * suv, unit);

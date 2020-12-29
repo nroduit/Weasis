@@ -93,8 +93,8 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomModel implements TreeModel, DataExplorerModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomModel.class);
 
-    public static final String NAME = "DICOM"; //$NON-NLS-1$
-    public static final String PREFERENCE_NODE = "dicom.model"; //$NON-NLS-1$
+    public static final String NAME = "DICOM";
+    public static final String PREFERENCE_NODE = "dicom.model";
 
     public static final TreeModelNode patient =
         new TreeModelNode(1, 0, TagW.PatientPseudoUID, new TagView(TagD.getTagFromIDs(Tag.PatientName, Tag.PatientID)));
@@ -102,7 +102,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         new TagView(TagD.getTagFromIDs(Tag.StudyDate, Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription)));
     public static final TreeModelNode series = new TreeModelNode(3, 0, TagW.SubseriesInstanceUID,
         new TagView(TagD.getTagFromIDs(Tag.SeriesDescription, Tag.SeriesNumber, Tag.SeriesTime)));
-    public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); //$NON-NLS-1$
+    public static final ExecutorService LOADING_EXECUTOR = ThreadUtil.buildNewSingleThreadExecutor("Dicom Model"); //NON-NLS
 
     private static final List<TreeModelNode> modelStructure = Arrays.asList(TreeModelNode.ROOT, patient, study, series);
 
@@ -120,7 +120,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         ArrayList<Codec> codecPlugins = new ArrayList<>(1);
         synchronized (BundleTools.CODEC_PLUGINS) {
             for (Codec codec : BundleTools.CODEC_PLUGINS) {
-                if (codec != null && !"JDK ImageIO".equals(codec.getCodecName()) //$NON-NLS-1$
+                if (codec != null && !"JDK ImageIO".equals(codec.getCodecName()) //NON-NLS
                     && codec.isMimeTypeSupported(DicomMediaIO.DICOM_MIMETYPE) && !codecPlugins.contains(codec)) {
                     codecPlugins.add(codec);
                 }
@@ -648,7 +648,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                     props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                     props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
                     props.put(ViewerPluginBuilder.ICON,
-                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
+                        new ImageIcon(getClass().getResource("/icon/16x16/key-images.png")));
                     props.put(ViewerPluginBuilder.UID, uid);
                     ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
                     ViewerPluginBuilder.openSequenceInPlugin(builder);
@@ -930,25 +930,25 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void get(String[] argv) throws IOException {
-        final String[] usage = { "Load DICOM files remotely or locally", //$NON-NLS-1$
-            "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", //$NON-NLS-1$
-            "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -r --remote=URI   open DICOMs from an URI", //$NON-NLS-1$
-            "  -w --wado=URI     open DICOMs from an XML manifest", "  -z --zip=URI      open DICOM ZIP from an URI",  //$NON-NLS-1$//$NON-NLS-2$
-            "  -p --portable     open DICOMs from configured directories at the same level of the executable", //$NON-NLS-1$
-            "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //$NON-NLS-1$
-            "  -? --help         show help" }; //$NON-NLS-1$
+        final String[] usage = { "Load DICOM files remotely or locally", //NON-NLS
+            "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", //NON-NLS
+            "PATH is either a directory(recursive) or a file", "  -l --local=PATH   open DICOMs from local disk", // NON-NLS
+            "  -r --remote=URI   open DICOMs from an URI", //NON-NLS
+            "  -w --wado=URI     open DICOMs from an XML manifest", "  -z --zip=URI      open DICOM ZIP from an URI", //NON-NLS
+            "  -p --portable     open DICOMs from configured directories at the same level of the executable", //NON-NLS
+            "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", //NON-NLS
+            "  -? --help         show help" }; //NON-NLS
 
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> largs = opt.getList("local"); //$NON-NLS-1$
-        final List<String> rargs = opt.getList("remote"); //$NON-NLS-1$
-        final List<String> zargs = opt.getList("zip"); //$NON-NLS-1$
-        final List<String> iargs = opt.getList("iwado"); //$NON-NLS-1$
-        final List<String> wargs = opt.getList("wado"); //$NON-NLS-1$
+        final List<String> largs = opt.getList("local"); //NON-NLS
+        final List<String> rargs = opt.getList("remote"); //NON-NLS
+        final List<String> zargs = opt.getList("zip");
+        final List<String> iargs = opt.getList("iwado"); //NON-NLS
+        final List<String> wargs = opt.getList("wado"); //NON-NLS
 
-        if (opt.isSet("help") //$NON-NLS-1$
+        if (opt.isSet("help")
             || (largs.isEmpty() && rargs.isEmpty() && iargs.isEmpty() && wargs.isEmpty() && zargs.isEmpty()
-                && !opt.isSet("portable"))) { //$NON-NLS-1$
+                && !opt.isSet("portable"))) { //NON-NLS
             opt.usage();
             return;
         }
@@ -963,7 +963,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     private void getCommand(Option opt, List<String> largs, List<String> rargs, List<String> iargs, List<String> wargs,
         List<String> zargs) {
         // start importing local dicom series list
-        if (opt.isSet("local")) { //$NON-NLS-1$
+        if (opt.isSet("local")) { //NON-NLS
             File[] files = new File[largs.size()];
             for (int i = 0; i < files.length; i++) {
                 files[i] = new File(largs.get(i));
@@ -971,22 +971,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
         }
 
-        if (opt.isSet("remote")) { //$NON-NLS-1$
+        if (opt.isSet("remote")) { //NON-NLS
             LOADING_EXECUTOR.execute(new LoadRemoteDicomURL(rargs.toArray(new String[rargs.size()]), DicomModel.this));
         }
 
         // build WADO series list to download
-        if (opt.isSet("wado")) { //$NON-NLS-1$
+        if (opt.isSet("wado")) { //NON-NLS
             LOADING_EXECUTOR.execute(new LoadRemoteDicomManifest(wargs, DicomModel.this));
         }
 
-        if (opt.isSet("zip")) { //$NON-NLS-1$
+        if (opt.isSet("zip")) {
             for (String zip : zargs) {
                 DicomZipImport.loadDicomZip(zip, DicomModel.this);
             }
         }
 
-        if (opt.isSet("iwado")) { //$NON-NLS-1$
+        if (opt.isSet("iwado")) { //NON-NLS
             List<String> xmlFiles = new ArrayList<>(iargs.size());
             for (int i = 0; i < iargs.size(); i++) {
                 try {
@@ -1004,18 +1004,18 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         // Get DICOM folder (by default DICOM, dicom, IHE_PDI, ihe_pdi) at the same level at the Weasis
         // executable file
-        if (opt.isSet("portable")) { //$NON-NLS-1$
+        if (opt.isSet("portable")) { //NON-NLS
 
-            String prop = System.getProperty("weasis.portable.dicom.directory"); //$NON-NLS-1$
-            String baseDir = System.getProperty("weasis.portable.dir"); //$NON-NLS-1$
+            String prop = System.getProperty("weasis.portable.dicom.directory");
+            String baseDir = System.getProperty("weasis.portable.dir");
 
             if (prop != null && baseDir != null) {
-                String[] dirs = prop.split(","); //$NON-NLS-1$
+                String[] dirs = prop.split(",");
                 for (int i = 0; i < dirs.length; i++) {
-                    dirs[i] = dirs[i].trim().replace("/", File.separator); //$NON-NLS-1$
+                    dirs[i] = dirs[i].trim().replace("/", File.separator);
                 }
                 File[] files = new File[dirs.length];
-                boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win");//$NON-NLS-1$
+                boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win"); //NON-NLS
                 if (notCaseSensitive) {
                     Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
                 }
@@ -1030,7 +1030,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
                 }
 
                 List<LoadSeries> loadSeries = null;
-                File dcmDirFile = new File(baseDir, "DICOMDIR"); //$NON-NLS-1$
+                File dcmDirFile = new File(baseDir, "DICOMDIR");
                 if (dcmDirFile.canRead()) {
                     // Copy images in cache if property weasis.portable.dicom.cache = true (default is true)
                     DicomDirLoader dirImport = new DicomDirLoader(dcmDirFile, DicomModel.this,
@@ -1047,24 +1047,24 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void rs(String[] argv) throws IOException {
-        final String[] usage = { "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", //$NON-NLS-1$
-            "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", //$NON-NLS-1$
-            "  -u --url=URL               URL of the DICOMWeb service", //$NON-NLS-1$
-            "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", //$NON-NLS-1$
-            "  -H --header=HEADER         Pass custom header(s) to all the requests", //$NON-NLS-1$
-            "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", //$NON-NLS-1$
-            "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", //$NON-NLS-1$
-            "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //$NON-NLS-1$
-            "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //$NON-NLS-1$
-            "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", //$NON-NLS-1$
-            "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", //$NON-NLS-1$
-            "  -? --help                  show help" }; //$NON-NLS-1$
+        final String[] usage = { "Load DICOM files from DICOMWeb API (QIDO/WADO-RS)", //NON-NLS
+            "Usage: dicom:rs -u URL -r QUERYPARAMS... [-H HEADER]... [--query-header HEADER]... [--retrieve-header HEADER]... [--query-ext EXT] [--retrieve-ext EXT] [--accept-ext EXT]", //NON-NLS
+            "  -u --url=URL               URL of the DICOMWeb service", //NON-NLS
+            "  -r --request=QUERYPARAMS   Query params of the URL, see weasis-pacs-connector", //NON-NLS
+            "  -H --header=HEADER         Pass custom header(s) to all the requests", //NON-NLS
+            "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", //NON-NLS
+            "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", //NON-NLS
+            "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", //NON-NLS
+            "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", //NON-NLS
+            "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", //NON-NLS
+            "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", //NON-NLS
+            "  -? --help                  show help" }; //NON-NLS
 
         final Option opt = Options.compile(usage).parse(argv);
-        final String rsUrl = opt.get("url"); //$NON-NLS-1$
-        final List<String> pargs = opt.getList("request"); //$NON-NLS-1$
+        final String rsUrl = opt.get("url"); //NON-NLS
+        final List<String> pargs = opt.getList("request"); //NON-NLS
 
-        if (opt.isSet("help") || rsUrl.isEmpty() //$NON-NLS-1$
+        if (opt.isSet("help") || rsUrl.isEmpty()
             || (pargs.isEmpty())) {
             opt.usage();
             return;
@@ -1072,22 +1072,22 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
         Properties props = new Properties();
         props.setProperty(RsQueryParams.P_DICOMWEB_URL, rsUrl);
-        String queryExt = opt.get("query-ext"); //$NON-NLS-1$
+        String queryExt = opt.get("query-ext"); //NON-NLS
         if (StringUtil.hasText(queryExt)) {
             props.setProperty(RsQueryParams.P_QUERY_EXT, queryExt);
         }
-        String retrieveExt = opt.get("retrieve-ext"); //$NON-NLS-1$
+        String retrieveExt = opt.get("retrieve-ext"); //NON-NLS
         if (StringUtil.hasText(retrieveExt)) {
             props.setProperty(RsQueryParams.P_RETRIEVE_EXT, retrieveExt);
         }
 
-        String acceptExt = opt.get("accept-ext"); //$NON-NLS-1$
+        String acceptExt = opt.get("accept-ext"); //NON-NLS
         if (!StringUtil.hasText(acceptExt)) {
-            acceptExt = "transfer-syntax=*"; //$NON-NLS-1$
+            acceptExt = "transfer-syntax=*"; //NON-NLS
         }
         props.setProperty(RsQueryParams.P_ACCEPT_EXT, acceptExt);
         
-        if (opt.isSet("show-whole-study")) { //$NON-NLS-1$
+        if (opt.isSet("show-whole-study")) { //NON-NLS
             props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
         }
 
@@ -1095,10 +1095,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, DicomModel.this, null, DicomModel.this));
             for (String query : pargs) {
-                List<String> common = opt.getList("header"); //$NON-NLS-1$
-                List<String> q = opt.getList("query-header"); //$NON-NLS-1$
+                List<String> common = opt.getList("header"); //NON-NLS
+                List<String> q = opt.getList("query-header"); //NON-NLS
                 q.addAll(common);
-                List<String> r = opt.getList("retrieve-header"); //$NON-NLS-1$
+                List<String> r = opt.getList("retrieve-header"); //NON-NLS
                 r.addAll(common);
                 RsQueryParams rsquery = new RsQueryParams(DicomModel.this, props, RsQueryParams.getQueryMap(query),
                     RsQueryParams.getHeaders(q), RsQueryParams.getHeaders(r));
@@ -1109,14 +1109,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     public void close(String[] argv) throws IOException {
-        final String[] usage = { "Close DICOM files", //$NON-NLS-1$
-            "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", //$NON-NLS-1$
-            "  -a --all           close all the patients", //$NON-NLS-1$
-            "  -y --study=UID     close a study, UID is Study Instance UID", //$NON-NLS-1$
-            "  -s --series=UID    close a series, UID is Series Instance UID", "  -? --help          show help" }; //$NON-NLS-1$ //$NON-NLS-2$
+        final String[] usage = { "Close DICOM files", //NON-NLS
+            "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", //NON-NLS
+            "  -a --all           close all the patients", //NON-NLS
+            "  -y --study=UID     close a study, UID is Study Instance UID", //NON-NLS
+            "  -s --series=UID    close a series, UID is Series Instance UID", "  -? --help          show help" }; // NON-NLS
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> yargs = opt.getList("study"); //$NON-NLS-1$
-        final List<String> sargs = opt.getList("series"); //$NON-NLS-1$
+        final List<String> yargs = opt.getList("study"); //NON-NLS
+        final List<String> sargs = opt.getList("series"); //NON-NLS
 
         if (opt.isSet("help") || (yargs.isEmpty() && sargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
             opt.usage();
@@ -1131,17 +1131,17 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
 
     private void closeCommand(Option opt, List<String> yargs, List<String> sargs) {
-        if (opt.isSet("all")) { //$NON-NLS-1$
+        if (opt.isSet("all")) { //NON-NLS
             for (MediaSeriesGroup patientGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                 removePatient(patientGroup);
             }
         } else {
-            if (opt.isSet("study")) { //$NON-NLS-1$
+            if (opt.isSet("study")) { //NON-NLS
                 for (String studyUID : yargs) {
                     removeStudy(getStudyNode(studyUID));
                 }
             }
-            if (opt.isSet("series")) { //$NON-NLS-1$
+            if (opt.isSet("series")) { //NON-NLS
                 for (String seriesUID : sargs) {
                     findSeriesToRemove(seriesUID);
                 }

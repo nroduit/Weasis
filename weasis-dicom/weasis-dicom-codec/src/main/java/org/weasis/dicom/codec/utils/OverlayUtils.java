@@ -159,7 +159,7 @@ public class OverlayUtils {
                 extractFromPixeldata(((DataBufferShort) db).getData(), columns, stride, mask, ovlyData, off, length);
                 break;
             default:
-                throw new UnsupportedOperationException("Unsupported DataBuffer type: " + db.getDataType()); //$NON-NLS-1$
+                throw new UnsupportedOperationException("Unsupported DataBuffer type: " + db.getDataType());
         }
     }
 

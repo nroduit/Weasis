@@ -30,11 +30,11 @@ public class Options implements Option {
     public static final String NL = System.getProperty("line.separator", "\n"); // NON-NLS
 
     // Note: need to double \ within ""
-    private static final String REGEX = "(?x)\\s*" + "(?:-([^-]))?" + // 1: short-opt-1 //$NON-NLS-1$ //$NON-NLS-2$
-        "(?:,?\\s*-(\\w))?" + // 2: short-opt-2 //$NON-NLS-1$
-        "(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?" + // 3: long-opt-1 and 4:arg-1 //$NON-NLS-1$
-        "(?:,?\\s*--(\\w[\\w-]*))?" + // 5: long-opt-2 //$NON-NLS-1$
-        ".*?(?:\\(default=(.*)\\))?\\s*"; // 6: default //$NON-NLS-1$
+    private static final String REGEX = "(?x)\\s*" + "(?:-([^-]))?" + // 1: short-opt-1 // NON-NLS
+        "(?:,?\\s*-(\\w))?" + // 2: short-opt-2 NON-NLS
+        "(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?" + // 3: long-opt-1 and 4:arg-1 NON-NLS
+        "(?:,?\\s*--(\\w[\\w-]*))?" + // 5: long-opt-2 NON-NLS
+        ".*?(?:\\(default=(.*)\\))?\\s*"; // 6: default NON-NLS
 
     private static final int GROUP_SHORT_OPT_1 = 1;
     private static final int GROUP_SHORT_OPT_2 = 2;
@@ -44,7 +44,7 @@ public class Options implements Option {
     private static final int GROUP_DEFAULT = 6;
 
     private final Pattern parser = Pattern.compile(REGEX);
-    private final Pattern uname = Pattern.compile("^Usage:\\s+(\\w+)"); //$NON-NLS-1$
+    private final Pattern uname = Pattern.compile("^Usage:\\s+(\\w+)");
 
     private final Map<String, Boolean> unmodifiableOptSet;
     private final Map<String, Object> unmodifiableOptArg;
@@ -56,7 +56,7 @@ public class Options implements Option {
     private final List<Object> xargs = new ArrayList<>();
     private List<String> args = null;
 
-    private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
+    private static final String UNKNOWN = "unknown"; //NON-NLS
     private String usageName = UNKNOWN;
     private int usageIndex = 0;
 
@@ -70,36 +70,36 @@ public class Options implements Option {
     private boolean stopOnBadOption = false;
 
     public static void main(String[] args) {
-        final String[] usage = { "test - test Options usage", //$NON-NLS-1$
-            "  text before Usage: is displayed when usage() is called and no error has occurred.", //$NON-NLS-1$
-            "  so can be used as a simple help message.", "", "Usage: testOptions [OPTION]... PATTERN [FILES]...", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            "  Output control: arbitrary non-option text can be included.", "  -? --help                show help", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -c --count=COUNT           show COUNT lines", //$NON-NLS-1$
-            "  -h --no-filename         suppress the prefixing filename on output", //$NON-NLS-1$
-            "  -q --quiet, --silent     suppress all normal output", //$NON-NLS-1$
-            "     --binary-files=TYPE   assume that binary files are TYPE", //$NON-NLS-1$
-            "                           TYPE is 'binary', 'text', or 'without-match'", //$NON-NLS-1$
-            "  -I                       equivalent to --binary-files=without-match", //$NON-NLS-1$
-            "  -d --directories=ACTION  how to handle directories (default=skip)", //$NON-NLS-1$
-            "                           ACTION is 'read', 'recurse', or 'skip'", //$NON-NLS-1$
-            "  -D --devices=ACTION      how to handle devices, FIFOs and sockets", //$NON-NLS-1$
-            "                           ACTION is 'read' or 'skip'", //$NON-NLS-1$
-            "  -R, -r --recursive       equivalent to --directories=recurse" }; //$NON-NLS-1$
+        final String[] usage = { "test - test Options usage", //NON-NLS
+            "  text before Usage: is displayed when usage() is called and no error has occurred.", //NON-NLS
+            "  so can be used as a simple help message.", "", "Usage: testOptions [OPTION]... PATTERN [FILES]...", // NON-NLS
+            "  Output control: arbitrary non-option text can be included.", "  -? --help                show help", // NON-NLS
+            "  -c --count=COUNT           show COUNT lines", //NON-NLS
+            "  -h --no-filename         suppress the prefixing filename on output", //NON-NLS
+            "  -q --quiet, --silent     suppress all normal output", //NON-NLS
+            "     --binary-files=TYPE   assume that binary files are TYPE", //NON-NLS
+            "                           TYPE is 'binary', 'text', or 'without-match'", //NON-NLS
+            "  -I                       equivalent to --binary-files=without-match", //NON-NLS
+            "  -d --directories=ACTION  how to handle directories (default=skip)", //NON-NLS
+            "                           ACTION is 'read', 'recurse', or 'skip'", //NON-NLS
+            "  -D --devices=ACTION      how to handle devices, FIFOs and sockets", //NON-NLS
+            "                           ACTION is 'read' or 'skip'", //NON-NLS
+            "  -R, -r --recursive       equivalent to --directories=recurse" }; //NON-NLS
 
         Option opt = Options.compile(usage).parse(args);
 
-        if (opt.isSet("help")) { //$NON-NLS-1$
+        if (opt.isSet("help")) {
             opt.usage(); // includes text before Usage:
             return;
         }
 
         if (opt.args().isEmpty()) {
-            throw opt.usageError("PATTERN not specified"); //$NON-NLS-1$
+            throw opt.usageError("PATTERN not specified"); //NON-NLS
         }
 
         System.out.println(opt);
-        if (opt.isSet("count")) { //$NON-NLS-1$
-            System.out.println("count = " + opt.getNumber("count")); //$NON-NLS-1$ //$NON-NLS-2$
+        if (opt.isSet("count")) { //NON-NLS
+            System.out.println("count = " + opt.getNumber("count")); // NON-NLS
         }
         System.out.println("--directories specified: " + opt.isSet("directories")); // NON-NLS
         System.out.println("directories=" + opt.get("directories")); // NON-NLS
@@ -110,7 +110,7 @@ public class Options implements Option {
     }
 
     public static Option compile(String optSpec) {
-        return compile(optSpec.split("\\n")); //$NON-NLS-1$
+        return compile(optSpec.split("\\n")); //NON-NLS
     }
 
     public static Option compile(String[] optSpec, Option gopt) {
@@ -136,7 +136,7 @@ public class Options implements Option {
     @Override
     public boolean isSet(String name) {
         if (!optSet.containsKey(name)) {
-            throw new IllegalArgumentException("option not defined in spec: " + name); //$NON-NLS-1$
+            throw new IllegalArgumentException("option not defined in spec: " + name);
         }
 
         return optSet.get(name);
@@ -145,12 +145,12 @@ public class Options implements Option {
     @Override
     public Object getObject(String name) {
         if (!optArg.containsKey(name)) {
-            throw new IllegalArgumentException("option not defined with argument: " + name); //$NON-NLS-1$
+            throw new IllegalArgumentException("option not defined with argument: " + name);
         }
 
         List<Object> list = getObjectList(name);
 
-        return list.isEmpty() ? "" : list.get(list.size() - 1); //$NON-NLS-1$
+        return list.isEmpty() ? "" : list.get(list.size() - 1);
     }
 
     @Override
@@ -159,7 +159,7 @@ public class Options implements Option {
         Object arg = optArg.get(name);
 
         if (arg == null) {
-            throw new IllegalArgumentException("option not defined with argument: " + name); //$NON-NLS-1$
+            throw new IllegalArgumentException("option not defined with argument: " + name);
         }
 
         if (arg instanceof String) { // default value
@@ -181,7 +181,7 @@ public class Options implements Option {
             try {
                 list.add((String) o);
             } catch (ClassCastException e) {
-                throw new IllegalArgumentException("option not String: " + name); //$NON-NLS-1$
+                throw new IllegalArgumentException("option not String: " + name);
             }
         }
         return list;
@@ -206,7 +206,7 @@ public class Options implements Option {
         try {
             return (String) getObject(name);
         } catch (ClassCastException e) {
-            throw new IllegalArgumentException("option not String: " + name); //$NON-NLS-1$
+            throw new IllegalArgumentException("option not String: " + name);
         }
     }
 
@@ -233,7 +233,7 @@ public class Options implements Option {
         if (args == null) {
             args = new ArrayList<>();
             for (Object arg : xargs) {
-                args.add(arg == null ? "null" : arg.toString()); //$NON-NLS-1$
+                args.add(arg == null ? "null" : arg.toString()); //NON-NLS
             }
         }
         return args;
@@ -262,7 +262,7 @@ public class Options implements Option {
      */
     @Override
     public IllegalArgumentException usageError(String s) {
-        error = usageName + ": " + s; //$NON-NLS-1$
+        error = usageName + ": " + s;
         usage();
         return new IllegalArgumentException(error);
     }
@@ -294,7 +294,7 @@ public class Options implements Option {
             }
 
             for (Entry<String, Object> e : gopt.optArg.entrySet()) {
-                if (!"".equals(e.getValue())) { //$NON-NLS-1$
+                if (!"".equals(e.getValue())) {
                     myOptArg.put(e.getKey(), e.getValue());
                 }
             }
@@ -305,8 +305,8 @@ public class Options implements Option {
         unmodifiableOptSet = Collections.unmodifiableMap(myOptSet);
         unmodifiableOptArg = Collections.unmodifiableMap(myOptArg);
 
-        defOpts = System.getenv(usageName.toUpperCase() + "_OPTS"); //$NON-NLS-1$
-        defArgs = (defOpts != null) ? defOpts.split("\\s+") : new String[0]; //$NON-NLS-1$
+        defOpts = System.getenv(usageName.toUpperCase() + "_OPTS"); //NON-NLS
+        defArgs = (defOpts != null) ? defOpts.split("\\s+") : new String[0]; //NON-NLS
     }
 
     /**
@@ -323,12 +323,12 @@ public class Options implements Option {
 
                 if (name != null) {
                     if (myOptSet.containsKey(name)) {
-                        throw new IllegalArgumentException("duplicate option in spec: --" + name); //$NON-NLS-1$
+                        throw new IllegalArgumentException("duplicate option in spec: --" + name);
                     }
                     myOptSet.put(name, false);
                 }
 
-                String dflt = (m.group(GROUP_DEFAULT) != null) ? m.group(GROUP_DEFAULT) : ""; //$NON-NLS-1$
+                String dflt = (m.group(GROUP_DEFAULT) != null) ? m.group(GROUP_DEFAULT) : "";
                 if (m.group(GROUP_ARG_1) != null) {
                     myOptArg.put(opt, dflt);
                 }
@@ -338,7 +338,7 @@ public class Options implements Option {
                     optAlias.put(opt2, opt);
                     myOptSet.put(opt2, false);
                     if (m.group(GROUP_ARG_1) != null) {
-                        myOptArg.put(opt2, ""); //$NON-NLS-1$
+                        myOptArg.put(opt2, "");
                     }
                 }
 
@@ -346,7 +346,7 @@ public class Options implements Option {
                     String sopt = m.group(i == 0 ? GROUP_SHORT_OPT_1 : GROUP_SHORT_OPT_2);
                     if (sopt != null) {
                         if (optName.containsKey(sopt)) {
-                            throw new IllegalArgumentException("duplicate option in spec: -" + sopt); //$NON-NLS-1$
+                            throw new IllegalArgumentException("duplicate option in spec: -" + sopt);
                         }
                         optName.put(sopt, name);
                     }
@@ -388,7 +388,7 @@ public class Options implements Option {
     @Override
     public Option parse(Object[] argv, boolean skipArg0) {
         if (null == argv) {
-            throw new IllegalArgumentException("argv is null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("argv is null");
         }
 
         return parse(Arrays.asList(argv), skipArg0);
@@ -414,7 +414,7 @@ public class Options implements Option {
         boolean endOpt = false;
 
         for (Object oarg : arguments) {
-            String arg = oarg == null ? "null" : oarg.toString(); //$NON-NLS-1$
+            String arg = oarg == null ? "null" : oarg.toString(); //NON-NLS
 
             if (endOpt) {
                 xargs.add(oarg);
@@ -428,9 +428,9 @@ public class Options implements Option {
                 }
                 xargs.add(oarg);
             } else {
-                if ("--".equals(arg)) { //$NON-NLS-1$
+                if ("--".equals(arg)) {
                     endOpt = true;
-                } else if (arg.startsWith("--")) { //$NON-NLS-1$
+                } else if (arg.startsWith("--")) {
                     int eq = arg.indexOf('='); 
                     String value = (eq == -1) ? null : arg.substring(eq + 1);
                     String name = arg.substring(2, (eq == -1) ? arg.length() : eq);
@@ -491,7 +491,7 @@ public class Options implements Option {
                             }
                         } else {
                             if (stopOnBadOption) {
-                                xargs.add("-" + c); //$NON-NLS-1$
+                                xargs.add("-" + c);
                                 endOpt = true;
                             } else {
                                 throw usageError("invalid option '" + c + "'"); // NON-NLS
@@ -503,8 +503,8 @@ public class Options implements Option {
         }
 
         if (needArg != null) {
-            String name = (needOpt != null) ? needOpt : "--" + needArg; //$NON-NLS-1$
-            throw usageError("option '" + name + "' requires an argument"); //$NON-NLS-1$ //$NON-NLS-2$
+            String name = (needOpt != null) ? needOpt : "--" + needArg;
+            throw usageError("option '" + name + "' requires an argument"); // NON-NLS
         }
 
         // remove long option aliases

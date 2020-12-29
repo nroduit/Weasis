@@ -73,7 +73,7 @@ public class Utils {
     }
 
     public static String getWeasisProtocol(String... params) {
-        Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?"); //$NON-NLS-1$
+        Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?");
         for (String p : params) {
             if (pattern.matcher(p).matches()) {
                 return p;
@@ -83,7 +83,7 @@ public class Utils {
     }
 
     public static int getWeasisProtocolIndex(String... params) {
-        Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?"); //$NON-NLS-1$
+        Pattern pattern = Pattern.compile("^weasis(-.*)?://.*?");
         for (int i = 0; i < params.length; i++) {
             if (pattern.matcher(params[i]).matches()) {
                 return i;
@@ -105,7 +105,7 @@ public class Utils {
             return Collections.emptyList();
         }
         List<String> matchList = new ArrayList<>();
-        Pattern patternSpaceExceptQuotes = Pattern.compile("'[^']*'|\"[^\"]*\"|( )"); //$NON-NLS-1$
+        Pattern patternSpaceExceptQuotes = Pattern.compile("'[^']*'|\"[^\"]*\"|( )");
         Matcher m = patternSpaceExceptQuotes.matcher(s);
         StringBuffer b = new StringBuffer();
         while (m.find()) {
@@ -143,8 +143,8 @@ public class Utils {
     }
 
     public static byte[] decrypt(byte[] input, String strKey) throws GeneralSecurityException {
-        SecretKeySpec skeyspec = new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish"); //$NON-NLS-1$
-        Cipher cipher = Cipher.getInstance("Blowfish"); //$NON-NLS-1$
+        SecretKeySpec skeyspec = new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish"); //NON-NLS
+        Cipher cipher = Cipher.getInstance("Blowfish"); //NON-NLS
         cipher.init(Cipher.DECRYPT_MODE, skeyspec);
         return cipher.doFinal(input);
     }

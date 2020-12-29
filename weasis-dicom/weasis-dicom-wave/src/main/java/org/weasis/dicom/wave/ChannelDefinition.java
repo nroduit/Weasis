@@ -34,7 +34,7 @@ public class ChannelDefinition {
      */
     public ChannelDefinition(Attributes dcm, int position) {
         this.position = position;
-        String title = Objects.requireNonNull(dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence") //$NON-NLS-1$
+        String title = Objects.requireNonNull(dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence") 
             .getString(Tag.CodeMeaning);
         this.lead = Lead.buildLead(title);
         Double chSensisvity = DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivity, null);
@@ -47,10 +47,10 @@ public class ChannelDefinition {
             Double sCorrectionFactor =
                 DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivityCorrectionFactor, 1.0);
             Attributes chs = Objects.requireNonNull(dcm.getNestedDataset(Tag.ChannelSensitivityUnitsSequence),
-                "no ChannelSensitivityUnitsSequence found"); //$NON-NLS-1$
+                "no ChannelSensitivityUnitsSequence found"); 
             String unit = chs.getString(Tag.CodeValue, org.weasis.core.api.image.util.Unit.PIXEL.getAbbreviation());
             String unitDesc = chs.getString(Tag.CodeMeaning, org.weasis.core.api.image.util.Unit.PIXEL.getFullName());
-            double factorUnit = "mV".equals(unit) ? 1000 : 1; //$NON-NLS-1$
+            double factorUnit = "mV".equals(unit) ? 1000 : 1; 
             this.amplitudeUnit = new Unit(unitDesc, unit, chSensisvity * sCorrectionFactor * factorUnit);
         }
 

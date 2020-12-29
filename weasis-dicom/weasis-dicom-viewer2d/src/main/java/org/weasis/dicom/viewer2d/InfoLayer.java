@@ -171,18 +171,18 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
              * Image Management Devices, July 27, 2000).
              */
             drawY -= fontHeight;
-            if ("01".equals(TagD.getTagValue(image, Tag.LossyImageCompression))) { //$NON-NLS-1$
+            if ("01".equals(TagD.getTagValue(image, Tag.LossyImageCompression))) {
                 double[] rates = TagD.getTagValue(image, Tag.LossyImageCompressionRatio, double[].class);
-                StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));//$NON-NLS-1$
+                StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.lossy"));
                 buf.append(StringUtil.COLON_AND_SPACE);
                 if (rates != null && rates.length > 0) {
                     for (int i = 0; i < rates.length; i++) {
                         if (i > 0) {
-                            buf.append(","); //$NON-NLS-1$
+                            buf.append(",");
                         }
-                        buf.append(" ["); //$NON-NLS-1$
+                        buf.append(" [");
                         buf.append(Math.round(rates[i]));
-                        buf.append(":1"); //$NON-NLS-1$
+                        buf.append(":1");
                         buf.append(']');
                     }
                 } else {
@@ -202,7 +202,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
             if (koElement != null) {
                 float y = midy;
-                String message = "Not a valid image: " + koElement.getDocumentTitle(); //$NON-NLS-1$
+                String message = "Not a valid image: " + koElement.getDocumentTitle(); //NON-NLS
                 AbstractGraphicLabel.paintColorFontOutline(g2, message,
                     midx - g2.getFontMetrics().stringWidth(message) / 2F, y, Color.RED);
             }
@@ -213,7 +213,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
-                sb.append(" - "); //$NON-NLS-1$
+                sb.append(" - ");
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
@@ -231,7 +231,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 sb.append(ActionW.WINLEVEL.getTitle());
                 sb.append(StringUtil.COLON_AND_SPACE);
                 sb.append(DecFormater.allNumber(window));
-                sb.append("/");//$NON-NLS-1$
+                sb.append("/");
                 sb.append(DecFormater.allNumber(level));
 
                 if (image != null) {
@@ -245,8 +245,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                     double maxp = level.doubleValue() + window.doubleValue() / 2.0;
                     if (minp > maxModLUT || maxp < minModLUT) {
                         outside = true;
-                        sb.append(" - "); //$NON-NLS-1$
-                        sb.append(Messages.getString("InfoLayer.msg_outside_levels")); //$NON-NLS-1$
+                        sb.append(" - ");
+                        sb.append(Messages.getString("InfoLayer.msg_outside_levels"));
                     }
                 }
             }
@@ -263,9 +263,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION) && hideMin) {
-            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
-                + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE
+                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " "
+                + Messages.getString("InfoLayer.angle_symb"),
                 border, drawY);
             drawY -= fontHeight;
         }
@@ -276,13 +276,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             if (image != null) {
                 Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
                 if (inst != null) {
-                    buf.append("["); //$NON-NLS-1$
+                    buf.append("[");
                     buf.append(inst);
-                    buf.append("] "); //$NON-NLS-1$
+                    buf.append("] ");
                 }
             }
             buf.append(view2DPane.getFrameIndex() + 1);
-            buf.append(" / "); //$NON-NLS-1$
+            buf.append(" / ");
             buf.append(view2DPane.getSeries()
                 .size((Filter<DicomImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())));
             AbstractGraphicLabel.paintFontOutline(g2, buf.toString(), border, drawY);
@@ -391,17 +391,17 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
             StringBuilder orientation = new StringBuilder(mod.name());
             if (rows != null && columns != null) {
-                orientation.append(" (");//$NON-NLS-1$
+                orientation.append(" (");
                 orientation.append(columns);
-                orientation.append("x");//$NON-NLS-1$
+                orientation.append("x"); //NON-NLS
                 orientation.append(rows);
-                orientation.append(")");//$NON-NLS-1$
+                orientation.append(")");
 
             }
             String colLeft = null;
             String rowTop = null;
             if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
-                orientation.append(" - ");//$NON-NLS-1$
+                orientation.append(" - ");
                 Label imgOrientation = ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(v[0], v[1],
                     v[2], v[3], v[4], v[5]);
                 orientation.append(imgOrientation);
@@ -458,10 +458,10 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             }
             if (rowTop != null && colLeft != null) {
                 if (colLeft.length() < 1) {
-                    colLeft = " "; //$NON-NLS-1$
+                    colLeft = " ";
                 }
                 if (rowTop.length() < 1) {
-                    rowTop = " "; //$NON-NLS-1$
+                    rowTop = " ";
                 }
                 Font oldFont = g2.getFont();
                 Font bigFont = oldFont.deriveFont(oldFont.getSize() + 5.0f);

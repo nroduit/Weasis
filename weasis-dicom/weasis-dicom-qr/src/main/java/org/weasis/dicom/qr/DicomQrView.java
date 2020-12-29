@@ -169,10 +169,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         }
     }
 
-    private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
-    private static final String LAST_CALLING_NODE = "lastCallingNode"; //$NON-NLS-1$
-    private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType"; //$NON-NLS-1$
-    static final File tempDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); //$NON-NLS-1$ //$NON-NLS-2$
+    private static final String LAST_SEL_NODE = "lastSelNode";
+    private static final String LAST_CALLING_NODE = "lastCallingNode";
+    private static final String LAST_RETRIEVE_TYPE = "lastRetrieveType";
+    static final File tempDir = FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "qr")); // NON-NLS
 
     private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
@@ -182,7 +182,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private final JTextField tfSearch = new JTextField();
     private final DicomModel dicomModel = new DicomModel();
     private final RetrieveTree tree = new RetrieveTree(dicomModel);
-    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+    private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
     private final JComboBox<TagW> comboTags = new JComboBox<>(TagD.getTagFromIDs(Tag.PatientName, Tag.PatientID,
         Tag.AccessionNumber, Tag.StudyID, Tag.StudyDescription, Tag.InstitutionName, Tag.ReferringPhysicianName,
@@ -228,7 +228,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     private final JComboBox<RetrieveType> comboDicomRetrieveType = new JComboBox<>(RetrieveType.values());
     private final JComboBox<AbstractDicomNode> comboCallingNode = new JComboBox<>();
     private final DicomListener dicomListener;
-    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); //$NON-NLS-1$
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); //NON-NLS
 
     public DicomQrView() {
         super(Messages.getString("DicomQrView.title"));
@@ -486,7 +486,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                     JOptionPane.ERROR_MESSAGE));
             }
         } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet"); //$NON-NLS-1$
+            throw new IllegalAccessError("Not implemented yet");
         }
     }
 
@@ -515,11 +515,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         @Override
                         public String toString() {
                             StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.PatientName));
-                            buf.append(" ["); //$NON-NLS-1$
+                            buf.append(" [");
                             buf.append(getDisplayValue(this, Tag.PatientID));
-                            buf.append("] "); //$NON-NLS-1$
+                            buf.append("] ");
                             buf.append(getDisplayValue(this, Tag.PatientBirthDate));
-                            buf.append(" "); //$NON-NLS-1$
+                            buf.append(" ");
                             buf.append(getDisplayValue(this, Tag.PatientSex));
                             return buf.toString();
                         }
@@ -536,13 +536,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                             @Override
                             public String toString() {
                                 StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.StudyDescription));
-                                buf.append(" ["); //$NON-NLS-1$
+                                buf.append(" [");
                                 buf.append(getDisplayValue(this, Tag.ModalitiesInStudy));
-                                buf.append("] "); //$NON-NLS-1$
+                                buf.append("] ");
                                 LocalDateTime studyDate = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, this);
                                 if (studyDate != null) {
                                     buf.append(TagUtil.formatDateTime(studyDate));
-                                    buf.append(" "); //$NON-NLS-1$
+                                    buf.append(" ");
                                 }
                                 buf.append(getDisplayValue(this, Tag.AccessionNumber));
                                 return buf.toString();
@@ -633,7 +633,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         if (sDate != null || eDate != null) {
             StringBuilder range = new StringBuilder();
             range.append(TagD.formatDicomDate(sDate));
-            range.append("-"); //$NON-NLS-1$
+            range.append("-");
             range.append(TagD.formatDicomDate(eDate));
             p.getParameters().add(new DicomParam(Tag.StudyDate, range.toString()));
         }

@@ -21,9 +21,9 @@ import javax.swing.border.Border;
 public class ToolBarButtonBorder implements Border {
 
     private static Image borderImage =
-        new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder.png")).getImage(); //$NON-NLS-1$
+        new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder.png")).getImage(); 
     private static Image pressedBorderImage =
-        new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder_pressed.png")).getImage(); //$NON-NLS-1$
+        new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder_pressed.png")).getImage(); 
 
     private static int borderWidth = borderImage.getWidth(null);
     private static int borderHeight = borderImage.getHeight(null);

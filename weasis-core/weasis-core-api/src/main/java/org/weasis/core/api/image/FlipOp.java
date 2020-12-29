@@ -25,7 +25,7 @@ public class FlipOp extends AbstractOp {
      *
      * Boolean value.
      */
-    public static final String P_FLIP = "flip"; //$NON-NLS-1$
+    public static final String P_FLIP = "flip"; //NON-NLS
 
     public FlipOp() {
         setName(OP_NAME);

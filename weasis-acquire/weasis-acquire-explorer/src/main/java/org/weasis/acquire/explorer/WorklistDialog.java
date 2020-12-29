@@ -154,12 +154,12 @@ public class WorklistDialog extends JDialog {
                 int row = jtable.getSelectedRow();
                 if (row < 0) {
                     selectedItem = null;
-                    selection.setText(""); //$NON-NLS-1$
+                    selection.setText("");
                 } else {
                     selectedItem = items.get(row);
                     TagW name = TagD.get(Tag.PatientName);
                     StringBuilder buf = new StringBuilder(name.getFormattedTagValue(name.getValue(selectedItem), null));
-                    buf.append(" "); //$NON-NLS-1$
+                    buf.append(" ");
                     TagW date = TagD.get(Tag.PatientBirthDate);
                     buf.append(date.getFormattedTagValue(date.getValue(selectedItem), null));
                     selection.setText(buf.toString());
@@ -202,7 +202,7 @@ public class WorklistDialog extends JDialog {
 
             AcquireManager.getInstance().applyToGlobal(tagable);
             selectedItem = null;
-            selection.setText(""); //$NON-NLS-1$
+            selection.setText("");
             jtable.getSelectionModel().clearSelection();
             return true;
         }

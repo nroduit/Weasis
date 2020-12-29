@@ -17,11 +17,11 @@ public interface ImageOpNode extends Copyable<ImageOpNode> {
 
     public final class Param {
 
-        public static final String NAME = "op.display.name"; //$NON-NLS-1$
-        public static final String ENABLE = "op.enable"; //$NON-NLS-1$
+        public static final String NAME = "op.display.name";
+        public static final String ENABLE = "op.enable";
 
-        public static final String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
-        public static final String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+        public static final String INPUT_IMG = "op.input.img";
+        public static final String OUTPUT_IMG = "op.output.img";
 
         private Param() {
         }

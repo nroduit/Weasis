@@ -19,8 +19,8 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 
 public class InsertableUtil {
-    public static final String ALL_BUNDLE = "weasis"; //$NON-NLS-1$
-    public static final String ALL = "all"; //$NON-NLS-1$
+    public static final String ALL_BUNDLE = "weasis"; //NON-NLS
+    public static final String ALL = "all"; //NON-NLS
 
     private InsertableUtil() {
     }
@@ -36,12 +36,12 @@ public class InsertableUtil {
     public static void applyPreferences(List<? extends Insertable> list, Preferences prefs, String bundleName,
         String componentName, Type type) {
         if (list != null && prefs != null && bundleName != null && componentName != null) {
-            Preferences prefNode = prefs.node(componentName).node(type.name().toLowerCase() + "s"); //$NON-NLS-1$
+            Preferences prefNode = prefs.node(componentName).node(type.name().toLowerCase() + "s");
             synchronized (list) {//NOSONAR lock object is the list for iterating its elements safely
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String nodeName = getCName(c.getClass());
-                        String key = "visible"; //$NON-NLS-1$
+                        String key = "visible"; //NON-NLS
                         Preferences node = prefNode.node(nodeName);
                         String valString = node.get(key, null);
                         // If not specify, value is true
@@ -54,7 +54,7 @@ public class InsertableUtil {
                         }
                         c.setComponentEnabled(val);
 
-                        key = "cPosition"; //$NON-NLS-1$
+                        key = "cPosition";
                         valString = node.get(key, null);
                         // If not specify, value is true
                         int index = c.getComponentPosition();
@@ -77,14 +77,14 @@ public class InsertableUtil {
 
     public static void savePreferences(List<? extends Insertable> list, Preferences prefs, Type type) {
         if (list != null && prefs != null) {
-            Preferences prefNode = prefs.node(type.name().toLowerCase() + "s"); //$NON-NLS-1$
+            Preferences prefNode = prefs.node(type.name().toLowerCase() + "s");
             synchronized (list) {//NOSONAR lock object is the list for iterating its elements safely
                 for (Insertable c : list) {
                     if (!Type.EMPTY.equals(c.getType())) {
                         String cname = getCName(c.getClass());
                         Preferences node = prefNode.node(cname);
-                        BundlePreferences.putBooleanPreferences(node, "visible", c.isComponentEnabled()); //$NON-NLS-1$
-                        BundlePreferences.putIntPreferences(node, "cPosition", c.getComponentPosition()); //$NON-NLS-1$
+                        BundlePreferences.putBooleanPreferences(node, "visible", c.isComponentEnabled()); //NON-NLS
+                        BundlePreferences.putIntPreferences(node, "cPosition", c.getComponentPosition());
                     }
                 }
             }
@@ -147,6 +147,6 @@ public class InsertableUtil {
         if (clazz != null) {
             return clazz.getSimpleName().toLowerCase();
         }
-        return ""; //$NON-NLS-1$
+        return "";
     }
 }

@@ -81,8 +81,8 @@ import bibliothek.gui.dock.common.CLocation;
 public class MeasureTool extends PluginTool implements GraphicSelectionListener {
     private static final long serialVersionUID = 1117961156637401550L;
 
-    public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE; //$NON-NLS-1$
-    public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img"); //$NON-NLS-1$
+    public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE; 
+    public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img");
     public static final ViewSetting viewSetting = new ViewSetting();
 
     protected final ImageViewerEventManager<? extends ImageElement> eventManager;
@@ -96,9 +96,9 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
         this.eventManager = eventManager;
         this.rootPane = new JScrollPane();
-        dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png"))); 
         setDockableWidth(javax.swing.UIManager.getLookAndFeel() != null
-            ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 //$NON-NLS-1$
+            ? javax.swing.UIManager.getLookAndFeel().getClass().getName().startsWith("org.pushingpixels") ? 190 : 205 
             : 205);
         jbInit();
     }
@@ -337,9 +337,9 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
                     buffer.append(m.getLabelExtension());
                 }
                 if (m.getUnit() != null) {
-                    buffer.append(" ["); //$NON-NLS-1$
+                    buffer.append(" ["); 
                     buffer.append(m.getUnit());
-                    buffer.append("]"); //$NON-NLS-1$
+                    buffer.append("]"); 
                 }
                 row[0] = buffer.toString();
                 row[1] = m.getValue();

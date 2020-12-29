@@ -20,19 +20,19 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
  * @since 09/01/2012
  */
 public class DicomPrintOptions extends PrintOptions {
-    public static final String DEF_MEDIUM_TYPE = "BLUE FILM"; //$NON-NLS-1$
-    public static final String DEF_PRIORITY = "LOW"; //$NON-NLS-1$
-    public static final String DEF_FILM_DEST = "MAGAZINE"; //$NON-NLS-1$
+    public static final String DEF_MEDIUM_TYPE = "BLUE FILM";  //NON-NLS
+    public static final String DEF_PRIORITY = "LOW"; 
+    public static final String DEF_FILM_DEST = "MAGAZINE"; 
     public static final int DEF_NUM_COPIES = 1;
     public static final boolean DEF_COLOR = false;
-    public static final String DEF_FILM_ORIENTATION = "PORTRAIT"; //$NON-NLS-1$
-    public static final String DEF_IMG_DISP_FORMAT = "STANDARD\\1,1"; //$NON-NLS-1$
+    public static final String DEF_FILM_ORIENTATION = "PORTRAIT"; 
+    public static final String DEF_IMG_DISP_FORMAT = "STANDARD\\1,1";  //NON-NLS
     public static final FilmSize DEF_FILM_SIZE = FilmSize.IN8X10;
-    public static final String DEF_MAGNIFICATION_TYPE = "CUBIC"; //$NON-NLS-1$
-    public static final String DEF_SMOOTHING_TYPE = "MEDIUM"; //$NON-NLS-1$
-    public static final String DEF_BORDER_DENSITY = "WHITE"; //$NON-NLS-1$
-    public static final String DEF_TRIM = "NO"; //$NON-NLS-1$
-    public static final String DEF_EMPTY_DENSITY = "BLACK"; //$NON-NLS-1$
+    public static final String DEF_MAGNIFICATION_TYPE = "CUBIC"; 
+    public static final String DEF_SMOOTHING_TYPE = "MEDIUM"; 
+    public static final String DEF_BORDER_DENSITY = "WHITE"; 
+    public static final String DEF_TRIM = "NO"; 
+    public static final String DEF_EMPTY_DENSITY = "BLACK"; 
     public static final boolean DEF_SHOW_ANNOTATIONS = true;
     public static final boolean DEF_PRINT_SEL_VIEW = false;
     public static final PrintOptions.DotPerInches DEF_DPI = PrintOptions.DotPerInches.DPI_150;

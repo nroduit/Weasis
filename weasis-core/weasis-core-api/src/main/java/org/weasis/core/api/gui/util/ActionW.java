@@ -22,7 +22,7 @@ import javax.swing.ImageIcon;
 import org.weasis.core.api.Messages;
 
 public class ActionW implements KeyActionValue {
-    public static final String DRAW_CMD_PREFIX = "draw.sub."; //$NON-NLS-1$
+    public static final String DRAW_CMD_PREFIX = "draw.sub."; //NON-NLS
 
     public static final ActionW NO_ACTION =
         new ActionW(Messages.getString("ActionW.no"), "none", KeyEvent.VK_N, 0, null); // NON-NLS
@@ -199,7 +199,7 @@ public class ActionW implements KeyActionValue {
 
     public static Cursor getCustomCursor(String filename, String cursorName, int hotSpotX, int hotSpotY) {
         Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-        URL path = ActionW.class.getResource("/icon/cursor/" + filename); //$NON-NLS-1$
+        URL path = ActionW.class.getResource("/icon/cursor/" + filename);
         if (path == null) {
             return null;
         }

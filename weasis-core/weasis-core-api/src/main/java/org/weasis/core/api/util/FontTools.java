@@ -49,7 +49,7 @@ public class FontTools {
     }
 
     public static float getAccurateFontHeight(Graphics g) {
-        return (float) g.getFontMetrics().getStringBounds("0", g).getHeight(); //$NON-NLS-1$
+        return (float) g.getFontMetrics().getStringBounds("0", g).getHeight();
     }
 
     public static float getMidFontHeightFactor() {

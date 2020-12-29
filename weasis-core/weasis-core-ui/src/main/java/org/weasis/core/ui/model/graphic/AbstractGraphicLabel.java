@@ -186,7 +186,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
             }
-            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2; //$NON-NLS-1$
+            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2; //NON-NLS
             labelWidth = maxWidth;
         }
     }

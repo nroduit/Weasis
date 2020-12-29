@@ -97,7 +97,7 @@ public class MeasureDialog extends PropertiesDialog {
                 String[] labels = ((AnnotationGraphic) graphic).getLabels();
                 for (String s : labels) {
                     buf.append(s);
-                    buf.append("\n"); //$NON-NLS-1$
+                    buf.append("\n");
                 }
                 textPane.setEnabled(!(graphic instanceof PixelInfoGraphic));
                 textPane.setText(buf.toString());

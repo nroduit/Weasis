@@ -16,7 +16,7 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 @org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class, immediate = false)
 public class WaveElementFactory implements DicomSpecialElementFactory {
 
-    public static final String SERIES_WAVEFORM_MIMETYPE = "wf/dicom"; //$NON-NLS-1$
+    public static final String SERIES_WAVEFORM_MIMETYPE = "wf/dicom"; //NON-NLS
 
     private static final String[] modalities = { "ECG", "HD" }; // NON-NLS
 

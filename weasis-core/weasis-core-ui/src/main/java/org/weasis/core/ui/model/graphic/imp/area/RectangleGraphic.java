@@ -41,7 +41,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
     public static final Integer POINTS_NUMBER = 8;
 
-    public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(RectangleGraphic.class.getResource("/icon/22x22/draw-rectangle.png"));
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true);
     public static final Measurement PERIMETER =
@@ -94,7 +94,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     }
 
     public RectangleGraphic buildGraphic(Rectangle2D rectangle) throws InvalidShapeException {
-        Rectangle2D r = Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!")); //$NON-NLS-1$
+        Rectangle2D r = Optional.ofNullable(rectangle).orElseThrow(() -> new InvalidShapeException("Rectangle2D is null!"));
         setHandlePointList(r);
         prepareShape();
         return this;
@@ -104,7 +104,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
     protected void prepareShape() throws InvalidShapeException {
 
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn");
         }
         buildShape(null);
     }
@@ -290,7 +290,7 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
         static eHandlePoint valueFromIndex(int index) {
             return Optional.ofNullable(map.get(index))
-                .orElseThrow(() -> new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index)); //$NON-NLS-1$
+                .orElseThrow(() -> new RuntimeException("Not a valid index for a rectangular DragGraphic : " + index));
         }
 
         eHandlePoint getVerticalMirror() {

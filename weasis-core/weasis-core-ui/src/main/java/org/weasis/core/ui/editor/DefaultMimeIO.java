@@ -150,7 +150,7 @@ public class DefaultMimeIO implements MediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "Default mime type reader " }; //$NON-NLS-1$
+        return new String[] { "Default mime type reader " }; //NON-NLS
     }
 
     @Override

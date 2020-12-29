@@ -35,7 +35,7 @@ public class LutToolBar extends WtoolBar {
     public LutToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
         super(Messages.getString("LutToolBar.lookupbar"), index);
         if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("EventManager cannot be null"); 
         }
 
         GroupPopup menu = null;
@@ -82,7 +82,7 @@ public class LutToolBar extends WtoolBar {
 
         final JToggleButton invertButton = new JToggleButton();
         invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
-        invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); //$NON-NLS-1$
+        invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png"))); 
         ActionState invlutAction = eventManager.getAction(ActionW.INVERT_LUT);
         if (invlutAction instanceof ToggleButtonListener) {
             ((ToggleButtonListener) invlutAction).registerActionState(invertButton);
@@ -91,7 +91,7 @@ public class LutToolBar extends WtoolBar {
     }
 
     private Icon buildLutIcon() {
-        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/lut.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/lut.png")); 
 
         return new DropButtonIcon(new Icon() {
 
@@ -123,7 +123,7 @@ public class LutToolBar extends WtoolBar {
     }
 
     private Icon buildWLIcon() {
-        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png")); 
 
         return new DropButtonIcon(new Icon() {
 

@@ -48,7 +48,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
         this.list = list;
         this.thumbCache = thumbCache;
         // Fix list reselection interval when dragging
-        this.list.putClientProperty("List.isFileList", Boolean.TRUE); //$NON-NLS-1$
+        this.list.putClientProperty("List.isFileList", Boolean.TRUE);
         listModel = new DefaultListModel<>();
         list.setModel(listModel);
     }

@@ -37,7 +37,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
 
     public static final Integer POINTS_NUMBER = 5;
 
-    public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png"));
 
     public static final Measurement ANGLE = new Measurement(Messages.getString("measure.angle"), 1, true);
     public static final Measurement COMPLEMENTARY_ANGLE =

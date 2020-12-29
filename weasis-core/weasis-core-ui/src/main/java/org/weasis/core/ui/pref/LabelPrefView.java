@@ -60,7 +60,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     public LabelPrefView(ViewSetting viewSetting) {
         super(Messages.getString("LabelPrefView.font"));
         if (viewSetting == null) {
-            throw new IllegalArgumentException("ViewSetting cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("ViewSetting cannot be null"); 
         }
         this.viewSetting = viewSetting;
         setComponentPosition(5);
@@ -140,8 +140,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
             }
         }
         jComboSize.setSelectedIndex(index);
-        jComboName.setSelectedItem("default".equals(viewSetting.getFontName()) ? Messages //$NON-NLS-1$
-            .getString("LabelPrefView.default") : viewSetting.getFontName()); //$NON-NLS-1$
+        jComboName.setSelectedItem("default".equals(viewSetting.getFontName()) ? Messages  //NON-NLS
+            .getString("LabelPrefView.default") : viewSetting.getFontName()); 
 
     }
 
@@ -185,7 +185,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
         }
         String name = jComboName.getSelectedItem().toString();
 
-        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); //$NON-NLS-1$
+        viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name);  //NON-NLS
         viewSetting.setFontSize(size);
         viewSetting.setFontType(style);
 

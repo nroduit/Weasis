@@ -25,7 +25,7 @@ public class AcquireSubmitButtonsPanel extends JPanel {
     private final AcquireActionButton resetBtn;
 
     public AcquireSubmitButtonsPanel() {
-        setBorder(UIManager.getBorder("TitledBorder.border")); //$NON-NLS-1$
+        setBorder(UIManager.getBorder("TitledBorder.border"));
         FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 10, 10);
         setLayout(flowLayout);
 

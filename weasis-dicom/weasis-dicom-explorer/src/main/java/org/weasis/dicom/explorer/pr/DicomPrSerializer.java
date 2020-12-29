@@ -66,7 +66,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class DicomPrSerializer {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrSerializer.class);
 
-    private static final String PIXEL = "PIXEL"; //$NON-NLS-1$
+    private static final String PIXEL = "PIXEL";
 
     private DicomPrSerializer() {
     }
@@ -151,10 +151,10 @@ public class DicomPrSerializer {
     }
 
     private static void writeCommonTags(Attributes attributes) {
-        String gsps = "GSPS"; //$NON-NLS-1$
+        String gsps = "GSPS";
         attributes.setString(Tag.ContentCreatorName, VR.PN, AppProperties.WEASIS_USER);
         attributes.setString(Tag.ContentLabel, VR.CS, gsps);
-        attributes.setString(Tag.ContentDescription, VR.LO, "Description"); //$NON-NLS-1$
+        attributes.setString(Tag.ContentDescription, VR.LO, "Description"); //NON-NLS
         attributes.setInt(Tag.SeriesNumber, VR.IS, 999);
         try {
             attributes.setString(Tag.StationName, VR.SH, InetAddress.getLocalHost().getHostName());
@@ -162,7 +162,7 @@ public class DicomPrSerializer {
             LOGGER.error("Cannot get host name: ", e);
         }
         attributes.setString(Tag.SoftwareVersions, VR.LO, AppProperties.WEASIS_VERSION);
-        attributes.setString(Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, gsps)); //$NON-NLS-1$
+        attributes.setString(Tag.SeriesDescription, VR.LO, String.join(" ", AppProperties.WEASIS_NAME, gsps));
     }
 
     private static void writeReferences(Attributes attributes, GraphicModel model, String sopClassUID) {
@@ -323,7 +323,7 @@ public class DicomPrSerializer {
                 Rectangle2D bound = label.getTransformedBounds(null);
 
                 Attributes text =
-                    bluildLabelAndBounds(bound, Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n"))); //$NON-NLS-1$
+                    bluildLabelAndBounds(bound, Arrays.stream(label.getLabels()).collect(Collectors.joining("\r\n")));
                 textSeq.add(text);
             }
         }
@@ -332,12 +332,12 @@ public class DicomPrSerializer {
     private static Attributes bluildLabelAndAnchor(AnnotationGraphic g) {
         Rectangle2D bound = g.getLabelBounds();
         Point2D anchor = g.getAnchorPoint();
-        String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n")); //$NON-NLS-1$
+        String text = Arrays.stream(g.getLabels()).collect(Collectors.joining("\r\n"));
 
         Attributes attributes = new Attributes(7);
         attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
         attributes.setFloat(Tag.AnchorPoint, VR.FL, (float) anchor.getX(), (float) anchor.getY());
-        attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y"); //$NON-NLS-1$
+        attributes.setString(Tag.AnchorPointVisibility, VR.CS, "Y"); //NON-NLS
         Sequence style = attributes.newSequence(Tag.LineStyleSequence, 1);
         Attributes styles = new Attributes();
         styles.setFloat(Tag.LineThickness, VR.FL, g.getLineThickness());

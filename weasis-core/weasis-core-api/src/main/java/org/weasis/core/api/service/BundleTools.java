@@ -40,7 +40,7 @@ import org.weasis.core.api.util.URLParameters;
 public class BundleTools {
     private static final Logger LOGGER = LoggerFactory.getLogger(BundleTools.class);
 
-    public static final String P_FORMAT_CODE = "locale.format.code"; //$NON-NLS-1$
+    public static final String P_FORMAT_CODE = "locale.format.code";
 
     public static final Map<String, String> SESSION_TAGS_MANIFEST = new HashMap<>(3);
     public static final Map<String, String> SESSION_TAGS_FILE = new HashMap<>(3);
@@ -48,15 +48,15 @@ public class BundleTools {
     static {
         Properties properties = System.getProperties();
         for (String key : properties.stringPropertyNames()) {
-            if (key.startsWith("TGM-")) { //$NON-NLS-1$
+            if (key.startsWith("TGM-")) { //NON-NLS
                 SESSION_TAGS_MANIFEST.put(key.substring(4), properties.getProperty(key));
-            } else if (key.startsWith("TGF-")) { //$NON-NLS-1$
+            } else if (key.startsWith("TGF-")) { //NON-NLS
                 SESSION_TAGS_FILE.put(key.substring(4), properties.getProperty(key));
             }
         }
     }
 
-    public static final String CONFIRM_CLOSE = "weasis.confirm.closing"; //$NON-NLS-1$
+    public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
     public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<Codec>());
     /**
      * This the persistence used at launch which can be stored remotely. These are the preferences necessary for
@@ -73,8 +73,8 @@ public class BundleTools {
     private static final File propsFile;
 
     static {
-        String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir"); //$NON-NLS-1$
-        propsFile = new File(prefPath, "weasis.properties"); //$NON-NLS-1$
+        String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir");
+        propsFile = new File(prefPath, "weasis.properties");
         readSystemPreferences();
 
         if (!propsFile.canRead()) {
@@ -92,7 +92,7 @@ public class BundleTools {
             }
         }
 
-        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path"); //$NON-NLS-1$
+        String path = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.resources.path");
         ResourceUtil.setResourcePath(path);
     }
 
@@ -122,15 +122,15 @@ public class BundleTools {
         SYSTEM_PREFERENCES.clear();
         BundleContext context = AppProperties.getBundleContext();
         if (context != null) {
-            String pkeys = context.getProperty("wp.list"); //$NON-NLS-1$
+            String pkeys = context.getProperty("wp.list");
             if (StringUtil.hasText(pkeys)) {
-                for (String key : pkeys.split(",")) { //$NON-NLS-1$
+                for (String key : pkeys.split(",")) {
                     SYSTEM_PREFERENCES.setProperty(key, context.getProperty(key));
-                    INIT_SYSTEM_PREFERENCES.setProperty(key, context.getProperty("wp.init." + key)); //$NON-NLS-1$
+                    INIT_SYSTEM_PREFERENCES.setProperty(key, context.getProperty("wp.init." + key)); //NON-NLS
                 }
                 // In case the remote file is empty or has less properties than the local file, set a pref to force
                 // rewriting both files
-                String diffRemote = "wp.init.diff.remote.pref"; //$NON-NLS-1$
+                String diffRemote = "wp.init.diff.remote.pref";
                 INIT_SYSTEM_PREFERENCES.setProperty(diffRemote, context.getProperty(diffRemote));
                 saveSystemPreferences();
             }
@@ -139,9 +139,9 @@ public class BundleTools {
 
     public static synchronized void saveSystemPreferences() {
         // Set in a popup message of the launcher
-        String key = "weasis.accept.disclaimer"; //$NON-NLS-1$
+        String key = "weasis.accept.disclaimer";
         SYSTEM_PREFERENCES.setProperty(key, System.getProperty(key));
-        key = "weasis.version.release"; //$NON-NLS-1$
+        key = "weasis.version.release";
         SYSTEM_PREFERENCES.setProperty(key, System.getProperty(key));
 
         if (!SYSTEM_PREFERENCES.equals(INIT_SYSTEM_PREFERENCES)) {
@@ -160,24 +160,24 @@ public class BundleTools {
     }
 
     public static String getServiceUrl() {
-        return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.url"); //$NON-NLS-1$
+        return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.url");
     }
 
     public static boolean isLocalSession() {
-        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.local.session", false); //$NON-NLS-1$
+        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.local.session", false);
     }
 
     public static boolean isStoreLocalSession() {
-        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.store.local.session", false); //$NON-NLS-1$
+        return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.store.local.session", false);
     }
 
     public static String getEncodedValue(String val) throws UnsupportedEncodingException {
-        return URLEncoder.encode(val, "UTF-8"); //$NON-NLS-1$
+        return URLEncoder.encode(val, "UTF-8");
     }
 
     private static void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {
         if (!isLocalSession() || isStoreLocalSession()) {
-            String sURL = String.format("%s?user=%s&profile=%s", remotePrefURL, //$NON-NLS-1$
+            String sURL = String.format("%s?user=%s&profile=%s", remotePrefURL, //NON-NLS
                 getEncodedValue(AppProperties.WEASIS_USER), getEncodedValue(AppProperties.WEASIS_PROFILE));
             URLParameters urlParameters = getURLParameters(true);
             ClosableURLConnection http = NetworkUtil.getUrlConnection(sURL, urlParameters);

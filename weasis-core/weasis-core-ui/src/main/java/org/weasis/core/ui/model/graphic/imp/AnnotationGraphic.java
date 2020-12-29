@@ -59,7 +59,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     private static final long serialVersionUID = -6993299250389257151L;
 
     public static final Integer POINTS_NUMBER = 2;
-    public static final Icon ICON = new ImageIcon(AnnotationGraphic.class.getResource("/icon/22x22/draw-text.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(AnnotationGraphic.class.getResource("/icon/22x22/draw-text.png"));
 
     protected Point2D ptBox;
     protected Point2D ptAnchor; // Let AB be a simple a line segment
@@ -97,7 +97,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn");
         }
         // Do not build shape as labelBounds can be initialize only by the method setLabel()
     }
@@ -340,7 +340,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
                     maxWidth = Math.max(layout.getBounds().getWidth(), maxWidth);
                 }
             }
-            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2; //$NON-NLS-1$
+            labelHeight = new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() + 2; //NON-NLS
             labelWidth = maxWidth;
         }
     }

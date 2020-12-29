@@ -21,12 +21,12 @@ import org.weasis.core.api.media.data.MediaElement;
 
 public final class JIUtility {
 
-    private static final File USER_HOME = new File(System.getProperty("user.home")); //$NON-NLS-1$
+    private static final File USER_HOME = new File(System.getProperty("user.home"));
     public static final String ROOT_FOLDER;
 
     static {
-        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
-            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "rootFolder"; //$NON-NLS-1$ //$NON-NLS-2$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //NON-NLS
+            ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "rootFolder"; // NON-NLS
         } else {
             ROOT_FOLDER = File.separator;
         }
@@ -37,7 +37,7 @@ public final class JIUtility {
 
     public static FileTreeModel createTreeModel() {
         Path rootPath;
-        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+        if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //NON-NLS
             final File winRootFoler = new File(ROOT_FOLDER);
             winRootFoler.mkdirs();
             winRootFoler.deleteOnExit();

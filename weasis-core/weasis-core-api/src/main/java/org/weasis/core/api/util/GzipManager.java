@@ -28,7 +28,7 @@ import org.weasis.core.util.FileUtil;
 public class GzipManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(GzipManager.class);
 
-    private static final String ERROR_CTX = "Cannot gzip uncompress"; //$NON-NLS-1$
+    private static final String ERROR_CTX = "Cannot gzip uncompress";  //NON-NLS
 
     private GzipManager() {
     }

@@ -52,12 +52,12 @@ public abstract class ImageOrientation {
         UNKNOWN, AXIAL, SAGITTAL, CORONAL, OBLIQUE
     }
 
-    public static final String DIR_R = "R"; //$NON-NLS-1$
-    public static final String DIR_L = "L"; //$NON-NLS-1$
-    public static final String DIR_A = "A"; //$NON-NLS-1$
-    public static final String DIR_P = "P"; //$NON-NLS-1$
-    public static final String DIR_F = "F"; //$NON-NLS-1$
-    public static final String DIR_H = "H"; //$NON-NLS-1$
+    public static final String DIR_R = "R"; //NON-NLS
+    public static final String DIR_L = "L"; //NON-NLS
+    public static final String DIR_A = "A"; //NON-NLS
+    public static final String DIR_P = "P"; //NON-NLS
+    public static final String DIR_F = "F"; //NON-NLS
+    public static final String DIR_H = "H"; //NON-NLS
 
     private static final double OBLIQUITY_THRESHOLD = 0.8;
 
@@ -233,7 +233,7 @@ public abstract class ImageOrientation {
      */
     public static final String makePatientOrientationFromImageOrientationPatient(double rowX, double rowY, double rowZ,
         double colX, double colY, double colZ) {
-        return makePatientOrientationFromPatientRelativeDirectionCosine(rowX, rowY, rowZ) + "\\" //$NON-NLS-1$
+        return makePatientOrientationFromPatientRelativeDirectionCosine(rowX, rowY, rowZ) + "\\"
             + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
     }
 

@@ -36,7 +36,7 @@ import org.weasis.core.api.util.ThreadUtil;
 public class ImportPanel extends JPanel {
     private static final long serialVersionUID = -8658686020451614960L;
 
-    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage"); //$NON-NLS-1$
+    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
 
     private JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
     private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
@@ -74,11 +74,11 @@ public class ImportPanel extends JPanel {
         ImportTask imporTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
 
         imporTask.addPropertyChangeListener(evt -> {
-            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) {
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) {
 
                 if (StateValue.STARTED == evt.getNewValue()) {
                     importBtn.setEnabled(false);

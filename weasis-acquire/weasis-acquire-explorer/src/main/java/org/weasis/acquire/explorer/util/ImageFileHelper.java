@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 public final class ImageFileHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageFileHelper.class);
 
-    private static final String GLOBAL_FILE_DESCRIPTION = "All Image Files"; //$NON-NLS-1$
+    private static final String GLOBAL_FILE_DESCRIPTION = "All Image Files"; //NON-NLS
     private static final Map<String, String> readerFileExtensionMap = createReaderFileExtensionMap();
 
     private ImageFileHelper() {
@@ -77,7 +77,7 @@ public final class ImageFileHelper {
 
         JFileChooser fc = new JFileChooser(path);
 
-        fc.setName("openImageFileChooser"); //$NON-NLS-1$
+        fc.setName("openImageFileChooser");
         fc.setDialogType(JFileChooser.OPEN_DIALOG);
         fc.setControlButtonsAreShown(true);
         fc.setAcceptAllFileFilterUsed(true);

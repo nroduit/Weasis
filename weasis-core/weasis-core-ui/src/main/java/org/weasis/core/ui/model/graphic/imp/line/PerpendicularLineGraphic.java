@@ -44,7 +44,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     public static final Integer POINTS_NUMBER = 4;
 
     public static final Icon ICON =
-        new ImageIcon(PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); //$NON-NLS-1$
+        new ImageIcon(PerpendicularLineGraphic.class.getResource("/icon/22x22/draw-perpendicular.png")); 
 
     public static final Measurement LINE_LENGTH =
         new Measurement(Messages.getString("measure.length"), 1, true, true, true);
@@ -96,7 +96,7 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
     @Override
     protected void prepareShape() throws InvalidShapeException {
         if (!isShapeValid()) {
-            throw new InvalidShapeException("This shape cannot be drawn"); //$NON-NLS-1$
+            throw new InvalidShapeException("This shape cannot be drawn"); 
         }
         buildShape(null);
     }

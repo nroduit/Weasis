@@ -129,7 +129,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
         this.setLayout(new BorderLayout(0, 0));
         this.rootPane = new JScrollPane();
-        this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png"))); //$NON-NLS-1$
+        this.dockable.setTitleIcon(new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png")));
         this.setDockableWidth(350);
         this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
         // By default recalculate DVH only when it is missing for structure
@@ -203,11 +203,11 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         };
 
         loadTask.addPropertyChangeListener(evt -> {
-            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) {
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) {
                 if (StateValue.STARTED == evt.getNewValue()) {
                     btnLoad.setEnabled(false);
                     progressBar.setVisible(true);
@@ -859,7 +859,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
 
     private static String getColorBullet(Color c, String label) {
-        StringBuilder buf = new StringBuilder("<html><font color='rgb("); //$NON-NLS-1$
+        StringBuilder buf = new StringBuilder("<html><font color='rgb("); //NON-NLS
         buf.append(c.getRed());
         buf.append(",");
         buf.append(c.getGreen());

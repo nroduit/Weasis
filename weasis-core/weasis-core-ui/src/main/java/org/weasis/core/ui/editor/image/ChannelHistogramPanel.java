@@ -55,8 +55,8 @@ public class ChannelHistogramPanel extends JPanel {
         this.jCheckLogarithmic = new JCheckBox(Messages.getString("ChannelHistogramPanel.log"), logarithmic);
         this.jCheckShowIntensity = new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity);
         this.jPanelHistogram = new HistogramPanel();
-        this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png"))); //$NON-NLS-1$
-        this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png"))); //$NON-NLS-1$
+        this.jButtonHistoMinus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png")));
+        this.jButtonHistoPlus = new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png")));
         init(name);
     }
 

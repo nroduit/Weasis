@@ -44,7 +44,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
 
-    private static final String lastDICOMDIR = "lastDicomDir";//$NON-NLS-1$
+    private static final String lastDICOMDIR = "lastDicomDir";
 
     private JLabel lblImportAFolder;
     private JTextField textField;
@@ -81,10 +81,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_textField.gridx = 1;
         gbc_textField.gridy = 0;
         JMVUtils.setPreferredWidth(textField, 375, 325);
-        textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));//$NON-NLS-1$
+        textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));
         add(textField, gbc_textField);
 
-        btnSearch = new JButton(" ... "); //$NON-NLS-1$
+        btnSearch = new JButton(" ... "); 
         btnSearch.addActionListener(e -> browseImgFile());
         GridBagConstraints gbc_button = new GridBagConstraints();
         gbc_button.anchor = GridBagConstraints.WEST;
@@ -111,7 +111,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         gbc_btnNewButton.gridy = 1;
         add(btncdrom, gbc_btnNewButton);
 
-        chckbxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));//$NON-NLS-1$
+        chckbxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
         GridBagConstraints gbc_chckbxWriteInCache = new GridBagConstraints();
         gbc_chckbxWriteInCache.gridwidth = 3;
         gbc_chckbxWriteInCache.anchor = GridBagConstraints.WEST;
@@ -139,7 +139,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     public void browseImgFile() {
         String directory = getImportPath();
         if (directory == null) {
-            directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");//$NON-NLS-1$
+            directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");
         }
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -148,7 +148,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
             @Override
             public String getDescription() {
-                return "DICOMDIR"; //$NON-NLS-1$
+                return "DICOMDIR"; 
             }
 
             @Override
@@ -196,7 +196,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     private String getImportPath() {
         String path = textField.getText().trim();
-        if (path != null && !path.trim().equals("")) { //$NON-NLS-1$
+        if (path != null && !path.trim().equals("")) { 
             return path;
         }
         return null;
@@ -262,14 +262,14 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     public static File getDcmDirFromMedia() {
         final List<File> dvs = new ArrayList<>();
         try {
-            if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+            if (AppProperties.OPERATING_SYSTEM.startsWith("win")) {  //NON-NLS
                 dvs.addAll(Arrays.asList(File.listRoots()));
-            } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
-                dvs.addAll(Arrays.asList(new File("/Volumes").listFiles())); //$NON-NLS-1$
+            } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) {  //NON-NLS
+                dvs.addAll(Arrays.asList(new File("/Volumes").listFiles())); 
             } else {
-                dvs.addAll(Arrays.asList(new File("/media").listFiles())); //$NON-NLS-1$
-                dvs.addAll(Arrays.asList(new File("/mnt").listFiles())); //$NON-NLS-1$
-                File userDir = new File("/media/" + System.getProperty("user.name", "local")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                dvs.addAll(Arrays.asList(new File("/media").listFiles())); 
+                dvs.addAll(Arrays.asList(new File("/mnt").listFiles())); 
+                File userDir = new File("/media/" + System.getProperty("user.name", "local")); // NON-NLS
                 if (userDir.exists()) {
                     dvs.addAll(Arrays.asList(userDir.listFiles()));
                 }

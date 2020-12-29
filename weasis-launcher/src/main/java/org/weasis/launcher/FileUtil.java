@@ -146,7 +146,7 @@ public class FileUtil {
     }
 
     public static File getApplicationTempDir() {
-        String tempDir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
+        String tempDir = System.getProperty("java.io.tmpdir");
         File tdir;
         if (tempDir == null || tempDir.length() == 1) {
             String dir = System.getProperty("user.home", ""); // NON-NLS
@@ -241,7 +241,7 @@ public class FileUtil {
             while ((entry = zis.getNextEntry()) != null) { // NOSONAR cannot write outside the target directory
                 File file = new File(directory, entry.getName());
                 if (!file.getCanonicalPath().startsWith(canonicalDirPath + File.separator)) { // Security check
-                    throw new IllegalStateException("Entry is trying to leave the target dir: " + entry.getName()); //$NON-NLS-1$
+                    throw new IllegalStateException("Entry is trying to leave the target dir: " + entry.getName());
                 }
                 if (entry.isDirectory()) {
                     file.mkdirs(); // NOSONAR only create a folder in the target directory
@@ -260,7 +260,7 @@ public class FileUtil {
         int unit = si ? 1000 : 1024;
         long absBytes = bytes == Long.MIN_VALUE ? Long.MAX_VALUE : Math.abs(bytes);
         if (absBytes < unit)
-            return bytes + " B"; //$NON-NLS-1$
+            return bytes + " B"; //NON-NLS
         int exp = (int) (Math.log(absBytes) / Math.log(unit));
         long th = (long) (Math.pow(unit, exp) * (unit - 0.05));
         if (exp < 6 && absBytes >= th - ((th & 0xfff) == 0xd00 ? 52 : 0))
@@ -270,7 +270,7 @@ public class FileUtil {
             bytes /= unit;
             exp -= 1;
         }
-        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //$NON-NLS-1$
+        return String.format("%.1f %sB", bytes / Math.pow(unit, exp), pre); //NON-NLS
     }
 
     public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {

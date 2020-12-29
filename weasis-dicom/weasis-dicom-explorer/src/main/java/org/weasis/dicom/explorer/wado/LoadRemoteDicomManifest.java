@@ -70,7 +70,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     public LoadRemoteDicomManifest(List<String> xmlFiles, DataExplorerModel explorerModel) {
         super(Messages.getString("DicomExplorer.loading"), true);
         if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("invalid parameters");
         }
         this.xmlFiles = xmlFiles.stream().filter(Objects::nonNull).collect(Collectors.toList());
         this.dicomModel = (DicomModel) explorerModel;

@@ -26,7 +26,7 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
     protected SeriesGroup seriesGroup;
 
     public AcquireSerieMetaPanel(SeriesGroup seriesGroup) {
-        super(""); //$NON-NLS-1$
+        super("");
         this.seriesGroup = seriesGroup;
 
     }

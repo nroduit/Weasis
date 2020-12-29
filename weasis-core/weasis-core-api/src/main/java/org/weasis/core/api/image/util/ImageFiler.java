@@ -88,7 +88,7 @@ public class ImageFiler extends AbstractBufferHandler {
     public static boolean writeJPG(OutputStream outputStream, RenderedImage source, float quality) {
         ImageWriter writer = null;
         try {
-            Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG"); //$NON-NLS-1$
+            Iterator<ImageWriter> iter = ImageIO.getImageWritersByFormatName("JPEG");
             if (iter.hasNext()) {
                 writer = iter.next();
                 try (ImageOutputStream os = ImageIO.createImageOutputStream(outputStream)) {
@@ -128,7 +128,7 @@ public class ImageFiler extends AbstractBufferHandler {
 
     public static String changeExtension(String filename, String ext) {
         if (filename == null) {
-            return ""; //$NON-NLS-1$
+            return "";
         }
         // replace extension after the last point
         int pointPos = filename.lastIndexOf('.');

@@ -92,7 +92,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         jRadioButtonMenuItemMagnify = new JRadioButtonMenuItem[magnify.length];
         for (int i = 0; i < jRadioButtonMenuItemMagnify.length; i++) {
             JRadioButtonMenuItem item = new JRadioButtonMenuItem();
-            item.setText(magnify[i] + "X"); //$NON-NLS-1$
+            item.setText(magnify[i] + "X"); //NON-NLS
             buttonMagnify.add(item);
             item.addActionListener(magnifyListener);
             jMenuMagnify.add(item);
@@ -127,7 +127,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
         }
         if (noselection) {
             ratio = Math.abs(ratio);
-            jMenuItemMagnifyOther.setText(ratio + "X"); //$NON-NLS-1$
+            jMenuItemMagnifyOther.setText(ratio + "X"); //NON-NLS
             buttonMagnify.add(jMenuItemMagnifyOther);
             if ((magnify[magnify.length - 1]) < ratio) {
                 jMenuMagnify.add(jMenuItemMagnifyOther);

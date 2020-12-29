@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 public class UriListFlavor {
     private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
-    public static final DataFlavor flavor = createConstant("text/uri-list;class=java.lang.String", null); //$NON-NLS-1$
+    public static final DataFlavor flavor = createConstant("text/uri-list;class=java.lang.String", null); //NON-NLS
 
     private static final DataFlavor[] flavors = new DataFlavor[] { DataFlavor.javaFileListFlavor, flavor };
 
@@ -39,10 +39,10 @@ public class UriListFlavor {
 
     public static List<File> textURIListToFileList(String uriList) {
         List<File> list = new java.util.ArrayList<>();
-        for (java.util.StringTokenizer st = new java.util.StringTokenizer(uriList, "\r\n"); st.hasMoreTokens();) { //$NON-NLS-1$
+        for (java.util.StringTokenizer st = new java.util.StringTokenizer(uriList, "\r\n"); st.hasMoreTokens();) {
             String s = st.nextToken();
             // Check if the line is a comment (as per the RFC 2483)
-            if (!s.startsWith("#")) { //$NON-NLS-1$
+            if (!s.startsWith("#")) {
                 try {
                     list.add(new File(new URI(s)));
                 } catch (Exception e) {

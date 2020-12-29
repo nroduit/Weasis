@@ -46,14 +46,14 @@ public class SeriesGroupTest {
 
         s1 = new SeriesGroup();
         s2 = new SeriesGroup(today);
-        s3 = new SeriesGroup("test serie 3"); //$NON-NLS-1$
+        s3 = new SeriesGroup("test serie 3"); //NON-NLS
     }
 
     @Test
     public void testToString() {
-        assertThat(s1.toString()).isEqualTo("Other"); //$NON-NLS-1$
+        assertThat(s1.toString()).isEqualTo("Other"); //NON-NLS
         assertThat(s2.toString()).isEqualTo(LocalUtil.getDateTimeFormatter().format(today));
-        assertThat(s3.toString()).isEqualTo("test serie 3"); //$NON-NLS-1$
+        assertThat(s3.toString()).isEqualTo("test serie 3"); //NON-NLS
     }
 
     @Test
@@ -67,17 +67,17 @@ public class SeriesGroupTest {
     public void testSort() {
         SeriesGroup s1 = new SeriesGroup();
         SeriesGroup s2 = new SeriesGroup(today);
-        SeriesGroup s3 = new SeriesGroup("serie3"); //$NON-NLS-1$
+        SeriesGroup s3 = new SeriesGroup("serie3"); //NON-NLS
         assetSorted(new SeriesGroup[] { s3, s2, s1 }, new SeriesGroup[] { s1, s2, s3 });
         assetSorted(new SeriesGroup[] { s2, s3, s1 }, new SeriesGroup[] { s1, s2, s3 });
 
         SeriesGroup s4 = new SeriesGroup(today.minusDays(1));
         assetSorted(new SeriesGroup[] { s3, s2, s1, s4 }, new SeriesGroup[] { s1, s4, s2, s3 });
 
-        SeriesGroup s5 = new SeriesGroup("serie2"); //$NON-NLS-1$
+        SeriesGroup s5 = new SeriesGroup("serie2"); //NON-NLS
         assetSorted(new SeriesGroup[] { s3, s2, s1, s4, s5 }, new SeriesGroup[] { s1, s4, s2, s5, s3 });
 
-        SeriesGroup s6 = new SeriesGroup("2015"); //$NON-NLS-1$
+        SeriesGroup s6 = new SeriesGroup("2015");
         assetSorted(new SeriesGroup[] { s3, s2, s1, s4, s5, s6 }, new SeriesGroup[] { s1, s4, s2, s6, s5, s3 });
     }
 

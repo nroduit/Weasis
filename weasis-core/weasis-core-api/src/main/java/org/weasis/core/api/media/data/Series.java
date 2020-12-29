@@ -42,7 +42,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     private static final Logger LOGGER = LoggerFactory.getLogger(Series.class);
 
     public static final DataFlavor sequenceDataFlavor =
-        createConstant(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + Series.class.getName(), null); //$NON-NLS-1$
+        createConstant(DataFlavor.javaJVMLocalObjectMimeType + ";class=" + Series.class.getName(), null); //NON-NLS
 
     private static final Random RANDOM = new SecureRandom();
     private static final DataFlavor[] flavors = { sequenceDataFlavor };
@@ -328,7 +328,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     @Override
     public String getToolTips() {
         StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append("<html>");
         E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
         if (media instanceof ImageElement) {
             ImageElement image = (ImageElement) media;
@@ -341,7 +341,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
                 toolTips.append(img.height());
             }
         }
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>");
         return toolTips.toString();
     }
 
@@ -351,7 +351,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         if (tag != null) {
             toolTips.append(tag.getFormattedTagValue(getTagValue(tag), null));
         }
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>");
     }
     
     protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag1, TagW tag2) {
@@ -359,12 +359,12 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
         toolTips.append(StringUtil.COLON_AND_SPACE);
         if (tag1 != null) {
             toolTips.append(tag1.getFormattedTagValue(getTagValue(tag1), null));
-            toolTips.append(" - "); //$NON-NLS-1$
+            toolTips.append(" - ");
         }
         if (tag2 != null) {
             toolTips.append(tag2.getFormattedTagValue(getTagValue(tag2), null));
         }
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>");
     }
 
     @Override
@@ -448,7 +448,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
     @Override
     public String getSeriesNumber() {
-        Integer val = (Integer) getTagValue(TagW.get("SeriesNumber")); //$NON-NLS-1$
-        return Optional.ofNullable(val).map(String::valueOf).orElseGet(() -> ""); //$NON-NLS-1$
+        Integer val = (Integer) getTagValue(TagW.get("SeriesNumber"));
+        return Optional.ofNullable(val).map(String::valueOf).orElseGet(() -> "");
     }
 }

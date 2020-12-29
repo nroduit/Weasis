@@ -45,45 +45,45 @@ public class AutoProcessor {
     /**
      * The property name used for the bundle directory.
      **/
-    public static final String AUTO_DEPLOY_DIR_PROPERTY = "felix.auto.deploy.dir"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_DIR_PROPERTY = "felix.auto.deploy.dir"; 
     /**
      * The default name used for the bundle directory.
      **/
-    public static final String AUTO_DEPLOY_DIR_VALUE = "bundle"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_DIR_VALUE = "bundle";  //NON-NLS
     /**
      * The property name used to specify auto-deploy actions.
      **/
-    public static final String AUTO_DEPLOY_ACTION_PROPERTY = "felix.auto.deploy.action"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_ACTION_PROPERTY = "felix.auto.deploy.action"; 
     /**
      * The property name used to specify auto-deploy start level.
      **/
-    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERTY = "felix.auto.deploy.startlevel"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_STARTLEVEL_PROPERTY = "felix.auto.deploy.startlevel"; 
     /**
      * The name used for the auto-deploy install action.
      **/
-    public static final String AUTO_DEPLOY_INSTALL_VALUE = "install"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_INSTALL_VALUE = "install";  //NON-NLS
     /**
      * The name used for the auto-deploy start action.
      **/
-    public static final String AUTO_DEPLOY_START_VALUE = "start"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_START_VALUE = "start";  //NON-NLS
     /**
      * The name used for the auto-deploy update action.
      **/
-    public static final String AUTO_DEPLOY_UPDATE_VALUE = "update"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_UPDATE_VALUE = "update";  //NON-NLS
     /**
      * The name used for the auto-deploy uninstall action.
      **/
-    public static final String AUTO_DEPLOY_UNINSTALL_VALUE = "uninstall"; //$NON-NLS-1$
+    public static final String AUTO_DEPLOY_UNINSTALL_VALUE = "uninstall";  //NON-NLS
     /**
      * The property name prefix for the launcher's auto-install property.
      **/
-    public static final String AUTO_INSTALL_PROP = "felix.auto.install"; //$NON-NLS-1$
+    public static final String AUTO_INSTALL_PROP = "felix.auto.install"; 
     /**
      * The property name prefix for the launcher's auto-start property.
      **/
-    public static final String AUTO_START_PROP = "felix.auto.start"; //$NON-NLS-1$
+    public static final String AUTO_START_PROP = "felix.auto.start"; 
 
-    public static final String XZ_COMPRESSION = ".xz"; //$NON-NLS-1$
+    public static final String XZ_COMPRESSION = ".xz"; 
 
     private AutoProcessor() {
     }
@@ -114,9 +114,9 @@ public class AutoProcessor {
         WeasisLoader weasisLoader) {
         // Determine if auto deploy actions to perform.
         String action = configMap.get(AUTO_DEPLOY_ACTION_PROPERTY);
-        action = (action == null) ? "" : action; //$NON-NLS-1$
+        action = (action == null) ? "" : action; 
         List<String> actionList = new ArrayList<>();
-        StringTokenizer st = new StringTokenizer(action, ","); //$NON-NLS-1$
+        StringTokenizer st = new StringTokenizer(action, ","); 
         while (st.hasMoreTokens()) {
             String s = st.nextToken().trim().toLowerCase();
             if (s.equals(AUTO_DEPLOY_INSTALL_VALUE) || s.equals(AUTO_DEPLOY_START_VALUE)
@@ -159,7 +159,7 @@ public class AutoProcessor {
             if (files != null) {
                 Arrays.sort(files);
                 for (int i = 0; i < files.length; i++) {
-                    if (files[i].getName().endsWith(".jar")) { //$NON-NLS-1$
+                    if (files[i].getName().endsWith(".jar")) { 
                         jarList.add(files[i]);
                     }
                 }
@@ -167,7 +167,7 @@ public class AutoProcessor {
             weasisLoader.setMax(jarList.size());
 
             boolean cache =
-                Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
+                Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); 
             // Install bundle JAR files and remember the bundle objects.
             final List<Bundle> startBundleList = new ArrayList<>();
             for (int i = 0; i < jarList.size(); i++) {
@@ -177,7 +177,7 @@ public class AutoProcessor {
                 File jar = jarList.get(i);
                 Bundle b = installedBundleMap.remove((jar).toURI().toString());
                 try {
-                    weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + jar.getName()); //$NON-NLS-1$
+                    weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + jar.getName()); 
 
                     // If the bundle is not already installed, then install it
                     // if the 'install' action is present.
@@ -206,7 +206,7 @@ public class AutoProcessor {
                     if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT
                         .equals(configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
                         // Reset all the old cache
-                        throw new IllegalStateException("A bundle cannot be started"); //$NON-NLS-1$
+                        throw new IllegalStateException("A bundle cannot be started"); 
                     }
                 }
             }
@@ -222,7 +222,7 @@ public class AutoProcessor {
                             b.uninstall();
                         } catch (BundleException ex) {
                             LOGGER.log(Level.SEVERE, ex,
-                                () -> String.format("Auto-deploy uninstall bundle %s", b.getSymbolicName())); //$NON-NLS-1$
+                                () -> String.format("Auto-deploy uninstall bundle %s", b.getSymbolicName()));  //NON-NLS
                         }
                     }
                 }
@@ -237,7 +237,7 @@ public class AutoProcessor {
                         b.start();
                     } catch (BundleException ex) {
                         LOGGER.log(Level.SEVERE, ex,
-                            () -> String.format("Auto-deploy install bundle %s", b.getSymbolicName())); //$NON-NLS-1$
+                            () -> String.format("Auto-deploy install bundle %s", b.getSymbolicName()));  //NON-NLS
                     }
                 }
             }
@@ -285,10 +285,10 @@ public class AutoProcessor {
                 LOGGER.log(Level.SEVERE, ex, () -> String.format("Invalid start level %s", key)); // NON-NLS
             }
             boolean canBeStarted = key.startsWith(AUTO_START_PROP);
-            StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true); //$NON-NLS-1$
+            StringTokenizer st = new StringTokenizer(configMap.get(key), "\" ", true); 
             for (String location = nextLocation(st); location != null; location = nextLocation(st)) {
                 String bundleName = getBundleNameFromLocation(location);
-                if (!"System Bundle".equals(bundleName)) { //$NON-NLS-1$
+                if (!"System Bundle".equals(bundleName)) {  //NON-NLS
                     BundleElement b = new BundleElement(startLevel, location, canBeStarted);
                     bundleList.put(bundleName, b);
                 }
@@ -308,14 +308,14 @@ public class AutoProcessor {
                 BundleElement b = bundleList.get(bundleName);
                 // Remove the bundles in cache when they are not in the config.properties list
                 if (b == null) {
-                    if (!"System Bundle".equals(bundleName)) {//$NON-NLS-1$
+                    if (!"System Bundle".equals(bundleName)) { //NON-NLS
                         bundles[i].uninstall();
                         LOGGER.log(Level.INFO, "Uninstall unused bundle: {0}", bundleName);
                     }
                     continue;
                 }
                 // Remove snapshot version to install it every time
-                if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) { //$NON-NLS-1$
+                if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) { 
                     bundles[i].uninstall();
                     LOGGER.log(Level.INFO, "Uninstall SNAPSHOT bundle: {0}", bundleName);
                     continue;
@@ -324,12 +324,12 @@ public class AutoProcessor {
 
             } catch (Exception e) {
                 LOGGER.log(Level.SEVERE, e,
-                    () -> String.format("Cannot remove from OSGI cache the bundle %s", bundleName)); //$NON-NLS-1$
+                    () -> String.format("Cannot remove from OSGI cache the bundle %s", bundleName));  //NON-NLS
             }
         }
 
         boolean cache =
-            Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); //$NON-NLS-1$
+            Boolean.TRUE.toString().equals(System.getProperty("http.bundle.cache", Boolean.TRUE.toString())); 
         int bundleIter = 0;
 
         // Parse and install the bundles associated with the key.
@@ -342,7 +342,7 @@ public class AutoProcessor {
                 continue;
             }
             try {
-                weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + bundleName); //$NON-NLS-1$
+                weasisLoader.writeLabel(WeasisLoader.LBL_DOWNLOADING + " " + bundleName); 
                 // Do not download again the same bundle version but with different location or already in installed
                 // in cache from a previous version of Weasis
                 Bundle b = installedBundleMap.get(bundleName);
@@ -360,7 +360,7 @@ public class AutoProcessor {
                     if (!Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT
                         .equals(configMap.get(Constants.FRAMEWORK_STORAGE_CLEAN))) {
                         // Reset all the old cache
-                        throw new IllegalStateException("A bundle cannot be started"); //$NON-NLS-1$
+                        throw new IllegalStateException("A bundle cannot be started"); 
                     }
                 }
             } finally {
@@ -401,7 +401,7 @@ public class AutoProcessor {
         if (location != null) {
             int index = location.lastIndexOf('/');
             String name = index >= 0 ? location.substring(index + 1) : location;
-            index = name.lastIndexOf(".jar"); //$NON-NLS-1$
+            index = name.lastIndexOf(".jar"); 
             return index >= 0 ? name.substring(0, index) : name;
         }
         return null;
@@ -412,7 +412,7 @@ public class AutoProcessor {
         if (!modulesi18n.isEmpty()) {
             if (b != null) {
                 StringBuilder p = new StringBuilder(b.getSymbolicName());
-                p.append("-i18n.jar.xz"); //$NON-NLS-1$
+                p.append("-i18n.jar.xz");  //NON-NLS
                 String filename = p.toString();
                 String value = modulesi18n.getProperty(filename);
                 if (value != null) {
@@ -438,13 +438,13 @@ public class AutoProcessor {
                                         installedBundleMap.put(bundleName, b);
                                     } catch (Exception exc) {
                                         LOGGER.log(Level.SEVERE, exc,
-                                            () -> String.format("Cannot install a translation bundle %s", uri)); //$NON-NLS-1$
+                                            () -> String.format("Cannot install a translation bundle %s", uri));  //NON-NLS
                                     }
                                 }
                             }
                         } catch (Exception e) {
                             LOGGER.log(Level.SEVERE, e,
-                                () -> String.format("Cannot install a translation bundle %s", uri)); //$NON-NLS-1$
+                                () -> String.format("Cannot install a translation bundle %s", uri));  //NON-NLS
                         }
                     }
                 }
@@ -456,7 +456,7 @@ public class AutoProcessor {
         String retVal = null;
 
         if (st.countTokens() > 0) {
-            String tokenList = "\" "; //$NON-NLS-1$
+            String tokenList = "\" "; 
             StringBuilder tokBuf = new StringBuilder(10);
             String tok = null;
             boolean inQuote = false;
@@ -464,15 +464,15 @@ public class AutoProcessor {
             boolean exit = false;
             while ((st.hasMoreTokens()) && (!exit)) {
                 tok = st.nextToken(tokenList);
-                if (tok.equals("\"")) { //$NON-NLS-1$
+                if (tok.equals("\"")) { 
                     inQuote = !inQuote;
                     if (inQuote) {
-                        tokenList = "\""; //$NON-NLS-1$
+                        tokenList = "\""; 
                     } else {
-                        tokenList = "\" "; //$NON-NLS-1$
+                        tokenList = "\" "; 
                     }
 
-                } else if (tok.equals(" ")) { //$NON-NLS-1$
+                } else if (tok.equals(" ")) { 
                     if (tokStarted) {
                         retVal = tokBuf.toString();
                         tokStarted = false;

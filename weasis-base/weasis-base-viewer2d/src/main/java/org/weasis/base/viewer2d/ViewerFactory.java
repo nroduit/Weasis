@@ -146,7 +146,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public boolean canReadMimeType(String mimeType) {
-        if (mimeType != null && mimeType.startsWith("image/")) { //$NON-NLS-1$
+        if (mimeType != null && mimeType.startsWith("image/")) {  //NON-NLS
             return true;
         }
         return false;
@@ -167,7 +167,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
     @Override
     public List<Action> getOpenActions() {
-        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { //$NON-NLS-1$
+        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { 
             return Collections.emptyList();
         }
         return Arrays.asList(preferencesAction);
@@ -199,7 +199,7 @@ public class ViewerFactory implements SeriesViewerFactory {
             MediaSeries<MediaElement> series = null;
             for (File file : selectedFiles) {
                 String mimeType = MimeInspector.getMimeType(file);
-                if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$
+                if (mimeType != null && mimeType.startsWith("image")) { 
                     Codec codec = BundleTools.getCodec(mimeType, null);
                     if (codec != null) {
                         MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
@@ -228,7 +228,7 @@ public class ViewerFactory implements SeriesViewerFactory {
                 JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"),
                     Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE);
             }
-            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); 
         }
     }
 }

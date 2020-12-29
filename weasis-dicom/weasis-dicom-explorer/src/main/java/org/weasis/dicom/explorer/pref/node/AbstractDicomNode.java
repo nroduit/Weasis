@@ -44,13 +44,13 @@ import org.weasis.dicom.explorer.Messages;
 public abstract class AbstractDicomNode {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractDicomNode.class);
 
-    protected static final String T_NODES = "nodes"; //$NON-NLS-1$
-    protected static final String T_NODE = "node"; //$NON-NLS-1$
+    protected static final String T_NODES = "nodes"; //NON-NLS
+    protected static final String T_NODE = "node"; //NON-NLS
 
-    protected static final String T_DESCRIPTION = "description"; //$NON-NLS-1$
-    protected static final String T_TYPE = "type"; //$NON-NLS-1$
-    protected static final String T_USAGE_TYPE = "usageType"; //$NON-NLS-1$
-    protected static final String T_TSUID = "tsuid"; //$NON-NLS-1$
+    protected static final String T_DESCRIPTION = "description";
+    protected static final String T_TYPE = "type";
+    protected static final String T_USAGE_TYPE = "usageType";
+    protected static final String T_TSUID = "tsuid"; //NON-NLS
 
     public enum Type {
         DICOM(Messages.getString("AbstractDicomNode.dcm_node"), "dicomNodes.xml"),
@@ -117,7 +117,7 @@ public abstract class AbstractDicomNode {
 
     public AbstractDicomNode(String description, Type type, UsageType usageType) {
         if (type == null) {
-            throw new IllegalArgumentException("Type cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Type cannot be null");
         }
         this.description = description;
         this.tsuid = TransferSyntax.NONE;
@@ -211,7 +211,7 @@ public abstract class AbstractDicomNode {
         final BundleContext context = FrameworkUtil.getBundle(AbstractDicomNode.class).getBundleContext();
         try {
             writer = factory.createXMLStreamWriter(
-                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //$NON-NLS-1$
+                new FileOutputStream(new File(BundlePreferences.getDataFolder(context), type.getFilename())), "UTF-8"); //NON-NLS
 
             writer.writeStartDocument("UTF-8", "1.0"); // NON-NLS
             writer.writeStartElement(T_NODES);

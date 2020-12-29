@@ -18,13 +18,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class PerpendicularLineGraphicTest extends GraphicTester<PerpendicularLineGraphic> {
-    private static final String XML_0 = "/graphic/perpendicularLine/perpendicularLine.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/perpendicularLine/perpendicularLine.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/perpendicularLine/perpendicularLine.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/perpendicularLine/perpendicularLine.graphic.1.xml"; //NON-NLS
 
-    static final String BASIC_TPL = "<perpendicularLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</perpendicularLine>"; //$NON-NLS-1$
+    static final String BASIC_TPL = "<perpendicularLine fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</perpendicularLine>"; //NON-NLS
 
     public static final PerpendicularLineGraphic COMPLETE_OBJECT = new PerpendicularLineGraphic();
     static {

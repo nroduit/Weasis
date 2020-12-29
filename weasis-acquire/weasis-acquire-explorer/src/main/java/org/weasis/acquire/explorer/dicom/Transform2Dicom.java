@@ -75,10 +75,10 @@ public final class Transform2Dicom {
 
         // Transform to JPEG
         File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
-        if (imgFile == null || !imageElement.getMimeType().contains("jpeg") //$NON-NLS-1$
+        if (imgFile == null || !imageElement.getMimeType().contains("jpeg")
             || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
 
-            imgFile = new File(exportDirImage, sopInstanceUID + ".jpg"); //$NON-NLS-1$
+            imgFile = new File(exportDirImage, sopInstanceUID + ".jpg");
             SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
             PlanarImage transformedImage = imageElement.getImage(opManager, false);
             
@@ -109,7 +109,7 @@ public final class Transform2Dicom {
             DicomMediaUtils.fillAttributes(imageElement.getTagEntrySetIterator(), attrs);
             // Spatial calibration
             if (Unit.PIXEL != imageElement.getPixelSpacingUnit()) {
-                attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial"); //$NON-NLS-1$
+                attrs.setString(Tag.PixelSpacingCalibrationDescription, VR.LO, "Used fiducial"); //NON-NLS
                 double unitRatio = imageElement.getPixelSize()
                     * Unit.MILLIMETER.getConversionRatio(imageElement.getPixelSpacingUnit().getConvFactor());
                 attrs.setDouble(Tag.PixelSpacing, VR.DS, unitRatio, unitRatio);

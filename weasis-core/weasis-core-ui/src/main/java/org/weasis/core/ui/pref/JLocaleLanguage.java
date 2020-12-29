@@ -34,9 +34,9 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
     }
 
     private void initLocales() {
-        String langs = System.getProperty("weasis.languages", null); //$NON-NLS-1$
+        String langs = System.getProperty("weasis.languages", null);
         if (langs != null) {
-            String[] items = langs.split(","); //$NON-NLS-1$
+            String[] items = langs.split(",");
             for (int i = 0; i < items.length; i++) {
                 String item = items[i].trim();
                 int index = item.indexOf(' ');
@@ -99,11 +99,11 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
                 removeItemListener(this);
                 Locale locale = ((JLocale) item).getLocale();
                 Locale.setDefault(locale);
-                BundleTools.SYSTEM_PREFERENCES.setProperty("locale.lang.code", LocalUtil.localeToText(locale)); //$NON-NLS-1$
+                BundleTools.SYSTEM_PREFERENCES.setProperty("locale.lang.code", LocalUtil.localeToText(locale));
                 removeAllItems();
                 sortLocales();
                 addItemListener(this);
-                firePropertyChange("locale", null, locale); //$NON-NLS-1$
+                firePropertyChange("locale", null, locale);
                 valueHasChanged();
             }
         }

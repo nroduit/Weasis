@@ -45,7 +45,7 @@ import org.weasis.opencv.data.PlanarImage;
 public class RawImageIO implements DcmMediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
-    private static final String MIME_TYPE = "image/raw"; //$NON-NLS-1$
+    private static final String MIME_TYPE = "image/raw"; //NON-NLS
 
     protected FileRawImage imageCV;
     private final FileCache fileCache;
@@ -169,7 +169,7 @@ public class RawImageIO implements DcmMediaReader {
 
     @Override
     public String[] getReaderDescription() {
-        return new String[] { "File Raw Image Decoder from OpenCV" }; //$NON-NLS-1$
+        return new String[] { "File Raw Image Decoder from OpenCV" }; //NON-NLS
     }
 
     @Override

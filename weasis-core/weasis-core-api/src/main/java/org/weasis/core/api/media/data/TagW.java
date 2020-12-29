@@ -49,7 +49,7 @@ public class TagW implements Serializable {
 
     protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<String, TagW>());
 
-    public static final String NO_VALUE = "UNKNOWN";//$NON-NLS-1$
+    public static final String NO_VALUE = "UNKNOWN";
 
     public enum TagType {
         // Period is 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
@@ -122,21 +122,21 @@ public class TagW implements Serializable {
     public static final TagW HasOverlay = new TagW("HasOverlay", TagType.BOOLEAN);
     public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN);
 
-    public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER); //$NON-NLS-1$
-    public static final TagW WadoTransferSyntaxUID = new TagW("WadoTransferSyntaxUID", TagType.STRING); //$NON-NLS-1$
-    public static final TagW DirectDownloadFile = new TagW("DirectDownloadFile", TagType.STRING); //$NON-NLS-1$
-    public static final TagW DirectDownloadThumbnail = new TagW("DirectDownloadThumbnail", TagType.STRING); //$NON-NLS-1$
-    public static final TagW ReadFromDicomdir = new TagW("ReadFromDicomdir", TagType.BOOLEAN); //$NON-NLS-1$
+    public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER);
+    public static final TagW WadoTransferSyntaxUID = new TagW("WadoTransferSyntaxUID", TagType.STRING);
+    public static final TagW DirectDownloadFile = new TagW("DirectDownloadFile", TagType.STRING);
+    public static final TagW DirectDownloadThumbnail = new TagW("DirectDownloadThumbnail", TagType.STRING);
+    public static final TagW ReadFromDicomdir = new TagW("ReadFromDicomdir", TagType.BOOLEAN);
 
-    public static final TagW WadoParameters = new TagW("WadoParameters", TagType.OBJECT); //$NON-NLS-1$
-    public static final TagW WadoInstanceReferenceList = new TagW("WadoInstanceReferenceList", TagType.LIST); //$NON-NLS-1$
-    public static final TagW DicomSpecialElementList = new TagW("DicomSpecialElementList", TagType.LIST); //$NON-NLS-1$
-    public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE, 3, 3); //$NON-NLS-1$
-    public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE); //$NON-NLS-1$
+    public static final TagW WadoParameters = new TagW("WadoParameters", TagType.OBJECT);
+    public static final TagW WadoInstanceReferenceList = new TagW("WadoInstanceReferenceList", TagType.LIST);
+    public static final TagW DicomSpecialElementList = new TagW("DicomSpecialElementList", TagType.LIST);
+    public static final TagW SlicePosition = new TagW("SlicePosition", TagType.DOUBLE, 3, 3);
+    public static final TagW SuvFactor = new TagW("SUVFactor", TagType.DOUBLE);
 
-    public static final TagW RootElement = new TagW("RootElement", TagType.STRING); //$NON-NLS-1$
-    public static final TagW FilePath = new TagW("FilePath", TagType.STRING); //$NON-NLS-1$
-    public static final TagW FileName = new TagW("FileName", TagType.STRING); //$NON-NLS-1$
+    public static final TagW RootElement = new TagW("RootElement", TagType.STRING);
+    public static final TagW FilePath = new TagW("FilePath", TagType.STRING);
+    public static final TagW FileName = new TagW("FileName", TagType.STRING);
     public static final TagW CurrentFolder =
         new TagW("CurrentFolder", Messages.getString("TagElement.cur_dir"), TagType.STRING);
     public static final TagW Checked = new TagW("Checked", TagType.BOOLEAN); //NON-NLS
@@ -146,21 +146,21 @@ public class TagW implements Serializable {
      *
      */
 
-    public static final TagW SubseriesInstanceUID = new TagW("SubseriesInstanceUID", TagType.STRING); //$NON-NLS-1$
+    public static final TagW SubseriesInstanceUID = new TagW("SubseriesInstanceUID", TagType.STRING);
     // One or more Items shall be included in this sequence
-    public static final TagW VOILUTsExplanation = new TagW("VOILUTsExplanation", TagType.STRING, 1, Integer.MAX_VALUE); //$NON-NLS-1$
-    public static final TagW VOILUTsData = new TagW("VOILUTsData", TagType.OBJECT); //$NON-NLS-1$
+    public static final TagW VOILUTsExplanation = new TagW("VOILUTsExplanation", TagType.STRING, 1, Integer.MAX_VALUE);
+    public static final TagW VOILUTsData = new TagW("VOILUTsData", TagType.OBJECT);
 
     // Only a single Item shall be included in this sequence
-    public static final TagW ModalityLUTExplanation = new TagW("ModalityLUTExplanation", TagType.STRING); //$NON-NLS-1$
-    public static final TagW ModalityLUTType = new TagW("ModalityLUTType", TagType.STRING); //$NON-NLS-1$
-    public static final TagW ModalityLUTData = new TagW("ModalityLUTData", TagType.OBJECT); //$NON-NLS-1$
+    public static final TagW ModalityLUTExplanation = new TagW("ModalityLUTExplanation", TagType.STRING);
+    public static final TagW ModalityLUTType = new TagW("ModalityLUTType", TagType.STRING);
+    public static final TagW ModalityLUTData = new TagW("ModalityLUTData", TagType.OBJECT);
 
     // Only a single Item shall be included in this sequence
-    public static final TagW PRLUTsExplanation = new TagW("PRLUTsExplanation", TagType.STRING); //$NON-NLS-1$
-    public static final TagW PRLUTsData = new TagW("PRLUTsData", TagType.OBJECT); //$NON-NLS-1$
+    public static final TagW PRLUTsExplanation = new TagW("PRLUTsExplanation", TagType.STRING);
+    public static final TagW PRLUTsData = new TagW("PRLUTsData", TagType.OBJECT);
 
-    public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN); //$NON-NLS-1$
+    public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
     static {
         addTag(ImageBitsPerPixel);
@@ -214,7 +214,7 @@ public class TagW implements Serializable {
         this.vmMin = vmMin < 1 ? 1 : vmMin;
 
         if (!isTypeCompliant(defaultValue)) {
-            throw new IllegalArgumentException("defaultValue is not compliant to the tag type"); //$NON-NLS-1$
+            throw new IllegalArgumentException("defaultValue is not compliant to the tag type");
         }
     }
 
@@ -410,24 +410,24 @@ public class TagW implements Serializable {
         if (value instanceof String) {
             str = (String) value;
         } else if (value instanceof String[]) {
-            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\")); //$NON-NLS-1$
+            str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
         } else if (value instanceof TemporalAccessor) {
             str = TagUtil.formatDateTime((TemporalAccessor) value);
         } else if (value instanceof TemporalAccessor[]) {
-            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", ")); //$NON-NLS-1$
+            str = Stream.of((TemporalAccessor[]) value).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
         } else if (value instanceof float[]) {
             float[] array = (float[]) value;
             str = IntStream.range(0, array.length).mapToObj(i -> String.valueOf(array[i]))
-                .collect(Collectors.joining(", ")); //$NON-NLS-1$
+                .collect(Collectors.joining(", "));
         } else if (value instanceof double[]) {
-            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", ")); //$NON-NLS-1$
+            str = DoubleStream.of((double[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else if (value instanceof int[]) {
-            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", ")); //$NON-NLS-1$
+            str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
         } else {
             str = value.toString();
         }
 
-        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) { //$NON-NLS-1$
+        if (StringUtil.hasText(format) && !"$V".equals(format.trim())) {
             return formatValue(str, value instanceof Float || value instanceof Double, format);
         }
 
@@ -436,7 +436,7 @@ public class TagW implements Serializable {
 
     protected static String formatValue(String value, boolean decimal, String format) {
         String str = value;
-        int index = format.indexOf("$V"); //$NON-NLS-1$
+        int index = format.indexOf("$V");
         int fmLength = 2;
         if (index != -1) {
             boolean suffix = format.length() > index + fmLength;
@@ -463,7 +463,7 @@ public class TagW implements Serializable {
                             int limit = Integer.parseInt(pattern);
                             int size = str.length();
                             if (size > limit) {
-                                str = str.substring(0, limit) + "..."; //$NON-NLS-1$
+                                str = str.substring(0, limit) + "...";
                             }
                         } catch (NumberFormatException e) {
                             LOGGER.warn("Cannot apply pattern to decimal value", e);

@@ -20,7 +20,7 @@ import org.weasis.core.api.Messages;
 
 public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
-    public static final MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, "__ROOT__", null); //$NON-NLS-1$
+    public static final MediaSeriesGroup rootNode = new MediaSeriesGroupNode(TagW.RootElement, "__ROOT__", null); //NON-NLS
 
     private final TagW tagID;
     private final TagView displayTag;

@@ -64,7 +64,7 @@ public class Activator implements BundleActivator, ServiceListener {
     @Override
     public void stop(BundleContext bundleContext) throws Exception {
         // Save preferences only if EventManager has been initialized
-        if (EventManager.hasBeenInitialized()) { //$NON-NLS-1$
+        if (EventManager.hasBeenInitialized()) {
             EventManager.getInstance().savePreferences(bundleContext);
         }
         UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(b -> b instanceof ImportToolBar);

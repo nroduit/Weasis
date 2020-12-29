@@ -26,7 +26,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     private int pagePosition;
 
     public AbstractItemDialogPage(String title) {
-        this.title = title == null ? "item" : title; //$NON-NLS-1$
+        this.title = title == null ? "item" : title; //NON-NLS
         key = String.valueOf(keyGenerator.incrementAndGet());
         this.pagePosition = 1000;
     }

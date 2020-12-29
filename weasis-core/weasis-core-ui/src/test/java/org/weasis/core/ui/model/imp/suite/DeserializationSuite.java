@@ -28,12 +28,12 @@ import org.weasis.core.ui.test.utils.ModelListHelper;
 import org.xml.sax.SAXParseException;
 
 public class DeserializationSuite extends ModelListHelper {
-    public static final String XML_0 = "/presentation/presentation.0.xml"; //$NON-NLS-1$
-    public static final String XML_1 = "/presentation/presentation.1.xml"; //$NON-NLS-1$
-    public static final String XML_2 = "/presentation/presentation.2.xml"; //$NON-NLS-1$
-    public static final String XML_3 = "/presentation/presentation.3.xml"; //$NON-NLS-1$
-    public static final String XML_4 = "/presentation/presentation.4.xml"; //$NON-NLS-1$
-    public static final String XML_5 = "/presentation/presentation.5.xml"; //$NON-NLS-1$
+    public static final String XML_0 = "/presentation/presentation.0.xml"; //NON-NLS
+    public static final String XML_1 = "/presentation/presentation.1.xml"; //NON-NLS
+    public static final String XML_2 = "/presentation/presentation.2.xml"; //NON-NLS
+    public static final String XML_3 = "/presentation/presentation.3.xml"; //NON-NLS
+    public static final String XML_4 = "/presentation/presentation.4.xml"; //NON-NLS
+    public static final String XML_5 = "/presentation/presentation.5.xml"; //NON-NLS
 
     @Test
     public void test_empty_xml() {
@@ -41,7 +41,7 @@ public class DeserializationSuite extends ModelListHelper {
 
         try {
             deserialize(xml_0, XmlGraphicModel.class);
-            fail("Must throws an exception"); //$NON-NLS-1$
+            fail("Must throws an exception");
         } catch (Exception e) {
             assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
         }
@@ -50,7 +50,7 @@ public class DeserializationSuite extends ModelListHelper {
 
         try {
             deserialize(xml_1, XmlGraphicModel.class);
-            fail("Must throws an exception"); //$NON-NLS-1$
+            fail("Must throws an exception");
         } catch (Exception e) {
             assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
         }

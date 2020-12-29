@@ -85,7 +85,7 @@ public class SimpleOpManager implements OpManager {
             String title = action.getName();
             int k = 2;
             while (nodes.get(title) != null) {
-                title += " " + k; //$NON-NLS-1$
+                title += " " + k;
                 k++;
             }
             if (k > 2) {

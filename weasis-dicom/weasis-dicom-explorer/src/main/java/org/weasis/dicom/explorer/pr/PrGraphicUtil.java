@@ -43,11 +43,11 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 public class PrGraphicUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrGraphicUtil.class);
 
-    public static final String POINT = "POINT"; //$NON-NLS-1$
-    public static final String POLYLINE = "POLYLINE"; //$NON-NLS-1$
-    public static final String INTERPOLATED = "INTERPOLATED"; //$NON-NLS-1$
-    public static final String CIRCLE = "CIRCLE"; //$NON-NLS-1$
-    public static final String ELLIPSE = "ELLIPSE"; //$NON-NLS-1$
+    public static final String POINT = "POINT";
+    public static final String POLYLINE = "POLYLINE";
+    public static final String INTERPOLATED = "INTERPOLATED";
+    public static final String CIRCLE = "CIRCLE";
+    public static final String ELLIPSE = "ELLIPSE";
 
     private PrGraphicUtil() {
     }
@@ -69,14 +69,14 @@ public class PrGraphicUtil {
          *
          * MATRIX not implemented
          */
-        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits)); //$NON-NLS-1$
+        boolean isDisp = dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
 
         String type = go.getString(Tag.GraphicType);
         Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
         boolean filled = getBooleanValue(go, Tag.GraphicFilled);
         Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
         Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
+        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern));
         if (style != null) {
             int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
             if (rgb != null) {
@@ -200,7 +200,7 @@ public class PrGraphicUtil {
                     setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
                 }
             }
-        } else if ("MULTIPOINT".equalsIgnoreCase(type)) { //$NON-NLS-1$
+        } else if ("MULTIPOINT".equalsIgnoreCase(type)) {
             if (points != null && points.length >= 2) {
                 int size = points.length / 2;
                 int pointSize = 3;
@@ -252,7 +252,7 @@ public class PrGraphicUtil {
     }
 
     public static boolean getBooleanValue(Attributes dcmobj, int tag) {
-        return "Y".equalsIgnoreCase(dcmobj.getString(tag)); //$NON-NLS-1$
+        return "Y".equalsIgnoreCase(dcmobj.getString(tag)); //NON-NLS
     }
 
     private static void setProperties(Graphic shape, Float thickness, Color color, Boolean labelVisible, Boolean filled,
@@ -284,7 +284,7 @@ public class PrGraphicUtil {
          *
          * Coordinates are DISPLAY or PIXEL
          */
-        boolean isDisp = "DISPLAY".equalsIgnoreCase(go.getString(Tag.CompoundGraphicUnits)); //$NON-NLS-1$
+        boolean isDisp = "DISPLAY".equalsIgnoreCase(go.getString(Tag.CompoundGraphicUnits));
 
         String type = go.getString(Tag.CompoundGraphicType);
         String id = go.getString(Tag.CompoundGraphicInstanceID);
@@ -292,7 +292,7 @@ public class PrGraphicUtil {
         boolean filled = getBooleanValue(go, Tag.GraphicFilled);
         Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
         Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern)); //$NON-NLS-1$
+        Boolean dashed = style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern));
         if (style != null) {
             int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
             if (rgb != null) {

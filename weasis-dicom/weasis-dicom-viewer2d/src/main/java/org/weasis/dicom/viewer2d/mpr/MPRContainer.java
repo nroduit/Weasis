@@ -161,7 +161,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
             initComponents = true;
             // Add standard toolbars
             // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
-            // props.putBooleanProperty("weasis.toolbar.synchbouton", false); //$NON-NLS-1$
+            // props.putBooleanProperty("weasis.toolbar.synchbouton", false); 
 
             EventManager evtMg = EventManager.getInstance();
             Optional<Toolbar> importBar = View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportToolBar).findFirst();
@@ -201,26 +201,26 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
 
                 int count = menuRoot.getItemCount();
 
-                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets")); //$NON-NLS-1$
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape")); //$NON-NLS-1$
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut")); //$NON-NLS-1$
-                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut")); //$NON-NLS-1$
-                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets")); 
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape")); 
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut")); 
+                JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut")); 
+                JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter")); 
 
                 if (count < menuRoot.getItemCount()) {
                     menuRoot.add(new JSeparator());
                     count = menuRoot.getItemCount();
                 }
 
-                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom")); //$NON-NLS-1$
-                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation")); //$NON-NLS-1$
+                JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom")); 
+                JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation")); 
 
                 if (count < menuRoot.getItemCount()) {
                     menuRoot.add(new JSeparator());
                     count = menuRoot.getItemCount();
                 }
 
-                menuRoot.add(manager.getResetMenu("weasis.pluginMenu.reset")); //$NON-NLS-1$
+                menuRoot.add(manager.getResetMenu("weasis.pluginMenu.reset")); 
             }
 
         }
@@ -408,7 +408,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement> implement
         ArrayList<Action> actions = new ArrayList<>(1);
         final String title = Messages.getString("View2dContainer.print_layout");
         DefaultAction printStd = new DefaultAction(title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { 
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
                 PrintDialog<DicomImageElement> dialog =
                     new PrintDialog<>(SwingUtilities.getWindowAncestor(MPRContainer.this), title, eventManager);

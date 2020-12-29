@@ -330,7 +330,7 @@ public class AcquireImageInfo {
 
     @Override
     public String toString() {
-        return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> ""); //$NON-NLS-1$
+        return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> "");
     }
 
     public String getComment() {

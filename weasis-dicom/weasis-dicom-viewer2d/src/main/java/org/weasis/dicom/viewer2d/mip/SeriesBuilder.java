@@ -47,7 +47,7 @@ public class SeriesBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
 
     public static final File MPR_CACHE_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip");  //NON-NLS
 
     private SeriesBuilder() {
     }

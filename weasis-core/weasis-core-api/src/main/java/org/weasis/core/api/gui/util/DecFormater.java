@@ -30,9 +30,9 @@ public class DecFormater {
     private static final NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals
     private static final NumberFormat df4 = LocalUtil.getNumberInstance(); // 4 decimals
     private static final NumberFormat percent2 = LocalUtil.getPercentInstance();
-    private static final DecimalFormat decimalAndNumber = new DecimalFormat("#,##0.#", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
+    private static final DecimalFormat decimalAndNumber = new DecimalFormat("#,##0.#", LocalUtil.getDecimalFormatSymbols());
     // Scientific format with 4 decimals
-    private static final DecimalFormat dfSci = new DecimalFormat("0.####E0", LocalUtil.getDecimalFormatSymbols()); //$NON-NLS-1$
+    private static final DecimalFormat dfSci = new DecimalFormat("0.####E0", LocalUtil.getDecimalFormatSymbols()); //NON-NLS
 
     static {
         df1.setMaximumFractionDigits(1);
@@ -66,9 +66,9 @@ public class DecFormater {
     }
 
     public static DefaultFormatterFactory setPreciseDoubleFormat(double min, double max) {
-        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##", LocalUtil.getDecimalFormatSymbols())); //$NON-NLS-1$
+        NumberFormatter displayFormatter = new NumberFormatter(new DecimalFormat("#,##0.##", LocalUtil.getDecimalFormatSymbols()));
         displayFormatter.setValueClass(Double.class);
-        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############", LocalUtil.getDecimalFormatSymbols())); //$NON-NLS-1$
+        NumberFormatter editFormatter = new NumberFormatter(new DecimalFormat("#,##0.0#############", LocalUtil.getDecimalFormatSymbols()));
         editFormatter.setValueClass(Double.class);
         editFormatter.setMinimum(min);
         editFormatter.setMaximum(max);

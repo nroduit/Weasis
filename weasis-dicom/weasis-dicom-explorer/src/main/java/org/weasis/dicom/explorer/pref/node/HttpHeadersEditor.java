@@ -140,7 +140,7 @@ public class HttpHeadersEditor extends JDialog {
 
         List<String> selItems = jList1.getSelectedValuesList();
         for (String val : selItems) {
-            String[] kv = val.split(":", 2); //$NON-NLS-1$
+            String[] kv = val.split(":", 2);
             if (kv.length == 2) {
                 node.removeHeader(kv[0]);
             }
@@ -180,7 +180,7 @@ public class HttpHeadersEditor extends JDialog {
             (String) JOptionPane.showInputDialog(this, Messages.getString("HttpHeadersEditor.msg_keyValue"),
                 this.getTitle(), JOptionPane.PLAIN_MESSAGE, null, null, input);
         if (StringUtil.hasLength(property)) {
-            String[] kv = property.split(":", 2); //$NON-NLS-1$
+            String[] kv = property.split(":", 2);
             if (kv.length == 2) {
                 node.addHeader(kv[0].trim(), kv[1].trim());
             }

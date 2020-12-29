@@ -104,7 +104,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         // Keep this order to avoid build a default editor
         HTMLEditorKit kit = JMVUtils.buildHTMLEditorKit(jTextPaneLimited);
         jTextPaneLimited.setEditorKit(kit);
-        jTextPaneLimited.setContentType("text/html"); //$NON-NLS-1$
+        jTextPaneLimited.setContentType("text/html"); 
         jTextPaneLimited.setEditable(false);
         JMVUtils.addStylesToHTML(jTextPaneLimited.getStyledDocument());
 
@@ -116,7 +116,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         dump.add(allPane, BorderLayout.CENTER);
         jTextPaneAll.setBorder(new EmptyBorder(5, 5, 5, 5));
         jTextPaneAll.setEditorKit(kit);
-        jTextPaneAll.setContentType("text/html"); //$NON-NLS-1$
+        jTextPaneAll.setContentType("text/html"); 
         jTextPaneAll.setEditable(false);
         JMVUtils.addStylesToHTML(jTextPaneAll.getStyledDocument());
 
@@ -198,15 +198,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
     private static void printElement(Attributes dcmObj, int tag, StyledDocument doc) {
         StringBuilder buf = new StringBuilder(TagUtils.toString(tag));
-        buf.append(" ["); //$NON-NLS-1$
+        buf.append(" ["); 
         VR vr = dcmObj.getVR(tag);
         buf.append(vr.toString());
-        buf.append("] "); //$NON-NLS-1$
+        buf.append("] "); 
 
         String privateCreator = dcmObj.privateCreatorOf(tag);
         String word = ElementDictionary.keywordOf(tag, privateCreator);
         if (!StringUtil.hasText(word)) {
-            word = "PrivateTag"; //$NON-NLS-1$
+            word = "PrivateTag"; 
         }
 
         buf.append(word);
@@ -214,10 +214,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
         int level = dcmObj.getLevel();
         if (level > 0) {
-            buf.insert(0, "-->"); //$NON-NLS-1$
+            buf.insert(0, "-->"); 
         }
         for (int i = 1; i < level; i++) {
-            buf.insert(0, "--"); //$NON-NLS-1$
+            buf.insert(0, "--"); 
         }
 
         Sequence seq = dcmObj.getSequence(tag);
@@ -225,13 +225,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             if (!seq.isEmpty()) {
                 printSequence(seq, doc, buf);
             } else {
-                buf.insert(0, "\n"); //$NON-NLS-1$
+                buf.insert(0, "\n"); 
                 printItem(doc, buf.toString(), null);
             }
         } else {
-            buf.insert(0, "\n"); //$NON-NLS-1$
+            buf.insert(0, "\n"); 
             if (vr.isInlineBinary()) {
-                buf.append("binary data"); //$NON-NLS-1$
+                buf.append("binary data");  //NON-NLS
                 printItem(doc, buf.toString(), null);
             } else {
                 printItem(doc, buf.toString(), null);
@@ -240,15 +240,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 if (value != null && value.length > 0) {
                     buf.append(value[0]);
                     for (int i = 1; i < value.length; i++) {
-                        buf.append("\\"); //$NON-NLS-1$
+                        buf.append("\\"); 
                         buf.append(value[i]);
                     }
                     if (buf.length() > 256) {
                         buf.setLength(253);
-                        buf.append("..."); //$NON-NLS-1$
+                        buf.append("..."); 
                     }
                 }
-                printItem(doc, buf.toString(), doc.getStyle("bold")); //$NON-NLS-1$
+                printItem(doc, buf.toString(), doc.getStyle("bold"));  //NON-NLS
             }
         }
     }
@@ -257,7 +257,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         try {
             doc.insertString(doc.getLength(), val, attribute);
         } catch (BadLocationException e) {
-            AuditLog.logError(LOGGER, e, "Error on writing dicom item!"); //$NON-NLS-1$
+            AuditLog.logError(LOGGER, e, "Error on writing dicom item!");  //NON-NLS
         }
     }
 
@@ -265,11 +265,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         if (seq != null) {
             buf.append(seq.size());
             if (seq.size() <= 1) {
-                buf.append(" item"); //$NON-NLS-1$
+                buf.append(" item");  //NON-NLS
             } else {
-                buf.append(" items"); //$NON-NLS-1$
+                buf.append(" items");  //NON-NLS
             }
-            buf.insert(0, "\n"); //$NON-NLS-1$
+            buf.insert(0, "\n"); 
             printItem(doc, buf.toString(), null);
 
             for (int i = 0; i < seq.size(); i++) {
@@ -277,14 +277,14 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 int level = attributes.getLevel();
                 StringBuilder buffer = new StringBuilder();
                 if (level > 0) {
-                    buffer.insert(0, "-->"); //$NON-NLS-1$
+                    buffer.insert(0, "-->"); 
                 }
                 for (int k = 1; k < level; k++) {
-                    buffer.insert(0, "--"); //$NON-NLS-1$
+                    buffer.insert(0, "--"); 
                 }
-                buffer.append(" ITEM #"); //$NON-NLS-1$
+                buffer.append(" ITEM #");  //NON-NLS
                 buffer.append(i + 1);
-                buffer.insert(0, "\n"); //$NON-NLS-1$
+                buffer.insert(0, "\n"); 
                 printItem(doc, buffer.toString(), null);
                 int[] tags = attributes.tags();
                 for (int tag : tags) {
@@ -292,7 +292,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                 }
             }
         } else {
-            buf.insert(0, "\n"); //$NON-NLS-1$
+            buf.insert(0, "\n"); 
             printItem(doc, buf.toString(), null);
         }
     }
@@ -350,8 +350,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
                             exist = true;
                             doc.insertString(doc.getLength(), tag.getDisplayedName(), null);
                             doc.insertString(doc.getLength(),
-                                StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n", //$NON-NLS-1$
-                                doc.getStyle("bold")); //$NON-NLS-1$
+                                StringUtil.COLON_AND_SPACE + tag.getFormattedTagValue(val, null) + "\n", 
+                                doc.getStyle("bold"));  //NON-NLS
                             break;
                         }
                     } catch (BadLocationException e) {
@@ -399,7 +399,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             frame.getContentPane().add(panel);
             frame.setAlwaysOnTop(true);
             frame.setIconImage(
-                new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")).getImage()); //$NON-NLS-1$
+                new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")).getImage()); 
             Component c = container instanceof Component ? (Component) container : UIManager.MAIN_AREA.getComponent();
             JMVUtils.showCenterScreen(frame, c);
         }
@@ -446,7 +446,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             up.addActionListener(evt -> previous());
             this.add(up);
             JButton down =
-                new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), //$NON-NLS-1$
+                new JButton(new RotatedIcon(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")), 
                     RotatedIcon.Rotate.UPSIDE_DOWN));
             down.setToolTipText(Messages.getString("DicomFieldsView.next"));
             down.addActionListener(evt -> next());

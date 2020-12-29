@@ -62,9 +62,9 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class SeriesBuilder {
 
-    static TagW SeriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2); //$NON-NLS-1$
+    static TagW SeriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2); 
     public static final File MPR_CACHE_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mpr"); //$NON-NLS-1$
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mpr");  //NON-NLS
 
     private SeriesBuilder() {
     }
@@ -94,7 +94,7 @@ public class SeriesBuilder {
 
                         if (MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY())) {
                             // confirmMessage(view, Messages.getString("SeriesBuilder.non_square"), abort);
-                            // //$NON-NLS-1$
+                            // 
                             width = img.getRescaleWidth(width);
                             height = img.getRescaleHeight(height);
                         }
@@ -481,7 +481,7 @@ public class SeriesBuilder {
                 PlanarImage image = dcm.getImage(null, false);
                 if (image == null) {
                     abort[0] = true;
-                    throw new IIOException("Cannot read an image!"); //$NON-NLS-1$
+                    throw new IIOException("Cannot read an image!"); 
                 }
                 if (MathUtil.isDifferent(dcm.getRescaleX(), dcm.getRescaleY())) {
                     Dimension dim = new Dimension((int) (Math.abs(dcm.getRescaleX()) * image.width()),

@@ -311,7 +311,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 return;
             }
         } else {
-            throw new Exception("Cannot read Waveform data"); //$NON-NLS-1$
+            throw new Exception("Cannot read Waveform data");
         }
 
         int bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(dcm, Tag.WaveformBitsAllocated, 0);
@@ -334,7 +334,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             DataBufferByte dataBuffer = new DataBufferByte(byteData, byteData.length, 0);
             waveData = new WaveByteData(dataBuffer, channelNumber, sampleNumber);
         } else {
-            throw new Exception("Unexpected bitsAllocated value: " + bitsAllocated); //$NON-NLS-1$
+            throw new Exception("Unexpected bitsAllocated value: " + bitsAllocated);
         }
     }
 
@@ -346,7 +346,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
             if (Lead.II == channel.getLead()) {
                 LeadPanel rhythm = new LeadPanel(this, waveData, new ChannelDefinition(channel, Lead.RYTHM.toString()));
-                cpane.add("rythm", rhythm); //$NON-NLS-1$
+                cpane.add("rythm", rhythm); //NON-NLS
             }
         }
     }
@@ -502,7 +502,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
             DicomSpecialElement dcm = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
             if (dcm != null && patient != null && study != null) {
                 g2.setColor(Color.black);
-                g2.setFont(new Font("SanSerif", Font.PLAIN, 9)); //$NON-NLS-1$
+                g2.setFont(new Font("SanSerif", Font.PLAIN, 9));
                 float fontHeight = FontTools.getAccurateFontHeight(g2);
                 float drawY = fontHeight;
                 TagW patNameTag = TagD.get(Tag.PatientName);
@@ -510,7 +510,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StringBuilder studyDate =
                     new StringBuilder(new TagView(TagD.getTagFromIDs(Tag.AcquisitionDate, Tag.ContentDate,
                         Tag.DateOfSecondaryCapture, Tag.SeriesDate, Tag.StudyDate)).getFormattedText(false, dcm));
-                studyDate.append(" - "); //$NON-NLS-1$
+                studyDate.append(" - ");
                 studyDate.append(new TagView(TagD.getTagFromIDs(Tag.AcquisitionTime, Tag.ContentTime,
                     Tag.TimeOfSecondaryCapture, Tag.SeriesTime, Tag.StudyTime)).getFormattedText(false, dcm));
                 g2.drawString(studyDate.toString(), midWidth, drawY);
@@ -520,16 +520,16 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 StringBuilder birthDate =
                     new StringBuilder(patBirthTag.getFormattedTagValue(patient.getTagValue(patBirthTag), null));
                 TagW patSexTag = TagD.get(Tag.PatientSex);
-                birthDate.append(" - "); //$NON-NLS-1$
+                birthDate.append(" - ");
                 birthDate.append(patSexTag.getFormattedTagValue(patient.getTagValue(patSexTag), null));
                 g2.drawString(birthDate.toString(), 0, drawY);
                 TagW studyDesTag = TagD.get(Tag.StudyDescription);
-                g2.drawString(studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), midWidth, //$NON-NLS-1$
+                g2.drawString(studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), midWidth, //NON-NLS
                     drawY);
                 drawY += fontHeight;
 
                 TagW patIDTag = TagD.get(Tag.PatientID);
-                g2.drawString(patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), 0, drawY); //$NON-NLS-1$
+                g2.drawString(patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), 0, drawY); //NON-NLS
                 TagW studyAcNbTag = TagD.get(Tag.AccessionNumber);
                 g2.drawString(studyAcNbTag.getFormattedTagValue(study.getTagValue(studyAcNbTag), null), midWidth,
                     drawY);

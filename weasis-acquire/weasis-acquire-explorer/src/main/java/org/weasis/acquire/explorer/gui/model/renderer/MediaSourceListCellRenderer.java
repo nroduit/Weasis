@@ -37,7 +37,7 @@ public class MediaSourceListCellRenderer extends JLabel implements ListCellRende
             setText(str);
         } else {
             setIcon(null);
-            setText(""); //$NON-NLS-1$
+            setText(""); 
         }
 
         setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());

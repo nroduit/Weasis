@@ -69,7 +69,7 @@ public class NativeOpenCVCodec implements Codec {
 
     @Override
     public String getCodecName() {
-        return "OpenCV imgcodecs"; //$NON-NLS-1$
+        return "OpenCV imgcodecs"; //NON-NLS
     }
 
     @Override

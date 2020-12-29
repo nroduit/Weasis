@@ -242,7 +242,7 @@ public class View2dFactory implements SeriesViewerFactory {
                         Messages.getString("OpenDicomAction.desc"), JOptionPane.WARNING_MESSAGE);
                 }
             }
-            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
+            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.dicom.dir", selectedFiles[0].getParent());
         }
     }
 }

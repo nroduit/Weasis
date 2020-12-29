@@ -76,7 +76,7 @@ public class ImagePrint implements Printable {
             case PageFormat.PORTRAIT:
                 return OrientationRequested.PORTRAIT;
             default:
-                throw new IllegalArgumentException("The given value is no valid PageFormat orientation."); //$NON-NLS-1$
+                throw new IllegalArgumentException("The given value is no valid PageFormat orientation."); 
         }
     }
 
@@ -105,7 +105,7 @@ public class ImagePrint implements Printable {
                 pj.print(aset);
             } catch (Exception e) {
                 // check for the annoying 'Printer is not accepting job' error.
-                if (e.getMessage().indexOf("accepting job") != -1) { //$NON-NLS-1$
+                if (e.getMessage().indexOf("accepting job") != -1) {  //NON-NLS
                     // recommend prompting the user at this point if they want to force it
                     // so they'll know there may be a problem.
                     int response = JOptionPane.showConfirmDialog(null, Messages.getString("ImagePrint.issue_desc"),
@@ -214,9 +214,9 @@ public class ImagePrint implements Printable {
             image.getInfoLayer().setVisible(false);
         }
 
-        Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
-        Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+        Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); 
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); 
+        Double originZoom = (Double) image.getActionValue("origin.zoom"); 
         PlanarImage img = image.getSourceImage();
         if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;

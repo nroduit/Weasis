@@ -37,7 +37,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     protected String settingTitle;
     protected AbstractItemDialogPage currentPage = null;
-    protected DefaultMutableTreeNode pagesRoot = new DefaultMutableTreeNode("root"); //$NON-NLS-1$
+    protected DefaultMutableTreeNode pagesRoot = new DefaultMutableTreeNode("root"); //NON-NLS
     private final JPanel jPanelRootPanel = new JPanel();
     private final BorderLayout borderLayout3 = new BorderLayout();
     protected final JButton jButtonClose = new JButton();

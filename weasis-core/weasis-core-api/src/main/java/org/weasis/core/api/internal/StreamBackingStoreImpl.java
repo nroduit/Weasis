@@ -54,7 +54,7 @@ import org.weasis.core.util.StringUtil;
  * complete preferences tree in a single stream.
  */
 public class StreamBackingStoreImpl implements BackingStore {
-    private static final String PREFS_TAG = "preferences"; //$NON-NLS-1$
+    private static final String PREFS_TAG = "preferences"; //NON-NLS
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamBackingStoreImpl.class);
 
@@ -64,7 +64,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     public StreamBackingStoreImpl(BundleContext context) {
         this.bundleContext = context;
-        String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir"); //$NON-NLS-1$
+        String prefPath = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.dir");
         this.prefRootDirectory = new File(prefPath);
         prefRootDirectory.mkdirs();
     }
@@ -76,7 +76,7 @@ public class StreamBackingStoreImpl implements BackingStore {
      */
     protected void checkAccess() throws BackingStoreException {
         if (prefRootDirectory == null || !prefRootDirectory.exists()) {
-            throw new BackingStoreException("Saving of data files to the bundle context is currently not supported."); //$NON-NLS-1$
+            throw new BackingStoreException("Saving of data files to the bundle context is currently not supported.");
         }
     }
 
@@ -98,7 +98,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     protected PreferencesDescription getDescription(File file) {
         final String fileName = file.getName();
         // parse the file name to get: bundle id, user|system identifier
-        if (fileName.endsWith(".xml")) { //$NON-NLS-1$
+        if (fileName.endsWith(".xml")) {
             final String key = fileName.substring(0, fileName.length() - 4);
 
             Bundle[] bundles = bundleContext.getBundles();
@@ -136,7 +136,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (bundle == null) {
             return null;
         }
-        return new File(prefRootDirectory, bundle.getSymbolicName() + ".xml"); //$NON-NLS-1$
+        return new File(prefRootDirectory, bundle.getSymbolicName() + ".xml");
     }
 
     protected String getURL(PreferencesDescription desc, String prefUrl) throws UnsupportedEncodingException {
@@ -146,7 +146,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         }
         if (StringUtil.hasText(prefUrl)) {
 
-            return String.format("%s?user=%s&profile=%s&module=%s", prefUrl, //$NON-NLS-1$
+            return String.format("%s?user=%s&profile=%s&module=%s", prefUrl, //NON-NLS
                 BundleTools.getEncodedValue(AppProperties.WEASIS_USER),
                 BundleTools.getEncodedValue(AppProperties.WEASIS_PROFILE),
                 BundleTools.getEncodedValue(bundle.getSymbolicName()));
@@ -189,7 +189,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         if (update.getProperties().size() < prefs.getProperties().size() || uchildren.size() < children.size()) {
             // Force the changeset to store remote prefs
             prefs.getChangeSet()
-                .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> "")); //$NON-NLS-1$
+                .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> ""));
         }
 
         for (PreferencesImpl child : uchildren) {
@@ -225,7 +225,7 @@ public class StreamBackingStoreImpl implements BackingStore {
                 readStream(root, xmler);
                 return readStream(root, xmler);
             } catch (XMLStreamException | IOException e) {
-                throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
+                throw new BackingStoreException("Unable to load preferences.", e);
             } finally {
                 FileUtil.safeClose(xmler);
             }
@@ -254,7 +254,7 @@ public class StreamBackingStoreImpl implements BackingStore {
                 xmler = factory.createXMLStreamReader(fileReader);
                 return readStream(root, xmler);
             } catch (XMLStreamException | IOException e) {
-                throw new BackingStoreException("Unable to load preferences.", e); //$NON-NLS-1$
+                throw new BackingStoreException("Unable to load preferences.", e);
             } finally {
                 FileUtil.safeClose(xmler);
             }
@@ -353,7 +353,7 @@ public class StreamBackingStoreImpl implements BackingStore {
             writer.writeEndDocument();
             clearAllChangeSet(rootPrefs);
         } catch (XMLStreamException e) {
-            throw new BackingStoreException("Unable to store preferences.", e); //$NON-NLS-1$
+            throw new BackingStoreException("Unable to store preferences.", e);
         } finally {
             FileUtil.safeClose(writer);
         }

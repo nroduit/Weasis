@@ -66,7 +66,7 @@ public class SplittingRules {
         // Make a condition to exclude projection image type
         And allOf = new And();
         allOf.addChild(
-            new DefaultCondition(TagD.get(Tag.ImageType), Condition.Type.notContainsIgnoreCase, "PROJECTION")); //$NON-NLS-1$
+            new DefaultCondition(TagD.get(Tag.ImageType), Condition.Type.notContainsIgnoreCase, "PROJECTION")); 
         ctRules.addSingleFrameTags(TagW.ImageOrientationPlane, allOf);
         rules.put(ctRules.getModality(), ctRules);
 
@@ -92,7 +92,7 @@ public class SplittingRules {
         XMLStreamReader xmler = null;
         InputStream stream = null;
         try {
-            File file = ResourceUtil.getResource("series-splitting-rules.xml"); //$NON-NLS-1$
+            File file = ResourceUtil.getResource("series-splitting-rules.xml");  //NON-NLS
             if (!file.canRead()) {
                 return;
             }
@@ -109,7 +109,7 @@ public class SplittingRules {
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        if ("modalities".equals(key)) { //$NON-NLS-1$
+                        if ("modalities".equals(key)) {  //NON-NLS
                             readModalities(xmler);
                         }
                         break;
@@ -133,12 +133,12 @@ public class SplittingRules {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     String key = xmler.getName().getLocalPart();
-                    if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
-                        String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+                    if ("modality".equals(key) && xmler.getAttributeCount() >= 1) {  //NON-NLS
+                        String name = xmler.getAttributeValue(null, "name"); //NON-NLS
                         Modality m = getModdality(name);
                         if (m != null) {
                             try {
-                                String extend = xmler.getAttributeValue(null, "extend");//$NON-NLS-1$
+                                String extend = xmler.getAttributeValue(null, "extend"); //NON-NLS
                                 SplittingModalityRules splitRules =
                                     new SplittingModalityRules(m, getSplittingModalityRules(extend));
                                 readModality(splitRules, xmler);
@@ -164,14 +164,14 @@ public class SplittingRules {
             switch (eventType) {
                 case XMLStreamConstants.START_ELEMENT:
                     String element = xmler.getName().getLocalPart();
-                    if ("splittingTags".equals(element)) { //$NON-NLS-1$
+                    if ("splittingTags".equals(element)) { 
                         readTags(data, xmler, false, element);
-                    } else if ("multiframeSplittingTags".equals(element)) { //$NON-NLS-1$
+                    } else if ("multiframeSplittingTags".equals(element)) { 
                         readTags(data, xmler, true, element);
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("modality".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                    if ("modality".equals(xmler.getName().getLocalPart())) {  //NON-NLS
                         state = false;
                     }
                     break;
@@ -228,12 +228,12 @@ public class SplittingRules {
                     value = xmler.getText();
                     break;
                 case XMLStreamConstants.START_ELEMENT:
-                    if ("condition".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
-                        tag = getTag(xmler.getAttributeValue(null, "tag"));//$NON-NLS-1$
-                        type = getConditionType(xmler.getAttributeValue(null, "type"));//$NON-NLS-1$
-                    } else if ("conditions".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
-                        String t = xmler.getAttributeValue(null, "type");//$NON-NLS-1$
-                        lastConditions = "anyOf".equals(t) ? new Or() : new And(); //$NON-NLS-1$
+                    if ("condition".equals(xmler.getName().getLocalPart())) {  //NON-NLS
+                        tag = getTag(xmler.getAttributeValue(null, "tag")); //NON-NLS
+                        type = getConditionType(xmler.getAttributeValue(null, "type")); //NON-NLS
+                    } else if ("conditions".equals(xmler.getName().getLocalPart())) {  //NON-NLS
+                        String t = xmler.getAttributeValue(null, "type");
+                        lastConditions = "anyOf".equals(t) ? new Or() : new And(); 
                         if (conditions == null) {
                             // Root condition
                             conditions = lastConditions;
@@ -243,7 +243,7 @@ public class SplittingRules {
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("condition".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                    if ("condition".equals(xmler.getName().getLocalPart())) {  //NON-NLS
                         if (tag == null || type == null || value == null) {
                             LOGGER.error("Cannot read condition: {} {} {}", tag, type, value);
                         }

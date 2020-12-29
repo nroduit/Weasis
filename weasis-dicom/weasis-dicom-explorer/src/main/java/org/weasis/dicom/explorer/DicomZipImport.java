@@ -39,7 +39,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
 
-    private static final String lastDICOMDIR = "lastDicomZip";//$NON-NLS-1$
+    private static final String lastDICOMDIR = "lastDicomZip";
 
     private File selectedFile;
     private JButton btnOpen;
@@ -63,7 +63,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
 
     public void browseImgFile() {
-        String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");//$NON-NLS-1$
+        String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");
 
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -71,7 +71,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         fileChooser.setFileFilter(new FileFormatFilter("zip", "ZIP")); // NON-NLS
         if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
             || (selectedFile = fileChooser.getSelectedFile()) == null) {
-            fileLabel.setText(""); //$NON-NLS-1$
+            fileLabel.setText("");
         } else {
             Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, selectedFile.getParent());
             fileLabel.setText(selectedFile.getPath());
@@ -118,7 +118,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             } catch (IOException e) {
                 LOGGER.error("unzipping", e);
             }
-            File dicomdir = new File(dir, "DICOMDIR"); //$NON-NLS-1$
+            File dicomdir = new File(dir, "DICOMDIR");
             if (dicomdir.canRead()) {
                 DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false);
                 List<LoadSeries> loadSeries = dirImport.readDicomDir();
@@ -139,7 +139,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             File tempFile = null;
             try {
                 URI u = new URI(uri);
-                if (u.toString().startsWith("file:")) { //$NON-NLS-1$
+                if (u.toString().startsWith("file:")) { //NON-NLS
                     tempFile = new File(u.getPath());
                 } else {
                     tempFile = File.createTempFile("dicom_", ".zip", AppProperties.APP_TEMP_DIR); // NON-NLS

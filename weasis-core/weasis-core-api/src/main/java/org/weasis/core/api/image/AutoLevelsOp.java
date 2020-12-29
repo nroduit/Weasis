@@ -19,14 +19,14 @@ import org.weasis.opencv.op.ImageProcessor;
 public class AutoLevelsOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
 
-    public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct"); //$NON-NLS-1$
-    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
+    public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct");
+    public static final String P_IMAGE_ELEMENT = "img.element";
     /**
      * Set whether auto levels is applied to the image (Required parameter).
      *
      * Boolean value.
      */
-    public static final String P_AUTO_LEVEL = "auto.level"; //$NON-NLS-1$
+    public static final String P_AUTO_LEVEL = "auto.level";
 
     public AutoLevelsOp() {
         setName(OP_NAME);

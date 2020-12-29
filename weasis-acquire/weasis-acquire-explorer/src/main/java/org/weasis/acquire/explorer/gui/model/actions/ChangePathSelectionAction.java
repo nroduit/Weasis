@@ -31,9 +31,9 @@ public class ChangePathSelectionAction extends AbstractAction {
     public ChangePathSelectionAction(AcquireExplorer acquisitionView) {
         this.mainView = acquisitionView;
 
-        putValue(Action.NAME, " ... "); //$NON-NLS-1$
-        putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath"); //$NON-NLS-1$
-        putValue(Action.SHORT_DESCRIPTION, Messages.getString("ChangePathSelectionAction.select_folder")); //$NON-NLS-1$
+        putValue(Action.NAME, " ... ");
+        putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath");
+        putValue(Action.SHORT_DESCRIPTION, Messages.getString("ChangePathSelectionAction.select_folder"));
     }
 
     @Override

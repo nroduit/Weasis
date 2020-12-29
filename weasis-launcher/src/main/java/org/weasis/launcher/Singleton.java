@@ -38,7 +38,7 @@ public class Singleton {
 
     private static final Logger LOGGER = Logger.getLogger(Singleton.class.getName());
 
-    private static final String LOCALHOST = "127.0.0.1"; //$NON-NLS-1$
+    private static final String LOCALHOST = "127.0.0.1";
     private static final File SI_FILEDIR =
         new File(System.getProperty("user.home") + File.separator + ".weasis", "singleton"); // NON-NLS
     private static final String SI_MAGICWORD = "si.init";
@@ -51,7 +51,7 @@ public class Singleton {
     private static final int ENCODING_PLATFORM = 1;
     private static final int ENCODING_UNICODE = 2;
 
-    private static final String ENCODING_UNICODE_NAME = "UTF-16LE"; //$NON-NLS-1$
+    private static final String ENCODING_UNICODE_NAME = "UTF-16LE"; //NON-NLS
 
     private static int currPort;
     private static String stringId = null;
@@ -249,7 +249,7 @@ public class Singleton {
     }
 
     private static File getSiFile(final String id, final int port) {
-        return new File(SI_FILEDIR, id + "_" + port); //$NON-NLS-1$
+        return new File(SI_FILEDIR, id + "_" + port);
     }
 
     private static class SingletonServer {
@@ -263,7 +263,7 @@ public class Singleton {
             } else {
                 // TODO call directly the constructor when Java 8 will be dropped
                 // thread = new Thread(null, runnable, "SIThread", 0, false);
-                Class<?> clazz = Class.forName("java.lang.Thread"); //$NON-NLS-1$
+                Class<?> clazz = Class.forName("java.lang.Thread");
                 Constructor<?> constructor =
                     clazz.getConstructor(ThreadGroup.class, Runnable.class, String.class, long.class, boolean.class);
                 thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false);
@@ -393,7 +393,7 @@ public class Singleton {
                                         if (arg) {
                                             recvArgs.add(line);
                                         } else {
-                                            String[] vals = line.split("=", 2); //$NON-NLS-1$
+                                            String[] vals = line.split("=", 2);
                                             if (vals.length == 2) {
                                                 props.put(vals[0], vals[1]);
                                             }

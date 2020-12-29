@@ -64,7 +64,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
 
     public EditionTool(Type type) {
         super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
-        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png")));
         setDockableWidth(300);
         setLayout(new BorderLayout());
 

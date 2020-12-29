@@ -23,7 +23,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 
 public class WindowAndPresetsOp extends WindowOp {
 
-    public static final String P_PR_ELEMENT = "pr.element"; //$NON-NLS-1$
+    public static final String P_PR_ELEMENT = "pr.element"; 
 
     @Override
     public void handleImageOpEvent(ImageOpEvent event) {

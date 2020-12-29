@@ -33,7 +33,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 public class EllipseGraphic extends RectangleGraphic {
     private static final long serialVersionUID = 3296060775738751236L;
 
-    public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(EllipseGraphic.class.getResource("/icon/22x22/draw-eclipse.png"));
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true);
     public static final Measurement PERIMETER =

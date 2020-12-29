@@ -28,7 +28,7 @@ public class SeriesViewerEvent {
     public SeriesViewerEvent(SeriesViewer<? extends MediaElement> seriesViewer,
         MediaSeries<? extends MediaElement> series, MediaElement mediaElement, EVENT eventType) {
         if (seriesViewer == null) {
-            throw new IllegalArgumentException("SeriesViewer parameter cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("SeriesViewer parameter cannot be null"); 
         }
         this.seriesViewer = seriesViewer;
         this.series = series;

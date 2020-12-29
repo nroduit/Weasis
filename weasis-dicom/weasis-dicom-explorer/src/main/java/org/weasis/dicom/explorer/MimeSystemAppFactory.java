@@ -29,8 +29,8 @@ import org.weasis.dicom.codec.FilesExtractor;
 @org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
-    public static final String NAME = Messages.getString("MimeSystemAppViewer.app"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png")); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("MimeSystemAppViewer.app");
+    public static final Icon ICON = new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png"));
     public static final MimeSystemAppViewer mimeSystemViewer = new MimeSystemAppViewer() {
 
         @Override
@@ -46,9 +46,9 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
                 // http://bugs.sun.com/view_bug.do?bug_id=6486393
                 FilesExtractor extractor = (FilesExtractor) series;
                 for (File file : extractor.getExtractFiles()) {
-                    if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+                    if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //NON-NLS
                         startAssociatedProgramFromLinux(file);
-                    } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //$NON-NLS-1$
+                    } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { //NON-NLS
                         // Workaround of the bug with mpg file see http://bugs.sun.com/view_bug.do?bug_id=6599987
                         startAssociatedProgramFromWinCMD(file);
                     } else if (Desktop.isDesktopSupported()) {

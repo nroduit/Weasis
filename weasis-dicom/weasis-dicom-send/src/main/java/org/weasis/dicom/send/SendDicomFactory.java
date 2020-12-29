@@ -35,7 +35,7 @@ public class SendDicomFactory implements DicomExportFactory {
 
     @Override
     public ExportDicom createDicomExportPage(Hashtable<String, Object> properties) {
-        if (properties != null && BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom.send", true)) { //$NON-NLS-1$
+        if (properties != null && BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.export.dicom.send", true)) {
             DicomModel dicomModel = (DicomModel) properties.get(DicomModel.class.getName());
             CheckTreeModel treeModel = (CheckTreeModel) properties.get(CheckTreeModel.class.getName());
             if (dicomModel != null && treeModel != null) {
@@ -53,7 +53,7 @@ public class SendDicomFactory implements DicomExportFactory {
     protected void activate(ComponentContext context) throws Exception {
         LOGGER.info("DICOM Send is activated");
         FileUtil.readProperties(
-            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
+            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"),
             EXPORT_PERSISTENCE);
     }
 
@@ -61,7 +61,7 @@ public class SendDicomFactory implements DicomExportFactory {
     protected void deactivate(ComponentContext context) {
         LOGGER.info("DICOM Send is deactivated");
         FileUtil.storeProperties(
-            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"), //$NON-NLS-1$
+            new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"),
             EXPORT_PERSISTENCE, null);
 
     }

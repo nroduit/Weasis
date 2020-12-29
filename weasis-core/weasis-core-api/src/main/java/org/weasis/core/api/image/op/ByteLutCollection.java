@@ -167,7 +167,7 @@ public class ByteLutCollection {
                 break;
             }
 
-            String[] line = scan.nextLine().split("\\s+"); //$NON-NLS-1$
+            String[] line = scan.nextLine().split("\\s+"); //NON-NLS
             if (line.length == 3) {
                 // Convert rgb to bgr
                 lut[2][lineIndex] = (byte) Integer.parseInt(line[0]);

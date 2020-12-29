@@ -30,16 +30,16 @@ public class AuditLog {
     // Share this logger
     public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);
 
-    public static final String LOG_LEVEL = "org.apache.sling.commons.log.level"; //$NON-NLS-1$
-    public static final String LOG_STACKTRACE_LIMIT = "org.apache.sling.commons.log.stack.limit"; //$NON-NLS-1$
-    public static final String LOG_FILE_ACTIVATION = "org.apache.sling.commons.log.file.activate"; //$NON-NLS-1$
-    public static final String LOG_FILE = "org.apache.sling.commons.log.file"; //$NON-NLS-1$
-    public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number"; //$NON-NLS-1$
-    public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size"; //$NON-NLS-1$
-    public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern"; //$NON-NLS-1$
-    public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names"; //$NON-NLS-1$
+    public static final String LOG_LEVEL = "org.apache.sling.commons.log.level";
+    public static final String LOG_STACKTRACE_LIMIT = "org.apache.sling.commons.log.stack.limit";
+    public static final String LOG_FILE_ACTIVATION = "org.apache.sling.commons.log.file.activate";
+    public static final String LOG_FILE = "org.apache.sling.commons.log.file";
+    public static final String LOG_FILE_NUMBER = "org.apache.sling.commons.log.file.number";
+    public static final String LOG_FILE_SIZE = "org.apache.sling.commons.log.file.size";
+    public static final String LOG_PATTERN = "org.apache.sling.commons.log.pattern";
+    public static final String LOG_LOGGERS = "org.apache.sling.commons.log.names";
 
-    public static final String MARKER_PERF = "*PERF*"; //$NON-NLS-1$
+    public static final String MARKER_PERF = "*PERF*"; //NON-NLS
 
     public enum LEVEL {
         TRACE, DEBUG, INFO, WARN, ERROR;
@@ -68,7 +68,7 @@ public class AuditLog {
                         Configuration logConfiguration = getLogConfiguration(confAdmin, loggerKey, loggerVal[0]);
                         if (logConfiguration == null) {
                             logConfiguration = confAdmin.createFactoryConfiguration(
-                                "org.apache.sling.commons.log.LogManager.factory.config", null); //$NON-NLS-1$
+                                "org.apache.sling.commons.log.LogManager.factory.config", null);
                             loggingProperties = new Hashtable<>();
                             loggingProperties.put(LOG_LOGGERS, loggerVal);
                             // add this property to give us something unique to re-find this configuration
@@ -76,7 +76,7 @@ public class AuditLog {
                         } else {
                             loggingProperties = logConfiguration.getProperties();
                         }
-                        loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level); //$NON-NLS-1$
+                        loggingProperties.put(LOG_LEVEL, level == null ? "INFO" : level);
                         if (logFile != null) {
                             loggingProperties.put(LOG_FILE, logFile);
                         }
@@ -90,7 +90,7 @@ public class AuditLog {
                             loggingProperties.put(LOG_PATTERN, pattern);
                         }
                         if (limit != null) {
-                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1"); //$NON-NLS-1$
+                            loggingProperties.put(LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
                         }
                         logConfiguration.update(loggingProperties);
                     } catch (IOException e) {

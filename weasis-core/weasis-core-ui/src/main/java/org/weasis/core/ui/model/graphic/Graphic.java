@@ -49,10 +49,10 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
     static final Boolean DEFAULT_SELECTED = Boolean.FALSE;
     static final Integer DEFAULT_PTS_SIZE = 10;
 
-    static final String ACTION_TO_FRONT = "toFront"; //$NON-NLS-1$
-    static final String ACTION_TO_BACK = "toBack"; //$NON-NLS-1$
-    static final String ACTION_REMOVE = "remove"; //$NON-NLS-1$
-    static final String ACTION_REMOVE_REPAINT = "remove.repaint"; //$NON-NLS-1$
+    static final String ACTION_TO_FRONT = "toFront";
+    static final String ACTION_TO_BACK = "toBack";
+    static final String ACTION_REMOVE = "remove"; //NON-NLS
+    static final String ACTION_REMOVE_REPAINT = "remove.repaint";
 
     static final Integer HANDLE_SIZE = 6;
     static final Integer SELECTION_SIZE = 10;

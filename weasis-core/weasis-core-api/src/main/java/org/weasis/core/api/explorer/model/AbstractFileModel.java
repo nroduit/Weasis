@@ -40,7 +40,7 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
 
     public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("get", "close")); // NON-NLS
 
-    public static final String NAME = "All Files"; //$NON-NLS-1$
+    public static final String NAME = "All Files";  //NON-NLS
     public static final TreeModelNode group =
         new TreeModelNode(1, 0, TagW.Group, new TagView(TagW.Group, TagW.FileName));
     public static final TreeModelNode series =
@@ -192,14 +192,14 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
     public abstract void get(String[] argv) throws IOException;
 
     public void close(String[] argv) throws IOException {
-        final String[] usage = { "Close images", //$NON-NLS-1$
-            "Usage: dicom:close (-a | ([-g UID]... [-s UID]...)) ", //$NON-NLS-1$
-            "  -a --all         close all series", //$NON-NLS-1$
-            "  -g --group=UID   close a group from its UID", "  -s --series=UID   close an series/image from its UID", //$NON-NLS-1$ //$NON-NLS-2$
-            "  -? --help        show help" }; //$NON-NLS-1$
+        final String[] usage = { "Close images",  //NON-NLS
+            "Usage: dicom:close (-a | ([-g UID]... [-s UID]...)) ",  //NON-NLS
+            "  -a --all         close all series",  //NON-NLS
+            "  -g --group=UID   close a group from its UID", "  -s --series=UID   close an series/image from its UID", // NON-NLS
+            "  -? --help        show help" };  //NON-NLS
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> gargs = opt.getList("group"); //$NON-NLS-1$
-        final List<String> iargs = opt.getList("series"); //$NON-NLS-1$
+        final List<String> gargs = opt.getList("group");  //NON-NLS
+        final List<String> iargs = opt.getList("series");  //NON-NLS
 
         if (opt.isSet("help") || (gargs.isEmpty() && iargs.isEmpty() && !opt.isSet("all"))) { // NON-NLS
             opt.usage();
@@ -209,19 +209,19 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
         GuiExecutor.instance().execute(() -> {
             AbstractFileModel dataModel = AbstractFileModel.this;
             firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
-            if (opt.isSet("all")) { //$NON-NLS-1$
+            if (opt.isSet("all")) {  //NON-NLS
                 for (MediaSeriesGroup g : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                     dataModel.removeTopGroup(g);
                 }
             } else {
-                if (opt.isSet("group")) { //$NON-NLS-1$
+                if (opt.isSet("group")) {  //NON-NLS
 
                     for (String gUID : gargs) {
                         dataModel.removeTopGroup(getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID));
                     }
                 }
 
-                if (opt.isSet("series")) { //$NON-NLS-1$
+                if (opt.isSet("series")) {  //NON-NLS
                     for (String uid : iargs) {
                         for (MediaSeriesGroup topGroup : model.getSuccessors(MediaSeriesGroupNode.rootNode)) {
                             MediaSeriesGroup s = getHierarchyNode(topGroup, uid);

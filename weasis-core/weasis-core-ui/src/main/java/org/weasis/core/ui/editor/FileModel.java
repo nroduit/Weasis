@@ -36,7 +36,7 @@ public class FileModel extends AbstractFileModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(FileModel.class);
 
     public static final File IMAGE_CACHE_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "image"); //$NON-NLS-1$
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "image");
 
     private File getFile(String url) {
         File outFile = null;
@@ -60,10 +60,10 @@ public class FileModel extends AbstractFileModel {
             "  -? --help          show help" }; //NON-NLS
 
         final Option opt = Options.compile(usage).parse(argv);
-        final List<String> fargs = opt.getList("file"); //$NON-NLS-1$
-        final List<String> uargs = opt.getList("url"); //$NON-NLS-1$
+        final List<String> fargs = opt.getList("file");
+        final List<String> uargs = opt.getList("url"); //NON-NLS
 
-        if (opt.isSet("help") || (fargs.isEmpty() && uargs.isEmpty())) { //$NON-NLS-1$
+        if (opt.isSet("help") || (fargs.isEmpty() && uargs.isEmpty())) {
             opt.usage();
             return;
         }
@@ -71,11 +71,11 @@ public class FileModel extends AbstractFileModel {
             AbstractFileModel dataModel = ViewerPluginBuilder.DefaultDataModel;
             dataModel.firePropertyChange(
                 new ObservableEvent(ObservableEvent.BasicAction.SELECT, dataModel, null, dataModel));
-            if (opt.isSet("file")) { //$NON-NLS-1$
+            if (opt.isSet("file")) {
                 fargs.stream().map(File::new).filter(File::isFile)
                     .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
             }
-            if (opt.isSet("url")) { //$NON-NLS-1$
+            if (opt.isSet("url")) { //NON-NLS
                 uargs.stream().map(this::getFile)
                     .forEach(f -> ViewerPluginBuilder.openSequenceInDefaultPlugin(f, true, true));
             }

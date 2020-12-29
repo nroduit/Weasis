@@ -73,12 +73,12 @@ import org.weasis.opencv.op.ImageConversion;
 public class PRManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(PRManager.class);
 
-    public static final String PR_APPLY = "weasis.apply.latest.pr"; //$NON-NLS-1$
+    public static final String PR_APPLY = "weasis.apply.latest.pr";
 
-    public static final String PR_PRESETS = "pr.presets"; //$NON-NLS-1$
-    public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel"; //$NON-NLS-1$
-    public static final String TAG_PR_ZOOM = "original.zoom"; //$NON-NLS-1$
-    public static final String TAG_DICOM_LAYERS = "pr.layers"; //$NON-NLS-1$
+    public static final String PR_PRESETS = "pr.presets";
+    public static final String TAG_CHANGE_PIX_CONFIG = "change.pixel";
+    public static final String TAG_PR_ZOOM = "original.zoom";
+    public static final String TAG_DICOM_LAYERS = "pr.layers";
 
     public static void applyPresentationState(ViewCanvas<DicomImageElement> view, PresentationStateReader reader,
         DicomImageElement img) {
@@ -142,7 +142,7 @@ public class PRManager {
         reader.readDisplayArea(img);
 
         String presentationMode = TagD.getTagValue(reader, Tag.PresentationSizeMode, String.class);
-        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); //$NON-NLS-1$
+        boolean trueSize = "TRUE SIZE".equalsIgnoreCase(presentationMode); //NON-NLS
 
         double[] prPixSize = TagD.getTagValue(reader, Tag.PresentationPixelSpacing, double[].class);
         if (prPixSize != null && prPixSize.length == 2 && prPixSize[0] > 0.0 && prPixSize[1] > 0.0) {
@@ -201,9 +201,9 @@ public class PRManager {
             actionsInView.put(ActionW.CROP.cmd(), area);
         }
 
-        if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
+        if ("SCALE TO FIT".equalsIgnoreCase(presentationMode)) { //NON-NLS
             actionsInView.put(PRManager.TAG_PR_ZOOM, -200.0);
-        } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) { //$NON-NLS-1$
+        } else if ("MAGNIFY".equalsIgnoreCase(presentationMode)) {
             Float val = TagD.getTagValue(reader, Tag.PresentationPixelMagnificationRatio, Float.class);
             actionsInView.put(PRManager.TAG_PR_ZOOM, val == null ? 1.0 : val);
         } else if (trueSize) {
@@ -255,7 +255,7 @@ public class PRManager {
         ArrayList<GraphicLayer> layers = new ArrayList<>();
         int k = 0;
         for (GraphicLayer layer : graphicModel.getLayers()) {
-            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]"); //$NON-NLS-1$
+            layer.setName(Optional.ofNullable(layer.getName()).orElseGet(layer.getType()::getDefaultName) + " [DICOM]"); //NON-NLS
             layer.setLocked(true);
             layer.setSerializable(false);
             layer.setLevel(270 + k++);
@@ -319,7 +319,7 @@ public class PRManager {
                     }
 
                     GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
-                    layer.setName(graphicLayerName + " [DICOM]"); //$NON-NLS-1$
+                    layer.setName(graphicLayerName + " [DICOM]"); //NON-NLS
                     layer.setSerializable(false);
                     layer.setLocked(true);
                     layer.setSelectable(false);
@@ -373,7 +373,7 @@ public class PRManager {
 
                             String[] textLines = EscapeChars.convertToLines(txo.getString(Tag.UnformattedTextValue));
                             // MATRIX not implemented
-                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits)); //$NON-NLS-1$
+                            boolean isDisp = "DISPLAY".equalsIgnoreCase(txo.getString(Tag.BoundingBoxAnnotationUnits));
                             float[] topLeft = txo.getFloats(Tag.BoundingBoxTopLeftHandCorner);
                             float[] bottomRight = txo.getFloats(Tag.BoundingBoxBottomRightHandCorner);
                             Rectangle2D rect = null;
@@ -408,7 +408,7 @@ public class PRManager {
                             if (anchor != null && anchor.length == 2) {
                                 // MATRIX not implemented
                                 boolean disp =
-                                    "DISPLAY".equalsIgnoreCase(txo.getString(Tag.AnchorPointAnnotationUnits)); //$NON-NLS-1$
+                                    "DISPLAY".equalsIgnoreCase(txo.getString(Tag.AnchorPointAnnotationUnits));
                                 double x = disp ? anchor[0] * width : anchor[0];
                                 double y = disp ? anchor[1] * height : anchor[1];
                                 Point2D.Double ptAnchor = new Point2D.Double(x, y);

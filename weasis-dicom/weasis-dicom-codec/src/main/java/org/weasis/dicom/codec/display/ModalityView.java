@@ -132,7 +132,7 @@ public class ModalityView {
 
     private static TagView getTagView(String name, String format) {
         if (name != null) {
-            String[] vals = name.split(","); //$NON-NLS-1$
+            String[] vals = name.split(",");
             ArrayList<TagW> list = new ArrayList<>(vals.length);
             for (String s : vals) {
                 TagW t = TagW.get(s);
@@ -152,7 +152,7 @@ public class ModalityView {
     private static void readTagDisplayByModality() {
         XMLStreamReader xmler = null;
         try {
-            File file = ResourceUtil.getResource("attributes-view.xml"); //$NON-NLS-1$
+            File file = ResourceUtil.getResource("attributes-view.xml"); //NON-NLS
             if (!file.canRead()) {
                 return;
             }
@@ -166,7 +166,7 @@ public class ModalityView {
                 switch (xmler.next()) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        if ("modalities".equals(key)) { //$NON-NLS-1$
+                        if ("modalities".equals(key)) { //NON-NLS
                             readModalities(xmler);
                         }
                         break;
@@ -188,12 +188,12 @@ public class ModalityView {
             switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
                     String key = xmler.getName().getLocalPart();
-                    if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
-                        String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+                    if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { //NON-NLS
+                        String name = xmler.getAttributeValue(null, "name"); //NON-NLS
                         Modality m = getModdality(name);
                         if (m != null) {
                             try {
-                                String extend = xmler.getAttributeValue(null, "extend");//$NON-NLS-1$
+                                String extend = xmler.getAttributeValue(null, "extend"); //NON-NLS
                                 ModalityInfoData data = new ModalityInfoData(m, getModdality(extend));
                                 readModality(data, xmler);
                                 MODALITY_VIEW_MAP.put(m, data);
@@ -215,8 +215,8 @@ public class ModalityView {
         while (xmler.hasNext() && state) {
             switch (xmler.next()) {
                 case XMLStreamConstants.START_ELEMENT:
-                    if ("corner".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
-                        String name = xmler.getAttributeValue(null, "name");//$NON-NLS-1$
+                    if ("corner".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //NON-NLS
+                        String name = xmler.getAttributeValue(null, "name"); //NON-NLS
                         CornerDisplay corner = getCornerDisplay(name);
                         if (corner != null) {
                             readCorner(data, corner, xmler);
@@ -224,7 +224,7 @@ public class ModalityView {
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("modality".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                    if ("modality".equals(xmler.getName().getLocalPart())) { //NON-NLS
                         state = false;
                     }
                     break;
@@ -252,13 +252,13 @@ public class ModalityView {
                     }
                     break;
                 case XMLStreamConstants.START_ELEMENT:
-                    if ("p".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) { //$NON-NLS-1$
-                        index = TagUtil.getIntegerTagAttribute(xmler, "index", -1); //$NON-NLS-1$
-                        format = xmler.getAttributeValue(null, "format");//$NON-NLS-1$
+                    if ("p".equals(xmler.getName().getLocalPart()) && xmler.getAttributeCount() >= 1) {
+                        index = TagUtil.getIntegerTagAttribute(xmler, "index", -1); //NON-NLS
+                        format = xmler.getAttributeValue(null, "format"); //NON-NLS
                     }
                     break;
                 case XMLStreamConstants.END_ELEMENT:
-                    if ("corner".equals(xmler.getName().getLocalPart())) { //$NON-NLS-1$
+                    if ("corner".equals(xmler.getName().getLocalPart())) { //NON-NLS
                         state = false;
                     }
                     break;

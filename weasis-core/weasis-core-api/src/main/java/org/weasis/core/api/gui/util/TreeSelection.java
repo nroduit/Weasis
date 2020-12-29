@@ -29,8 +29,8 @@ public class TreeSelection extends JTree {
         this.setShowsRootHandles(true);
         this.setRootVisible(false);
         DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
-        ImageIcon plus = new ImageIcon(getClass().getResource("/icon/plusTree.png")); //$NON-NLS-1$
-        ImageIcon minus = new ImageIcon(getClass().getResource("/icon/minusTree.png")); //$NON-NLS-1$
+        ImageIcon plus = new ImageIcon(getClass().getResource("/icon/plusTree.png"));
+        ImageIcon minus = new ImageIcon(getClass().getResource("/icon/minusTree.png"));
         ComponentUI ui = this.getUI();
         if (ui instanceof BasicTreeUI) {
             ((BasicTreeUI) ui).setExpandedIcon(minus);
@@ -47,7 +47,7 @@ public class TreeSelection extends JTree {
     }
 
     public TreePath getTreePath(DefaultMutableTreeNode node) {
-        ResourceBundle.getBundle("javax.help.resources.Constants", Locale.getDefault()); //$NON-NLS-1$
+        ResourceBundle.getBundle("javax.help.resources.Constants", Locale.getDefault());
         return new TreePath(((DefaultTreeModel) getModel()).getPathToRoot(node));
     }
 

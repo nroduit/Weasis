@@ -56,7 +56,7 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
         ss.addRule(
-            "body {font-family:sans-serif;font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}"); //$NON-NLS-1$
+            "body {font-family:sans-serif;font-size:12pt;background-color:white;color:black;margin:3;font-weight:normal;}");
         tmpPane.setEditorKit(kit);
         tmpPane.setBorder(null);
         tmpPane.setText(pane.getText());

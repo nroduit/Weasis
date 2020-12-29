@@ -25,7 +25,7 @@ import org.weasis.core.api.gui.InsertableUtil;
 
 @SuppressWarnings("serial")
 public class ToolBarContainer extends JPanel {
-    public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty"); //$NON-NLS-1$
+    public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty");
     private final List<Toolbar> bars = new ArrayList<>();
 
     public ToolBarContainer() {

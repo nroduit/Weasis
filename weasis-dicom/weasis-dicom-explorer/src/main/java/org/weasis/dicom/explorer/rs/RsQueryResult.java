@@ -60,12 +60,12 @@ public class RsQueryResult extends AbstractQueryResult {
     private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryResult.class);
 
     private static final boolean multipleParams =
-        LangUtil.getEmptytoFalse(System.getProperty("dicom.qido.query.multi.params")); //$NON-NLS-1$
+        LangUtil.getEmptytoFalse(System.getProperty("dicom.qido.query.multi.params"));
     private static final String STUDY_QUERY = multiParams(
-        "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010"); //$NON-NLS-1$
-    private static final String SERIES_QUERY = multiParams("0008103E,00080060,0020000E,00200011,00081190"); //$NON-NLS-1$
-    private static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190"); //$NON-NLS-1$
-    private static final String QIDO_REQUEST = "QIDO-RS request: {}"; //$NON-NLS-1$
+        "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010"); //NON-NLS
+    private static final String SERIES_QUERY = multiParams("0008103E,00080060,0020000E,00200011,00081190"); //NON-NLS
+    private static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190");
+    private static final String QIDO_REQUEST = "QIDO-RS request: {}"; //NON-NLS
 
     private final RsQueryParams rsQueryParams;
     private final WadoParameters wadoParameters;
@@ -73,7 +73,7 @@ public class RsQueryResult extends AbstractQueryResult {
 
     public RsQueryResult(RsQueryParams rsQueryParams) {
         this.rsQueryParams = rsQueryParams;
-        this.wadoParameters = new WadoParameters("", true, true); //$NON-NLS-1$
+        this.wadoParameters = new WadoParameters("", true, true);
         rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
         // Accept only multipart/related and retrieve dicom at the stored syntax
         wadoParameters.addHttpTag("Accept", Multipart.MULTIPART_RELATED + ";type=\"" + Multipart.ContentType.DICOM // NON-NLS
@@ -98,19 +98,19 @@ public class RsQueryResult extends AbstractQueryResult {
             }
 
             // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
-            int beginIndex = patientID.indexOf("^^^"); //$NON-NLS-1$
+            int beginIndex = patientID.indexOf("^^^");
 
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/studies?00100020="); //$NON-NLS-1$
+            buf.append("/studies?00100020="); //NON-NLS
             String patientVal = beginIndex <= 0 ? patientID : patientID.substring(0, beginIndex);
             try {
                 buf.append(URLEncoder.encode(patientVal, StandardCharsets.UTF_8.toString()));
                 if (beginIndex > 0) {
-                    buf.append("&00100021="); //$NON-NLS-1$
+                    buf.append("&00100021=");
                     buf.append(patientID.substring(beginIndex + 3));
                 }
                 buf.append(STUDY_QUERY);
-                buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+                buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
                 LOGGER.debug(QIDO_REQUEST, buf);
                 List<Attributes> studies = parseJSON(buf.toString());
@@ -195,7 +195,7 @@ public class RsQueryResult extends AbstractQueryResult {
                 String m = s.getString(Tag.ModalitiesInStudy);
                 if (StringUtil.hasText(m)) {
                     boolean remove = true;
-                    for (String mod : rsQueryParams.getModalitiesInStudy().split(",")) { //$NON-NLS-1$
+                    for (String mod : rsQueryParams.getModalitiesInStudy().split(",")) {
                         if (m.indexOf(mod) != -1) {
                             remove = false;
                             break;
@@ -211,14 +211,14 @@ public class RsQueryResult extends AbstractQueryResult {
         }
 
         if (StringUtil.hasText(rsQueryParams.getKeywords())) {
-            String[] keys = rsQueryParams.getKeywords().split(","); //$NON-NLS-1$
+            String[] keys = rsQueryParams.getKeywords().split(",");
             for (int i = 0; i < keys.length; i++) {
                 keys[i] = StringUtil.deAccent(keys[i].trim().toUpperCase());
             }
 
             studyLabel: for (int i = studies.size() - 1; i >= 0; i--) {
                 Attributes s = studies.get(i);
-                String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase()); //$NON-NLS-1$
+                String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase());
 
                 for (int j = 0; j < keys.length; j++) {
                     if (desc.contains(keys[j])) {
@@ -276,10 +276,10 @@ public class RsQueryResult extends AbstractQueryResult {
                 continue;
             }
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/studies?0020000D="); //$NON-NLS-1$
+            buf.append("/studies?0020000D="); //NON-NLS
             buf.append(studyInstanceUID);
             buf.append(STUDY_QUERY);
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -299,10 +299,10 @@ public class RsQueryResult extends AbstractQueryResult {
                 continue;
             }
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/studies?00080050="); //$NON-NLS-1$
+            buf.append("/studies?00080050="); //NON-NLS
             buf.append(accessionNumber);
             buf.append(STUDY_QUERY);
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -327,11 +327,11 @@ public class RsQueryResult extends AbstractQueryResult {
             }
 
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/series?0020000E="); //$NON-NLS-1$
+            buf.append("/series?0020000E="); //NON-NLS
             buf.append(seriesInstanceUID);
             buf.append(STUDY_QUERY);
-            buf.append(",0008103E,00080060,00081190,00200011"); //$NON-NLS-1$
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(",0008103E,00080060,00081190,00200011"); //NON-NLS
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -363,12 +363,12 @@ public class RsQueryResult extends AbstractQueryResult {
             }
 
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/instances?00080018="); //$NON-NLS-1$
+            buf.append("/instances?00080018="); //NON-NLS
             buf.append(sopInstanceUID);
             buf.append(STUDY_QUERY);
-            buf.append(",0008103E,00080060,0020000E,00200011"); //$NON-NLS-1$
-            buf.append(",00200013,00081190"); //$NON-NLS-1$
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(",0008103E,00080060,0020000E,00200011"); //NON-NLS
+            buf.append(",00200013,00081190");
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -397,11 +397,11 @@ public class RsQueryResult extends AbstractQueryResult {
         String studyInstanceUID = studyDataSet.getString(Tag.StudyInstanceUID);
         if (StringUtil.hasText(studyInstanceUID)) {
             StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-            buf.append("/studies/"); //$NON-NLS-1$
+            buf.append("/studies/"); //NON-NLS
             buf.append(studyInstanceUID);
-            buf.append("/series?includefield="); //$NON-NLS-1$
+            buf.append("/series?includefield="); //NON-NLS
             buf.append(SERIES_QUERY);
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -426,9 +426,9 @@ public class RsQueryResult extends AbstractQueryResult {
         if (StringUtil.hasText(serieInstanceUID)) {
             String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
             StringBuilder buf = new StringBuilder(seriesRetrieveURL);
-            buf.append("/instances?includefield="); //$NON-NLS-1$
+            buf.append("/instances?includefield="); //NON-NLS
             buf.append(INSTANCE_QUERY);
-            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, "")); //$NON-NLS-1$
+            buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
             try {
                 LOGGER.debug(QIDO_REQUEST, buf);
@@ -459,7 +459,7 @@ public class RsQueryResult extends AbstractQueryResult {
             String rurl = instanceDataSet.getString(Tag.RetrieveURL);
             if (!StringUtil.hasText(rurl)) {
                 StringBuilder b = new StringBuilder(seriesRetrieveURL);
-                b.append("/instances/"); //$NON-NLS-1$
+                b.append("/instances/"); //NON-NLS
                 b.append(sopUID);
                 rurl = b.toString();
             }
@@ -470,7 +470,7 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private MediaSeriesGroup getPatient(Attributes patientDataset) {
         if (patientDataset == null) {
-            throw new IllegalArgumentException("patientDataset cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("patientDataset cannot be null");
         }
 
         PatientComparator patientComparator = new PatientComparator(patientDataset);
@@ -498,7 +498,7 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private MediaSeriesGroup getStudy(MediaSeriesGroup patient, final Attributes studyDataset) {
         if (studyDataset == null) {
-            throw new IllegalArgumentException("studyDataset cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("studyDataset cannot be null");
         }
         String studyUID = studyDataset.getString(Tag.StudyInstanceUID);
         DicomModel model = rsQueryParams.getDicomModel();
@@ -518,7 +518,7 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private Series getSeries(MediaSeriesGroup study, final Attributes seriesDataset, boolean startDownloading) {
         if (seriesDataset == null) {
-            throw new IllegalArgumentException("seriesDataset cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("seriesDataset cannot be null");
         }
         String seriesUID = seriesDataset.getString(Tag.SeriesInstanceUID);
         DicomModel model = rsQueryParams.getDicomModel();
@@ -536,9 +536,9 @@ public class RsQueryResult extends AbstractQueryResult {
             }
             if (!StringUtil.hasText(TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class))) {
                 StringBuilder buf = new StringBuilder(rsQueryParams.getBaseUrl());
-                buf.append("/studies/"); //$NON-NLS-1$
+                buf.append("/studies/"); //NON-NLS
                 buf.append(study.getTagValue(TagD.get(Tag.StudyInstanceUID)));
-                buf.append("/series/"); //$NON-NLS-1$
+                buf.append("/series/"); //NON-NLS
                 buf.append(seriesUID);
                 dicomSeries.setTag(TagD.get(Tag.RetrieveURL), buf.toString());
             }

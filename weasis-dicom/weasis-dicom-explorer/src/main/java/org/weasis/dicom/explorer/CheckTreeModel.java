@@ -48,7 +48,7 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 public class CheckTreeModel {
     private static final Logger LOGGER = LoggerFactory.getLogger(CheckTreeModel.class);
 
-    public static final TagW SourceSeriesForPR = new TagW("SourceSeriesForPR", TagType.OBJECT); //$NON-NLS-1$
+    public static final TagW SourceSeriesForPR = new TagW("SourceSeriesForPR", TagType.OBJECT); 
 
     private final DefaultMutableTreeNode rootNode;
     private final DefaultTreeModel model;
@@ -100,12 +100,12 @@ public class CheckTreeModel {
                         StringBuilder buf = new StringBuilder();
                         boolean newElement = LangUtil.getNULLtoFalse((Boolean) d.getTagValue(TagW.ObjectToSave));
                         if (newElement) {
-                            buf.append("<html>"); //$NON-NLS-1$
-                            buf.append("<font color='orange'><b>NEW </b></font>"); //$NON-NLS-1$
+                            buf.append("<html>"); 
+                            buf.append("<font color='orange'><b>NEW </b></font>");  //NON-NLS
                         }
                         buf.append(d.getShortLabel());
                         if (newElement) {
-                            buf.append("</html>"); //$NON-NLS-1$
+                            buf.append("</html>"); 
                         }
                         return buf.toString();
                     }
@@ -123,9 +123,9 @@ public class CheckTreeModel {
                         Integer val = TagD.getTagValue(m, Tag.InstanceNumber, Integer.class);
                         StringBuilder buf = new StringBuilder();
                         if (val != null) {
-                            buf.append("["); //$NON-NLS-1$
+                            buf.append("["); 
                             buf.append(val);
-                            buf.append("] "); //$NON-NLS-1$
+                            buf.append("] "); 
                         }
                         String sopUID = TagD.getTagValue(m, Tag.SOPInstanceUID, String.class);
                         if (sopUID != null) {
@@ -151,13 +151,13 @@ public class CheckTreeModel {
             String seriesInstanceUID = UIDUtils.createUID();
             Series<?> prSeries = new DicomSeries(seriesInstanceUID);
             prSeries.setTag(TagD.get(Tag.SeriesNumber), TagD.getTagValue(series, Tag.SeriesNumber, Integer.class));
-            prSeries.setTag(TagD.get(Tag.Modality), "PR"); //$NON-NLS-1$
+            prSeries.setTag(TagD.get(Tag.Modality), "PR"); 
             prSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesInstanceUID);
             prSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
             prSeries.setTag(SourceSeriesForPR, series);
             prSeries.setTag(TagD.get(Tag.SeriesDescription),
-                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class)).orElse("") //$NON-NLS-1$
-                    + " [GRAPHICS]"); //$NON-NLS-1$
+                Optional.ofNullable(TagD.getTagValue(series, Tag.SeriesDescription, String.class)).orElse("") 
+                    + " [GRAPHICS]");  //NON-NLS
             DefaultMutableTreeNode prVirtualNode = new ToolTipTreeNode(prSeries, false);
             studyNode.insert(prVirtualNode, index + 1);
         }
@@ -213,15 +213,15 @@ public class CheckTreeModel {
                         URL url = path.toURI().toURL();
                         if (url != null) {
                             StringBuilder buf = new StringBuilder();
-                            buf.append("<html>"); //$NON-NLS-1$
-                            buf.append("<img src=\""); //$NON-NLS-1$
+                            buf.append("<html>"); 
+                            buf.append("<img src=\"");  //NON-NLS
                             buf.append(url.toString());
-                            buf.append("\"><br>"); //$NON-NLS-1$
+                            buf.append("\"><br>");  //NON-NLS
                             LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
                             if (date != null) {
                                 buf.append(TagUtil.formatDateTime(date));
                             }
-                            buf.append("</html>"); //$NON-NLS-1$
+                            buf.append("</html>"); 
                             return buf.toString();
                         }
                     }
@@ -238,19 +238,19 @@ public class CheckTreeModel {
             StringBuilder buf = new StringBuilder();
             boolean newElement = LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave));
             if (newElement) {
-                buf.append("<html>"); //$NON-NLS-1$
-                buf.append("<font color='orange'><b>NEW </b></font>"); //$NON-NLS-1$
+                buf.append("<html>"); 
+                buf.append("<font color='orange'><b>NEW </b></font>");  //NON-NLS
             }
             Integer val = TagD.getTagValue(s, Tag.SeriesNumber, Integer.class);
             if (val != null) {
-                buf.append("["); //$NON-NLS-1$
+                buf.append("["); 
                 buf.append(val);
-                buf.append("] "); //$NON-NLS-1$
+                buf.append("] "); 
             }
             String modality = TagD.getTagValue(s, Tag.Modality, String.class);
             if (modality != null) {
                 buf.append(modality);
-                buf.append(" "); //$NON-NLS-1$
+                buf.append(" "); 
             }
             String desc = TagD.getTagValue(s, Tag.SeriesDescription, String.class);
             if (desc != null) {
@@ -258,7 +258,7 @@ public class CheckTreeModel {
             }
             buf.append(" -- (").append(getChildCount()).append(" instances)"); // NON-NLS
             if (newElement) {
-                buf.append("</html>"); //$NON-NLS-1$
+                buf.append("</html>"); 
             }
             return buf.toString();
         }

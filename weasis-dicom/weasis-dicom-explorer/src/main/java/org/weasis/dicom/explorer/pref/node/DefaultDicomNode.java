@@ -21,9 +21,9 @@ import org.weasis.dicom.param.TlsOptions;
 
 public class DefaultDicomNode extends AbstractDicomNode {
 
-    protected static final String T_AETITLE = "aeTitle"; //$NON-NLS-1$
-    protected static final String T_HOST = "hostname"; //$NON-NLS-1$
-    protected static final String T_PORT = "port"; //$NON-NLS-1$
+    protected static final String T_AETITLE = "aeTitle";
+    protected static final String T_HOST = "hostname"; //NON-NLS
+    protected static final String T_PORT = "port"; //NON-NLS
 
     // For C-MOVE, C-GET, C-STORE
     protected String aeTitle;
@@ -41,17 +41,17 @@ public class DefaultDicomNode extends AbstractDicomNode {
     @Override
     public String getToolTips() {
         StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append("<html>");
         toolTips.append(toString());
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>");
         toolTips.append(getType().toString());
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(aeTitle);
-        toolTips.append("@"); //$NON-NLS-1$
+        toolTips.append("@");
         toolTips.append(hostname);
-        toolTips.append(":"); //$NON-NLS-1$
+        toolTips.append(":");
         toolTips.append(port);
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>");
         return toolTips.toString();
     }
 
@@ -61,10 +61,10 @@ public class DefaultDicomNode extends AbstractDicomNode {
 
     public void setAeTitle(String aeTitle) {
         if (!StringUtil.hasText(aeTitle)) {
-            throw new IllegalArgumentException("Missing AET"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Missing AET");
         }
         if (aeTitle.length() > 16) {
-            throw new IllegalArgumentException("AET has more than 16 characters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("AET has more than 16 characters");
         }
         this.aeTitle = aeTitle;
     }
@@ -83,7 +83,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
 
     public void setPort(Integer port) {
         if (port != null && (port < 1 || port > 65535)) {
-            throw new IllegalArgumentException("Port out of bound"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Port out of bound");
         }
         this.port = port == null ? 104 : port;
     }

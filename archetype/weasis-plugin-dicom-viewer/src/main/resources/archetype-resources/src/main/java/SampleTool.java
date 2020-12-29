@@ -31,7 +31,7 @@ public class SampleTool extends PluginTool {
 
     public SampleTool(Type type) {
         super(BUTTON_NAME, "Sample Tool", type, 120);
-        dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png"))); //${symbol_dollar}NON-NLS-1${symbol_dollar}
+        dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png")));
         setDockableWidth(290);
     }
 

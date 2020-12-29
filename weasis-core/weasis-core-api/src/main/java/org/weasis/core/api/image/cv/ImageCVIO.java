@@ -63,7 +63,7 @@ public class ImageCVIO implements MediaReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
 
     public static final File CACHE_UNCOMPRESSED_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); //$NON-NLS-1$
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); //NON-NLS
 
     private final URI uri;
     private final String mimeType;
@@ -94,7 +94,7 @@ public class ImageCVIO implements MediaReader {
             file = cache.getTransformedFile();
             if (file == null) {
                 String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
-                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv"); //$NON-NLS-1$
+                imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv");
                 if (Files.isReadable(imgCachePath)) {
                     file = imgCachePath.toFile();
                     cache.setTransformedFile(file);
@@ -126,7 +126,7 @@ public class ImageCVIO implements MediaReader {
 
     private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
         PlanarImage img = null;
-        if (file.getPath().endsWith(".wcv")) { //$NON-NLS-1$
+        if (file.getPath().endsWith(".wcv")) {
             img = new FileRawImage(file).read();
         } else if (codec instanceof NativeOpenCVCodec) {
             img = ImageProcessor.readImageWithCvException(file);
@@ -152,7 +152,7 @@ public class ImageCVIO implements MediaReader {
             return null;
         }
 
-        ImageInputStream stream = new FileImageInputStream(new RandomAccessFile(file, "r")); //$NON-NLS-1$
+        ImageInputStream stream = new FileImageInputStream(new RandomAccessFile(file, "r"));
         ImageReadParam param = reader.getDefaultReadParam();
         reader.setInput(stream, true, true);
         RenderedImage bi;
@@ -202,10 +202,10 @@ public class ImageCVIO implements MediaReader {
         String sUID = null;
         MediaElement element = getSingleImage();
         if (element != null) {
-            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
+            sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
         }
         if (sUID == null) {
-            sUID = uri == null ? "unknown" : uri.toString(); //$NON-NLS-1$
+            sUID = uri == null ? "unknown" : uri.toString(); //NON-NLS
         }
         MediaSeries<MediaElement> series =
             new Series<MediaElement>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) {
@@ -335,7 +335,7 @@ public class ImageCVIO implements MediaReader {
          * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
          */
         if (img != null && (img.width() > ImageFiler.TILESIZE || img.height() > ImageFiler.TILESIZE)
-            && !mimeType.contains("dicom")) { //$NON-NLS-1$
+            && !mimeType.contains("dicom")) { //NON-NLS
             File outFile = imgCachePath.toFile();
             try {
                 new FileRawImage(outFile).write(img);
@@ -367,7 +367,7 @@ public class ImageCVIO implements MediaReader {
 
                 }
                 ImageProcessor.writeThumbnail(img8.toMat(),
-                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE); //$NON-NLS-1$
+                    new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE);
                 return outFile;
             } catch (Exception e) {
                 FileUtil.delete(outFile);

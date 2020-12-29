@@ -32,8 +32,8 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
 public class MPRFactory implements SeriesViewerFactory {
 
-    public static final String NAME = Messages.getString("MPRFactory.title"); //$NON-NLS-1$
-    public static final Icon ICON = new ImageIcon(MPRFactory.class.getResource("/icon/16x16/mpr.png")); //$NON-NLS-1$
+    public static final String NAME = Messages.getString("MPRFactory.title");
+    public static final Icon ICON = new ImageIcon(MPRFactory.class.getResource("/icon/16x16/mpr.png"));
 
     @Override
     public Icon getIcon() {

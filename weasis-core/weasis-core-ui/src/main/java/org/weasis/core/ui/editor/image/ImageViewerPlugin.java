@@ -70,20 +70,20 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     // A model must have at least one view that inherited of DefaultView2d
     public static final Class<?> view2dClass = ViewCanvas.class;
-    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName()); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final GridBagLayoutModel VIEWS_2x1 = new GridBagLayoutModel("2x1", //$NON-NLS-1$
-        String.format(F_VIEWS, "2x1"), 2, 1, view2dClass.getName()); //$NON-NLS-1$
-    public static final GridBagLayoutModel VIEWS_1x2 = new GridBagLayoutModel("1x2", //$NON-NLS-1$
-        String.format(F_VIEWS, "1x2"), 1, 2, view2dClass.getName()); //$NON-NLS-1$
+    public static final GridBagLayoutModel VIEWS_1x1 = new GridBagLayoutModel("1x1",  //NON-NLS
+        String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), 1, 1, view2dClass.getName()); // NON-NLS
+    public static final GridBagLayoutModel VIEWS_2x1 = new GridBagLayoutModel("2x1",  //NON-NLS
+        String.format(F_VIEWS, "2x1"), 2, 1, view2dClass.getName());  //NON-NLS
+    public static final GridBagLayoutModel VIEWS_1x2 = new GridBagLayoutModel("1x2",  //NON-NLS
+        String.format(F_VIEWS, "1x2"), 1, 2, view2dClass.getName());  //NON-NLS
     public static final GridBagLayoutModel VIEWS_2x2_f2 =
-        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), //$NON-NLS-1$
-            "layout_c2x1", Messages.getString("ImageViewerPlugin.layout_c2x1")); //$NON-NLS-1$ //$NON-NLS-2$
+        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"),  //NON-NLS
+            "layout_c2x1", Messages.getString("ImageViewerPlugin.layout_c2x1")); // NON-NLS
     public static final GridBagLayoutModel VIEWS_2_f1x2 =
-        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), //$NON-NLS-1$
-            "layout_c1x2", Messages.getString("ImageViewerPlugin.layout_c1x2")); //$NON-NLS-1$ //$NON-NLS-2$
-    public static final GridBagLayoutModel VIEWS_2x2 = new GridBagLayoutModel("2x2", //$NON-NLS-1$
-        String.format(F_VIEWS, "2x2"), 2, 2, view2dClass.getName()); //$NON-NLS-1$
+        new GridBagLayoutModel(ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"),  //NON-NLS
+            "layout_c1x2", Messages.getString("ImageViewerPlugin.layout_c1x2")); // NON-NLS
+    public static final GridBagLayoutModel VIEWS_2x2 = new GridBagLayoutModel("2x2",  //NON-NLS
+        String.format(F_VIEWS, "2x2"), 2, 2, view2dClass.getName());  //NON-NLS
 
     /**
      * The current focused <code>ImagePane</code>. The default is 0.
@@ -113,7 +113,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         String pluginName, Icon icon, String tooltips) {
         super(uid, pluginName, icon, tooltips);
         if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("EventManager cannot be null"); 
         }
         this.eventManager = eventManager;
         view2ds = new ArrayList<>();
@@ -195,7 +195,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     public static GridBagLayoutModel buildGridBagLayoutModel(int rows, int cols, String type) {
         StringBuilder buf = new StringBuilder();
         buf.append(rows);
-        buf.append("x"); //$NON-NLS-1$
+        buf.append("x");  //NON-NLS
         buf.append(cols);
         return new GridBagLayoutModel(buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf.toString()), rows,
             cols, type);
@@ -938,7 +938,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
         public DragLayoutElement(LayoutConstraints constraints, Component component) {
             if (constraints == null || component == null) {
-                throw new IllegalArgumentException("Arguments cannot be null"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Arguments cannot be null"); 
             }
             this.constraints = constraints;
             this.originalConstraints = constraints.copy();

@@ -130,7 +130,7 @@ public final class TagUtil {
         } else if (date instanceof Instant) {
             return LocalUtil.getDateTimeFormatter().format(((Instant) date).atZone(ZoneId.systemDefault()));
         }
-        return ""; //$NON-NLS-1$
+        return "";
     }
 
     public static TagW[] getTagFromKeywords(String... tagKey) {
@@ -157,7 +157,7 @@ public final class TagUtil {
     }
 
     public static String[] getStringArrayTagAttribute(XMLStreamReader xmler, String attribute, String[] defaultValue) {
-        return getStringArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
+        return getStringArrayTagAttribute(xmler, attribute, defaultValue, "\\");
     }
 
     public static String[] getStringArrayTagAttribute(XMLStreamReader xmler, String attribute, String[] defaultValue,
@@ -200,7 +200,7 @@ public final class TagUtil {
     }
 
     public static int[] getIntArrayTagAttribute(XMLStreamReader xmler, String attribute, int[] defaultValue) {
-        return getIntArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
+        return getIntArrayTagAttribute(xmler, attribute, defaultValue, "\\");
     }
 
     public static int[] getIntArrayTagAttribute(XMLStreamReader xmler, String attribute, int[] defaultValue,
@@ -234,7 +234,7 @@ public final class TagUtil {
     }
 
     public static double[] getDoubleArrayTagAttribute(XMLStreamReader xmler, String attribute, double[] defaultValue) {
-        return getDoubleArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
+        return getDoubleArrayTagAttribute(xmler, attribute, defaultValue, "\\");
     }
 
     public static double[] getDoubleArrayTagAttribute(XMLStreamReader xmler, String attribute, double[] defaultValue,
@@ -268,7 +268,7 @@ public final class TagUtil {
     }
 
     public static float[] getFloatArrayTagAttribute(XMLStreamReader xmler, String attribute, float[] defaultValue) {
-        return getFloatArrayTagAttribute(xmler, attribute, defaultValue, "\\"); //$NON-NLS-1$
+        return getFloatArrayTagAttribute(xmler, attribute, defaultValue, "\\");
     }
 
     public static float[] getFloatArrayTagAttribute(XMLStreamReader xmler, String attribute, float[] defaultValue,
@@ -310,7 +310,7 @@ public final class TagUtil {
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
+        return getDatesFromElement(xmler, attribute, type, defaultValue, "\\");
     }
 
     public static TemporalAccessor[] getDatesFromElement(XMLStreamReader xmler, String attribute, TagType type,

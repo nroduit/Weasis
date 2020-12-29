@@ -278,7 +278,7 @@ public class DicomMediaUtils {
                 }
                 if (dataLength > (1 << numBits)) {
                     LOGGER.debug(
-                        "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"", //$NON-NLS-1$
+                        "Illegal LUT Data length \"{}\" with respect to the number of bits in LUT descriptor \"{}\"",
                         dataLength, numBits);
                 }
             }
@@ -300,7 +300,7 @@ public class DicomMediaUtils {
         }
         StringBuilder sb = new StringBuilder(s[0]);
         for (int i = 1; i < s.length; i++) {
-            sb.append("\\" + s[i]); //$NON-NLS-1$
+            sb.append("\\" + s[i]);
         }
         return sb.toString();
     }
@@ -399,11 +399,11 @@ public class DicomMediaUtils {
         if (years < 2) {
             long months = ChronoUnit.MONTHS.between(first, last);
             if (months < 2) {
-                return String.format("%03dD", ChronoUnit.DAYS.between(first, last)); //$NON-NLS-1$
+                return String.format("%03dD", ChronoUnit.DAYS.between(first, last)); //NON-NLS
             }
-            return String.format("%03dM", months); //$NON-NLS-1$
+            return String.format("%03dM", months); //NON-NLS
         }
-        return String.format("%03dY", years); //$NON-NLS-1$
+        return String.format("%03dY", years); //NON-NLS
     }
 
     public static Float getFloatFromDicomElement(Attributes dicom, int tag, Float defaultValue) {
@@ -653,7 +653,7 @@ public class DicomMediaUtils {
                 shape = new Area(rect);
 
             }
-            if (shutterShape.contains("CIRCULAR")) { //$NON-NLS-1$
+            if (shutterShape.contains("CIRCULAR")) {
                 int[] centerOfCircularShutter =
                     DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.CenterOfCircularShutter, null);
                 if (centerOfCircularShutter != null && centerOfCircularShutter.length >= 2) {
@@ -669,7 +669,7 @@ public class DicomMediaUtils {
                     }
                 }
             }
-            if (shutterShape.contains("POLYGONAL")) { //$NON-NLS-1$
+            if (shutterShape.contains("POLYGONAL")) {
                 int[] points =
                     DicomMediaUtils.getIntAyrrayFromDicomElement(dcmObject, Tag.VerticesOfThePolygonalShutter, null);
                 if (points != null) {
@@ -817,7 +817,7 @@ public class DicomMediaUtils {
                      * be ignored from the perspective of applying window values, and for those SOP Classes, window
                      * values shall be applied directly to the stored pixel values without rescaling.
                      */
-                    LOGGER.trace("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);//$NON-NLS-1$
+                    LOGGER.trace("Do not apply RescaleSlope and RescaleIntercept to {}", modlality);
                 } else {
                     TagD.get(Tag.RescaleSlope).readValue(mLutItems, tagable);
                     TagD.get(Tag.RescaleIntercept).readValue(mLutItems, tagable);
@@ -849,7 +849,7 @@ public class DicomMediaUtils {
                     if (pixRel != null && ("LOG".equalsIgnoreCase(pixRel) || "DISP".equalsIgnoreCase(pixRel))) { // NON-NLS
                         canApplyMLUT = false;
                         LOGGER.debug(
-                            "Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship"); //$NON-NLS-1$
+                            "Modality LUT Sequence shall NOT be applied according to PixelIntensityRelationship");
                     }
                 }
 
@@ -987,7 +987,7 @@ public class DicomMediaUtils {
     public static void applyPrLutModule(Attributes dcmItems, Tagable tagable) {
         if (dcmItems != null && tagable != null) {
             // TODO implement 1.2.840.10008.5.1.4.1.1.11.2 -5 color and xray
-            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) { //$NON-NLS-1$
+            if ("1.2.840.10008.5.1.4.1.1.11.1".equals(dcmItems.getString(Tag.SOPClassUID))) {
                 Attributes presentationLUT = dcmItems.getNestedDataset(Tag.PresentationLUTSequence);
                 if (presentationLUT != null) {
                     /**
@@ -998,7 +998,7 @@ public class DicomMediaUtils {
                     tagable.setTag(TagW.PRLUTsData, createLut(presentationLUT));
                     tagable.setTag(TagW.PRLUTsExplanation,
                         getStringFromDicomElement(presentationLUT, Tag.LUTExplanation));
-                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY"); //$NON-NLS-1$
+                    tagable.setTagNoNull(TagD.get(Tag.PresentationLUTShape), "IDENTITY");
                 } else {
                     // value: INVERSE, IDENTITY
                     // INVERSE => must inverse values (same as monochrome 1)
@@ -1025,7 +1025,7 @@ public class DicomMediaUtils {
     public static void computeSUVFactor(Attributes dicomObject, Tagable tagable, int index) {
         // From vendor neutral code at http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
         String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
-        if ("PT".equals(modlality)) { //$NON-NLS-1$
+        if ("PT".equals(modlality)) {
             String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
             if (correctedImage != null && correctedImage.contains("ATTN") && correctedImage.contains("DECY")) { // NON-NLS
                 double suvFactor = 0.0;
@@ -1052,7 +1052,7 @@ public class DicomMediaUtils {
                 // MLML = milliliter/milliliter
                 // GML = grams/milliliter
                 // STDDEV = standard deviations
-                if ("BQML".equals(units)) { //$NON-NLS-1$
+                if ("BQML".equals(units)) {
                     Float weight = getFloatFromDicomElement(dicomObject, Tag.PatientWeight, 0.0f); // in Kg
                     if (MathUtil.isDifferentFromZero(weight)) {
                         Attributes dcm =
@@ -1067,7 +1067,7 @@ public class DicomMediaUtils {
                                 TagUtil.dateTime(getDateFromDicomElement(dicomObject, Tag.AcquisitionDate, null),
                                     getDateFromDicomElement(dicomObject, Tag.AcquisitionTime, null));
                             Date scanDate = getDateFromDicomElement(dicomObject, Tag.SeriesDate, null);
-                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null //$NON-NLS-1$
+                            if ("START".equals(dicomObject.getString(Tag.DecayCorrection)) && totalDose != null
                                 && halfLife != null && acquisitionDateTime != null
                                 && (injectDateTime != null || (scanDate != null && injectTime != null))) {
                                 double time = 0.0;
@@ -1079,7 +1079,7 @@ public class DicomMediaUtils {
                                         // per GE docs, may have been updated during post-processing into new series
                                         String privateCreator = dicomObject.getString(0x00090010);
                                         Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
-                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //$NON-NLS-1$
+                                        if ("GEMS_PETD_01".equals(privateCreator) && privateScanDateTime != null) { //NON-NLS
                                             scanDate = privateScanDateTime;
                                         } else {
                                             scanDate = null;
@@ -1102,14 +1102,14 @@ public class DicomMediaUtils {
                             }
                         }
                     }
-                } else if ("CNTS".equals(units)) { //$NON-NLS-1$
+                } else if ("CNTS".equals(units)) {
                     String privateTagCreator = dicomObject.getString(0x70530010);
                     double privateSUVFactor = dicomObject.getDouble(0x70531000, 0.0);
-                    if ("Philips PET Private Group".equals(privateTagCreator) //$NON-NLS-1$
+                    if ("Philips PET Private Group".equals(privateTagCreator) //NON-NLS
                         && MathUtil.isDifferentFromZero(privateSUVFactor)) {
                         suvFactor = privateSUVFactor; // units => "g/ml"
                     }
-                } else if ("GML".equals(units)) { //$NON-NLS-1$
+                } else if ("GML".equals(units)) {
                     suvFactor = 1.0;
                 }
                 if (MathUtil.isDifferentFromZero(suvFactor)) {
@@ -1136,7 +1136,7 @@ public class DicomMediaUtils {
         Date now = new Date();
         pr.setDate(Tag.PresentationCreationDateAndTime, now);
         pr.setDate(Tag.ContentDateAndTime, now);
-        pr.setString(Tag.Modality, VR.CS, "PR"); //$NON-NLS-1$
+        pr.setString(Tag.Modality, VR.CS, "PR");
         pr.setString(Tag.SeriesInstanceUID, VR.UI,
             StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
         return pr;
@@ -1202,7 +1202,7 @@ public class DicomMediaUtils {
          *       Tag.CodeMeaning = "Of Interest"
          */
 
-        final Attributes documentTitle = codeByValue.get("113000").toCodeItem(); //$NON-NLS-1$
+        final Attributes documentTitle = codeByValue.get("113000").toCodeItem();
         // TODO - the user or some preferences should be able to set this title value from a predefined list of code
 
         /**
@@ -1217,8 +1217,8 @@ public class DicomMediaUtils {
         // TODO - add ability to set "Optional Document Title Modifier" for created KOS from the predefined list of code
         // final Attributes documentTitleModifier = null;
 
-        final String seriesNumber = "999"; // A number that identifies the Series. (default: 999) //$NON-NLS-1$
-        final String instanceNumber = "1"; // A number that identifies the Document. (default: 1) //$NON-NLS-1$
+        final String seriesNumber = "999"; // A number that identifies the Series. (default: 999)
+        final String instanceNumber = "1"; // A number that identifies the Document. (default: 1)
 
         // TODO - add ability to override default instanceNumber and seriesNumber from given parameters in case many
         // KEY OBJECT DOCUMENT SERIES and KEY OBJECT DOCUMENT are build for the same Study in the same context
@@ -1238,20 +1238,20 @@ public class DicomMediaUtils {
         dKOS.setString(Tag.SOPClassUID, VR.UI, UID.KeyObjectSelectionDocumentStorage);
         dKOS.setString(Tag.SOPInstanceUID, VR.UI, UIDUtils.createUID());
         dKOS.setDate(Tag.ContentDateAndTime, new Date());
-        dKOS.setString(Tag.Modality, VR.CS, "KO"); //$NON-NLS-1$
+        dKOS.setString(Tag.Modality, VR.CS, "KO");
         dKOS.setNull(Tag.ReferencedPerformedProcedureStepSequence, VR.SQ);
         dKOS.setString(Tag.SeriesInstanceUID, VR.UI,
             StringUtil.hasText(seriesInstanceUID) ? seriesInstanceUID : UIDUtils.createUID());
         dKOS.setString(Tag.SeriesNumber, VR.IS, seriesNumber);
         dKOS.setString(Tag.InstanceNumber, VR.IS, instanceNumber);
-        dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER"); //$NON-NLS-1$
-        dKOS.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE"); //$NON-NLS-1$
+        dKOS.setString(Tag.ValueType, VR.CS, "CONTAINER");
+        dKOS.setString(Tag.ContinuityOfContent, VR.CS, "SEPARATE");
         dKOS.newSequence(Tag.ConceptNameCodeSequence, 1).add(documentTitle);
         dKOS.newSequence(Tag.CurrentRequestedProcedureEvidenceSequence, 1);
 
         Attributes templateIdentifier = new Attributes(2);
-        templateIdentifier.setString(Tag.MappingResource, VR.CS, "DCMR"); //$NON-NLS-1$
-        templateIdentifier.setString(Tag.TemplateIdentifier, VR.CS, "2010"); //$NON-NLS-1$
+        templateIdentifier.setString(Tag.MappingResource, VR.CS, "DCMR");
+        templateIdentifier.setString(Tag.TemplateIdentifier, VR.CS, "2010");
         dKOS.newSequence(Tag.ContentTemplateSequence, 1).add(templateIdentifier);
 
         Sequence contentSeq = dKOS.newSequence(Tag.ContentSequence, 1);
@@ -1272,10 +1272,10 @@ public class DicomMediaUtils {
         if (StringUtil.hasText(keyObjectDescription)) {
 
             Attributes keyObjectDescriptionSequence = new Attributes(4);
-            keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS"); //$NON-NLS-1$
-            keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT"); //$NON-NLS-1$
+            keyObjectDescriptionSequence.setString(Tag.RelationshipType, VR.CS, "CONTAINS");
+            keyObjectDescriptionSequence.setString(Tag.ValueType, VR.CS, "TEXT");
             keyObjectDescriptionSequence.newSequence(Tag.ConceptNameCodeSequence, 1)
-                .add(codeByValue.get("113012").toCodeItem()); //$NON-NLS-1$
+                .add(codeByValue.get("113012").toCodeItem());
             keyObjectDescriptionSequence.setString(Tag.TextValue, VR.UT, keyObjectDescription);
 
             contentSeq.add(keyObjectDescriptionSequence);
@@ -1307,14 +1307,14 @@ public class DicomMediaUtils {
             // disable external entities for security
             factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
             factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-            stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml"); //$NON-NLS-1$
+            stream = DicomMediaUtils.class.getResourceAsStream("/config/KeyObjectSelectionCodes.xml"); //NON-NLS
             xmler = factory.createXMLStreamReader(stream);
 
             while (xmler.hasNext()) {
                 switch (xmler.next()) {
                     case XMLStreamConstants.START_ELEMENT:
                         String key = xmler.getName().getLocalPart();
-                        if ("resources".equals(key)) { //$NON-NLS-1$
+                        if ("resources".equals(key)) { //NON-NLS
                             while (xmler.hasNext()) {
                                 switch (xmler.next()) {
                                     case XMLStreamConstants.START_ELEMENT:
@@ -1345,23 +1345,23 @@ public class DicomMediaUtils {
     private static void readCodeResource(XMLStreamReader xmler, Map<String, KeyObjectSelectionCode> codeByValue)
         throws XMLStreamException {
         String key = xmler.getName().getLocalPart();
-        if ("resource".equals(key)) { //$NON-NLS-1$
-            String resourceName = xmler.getAttributeValue(null, "name"); //$NON-NLS-1$
-            String contextGroupID = xmler.getAttributeValue(null, "contextId"); //$NON-NLS-1$
+        if ("resource".equals(key)) { //NON-NLS
+            String resourceName = xmler.getAttributeValue(null, "name"); //NON-NLS
+            String contextGroupID = xmler.getAttributeValue(null, "contextId");
 
             while (xmler.hasNext()) {
                 int eventType = xmler.next();
                 switch (eventType) {
                     case XMLStreamConstants.START_ELEMENT:
                         key = xmler.getName().getLocalPart();
-                        if ("code".equals(key)) { //$NON-NLS-1$
+                        if ("code".equals(key)) { //NON-NLS
 
-                            String codingSchemeDesignator = xmler.getAttributeValue(null, "scheme"); //$NON-NLS-1$
-                            String codeValue = xmler.getAttributeValue(null, "value"); //$NON-NLS-1$
-                            String codeMeaning = xmler.getAttributeValue(null, "meaning"); //$NON-NLS-1$
+                            String codingSchemeDesignator = xmler.getAttributeValue(null, "scheme"); //NON-NLS
+                            String codeValue = xmler.getAttributeValue(null, "value"); //NON-NLS
+                            String codeMeaning = xmler.getAttributeValue(null, "meaning"); //NON-NLS
 
-                            String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod"); //$NON-NLS-1$
-                            String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId"); //$NON-NLS-1$
+                            String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod");
+                            String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId");
 
                             codeByValue.put(codeValue,
                                 new DicomMediaUtils.KeyObjectSelectionCode(resourceName, contextGroupID,
@@ -1488,7 +1488,7 @@ public class DicomMediaUtils {
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,
         TemporalAccessor[] defaultValue) {
-        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\"); //$NON-NLS-1$
+        return getDatesFromDicomElement(xmler, attribute, type, defaultValue, "\\");
     }
 
     public static TemporalAccessor[] getDatesFromDicomElement(XMLStreamReader xmler, String attribute, TagType type,

@@ -54,10 +54,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public static final String BUTTON_NAME = Messages.getString("DisplayTool.display");
 
-    private final JCheckBox applyAllViews = new JCheckBox("Apply to all views", true); //$NON-NLS-1$
+    private final JCheckBox applyAllViews = new JCheckBox(Messages.getString("apply.to.all.views"), true);
     private final CheckboxTree tree;
     private boolean initPathSelection;
-    private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true); //$NON-NLS-1$
+    private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
     private DefaultMutableTreeNode image;
     private DefaultMutableTreeNode info;
@@ -67,7 +67,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     public DisplayTool(String pluginName) {
         super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
-        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png"))); //$NON-NLS-1$
+        dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png")));
         setDockableWidth(210);
 
         tree = new CheckboxTree();

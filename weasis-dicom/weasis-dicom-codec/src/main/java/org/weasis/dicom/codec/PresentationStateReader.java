@@ -32,14 +32,14 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PresentationStateReader implements Tagable {
 
-    public static final String TAG_PR_READER = "pr.reader"; //$NON-NLS-1$
+    public static final String TAG_PR_READER = "pr.reader";
 
     public static final int PRIVATE_CREATOR_TAG = 0x71070070;
     public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
-    public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //$NON-NLS-1$
+    public static final String PR_MODEL_ID = "weasis/model/xml/2.5"; //NON-NLS
 
-    public static final String TAG_PR_ROTATION = "pr.rotation"; //$NON-NLS-1$
-    public static final String TAG_PR_FLIP = "pr.flip"; //$NON-NLS-1$
+    public static final String TAG_PR_ROTATION = "pr.rotation";
+    public static final String TAG_PR_FLIP = "pr.flip";
 
     private static final ICC_ColorSpace LAB = new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
 
@@ -48,7 +48,7 @@ public class PresentationStateReader implements Tagable {
     private final HashMap<TagW, Object> tags = new HashMap<>();
 
     public PresentationStateReader(PRSpecialElement dicom) {
-        Objects.requireNonNull(dicom, "Dicom parameter cannot be null"); //$NON-NLS-1$
+        Objects.requireNonNull(dicom, "Dicom parameter cannot be null");
         this.prSpecialElement = dicom;
         DicomMediaIO dicomImageLoader = dicom.getMediaReader();
         this.dcmobj = dicomImageLoader.getDicomObject();
@@ -144,7 +144,7 @@ public class PresentationStateReader implements Tagable {
     }
 
     public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
-        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")) //$NON-NLS-1$
+        return Optional.ofNullable(PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")) //NON-NLS
             .orElseGet(ArrayList::new);
     }
 
@@ -152,7 +152,7 @@ public class PresentationStateReader implements Tagable {
         if (dcmobj != null) {
             // Rotation and then Flip
             actionsInView.put(TAG_PR_ROTATION, dcmobj.getInt(Tag.ImageRotation, 0));
-            actionsInView.put(TAG_PR_FLIP, "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //$NON-NLS-1$
+            actionsInView.put(TAG_PR_FLIP, "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); //NON-NLS
         }
     }
 

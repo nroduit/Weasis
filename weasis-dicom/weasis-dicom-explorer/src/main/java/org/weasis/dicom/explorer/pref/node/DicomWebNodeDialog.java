@@ -60,7 +60,7 @@ public class DicomWebNodeDialog extends JDialog {
         initComponents();
         this.nodesComboBox = nodeComboBox;
         if(dicomNode == null){
-            this.dicomNode = new DicomWebNode("", (DicomWebNode.WebType) comboBox.getSelectedItem(), null, null); //$NON-NLS-1$
+            this.dicomNode = new DicomWebNode("", (DicomWebNode.WebType) comboBox.getSelectedItem(), null, null); 
             nodesComboBox.addItem(this.dicomNode);
             nodesComboBox.setSelectedItem(this.dicomNode);
         }
@@ -118,7 +118,7 @@ public class DicomWebNodeDialog extends JDialog {
         content.add(comboBox, gbcComboBox);
 
         urlLabel = new JLabel();
-        urlLabel.setText("URL" + StringUtil.COLON); //$NON-NLS-1$
+        urlLabel.setText("URL" + StringUtil.COLON); 
         GridBagConstraints gbcAeTitleLabel = new GridBagConstraints();
         gbcAeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
         gbcAeTitleLabel.insets = new Insets(0, 0, 5, 5);

@@ -29,11 +29,11 @@ public class FileCache {
     }
 
     public boolean isLocalFile() {
-        return reader.getUri().getScheme().startsWith("file"); //$NON-NLS-1$
+        return reader.getUri().getScheme().startsWith("file");
     }
 
     public boolean isElementInMemory() {
-        return reader.getUri().getScheme().startsWith("data"); //$NON-NLS-1$
+        return reader.getUri().getScheme().startsWith("data");
     }
 
     public Optional<File> getOriginalFile() {

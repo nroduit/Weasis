@@ -313,7 +313,7 @@ public class HistogramPanel extends JPanel {
 
     public void saveHistogramInCSV(File csvOutputFile) {
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-            pw.println("Class,Occurrences"); //$NON-NLS-1$
+            pw.println("Class,Occurrences"); //NON-NLS
             float[] histValues = data.getHistValues();
             WindLevelParameters windLevel = data.getWindLevel();
             double min = windLevel.getLevelMin();
@@ -326,10 +326,10 @@ public class HistogramPanel extends JPanel {
                 StringBuilder buf = new StringBuilder();
                 buf.append(val);
                 if (val2 != val && val2 < max) {
-                    buf.append("..."); //$NON-NLS-1$
+                    buf.append("...");
                     buf.append(val2);
                 }
-                buf.append(","); //$NON-NLS-1$
+                buf.append(",");
                 buf.append(histValues[i]);
                 pw.println(buf.toString());
             }
@@ -375,7 +375,7 @@ public class HistogramPanel extends JPanel {
                 buf.append(StringUtil.COLON_AND_SPACE);
                 buf.append(val);
                 if (val2 != val && val2 < max) {
-                    buf.append("..."); //$NON-NLS-1$
+                    buf.append("...");
                     buf.append(val2);
                 }
                 buf.append("<br>");

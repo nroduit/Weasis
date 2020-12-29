@@ -25,7 +25,7 @@ public class ImportToolBar extends WtoolBar {
     public ImportToolBar(int index) {
         super(Messages.getString("ImportToolBar.import_img_bar"), index);
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) {
             AbstractAction action = new AbstractAction() {
 
                 @Override
@@ -33,7 +33,7 @@ public class ImportToolBar extends WtoolBar {
                     ViewerFactory.getOpenImageAction(e);
                 }
             };
-            action.putValue(Action.LARGE_ICON_KEY, new ImageIcon(SeriesViewerFactory.class.getResource("/icon/32x32/img-import.png"))); //$NON-NLS-1$
+            action.putValue(Action.LARGE_ICON_KEY, new ImageIcon(SeriesViewerFactory.class.getResource("/icon/32x32/img-import.png")));
             final JButton btnImport = new JButton(action);
             btnImport.setToolTipText(Messages.getString("ImportToolBar.open_img"));
             add(btnImport);

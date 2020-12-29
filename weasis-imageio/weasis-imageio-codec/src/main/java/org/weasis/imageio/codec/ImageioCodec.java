@@ -24,7 +24,7 @@ import org.weasis.core.api.media.data.MediaReader;
 @org.osgi.service.component.annotations.Component(service = Codec.class, immediate = false)
 public class ImageioCodec implements Codec {
 
-    public static final String NAME = "JDK ImageIO"; //$NON-NLS-1$
+    public static final String NAME = "JDK ImageIO"; //NON-NLS
 
     @Override
     public String[] getReaderMIMETypes() {

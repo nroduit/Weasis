@@ -108,7 +108,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
             sb.append(StringUtil.COLON_AND_SPACE);
             if (pixelInfo != null) {
                 sb.append(pixelInfo.getPixelValueText());
-                sb.append(" - "); //$NON-NLS-1$
+                sb.append(" - "); 
                 sb.append(pixelInfo.getPixelPositionText());
             }
             String str = sb.toString();
@@ -126,7 +126,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
                 sb.append(ActionW.WINLEVEL.getTitle());
                 sb.append(StringUtil.COLON_AND_SPACE);
                 sb.append(DecFormater.allNumber(window));
-                sb.append("/");//$NON-NLS-1$
+                sb.append("/");
                 sb.append(DecFormater.allNumber(level));
             }
             AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
@@ -138,16 +138,16 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
             drawY -= fontHeight;
         }
         if (getDisplayPreferences(ROTATION)) {
-            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE //$NON-NLS-1$
-                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " //$NON-NLS-1$
-                + Messages.getString("InfoLayer.angle_symb"), //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.angle") + StringUtil.COLON_AND_SPACE
+                + view2DPane.getActionValue(ActionW.ROTATION.cmd()) + " " 
+                + Messages.getString("InfoLayer.angle_symb"),
                 border, drawY);
             drawY -= fontHeight;
         }
 
         if (getDisplayPreferences(FRAME)) {
-            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.frame") //$NON-NLS-1$
-                + StringUtil.COLON_AND_SPACE + (view2DPane.getFrameIndex() + 1) + " / " //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2, Messages.getString("InfoLayer.frame")
+                + StringUtil.COLON_AND_SPACE + (view2DPane.getFrameIndex() + 1) + " / " 
                 + view2DPane.getSeries()
                     .size((Filter<ImageElement>) view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())),
                 border, drawY);

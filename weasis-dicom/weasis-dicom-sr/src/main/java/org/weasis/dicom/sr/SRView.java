@@ -86,7 +86,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
         htmlPanel.setEditorKit(JMVUtils.buildHTMLEditorKit(htmlPanel));
-        htmlPanel.setContentType("text/html"); //$NON-NLS-1$
+        htmlPanel.setContentType("text/html");
         htmlPanel.setEditable(false);
         htmlPanel.addHyperlinkListener(e -> {
             JTextPane pane = (JTextPane) e.getSource();
@@ -97,7 +97,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
                 String desc = e.getDescription();
                 URL url = e.getURL();
-                if (url == null && desc != null && desc.startsWith("#")) { //$NON-NLS-1$
+                if (url == null && desc != null && desc.startsWith("#")) {
                     htmlPanel.scrollToReference(desc.substring(1));
                 } else {
                     openRelatedSeries(e.getURL().getHost());
@@ -226,7 +226,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
                                 props.put(ViewerPluginBuilder.ICON,
-                                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png"))); //$NON-NLS-1$
+                                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png")));
                                 props.put(ViewerPluginBuilder.UID, uid);
                                 List<DicomSeries> seriesList = new ArrayList<>();
                                 seriesList.add((DicomSeries) s);
@@ -258,7 +258,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 mediaElement.setTag(TagW.PresentationModel, modelList);
             }
 
-            String layerName = "SCOORD [DICOM]";//$NON-NLS-1$
+            String layerName = "SCOORD [DICOM]"; //NON-NLS
             GraphicLayer layer = null;
             for (GraphicLayer l : modelList.getLayers()) {
                 if (layerName.equals(l.getName())) {

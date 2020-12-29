@@ -62,7 +62,7 @@ public class DropDownLabel implements Icon {
     }
 
     public void setLabel(String label, JComponent parent) {
-        this.label = label == null ? "" : label; //$NON-NLS-1$
+        this.label = label == null ? "" : label; 
         updateSize(parent);
     }
 

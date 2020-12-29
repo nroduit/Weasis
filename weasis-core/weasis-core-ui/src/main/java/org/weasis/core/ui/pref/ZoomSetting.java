@@ -16,10 +16,10 @@ import org.weasis.core.api.service.BundlePreferences;
 
 public class ZoomSetting {
 
-    public static final String PREFERENCE_NODE = "zoom"; //$NON-NLS-1$
-    // public static final String P_ZOOM_SYNCH = "zoom.synch"; //$NON-NLS-1$
-    // public static final String P_SHOW_DRAWINGS = "show.drawings"; //$NON-NLS-1$
-    // public static final String P_ROUND = "round"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "zoom"; //NON-NLS
+    // public static final String P_ZOOM_SYNCH = "zoom.synch";
+    // public static final String P_SHOW_DRAWINGS = "show.drawings";
+    // public static final String P_ROUND = "round";
 
     private boolean lensShowDrawings = true;
     private boolean lensSynchronize = false;
@@ -33,14 +33,14 @@ public class ZoomSetting {
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
-            interpolation = p.getInt("interpolation", 1); //$NON-NLS-1$
+            interpolation = p.getInt("interpolation", 1); //NON-NLS
         }
     }
 
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
-            BundlePreferences.putIntPreferences(p, "interpolation", interpolation); //$NON-NLS-1$
+            BundlePreferences.putIntPreferences(p, "interpolation", interpolation); //NON-NLS
         }
     }
 

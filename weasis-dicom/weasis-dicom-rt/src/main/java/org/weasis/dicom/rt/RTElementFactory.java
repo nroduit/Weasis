@@ -21,9 +21,9 @@ import org.weasis.dicom.codec.DicomSpecialElementFactory;
 @org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class, immediate = false)
 public class RTElementFactory implements DicomSpecialElementFactory {
 
-    public static final String SERIES_RT_MIMETYPE = "rt/dicom"; //$NON-NLS-1$
+    public static final String SERIES_RT_MIMETYPE = "rt/dicom"; //NON-NLS
 
-    private static final String[] modalities = { "RTSTRUCT", "RTPLAN", "RTDOSE" }; //$NON-NLS-1$
+    private static final String[] modalities = { "RTSTRUCT", "RTPLAN", "RTDOSE" };
 
     @Override
     public String getSeriesMimeType() {

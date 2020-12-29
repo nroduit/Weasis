@@ -60,8 +60,8 @@ public abstract class SliderCineListener extends SliderChangeListener {
 
         if (slider.isdisplayValueInTitle() && panel != null && panel.getBorder() instanceof TitledBorder) {
             if (rate > 0) {
-                buffer.append(" - "); //$NON-NLS-1$
-                buffer.append(Messages.getString("SliderCineListener.cine")); //$NON-NLS-1$
+                buffer.append(" - ");
+                buffer.append(Messages.getString("SliderCineListener.cine"));
                 buffer.append(StringUtil.COLON_AND_SPACE);
                 buffer.append(rate);
                 if (TIME.SECOND.equals(time)) {
@@ -73,7 +73,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
                 }
             }
             ((TitledBorder) panel.getBorder()).setTitleColor(
-                rate > 0 && rate < (getSpeed() - 1) ? Color.red : UIManager.getColor("TitledBorder.titleColor")); //$NON-NLS-1$
+                rate > 0 && rate < (getSpeed() - 1) ? Color.red : UIManager.getColor("TitledBorder.titleColor"));
             ((TitledBorder) panel.getBorder()).setTitle(buffer.toString());
             panel.repaint();
         } else {

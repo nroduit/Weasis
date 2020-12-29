@@ -25,11 +25,11 @@ public class DcmHeaderToolBar extends WtoolBar {
     public DcmHeaderToolBar(final ImageViewerEventManager<DicomImageElement> eventManager, int index) {
         super(Messages.getString("DcmHeaderToolBar.title"), index);
         if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("EventManager cannot be null"); 
         }
 
         final JButton metaButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png"))); 
         metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
         metaButton.addActionListener(e -> DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer()));
         add(metaButton);

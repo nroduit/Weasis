@@ -93,25 +93,25 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
 
         jPanelAbout.setLayout(gridBagLayout1);
         jTextPane1.setEditorKit(JMVUtils.buildHTMLEditorKit(jTextPane1));
-        jTextPane1.setContentType("text/html"); //$NON-NLS-1$
+        jTextPane1.setContentType("text/html");
         jTextPane1.setEditable(false);
 
         jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
-        final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //$NON-NLS-1$
+        final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); //NON-NLS
         message.append(AppProperties.WEASIS_NAME);
         message.append(" ");
         message.append(AppProperties.WEASIS_VERSION);
-        message.append("</H2>"); //$NON-NLS-1$
+        message.append("</H2>"); //NON-NLS
 
         String rn = Messages.getString("WeasisWin.release");
         message.append(String.format("<a href=\"%s", //NON-NLS
             BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); // NON-NLS
         message.append("\" style=\"color:#FF9900\">"); //NON-NLS
         message.append(rn);
-        message.append("</a>");//$NON-NLS-1$
-        message.append("<BR>"); //$NON-NLS-1$
-        message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); //$NON-NLS-1$ //$NON-NLS-2$
-        message.append("</div>"); //$NON-NLS-1$
+        message.append("</a>"); //NON-NLS
+        message.append("<BR>");
+        message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); // NON-NLS
+        message.append("</div>"); //NON-NLS
         jTextPane1.setText(message.toString());
         jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
 

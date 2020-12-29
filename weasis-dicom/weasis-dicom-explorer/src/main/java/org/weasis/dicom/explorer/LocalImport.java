@@ -33,7 +33,7 @@ import org.weasis.dicom.explorer.internal.Activator;
 public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     private static final Logger LOGGER = LoggerFactory.getLogger(LocalImport.class);
 
-    private static final String lastDirKey = "lastOpenDir";//$NON-NLS-1$
+    private static final String lastDirKey = "lastOpenDir";
 
     private JCheckBox chckbxSearch;
     private JLabel lblImportAFolder;
@@ -70,10 +70,10 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
         gbc_textField.gridx = 1;
         gbc_textField.gridy = 0;
         JMVUtils.setPreferredWidth(textField, 375, 325);
-        textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, ""));//$NON-NLS-1$
+        textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, ""));
         add(textField, gbc_textField);
 
-        button = new JButton(" ... "); //$NON-NLS-1$
+        button = new JButton(" ... ");
         button.addActionListener(e -> browseImgFile());
         GridBagConstraints gbc_button = new GridBagConstraints();
         gbc_button.anchor = GridBagConstraints.WEST;
@@ -110,7 +110,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     public void browseImgFile() {
         String directory = getImportPath();
         if (directory == null) {
-            directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, "");//$NON-NLS-1$
+            directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, "");
         }
         JFileChooser fileChooser = new JFileChooser(directory);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);

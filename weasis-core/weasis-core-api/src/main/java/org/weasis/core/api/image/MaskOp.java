@@ -16,16 +16,16 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class MaskOp extends AbstractOp {
 
-    public static final String OP_NAME = "Mask"; //$NON-NLS-1$
+    public static final String OP_NAME = "Mask"; //NON-NLS
 
     /**
      * Set whether the shutter is applied (Required parameter).
      *
      * Boolean value.
      */
-    public static final String P_SHOW = "show"; //$NON-NLS-1$
-    public static final String P_SHAPE = "shape"; //$NON-NLS-1$
-    public static final String P_ALPHA = "img.alpha"; //$NON-NLS-1$
+    public static final String P_SHOW = "show"; //NON-NLS
+    public static final String P_SHAPE = "shape"; //NON-NLS
+    public static final String P_ALPHA = "img.alpha";
 
     public MaskOp() {
         setName(OP_NAME);

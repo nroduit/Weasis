@@ -25,9 +25,9 @@ import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomWebNode extends AbstractDicomNode {
 
-    private static final String T_URL = "url"; //$NON-NLS-1$
-    private static final String T_WEB_TYPE = "webtype"; //$NON-NLS-1$
-    private static final String T_HEADER = "headers"; //$NON-NLS-1$
+    private static final String T_URL = "url"; //NON-NLS
+    private static final String T_WEB_TYPE = "webtype"; //NON-NLS
+    private static final String T_HEADER = "headers"; //NON-NLS
     
     public enum WebType {
         STOWRS("STOW-RS"), WADO("WADO"), WADORS("WADO-RS"); // NON-NLS
@@ -58,13 +58,13 @@ public class DicomWebNode extends AbstractDicomNode {
     @Override
     public String getToolTips() {
         StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append("<html>");
         toolTips.append(toString());
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>");
         toolTips.append(webType.toString());
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(url);
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>");
         return toolTips.toString();
     }
 
@@ -106,8 +106,8 @@ public class DicomWebNode extends AbstractDicomNode {
         writer.writeAttribute(T_URL, url.toString());
         writer.writeAttribute(T_WEB_TYPE, StringUtil.getEmptyStringIfNullEnum(webType));
         String val = headers.entrySet().stream()
-                        .map(map -> map.getKey() + ":" + map.getValue()) //$NON-NLS-1$
-                        .collect(Collectors.joining("\n")); //$NON-NLS-1$
+                        .map(map -> map.getKey() + ":" + map.getValue())
+                        .collect(Collectors.joining("\n"));
         writer.writeAttribute(T_HEADER,  Base64.getEncoder().encodeToString(val.getBytes()));
     }
 
@@ -125,9 +125,9 @@ public class DicomWebNode extends AbstractDicomNode {
         String val = xmler.getAttributeValue(null, T_HEADER);
         if(StringUtil.hasText(val)) {
             String result = new String(Base64.getDecoder().decode(val));
-            String[] entry = result.split("[\\n]+"); //$NON-NLS-1$
+            String[] entry = result.split("[\\n]+"); //NON-NLS
             for (String s : entry) {
-                String[] kv = s.split(":", 2); //$NON-NLS-1$
+                String[] kv = s.split(":", 2);
                 if(kv.length == 2) {
                     node.addHeader(kv[0].trim(), kv[1].trim());
                 }

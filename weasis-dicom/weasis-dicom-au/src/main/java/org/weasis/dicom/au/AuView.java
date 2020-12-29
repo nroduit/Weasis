@@ -170,7 +170,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         throws IOException, UnsupportedAudioFileException, LineUnavailableException {
         AudioData audioData = getAudioData(media);
         if (audioData == null) {
-            throw new IllegalStateException("Cannot build an AudioInputStream"); //$NON-NLS-1$
+            throw new IllegalStateException("Cannot build an AudioInputStream");
         }
 
         try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(), audioData.audioFormat,
@@ -185,7 +185,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         play = new JButton(Messages.getString("AuView.play")); // Play/stop button
         progress = new JSlider(0, audioLength, 0); // Shows position in sound
-        time = new JLabel("0"); // Shows position as a # //$NON-NLS-1$
+        time = new JLabel("0"); // Shows position as a #
 
         // When clicked, start or stop playing the sound
         play.addActionListener(e -> {
@@ -198,7 +198,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
         progress.addChangeListener(e -> {
             int value = progress.getValue();
-            time.setText(String.format("%.2f s", value / 1000.0)); //$NON-NLS-1$
+            time.setText(String.format("%.2f s", value / 1000.0)); //NON-NLS
 
             // If we're not already there, skip there.
             if (value != audioPosition) {
@@ -251,7 +251,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
                     try (AudioInputStream audioStream = new AudioInputStream(audioData.bulkData.openStream(),
                         audioData.audioFormat, audioData.bulkData.length() / audioData.audioFormat.getFrameSize())) {
-                        if (".wav".equals(extension)) { //$NON-NLS-1$
+                        if (".wav".equals(extension)) {
                             AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, new File(filename));
                         } else {
                             AudioSystem.write(audioStream, AudioFileFormat.Type.AU, new File(filename));
@@ -364,7 +364,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
         s.setLabelTable(labels);
         s.setPaintLabels(true);
 
-        s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits())); //$NON-NLS-1$
+        s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits()));
 
         s.addChangeListener(e -> {
             int i = s.getValue();
@@ -402,7 +402,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                             int frameSize =
                                 (numChannels == AudioSystem.NOT_SPECIFIED || bitsPerSample == AudioSystem.NOT_SPECIFIED)
                                     ? AudioSystem.NOT_SPECIFIED : ((bitsPerSample + 7) / 8) * numChannels;
-                            audioFormat = new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW, //$NON-NLS-1$
+                            audioFormat = new AudioFormat("AB".equals(spInterpretation) ? Encoding.ALAW : Encoding.ULAW,
                                 (float) sampleRate, bitsPerSample, numChannels, frameSize, (float) sampleRate,
                                 attributes.bigEndian());
                         } else {

@@ -187,8 +187,8 @@ public class WeasisWin {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         RootPaneContainer container = null;
         try {
-            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow"); //$NON-NLS-1$
-            Object containerObj = server.getAttribute(objectName, "RootPaneContainer"); //$NON-NLS-1$
+            ObjectName objectName = ObjectName.getInstance("weasis:name=MainWindow");  //NON-NLS
+            Object containerObj = server.getAttribute(objectName, "RootPaneContainer"); 
             if (containerObj instanceof RootPaneContainer) {
                 container = (RootPaneContainer) containerObj;
                 container.getRootPane().updateUI();
@@ -219,7 +219,7 @@ public class WeasisWin {
             frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, (Component) rootPaneContainer);
         }
 
-        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) { //$NON-NLS-1$
+        if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) { 
             rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
         }
         toolbarContainer = new ToolBarContainer();
@@ -268,12 +268,12 @@ public class WeasisWin {
     }
 
     private boolean closeAllRunnable() {
-        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.state", frame.getExtendedState()); //$NON-NLS-1$
+        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.state", frame.getExtendedState()); 
         Rectangle rect = frame.getBounds();
-        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.x", rect.x); //$NON-NLS-1$
-        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.y", rect.y); //$NON-NLS-1$
-        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.width", rect.width); //$NON-NLS-1$
-        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.height", rect.height); //$NON-NLS-1$
+        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.x", rect.x); 
+        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.y", rect.y); 
+        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.width", rect.width); 
+        BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.height", rect.height); 
         for (Runnable onClose : runOnClose) {
             onClose.run();
         }
@@ -291,7 +291,7 @@ public class WeasisWin {
     public void createMainPanel() throws Exception {
 
         // Do not disable check when debugging
-        if (System.getProperty("maven.localRepository") == null) { //$NON-NLS-1$
+        if (System.getProperty("maven.localRepository") == null) { 
             DockUtilities.disableCheckLayoutLocked();
         }
         CControl control = UIManager.DOCKING_CONTROL;
@@ -308,35 +308,35 @@ public class WeasisWin {
 
         // Fix substance
         LookAndFeel laf = javax.swing.UIManager.getLookAndFeel();
-        if (laf.getClass().getName().startsWith("org.pushingpixels")) { //$NON-NLS-1$
+        if (laf.getClass().getName().startsWith("org.pushingpixels")) { 
             ColorManager colors = control.getController().getColors();
 
-            Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground"); //$NON-NLS-1$
+            Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground"); 
             Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
             Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
             Color activeColor = selection.darker();
-            Color activeTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); //$NON-NLS-1$
+            Color activeTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground"); 
 
-            colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient); 
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection); 
+            colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor); 
 
-            colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor); 
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor); 
+            colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor); 
 
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient); 
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection); 
+            colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor); 
 
-            colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", activeTextColor); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor()); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor()); 
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", activeTextColor); 
+            colors.put(Priority.CLIENT, "stack.tab.text.selected.focuslost", RexSystemColor.getInactiveTextColor()); 
 
-            colors.put(Priority.CLIENT, "title.flap.active", selection); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "title.flap.active.text", activeTextColor); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection)); //$NON-NLS-1$
-            colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection)); //$NON-NLS-1$
+            colors.put(Priority.CLIENT, "title.flap.active", selection); 
+            colors.put(Priority.CLIENT, "title.flap.active.text", activeTextColor); 
+            colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection)); 
+            colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection)); 
         }
 
         control.addFocusListener(selectionListener);
@@ -649,7 +649,7 @@ public class WeasisWin {
             config = defMonitor.getGraphicsConfiguration();
         }
 
-        int lastState = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.state", Frame.MAXIMIZED_BOTH); //$NON-NLS-1$
+        int lastState = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.state", Frame.MAXIMIZED_BOTH); 
         if(lastState != Frame.NORMAL) {
             lastState =  Frame.MAXIMIZED_BOTH;
         }
@@ -662,10 +662,10 @@ public class WeasisWin {
             b.width -= (inset.left + inset.right);
             b.height -= (inset.top + inset.bottom);
             if (lastState == Frame.NORMAL) {
-                int x = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.x", 0); //$NON-NLS-1$
-                int y = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.y", 0); //$NON-NLS-1$
-                int w = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.width", Integer.MAX_VALUE); //$NON-NLS-1$
-                int h = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.height", Integer.MAX_VALUE); //$NON-NLS-1$
+                int x = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.x", 0); 
+                int y = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.y", 0); 
+                int w = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.width", Integer.MAX_VALUE); 
+                int h = BundleTools.LOCAL_UI_PERSISTENCE.getIntProperty("last.window.height", Integer.MAX_VALUE); 
                 if(x < b.x) {
                     x = b.x;
                 }
@@ -721,12 +721,12 @@ public class WeasisWin {
 
         final JMenuItem webMenuItem = new JMenuItem(Messages.getString("WeasisWin.shortcuts"));
         webMenuItem.addActionListener(
-            e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); //$NON-NLS-1$
+            e -> openBrowser(webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts"))); 
         helpMenuItem.add(webMenuItem);
 
         final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online"));
         websiteMenuItem.addActionListener(
-            e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); //$NON-NLS-1$
+            e -> openBrowser(websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online"))); 
         helpMenuItem.add(websiteMenuItem);
         final JMenuItem aboutMenuItem =
             new JMenuItem(String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));
@@ -846,7 +846,7 @@ public class WeasisWin {
     private void buildMenuView() {
         menuView.removeAll();
 
-        DynamicMenu toolBarMenu = new DynamicMenu(Messages.getString("WeasisWin.toolbar")) {//$NON-NLS-1$
+        DynamicMenu toolBarMenu = new DynamicMenu(Messages.getString("WeasisWin.toolbar")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -868,7 +868,7 @@ public class WeasisWin {
         toolMenu.addPopupMenuListener();
         menuView.add(toolMenu);
 
-        DynamicMenu explorerMenu = new DynamicMenu("Explorer") { //$NON-NLS-1$
+        DynamicMenu explorerMenu = new DynamicMenu("Explorer") {  //NON-NLS
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -880,7 +880,7 @@ public class WeasisWin {
         menuView.add(explorerMenu);
 
         // TODO add save workspace layout
-        // final AbstractAction saveAction = new AbstractAction("Save workspace layout") { //$NON-NLS-1$
+        // final AbstractAction saveAction = new AbstractAction("Save workspace layout") { 
         //
         // @Override
         // public void actionPerformed(ActionEvent e) {
@@ -897,7 +897,7 @@ public class WeasisWin {
         // };
         // menuView.add(saveAction);
         //
-        // final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") { //$NON-NLS-1$
+        // final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") { 
         //
         // @Override
         // public void actionPerformed(ActionEvent e) {
@@ -928,7 +928,7 @@ public class WeasisWin {
         openMenu.addPopupMenuListener();
         menuFile.add(openMenu);
 
-        DynamicMenu importMenu = new DynamicMenu(Messages.getString("WeasisWin.import")) {//$NON-NLS-1$
+        DynamicMenu importMenu = new DynamicMenu(Messages.getString("WeasisWin.import")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -938,7 +938,7 @@ public class WeasisWin {
         importMenu.addPopupMenuListener();
         menuFile.add(importMenu);
 
-        DynamicMenu exportMenu = new DynamicMenu(Messages.getString("WeasisWin.export")) {//$NON-NLS-1$
+        DynamicMenu exportMenu = new DynamicMenu(Messages.getString("WeasisWin.export")) {
 
             @Override
             public void popupMenuWillBecomeVisible() {
@@ -981,7 +981,7 @@ public class WeasisWin {
     private class SequenceHandler extends TransferHandler {
 
         public SequenceHandler() {
-            super("series"); //$NON-NLS-1$
+            super("series");  //NON-NLS
         }
 
         @Override
@@ -1184,9 +1184,9 @@ public class WeasisWin {
 
         Option opt = Options.compile(usage).parse(argv);
 
-        if (opt.isSet("version")) { //$NON-NLS-1$
+        if (opt.isSet("version")) { 
             System.out.println(AppProperties.WEASIS_VERSION);
-        } else if (opt.isSet("all")) { //$NON-NLS-1$
+        } else if (opt.isSet("all")) {  //NON-NLS
             PrintStream out = System.out;
             out.println("  " + AppProperties.WEASIS_NAME + " " + AppProperties.WEASIS_VERSION);
             out.println("  Installation path: " + AppProperties.WEASIS_PATH);  //NON-NLS
@@ -1212,9 +1212,9 @@ public class WeasisWin {
             "  -? --help        show help" };  //NON-NLS
 
         Option opt = Options.compile(usage).parse(argv);
-        if (opt.isSet("quit")) { //$NON-NLS-1$
+        if (opt.isSet("quit")) {  //NON-NLS
             System.exit(0);
-        } else if (opt.isSet("visible")) { //$NON-NLS-1$
+        } else if (opt.isSet("visible")) {  //NON-NLS
             GuiExecutor.instance().execute(() -> {
                 Frame app = getFrame();
                 app.setVisible(true);

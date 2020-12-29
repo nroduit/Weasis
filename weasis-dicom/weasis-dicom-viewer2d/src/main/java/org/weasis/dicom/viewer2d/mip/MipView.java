@@ -51,8 +51,8 @@ public class MipView extends View2d {
     private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
     public static final ImageIcon MIP_ICON_SETTING =
-        new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")); //$NON-NLS-1$
-    public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); //$NON-NLS-1$ //$NON-NLS-2$
+        new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png")); 
+    public static final ActionW MIP = new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); // NON-NLS
     public static final ActionW MIP_THICKNESS =
         new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); // NON-NLS
 
@@ -72,7 +72,7 @@ public class MipView extends View2d {
         actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.BEST_FIT);
         actionsInView.put(MIP_THICKNESS.cmd(), 2);
         actionsInView.put(MipView.MIP.cmd(), MipView.Type.MAX);
-        actionsInView.put("no.ko", true); //$NON-NLS-1$
+        actionsInView.put("no.ko", true); 
 
         // Propagate the preset
         OpManager disOp = getDisplayOpManager();
@@ -112,7 +112,7 @@ public class MipView extends View2d {
         this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
         setMip(null);
-        File mipDir = AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip"); //$NON-NLS-1$
+        File mipDir = AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "mip");  //NON-NLS
         FileUtil.deleteDirectoryContents(mipDir, 1, 0);
 
         ImageViewerPlugin<DicomImageElement> container = this.getEventManager().getSelectedView2dContainer();
@@ -145,7 +145,7 @@ public class MipView extends View2d {
                 LOGGER.info(e.getMessage());
             } catch (Throwable t) {
                 dicoms.clear();
-                AuditLog.logError(LOGGER, t, "Mip renderding error"); //$NON-NLS-1$
+                AuditLog.logError(LOGGER, t, "Mip renderding error");  //NON-NLS
             } finally {
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.instance().execute(() -> {

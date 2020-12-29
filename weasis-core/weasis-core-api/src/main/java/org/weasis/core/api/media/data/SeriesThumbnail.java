@@ -87,7 +87,7 @@ public class SeriesThumbnail extends Thumbnail
     public SeriesThumbnail(final MediaSeries<? extends MediaElement> sequence, int thumbnailSize) {
         super(thumbnailSize);
         if (sequence == null) {
-            throw new IllegalArgumentException("Sequence cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Sequence cannot be null");
         }
         this.series = sequence;
 
@@ -322,7 +322,7 @@ public class SeriesThumbnail extends Thumbnail
             int fontHeight = (int) (FontTools.getAccurateFontHeight(g2d) + 1.5f);
             Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
             if (splitNb != null) {
-                String nb = "#" + splitNb; //$NON-NLS-1$
+                String nb = "#" + splitNb;
                 int w = g2d.getFontMetrics().stringWidth(nb);
                 g2d.setPaint(Color.BLACK);
                 int sx = x + width - 2 - w;

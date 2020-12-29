@@ -28,7 +28,7 @@ public class TreeModelNode {
 
     public TreeModelNode(int depth, int nodePosition, TagW tagElement, TagView tagView) {
         if (tagElement == null) {
-            throw new IllegalArgumentException("TagW is null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("TagW is null"); 
         }
         this.depth = depth;
         this.nodePosition = nodePosition;

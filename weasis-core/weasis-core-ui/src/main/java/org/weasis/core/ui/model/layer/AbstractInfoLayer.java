@@ -50,7 +50,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
     private static final long serialVersionUID = 1338490067849040408L;
 
-    public static final String P_ALL_VIEWS = "annotations.all.views"; //$NON-NLS-1$
+    public static final String P_ALL_VIEWS = "annotations.all.views";
     public static volatile boolean applyToAllView = true;
     public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();
     private static final Map<String, String> conversionMapForStorage = new HashMap<>();
@@ -67,17 +67,17 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         defaultDisplayPreferences.put(FRAME, true);
         defaultDisplayPreferences.put(PIXEL, true);
 
-        conversionMapForStorage.put(ANNOTATIONS, "annotations"); //$NON-NLS-1$
-        conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations"); //$NON-NLS-1$
-        conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym"); //$NON-NLS-1$
-        conversionMapForStorage.put(SCALE, "scale"); //$NON-NLS-1$
-        conversionMapForStorage.put(LUT, "lut"); //$NON-NLS-1$
-        conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation"); //$NON-NLS-1$
-        conversionMapForStorage.put(WINDOW_LEVEL, "wl"); //$NON-NLS-1$
-        conversionMapForStorage.put(ZOOM, "zoom"); //$NON-NLS-1$
-        conversionMapForStorage.put(ROTATION, "rotation"); //$NON-NLS-1$
-        conversionMapForStorage.put(FRAME, "frame"); //$NON-NLS-1$
-        conversionMapForStorage.put(PIXEL, "pixel"); //$NON-NLS-1$
+        conversionMapForStorage.put(ANNOTATIONS, "annotations");
+        conversionMapForStorage.put(MIN_ANNOTATIONS, "minAnnotations");
+        conversionMapForStorage.put(ANONYM_ANNOTATIONS, "anonym"); //NON-NLS
+        conversionMapForStorage.put(SCALE, "scale"); //NON-NLS
+        conversionMapForStorage.put(LUT, "lut"); //NON-NLS
+        conversionMapForStorage.put(IMAGE_ORIENTATION, "orientation"); //NON-NLS
+        conversionMapForStorage.put(WINDOW_LEVEL, "wl"); //NON-NLS
+        conversionMapForStorage.put(ZOOM, "zoom"); //NON-NLS
+        conversionMapForStorage.put(ROTATION, "rotation"); //NON-NLS
+        conversionMapForStorage.put(FRAME, "frame"); //NON-NLS
+        conversionMapForStorage.put(PIXEL, "pixel"); //NON-NLS
     }
 
     protected static final int P_BORDER = 10;
@@ -103,8 +103,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     public static void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences pref = p.node("infolayer"); //$NON-NLS-1$
-            applyToAllView = pref.getBoolean("allViews", true); //$NON-NLS-1$
+            Preferences pref = p.node("infolayer"); //NON-NLS
+            applyToAllView = pref.getBoolean("allViews", true);
 
             Iterator<Entry<String, Boolean>> d = defaultDisplayPreferences.entrySet().iterator();
             while (d.hasNext()) {
@@ -117,8 +117,8 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     public static void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences pref = p.node("infolayer"); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView); //$NON-NLS-1$
+            Preferences pref = p.node("infolayer"); //NON-NLS
+            BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView);
 
             Iterator<Entry<String, String>> d = conversionMapForStorage.entrySet().iterator();
             while (d.hasNext()) {
@@ -434,7 +434,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
                 AbstractGraphicLabel.paintFontOutline(g2d, pixSizeDesc, (float) (posx + scaleSizex + 5),
                     (float) posy - fontHeight);
             }
-            str += " " + unit[0].getAbbreviation(); //$NON-NLS-1$
+            str += " " + unit[0].getAbbreviation();
             AbstractGraphicLabel.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
         }
 
@@ -502,7 +502,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
             g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-            AbstractGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx, //$NON-NLS-1$
+            AbstractGraphicLabel.paintFontOutline(g2d, str + " " + unit[0].getAbbreviation(), (int) posx,
                 (int) (posy - 5 * strokeWidth));
         }
 

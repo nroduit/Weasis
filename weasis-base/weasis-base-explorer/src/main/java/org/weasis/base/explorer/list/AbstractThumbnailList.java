@@ -71,8 +71,8 @@ import org.weasis.core.ui.util.DefaultAction;
 @SuppressWarnings("serial")
 public abstract class AbstractThumbnailList<E extends MediaElement> extends JList<E> implements ThumbnailList<E> {
 
-    public static final String SECTION_CHANGED = "SECTION_CHANGED"; //$NON-NLS-1$
-    public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; //$NON-NLS-1$
+    public static final String SECTION_CHANGED = "SECTION_CHANGED";  //NON-NLS
+    public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE";  //NON-NLS
 
     public static final Dimension DEF_ICON_DIM = new Dimension(150, 150);
 
@@ -240,19 +240,19 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
 
         StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append("<html>"); 
         toolTips.append(item.getName());
-        toolTips.append("<br>"); //$NON-NLS-1$
-        toolTips.append(Messages.getString("JIThumbnailList.size")); //$NON-NLS-1$
+        toolTips.append("<br>"); 
+        toolTips.append(Messages.getString("JIThumbnailList.size"));
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(FileUtil.humanReadableByte(item.getLength(), false));
-        toolTips.append("<br>"); //$NON-NLS-1$
+        toolTips.append("<br>"); 
 
         toolTips.append(Messages.getString("JIThumbnailList.date"));
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(TagUtil.formatDateTime(Instant.ofEpochMilli(item.getLastModified())));
-        toolTips.append("<br>"); //$NON-NLS-1$
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("<br>"); 
+        toolTips.append("</html>"); 
 
         return toolTips.toString();
     }
@@ -278,14 +278,14 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
             Codec codec = reader.getCodec();
             String sUID;
             String gUID;
-            if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
+            if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {  //NON-NLS
                 if (reader.getMediaElement() == null) {
                     // DICOM is not readable
                     return null;
                 }
-                sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
-                gUID = (String) reader.getTagValue(TagW.get("PatientID")); //$NON-NLS-1$
-                tname = TagW.get("PatientName"); //$NON-NLS-1$
+                sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); 
+                gUID = (String) reader.getTagValue(TagW.get("PatientID")); 
+                tname = TagW.get("PatientName"); 
                 tvalue = (String) reader.getTagValue(tname);
             } else {
                 sUID = mediaElement.getMediaURI().toString();
@@ -319,14 +319,14 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
                 String tvalue;
 
                 Codec codec = reader.getCodec();
-                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) { //$NON-NLS-1$
+                if (isDicomMedia(mediaElement) && codec != null && codec.isMimeTypeSupported("application/dicom")) {  //NON-NLS
                     if (reader.getMediaElement() == null) {
                         // DICOM is not readable
                         return;
                     }
-                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
-                    gUID = (String) reader.getTagValue(TagW.get("PatientID")); //$NON-NLS-1$
-                    tname = TagW.get("PatientName"); //$NON-NLS-1$
+                    sUID = (String) reader.getTagValue(TagW.get("SeriesInstanceUID")); 
+                    gUID = (String) reader.getTagValue(TagW.get("PatientID")); 
+                    tname = TagW.get("PatientName"); 
                     tvalue = (String) reader.getTagValue(tname);
                 } else {
                     sUID = oneFile ? mediaElement.getMediaURI().toString()
@@ -416,10 +416,10 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
                                     MediaElement[] ms = mreader.getMediaElement();
                                     if (ms != null) {
                                         for (MediaElement media : ms) {
-                                            media.setTag(TagW.get("SeriesInstanceUID"), //$NON-NLS-1$
+                                            media.setTag(TagW.get("SeriesInstanceUID"), 
                                                 series.getTagValue(series.getTagID()));
                                             URI uri = media.getMediaURI();
-                                            media.setTag(TagW.get("SOPInstanceUID"), //$NON-NLS-1$
+                                            media.setTag(TagW.get("SOPInstanceUID"), 
                                                 uri == null ? UUID.randomUUID().toString() : uri.toString());
                                             series.addMedia(media);
                                         }
@@ -453,7 +453,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         if (mediaElement != null) {
             String mime = mediaElement.getMimeType();
             if (mime != null) {
-                return mime.indexOf("dicom") != -1; //$NON-NLS-1$
+                return mime.indexOf("dicom") != -1;  //NON-NLS
             }
         }
         return false;

@@ -127,7 +127,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
 
             String bundleName = context.getBundle().getSymbolicName();
             String componentName = InsertableUtil.getCName(this.getClass());
-            String key = "enable"; //$NON-NLS-1$
+            String key = "enable"; //NON-NLS
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImportToolBar.class), key, true)) {
@@ -414,7 +414,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement> implements 
             ColorLayerUI.showCenterScreen(dialog, layer);
         };
         DefaultAction printStd = new DefaultAction(title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event); //$NON-NLS-1$
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event);
         printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
         actions.add(printStd);
         return actions;

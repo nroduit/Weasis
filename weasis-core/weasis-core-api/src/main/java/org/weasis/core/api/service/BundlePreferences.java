@@ -32,11 +32,11 @@ public class BundlePreferences {
     public static File getDataFolder(BundleContext context) {
         if (context != null) {
             File dataFolder =
-                new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName()); //$NON-NLS-1$
+                new File(AppProperties.WEASIS_PATH + File.separator + "data", context.getBundle().getSymbolicName());
             dataFolder.mkdirs();
             return dataFolder;
         }
-        return new File(AppProperties.WEASIS_PATH, "data"); //$NON-NLS-1$
+        return new File(AppProperties.WEASIS_PATH, "data");
     }
 
     public static Preferences getDefaultPreferences(BundleContext context) {

@@ -235,8 +235,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             }
             g2d.drawImage(ImageConversion.toBufferedImage(displayImage), null, null);
         } catch (Exception e) {
-            LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
-            if ("java.io.IOException: closed".equals(e.getMessage())) { //$NON-NLS-1$
+            LOGGER.error("Cannot draw the image", e);
+            if ("java.io.IOException: closed".equals(e.getMessage())) { //NON-NLS
                 // Issue when the stream has been closed of a tiled image (problem that readAsRendered do not read data
                 // immediately)
                 if (sourceImage.isImageInCache()) {
@@ -246,7 +246,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
                 updateDisplayOperations();
             }
         } catch (OutOfMemoryError e) {
-            LOGGER.error("Cannot draw the image", e);//$NON-NLS-1$
+            LOGGER.error("Cannot draw the image", e);
             CvUtil.runGarbageCollectorAndWait(100);
         }
         g2d.setClip(clip);
@@ -483,7 +483,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID impl
             WindowOp wlOp = (WindowOp) disOpManager.getNode(WindowOp.OP_NAME);
             if (wlOp != null) {
                 pixelPadding = LangUtil.getNULLtoTrue((Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-                tagable = (TagReadable) wlOp.getParam("pr.element"); //$NON-NLS-1$
+                tagable = (TagReadable) wlOp.getParam("pr.element");
             }
             val = imageElement.pixelToRealValue(pixelValue, tagable, pixelPadding);
         }

@@ -148,7 +148,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
 
             String bundleName = context.getBundle().getSymbolicName();
             String componentName = InsertableUtil.getCName(this.getClass());
-            String key = "enable"; //$NON-NLS-1$
+            String key = "enable"; //NON-NLS
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImportToolBar.class), key, true)) {
@@ -428,7 +428,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
                 } else if (ObservableEvent.BasicAction.UPDATE.equals(action)) {
                     if (SeriesEvent.Action.UPDATE.equals(action2)) {
                         if (source instanceof KOSpecialElement) {
-                            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll")); //$NON-NLS-1$
+                            setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
                         }
                     }
                 }
@@ -653,7 +653,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement> implem
         ArrayList<Action> actions = new ArrayList<>(2);
         final String title = Messages.getString("View2dContainer.print_layout");
         DefaultAction printStd = new DefaultAction(title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> { //$NON-NLS-1$
+            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")), event -> {
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
                 PrintDialog<DicomImageElement> dialog =
                     new PrintDialog<>(SwingUtilities.getWindowAncestor(View2dContainer.this), title, eventManager);

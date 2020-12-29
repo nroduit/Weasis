@@ -56,7 +56,7 @@ public class ExportTree extends JScrollPane {
         };
 
         // Register tooltips
-        checkboxTree.setToolTipText(""); //$NON-NLS-1$
+        checkboxTree.setToolTipText("");
 
         /**
          * At this point checking Paths are supposed to be binded at Series Level but depending on the CheckingMode it

@@ -112,7 +112,7 @@ public class MagicMimeEntry {
         if (tokens.length > 0) {
             String tok = tokens[0].trim();
             try {
-                if (tok.startsWith("0x")) { //$NON-NLS-1$
+                if (tok.startsWith("0x")) { //NON-NLS
                     checkBytesFrom = Integer.parseInt(tok.substring(2), 16);
                 } else {
                     checkBytesFrom = Integer.parseInt(tok);
@@ -150,19 +150,19 @@ public class MagicMimeEntry {
     }
 
     private int getType(String tok) {
-        if (tok.startsWith("string")) { //$NON-NLS-1$
+        if (tok.startsWith("string")) { //NON-NLS
             return STRING_TYPE;
-        } else if (tok.startsWith("belong")) { //$NON-NLS-1$
+        } else if (tok.startsWith("belong")) { //NON-NLS
             return BELONG_TYPE;
-        } else if (tok.equals("short")) { //$NON-NLS-1$
+        } else if (tok.equals("short")) { //NON-NLS
             return SHORT_TYPE;
-        } else if (tok.startsWith("lelong")) { //$NON-NLS-1$
+        } else if (tok.startsWith("lelong")) { //NON-NLS
             return LELONG_TYPE;
-        } else if (tok.startsWith("beshort")) { //$NON-NLS-1$
+        } else if (tok.startsWith("beshort")) { //NON-NLS
             return BESHORT_TYPE;
-        } else if (tok.startsWith("leshort")) { //$NON-NLS-1$
+        } else if (tok.startsWith("leshort")) { //NON-NLS
             return LESHORT_TYPE;
-        } else if (tok.equals("byte")) { //$NON-NLS-1$
+        } else if (tok.equals("byte")) { //NON-NLS
             return BYTE_TYPE;
         }
 
@@ -327,7 +327,7 @@ public class MagicMimeEntry {
             if (indx >= 0) {
                 sMask = (short) Integer.parseInt(typeStr.substring(indx + 3), 16);
                 needMask = true;
-            } else if (getContent().startsWith("&")) { //$NON-NLS-1$
+            } else if (getContent().startsWith("&")) {
                 sMask = (short) Integer.parseInt(getContent().substring(3), 16);
                 needMask = true;
             }
@@ -343,7 +343,7 @@ public class MagicMimeEntry {
             if (indx >= 0) {
                 lMask = Long.parseLong(typeStr.substring(indx + 3), 16);
                 needMask = true;
-            } else if (getContent().startsWith("&")) { //$NON-NLS-1$
+            } else if (getContent().startsWith("&")) {
                 lMask = Long.parseLong(getContent().substring(3), 16);
                 needMask = true;
             }
@@ -383,9 +383,9 @@ public class MagicMimeEntry {
         bbuf.order(bo);
         short got;
         String testContent = getContent();
-        if (testContent.startsWith("0x")) { //$NON-NLS-1$
+        if (testContent.startsWith("0x")) { //NON-NLS
             got = (short) Integer.parseInt(testContent.substring(2), 16);
-        } else if (testContent.startsWith("&")) { //$NON-NLS-1$
+        } else if (testContent.startsWith("&")) {
             got = (short) Integer.parseInt(testContent.substring(3), 16);
         } else {
             got = (short) Integer.parseInt(testContent);
@@ -408,9 +408,9 @@ public class MagicMimeEntry {
         bbuf.order(bo);
         long got;
         String testContent = getContent();
-        if (testContent.startsWith("0x")) { //$NON-NLS-1$
+        if (testContent.startsWith("0x")) { //NON-NLS
             got = Long.parseLong(testContent.substring(2), 16);
-        } else if (testContent.startsWith("&")) { //$NON-NLS-1$
+        } else if (testContent.startsWith("&")) {
             got = Long.parseLong(testContent.substring(3), 16);
         } else {
             got = Long.parseLong(testContent);

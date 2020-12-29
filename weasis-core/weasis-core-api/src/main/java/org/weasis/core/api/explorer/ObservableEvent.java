@@ -25,7 +25,7 @@ public class ObservableEvent extends PropertyChangeEvent {
     public ObservableEvent(BasicAction actionCommand, Object source, Object oldValue, Object newValue) {
         super(source, null, oldValue, newValue);
         if (actionCommand == null) {
-            throw new IllegalArgumentException("null source"); //$NON-NLS-1$
+            throw new IllegalArgumentException("null source");
         }
         this.actionCommand = actionCommand;
     }

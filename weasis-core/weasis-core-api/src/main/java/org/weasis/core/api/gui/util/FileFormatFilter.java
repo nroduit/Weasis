@@ -115,12 +115,12 @@ public class FileFormatFilter extends FileFilter {
                 Set<String> extensions = fExtensions.keySet();
                 Iterator<String> it = extensions.iterator();
                 if (it.hasNext()) {
-                    fFullDescription += "*." + it.next(); //$NON-NLS-1$
+                    fFullDescription += "*." + it.next();
                 }
                 while (it.hasNext()) {
-                    fFullDescription += ", *." + it.next(); //$NON-NLS-1$
+                    fFullDescription += ", *." + it.next();
                 }
-                fFullDescription += ")"; //$NON-NLS-1$
+                fFullDescription += ")";
             } else {
                 fFullDescription = fDescription;
             }

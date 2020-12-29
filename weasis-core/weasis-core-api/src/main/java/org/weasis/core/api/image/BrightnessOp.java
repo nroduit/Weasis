@@ -17,10 +17,10 @@ import org.weasis.opencv.op.ImageProcessor;
 public class BrightnessOp extends AbstractOp {
     private static final Logger LOGGER = LoggerFactory.getLogger(BrightnessOp.class);
 
-    public static final String OP_NAME = "rescale"; //$NON-NLS-1$
+    public static final String OP_NAME = "rescale"; //NON-NLS
 
-    public static final String P_BRIGTNESS_VALUE = "rescale.brightness"; //$NON-NLS-1$
-    public static final String P_CONTRAST_VALUE = "rescale.contrast"; //$NON-NLS-1$
+    public static final String P_BRIGTNESS_VALUE = "rescale.brightness";
+    public static final String P_CONTRAST_VALUE = "rescale.contrast";
 
     public BrightnessOp() {
         setName(OP_NAME);

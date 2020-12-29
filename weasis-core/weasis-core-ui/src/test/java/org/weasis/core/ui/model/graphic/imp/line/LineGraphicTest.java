@@ -19,13 +19,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class LineGraphicTest extends GraphicTester<LineGraphic> {
-    private static final String XML_0 = "/graphic/line/line.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/line/line.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/line/line.graphic.0.xml";  //NON-NLS
+    private static final String XML_1 = "/graphic/line/line.graphic.1.xml";  //NON-NLS
 
-    public static final String BASIC_TPL = "<line fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</line>"; //$NON-NLS-1$
+    public static final String BASIC_TPL = "<line fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">"  //NON-NLS
+        + "<paint rgb=\"%s\"/>"  //NON-NLS
+        + "<pts/>"  //NON-NLS
+        + "</line>";  //NON-NLS
 
     public static final LineGraphic COMPLETE_OBJECT = new LineGraphic();
     static {

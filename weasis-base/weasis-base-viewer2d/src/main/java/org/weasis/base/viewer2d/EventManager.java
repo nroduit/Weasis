@@ -127,7 +127,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         zoomSetting.applyPreferences(prefs);
         mouseActions.applyPreferences(prefs);
         if (prefs != null) {
-            Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$
+            Preferences prefNode = prefs.node("mouse.sensivity");
             getSliderPreference(prefNode, ActionW.WINDOW, 1.25);
             getSliderPreference(prefNode, ActionW.LEVEL, 1.25);
             getSliderPreference(prefNode, ActionW.SCROLL_SERIES, 0.1);
@@ -171,7 +171,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     private ComboItemListener<ByteLut> newLutAction() {
         List<ByteLut> luts = new ArrayList<>();
         luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
-        ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts"));//$NON-NLS-1$
+        ByteLutCollection.readLutFilesFromResourcesDir(luts, ResourceUtil.getResource("luts")); //NON-NLS
         // Set default first as the list has been sorted
         luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
@@ -425,7 +425,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         cineAction.ifPresent(a -> a.setSliderMinMaxValue(1,
             series.size((Filter<ImageElement>) view2d.getActionValue(ActionW.FILTERED_SERIES.cmd())),
             view2d.getFrameIndex() + 1, false));
-        final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate")); //$NON-NLS-1$
+        final Integer speed = (Integer) series.getTagValue(TagW.get("CineRate"));
         if (speed != null) {
             cineAction.ifPresent(a -> a.setSpeed(speed));
         }
@@ -445,7 +445,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         // Mouse buttons preferences
         mouseActions.savePreferences(prefs);
         if (prefs != null) {
-            Preferences prefNode = prefs.node("mouse.sensivity"); //$NON-NLS-1$
+            Preferences prefNode = prefs.node("mouse.sensivity");
             setSliderPreference(prefNode, ActionW.WINDOW);
             setSliderPreference(prefNode, ActionW.LEVEL);
             setSliderPreference(prefNode, ActionW.SCROLL_SERIES);
@@ -568,11 +568,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // JMenu menu = null;
     // if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
     // menu = sortStackAction.createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
-    // //$NON-NLS-1$
+    //
     //
     // menu.add(new JSeparator());
     // menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
-    // .getString("View2dContainer.inv_stack"))); //$NON-NLS-1$
+    // .getString("View2dContainer.inv_stack")));
     // }
     // return menu;
     // }
@@ -582,7 +582,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
             Optional<ComboItemListener> lutAction = getAction(ActionW.LUT, ComboItemListener.class);
             if (lutAction.isPresent()) {
-                menu = lutAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));//$NON-NLS-1$
+                menu = lutAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));
             }
         }
         return menu;

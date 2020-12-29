@@ -85,7 +85,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         private static final long serialVersionUID = -9199885304640621515L;
 
         public SequenceHandler() {
-            super("series"); //$NON-NLS-1$
+            super("series");  //NON-NLS
         }
 
         @Override
@@ -172,7 +172,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             if (files != null) {
                 for (File file : files) {
                     MediaReader reader = ViewerPluginBuilder.getMedia(file, false);
-                    if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) { //$NON-NLS-1$
+                    if (reader != null && !reader.getMediaFragmentMimeType().contains("dicom")) {  //NON-NLS
                         MediaElement[] medias = reader.getMediaElement();
                         if (medias != null) {
                             for (MediaElement mediaElement : medias) {

@@ -21,16 +21,16 @@ public class MouseActions {
 
     public static final int SCROLL_MASK = 1 << 1;
 
-    public static final String PREFERENCE_NODE = "mouse.action"; //$NON-NLS-1$
-    public static final String P_MOUSE_LEFT = "mouse_left"; //$NON-NLS-1$
-    public static final String P_MOUSE_MIDDLE = "mouse_middle"; //$NON-NLS-1$
-    public static final String P_MOUSE_RIGHT = "mouse_right"; //$NON-NLS-1$
-    public static final String P_MOUSE_WHEEL = "mouse_wheel"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "mouse.action";
+    public static final String P_MOUSE_LEFT = "mouse_left"; //NON-NLS
+    public static final String P_MOUSE_MIDDLE = "mouse_middle"; //NON-NLS
+    public static final String P_MOUSE_RIGHT = "mouse_right"; //NON-NLS
+    public static final String P_MOUSE_WHEEL = "mouse_wheel"; //NON-NLS
 
-    public static final String T_LEFT = "left"; //$NON-NLS-1$
-    public static final String T_MIDDLE = "middle"; //$NON-NLS-1$
-    public static final String T_RIGHT = "right"; //$NON-NLS-1$
-    public static final String T_WHEEL = "wheel"; //$NON-NLS-1$
+    public static final String T_LEFT = "left"; //NON-NLS
+    public static final String T_MIDDLE = "middle"; //NON-NLS
+    public static final String T_RIGHT = "right"; //NON-NLS
+    public static final String T_WHEEL = "wheel"; //NON-NLS
 
     private String left;
     private String middle;
@@ -40,14 +40,14 @@ public class MouseActions {
 
     public MouseActions(Preferences prefs) {
         this.activeButtons =
-            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", InputEvent.BUTTON1_DOWN_MASK //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty("weasis.toolbar.mouseboutons", InputEvent.BUTTON1_DOWN_MASK
                 | InputEvent.BUTTON2_DOWN_MASK | InputEvent.BUTTON3_DOWN_MASK | SCROLL_MASK);
-        this.left = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd()); //$NON-NLS-1$
-        this.middle = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd()); //$NON-NLS-1$
+        this.left = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.left", ActionW.WINLEVEL.cmd());
+        this.middle = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.middle", ActionW.PAN.cmd());
         this.right =
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd()); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.right", ActionW.CONTEXTMENU.cmd());
         this.wheel =
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd()); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.toolbar.mouse.wheel", ActionW.SCROLL_SERIES.cmd());
 
         applyPreferences(prefs);
 

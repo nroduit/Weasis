@@ -55,7 +55,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
         super(Messages.getString("DicomExplorer.loading"), false);
 
         if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("invalid parameters");
         }
 
         this.dicomModel = (DicomModel) explorerModel;

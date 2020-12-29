@@ -383,7 +383,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             if (bound.width > panelLength) {
                 int length = (title.length() * panelLength) / bound.width;
                 if (length > 2) {
-                    title = title.substring(0, length - 2) + "..."; //$NON-NLS-1$
+                    title = title.substring(0, length - 2) + "...";
                 }
             }
             super.paintBorder(c, g, x, y, width, height);
@@ -501,7 +501,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         public PatientPane(MediaSeriesGroup patient) {
             if (patient == null) {
-                throw new IllegalArgumentException("Patient cannot be null"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Patient cannot be null");
             }
             this.patient = patient;
             this.setAlignmentX(LEFT_ALIGNMENT);
@@ -515,7 +515,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 TitleBorder title = new TitleBorder(patient.toString());
                 title.setTitleFont(FontTools.getFont12Bold());
                 title.setTitleJustification(TitledBorder.LEFT);
-                Color color = javax.swing.UIManager.getColor("ComboBox.buttonHighlight"); //$NON-NLS-1$
+                Color color = javax.swing.UIManager.getColor("ComboBox.buttonHighlight");
                 title.setTitleColor(color);
                 title.setBorder(BorderFactory.createLineBorder(color, 2));
                 this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 25, 5), title));
@@ -615,7 +615,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         public StudyPane(MediaSeriesGroup dicomStudy) {
             if (dicomStudy == null) {
-                throw new IllegalArgumentException("Study cannot be null"); //$NON-NLS-1$
+                throw new IllegalArgumentException("Study cannot be null");
             }
             this.setAlignmentX(LEFT_ALIGNMENT);
             this.setAlignmentY(TOP_ALIGNMENT);
@@ -709,7 +709,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             this.setAlignmentX(LEFT_ALIGNMENT);
             this.setAlignmentY(TOP_ALIGNMENT);
             String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
-            label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER); //$NON-NLS-1$
+            label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);
             label.setFont(FontTools.getFont10());
             label.setFocusable(false);
             this.setFocusable(false);
@@ -730,7 +730,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 }
                 FontRenderContext frc = new FontRenderContext(null, false, false);
                 Dimension dim =
-                    new Dimension(thumbnailSize, (int) (label.getFont().getStringBounds("0", frc).getHeight() + 1.0f)); //$NON-NLS-1$
+                    new Dimension(thumbnailSize, (int) (label.getFont().getStringBounds("0", frc).getHeight() + 1.0f));
                 label.setPreferredSize(dim);
                 label.setMaximumSize(dim);
             }
@@ -738,7 +738,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
         public void updateText() {
             String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
-            label.setText(desc == null ? "" : desc); //$NON-NLS-1$
+            label.setText(desc == null ? "" : desc);
         }
 
         public boolean isSeries(MediaSeriesGroup sequence) {
@@ -845,7 +845,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             panelMain.add(panel, BorderLayout.NORTH);
             JPanel panel2 = new JPanel();
 
-            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) { //$NON-NLS-1$
+            if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.explorer.moreoptions", true)) {
                 GridBagConstraints gbcbtnMoreOptions = new GridBagConstraints();
                 gbcbtnMoreOptions.anchor = GridBagConstraints.EAST;
                 gbcbtnMoreOptions.gridx = 1;

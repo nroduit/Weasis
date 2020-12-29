@@ -42,7 +42,7 @@ public class SRReader {
 
     public SRReader(Series series, DicomSpecialElement dicomSR) {
         if (dicomSR == null) {
-            throw new IllegalArgumentException("Dicom parameter cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Dicom parameter cannot be null");
         }
         this.dicomSR = dicomSR;
         this.dcmItems = dicomSR.getMediaReader().getDicomObject();
@@ -77,9 +77,9 @@ public class SRReader {
                 html.append(" ");
                 html.append(instName);
                 if (instDepName != null) {
-                    html.append(" ("); //$NON-NLS-1$
+                    html.append(" (");
                     html.append(instDepName);
-                    html.append(")"); //$NON-NLS-1$
+                    html.append(")");
                 }
             }
             if (stationName != null) {
@@ -92,66 +92,66 @@ public class SRReader {
             }
             if (contentDateTime != null) {
                 if (instName != null || stationName != null) {
-                    html.append(", "); //$NON-NLS-1$
+                    html.append(", ");
                 }
                 html.append(TagUtil.formatDateTime(contentDateTime));
             }
             if (instName != null || stationName != null || contentDateTime != null) {
-                html.append("<BR>"); //$NON-NLS-1$
+                html.append("<BR>");
             }
 
-            html.append("<table border=\"0\" width=\"100%\" cellspacing=\"5\">"); //$NON-NLS-1$
+            html.append("<table border=\"0\" width=\"100%\" cellspacing=\"5\">"); //NON-NLS
 
-            html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); //$NON-NLS-1$
-            html.append("<font size=\"+1\">Patient</font>"); //$NON-NLS-1$
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<tr align=\"left\" valign=\"top\"><td width=\"33%\" >"); //NON-NLS
+            html.append("<font size=\"+1\">Patient</font>"); //NON-NLS
+            html.append("<BR>");
             writeItem(Tag.PatientName, html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.PatientID, html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.PatientBirthDate, html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.PatientSex, html);
 
-            html.append("</td><td width=\"33%\" >"); //$NON-NLS-1$
-            html.append("<font size=\"+1\">"); //$NON-NLS-1$
-            html.append(Messages.getString("SRReader.study")); //$NON-NLS-1$
-            html.append("</font>"); //$NON-NLS-1$
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("</td><td width=\"33%\" >"); //NON-NLS
+            html.append("<font size=\"+1\">"); //NON-NLS
+            html.append(Messages.getString("SRReader.study"));
+            html.append("</font>"); //NON-NLS
+            html.append("<BR>");
             writeStudyDateTime(html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.StudyID, html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.AccessionNumber, html);
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("<BR>");
             writeItem(Tag.ReferringPhysicianName, html);
 
-            html.append("</td><td width=\"33%\" >"); //$NON-NLS-1$
-            html.append("<font size=\"+1\">"); //$NON-NLS-1$
-            html.append(Messages.getString("SRReader.report_status")); //$NON-NLS-1$
-            html.append("</font><BR>"); //$NON-NLS-1$
-            writeItem(Tag.CompletionFlag, html); // $NON-NLS-1$
-            html.append("<BR>"); //$NON-NLS-1$
-            writeItem(Tag.VerificationFlag, html); // $NON-NLS-1$
-            html.append("<BR>"); //$NON-NLS-1$
+            html.append("</td><td width=\"33%\" >"); //NON-NLS
+            html.append("<font size=\"+1\">"); //NON-NLS
+            html.append(Messages.getString("SRReader.report_status"));
+            html.append("</font><BR>"); //NON-NLS
+            writeItem(Tag.CompletionFlag, html);
+            html.append("<BR>");
+            writeItem(Tag.VerificationFlag, html);
+            html.append("<BR>"); //NON-NLS
             writeVerifyingObservers(html);
-            html.append("</td></tr>"); //$NON-NLS-1$
+            html.append("</td></tr>"); //NON-NLS
 
-            html.append("</table>"); //$NON-NLS-1$
-            html.append("<hr size=2>"); //$NON-NLS-1$
+            html.append("</table>"); //NON-NLS
+            html.append("<hr size=2>"); //NON-NLS
             Sequence cts = content.getContent();
             if (cts != null) {
                 for (int i = 0; i < cts.size(); i++) {
                     SRDocumentContent c = new SRDocumentContent(cts.get(i));
-                    html.append("<BR>"); //$NON-NLS-1$
-                    html.append("<B>"); //$NON-NLS-1$
-                    String level = "1." + (i + 1); //$NON-NLS-1$
+                    html.append("<BR>");
+                    html.append("<B>");
+                    String level = "1." + (i + 1);
                     html.append(level);
-                    html.append(" </B>"); //$NON-NLS-1$
+                    html.append(" </B>"); //NON-NLS
                     Code code = c.getConceptNameCode();
                     addCodeMeaning(html, code, "<B>", "</B>"); // NON-NLS
                     convertContentToHTML(html, c, false, code == null, map, level);
-                    html.append("<BR>"); //$NON-NLS-1$
+                    html.append("<BR>");
                     addContent(html, c, map, level);
                 }
             }
@@ -161,19 +161,19 @@ public class SRReader {
     private static void convertContentToHTML(StringBuilder html, SRDocumentContent c, boolean continuous,
         boolean noCodeName, Map<String, SRImageReference> map, String level) {
         if (c != null) {
-            html.append("<A name=\""); //$NON-NLS-1$
+            html.append("<A name=\""); //NON-NLS
             html.append(level);
-            html.append("\"<></A>"); //$NON-NLS-1$
+            html.append("\"<></A>"); //NON-NLS
             String type = c.getValueType();
 
-            if ("TEXT".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            if ("TEXT".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 convertTextToHTML(html, c.getTextValue());
-            } else if ("CODE".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("CODE".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 addCodeMeaning(html, c.getConceptCode(), null, null);
-            } else if ("PNAME".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("PNAME".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 convertTextToHTML(html, TagD.getDicomPersonName(c.getPersonName()));
             } else if ("NUM".equals(type)) {
                 html.append(continuous || noCodeName ? " " : " = ");
@@ -183,50 +183,50 @@ public class SRReader {
                     Attributes item = val.getNestedDataset(Tag.MeasurementUnitsCodeSequence);
                     if (item != null) {
                         Code unit = new Code(item);
-                        if (!"1".equals(unit.getCodeValue())) { //$NON-NLS-1$
-                            html.append(" "); //$NON-NLS-1$
+                        if (!"1".equals(unit.getCodeValue())) {
+                            html.append(" ");
                             addCodeMeaning(html, unit, null, null);
                         }
                     }
                 }
-            } else if ("CONTAINER".equals(type)) { //$NON-NLS-1$
+            } else if ("CONTAINER".equals(type)) {
                 return;
-            } else if ("IMAGE".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("IMAGE".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 SRImageReference imgRef = getReferencedImage(map, level, c.getAttributes());
                 if (imgRef != null) {
-                    html.append("<a href=\"http://"); //$NON-NLS-1$
+                    html.append("<a href=\"http://"); //NON-NLS
                     html.append(level);
                     html.append("\" style=\"color:#FF9900\">"); //NON-NLS
                     html.append(Messages.getString("SRReader.show_img")); //NON-NLS
                     html.append("</a>"); //NON-NLS
                 }
-            } else if ("DATETIME".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("DATETIME".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 html.append(c.getDateTime());
-            } else if ("DATE".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("DATE".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 html.append(c.getDate());
-            } else if ("TIME".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("TIME".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 html.append(c.getTime());
-            } else if ("UIDREF".equals(type)) { //$NON-NLS-1$
-                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+            } else if ("UIDREF".equals(type)) {
+                html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 convertTextToHTML(html, c.getUID());
-            } else if ("COMPOSITE".equals(type)) { //$NON-NLS-1$
+            } else if ("COMPOSITE".equals(type)) {
                 Sequence sequenceElt = c.getAttributes().getSequence(Tag.ReferencedSOPSequence);
                 if (sequenceElt != null && !sequenceElt.isEmpty()) {
-                    html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+                    html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                     for (int i = 0; i < sequenceElt.size(); i++) {
                         SOPInstanceReference sopRef = new SOPInstanceReference(sequenceElt.get(i));
                         html.append(sopRef.getReferencedSOPClassUID());
-                        html.append(" (SOP Instance UID"); //$NON-NLS-1$
+                        html.append(" (SOP Instance UID"); //NON-NLS
                         html.append(StringUtil.COLON_AND_SPACE);
                         html.append(sopRef.getReferencedSOPInstanceUID());
-                        html.append(")"); //$NON-NLS-1$
+                        html.append(")");
                     }
                 }
-            } else if ("SCOORD".equals(type)) { //$NON-NLS-1$
+            } else if ("SCOORD".equals(type)) {
                 Attributes graphicsItems = c.getAttributes();
                 Sequence sc = c.getContent();
                 if (sc != null) {
@@ -256,13 +256,13 @@ public class SRReader {
                                 LOGGER.error("Cannot build graphic from SR", e);
                             }
 
-                            html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //$NON-NLS-1$
+                            html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE); //NON-NLS
 
-                            html.append("<a href=\"http://"); //$NON-NLS-1$
+                            html.append("<a href=\"http://"); //NON-NLS
                             html.append(id);
-                            html.append("\" style=\"color:#FF9900\">"); //$NON-NLS-1$
+                            html.append("\" style=\"color:#FF9900\">"); //NON-NLS
                             html.append(graphicsItems.getString(Tag.GraphicType));
-                            html.append("</a>"); //$NON-NLS-1$
+                            html.append("</a>"); //NON-NLS
                         }
                     }
                 }
@@ -274,7 +274,7 @@ public class SRReader {
                 // html.append(continuous || noCodeName ? " " : StringUtil.COLON_AND_SPACE);
                 // // TODO
             } else if (type != null) {
-                html.append("<i>"); //$NON-NLS-1$
+                html.append("<i>");
                 html.append(type);
                 html.append(" ");
                 html.append(Messages.getString("SRReader.tag_missing"));
@@ -286,13 +286,13 @@ public class SRReader {
             if (refs != null) {
                 html.append(Messages.getString("SRReader.content_ref") + StringUtil.COLON_AND_SPACE);
                 String id = getReferencedContentItemIdentifier(refs);
-                html.append("<a href=\"#"); //$NON-NLS-1$
+                html.append("<a href=\"#"); //NON-NLS
                 html.append(id);
                 html.append("\">");
                 html.append(Messages.getString("SRReader.node"));
                 html.append(" ");
                 html.append(id);
-                html.append("</a>"); //$NON-NLS-1$
+                html.append("</a>"); //NON-NLS
 
             }
 
@@ -331,7 +331,7 @@ public class SRReader {
         String level) {
         Sequence cts = c.getContent();
         if (cts != null) {
-            boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent()); //$NON-NLS-1$
+            boolean continuity = "CONTINUOUS".equals(c.getContinuityOfContent());
             if (!continuity) {
                 html.append("<OL>");
             }
@@ -372,7 +372,7 @@ public class SRReader {
             if (lines.length > 0) {
                 html.append(EscapeChars.forHTML(lines[0]));
                 for (int i = 1; i < lines.length; i++) {
-                    html.append("<BR>"); //$NON-NLS-1$
+                    html.append("<BR>");
                     html.append(EscapeChars.forHTML(lines[i]));
                 }
             }
@@ -382,9 +382,9 @@ public class SRReader {
     private void writeItem(int tagID, StringBuilder html) {
         TagW tag = TagD.getNullable(tagID, null);
         if (tag != null && html != null && dcmItems != null) {
-            html.append("<B>"); //$NON-NLS-1$
+            html.append("<B>");
             html.append(tag.getDisplayedName());
-            html.append("</B>"); //$NON-NLS-1$
+            html.append("</B>");
             html.append(StringUtil.COLON_AND_SPACE);
             html.append(tag.getFormattedTagValue(tag.getValue(dcmItems), null));
         }
@@ -395,9 +395,9 @@ public class SRReader {
         if (tagDate != null && html != null && dcmItems != null) {
             LocalDateTime date = TagD.dateTime(Tag.StudyDateAndTime, dcmItems);
             if (date != null) {
-                html.append("<B>"); //$NON-NLS-1$
+                html.append("<B>");
                 html.append(tagDate.getDisplayedName());
-                html.append("</B>"); //$NON-NLS-1$
+                html.append("</B>");
                 html.append(StringUtil.COLON_AND_SPACE);
                 html.append(TagUtil.formatDateTime(date));
             }
@@ -412,23 +412,23 @@ public class SRReader {
                 html.append(Messages.getString("SRReader.ver_observer"));
                 html.append("</B>");
                 html.append(StringUtil.COLON);
-                html.append("<BR>"); //$NON-NLS-1$
+                html.append("<BR>");
                 for (Attributes v : seq) {
                     TemporalAccessor date = (TemporalAccessor) TagD.get(Tag.VerificationDateTime).getValue(v);
                     if (date != null) {
-                        html.append(" * "); //$NON-NLS-1$
+                        html.append(" * ");
                         html.append(TagUtil.formatDateTime(date));
-                        html.append(" - "); //$NON-NLS-1$
+                        html.append(" - ");
                         String name = TagD.getDicomPersonName(v.getString(Tag.VerifyingObserverName));
                         if (name != null) {
                             html.append(name);
-                            html.append(", "); //$NON-NLS-1$
+                            html.append(", ");
                         }
                         String org = v.getString(Tag.VerifyingOrganization);
                         if (org != null) {
                             html.append(org);
                         }
-                        html.append("<BR>"); //$NON-NLS-1$
+                        html.append("<BR>");
                     }
                 }
             }

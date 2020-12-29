@@ -279,7 +279,7 @@ public final class GeomUtil {
      */
     public static boolean lineParallel(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
         if (ptA == null || ptB == null || ptC == null || ptD == null) {
-            throw new IllegalArgumentException("All the points must not be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("All the points must not be null"); 
         }
         return MathUtil.isEqualToZero((ptB.getX() - ptA.getX()) * (ptD.getY() - ptC.getY())
             - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX()));

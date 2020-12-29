@@ -52,7 +52,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
     public static final Integer POINTS_NUMBER = UNDEFINED;
 
-    public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png"));
 
     public static final Measurement AREA = new Measurement(Messages.getString("measure.area"), 1, true, true, true);
     public static final Measurement PERIMETER =
@@ -150,7 +150,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
             }
 
             if (!isShapeValid() || pts.size() < 3) {
-                throw new InvalidShapeException("This Polygon cannot be drawn"); //$NON-NLS-1$
+                throw new InvalidShapeException("This Polygon cannot be drawn");
             }
             buildShape(null);
         }

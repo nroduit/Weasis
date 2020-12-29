@@ -41,7 +41,7 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
  */
 public final class KOComponentFactory {
 
-    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png")); //$NON-NLS-1$
+    public static final ImageIcon KO_STAR_ICON = new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png"));
     public static final ImageIcon KO_STAR_ICON_SELECTED;
     public static final ImageIcon KO_STAR_ICON_EXIST;
 

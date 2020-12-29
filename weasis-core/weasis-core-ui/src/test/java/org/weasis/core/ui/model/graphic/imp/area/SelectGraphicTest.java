@@ -21,13 +21,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class SelectGraphicTest extends GraphicTester<SelectGraphic> {
-    private static final String XML_0 = "/graphic/select/select.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/select/select.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/select/select.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/select/select.graphic.1.xml"; //NON-NLS
 
-    public static final String BASIC_TPL = "<selectGraphic fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</selectGraphic>"; //$NON-NLS-1$
+    public static final String BASIC_TPL = "<selectGraphic fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</selectGraphic>"; //NON-NLS
 
     public static final SelectGraphic COMPLETE_OBJECT = new SelectGraphic();
     static {

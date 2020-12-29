@@ -17,8 +17,8 @@ import org.weasis.core.api.media.data.TagW;
 public class AcquireSerieMeta extends AcquireMetadataTableModel {
     private static final long serialVersionUID = 8912202268139591519L;
 
-    private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.series.display", //$NON-NLS-1$
-        "Modality,OperatorsName,ReferringPhysicianName,BodyPartExamined,SeriesDescription"); //$NON-NLS-1$
+    private static final TagW[] TAGS_TO_DISPLAY = getTags("weasis.acquire.meta.series.display",
+        "Modality,OperatorsName,ReferringPhysicianName,BodyPartExamined,SeriesDescription"); //NON-NLS
     private static final TagW[] TAGS_EDITABLE =
         getTags("weasis.acquire.meta.series.edit", "ReferringPhysicianName,BodyPartExamined,SeriesDescription"); // NON-NLS
     private static final TagW[] TAGS_TO_PUBLISH =

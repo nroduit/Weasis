@@ -82,7 +82,7 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
 
     public void updateDicomTags() {
         // Modality from worklist otherwise XC
-        setIfnotInGlobal(TagD.get(Tag.Modality), "XC"); //$NON-NLS-1$
+        setIfnotInGlobal(TagD.get(Tag.Modality), "XC");
         setIfnotInGlobal(TagD.get(Tag.OperatorsName), null);
         setIfnotInGlobal(TagD.get(Tag.ReferringPhysicianName), null);
     }
@@ -225,7 +225,7 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
         }
 
         // Check equals
-        assert this.equals(that) : "compareTo inconsistent with equals."; //$NON-NLS-1$
+        assert this.equals(that) : "compareTo inconsistent with equals.";
 
         return EQUAL;
     }

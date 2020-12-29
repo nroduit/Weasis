@@ -34,7 +34,7 @@ public final class ImageSectionIcon implements AnimatedIconStatic {
 
     @Override
     public String getName() {
-        return "ImageSectionIcon"; //$NON-NLS-1$
+        return "ImageSectionIcon";
     }
 
     @Override

@@ -73,7 +73,7 @@ public class ForcedAcceptPrintService implements PrintService {
             // attribute.
 
         } catch (PrinterException e) {
-            AuditLog.logError(LOGGER, e, "Set Print Service"); //$NON-NLS-1$
+            AuditLog.logError(LOGGER, e, "Set Print Service"); //NON-NLS
         }
 
     }
@@ -96,7 +96,7 @@ public class ForcedAcceptPrintService implements PrintService {
         try {
             thePrintJob.setPrintService(delegate);
         } catch (PrinterException e) {
-            AuditLog.logError(LOGGER, e, "Restore Print Service"); //$NON-NLS-1$
+            AuditLog.logError(LOGGER, e, "Restore Print Service"); //NON-NLS
         }
 
     }

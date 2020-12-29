@@ -57,8 +57,8 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
     private static final List<GridBagLayoutModel> LAYOUT_LIST =
         Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
 
-    static final GridBagLayoutModel DEFAULT_VIEW = new GridBagLayoutModel("1x1", //$NON-NLS-1$
-        "1x1", 1, 1, AuView.class.getName()); //$NON-NLS-1$
+    static final GridBagLayoutModel DEFAULT_VIEW = new GridBagLayoutModel("1x1", //NON-NLS
+        "1x1", 1, 1, AuView.class.getName()); //NON-NLS
 
     static {
         SYNCH_LIST.add(SynchView.NONE);
@@ -120,7 +120,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement> implements
             final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
             String bundleName = context.getBundle().getSymbolicName();
             String componentName = InsertableUtil.getCName(this.getClass());
-            String key = "enable"; //$NON-NLS-1$
+            String key = "enable"; //NON-NLS
 
             if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
                 InsertableUtil.getCName(ImportToolBar.class), key, true)) {

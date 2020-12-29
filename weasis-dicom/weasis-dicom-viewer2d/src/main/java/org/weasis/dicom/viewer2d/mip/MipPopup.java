@@ -219,11 +219,11 @@ public class MipPopup {
                 DicomImageElement limg = series.getMedia(max, filter, sortFilter);
 
                 if (fimg != null && limg != null) {
-                    buf.append(" ("); //$NON-NLS-1$
+                    buf.append(" ("); 
                     buf.append(DecFormater.allNumber(SeriesBuilder.getThickness(fimg, limg)));
-                    buf.append(" "); //$NON-NLS-1$
+                    buf.append(" "); 
                     buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
-                    buf.append(")"); //$NON-NLS-1$
+                    buf.append(")"); 
                 }
             }
             updateSliderProoperties(sliderThickness, buf.toString());

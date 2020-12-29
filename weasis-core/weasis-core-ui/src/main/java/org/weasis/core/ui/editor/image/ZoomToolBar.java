@@ -38,11 +38,11 @@ public class ZoomToolBar extends WtoolBar {
     public ZoomToolBar(final ImageViewerEventManager<?> eventManager, int index, boolean showLens) {
         super(Messages.getString("ZoomToolBar.zoomBar"), index);
         if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("EventManager cannot be null");
         }
 
-        final DropDownButton zoom = new DropDownButton("zoom", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
-            .getResource("/icon/32x32/zoom.png")))) { //$NON-NLS-1$
+        final DropDownButton zoom = new DropDownButton("zoom", new DropButtonIcon(new ImageIcon(MouseActions.class //NON-NLS
+            .getResource("/icon/32x32/zoom.png")))) {
 
             @Override
             protected JPopupMenu getPopupMenu() {

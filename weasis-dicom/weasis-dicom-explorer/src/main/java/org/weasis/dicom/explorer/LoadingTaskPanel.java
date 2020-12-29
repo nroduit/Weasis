@@ -99,7 +99,7 @@ public class LoadingTaskPanel extends JPanel {
             this.add(globalStopButton);
         } else {
             JButton cancelButton =
-                new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); //$NON-NLS-1$
+                new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png"))); 
             cancelButton.addActionListener(e -> {
                 message.setText(Messages.getString("LoadingTaskPanel.abording"));
                 if (task != null) {

@@ -60,7 +60,7 @@ public class ManifestBuilder {
 
     public static void writeExtendedManifest(ArcQuery arquery, File outFile) throws IOException {
         if (arquery == null || outFile == null) {
-            throw new IllegalArgumentException("ArcQuery and File cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("ArcQuery and File cannot be null"); 
         }
 
         try (BufferedWriter buf =
@@ -95,9 +95,9 @@ public class ManifestBuilder {
         }
 
         if (!images.isEmpty()) {
-            buf.append("\n<"); //$NON-NLS-1$
+            buf.append("\n<"); 
             buf.append(ArcParameters.TAG_PR_ROOT);
-            buf.append(">\n"); //$NON-NLS-1$
+            buf.append(">\n"); 
 
             for (DicomImageElement img : images) {
                 GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
@@ -105,12 +105,12 @@ public class ManifestBuilder {
                     GraphicModel m = DicomPrSerializer.getModelForSerialization(model, null);
                     XmlSerializer.writePresentation(m, buf);
                 }
-                buf.append("\n"); //$NON-NLS-1$
+                buf.append("\n"); 
             }
 
-            buf.append("\n</"); //$NON-NLS-1$
+            buf.append("\n</"); 
             buf.append(ArcParameters.TAG_PR_ROOT);
-            buf.append(">"); //$NON-NLS-1$
+            buf.append(">"); 
         }
 
         KOSpecialElement.writeSelection(koEditable, buf);

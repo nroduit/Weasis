@@ -86,7 +86,7 @@ public class ResourceUtil {
 
     public static void setResourcePath(String path) {
         if (!StringUtil.hasText(path)) {
-            throw new IllegalArgumentException("No value for property: weasis.resources.path"); //$NON-NLS-1$
+            throw new IllegalArgumentException("No value for property: weasis.resources.path");
         }
         ResourceUtil.path.set(path);
     }
@@ -97,14 +97,14 @@ public class ResourceUtil {
 
     public static File getResource(String filename) {
         if (!StringUtil.hasText(filename)) {
-            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Empty filename");
         }
         return new File(getResourcePath(), filename);
     }
 
     public static File getResource(String filename, String... subFolderName) {
         if (!StringUtil.hasText(filename)) {
-            throw new IllegalArgumentException("Empty filename"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Empty filename");
         }
         String path = getResourcePath();
         if (subFolderName != null) {

@@ -26,19 +26,19 @@ public enum LayerType {
 
     MEASURE(50, Messages.getString("LayerType.measurements"), Boolean.TRUE, Boolean.FALSE, Boolean.TRUE, Boolean.TRUE),
 
-    TEMP_DRAW(60, "Drawings [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
+    TEMP_DRAW(60, "Drawings [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE),  //NON-NLS
 
-    ACQUIRE(70, "Dicomizer [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
+    ACQUIRE(70, "Dicomizer [Temp]", Boolean.TRUE, Boolean.FALSE, Boolean.FALSE, Boolean.TRUE),  //NON-NLS
 
     BLOB(80, Messages.getString("LayerType.obj"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
 
     POINTS(90, Messages.getString("LayerType.pts"), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE, Boolean.TRUE),
 
-    DICOM_SR(100, "DICOM SR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE), //$NON-NLS-1$
+    DICOM_SR(100, "DICOM SR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE),  //NON-NLS
 
-    DICOM_RT(110, "DICOM RT", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE), //$NON-NLS-1$
+    DICOM_RT(110, "DICOM RT", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.FALSE),  //NON-NLS
     
-    DICOM_PR(120, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE); //$NON-NLS-1$
+    DICOM_PR(120, "DICOM PR", Boolean.TRUE, Boolean.TRUE, Boolean.FALSE, Boolean.TRUE);  //NON-NLS
 
 
 

@@ -50,7 +50,7 @@ public class ImageGroupPane extends ViewerPlugin<ImageElement> {
         final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         String bundleName = context.getBundle().getSymbolicName();
         String componentName = InsertableUtil.getCName(this.getClass());
-        String key = "enable"; //$NON-NLS-1$
+        String key = "enable"; //NON-NLS
 
         if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
             InsertableUtil.getCName(AcquireToolBar.class), key, true)) {

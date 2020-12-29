@@ -240,11 +240,11 @@ public class DicomSorter {
 
     private static boolean isDoseReport(MediaSeriesGroup series) {
         String s1 = TagD.getTagValue(series, Tag.SOPClassUID, String.class);
-        if(s1 == null || !s1.startsWith("1.2.840.10008.5.1.4.1.1.88")) { //$NON-NLS-1$
+        if(s1 == null || !s1.startsWith("1.2.840.10008.5.1.4.1.1.88")) {
             return false;
         }
-        return "1.2.840.10008.5.1.4.1.1.88.67".equals(s1) || "1.2.840.10008.5.1.4.1.1.88.68".equals(s1) //$NON-NLS-1$ //$NON-NLS-2$
-            || "1.2.840.10008.5.1.4.1.1.88.73".equals(s1); //$NON-NLS-1$
+        return "1.2.840.10008.5.1.4.1.1.88.67".equals(s1) || "1.2.840.10008.5.1.4.1.1.88.68".equals(s1) // NON-NLS
+            || "1.2.840.10008.5.1.4.1.1.88.73".equals(s1);
     }
 
 }

@@ -73,11 +73,11 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomView.class);
 
-    private static final String LAST_SEL_NODE = "lastSelNode"; //$NON-NLS-1$
+    private static final String LAST_SEL_NODE = "lastSelNode";
 
     private final DicomModel dicomModel;
     private final ExportTree exportTree;
-    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task"); //$NON-NLS-1$
+    private final ExecutorService executor = ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Send task"); //NON-NLS
 
     private final JPanel panel = new JPanel();
     private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
@@ -213,7 +213,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
                 try (StowrsMultiFiles stowRS = new StowrsMultiFiles(destination.getUrl().toString(), Multipart.ContentType.DICOM, AppProperties.WEASIS_NAME, destination.getHeaders())) {
                     stowRS.uploadDicom(files, true);
                 } catch (Exception e) {
-                    showErrorMessage("StowRS error: {}", e, null); //$NON-NLS-1$
+                    showErrorMessage("StowRS error: {}", e, null); //NON-NLS
                 }
             }
         } finally {

@@ -72,7 +72,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         tableScroll.setBorder(BorderFactory.createEmptyBorder(7, 3, 0, 3));
         table = new JTable();
         // Force to commit value when losing the focus
-        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); //$NON-NLS-1$
+        table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE); 
         table.setFont(FontTools.getFont11()); // Default size
         table.getTableHeader().setReorderingAllowed(false);
         updateTable();
@@ -186,14 +186,14 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
         // TODO more anatomy: http://dicom.nema.org/medical/dicom/2016c/output/chtml/part03/sect_10.5.html
         private static final JComboBox<String> bodyPartsCombo =
-            new JComboBox<>(getBodyPartValues("weasis.acquire.meta.body.part")); //$NON-NLS-1$
+            new JComboBox<>(getBodyPartValues("weasis.acquire.meta.body.part")); 
         private static final JComboBox<TagD.Sex> sexCombo = new JComboBox<>(TagD.Sex.values());
         private static final JComboBox<Modality> modalityCombo =
             new JComboBox<>(Modality.getAllModalitiesExceptDefault());
         private static final JComboBox<String> studyDescCombo =
-            new JComboBox<>(getValues("weasis.acquire.meta.study.description", null)); //$NON-NLS-1$
+            new JComboBox<>(getValues("weasis.acquire.meta.study.description", null)); 
         private static final JComboBox<String> seriesDescCombo =
-            new JComboBox<>(getValues("weasis.acquire.meta.series.description", null)); //$NON-NLS-1$
+            new JComboBox<>(getValues("weasis.acquire.meta.series.description", null)); 
         static {
             initCombo(bodyPartsCombo);
             initCombo(sexCombo);
@@ -329,7 +329,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
                     "TIBIAFIBULA", "TLSPINE", "TMJ", "TOE", "TONGUE", "TRACHEA", "TSPINE", "ULNA", "URETER", "URETHRA", // NON-NLS
                     "UTERUS", "VAGINA", "VULVA", "WHOLEBODY", "WRIST", "ZYGOMA" }; // NON-NLS
             }
-            String[] val = values.split(","); //$NON-NLS-1$
+            String[] val = values.split(","); 
             List<String> list = new ArrayList<>(val.length);
             for (String s : val) {
                 String v = s.trim();
@@ -346,7 +346,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
             if (values == null) {
                 return new String[0];
             }
-            String[] val = values.split(","); //$NON-NLS-1$
+            String[] val = values.split(","); 
             List<String> list = new ArrayList<>(val.length);
             for (String s : val) {
                 if (StringUtil.hasText(s)) {

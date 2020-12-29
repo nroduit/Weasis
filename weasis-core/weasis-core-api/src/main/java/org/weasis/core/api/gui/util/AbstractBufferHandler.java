@@ -35,7 +35,7 @@ public abstract class AbstractBufferHandler {
     private String path;
     private boolean isDirty;
     private final Component parent;
-    private String addOpenMessage = ""; //$NON-NLS-1$
+    private String addOpenMessage = "";
     private FileFilter fileFilter;
 
     public AbstractBufferHandler(Component component) {
@@ -99,7 +99,7 @@ public abstract class AbstractBufferHandler {
                     + addOpenMessage,
                 Messages.getString("AbstractBufferHandler.open"), 0);
             setPath(null);
-            addOpenMessage = ""; //$NON-NLS-1$
+            addOpenMessage = "";
             return false;
         } else {
             isDirty = false;
@@ -132,11 +132,11 @@ public abstract class AbstractBufferHandler {
         }
         File file = jfilechooser.getSelectedFile();
         String filename;
-        String extension = ""; //$NON-NLS-1$
+        String extension = "";
 
         FileFilter filter = jfilechooser.getFileFilter();
         if (filter instanceof FileFormatFilter) {
-            extension = "." + ((FileFormatFilter) filter).getDefaultExtension(); //$NON-NLS-1$
+            extension = "." + ((FileFormatFilter) filter).getDefaultExtension();
         }
 
         if ((file.getPath()).endsWith(extension)) {

@@ -45,7 +45,7 @@ public class AdvancedShape implements Shape {
     private Graphic graphic;
 
     public AdvancedShape(Graphic graphic, int initialShapeNumber) {
-        this.graphic = Objects.requireNonNull(graphic, "Graphic cannot be null!"); //$NON-NLS-1$
+        this.graphic = Objects.requireNonNull(graphic, "Graphic cannot be null!"); 
         this.shapeList = new ArrayList<>(initialShapeNumber);
     }
 

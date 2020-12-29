@@ -134,7 +134,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
         }
 
         if (prefDir == null) {
-            prefDir = Paths.get(System.getProperty("user.home")); //$NON-NLS-1$
+            prefDir = Paths.get(System.getProperty("user.home"));
         }
 
         if (Files.isReadable(prefDir) && prefDir.toFile().isDirectory()) {

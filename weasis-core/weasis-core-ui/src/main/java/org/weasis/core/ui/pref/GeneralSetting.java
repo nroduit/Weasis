@@ -109,7 +109,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
         try {
             JMVUtils.setNumberModel(spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
-            JMVUtils.setNumberModel(spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1); //$NON-NLS-1$
+            JMVUtils.setNumberModel(spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1); 
             jbInit();
             initialize(true);
         } catch (Exception e) {
@@ -179,7 +179,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         gbcTxtpnNote.gridx = 0;
         gbcTxtpnNote.gridy = 3;
         txtpnNote.setEditorKit(JMVUtils.buildHTMLEditorKit(txtpnNote));
-        txtpnNote.setContentType("text/html"); //$NON-NLS-1$
+        txtpnNote.setContentType("text/html"); 
         txtpnNote.setEditable(false);
         txtpnNote.setText(getText());
         add(txtpnNote, gbcTxtpnNote);
@@ -296,7 +296,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
         WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
         chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
         panel1.add(comboBoxLogLevel);
-        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));//$NON-NLS-1$
+        comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));
         panel1.add(horizontalStrut);
 
         panel1.add(lblStacktraceLimit);
@@ -308,15 +308,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
         }
         comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : ""); 
         panel1.add(comboBoxStackLimit);
-        chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); //$NON-NLS-1$
+        chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, ""))); 
         spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
-        spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); //$NON-NLS-1$
+        spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB")); 
         checkRolingLog();
 
-        comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); //$NON-NLS-1$
+        comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code")); 
         comboBoxFormat.selectLocale();
 
-        String className = prfs.getProperty("weasis.look"); //$NON-NLS-1$
+        String className = prfs.getProperty("weasis.look"); 
         if (className == null) {
             LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
             if (currentLAF != null) {
@@ -354,11 +354,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     @Override
     public void closeAdditionalWindow() {
-        BundleTools.SYSTEM_PREFERENCES.putBooleanProperty("weasis.confirm.closing", chckbxConfirmClosing.isSelected()); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.putBooleanProperty("weasis.confirm.closing", chckbxConfirmClosing.isSelected()); 
 
         String limit = (String) comboBoxStackLimit.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_STACKTRACE_LIMIT,
-            StringUtil.hasText(limit) ? limit : "-1"); //$NON-NLS-1$
+            StringUtil.hasText(limit) ? limit : "-1"); 
 
         LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
         BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
@@ -372,19 +372,19 @@ public class GeneralSetting extends AbstractItemDialogPage {
         String fileSize = null;
         if (chckbxFileLog.isSelected()) {
             fileNb = spinner.getValue().toString();
-            fileSize = spinner1.getValue().toString() + "MB"; //$NON-NLS-1$
+            fileSize = spinner1.getValue().toString() + "MB"; 
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
             BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_SIZE, fileSize);
         }
         String pattern = BundleTools.SYSTEM_PREFERENCES.getProperty(AuditLog.LOG_PATTERN,
-            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}"); //$NON-NLS-1$
+            "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}"); 
         BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
         AuditLog.createOrUpdateLogger(context, "default.log", new String[] { "org" }, level.toString(), logFile, // NON-NLS
             pattern, fileNb, fileSize, limit);
 
         LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
         if (look != null) {
-            BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.look", look.getClassName()); //$NON-NLS-1$
+            BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.look", look.getClassName()); 
         }
         // save preferences
         BundleTools.saveSystemPreferences();
@@ -415,19 +415,19 @@ public class GeneralSetting extends AbstractItemDialogPage {
         BundleTools.SYSTEM_PREFERENCES.resetProperty(BundleTools.CONFIRM_CLOSE, Boolean.FALSE.toString());
 
         // Reset properties used by OSGI service (Sling Logger)
-        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3"); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO"); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, ""); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); //$NON-NLS-1$
-        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_STACKTRACE_LIMIT, "3"); 
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_LEVEL, "INFO"); 
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, ""); 
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5"); 
+        BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB");  //NON-NLS
 
         BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
         // Reset cache of locale format
         LocalUtil.setLocaleFormat(null);
         // Reset format to the config.properties value or null (default system value)
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);//$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
 
-        BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null); //$NON-NLS-1$
+        BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null); 
 
     }
 
@@ -457,9 +457,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     public static String setLookAndFeel(String look) {
         // Do not display metal LAF in bold, it is ugly
-        UIManager.put("swing.boldMetal", Boolean.FALSE); //$NON-NLS-1$
+        UIManager.put("swing.boldMetal", Boolean.FALSE); 
         // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
-        UIManager.put("Slider.paintValue", Boolean.FALSE); //$NON-NLS-1$
+        UIManager.put("Slider.paintValue", Boolean.FALSE); 
 
         String laf = getAvailableLookAndFeel(look);
         try {
@@ -485,13 +485,13 @@ public class GeneralSetting extends AbstractItemDialogPage {
             }
         }
         if (laf == null) {
-            if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { //$NON-NLS-1$
-                laf = "com.apple.laf.AquaLookAndFeel"; //$NON-NLS-1$
+            if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) {  //NON-NLS
+                laf = "com.apple.laf.AquaLookAndFeel"; 
             } else {
                 // Try to set Nimbus, concurrent thread issue
                 // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
                 for (int i = 0, n = lafs.length; i < n; i++) {
-                    if ("Nimbus".equals(lafs[i].getName())) { //$NON-NLS-1$
+                    if ("Nimbus".equals(lafs[i].getName())) {  //NON-NLS
                         laf = lafs[i].getClassName();
                         break;
                     }

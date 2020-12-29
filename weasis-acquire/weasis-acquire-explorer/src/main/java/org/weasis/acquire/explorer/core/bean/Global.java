@@ -22,7 +22,7 @@ import org.weasis.dicom.codec.TagD;
 
 public class Global extends DefaultTagable {
 
-    public static final Integer patientDicomGroupNumber = Integer.parseInt("0010", 16); //$NON-NLS-1$
+    public static final Integer patientDicomGroupNumber = Integer.parseInt("0010", 16); 
 
     protected boolean allowFullEdition = true;
 

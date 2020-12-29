@@ -131,15 +131,15 @@ public final class LutShape {
     public static final LutShape getLutShape(String shape) {
         if (shape != null) {
             String val = shape.toUpperCase();
-            if ("LINEAR".equals(val)) { //$NON-NLS-1$
+            if ("LINEAR".equals(val)) {
                 return LutShape.LINEAR;
-            } else if ("SIGMOID".equals(val)) { //$NON-NLS-1$
+            } else if ("SIGMOID".equals(val)) {
                 return LutShape.SIGMOID;
-            } else if ("SIGMOID_NORM".equals(val)) { //$NON-NLS-1$
+            } else if ("SIGMOID_NORM".equals(val)) { //NON-NLS
                 return LutShape.SIGMOID_NORM;
-            } else if ("LOG".equals(val)) { //$NON-NLS-1$
+            } else if ("LOG".equals(val)) {
                 return LutShape.LOG;
-            } else if ("LOG_INV".equals(val)) { //$NON-NLS-1$
+            } else if ("LOG_INV".equals(val)) { //NON-NLS
                 return LutShape.LOG_INV;
             }
         }

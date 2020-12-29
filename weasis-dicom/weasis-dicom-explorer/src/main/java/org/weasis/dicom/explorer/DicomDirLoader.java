@@ -65,12 +65,12 @@ public class DicomDirLoader {
 
     public DicomDirLoader(File dcmDirFile, DataExplorerModel explorerModel, boolean writeInCache) {
         if (dcmDirFile == null || !dcmDirFile.canRead() || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("invalid parameters");
         }
         this.dicomModel = (DicomModel) explorerModel;
         this.writeInCache = writeInCache;
         this.dcmDirFile = dcmDirFile;
-        wadoParameters = new WadoParameters("", true); //$NON-NLS-1$
+        wadoParameters = new WadoParameters("", true);
         seriesList = new ArrayList<>();
 
     }
@@ -251,7 +251,7 @@ public class DicomDirLoader {
                                 Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, new Point(0, 0));
                             raster.setDataElements(0, 0, width, height, pixelData);
                             PhotometricInterpretation pmi = PhotometricInterpretation
-                                .fromString(iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2")); //$NON-NLS-1$
+                                .fromString(iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2"));
                             BufferedImage thumbnail = new BufferedImage(
                                 pmi.createColorModel(8, DataBuffer.TYPE_BYTE, Transcoder.sRGB, iconInstance), raster, false, null);
                             if (ImageProcessor.writeImage(thumbnail, thumbnailPath)) {

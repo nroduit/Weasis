@@ -24,8 +24,8 @@ public class AcquireToolBar<DicomImageElement> extends WtoolBar {
 
         // TODO add button for publishing, help...
         final JButton printButton =
-            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); //$NON-NLS-1$
-        printButton.setToolTipText(""); //$NON-NLS-1$
+            new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png"))); 
+        printButton.setToolTipText(""); 
         printButton.addActionListener(e -> {
             // Do nothing
         });

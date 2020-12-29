@@ -169,7 +169,7 @@ public class DicomNodeDialog extends JDialog {
             this.getContentPane().add(content, BorderLayout.NORTH);
             this.getContentPane().add(printOptionsPane, BorderLayout.CENTER);
         } else {
-            JLabel lblType = new JLabel("Usage type" + StringUtil.COLON); //$NON-NLS-1$
+            JLabel lblType = new JLabel(Messages.getString("usage.type") + StringUtil.COLON);
             GridBagConstraints gbcLblType = new GridBagConstraints();
             gbcLblType.anchor = GridBagConstraints.EAST;
             gbcLblType.insets = new Insets(0, 0, 5, 5);
@@ -189,7 +189,7 @@ public class DicomNodeDialog extends JDialog {
 
             if (typeNode == AbstractDicomNode.Type.DICOM_CALLING) {
                 portTf.setValue(11113);
-                hostnameTf.setText("localhost"); //$NON-NLS-1$
+                hostnameTf.setText("localhost");  //NON-NLS
             }
         }
 

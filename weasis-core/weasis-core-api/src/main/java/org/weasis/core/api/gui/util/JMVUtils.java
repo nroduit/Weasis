@@ -72,8 +72,8 @@ import org.weasis.core.util.StringUtil;
 public class JMVUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(JMVUtils.class);
 
-    public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); //$NON-NLS-1$
-    public static final Color TREE_SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); //$NON-NLS-1$
+    public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background"); 
+    public static final Color TREE_SELECTION_BACKROUND = (Color) javax.swing.UIManager.get("Tree.selectionBackground"); 
 
     private JMVUtils() {
         super();
@@ -186,8 +186,8 @@ public class JMVUtils {
     }
 
     private static void addCheckActionToJFormattedTextField(final JFormattedTextField textField) {
-        textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); //$NON-NLS-1$
-        textField.getActionMap().put("check", new AbstractAction() { //$NON-NLS-1$
+        textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); 
+        textField.getActionMap().put("check", new AbstractAction() { 
 
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -255,9 +255,9 @@ public class JMVUtils {
 
     public static Dimension getSmallIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if ("CDE/Motif".equalsIgnoreCase(look)) { //$NON-NLS-1$
+        if ("CDE/Motif".equalsIgnoreCase(look)) {  //NON-NLS
             return new Dimension(38, 34);
-        } else if (look.startsWith("GTK")) { //$NON-NLS-1$
+        } else if (look.startsWith("GTK")) { 
             return new Dimension(28, 28);
         } else {
             return new Dimension(22, 22);
@@ -266,7 +266,7 @@ public class JMVUtils {
 
     public static Dimension getBigIconButtonSize() {
         String look = UIManager.getLookAndFeel().getName();
-        if ("CDE/Motif".equalsIgnoreCase(look)) { //$NON-NLS-1$
+        if ("CDE/Motif".equalsIgnoreCase(look)) {  //NON-NLS
             return new Dimension(46, 42);
         } else if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { // NON-NLS
             return new Dimension(36, 36);
@@ -288,11 +288,11 @@ public class JMVUtils {
         JButton jButtonHelp;
         if (small) {
           jButtonHelp =
-              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png"))); //$NON-NLS-1$
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png"))); 
           jButtonHelp.setPreferredSize(getSmallIconButtonSize());
         } else {
           jButtonHelp =
-              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png"))); //$NON-NLS-1$
+              new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png"))); 
           jButtonHelp.setPreferredSize(getBigIconButtonSize());
         }
         jButtonHelp.addActionListener(
@@ -300,7 +300,7 @@ public class JMVUtils {
               try {
                 JMVUtils.openInDefaultBrowser(
                     jButtonHelp,
-                    new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic)); //$NON-NLS-1$
+                    new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic)); 
               } catch (MalformedURLException e1) {
                 LOGGER.error("Cannot open online help", e1);
               }
@@ -313,27 +313,27 @@ public class JMVUtils {
         Objects.requireNonNull(component);
         HTMLEditorKit kit = new HTMLEditorKit();
         StyleSheet ss = kit.getStyleSheet();
-        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" //$NON-NLS-1$
-            + Integer.toHexString((component.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" //$NON-NLS-1$
+        ss.addRule("body {font-family:sans-serif;font-size:12pt;background-color:#" 
+            + Integer.toHexString((component.getBackground().getRGB() & 0xffffff) | 0x1000000).substring(1) + ";color:#" 
             + Integer.toHexString((component.getForeground().getRGB() & 0xffffff) | 0x1000000).substring(1)
-            + ";margin:3;font-weight:normal;}"); //$NON-NLS-1$
+            + ";margin:3;font-weight:normal;}"); 
         return kit;
     }
 
     public static void addStylesToHTML(StyledDocument doc) {
         // Initialize some styles.
-        Style regular = doc.getStyle("default"); //$NON-NLS-1$
-        Style s = doc.addStyle("title", regular); //$NON-NLS-1$
+        Style regular = doc.getStyle("default");  //NON-NLS
+        Style s = doc.addStyle("title", regular);  //NON-NLS
         StyleConstants.setFontSize(s, 16);
         StyleConstants.setBold(s, true);
-        s = doc.addStyle("bold", regular); //$NON-NLS-1$
+        s = doc.addStyle("bold", regular);  //NON-NLS
         StyleConstants.setBold(s, true);
         StyleConstants.setFontSize(s, 12);
-        s = doc.addStyle("small", regular); //$NON-NLS-1$
+        s = doc.addStyle("small", regular);  //NON-NLS
         StyleConstants.setFontSize(s, 10);
-        s = doc.addStyle("large", regular); //$NON-NLS-1$
+        s = doc.addStyle("large", regular);  //NON-NLS
         StyleConstants.setFontSize(s, 14);
-        s = doc.addStyle("italic", regular); //$NON-NLS-1$
+        s = doc.addStyle("italic", regular);  //NON-NLS
         StyleConstants.setFontSize(s, 12);
         StyleConstants.setItalic(s, true);
     }
@@ -364,9 +364,9 @@ public class JMVUtils {
 
     public static void openInDefaultBrowser(Component parent, URL url) {
         if (url != null) {
-            if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { //$NON-NLS-1$
+            if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) {  //NON-NLS
                 try {
-                    String cmd = String.format("xdg-open %s", url); //$NON-NLS-1$
+                    String cmd = String.format("xdg-open %s", url);  //NON-NLS
                     Runtime.getRuntime().exec(cmd);
                 } catch (IOException e) {
                     LOGGER.error("Cannot open URL to the system browser", e);
@@ -423,14 +423,14 @@ public class JMVUtils {
 
     public static String getValueRGBasText(Color color) {
         if (color == null) {
-            return ""; //$NON-NLS-1$
+            return ""; 
         }
         return "red = " + color.getRed() + ", green = " + color.getGreen() + ", blue = " + color.getBlue(); // NON-NLS
     }
 
     public static String getValueRGBasText2(Color color) {
         if (color == null) {
-            return ""; //$NON-NLS-1$
+            return ""; 
         }
         return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue();
     }

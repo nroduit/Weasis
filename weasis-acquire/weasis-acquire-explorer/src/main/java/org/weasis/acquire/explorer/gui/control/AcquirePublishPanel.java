@@ -42,7 +42,7 @@ public class AcquirePublishPanel extends JPanel {
     private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish"));
     private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
 
-    public static final ExecutorService PUBLISH_DICOM = ThreadUtil.buildNewSingleThreadExecutor("Publish Dicom"); //$NON-NLS-1$
+    public static final ExecutorService PUBLISH_DICOM = ThreadUtil.buildNewSingleThreadExecutor("Publish Dicom"); //NON-NLS
 
     public AcquirePublishPanel() {
         // setBorder(new TitledBorder(null, "Publish", TitledBorder.LEADING, TitledBorder.TOP, null, null));
@@ -70,11 +70,11 @@ public class AcquirePublishPanel extends JPanel {
     }
 
     private void publishChanged(PropertyChangeEvent evt) {
-        if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
+        if ("progress".equals(evt.getPropertyName())) {
             int progress = (Integer) evt.getNewValue();
             progressBar.setValue(progress);
 
-        } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
+        } else if ("state".equals(evt.getPropertyName())) {
             if (StateValue.STARTED == evt.getNewValue()) {
                 publishBtn.setEnabled(false);
                 progressBar.setVisible(true);

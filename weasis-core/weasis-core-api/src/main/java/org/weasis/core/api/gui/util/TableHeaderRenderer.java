@@ -43,8 +43,8 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
                 Color fgColor = null;
                 Color bgColor = null;
                 if (hasFocus) {
-                    fgColor = UIManager.getColor("TableHeader.focusCellForeground"); //$NON-NLS-1$
-                    bgColor = UIManager.getColor("TableHeader.focusCellBackground"); //$NON-NLS-1$
+                    fgColor = UIManager.getColor("TableHeader.focusCellForeground");
+                    bgColor = UIManager.getColor("TableHeader.focusCellBackground");
                 }
                 if (fgColor == null) {
                     fgColor = header.getForeground();
@@ -59,16 +59,16 @@ public class TableHeaderRenderer extends JLabel implements TableCellRenderer {
         }
         String val = value == null ? null : value.toString();
         if (!StringUtil.hasText(val)) {
-            val = " "; //$NON-NLS-1$
+            val = " ";
         }
         setText(val);
         setToolTipText(val);
         Border border = null;
         if (hasFocus) {
-            border = UIManager.getBorder("TableHeader.focusCellBorder"); //$NON-NLS-1$
+            border = UIManager.getBorder("TableHeader.focusCellBorder");
         }
         if (border == null) {
-            border = UIManager.getBorder("TableHeader.cellBorder"); //$NON-NLS-1$
+            border = UIManager.getBorder("TableHeader.cellBorder");
         }
         setBorder(border);
         return this;

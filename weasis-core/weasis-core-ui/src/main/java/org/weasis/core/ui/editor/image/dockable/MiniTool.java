@@ -53,7 +53,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
         Dimension dim = new Dimension(5, 5);
         add(Box.createRigidArea(dim));
-        final DropDownButton button = new DropDownButton("Mini", currentAction.getActionW().getSmallDropButtonIcon()) { //$NON-NLS-1$
+        final DropDownButton button = new DropDownButton("Mini", currentAction.getActionW().getSmallDropButtonIcon()) { //NON-NLS
 
             @Override
             protected JPopupMenu getPopupMenu() {

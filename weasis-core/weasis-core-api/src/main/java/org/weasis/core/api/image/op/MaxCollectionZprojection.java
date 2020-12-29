@@ -21,7 +21,7 @@ public class MaxCollectionZprojection {
 
     public MaxCollectionZprojection(List<ImageElement> sources) {
         if (sources == null) {
-            throw new IllegalArgumentException("Sources cannot be null!"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Sources cannot be null!"); 
         }
         this.sources = sources; 
     }

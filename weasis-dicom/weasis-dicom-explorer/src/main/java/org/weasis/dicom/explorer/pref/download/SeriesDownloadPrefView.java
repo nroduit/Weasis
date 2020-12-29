@@ -28,7 +28,7 @@ import org.weasis.dicom.explorer.Messages;
 
 @SuppressWarnings("serial")
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
-    public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately"; //$NON-NLS-1$
+    public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
 
     private JCheckBox downloadImmediatelyCheckbox =
         new JCheckBox(Messages.getString("SeriesDownloadPrefView.downloadImmediatelyCheckbox"));

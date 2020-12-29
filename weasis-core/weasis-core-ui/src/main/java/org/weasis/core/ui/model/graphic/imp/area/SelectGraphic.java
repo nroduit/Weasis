@@ -40,7 +40,7 @@ import org.weasis.core.ui.model.utils.imp.SelectedDragSequence;
 public class SelectGraphic extends RectangleGraphic {
     private static final long serialVersionUID = -7680605225823046153L;
 
-    public static final Icon ICON = new ImageIcon(SelectGraphic.class.getResource("/icon/22x22/draw-selection.png")); //$NON-NLS-1$
+    public static final Icon ICON = new ImageIcon(SelectGraphic.class.getResource("/icon/22x22/draw-selection.png")); 
 
     public SelectGraphic() {
         super();

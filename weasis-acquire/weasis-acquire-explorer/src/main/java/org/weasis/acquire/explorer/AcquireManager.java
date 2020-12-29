@@ -89,7 +89,7 @@ import org.xml.sax.SAXException;
 public class AcquireManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
-    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("patient")); //$NON-NLS-1$
+    public static final List<String> functions = Collections.unmodifiableList(Arrays.asList("patient"));  //NON-NLS
     public static final Global GLOBAL = new Global();
 
     private static final int OPT_NONE = 0;
@@ -267,7 +267,7 @@ public class AcquireManager {
     private static SeriesGroup findSeries(SeriesGroup searchedSeries, AcquireImageInfo imageInfo,
         int maxRangeInMinutes) {
 
-        Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null"); //$NON-NLS-1$
+        Objects.requireNonNull(imageInfo, "findSeries imageInfo should not be null"); 
 
         if (SeriesGroup.Type.DATE.equals(searchedSeries.getType())) {
             LocalDateTime imageDate = TagD.dateTime(Tag.ContentDate, Tag.ContentTime, imageInfo.getImage());
@@ -391,9 +391,9 @@ public class AcquireManager {
     }
 
     private static void showWorklist() {
-        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.host"); //$NON-NLS-1$
-        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.aet"); //$NON-NLS-1$
-        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.port"); //$NON-NLS-1$
+        String host = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.host"); 
+        String aet = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.aet"); 
+        String port = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.wkl.port"); 
         if (StringUtil.hasText(aet) && StringUtil.hasText(host) && StringUtil.hasText(port)) {
             DicomNode called = new DicomNode(aet, host, Integer.parseInt(port));
             DicomNode calling = new DicomNode(
@@ -417,19 +417,19 @@ public class AcquireManager {
      * @throws IOException
      */
     public void patient(String[] argv) throws IOException {
-        final String[] usage = { "Load Patient Context from the first argument", //$NON-NLS-1$
-            "Usage: acquire:patient (-x | -i | -s | -u) arg", //$NON-NLS-1$
-            "arg is an XML text in UTF8 or an url with the option '--url'", //$NON-NLS-1$
-            "  -x --xml         Open Patient Context from an XML data containing all DICOM Tags ", //$NON-NLS-1$
-            "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]", //$NON-NLS-1$
-            "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]", //$NON-NLS-1$
-            "  -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)", //$NON-NLS-1$
-            "  -? --help        show help" }; //$NON-NLS-1$
+        final String[] usage = { "Load Patient Context from the first argument",  //NON-NLS
+            "Usage: acquire:patient (-x | -i | -s | -u) arg",  //NON-NLS
+            "arg is an XML text in UTF8 or an url with the option '--url'",  //NON-NLS
+            "  -x --xml         Open Patient Context from an XML data containing all DICOM Tags ",  //NON-NLS
+            "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]",  //NON-NLS
+            "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]",  //NON-NLS
+            "  -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)",  //NON-NLS
+            "  -? --help        show help" };  //NON-NLS
 
         final Option opt = Options.compile(usage).parse(argv);
         final List<String> args = opt.args();
 
-        if (opt.isSet("help") || args.isEmpty()) { //$NON-NLS-1$
+        if (opt.isSet("help") || args.isEmpty()) { 
             opt.usage();
             return;
         }
@@ -441,13 +441,13 @@ public class AcquireManager {
 
         final Document newPatientContext;
 
-        if (opt.isSet("xml")) { //$NON-NLS-1$
+        if (opt.isSet("xml")) { 
             newPatientContext = getPatientContext(arg, OPT_NONE);
-        } else if (opt.isSet("inbound")) { //$NON-NLS-1$
+        } else if (opt.isSet("inbound")) {  //NON-NLS
             newPatientContext = getPatientContext(arg, OPT_B64ZIP);
-        } else if (opt.isSet("iurlsafe")) { //$NON-NLS-1$
+        } else if (opt.isSet("iurlsafe")) {  //NON-NLS
             newPatientContext = getPatientContext(arg, OPT_B64URLSAFEZIP);
-        } else if (opt.isSet("url")) { //$NON-NLS-1$
+        } else if (opt.isSet("url")) {  //NON-NLS
             newPatientContext = getPatientContextFromUrl(arg);
         } else {
             newPatientContext = null;
@@ -560,7 +560,7 @@ public class AcquireManager {
      */
     private static Document getPatientContext(byte[] byteArray, int codeOption) {
         if (byteArray == null || byteArray.length == 0) {
-            throw new IllegalArgumentException("empty byteArray parameter"); //$NON-NLS-1$
+            throw new IllegalArgumentException("empty byteArray parameter"); 
         }
 
         if (codeOption != OPT_NONE) {
@@ -585,8 +585,8 @@ public class AcquireManager {
         try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); //$NON-NLS-1$
-            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, ""); //$NON-NLS-1$
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, ""); 
+            factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, ""); 
             return factory.newDocumentBuilder().parse(inputStream);
         } catch (SAXException | IOException | ParserConfigurationException e) {
             LOGGER.error("Parsing Patient Context XML", e);
@@ -628,12 +628,12 @@ public class AcquireManager {
      */
     private static URI getURIFromURL(String urlStr) {
         if (!StringUtil.hasText(urlStr)) {
-            throw new IllegalArgumentException("empty urlString parameter"); //$NON-NLS-1$
+            throw new IllegalArgumentException("empty urlString parameter"); 
         }
 
         URI uri = null;
 
-        if (!urlStr.startsWith("http")) { //$NON-NLS-1$
+        if (!urlStr.startsWith("http")) {  //NON-NLS
             try {
                 File file = new File(urlStr);
                 if (file.canRead()) {

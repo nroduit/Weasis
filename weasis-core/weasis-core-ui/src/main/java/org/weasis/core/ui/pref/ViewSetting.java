@@ -28,7 +28,7 @@ import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public class ViewSetting {
-    public static final String PREFERENCE_NODE = "view2d.default"; //$NON-NLS-1$
+    public static final String PREFERENCE_NODE = "view2d.default";
     private int fontType;
     private int fontSize;
     private String fontName;
@@ -42,18 +42,18 @@ public class ViewSetting {
     public void applyPreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences font = p.node("font"); //$NON-NLS-1$
-            fontName = font.get("name", Messages.getString("LabelPrefView.default")); //$NON-NLS-1$ //$NON-NLS-2$
-            fontType = font.getInt("type", 0); //$NON-NLS-1$
-            fontSize = font.getInt("size", 12); //$NON-NLS-1$
-            Preferences draw = p.node("drawing"); //$NON-NLS-1$
-            drawOnlyOnce = draw.getBoolean("once", true); //$NON-NLS-1$
-            lineWidth = draw.getInt("width", 1); //$NON-NLS-1$
-            int rgb = draw.getInt("color", Color.YELLOW.getRGB()); //$NON-NLS-1$
+            Preferences font = p.node("font"); //NON-NLS
+            fontName = font.get("name", Messages.getString("LabelPrefView.default")); // NON-NLS
+            fontType = font.getInt("type", 0);
+            fontSize = font.getInt("size", 12); //NON-NLS
+            Preferences draw = p.node("drawing"); //NON-NLS
+            drawOnlyOnce = draw.getBoolean("once", true); //NON-NLS
+            lineWidth = draw.getInt("width", 1); //NON-NLS
+            int rgb = draw.getInt("color", Color.YELLOW.getRGB()); //NON-NLS
             lineColor = new Color(rgb);
-            Preferences stats = p.node("statistics"); //$NON-NLS-1$
-            basicStatistics = stats.getBoolean("basic", true); //$NON-NLS-1$
-            moreStatistics = stats.getBoolean("more", true); //$NON-NLS-1$
+            Preferences stats = p.node("statistics"); //NON-NLS
+            basicStatistics = stats.getBoolean("basic", true); //NON-NLS
+            moreStatistics = stats.getBoolean("more", true); //NON-NLS
 
             ImageStatistics.IMAGE_PIXELS.setComputed(basicStatistics);
             ImageStatistics.IMAGE_MIN.setComputed(basicStatistics);
@@ -66,11 +66,11 @@ public class ViewSetting {
             ImageStatistics.IMAGE_KURTOSIS.setComputed(moreStatistics);
             ImageStatistics.IMAGE_ENTROPY.setComputed(moreStatistics);
 
-            String labels = stats.get("label", null); //$NON-NLS-1$
+            String labels = stats.get("label", null); //NON-NLS
             if (labels != null) {
-                String[] items = labels.split(","); //$NON-NLS-1$
+                String[] items = labels.split(",");
                 for (int i = 0; i < items.length; i++) {
-                    String[] val = items[i].split(":"); //$NON-NLS-1$
+                    String[] val = items[i].split(":");
                     if (val.length == 2) {
                         for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
                             if (val[0].equals(String.valueOf(m.getId()))) {
@@ -88,11 +88,11 @@ public class ViewSetting {
                 List<Measurement> list = graph.getMeasurementList();
                 if (list != null && !list.isEmpty()) {
                     Preferences gpref = p.node(graph.getClass().getSimpleName());
-                    labels = gpref.get("label", null); //$NON-NLS-1$
+                    labels = gpref.get("label", null); //NON-NLS
                     if (labels != null) {
-                        String[] items = labels.split(","); //$NON-NLS-1$
+                        String[] items = labels.split(",");
                         for (int k = 0; k < items.length; k++) {
-                            String[] val = items[k].split(":"); //$NON-NLS-1$
+                            String[] val = items[k].split(":");
                             if (val.length == 2) {
                                 for (Measurement m : list) {
                                     if (val[0].equals(String.valueOf(m.getId()))) {
@@ -133,14 +133,14 @@ public class ViewSetting {
             }
 
             Monitor monitor = new Monitor(gd[i]);
-            StringBuilder buf = new StringBuilder("screen."); //$NON-NLS-1$
+            StringBuilder buf = new StringBuilder("screen."); //NON-NLS
             buf.append(monitor.getMonitorID());
             Rectangle b = monitor.getBounds();
-            buf.append("."); //$NON-NLS-1$
+            buf.append(".");
             buf.append(b.width);
-            buf.append("x"); //$NON-NLS-1$
+            buf.append("x"); //NON-NLS
             buf.append(b.height);
-            buf.append(".pitch"); //$NON-NLS-1$
+            buf.append(".pitch");
             double pitch = BundleTools.LOCAL_UI_PERSISTENCE.getDoubleProperty(buf.toString(), 0.0);
             monitor.setRealScaleFactor(pitch);
             monitors.add(monitor);
@@ -148,38 +148,38 @@ public class ViewSetting {
     }
 
     private static boolean isTrueValue(String val) {
-        return "1".equals(val.trim()); //$NON-NLS-1$
+        return "1".equals(val.trim());
     }
 
     private static void writeLabels(StringBuilder buffer, Measurement m) {
         buffer.append(m.getId());
-        buffer.append(":"); //$NON-NLS-1$
-        buffer.append(m.getGraphicLabel() ? "1" : "0"); //$NON-NLS-1$ //$NON-NLS-2$
+        buffer.append(":");
+        buffer.append(m.getGraphicLabel() ? "1" : "0"); // NON-NLS
     }
 
     public void savePreferences(Preferences prefs) {
         if (prefs != null) {
             Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
-            Preferences font = p.node("font"); //$NON-NLS-1$
-            BundlePreferences.putStringPreferences(font, "name", fontName); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(font, "type", fontType); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(font, "size", fontSize); //$NON-NLS-1$
+            Preferences font = p.node("font"); //NON-NLS
+            BundlePreferences.putStringPreferences(font, "name", fontName); //NON-NLS
+            BundlePreferences.putIntPreferences(font, "type", fontType); //NON-NLS
+            BundlePreferences.putIntPreferences(font, "size", fontSize); //NON-NLS
 
-            Preferences draw = p.node("drawing"); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(draw, "width", lineWidth); //$NON-NLS-1$
-            BundlePreferences.putIntPreferences(draw, "color", lineColor.getRGB()); //$NON-NLS-1$
+            Preferences draw = p.node("drawing"); //NON-NLS
+            BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); //NON-NLS
+            BundlePreferences.putIntPreferences(draw, "width", lineWidth); //NON-NLS
+            BundlePreferences.putIntPreferences(draw, "color", lineColor.getRGB()); //NON-NLS
 
-            Preferences stats = p.node("statistics"); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); //$NON-NLS-1$
-            BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); //$NON-NLS-1$
+            Preferences stats = p.node("statistics"); //NON-NLS
+            BundlePreferences.putBooleanPreferences(stats, "basic", basicStatistics); //NON-NLS
+            BundlePreferences.putBooleanPreferences(stats, "more", moreStatistics); //NON-NLS
             StringBuilder buffer = new StringBuilder();
             writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[0]);
             for (int i = 1; i < ImageStatistics.ALL_MEASUREMENTS.length; i++) {
-                buffer.append(","); //$NON-NLS-1$
+                buffer.append(",");
                 writeLabels(buffer, ImageStatistics.ALL_MEASUREMENTS[i]);
             }
-            BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //$NON-NLS-1$
+            BundlePreferences.putStringPreferences(stats, "label", buffer.toString()); //NON-NLS
 
             // Forget the Selection Graphic
             for (int i = 1; i < MeasureToolBar.measureGraphicList.size(); i++) {
@@ -190,10 +190,10 @@ public class ViewSetting {
                     buffer = new StringBuilder();
                     writeLabels(buffer, list.get(0));
                     for (int j = 1; j < list.size(); j++) {
-                        buffer.append(","); //$NON-NLS-1$
+                        buffer.append(",");
                         writeLabels(buffer, list.get(j));
                     }
-                    BundlePreferences.putStringPreferences(gpref, "label", buffer.toString()); //$NON-NLS-1$
+                    BundlePreferences.putStringPreferences(gpref, "label", buffer.toString()); //NON-NLS
                 }
             }
         }

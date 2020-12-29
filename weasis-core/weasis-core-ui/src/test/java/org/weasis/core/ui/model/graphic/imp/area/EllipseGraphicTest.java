@@ -18,13 +18,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
-    private static final String XML_0 = "/graphic/ellipse/ellipse.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/ellipse/ellipse.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/ellipse/ellipse.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/ellipse/ellipse.graphic.1.xml"; //NON-NLS
 
-    public static final String BASIC_TPL = "<ellipse fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</ellipse>"; //$NON-NLS-1$
+    public static final String BASIC_TPL = "<ellipse fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</ellipse>"; //NON-NLS
 
     public static final EllipseGraphic COMPLETE_OBJECT = new EllipseGraphic();
     static {

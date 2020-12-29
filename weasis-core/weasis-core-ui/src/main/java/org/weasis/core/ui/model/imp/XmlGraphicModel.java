@@ -34,16 +34,16 @@ public class XmlGraphicModel extends AbstractGraphicModel {
     }
 
     private static List<ReferencedSeries> buildReferences(ImageElement img) {
-        String seriesUUID = (String) img.getTagValue(TagW.get("SeriesInstanceUID")); //$NON-NLS-1$
+        String seriesUUID = (String) img.getTagValue(TagW.get("SeriesInstanceUID"));
         if (seriesUUID == null) {
             seriesUUID = java.util.UUID.randomUUID().toString();
-            img.setTag(TagW.get("SeriesInstanceUID"), seriesUUID); //$NON-NLS-1$
+            img.setTag(TagW.get("SeriesInstanceUID"), seriesUUID);
         }
 
-        String uid = (String) img.getTagValue(TagW.get("SOPInstanceUID")); //$NON-NLS-1$
+        String uid = (String) img.getTagValue(TagW.get("SOPInstanceUID"));
         if (uid == null) {
             uid = java.util.UUID.randomUUID().toString();
-            img.setTag(TagW.get("SOPInstanceUID"), uid); //$NON-NLS-1$
+            img.setTag(TagW.get("SOPInstanceUID"), uid);
         }
 
         List<Integer> frameList = new ArrayList<>(1);

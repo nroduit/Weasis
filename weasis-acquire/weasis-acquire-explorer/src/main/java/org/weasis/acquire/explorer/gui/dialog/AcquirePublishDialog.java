@@ -68,8 +68,8 @@ import org.weasis.opencv.data.PlanarImage;
 public class AcquirePublishDialog extends JDialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
 
-    public static final String P_LAST_RESOLUTION = "last.resolution"; //$NON-NLS-1$
-    public static final String PREFERENCE_NODE = "publish"; //$NON-NLS-1$
+    public static final String P_LAST_RESOLUTION = "last.resolution";
+    public static final String PREFERENCE_NODE = "publish"; //NON-NLS
 
     public enum Resolution {
         ORIGINAL(Messages.getString("AcquirePublishDialog.original"), Integer.MAX_VALUE),
@@ -210,7 +210,7 @@ public class AcquirePublishDialog extends JDialog {
         destPane.add(lblDestination);
         AbstractDicomNode.addTooltipToComboList(comboNode);
 
-        if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) { //$NON-NLS-1$
+        if (!StringUtil.hasText(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) {
             AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
             if (comboNode.getItemCount() == 0) {
                 comboNode.addItem(getDestinationConfiguration());
@@ -287,11 +287,11 @@ public class AcquirePublishDialog extends JDialog {
         ActionListener taskCancelActionListener = e -> dicomizeTask.cancel(true);
 
         dicomizeTask.addPropertyChangeListener(evt -> {
-            if ("progress".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            if ("progress".equals(evt.getPropertyName())) {
                 int progress = (Integer) evt.getNewValue();
                 progressBar.setValue(progress);
 
-            } else if ("state".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            } else if ("state".equals(evt.getPropertyName())) {
 
                 if (StateValue.STARTED == evt.getNewValue()) {
                     resolutionPane.setVisible(false);
@@ -339,7 +339,7 @@ public class AcquirePublishDialog extends JDialog {
             }
         });
 
-        ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); //$NON-NLS-1$
+        ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); //NON-NLS
 
     }
 

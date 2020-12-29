@@ -21,10 +21,10 @@ public class WindowOp extends AbstractOp {
 
     public static final String OP_NAME = Messages.getString("WindowLevelOperation.title");
 
-    public static final String P_IMAGE_ELEMENT = "img.element"; //$NON-NLS-1$
-    public static final String P_FILL_OUTSIDE_LUT = "fill.outside.lut"; //$NON-NLS-1$
-    public static final String P_APPLY_WL_COLOR = "weasis.color.wl.apply"; //$NON-NLS-1$
-    public static final String P_INVERSE_LEVEL = "weasis.level.inverse"; //$NON-NLS-1$
+    public static final String P_IMAGE_ELEMENT = "img.element";
+    public static final String P_FILL_OUTSIDE_LUT = "fill.outside.lut";
+    public static final String P_APPLY_WL_COLOR = "weasis.color.wl.apply";
+    public static final String P_INVERSE_LEVEL = "weasis.level.inverse";
 
     public WindowOp() {
         setName(OP_NAME);

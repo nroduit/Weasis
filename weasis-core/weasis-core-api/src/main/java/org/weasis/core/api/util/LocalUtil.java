@@ -32,7 +32,7 @@ public class LocalUtil {
 
     public static String localeToText(Locale value) {
         if (value == null) {
-            return "en"; //$NON-NLS-1$
+            return "en";  //NON-NLS
         }
         return value.toString();
     }
@@ -42,14 +42,14 @@ public class LocalUtil {
             return Locale.ENGLISH;
         }
 
-        if ("system".equals(value)) { //$NON-NLS-1$
+        if ("system".equals(value)) {  //NON-NLS
             return getSystemLocale();
         }
 
-        String[] val = value.split("_", 3); //$NON-NLS-1$
-        String language = val.length > 0 ? val[0] : ""; //$NON-NLS-1$
-        String country = val.length > 1 ? val[1] : ""; //$NON-NLS-1$
-        String variant = val.length > 2 ? val[2] : ""; //$NON-NLS-1$
+        String[] val = value.split("_", 3); 
+        String language = val.length > 0 ? val[0] : ""; 
+        String country = val.length > 1 ? val[1] : ""; 
+        String variant = val.length > 2 ? val[2] : ""; 
 
         return new Locale(language, country, variant);
     }

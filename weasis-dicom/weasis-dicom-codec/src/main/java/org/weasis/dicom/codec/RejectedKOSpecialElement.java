@@ -41,10 +41,10 @@ public class RejectedKOSpecialElement extends AbstractKOSpecialElement {
                 if (item != null) {
                     String cm = item.getString(Tag.CodeMeaning, null);
                     if (cm != null) {
-                        return "Rejected for Quality Reasons".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Rejected for Patient Safety Reasons".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Incorrect Modality Worklist Entry".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Data Retention Policy Expired".equalsIgnoreCase(cm); //$NON-NLS-1$
+                        return "Rejected for Quality Reasons".equalsIgnoreCase(cm) //NON-NLS
+                            || "Rejected for Patient Safety Reasons".equalsIgnoreCase(cm) //NON-NLS
+                            || "Incorrect Modality Worklist Entry".equalsIgnoreCase(cm) //NON-NLS
+                            || "Data Retention Policy Expired".equalsIgnoreCase(cm); //NON-NLS
                     }
                 }
             }

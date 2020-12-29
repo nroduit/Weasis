@@ -45,7 +45,7 @@ public class Activator implements BundleActivator, ServiceListener {
         registerCommands(bundleContext);
         File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
-            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_UI_PERSISTENCE);//$NON-NLS-1$
+            FileUtil.readProperties(new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_UI_PERSISTENCE);
         }
         Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
         AbstractInfoLayer.applyPreferences(prefs);
@@ -65,7 +65,7 @@ public class Activator implements BundleActivator, ServiceListener {
         });
 
         bundleContext.addServiceListener(this,
-            String.format("(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName()));//$NON-NLS-1$
+            String.format("(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName())); //NON-NLS
     }
 
     @Override
@@ -76,7 +76,7 @@ public class Activator implements BundleActivator, ServiceListener {
         MeasureTool.viewSetting.savePreferences(prefs);
         File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
         if (dataFolder != null) {
-            File file = new File(dataFolder, "persitence.properties"); //$NON-NLS-1$
+            File file = new File(dataFolder, "persitence.properties");
             FileUtil.prepareToWriteFile(file);
             FileUtil.storeProperties(file, BundleTools.LOCAL_UI_PERSISTENCE, null);
         }
@@ -118,7 +118,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     private static void registerCommands(BundleContext context) {
         Dictionary<String, Object> dict = new Hashtable<>();
-        dict.put(CommandProcessor.COMMAND_SCOPE, "image"); //$NON-NLS-1$
+        dict.put(CommandProcessor.COMMAND_SCOPE, "image");
         dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions.toArray(new String[AbstractFileModel.functions.size()]));
         context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
     }

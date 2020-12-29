@@ -54,13 +54,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     public static final ActionW[] actionsScroll =
         { ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION };
     public static final Icon MouseLeftIcon =
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png")); //$NON-NLS-1$
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-left.png"));
     public static final Icon MouseRightIcon =
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-right.png")); //$NON-NLS-1$
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-right.png"));
     public static final Icon MouseMiddleIcon =
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-middle.png")); //$NON-NLS-1$
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-middle.png"));
     public static final Icon MouseWheelIcon =
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-wheel.png")); //$NON-NLS-1$
+        new ImageIcon(MouseActions.class.getResource("/icon/32x32/mouse-wheel.png"));
 
     protected final ImageViewerEventManager<E> eventManager;
     private final DropDownButton mouseLeft;
@@ -72,7 +72,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     public ViewerToolBar(final ImageViewerEventManager<E> eventManager, int activeMouse, WProperties props, int index) {
         super(Messages.getString("ViewerToolBar.title"), index);
         if (eventManager == null) {
-            throw new IllegalArgumentException("EventManager cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("EventManager cannot be null");
         }
         this.eventManager = eventManager;
 
@@ -120,10 +120,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             addSeparator(WtoolBar.SEPARATOR_2x24);
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) { //$NON-NLS-1$
+        if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
             final DropDownButton layout =
-                new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //$NON-NLS-1$
-                    .getResource("/icon/32x32/layout.png")))) { //$NON-NLS-1$
+                new DropDownButton("layout", new DropButtonIcon(new ImageIcon(MouseActions.class //NON-NLS
+                    .getResource("/icon/32x32/layout.png")))) {
 
                     @Override
                     protected JPopupMenu getPopupMenu() {
@@ -134,7 +134,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             add(layout);
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) { //$NON-NLS-1$
+        if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) {
             add(Box.createRigidArea(new Dimension(5, 0)));
 
             synchButton = buildSynchButton();
@@ -143,10 +143,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             synchButton = null;
         }
 
-        if (props.getBooleanProperty("weasis.toolbar.reset", true)) { //$NON-NLS-1$
+        if (props.getBooleanProperty("weasis.toolbar.reset", true)) {
             final JButton resetButton = new JButton();
-            resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset")); //$NON-NLS-1$
-            resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png"))); //$NON-NLS-1$
+            resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset"));
+            resetButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/reset.png")));
             resetButton.addActionListener(e -> eventManager.resetDisplay());
             ActionState layout = eventManager.getAction(ActionW.RESET);
             if (layout != null) {
@@ -178,7 +178,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         ActionState layout = eventManager.getAction(ActionW.LAYOUT);
         JPopupMenu popupMouseButtons = new JPopupMenu();
         if (layout instanceof ComboItemListener) {
-            JMenu menu = ((ComboItemListener) layout).createUnregisteredRadioMenu("layout"); //$NON-NLS-1$
+            JMenu menu = ((ComboItemListener) layout).createUnregisteredRadioMenu("layout"); //NON-NLS
             popupMouseButtons.setInvoker(dropDownButton);
             Component[] cps = menu.getMenuComponents();
             for (int i = 0; i < cps.length; i++) {
@@ -363,7 +363,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     private static Icon buildSynchIcon(SynchView synch) {
-        final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png")); //$NON-NLS-1$
+        final Icon mouseIcon = new ImageIcon(MouseActions.class.getResource("/icon/32x32/synch.png"));
         final Icon smallIcon = synch.getIcon();
         return new DropButtonIcon(new Icon() {
 

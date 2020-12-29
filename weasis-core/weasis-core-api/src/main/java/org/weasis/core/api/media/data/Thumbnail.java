@@ -53,8 +53,8 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 
     public static final File THUMBNAIL_CACHE_DIR =
-        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //$NON-NLS-1$
-    public static final ExecutorService THUMB_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader"); //$NON-NLS-1$
+        AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "thumb"); //NON-NLS
+    public static final ExecutorService THUMB_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader"); //NON-NLS
 
     public static final RenderingHints DownScaleQualityHints =
         new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -87,7 +87,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     public Thumbnail(final MediaElement media, int thumbnailSize, boolean keepMediaCache, OpManager opManager) {
         super(null, null, SwingConstants.CENTER);
         if (media == null) {
-            throw new IllegalArgumentException("image cannot be null"); //$NON-NLS-1$
+            throw new IllegalArgumentException("image cannot be null");
         }
         this.thumbnailSize = thumbnailSize;
         init(media, keepMediaCache, opManager);
@@ -121,26 +121,26 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         if (media != null) {
             String mime = media.getMimeType();
             if (mime != null) {
-                if (mime.startsWith("image")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.img"); //$NON-NLS-1$
+                if (mime.startsWith("image")) {
+                    type = Messages.getString("Thumbnail.img");
                     icon = MimeInspector.imageIcon;
-                } else if (mime.startsWith("video")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.video"); //$NON-NLS-1$
+                } else if (mime.startsWith("video")) { //NON-NLS
+                    type = Messages.getString("Thumbnail.video");
                     icon = MimeInspector.videoIcon;
-                } else if (mime.equals("sr/dicom")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.dicom_sr"); //$NON-NLS-1$
+                } else if (mime.equals("sr/dicom")) { //NON-NLS
+                    type = Messages.getString("Thumbnail.dicom_sr");
                     icon = MimeInspector.textIcon;
-                } else if (mime.startsWith("txt")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.text"); //$NON-NLS-1$
+                } else if (mime.startsWith("txt")) {
+                    type = Messages.getString("Thumbnail.text");
                     icon = MimeInspector.textIcon;
-                } else if (mime.endsWith("html")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.html"); //$NON-NLS-1$
+                } else if (mime.endsWith("html")) {
+                    type = Messages.getString("Thumbnail.html");
                     icon = MimeInspector.htmlIcon;
-                } else if (mime.equals("application/pdf")) { //$NON-NLS-1$
-                    type = Messages.getString("Thumbnail.pdf"); //$NON-NLS-1$
+                } else if (mime.equals("application/pdf")) {
+                    type = Messages.getString("Thumbnail.pdf");
                     icon = MimeInspector.pdfIcon;
-                } else if (mime.equals("wf/dicom")) { //$NON-NLS-1$
-                    type = "ECG"; //$NON-NLS-1$
+                } else if (mime.equals("wf/dicom")) { //NON-NLS
+                    type = "ECG";
                     icon = MimeInspector.ecgIcon;
                 } else if (mime.startsWith("audio") || mime.equals("au/dicom")) { // NON-NLS
                     type = Messages.getString("Thumbnail.audio");
@@ -229,7 +229,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                 };
                 THUMB_LOADER.execute(thumbnailReader);
             } catch (Exception e) {
-                LOGGER.error("Cannot build thumbnail!", e);//$NON-NLS-1$
+                LOGGER.error("Cannot build thumbnail!", e);
                 loading.set(false);
             }
 
@@ -263,7 +263,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                             try {
                                 file = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); // NON-NLS
                             } catch (IOException e) {
-                                LOGGER.error("Cannot create file for thumbnail!", e);//$NON-NLS-1$
+                                LOGGER.error("Cannot create file for thumbnail!", e);
                             }
                         }
                         try {
@@ -326,7 +326,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                     // We don't need the result, so cancel the task too
                     future.cancel(true);
                 } catch (ExecutionException e) {
-                    LOGGER.error("Cannot read thumbnail pixel data!: {}", file, e);//$NON-NLS-1$
+                    LOGGER.error("Cannot read thumbnail pixel data!: {}", file, e);
                 }
                 if ((thumb == null && media != null) || (thumb != null && thumb.width() <= 0)) {
                     readable = false;

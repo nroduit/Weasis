@@ -28,15 +28,15 @@ public class Activator implements BundleActivator {
 
     @Override
     public void start(final BundleContext context) throws Exception {
-        String cache = context.getProperty("weasis.portable.dicom.cache"); //$NON-NLS-1$
+        String cache = context.getProperty("weasis.portable.dicom.cache");
         DicomManager.getInstance().setPortableDirCache(!((cache != null) && cache.equalsIgnoreCase(Boolean.FALSE.toString())));
-        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
+        FileUtil.readProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"),
             IMPORT_EXPORT_PERSISTENCE);
     }
 
     @Override
     public void stop(BundleContext context) throws Exception {
-        FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"), //$NON-NLS-1$
+        FileUtil.storeProperties(new File(BundlePreferences.getDataFolder(context), "import-export.properties"),
             IMPORT_EXPORT_PERSISTENCE, null);
 
         DicomModel.LOADING_EXECUTOR.shutdownNow();

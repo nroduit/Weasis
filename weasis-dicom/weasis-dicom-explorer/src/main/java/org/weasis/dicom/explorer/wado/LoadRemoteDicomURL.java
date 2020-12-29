@@ -40,7 +40,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     public LoadRemoteDicomURL(String[] urls, DataExplorerModel explorerModel) {
         super(Messages.getString("DicomExplorer.loading"), true);
         if (urls == null || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("invalid parameters");
         }
         URL[] urlRef = new URL[urls.length];
         for (int i = 0; i < urls.length; i++) {
@@ -59,7 +59,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
     public LoadRemoteDicomURL(URL[] urls, DataExplorerModel explorerModel) {
         super(Messages.getString("DicomExplorer.loading"), true);
         if (urls == null || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+            throw new IllegalArgumentException("invalid parameters");
         }
         this.urls = urls;
         this.dicomModel = (DicomModel) explorerModel;
@@ -89,7 +89,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
             Series dicomSeries = new DicomSeries(seriesUID);
             dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
             dicomSeries.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
-            final WadoParameters wadoParameters = new WadoParameters("", false); //$NON-NLS-1$
+            final WadoParameters wadoParameters = new WadoParameters("", false);
             dicomSeries.setTag(TagW.WadoParameters, wadoParameters);
             SeriesInstanceList seriesInstanceList = new SeriesInstanceList();
             dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);

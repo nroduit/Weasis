@@ -57,7 +57,7 @@ public class XmlSerializer {
     public static void writePresentation(ImageElement img, File destinationFile) {
         GraphicModel model = (GraphicModel) img.getTagValue(TagW.PresentationModel);
         if (model != null && !model.getModels().isEmpty()) {
-            File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml"); //$NON-NLS-1$
+            File gpxFile = new File(destinationFile.getParent(), destinationFile.getName() + ".xml");
 
             try {
                 JAXBContext jaxbContext = getJaxbContext(model.getClass());

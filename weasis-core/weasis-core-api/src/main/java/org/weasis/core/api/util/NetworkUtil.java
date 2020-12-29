@@ -39,16 +39,16 @@ public class NetworkUtil {
     }
 
     public static int getUrlConnectionTimeout() {
-        return StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000); //$NON-NLS-1$
+        return StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 5000);
     }
 
     public static int getUrlReadTimeout() {
-        return StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000); //$NON-NLS-1$
+        return StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000);
     }
 
     public static URI getURI(String pathOrUri) throws MalformedURLException, URISyntaxException {
         URI uri = null;
-        if (!pathOrUri.startsWith("http")) { //$NON-NLS-1$
+        if (!pathOrUri.startsWith("http")) { //NON-NLS
             try {
                 File file = new File(pathOrUri);
                 if (file.canRead()) {
@@ -94,7 +94,7 @@ public class NetworkUtil {
             HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
             try {
                 if (urlParameters.isHttpPost()) {
-                    httpURLConnection.setRequestMethod("POST"); //$NON-NLS-1$
+                    httpURLConnection.setRequestMethod("POST");
                 } else {
                     return new ClosableURLConnection(readResponse(httpURLConnection, headers));
                 }
@@ -143,22 +143,22 @@ public class NetworkUtil {
     public static URLConnection applyRedirectionStream(URLConnection urlConnection, Map<String, String> headers)
         throws IOException {
         URLConnection c = urlConnection;
-        String redirect = c.getHeaderField("Location"); //$NON-NLS-1$
+        String redirect = c.getHeaderField("Location");
         for (int i = 0; i < MAX_REDIRECTS; i++) {
             if (redirect != null) {
-                String cookies = c.getHeaderField("Set-Cookie"); //$NON-NLS-1$
+                String cookies = c.getHeaderField("Set-Cookie");
                 if (c instanceof HttpURLConnection) {
                     ((HttpURLConnection) c).disconnect();
                 }
                 c = new URL(redirect).openConnection();
-                c.setRequestProperty("Cookie", cookies); //$NON-NLS-1$
+                c.setRequestProperty("Cookie", cookies);
                 if (headers != null && headers.size() > 0) {
                     for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext();) {
                         Entry<String, String> element = iter.next();
                         c.addRequestProperty(element.getKey(), element.getValue());
                     }
                 }
-                redirect = c.getHeaderField("Location"); //$NON-NLS-1$
+                redirect = c.getHeaderField("Location");
             } else {
                 break;
             }

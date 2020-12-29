@@ -21,8 +21,8 @@ import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomQidoNode extends AbstractDicomNode {
 
-    private static final String Q_URL = "urlQido"; //$NON-NLS-1$
-    private static final String W_URL = "urlWado"; //$NON-NLS-1$
+    private static final String Q_URL = "urlQido"; 
+    private static final String W_URL = "urlWado"; 
 
     private URL qidoUrl;
     private URL wadoUrl;
@@ -36,17 +36,17 @@ public class DicomQidoNode extends AbstractDicomNode {
     @Override
     public String getToolTips() {
         StringBuilder toolTips = new StringBuilder();
-        toolTips.append("<html>"); //$NON-NLS-1$
+        toolTips.append("<html>"); 
         toolTips.append(toString());
-        toolTips.append("<br>"); //$NON-NLS-1$
-        toolTips.append("QIDO-RS"); //$NON-NLS-1$
+        toolTips.append("<br>"); 
+        toolTips.append("QIDO-RS");  //NON-NLS
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(qidoUrl);
-        toolTips.append("<br>"); //$NON-NLS-1$
-        toolTips.append("WADO-RS"); //$NON-NLS-1$
+        toolTips.append("<br>"); 
+        toolTips.append("WADO-RS");  //NON-NLS
         toolTips.append(StringUtil.COLON_AND_SPACE);
         toolTips.append(wadoUrl);
-        toolTips.append("</html>"); //$NON-NLS-1$
+        toolTips.append("</html>"); 
         return toolTips.toString();
     }
 

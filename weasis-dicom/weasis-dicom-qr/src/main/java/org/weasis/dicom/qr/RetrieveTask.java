@@ -105,7 +105,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 params.setConnectOptions(connectOptions);
 
                 if (RetrieveType.CGET == type) {
-                    File sopClass = ResourceUtil.getResource("store-tcs.properties"); //$NON-NLS-1$
+                    File sopClass = ResourceUtil.getResource("store-tcs.properties");  //NON-NLS
                     URL url = null;
                     if (sopClass.canRead()) {
                         try {
@@ -133,9 +133,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                         if (dicomListener != null) {
                             dicomListener.stop();
                         }
-                        String msg = Messages.getString("RetrieveTask.msg_start_listener"); //$NON-NLS-1$
-                        errorMessage = String.format("%s: %s.", msg, e.getMessage()); //$NON-NLS-1$
-                        LOGGER.error("Start DICOM listener", e); //$NON-NLS-1$
+                        String msg = Messages.getString("RetrieveTask.msg_start_listener");
+                        errorMessage = String.format("%s: %s.", msg, e.getMessage());  //NON-NLS
+                        LOGGER.error("Start DICOM listener", e);
                     }
 
                     if (errorMessage != null) {
@@ -185,7 +185,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
                     DicomWebNode wnode = wadoURLs.get(0);
                     WadoParameters wadoParameters =
-                        new WadoParameters("local", wnode.getUrl().toString(), false, null, null, null); //$NON-NLS-1$
+                        new WadoParameters("local", wnode.getUrl().toString(), false, null, null, null);  //NON-NLS
                     wnode.getHeaders().forEach(wadoParameters::addHttpTag);
                   
                     CFindQueryResult query = new CFindQueryResult(wadoParameters);
@@ -231,7 +231,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
             }
 
         } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet"); //$NON-NLS-1$
+            throw new IllegalAccessError("Not implemented yet"); 
         } else {
             errorMessage = Messages.getString("RetrieveTask.no_calling_node");
         }

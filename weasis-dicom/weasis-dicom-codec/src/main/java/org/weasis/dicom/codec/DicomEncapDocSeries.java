@@ -53,12 +53,12 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
     public void addMedia(DicomEncapDocElement media) {
         if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
             DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
-            String extension = ".tmp"; //$NON-NLS-1$
+            String extension = ".tmp";
             Attributes ds = dicomImageLoader.getDicomObject();
             String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
             String ext = MimeInspector.getExtensions(mime);
             if (StringUtil.hasText(extension)) {
-                extension = "." + ext; //$NON-NLS-1$
+                extension = "." + ext;
             }
             // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
             Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
@@ -67,7 +67,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
                 FileInputStream in = null;
                 FileOutputStream out = null;
                 try {
-                    File file = File.createTempFile("encap_", extension, AppProperties.FILE_CACHE_DIR); //$NON-NLS-1$
+                    File file = File.createTempFile("encap_", extension, AppProperties.FILE_CACHE_DIR);
                     in = new FileInputStream(media.getFile());
                     out = new FileOutputStream(file);
                     StreamUtils.skipFully(in, bulkData.offset());

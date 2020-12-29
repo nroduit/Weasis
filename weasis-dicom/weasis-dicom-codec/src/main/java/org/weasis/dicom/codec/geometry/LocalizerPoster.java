@@ -102,13 +102,13 @@ public abstract class LocalizerPoster {
      */
     public static void validateDirectionCosines(Vector3d row, Vector3d column) {
         if (Math.abs(row.lengthSquared() - 1) > 0.001) {
-            throw new IllegalArgumentException("Row not a unit vector"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Row not a unit vector"); 
         }
         if (Math.abs(column.lengthSquared() - 1) > 0.001) {
-            throw new IllegalArgumentException("Column not a unit vector"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Column not a unit vector"); 
         }
         if (row.dot(column) > 0.005) { // dot product should be cos(90)=0 if orthogonal
-            throw new IllegalArgumentException("Row and column vectors are not orthogonal"); //$NON-NLS-1$
+            throw new IllegalArgumentException("Row and column vectors are not orthogonal"); 
         }
     }
 

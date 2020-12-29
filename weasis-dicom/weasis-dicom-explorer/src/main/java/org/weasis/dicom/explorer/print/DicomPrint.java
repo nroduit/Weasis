@@ -93,8 +93,8 @@ public class DicomPrint {
         Graphics2D g2d = (Graphics2D) bufferedImage.getGraphics();
 
         if (g2d != null) {
-            Color borderColor = "WHITE".equals(printOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
-            Color background = "WHITE".equals(printOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK; //$NON-NLS-1$
+            Color borderColor = "WHITE".equals(printOptions.getBorderDensity()) ? Color.WHITE : Color.BLACK;
+            Color background = "WHITE".equals(printOptions.getEmptyDensity()) ? Color.WHITE : Color.BLACK;
             g2d.setBackground(background);
             if (!Color.BLACK.equals(background)) {
                 // Change background color
@@ -163,7 +163,7 @@ public class DicomPrint {
         int width = filmSize.getWidth(dpi);
         int height = filmSize.getHeight(dpi);
 
-        if ("LANDSCAPE".equals(printOptions.getFilmOrientation())) { //$NON-NLS-1$
+        if ("LANDSCAPE".equals(printOptions.getFilmOrientation())) {
             int tmp = width;
             width = height;
             height = tmp;
@@ -172,9 +172,9 @@ public class DicomPrint {
         String mType = printOptions.getMagnificationType();
         interpolation = 1;
 
-        if ("REPLICATE".equals(mType)) { //$NON-NLS-1$
+        if ("REPLICATE".equals(mType)) {
             interpolation = 0;
-        } else if ("CUBIC".equals(mType)) { //$NON-NLS-1$
+        } else if ("CUBIC".equals(mType)) {
             interpolation = 2;
         }
 
@@ -199,9 +199,9 @@ public class DicomPrint {
             image.getInfoLayer().setVisible(false);
         }
 
-        Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound"); //$NON-NLS-1$
-        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset"); //$NON-NLS-1$
-        Double originZoom = (Double) image.getActionValue("origin.zoom"); //$NON-NLS-1$
+        Rectangle2D originSize = (Rectangle2D) image.getActionValue("origin.image.bound");
+        Point2D originCenterOffset = (Point2D) image.getActionValue("origin.center.offset");
+        Double originZoom = (Double) image.getActionValue("origin.zoom");
         PlanarImage img = image.getSourceImage();
         if (img != null && originCenterOffset != null && originZoom != null) {
             boolean bestfit = originZoom <= 0.0;
@@ -370,7 +370,7 @@ public class DicomPrint {
             LOGGER.warn("DICOM Print warning status: {}", Integer.toHexString(status));
         } else if (status != Status.Success) {
             throw new IOException(
-                "Unable to print the image. DICOM response status: " + Integer.toHexString(status)); //$NON-NLS-1$
+                "Unable to print the image. DICOM response status: " + Integer.toHexString(status));
         }
     }
 

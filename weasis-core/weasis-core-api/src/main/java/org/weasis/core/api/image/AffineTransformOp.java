@@ -33,16 +33,16 @@ public class AffineTransformOp extends AbstractOp {
      *
      * Double array (length of 6).
      */
-    public static final String P_AFFINE_MATRIX = "affine.matrix"; //$NON-NLS-1$
+    public static final String P_AFFINE_MATRIX = "affine.matrix";
 
     /**
      * Set the interpolation type (Optional parameter).
      *
      * Integer value. Default value is bilinear interpolation. See javax.media.jai.Interpolation.
      */
-    public static final String P_INTERPOLATION = "interpolation"; //$NON-NLS-1$
+    public static final String P_INTERPOLATION = "interpolation"; //NON-NLS
 
-    public static final String P_DST_BOUNDS = "dest.bounds"; //$NON-NLS-1$
+    public static final String P_DST_BOUNDS = "dest.bounds";
 
     public AffineTransformOp() {
         setName(OP_NAME);

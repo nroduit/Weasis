@@ -134,17 +134,17 @@ public class RetrieveTreeModel {
         public String getToolTipText() {
             TagReadable s = (TagReadable) getUserObject();
             StringBuilder toolTips = new StringBuilder();
-            toolTips.append("<html>"); //$NON-NLS-1$
+            toolTips.append("<html>");
             s.getTagEntrySetIterator().forEachRemaining(i -> {
                 TagW tag = i.getKey();
-                toolTips.append("<b>"); //$NON-NLS-1$
+                toolTips.append("<b>");
                 toolTips.append(tag.getDisplayedName());
-                toolTips.append("</b>"); //$NON-NLS-1$
+                toolTips.append("</b>");
                 toolTips.append(StringUtil.COLON_AND_SPACE);
                 toolTips.append(tag.getFormattedTagValue(i.getValue(), null));
-                toolTips.append("<br>"); //$NON-NLS-1$
+                toolTips.append("<br>");
             });
-            toolTips.append("</html>"); //$NON-NLS-1$
+            toolTips.append("</html>");
             return toolTips.toString();
         }
     }
@@ -167,15 +167,15 @@ public class RetrieveTreeModel {
                         URL url = path.toURI().toURL();
                         if (url != null) {
                             StringBuilder buf = new StringBuilder();
-                            buf.append("<html>"); //$NON-NLS-1$
-                            buf.append("<img src=\""); //$NON-NLS-1$
+                            buf.append("<html>");
+                            buf.append("<img src=\""); //NON-NLS
                             buf.append(url.toString());
-                            buf.append("\"><br>"); //$NON-NLS-1$
+                            buf.append("\"><br>"); //NON-NLS
                             LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
                             if (date != null) {
                                 buf.append(TagUtil.formatDateTime(date));
                             }
-                            buf.append("</html>"); //$NON-NLS-1$
+                            buf.append("</html>");
                             return buf.toString();
                         }
                     }
@@ -192,14 +192,14 @@ public class RetrieveTreeModel {
             StringBuilder buf = new StringBuilder();
             Integer val = TagD.getTagValue(s, Tag.SeriesNumber, Integer.class);
             if (val != null) {
-                buf.append("["); //$NON-NLS-1$
+                buf.append("[");
                 buf.append(val);
-                buf.append("] "); //$NON-NLS-1$
+                buf.append("] ");
             }
             String modality = TagD.getTagValue(s, Tag.Modality, String.class);
             if (modality != null) {
                 buf.append(modality);
-                buf.append(" "); //$NON-NLS-1$
+                buf.append(" ");
             }
             String desc = TagD.getTagValue(s, Tag.SeriesDescription, String.class);
             if (desc != null) {

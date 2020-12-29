@@ -21,15 +21,15 @@ public class SwingResources {
     
     private static final Logger LOGGER = Logger.getLogger(SwingResources.class.getName());
     
-    static final String AND_MNEMONIC = "AndMnemonic"; //$NON-NLS-1$
-    static final String TITLE_SUFFIX = ".titleAndMnemonic"; //$NON-NLS-1$
-    static final String TEXT_SUFFIX = ".textAndMnemonic"; //$NON-NLS-1$
+    static final String AND_MNEMONIC = "AndMnemonic"; 
+    static final String TITLE_SUFFIX = ".titleAndMnemonic"; 
+    static final String TEXT_SUFFIX = ".textAndMnemonic"; 
 
-    static final String KEY_MNEMONIC = "Mnemonic"; //$NON-NLS-1$
-    static final String KEY_MNEMONIC_INDEX = "DisplayedMnemonicIndex"; //$NON-NLS-1$
-    static final String KEY_TEXT = "Text"; //$NON-NLS-1$
+    static final String KEY_MNEMONIC = "Mnemonic";  //NON-NLS
+    static final String KEY_MNEMONIC_INDEX = "DisplayedMnemonicIndex"; 
+    static final String KEY_TEXT = "Text";  //NON-NLS
 
-    static final String KEY_TITLE = "Title"; //$NON-NLS-1$
+    static final String KEY_TITLE = "Title";  //NON-NLS
     
     private SwingResources() {
     }
@@ -79,8 +79,8 @@ public class SwingResources {
                             compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), KEY_TEXT);
                             UIManager.put(compositeKey, getTextFromProperty(text));
                             if (mnemonic != null) {
-                                if (stringKey.startsWith("ColorChooser")) { //$NON-NLS-1$
-                                    compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), "NameText"); //$NON-NLS-1$
+                                if (stringKey.startsWith("ColorChooser")) { 
+                                    compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), "NameText"); 
                                     UIManager.put(compositeKey, getTextFromProperty(text));
                                 }
                                 compositeKey = composeKey(stringKey, TEXT_SUFFIX.length(), KEY_MNEMONIC);

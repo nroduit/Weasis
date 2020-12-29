@@ -88,7 +88,7 @@ public class GraphicsPane extends JComponent implements Canvas {
                 this.graphicManager.updateLabels(Boolean.TRUE, (ViewCanvas) this);
             }
             this.graphicManager.addChangeListener(layerModelHandler);
-            firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager); //$NON-NLS-1$
+            firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager); 
         }
     }
 
@@ -147,7 +147,7 @@ public class GraphicsPane extends JComponent implements Canvas {
             if (this.viewModel != null) {
                 this.viewModel.addViewModelChangeListener(viewModelHandler);
             }
-            firePropertyChange("viewModel", viewModelOld, this.viewModel); //$NON-NLS-1$
+            firePropertyChange("viewModel", viewModelOld, this.viewModel); 
         }
     }
 
@@ -377,19 +377,19 @@ public class GraphicsPane extends JComponent implements Canvas {
             String s = propertychangeevent.getPropertyName();
             if (obj instanceof Graphic) {
                 Graphic graph = (Graphic) obj;
-                if ("bounds".equals(s)) { //$NON-NLS-1$
+                if ("bounds".equals(s)) { 
                     graphicBoundsChanged(graph, (Shape) propertychangeevent.getOldValue(),
                         (Shape) propertychangeevent.getNewValue(), getAffineTransform());
-                } else if ("graphicLabel".equals(s)) { //$NON-NLS-1$
+                } else if ("graphicLabel".equals(s)) { 
                     labelBoundsChanged(graph, (DefaultGraphicLabel) propertychangeevent.getOldValue(),
                         (DefaultGraphicLabel) propertychangeevent.getNewValue(), getAffineTransform());
-                } else if ("remove".equals(s)) { //$NON-NLS-1$
+                } else if ("remove".equals(s)) { 
                     removeGraphic(graph);
-                } else if ("remove.repaint".equals(s)) { //$NON-NLS-1$
+                } else if ("remove.repaint".equals(s)) { 
                     removeGraphicAndRepaint(graph);
-                } else if ("toFront".equals(s)) { //$NON-NLS-1$
+                } else if ("toFront".equals(s)) { 
                     toFront(graph);
-                } else if ("toBack".equals(s)) { //$NON-NLS-1$
+                } else if ("toBack".equals(s)) { 
                     toBack(graph);
                 }
             }

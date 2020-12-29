@@ -38,20 +38,20 @@ import org.weasis.core.util.StringUtil;
 public class MimeInspector {
     private static final Logger LOGGER = LoggerFactory.getLogger(MimeInspector.class);
 
-    public static final String UNKNOWN_MIME_TYPE = "application/x-unknown-mime-type"; //$NON-NLS-1$
-    public static final Icon unknownIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/unknown.png")); //$NON-NLS-1$
+    public static final String UNKNOWN_MIME_TYPE = "application/x-unknown-mime-type";  //NON-NLS
+    public static final Icon unknownIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/unknown.png")); 
     public static final Icon textIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-x-generic.png")); //$NON-NLS-1$
-    public static final Icon htmlIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-html.png")); //$NON-NLS-1$
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-x-generic.png")); 
+    public static final Icon htmlIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-html.png")); 
     public static final Icon imageIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); //$NON-NLS-1$
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/image-x-generic.png")); 
     public static final Icon audioIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); //$NON-NLS-1$
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png")); 
     public static final Icon videoIcon =
-        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); //$NON-NLS-1$
-    public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); //$NON-NLS-1$
-    public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); //$NON-NLS-1$
-    public static final Icon ecgIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/ecg.png")); //$NON-NLS-1$
+        new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png")); 
+    public static final Icon dicomIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png")); 
+    public static final Icon pdfIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png")); 
+    public static final Icon ecgIcon = new ImageIcon(MimeInspector.class.getResource("/icon/22x22/ecg.png")); 
 
     private static final Properties mimeTypes = new Properties();
     private static final ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
@@ -61,7 +61,7 @@ public class MimeInspector {
         InputStream fileStream = null;
         try {
             // Load the default supplied mime types
-            fileStream = MimeInspector.class.getResourceAsStream("/mime-types.properties"); //$NON-NLS-1$
+            fileStream = MimeInspector.class.getResourceAsStream("/mime-types.properties");  //NON-NLS
             mimeTypes.load(fileStream);
         } catch (IOException e) {
             LOGGER.error("Error when reading mime-types", e);
@@ -70,7 +70,7 @@ public class MimeInspector {
         }
 
         // Parse and initialize the magic.mime rules
-        InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime"); //$NON-NLS-1$
+        InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime");  //NON-NLS
         if (is != null) {
             try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) { 
                 MimeInspector.parse(streamReader);
@@ -87,12 +87,12 @@ public class MimeInspector {
         if (file == null || mimeType == null || !file.canRead()) {
             return false;
         } else if (file.isDirectory()) {
-            return "application/directory".equals(mimeType); //$NON-NLS-1$
+            return "application/directory".equals(mimeType);  //NON-NLS
         }
         MagicMimeEntry me = getMagicMimeEntry(mimeType);
         if (me != null) {
             // Otherwise find Mime Type from the magic number in file
-            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {//$NON-NLS-1$
+            try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
                 if (mimeType.equals(me.getMatch(raf))) {
                     return true;
                 }
@@ -124,12 +124,12 @@ public class MimeInspector {
         if (file == null || !file.canRead()) {
             return null;
         } else if (file.isDirectory()) {
-            return "application/directory"; //$NON-NLS-1$
+            return "application/directory";  //NON-NLS
         }
         String mimeType = null;
 
         // Otherwise find Mime Type from the magic number in file
-        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {//$NON-NLS-1$
+        try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
             mimeType = MimeInspector.getMagicMimeType(raf);
         } catch (IOException e) {
             LOGGER.error("Error when getting mime-type", e);
@@ -151,7 +151,7 @@ public class MimeInspector {
         if (extension != null && extension.length() > 0 && extension.length() < 5) {
             String mimeType = mimeTypes.getProperty(extension.toLowerCase());
             if (mimeType != null) {
-                String[] mimes = mimeType.split(","); //$NON-NLS-1$
+                String[] mimes = mimeType.split(","); 
                 // When several Mimes for an extension, try to find from magic number
                 if (mimes.length > 1) {
                     return Optional.ofNullable(getMimeTypeFromMagicNumber(file)).orElse(mimes[0]);
@@ -238,7 +238,7 @@ public class MimeInspector {
     // Utility method to get the major part of a mime type
     public static String getMajorComponent(String mimeType) {
         if (mimeType == null) {
-            return ""; //$NON-NLS-1$
+            return ""; 
         }
         int offset = mimeType.indexOf('/');
         if (offset == -1) {
@@ -251,7 +251,7 @@ public class MimeInspector {
     // Utility method to get the minor part of a mime type
     public static String getMinorComponent(String mimeType) {
         if (mimeType == null) {
-            return ""; //$NON-NLS-1$
+            return ""; 
         }
         int offset = mimeType.indexOf('/');
         if (offset == -1) {
@@ -282,7 +282,7 @@ public class MimeInspector {
                 String key = (String) entry.getKey();
                 String val = (String) entry.getValue();
                 if (StringUtil.hasText(val)) {
-                    String[] mimes = val.split(","); //$NON-NLS-1$
+                    String[] mimes = val.split(","); 
                     for (String m : mimes) {
                         if(mime.equals(m)) {
                             return key;

@@ -124,7 +124,7 @@ public class WeasisWinListener implements MainWindowListener {
                             if (series.size() == 1) {
                                 MediaSeries<MediaElement> s = series.get(0);
                                 MediaSeriesGroup group = treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) { //$NON-NLS-1$
+                                if (inSelView && s.getMimeType().indexOf("dicom") == -1) { //NON-NLS
                                     // Change the group attribution. DO NOT use it with DICOM.
                                     group = selectedPlugin.getGroupID();
                                 }
@@ -141,7 +141,7 @@ public class WeasisWinListener implements MainWindowListener {
                                         List<MediaSeries<?>> seriesList = entry.getValue();
                                         if (!seriesList.isEmpty()) {
                                             // Change the group attribution. DO NOT use it with DICOM.
-                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) { //$NON-NLS-1$
+                                            if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) { //NON-NLS
                                                 group = selectedPlugin.getGroupID();
                                             }
                                         }

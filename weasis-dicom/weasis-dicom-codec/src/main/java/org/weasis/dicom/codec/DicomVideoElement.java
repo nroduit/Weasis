@@ -18,7 +18,7 @@ import org.weasis.core.util.FileUtil;
 
 public class DicomVideoElement extends AudioVideoElement implements FileExtractor {
 
-    public static final String MPEG_MIMETYPE = "video/mpeg"; //$NON-NLS-1$
+    public static final String MPEG_MIMETYPE = "video/mpeg";
 
     private double pixelSizeX = 1.0;
     private double pixelSizeY = 1.0;

@@ -99,7 +99,7 @@ public class DownloadManager {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DownloadManager.class);
 
-    public static final String CONCURRENT_SERIES = "download.concurrent.series"; //$NON-NLS-1$
+    public static final String CONCURRENT_SERIES = "download.concurrent.series";
     public static final List<LoadSeries> TASKS = new ArrayList<>();
 
     // Executor without concurrency (only one task is executed at the same time)
@@ -114,7 +114,7 @@ public class DownloadManager {
     public static final ThreadPoolExecutor CONCURRENT_EXECUTOR =
         new ThreadPoolExecutor(BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3),
             BundleTools.SYSTEM_PREFERENCES.getIntProperty(CONCURRENT_SERIES, 3), 0L, TimeUnit.MILLISECONDS,
-            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader")); //$NON-NLS-1$
+            PRIORITY_QUEUE, ThreadUtil.getThreadFactory("Series Downloader")); //NON-NLS
 
     public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
 
@@ -261,23 +261,23 @@ public class DownloadManager {
 
             String path = uri.getPath();
             URLParameters urlParameters = new URLParameters(BundleTools.SESSION_TAGS_MANIFEST,
-                StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000), //$NON-NLS-1$
-                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2); //$NON-NLS-1$
+                StringUtil.getInt(System.getProperty("UrlConnectionTimeout"), 7000),
+                StringUtil.getInt(System.getProperty("UrlReadTimeout"), 15000) * 2);
 
             ClosableURLConnection urlConnection = NetworkUtil.getUrlConnection(uri.toURL(), urlParameters);
 
             LOGGER.info("Downloading XML manifest: {}", path);
             InputStream urlInputStream = urlConnection.getInputStream();
 
-            if (path.endsWith(".gz")) { //$NON-NLS-1$
+            if (path.endsWith(".gz")) {
                 stream = new BufferedInputStream(new GZIPInputStream(urlInputStream));
-            } else if (path.endsWith(".xml")) { //$NON-NLS-1$
+            } else if (path.endsWith(".xml")) {
                 stream = urlInputStream;
             } else {
                 // In case wado file has no extension
                 File outFile = File.createTempFile("wado_", "", AppProperties.APP_TEMP_DIR); // NON-NLS
                 FileUtil.writeStreamWithIOException(urlInputStream, outFile);
-                if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //$NON-NLS-1$
+                if (MimeInspector.isMatchingMimeTypeFromMagicNumber(outFile, "application/x-gzip")) { //NON-NLS
                     stream = new BufferedInputStream(new GZIPInputStream(new FileInputStream(outFile)));
                 } else {
                     stream = new FileInputStream(outFile);
@@ -297,8 +297,8 @@ public class DownloadManager {
             SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
                 Schema schema = schemaFactory.newSchema(new Source[] {
-                    new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()), //$NON-NLS-1$
-                    new StreamSource(DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm()) }); //$NON-NLS-1$
+                    new StreamSource(DownloadManager.class.getResource("/config/wado_query.xsd").toExternalForm()),
+                    new StreamSource(DownloadManager.class.getResource("/config/manifest.xsd").toExternalForm()) });
                 Validator validator = schema.newValidator();
                 validator.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, StringUtil.EMPTY_STRING);
                 validator.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, StringUtil.EMPTY_STRING);
@@ -373,11 +373,11 @@ public class DownloadManager {
     }
 
     private static void readArcQuery(XMLStreamReader xmler, ReaderParams params) throws XMLStreamException {
-        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, ""); //$NON-NLS-1$
+        String arcID = TagUtil.getTagAttribute(xmler, ArcParameters.ARCHIVE_ID, "");
         String wadoURL = TagUtil.getTagAttribute(xmler, ArcParameters.BASE_URL, null);
         boolean onlySopUID = Boolean
             .parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-        String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
         final WadoParameters wadoParameters =
@@ -389,7 +389,7 @@ public class DownloadManager {
         String wadoURL = TagUtil.getTagAttribute(xmler, WadoParameters.WADO_URL, null);
         boolean onlySopUID = Boolean
             .parseBoolean(TagUtil.getTagAttribute(xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-        String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, ""); //$NON-NLS-1$
+        String additionnalParameters = TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
         String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
         String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
         final WadoParameters wadoParameters =
@@ -408,12 +408,12 @@ public class DownloadManager {
                 MediaSeriesGroup patient = readPatient(xmler, params, wadoParameters);
                 patients.add(patient);
             } else if (ArcParameters.TAG_HTTP_TAG.equals(key)) {
-                String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //$NON-NLS-1$
-                String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //$NON-NLS-1$
+                String httpkey = TagUtil.getTagAttribute(xmler, "key", null); //NON-NLS
+                String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); //NON-NLS
                 wadoParameters.addHttpTag(httpkey, httpvalue);
-            } else if ("Message".equals(key)) { //$NON-NLS-1$
-                final String title = TagUtil.getTagAttribute(xmler, "title", null); //$NON-NLS-1$
-                final String message = TagUtil.getTagAttribute(xmler, "description", null); //$NON-NLS-1$
+            } else if ("Message".equals(key)) { //NON-NLS
+                final String title = TagUtil.getTagAttribute(xmler, "title", null); //NON-NLS
+                final String message = TagUtil.getTagAttribute(xmler, "description", null);
                 if (StringUtil.hasText(title) && StringUtil.hasText(message)) {
                     String severity = TagUtil.getTagAttribute(xmler, "severity", "WARN"); // NON-NLS
                     final int messageType = "ERROR".equals(severity) ? JOptionPane.ERROR_MESSAGE

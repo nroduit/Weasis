@@ -22,13 +22,13 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.test.testers.GraphicTester;
 
 public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
-    private static final String XML_0 = "/graphic/pixel/pixel.graphic.0.xml"; //$NON-NLS-1$
-    private static final String XML_1 = "/graphic/pixel/pixel.graphic.1.xml"; //$NON-NLS-1$
+    private static final String XML_0 = "/graphic/pixel/pixel.graphic.0.xml"; //NON-NLS
+    private static final String XML_1 = "/graphic/pixel/pixel.graphic.1.xml"; //NON-NLS
 
-    static final String BASIC_TPL = "<pixelInfo fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //$NON-NLS-1$
-        + "<paint rgb=\"%s\"/>" //$NON-NLS-1$
-        + "<pts/>" //$NON-NLS-1$
-        + "</pixelInfo>"; //$NON-NLS-1$
+    static final String BASIC_TPL = "<pixelInfo fill=\"%s\" showLabel=\"%s\" thickness=\"%s\" uuid=\"%s\">" //NON-NLS
+        + "<paint rgb=\"%s\"/>" //NON-NLS
+        + "<pts/>" //NON-NLS
+        + "</pixelInfo>"; //NON-NLS
 
     public static final PixelInfoGraphic COMPLETE_OBJECT = new PixelInfoGraphic();
     static {
@@ -40,7 +40,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
         COMPLETE_OBJECT.setPts(pts);
         COMPLETE_OBJECT.setLabelWidth(112.53125);
         COMPLETE_OBJECT.setLabelHeight(13.125);
-        COMPLETE_OBJECT.setLabels(new String[] { " R=144 G=116 B=101" }); //$NON-NLS-1$
+        COMPLETE_OBJECT.setLabels(new String[] { " R=144 G=116 B=101" }); //NON-NLS
         COMPLETE_OBJECT.setLabelBounds(new Rectangle2D.Double(1539.234375, 1024.4375, 124.53125, 25.125));
     }
 

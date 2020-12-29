@@ -85,7 +85,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     }
     
     public static String getLastPath() {
-        String home = System.getProperty("user.home"); //$NON-NLS-1$
+        String home = System.getProperty("user.home");
         File prefDir = new File(BundleTools.LOCAL_UI_PERSISTENCE.getProperty(AcquireExplorer.P_LAST_DIR, home));
         if (prefDir.canRead() && prefDir.isDirectory()) {
             return prefDir.getPath();

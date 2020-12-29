@@ -43,10 +43,10 @@ public class TagDTest {
      */
     @Test
     public void testGetDicomDate() throws Exception {
-        LocalDate date1 = TagD.getDicomDate("19930822"); //$NON-NLS-1$
+        LocalDate date1 = TagD.getDicomDate("19930822"); 
         assertEquals(LocalDate.of(1993, 8, 22), date1);
 
-        date1 = TagD.getDicomDate("1993:08:22"); //$NON-NLS-1$
+        date1 = TagD.getDicomDate("1993:08:22"); 
         assertEquals(LocalDate.of(1993, 8, 22), date1);
     }
 
@@ -81,16 +81,16 @@ public class TagDTest {
      */
     @Test
     public void testGetDicomTime() throws Exception {
-        LocalTime time = TagD.getDicomTime("070907.0705 "); //$NON-NLS-1$
+        LocalTime time = TagD.getDicomTime("070907.0705 "); 
         assertEquals(LocalTime.of(7, 9, 7, 70_500_000), time);
 
-        time = TagD.getDicomTime("10"); //$NON-NLS-1$
+        time = TagD.getDicomTime("10"); 
         assertEquals(LocalTime.of(10, 0), time);
 
-        time = TagD.getDicomTime("1010"); //$NON-NLS-1$
+        time = TagD.getDicomTime("1010"); 
         assertEquals(LocalTime.of(10, 10), time);
 
-        time = TagD.getDicomTime("021 "); //$NON-NLS-1$
+        time = TagD.getDicomTime("021 "); 
         assertEquals(null, time);
 
         // Does not support leap second:
@@ -98,7 +98,7 @@ public class TagDTest {
         // time = TagUtil.getDicomTime("235960");
         // assertEquals(LocalTime.of(23, 59, 60), time);
 
-        time = TagD.getDicomTime("07:09:07.0705 "); //$NON-NLS-1$
+        time = TagD.getDicomTime("07:09:07.0705 "); 
         assertEquals(LocalTime.of(7, 9, 7, 70_500_000), time);
     }
 
@@ -126,95 +126,95 @@ public class TagDTest {
     @Test
     public void testGetDicomDateTime() throws Exception {
 
-         Date date = DateUtils.parseDA(null, "1993:08:22"); //$NON-NLS-1$
+         Date date = DateUtils.parseDA(null, "1993:08:22"); 
          LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
          assertEquals(LocalDate.of(1993, 8, 22), datetime.toLocalDate());
 
          DatePrecision precision = new DatePrecision();
-         date = DateUtils.parseTM(null, "070907.07 ", precision); //$NON-NLS-1$
+         date = DateUtils.parseTM(null, "070907.07 ", precision); 
          datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
          assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-         LocalDateTime time = TagD.getDicomDateTime(null, "1953082711"); //$NON-NLS-1$
+         LocalDateTime time = TagD.getDicomDateTime(null, "1953082711"); 
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300"); //$NON-NLS-1$
+         time = TagD.getDicomDateTime(null,"19530827111300"); 
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300.0"); //$NON-NLS-1$
+         time = TagD.getDicomDateTime(null,"19530827111300.0"); 
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-         time = TagD.getDicomDateTime(null,"19530827111300.005"); //$NON-NLS-1$
+         time = TagD.getDicomDateTime(null,"19530827111300.005"); 
          assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
     }
 
     @Test
     public void testGetDicomPatientSex() throws Exception {
         String sex = TagD.getDicomPatientSex(null);
-        assertEquals("", sex); //$NON-NLS-1$
+        assertEquals("", sex); 
 
-        sex = TagD.getDicomPatientSex(""); //$NON-NLS-1$
-        assertEquals("", sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex(""); 
+        assertEquals("", sex); 
 
-        sex = TagD.getDicomPatientSex("F"); //$NON-NLS-1$
-        assertEquals(Messages.getString("TagW.female"), sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex("F");  //NON-NLS
+        assertEquals(Messages.getString("TagW.female"), sex);
 
-        sex = TagD.getDicomPatientSex("M"); //$NON-NLS-1$
-        assertEquals(Messages.getString("TagW.Male"), sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex("M");  //NON-NLS
+        assertEquals(Messages.getString("TagW.Male"), sex);
 
-        sex = TagD.getDicomPatientSex("Male"); //$NON-NLS-1$
-        assertEquals(Messages.getString("TagW.Male"), sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex("Male");  //NON-NLS
+        assertEquals(Messages.getString("TagW.Male"), sex);
 
-        sex = TagD.getDicomPatientSex("O"); //$NON-NLS-1$
-        assertEquals(Messages.getString("TagW.other"), sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex("O");  //NON-NLS
+        assertEquals(Messages.getString("TagW.other"), sex);
 
-        sex = TagD.getDicomPatientSex("U"); //$NON-NLS-1$
-        assertEquals(Messages.getString("TagW.other"), sex); //$NON-NLS-1$
+        sex = TagD.getDicomPatientSex("U");  //NON-NLS
+        assertEquals(Messages.getString("TagW.other"), sex);
     }
 
     @Test
     public void testGetDicomPersonName() throws Exception {
         String name = TagD.getDicomPersonName(null);
-        assertEquals("", name); //$NON-NLS-1$
+        assertEquals("", name); 
 
-        name = TagD.getDicomPersonName(" "); //$NON-NLS-1$
-        assertEquals("", name); //$NON-NLS-1$
+        name = TagD.getDicomPersonName(" "); 
+        assertEquals("", name); 
 
-        name = TagD.getDicomPersonName("Delaney^William^M.^Dr^MD"); //$NON-NLS-1$
-        assertEquals("Delaney, William M., Dr, MD", name); //$NON-NLS-1$
+        name = TagD.getDicomPersonName("Delaney^William^M.^Dr^MD");  //NON-NLS
+        assertEquals("Delaney, William M., Dr, MD", name); 
     }
 
     @Test
     public void testGetDicomPeriod() throws Exception {
         String period = TagD.getDicomPeriod(null);
-        assertEquals("", period); //$NON-NLS-1$
+        assertEquals("", period); 
 
-        period = TagD.getDicomPeriod("0"); //$NON-NLS-1$
-        assertEquals("", period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("0"); 
+        assertEquals("", period); 
 
-        period = TagD.getDicomPeriod("0Z"); //$NON-NLS-1$
-        assertEquals("", period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("0Z");  //NON-NLS
+        assertEquals("", period); 
 
-        period = TagD.getDicomPeriod("031Y"); //$NON-NLS-1$
-        assertEquals("31 " + ChronoUnit.YEARS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("031Y");  //NON-NLS
+        assertEquals("31 " + ChronoUnit.YEARS.toString(), period); 
 
-        period = TagD.getDicomPeriod("001Y"); //$NON-NLS-1$
-        assertEquals("1 " + ChronoUnit.YEARS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("001Y");  //NON-NLS
+        assertEquals("1 " + ChronoUnit.YEARS.toString(), period); 
 
-        period = TagD.getDicomPeriod("1Y"); //$NON-NLS-1$
-        assertEquals("1 " + ChronoUnit.YEARS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("1Y");  //NON-NLS
+        assertEquals("1 " + ChronoUnit.YEARS.toString(), period); 
 
-        period = TagD.getDicomPeriod("000Y"); //$NON-NLS-1$
-        assertEquals("0 " + ChronoUnit.YEARS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("000Y");  //NON-NLS
+        assertEquals("0 " + ChronoUnit.YEARS.toString(), period); 
 
-        period = TagD.getDicomPeriod("001M"); //$NON-NLS-1$
-        assertEquals("1 " + ChronoUnit.MONTHS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("001M");  //NON-NLS
+        assertEquals("1 " + ChronoUnit.MONTHS.toString(), period);  //NON-NLS
 
-        period = TagD.getDicomPeriod("011W"); //$NON-NLS-1$
-        assertEquals("11 " + ChronoUnit.WEEKS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("011W");  //NON-NLS
+        assertEquals("11 " + ChronoUnit.WEEKS.toString(), period); 
 
-        period = TagD.getDicomPeriod("111D"); //$NON-NLS-1$
-        assertEquals("111 " + ChronoUnit.DAYS.toString(), period); //$NON-NLS-1$
+        period = TagD.getDicomPeriod("111D");  //NON-NLS
+        assertEquals("111 " + ChronoUnit.DAYS.toString(), period); 
     }
 
 }

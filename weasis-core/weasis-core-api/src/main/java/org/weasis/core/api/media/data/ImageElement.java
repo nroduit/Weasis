@@ -40,7 +40,7 @@ import org.weasis.opencv.op.ImageProcessor;
 public class ImageElement extends MediaElement {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
 
-    public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); //$NON-NLS-1$
+    public static final ExecutorService IMAGE_LOADER = ThreadUtil.buildNewSingleThreadExecutor("Image Loader");  //NON-NLS
 
     private static final NativeCache<ImageElement, PlanarImage> mCache =
         new NativeCache<ImageElement, PlanarImage>(Runtime.getRuntime().maxMemory() / 2) {
@@ -193,7 +193,7 @@ public class ImageElement extends MediaElement {
         // Rectify non square pixel image in the first operation
         if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {     
             ZoomOp node = new ZoomOp();
-            node.setName("rectifyAspectRatio"); //$NON-NLS-1$
+            node.setName("rectifyAspectRatio"); 
             node.setParam(ZoomOp.P_RATIO_X, getRescaleX());
             node.setParam(ZoomOp.P_RATIO_Y, getRescaleY());
             return node;

@@ -139,7 +139,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
     @Override
     public void setReferencedSeries(List<ReferencedSeries> referencedSeries) {
-        if (referencedSeries != null && !referencedSeries.getClass().getSimpleName().startsWith("Synchronized")) { //$NON-NLS-1$
+        if (referencedSeries != null && !referencedSeries.getClass().getSimpleName().startsWith("Synchronized")) { //NON-NLS
             this.referencedSeries = Collections.synchronizedList(referencedSeries);
         }
         this.referencedSeries =

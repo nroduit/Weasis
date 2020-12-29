@@ -119,7 +119,7 @@ public class Tree<T> {
         String inc = new String(value);
         StringBuilder s = new StringBuilder(inc + head);
         for (Tree<T> child : leafs) {
-            s.append("\n"); //$NON-NLS-1$
+            s.append("\n");
             s.append(child.printTree(increment + 2));
         }
         return s.toString();

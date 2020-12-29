@@ -44,13 +44,13 @@ import org.weasis.core.ui.serialize.XmlSerializer;
 public class ViewerPluginBuilder {
     private static final Logger LOGGER = LoggerFactory.getLogger(ViewerPluginBuilder.class);
 
-    public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer"; //$NON-NLS-1$
-    public static final String BEST_DEF_LAYOUT = "best.def.layout"; //$NON-NLS-1$
-    public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image //$NON-NLS-1$
-    public static final String ADD_IN_SELECTED_VIEW = "add.in.selected.view"; // For non DICOM images //$NON-NLS-1$
-    public static final String SCREEN_BOUND = "screen.bound"; //$NON-NLS-1$
-    public static final String ICON = "plugin.icon"; //$NON-NLS-1$
-    public static final String UID = "plugin.uid"; //$NON-NLS-1$
+    public static final String CMP_ENTRY_BUILD_NEW_VIEWER = "cmp.entry.viewer";
+    public static final String BEST_DEF_LAYOUT = "best.def.layout";
+    public static final String OPEN_IN_SELECTION = "add.in.selected.view"; // For only one image
+    public static final String ADD_IN_SELECTED_VIEW = "add.in.selected.view"; // For non DICOM images
+    public static final String SCREEN_BOUND = "screen.bound";
+    public static final String ICON = "plugin.icon";
+    public static final String UID = "plugin.uid";
 
     public static final FileModel DefaultDataModel = new FileModel();
     private final SeriesViewerFactory factory;
@@ -187,7 +187,7 @@ public class ViewerPluginBuilder {
             boolean cache = file.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath());
             String mimeType = MimeInspector.getMimeType(file);
             if (mimeType != null) {
-                Codec codec = BundleTools.getCodec(mimeType, "dcm4che"); //$NON-NLS-1$
+                Codec codec = BundleTools.getCodec(mimeType, "dcm4che"); //NON-NLS
                 if (codec != null) {
                     MediaReader mreader = codec.getMediaIO(file.toURI(), mimeType, null);
                     if (cache) {
@@ -249,7 +249,7 @@ public class ViewerPluginBuilder {
                 DefaultDataModel.addHierarchyNode(group1, series);
             } else {
                 // Test if SOPInstanceUID already exists
-                TagW sopTag = TagW.get("SOPInstanceUID"); //$NON-NLS-1$
+                TagW sopTag = TagW.get("SOPInstanceUID");
                 if (series instanceof Series
                     && ((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
                     return series;
@@ -265,7 +265,7 @@ public class ViewerPluginBuilder {
                     FileCache fc = media.getFileCache();
                     Optional<File> fo = fc.getOriginalFile();
                     if (fc.isLocalFile() && fo.isPresent()) {                      
-                        File gpxFile = new File(fo.get().getPath() + ".xml"); //$NON-NLS-1$
+                        File gpxFile = new File(fo.get().getPath() + ".xml");
                         GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
                         if (graphicModel != null) {
                             media.setTag(TagW.PresentationModel, graphicModel);

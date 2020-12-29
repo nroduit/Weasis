@@ -57,7 +57,7 @@ public class PixelInfo {
                 StringBuilder text = new StringBuilder();
                 text.append(DecFormater.allNumber(values[0]));
                 if (pixelValueUnit != null) {
-                    text.append(" ");//$NON-NLS-1$
+                    text.append(" ");
                     text.append(pixelValueUnit);
                 }
                 return text.toString();
@@ -75,11 +75,11 @@ public class PixelInfo {
 
                 StringBuilder text = new StringBuilder();
                 for (int i = 0; i < values.length; i++) {
-                    text.append(" ");//$NON-NLS-1$
+                    text.append(" ");
                     text.append((channelNames == null || i >= channelNames.length)
                         ? Messages.getString("PixelInfo.unknown") : channelNames[i].substring(0,
                             1));
-                    text.append("=");//$NON-NLS-1$
+                    text.append("=");
                     text.append(DecFormater.twoDecimal(values[i]));
                 }
                 return text.toString();
@@ -114,13 +114,13 @@ public class PixelInfo {
 
     public String getPixelPositionText() {
         if (position == null) {
-            return Messages.getString("DefaultView2d.out");//$NON-NLS-1$
+            return Messages.getString("DefaultView2d.out");
         }
-        StringBuilder text = new StringBuilder("("); //$NON-NLS-1$
+        StringBuilder text = new StringBuilder("(");
         text.append(position.x);
-        text.append(",");//$NON-NLS-1$
+        text.append(",");
         text.append(position.y);
-        text.append(")");//$NON-NLS-1$
+        text.append(")");
         return text.toString();
     }
 
@@ -129,13 +129,13 @@ public class PixelInfo {
             return getPixelPositionText();
         }
 
-        StringBuilder text = new StringBuilder("("); //$NON-NLS-1$
+        StringBuilder text = new StringBuilder("(");
         text.append(DecFormater.twoDecimal(pixelSize * position.x));
         text.append(pixelSpacingUnit.getAbbreviation());
-        text.append(",");//$NON-NLS-1$
+        text.append(",");
         text.append(DecFormater.twoDecimal(pixelSize * position.y));
         text.append(pixelSpacingUnit.getAbbreviation());
-        text.append(")");//$NON-NLS-1$
+        text.append(")");
         return text.toString();
     }
 }
