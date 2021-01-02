@@ -7,7 +7,7 @@
 	  <!--suppress MavenPropertyInParent -->
     <version>${revision}${changelist}</version>
 	<packaging>pom</packaging>
-	<name>${project.artifactId}</name>
+	<name>Weasis framework parent [${project.artifactId}]</name>
 
 	<properties>
 		<!-- force command line arguments settings to set version -->

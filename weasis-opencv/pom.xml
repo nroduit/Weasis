@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.weasis.opencv</groupId>
 	<artifactId>weasis-opencv</artifactId>
-	<name>OpenCV [${project.artifactId}]</name>
+	<name>OpenCV plugins [${project.artifactId}]</name>
 	<packaging>pom</packaging>
 
 	<modules>

@@ -12,7 +12,7 @@
 	<groupId>org.weasis.acquire</groupId>
 	<artifactId>weasis-acquire-editor</artifactId>
 	<packaging>jar</packaging>
-	<name>Tool panel sample [${project.artifactId}]</name>
+	<name>Acquire - Media editor [${project.artifactId}]</name>
 
 	<build>
 		<plugins>

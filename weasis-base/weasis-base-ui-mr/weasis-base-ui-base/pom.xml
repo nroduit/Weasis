@@ -10,7 +10,7 @@
 	</parent>
 	<artifactId>weasis-base-ui-base</artifactId>
 	<packaging>jar</packaging>
-	<name>Weasis Base UI [${project.artifactId}]</name>
+	<name>Base - Multi-release java 8 UI [${project.artifactId}]</name>
 
 	<properties>
 		<maven.install.skip>true</maven.install.skip>

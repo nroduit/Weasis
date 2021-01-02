@@ -10,7 +10,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-framework</artifactId>
 	<packaging>pom</packaging>
-	<name>${project.artifactId}</name>
+	<name>Weasis framework ${project.artifactId}</name>
 	<scm>
 		<connection>scm:git:git@github.com:nroduit/Weasis.git</connection>
 		<developerConnection>scm:git:https://weasis.repositoryhosting.com/git/weasis/weasis-dev.git</developerConnection>
@@ -22,13 +22,12 @@
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 	<modules>
-		<module>weasis-parent</module>
 		<module>weasis-opencv</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
 		<module>weasis-base</module>
-		<module>weasis-acquire</module>
 		<module>weasis-dicom</module>
+		<module>weasis-acquire</module>
 		<module>weasis-launcher</module>
 	</modules>
 </project>

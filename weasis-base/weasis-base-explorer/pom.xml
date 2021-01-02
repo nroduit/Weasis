@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-base-explorer</artifactId>
 	<packaging>jar</packaging>
-	<name>Media Explorer [${project.artifactId}]</name>
+	<name>Base - Media explorer [${project.artifactId}]</name>
 	
 	<build>
 		<plugins>

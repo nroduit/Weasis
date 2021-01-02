@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-sr</artifactId>
 	<packaging>jar</packaging>
-	<name>DICOM Structured Report Viewer [${project.artifactId}]</name>
+	<name>DICOM - Viewer of DICOM Structured Report [${project.artifactId}]</name>
 
 	<build>
 		<plugins>

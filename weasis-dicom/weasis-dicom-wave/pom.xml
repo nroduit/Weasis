@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-wave</artifactId>
 	<packaging>jar</packaging>
-	<name>DICOM ECG Viewer [${project.artifactId}]</name>
+	<name>DICOM - Viewer for ECGs [${project.artifactId}]</name>
 
 	<build>
 		<plugins>

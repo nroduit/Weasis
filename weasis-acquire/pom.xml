@@ -12,7 +12,7 @@
 	<groupId>org.weasis.acquire</groupId>
 	<artifactId>weasis-acquire</artifactId>
 	<packaging>pom</packaging>
-	<name>Default Plug-ins [${project.artifactId}]</name>
+	<name>Acquire plugins [${project.artifactId}]</name>
 	<modules>
 		<module>weasis-acquire-explorer</module>
 		<module>weasis-acquire-editor</module>

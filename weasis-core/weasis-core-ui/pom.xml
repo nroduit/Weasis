@@ -11,21 +11,37 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-core-ui</artifactId>
 	<packaging>jar</packaging>
-	<name>Weasis UI API (j2se) [${project.artifactId}]</name>
+	<name>Core - Core UI API (Swing) [${project.artifactId}]</name>
 
 	<build>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-dependency</id>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<includeArtifactIds>lablib-checkboxtree,jxlayer,LGoodDatePicker,xchart,VectorGraphics2D</includeArtifactIds>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>biz.aQute.bnd</groupId>
 				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
 					<bnd>
+						-includeresource.all: lib/=target/dependency/;lib:=true
 						Import-Package: com.sun.xml.internal.bind;resolution:=optional,javax.xml.bind;version=!,\
 						javax.xml.bind.annotation;version=!,javax.xml.bind.annotation.adapters;version=!,\
 						com.sun.xml.bind.v2;resolution:=optional,!sun.swing,*
-						Export-Package: !org.weasis.core.ui.internal,org.weasis.core.ui.*,it.cnr.imaa.*,\
-						org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,com.privatejgoodies.*,\
-						org.knowm.xchart.*,de.erichseifert.*
+						Export-Package: !org.weasis.core.ui.internal,org.weasis.core.ui.*
+						-exportcontents: it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,\
+						com.privatejgoodies.*,org.knowm.xchart.*,de.erichseifert.*
 					</bnd>
 				</configuration>
 			</plugin>
@@ -70,12 +86,17 @@
 		<dependency>
 			<groupId>com.github.lgooddatepicker</groupId>
 			<artifactId>LGoodDatePicker</artifactId>
-			<version>10.3.1</version>
+			<version>11.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.knowm.xchart</groupId>
 			<artifactId>xchart</artifactId>
 			<version>3.5.0</version>
+		</dependency>
+		<dependency>
+			<groupId>de.erichseifert.vectorgraphics2d</groupId>
+			<artifactId>VectorGraphics2D</artifactId>
+			<version>0.11</version>
 		</dependency>
 
 		<!-- FOR TESTS -->

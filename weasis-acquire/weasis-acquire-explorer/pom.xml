@@ -12,13 +12,7 @@
 	<groupId>org.weasis.acquire</groupId>
 	<artifactId>weasis-acquire-explorer</artifactId>
 	<packaging>jar</packaging>
-	<name>Media Importer [${project.artifactId}]</name>
-
-	<properties>
-		<xmpcore.version>5.1.3</xmpcore.version>
-		<usbdrivedectector.version>1.0.2</usbdrivedectector.version>
-		<metadata-extractor.version>2.11.0</metadata-extractor.version>
-	</properties>
+	<name>Acquire - Media explorer [${project.artifactId}]</name>
 
 	<build>
 		<plugins>
@@ -46,9 +40,7 @@
 				<artifactId>bnd-maven-plugin</artifactId>
 				<configuration>
 					<bnd>
-						-includeresource: lib/=target/dependency/metadata-extractor-${metadata-extractor.version}.jar;lib:=true,\
-						lib/=target/dependency/xmpcore-${xmpcore.version}.jar;lib:=true,\
-						lib/=target/dependency/usbdrivedectector-${usbdrivedectector.version}.jar;lib:=true
+						-includeresource.all: lib/=target/dependency/;lib:=true
 						Export-Package: org.weasis.acquire.explorer.*
 					</bnd>
 				</configuration>

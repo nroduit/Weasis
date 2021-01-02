@@ -10,7 +10,7 @@
     <version>${revision}${changelist}</version>
 	</parent>
 	<artifactId>weasis-base-ui</artifactId>
-	<name>Distribution multirelease [${project.artifactId}]</name>
+	<name>Base - Multi-release UI distribution [${project.artifactId}]</name>
 	<packaging>pom</packaging>
 
 	<build>

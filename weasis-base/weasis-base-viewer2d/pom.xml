@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-base-viewer2d</artifactId>
 	<packaging>jar</packaging>
-	<name>Image Viewer [${project.artifactId}]</name>
+	<name>Base - Image viewer (non-DICOM) [${project.artifactId}]</name>
 
 	<build>
 		<plugins>

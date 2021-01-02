@@ -11,7 +11,7 @@
 	</parent>
 	<artifactId>weasis-dicom-rt</artifactId>
 	<packaging>jar</packaging>
-	<name>Weasis DICOM-RT Tool panel [${project.artifactId}]</name>
+	<name>DICOM - Viewer for RTs (radiotherapy) [${project.artifactId}]</name>
 	<properties>
 		<math3.version>3.6.1</math3.version>
 	</properties>

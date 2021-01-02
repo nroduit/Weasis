@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>weasis-base-ui-nine</artifactId>
-	<name>Version Java 9 [${project.artifactId}]</name>
+	<name>Base - Multi-release java 9 UI [${project.artifactId}]</name>
 
 	<properties>
 		<maven.compiler.release>9</maven.compiler.release>

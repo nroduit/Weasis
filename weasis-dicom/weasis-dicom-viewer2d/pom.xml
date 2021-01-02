@@ -11,7 +11,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<artifactId>weasis-dicom-viewer2d</artifactId>
 	<packaging>jar</packaging>
-	<name>2D DICOM Viewer [${project.artifactId}]</name>
+	<name>DICOM - Viewer (2D and MPR) [${project.artifactId}]</name>
 
 	<build>
 		<plugins>

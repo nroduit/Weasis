@@ -12,8 +12,7 @@
 	</parent>
 	<artifactId>weasis-dicom-qr</artifactId>
 	<packaging>jar</packaging>
-	<name>${project.artifactId}</name>
-	<description>DICOM Query/Retrieve</description>
+	<name>DICOM - Query/Retrieve [${project.artifactId}]</name>
 
 	<build>
 		<plugins>
