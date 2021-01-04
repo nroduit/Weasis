@@ -19,7 +19,6 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -65,18 +64,14 @@ public class NetworkUtil {
         return prepareConnection(url.openConnection(), urlParameters);
     }
 
-    private static Map<String, String> updateHeadersWithAppProperties(Map<String, String> headers) {
-        if (headers == null) headers = new LinkedHashMap<>();
-
-        headers.put("User-Agent", AppProperties.WEASIS_USER_AGENT);
-        headers.putIfAbsent("Weasis-User", AppProperties.WEASIS_USER);
-
-        return headers;
+    private static void updateHeadersWithAppProperties(URLConnection urlConnection) {
+        urlConnection.setRequestProperty("User-Agent", AppProperties.WEASIS_USER_AGENT);
+        urlConnection.setRequestProperty("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase());
     }
 
     private static ClosableURLConnection prepareConnection(URLConnection urlConnection, URLParameters urlParameters)
             throws StreamIOException {
-        Map<String, String> headers = updateHeadersWithAppProperties(urlParameters.getHeaders());
+        Map<String, String> headers = urlParameters.getHeaders();
 
         if (headers != null && headers.size() > 0) {
             for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
@@ -84,6 +79,9 @@ public class NetworkUtil {
                 urlConnection.setRequestProperty(element.getKey(), element.getValue());
             }
         }
+
+        updateHeadersWithAppProperties(urlConnection);
+
         urlConnection.setConnectTimeout(urlParameters.getConnectTimeout());
         urlConnection.setReadTimeout(urlParameters.getReadTimeout());
         urlConnection.setAllowUserInteraction(urlParameters.isAllowUserInteraction());
@@ -173,7 +171,7 @@ public class NetworkUtil {
         InputStream errorStream = httpURLConnection.getErrorStream();
         if (errorStream != null) {
             try (InputStreamReader inputStream = new InputStreamReader(errorStream, StandardCharsets.UTF_8);
-                            BufferedReader reader = new BufferedReader(inputStream)) {
+                 BufferedReader reader = new BufferedReader(inputStream)) {
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -182,7 +180,7 @@ public class NetworkUtil {
                 String errorDescription = stringBuilder.toString();
                 if (StringUtil.hasText(errorDescription)) {
                     LOGGER.trace("HttpURLConnection ERROR, server response: {}",
-                        errorDescription);
+                            errorDescription);
                 }
             }
         }

@@ -9,6 +9,7 @@
 
 package org.weasis.core.api.util;
 
+import java.util.Collections;
 import java.util.Map;
 
 public class URLParameters {
@@ -38,8 +39,8 @@ public class URLParameters {
     }
 
     public URLParameters(Map<String, String> headers, Integer connectTimeout, Integer readTimeout, Boolean httpPost,
-        Boolean useCaches, Long ifModifiedSince, Boolean allowUserInteraction) {
-        this.headers = headers;
+                         Boolean useCaches, Long ifModifiedSince, Boolean allowUserInteraction) {
+        this.headers = headers != null ? Collections.unmodifiableMap(headers) : null;
         this.ifModifiedSince = ifModifiedSince == null ? 0L : ifModifiedSince;
         this.connectTimeout = connectTimeout == null ? NetworkUtil.getUrlConnectionTimeout() : connectTimeout;
         this.readTimeout = readTimeout == null ? NetworkUtil.getUrlReadTimeout() : readTimeout;
