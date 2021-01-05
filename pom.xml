@@ -22,6 +22,7 @@
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 	<modules>
+		<module>weasis-parent</module>
 		<module>weasis-opencv</module>
 		<module>weasis-core</module>
 		<module>weasis-imageio</module>
