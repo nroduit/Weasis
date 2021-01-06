@@ -47,7 +47,7 @@
     <slf4j.version>1.7.30</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.3p1</dockingframes.version>
-    <weasis-dicom-tools.version>5.22.6</weasis-dicom-tools.version>
+    <weasis-dicom-tools.version>5.23.0</weasis-dicom-tools.version>
     <weasis.core.img.version>4.5.0</weasis.core.img.version>
     <weasis.opencv.native.version>4.5.0-dcm</weasis.opencv.native.version>
     <javax.json.version>1.1.6</javax.json.version>
