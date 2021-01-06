@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-
 package org.weasis.dicom.codec.macro;
 
 import java.io.IOException;
@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -22,99 +21,98 @@ import org.dcm4che3.data.VR;
 
 public class DigitalSignatures extends Module {
 
-    public DigitalSignatures(Attributes dcmItems) {
-        super(dcmItems);
+  public DigitalSignatures(Attributes dcmItems) {
+    super(dcmItems);
+  }
+
+  public DigitalSignatures() {
+    super(new Attributes());
+  }
+
+  public static Collection<DigitalSignatures> toDigitalSignaturesMacros(Sequence seq) {
+    if (seq == null || seq.isEmpty()) {
+      return Collections.emptyList();
     }
 
-    public DigitalSignatures() {
-        super(new Attributes());
+    ArrayList<DigitalSignatures> list = new ArrayList<>(seq.size());
+
+    for (Attributes attr : seq) {
+      list.add(new DigitalSignatures(attr));
     }
 
-    public static Collection<DigitalSignatures> toDigitalSignaturesMacros(Sequence seq) {
-        if (seq == null || seq.isEmpty()) {
-            return Collections.emptyList();
-        }
+    return list;
+  }
 
-        ArrayList<DigitalSignatures> list = new ArrayList<>(seq.size());
+  public int getMACIDNumber() {
+    return dcmItems.getInt(Tag.MACIDNumber, -1);
+  }
 
-        for (Attributes attr : seq) {
-            list.add(new DigitalSignatures(attr));
-        }
+  public void setMACIDNumber(int i) {
+    dcmItems.setInt(Tag.MACIDNumber, VR.US, i);
+  }
 
-        return list;
-    }
+  public String getDigitalSignatureUID() {
+    return dcmItems.getString(Tag.DigitalSignatureUID);
+  }
 
-    public int getMACIDNumber() {
-        return dcmItems.getInt(Tag.MACIDNumber, -1);
-    }
+  public void setDigitalSignatureUID(String s) {
+    dcmItems.setString(Tag.DigitalSignatureUID, VR.UI, s);
+  }
 
-    public void setMACIDNumber(int i) {
-        dcmItems.setInt(Tag.MACIDNumber, VR.US, i);
-    }
+  public Date getDigitalSignatureDateTime() {
+    return dcmItems.getDate(Tag.DigitalSignatureDateTime);
+  }
 
-    public String getDigitalSignatureUID() {
-        return dcmItems.getString(Tag.DigitalSignatureUID);
-    }
+  public void setDigitalSignatureDateTime(Date d) {
+    dcmItems.setDate(Tag.DigitalSignatureDateTime, VR.DT, d);
+  }
 
-    public void setDigitalSignatureUID(String s) {
-        dcmItems.setString(Tag.DigitalSignatureUID, VR.UI, s);
-    }
+  public String getCertificateType() {
+    return dcmItems.getString(Tag.CertificateType);
+  }
 
-    public Date getDigitalSignatureDateTime() {
-        return dcmItems.getDate(Tag.DigitalSignatureDateTime);
-    }
+  public void setCertificateType(String s) {
+    dcmItems.setString(Tag.CertificateType, VR.CS, s);
+  }
 
-    public void setDigitalSignatureDateTime(Date d) {
-        dcmItems.setDate(Tag.DigitalSignatureDateTime, VR.DT, d);
-    }
+  public byte[] getCertificateOfSigner() throws IOException {
+    return dcmItems.getBytes(Tag.CertificateOfSigner);
+  }
 
-    public String getCertificateType() {
-        return dcmItems.getString(Tag.CertificateType);
-    }
+  public void setCertificateOfSigner(byte[] b) {
+    dcmItems.setBytes(Tag.CertificateOfSigner, VR.OB, b);
+  }
 
-    public void setCertificateType(String s) {
-        dcmItems.setString(Tag.CertificateType, VR.CS, s);
-    }
+  public byte[] getSignature() throws IOException {
+    return dcmItems.getBytes(Tag.Signature);
+  }
 
-    public byte[] getCertificateOfSigner() throws IOException {
-        return dcmItems.getBytes(Tag.CertificateOfSigner);
-    }
+  public void setSignature(byte[] b) {
+    dcmItems.setBytes(Tag.Signature, VR.OB, b);
+  }
 
-    public void setCertificateOfSigner(byte[] b) {
-        dcmItems.setBytes(Tag.CertificateOfSigner, VR.OB, b);
-    }
+  public String getCertifiedTimestampType() {
+    return dcmItems.getString(Tag.CertifiedTimestampType);
+  }
 
-    public byte[] getSignature() throws IOException {
-        return dcmItems.getBytes(Tag.Signature);
-    }
+  public void setCertifiedTimestampType(String s) {
+    dcmItems.setString(Tag.CertifiedTimestampType, VR.CS, s);
+  }
 
-    public void setSignature(byte[] b) {
-        dcmItems.setBytes(Tag.Signature, VR.OB, b);
-    }
+  public byte[] getCertifiedTimestamp() throws IOException {
+    return dcmItems.getBytes(Tag.CertifiedTimestamp);
+  }
 
-    public String getCertifiedTimestampType() {
-        return dcmItems.getString(Tag.CertifiedTimestampType);
-    }
+  public void setCertifiedTimestamp(byte[] b) {
+    dcmItems.setBytes(Tag.CertifiedTimestamp, VR.OB, b);
+  }
 
-    public void setCertifiedTimestampType(String s) {
-        dcmItems.setString(Tag.CertifiedTimestampType, VR.CS, s);
-    }
+  public Code getDigitalSignaturePurposeCode() {
+    Attributes item = dcmItems.getNestedDataset(Tag.DigitalSignaturePurposeCodeSequence);
+    return item != null ? new Code(item) : null;
+  }
 
-    public byte[] getCertifiedTimestamp() throws IOException {
-        return dcmItems.getBytes(Tag.CertifiedTimestamp);
-    }
-
-    public void setCertifiedTimestamp(byte[] b) {
-        dcmItems.setBytes(Tag.CertifiedTimestamp, VR.OB, b);
-    }
-
-    public Code getDigitalSignaturePurposeCode() {
-        Attributes item = dcmItems.getNestedDataset(Tag.DigitalSignaturePurposeCodeSequence);
-        return item != null ? new Code(item) : null;
-    }
-
-    public void setDigitalSignaturePurposeCode(Code code) {
-        updateSequence(Tag.DigitalSignaturePurposeCodeSequence, code);
-    }
-
+  public void setDigitalSignaturePurposeCode(Code code) {
+    updateSequence(Tag.DigitalSignaturePurposeCodeSequence, code);
+  }
 }

@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-
 package org.weasis.launcher;
 
 import java.awt.BorderLayout;
@@ -26,7 +26,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -34,217 +33,226 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.RootPaneContainer;
 import javax.swing.SwingConstants;
-
 import org.osgi.framework.BundleContext;
 
 public class WeasisLoader {
 
-    private static final Logger LOGGER = Logger.getLogger(WeasisLoader.class.getName());
+  private static final Logger LOGGER = Logger.getLogger(WeasisLoader.class.getName());
 
-    public static final String P_DIALOG = "Dialog"; //NON-NLS
-    public static final String LBL_LOADING = Messages.getString("WebStartLoader.load");
-    public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download");
-    public static final String FRM_TITLE =
-        String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name"));
-    public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end");
+  public static final String P_DIALOG = "Dialog"; // NON-NLS
+  public static final String LBL_LOADING = Messages.getString("WebStartLoader.load");
+  public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download");
+  public static final String FRM_TITLE =
+      String.format(Messages.getString("WebStartLoader.title"), System.getProperty("weasis.name"));
+  public static final String PRG_STRING_FORMAT = Messages.getString("WebStartLoader.end");
 
-    private javax.swing.JButton cancelButton;
-    private javax.swing.JLabel loadingLabel;
-    private javax.swing.JProgressBar downloadProgress;
-    private Container container;
+  private javax.swing.JButton cancelButton;
+  private javax.swing.JLabel loadingLabel;
+  private javax.swing.JProgressBar downloadProgress;
+  private Container container;
 
-    private final File resPath;
-    private final WeasisMainFrame mainFrame;
+  private final File resPath;
+  private final WeasisMainFrame mainFrame;
 
-    public WeasisLoader(File resPath, WeasisMainFrame mainFrame) {
-        this.resPath = resPath;
-        this.mainFrame = mainFrame;
+  public WeasisLoader(File resPath, WeasisMainFrame mainFrame) {
+    this.resPath = resPath;
+    this.mainFrame = mainFrame;
+  }
+
+  public void writeLabel(String text) {
+    loadingLabel.setText(text);
+  }
+
+  /*
+   * Init splashScreen
+   */
+  public void initGUI() {
+    loadingLabel = new javax.swing.JLabel();
+    loadingLabel.setFont(new Font(P_DIALOG, Font.PLAIN, 10));
+    downloadProgress = new javax.swing.JProgressBar();
+    Font font = new Font(P_DIALOG, Font.PLAIN, 12);
+    downloadProgress.setFont(font);
+    cancelButton = new javax.swing.JButton();
+    cancelButton.setFont(font);
+
+    RootPaneContainer frame = mainFrame.getRootPaneContainer();
+
+    Window win = new Window((Frame) frame);
+    win.addWindowListener(
+        new java.awt.event.WindowAdapter() {
+
+          @Override
+          public void windowClosing(java.awt.event.WindowEvent evt) {
+            closing();
+          }
+        });
+    container = win;
+
+    loadingLabel.setText(LBL_LOADING);
+    loadingLabel.setFocusable(false);
+
+    downloadProgress.setFocusable(false);
+    downloadProgress.setStringPainted(true);
+    downloadProgress.setString(LBL_LOADING);
+
+    cancelButton.setText(Messages.getString("WebStartLoader.cancel"));
+    cancelButton.addActionListener(evt -> closing());
+
+    Icon icon;
+    File iconFile = null;
+    if (resPath != null) {
+      iconFile = new File(resPath, "images" + File.separator + "about.png"); // NON-NLS
+      if (!iconFile.canRead()) {
+        iconFile = null;
+      }
     }
-
-    public void writeLabel(String text) {
-        loadingLabel.setText(text);
-    }
-
-    /*
-     * Init splashScreen
-     */
-    public void initGUI() {
-        loadingLabel = new javax.swing.JLabel();
-        loadingLabel.setFont(new Font(P_DIALOG, Font.PLAIN, 10));
-        downloadProgress = new javax.swing.JProgressBar();
-        Font font = new Font(P_DIALOG, Font.PLAIN, 12);
-        downloadProgress.setFont(font);
-        cancelButton = new javax.swing.JButton();
-        cancelButton.setFont(font);
-
-        RootPaneContainer frame = mainFrame.getRootPaneContainer();
-
-        Window win = new Window((Frame) frame);
-        win.addWindowListener(new java.awt.event.WindowAdapter() {
+    if (iconFile == null) {
+      icon =
+          new Icon() {
 
             @Override
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                closing();
+            public void paintIcon(Component c, Graphics g, int x, int y) {
+              // Do nothing
             }
-        });
-        container = win;
 
-        loadingLabel.setText(LBL_LOADING);
-        loadingLabel.setFocusable(false);
-
-        downloadProgress.setFocusable(false);
-        downloadProgress.setStringPainted(true);
-        downloadProgress.setString(LBL_LOADING);
-
-        cancelButton.setText(Messages.getString("WebStartLoader.cancel"));
-        cancelButton.addActionListener(evt -> closing());
-
-        Icon icon;
-        File iconFile = null;
-        if (resPath != null) {
-            iconFile = new File(resPath, "images" + File.separator + "about.png"); // NON-NLS
-            if (!iconFile.canRead()) {
-                iconFile = null;
+            @Override
+            public int getIconWidth() {
+              return 350;
             }
-        }
-        if (iconFile == null) {
-            icon = new Icon() {
 
-                @Override
-                public void paintIcon(Component c, Graphics g, int x, int y) {
-                    // Do nothing
-                }
+            @Override
+            public int getIconHeight() {
+              return 75;
+            }
+          };
+    } else {
+      icon = new ImageIcon(iconFile.getAbsolutePath());
+    }
 
-                @Override
-                public int getIconWidth() {
-                    return 350;
-                }
+    JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
+    imagePane.setFont(new Font(P_DIALOG, Font.BOLD, 16));
+    imagePane.setVerticalTextPosition(SwingConstants.TOP);
+    imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
+    imagePane.setFocusable(false);
 
-                @Override
-                public int getIconHeight() {
-                    return 75;
-                }
-            };
-        } else {
-            icon = new ImageIcon(iconFile.getAbsolutePath());
-        }
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.setBackground(Color.WHITE);
+    panel.add(imagePane, BorderLayout.CENTER);
 
-        JLabel imagePane = new JLabel(FRM_TITLE, icon, SwingConstants.CENTER);
-        imagePane.setFont(new Font(P_DIALOG, Font.BOLD, 16));
-        imagePane.setVerticalTextPosition(SwingConstants.TOP);
-        imagePane.setHorizontalTextPosition(SwingConstants.CENTER);
-        imagePane.setFocusable(false);
+    JPanel panelProgress = new JPanel(new BorderLayout());
+    panelProgress.setBackground(Color.WHITE);
+    panelProgress.add(loadingLabel, BorderLayout.NORTH);
+    panelProgress.add(downloadProgress, BorderLayout.CENTER);
+    panelProgress.add(cancelButton, BorderLayout.EAST);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE);
-        panel.add(imagePane, BorderLayout.CENTER);
-
-        JPanel panelProgress = new JPanel(new BorderLayout());
-        panelProgress.setBackground(Color.WHITE);
-        panelProgress.add(loadingLabel, BorderLayout.NORTH);
-        panelProgress.add(downloadProgress, BorderLayout.CENTER);
-        panelProgress.add(cancelButton, BorderLayout.EAST);
-
-        panel.add(panelProgress, BorderLayout.SOUTH);
-        panel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black),
+    panel.add(panelProgress, BorderLayout.SOUTH);
+    panel.setBorder(
+        BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.black),
             BorderFactory.createEmptyBorder(3, 3, 3, 3)));
 
-        container.add(panel, BorderLayout.CENTER);
+    container.add(panel, BorderLayout.CENTER);
 
-        if (container instanceof Window) {
-            ((Window) container).pack();
-        }
-
+    if (container instanceof Window) {
+      ((Window) container).pack();
     }
+  }
 
-    public WeasisMainFrame getMainFrame() {
-        return mainFrame;
+  public WeasisMainFrame getMainFrame() {
+    return mainFrame;
+  }
+
+  /*
+   * Set maximum value for progress bar
+   */
+  public void setMax(final int max) {
+    if (isClosed()) {
+      return;
     }
+    EventQueue.invokeLater(() -> downloadProgress.setMaximum(max));
+  }
 
-    /*
-     * Set maximum value for progress bar
-     */
-    public void setMax(final int max) {
-        if (isClosed()) {
-            return;
-        }
-        EventQueue.invokeLater(() -> downloadProgress.setMaximum(max));
+  /*
+   * Set actual value of progress bar
+   */
+  public void setValue(final int val) {
+    if (isClosed()) {
+      return;
     }
-
-    /*
-     * Set actual value of progress bar
-     */
-    public void setValue(final int val) {
-        if (isClosed()) {
-            return;
-        }
-        EventQueue.invokeLater(() -> {
-            downloadProgress.setString(String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
-            downloadProgress.setValue(val);
-            downloadProgress.repaint();
+    EventQueue.invokeLater(
+        () -> {
+          downloadProgress.setString(
+              String.format(PRG_STRING_FORMAT, val, downloadProgress.getMaximum()));
+          downloadProgress.setValue(val);
+          downloadProgress.repaint();
         });
+  }
 
-    }
+  private void closing() {
+    System.exit(0);
+  }
 
-    private void closing() {
-        System.exit(0);
-    }
+  public boolean isClosed() {
+    return container == null;
+  }
 
-    public boolean isClosed() {
-        return container == null;
-    }
-
-    public void open() {
-        try {
-            EventQueue.invokeAndWait(() -> {
-                if (container == null) {
-                    initGUI();
-                }
-                displayOnScreen();
-            });
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (InvocationTargetException e) {
-            LOGGER.log(Level.SEVERE, "Display splashscreen", e);
-        }
-    }
-
-    public void close() {
-        if (isClosed()) {
-            return;
-        }
-        EventQueue.invokeLater(() -> {
-            container.setVisible(false);
-            if (container.getParent() != null) {
-                container.getParent().remove(container);
+  public void open() {
+    try {
+      EventQueue.invokeAndWait(
+          () -> {
+            if (container == null) {
+              initGUI();
             }
-            if (container instanceof Window) {
-                ((Window) container).dispose();
-            }
-            container = null;
-            cancelButton = null;
-            downloadProgress = null;
-            loadingLabel = null;
+            displayOnScreen();
+          });
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    } catch (InvocationTargetException e) {
+      LOGGER.log(Level.SEVERE, "Display splashscreen", e);
+    }
+  }
+
+  public void close() {
+    if (isClosed()) {
+      return;
+    }
+    EventQueue.invokeLater(
+        () -> {
+          container.setVisible(false);
+          if (container.getParent() != null) {
+            container.getParent().remove(container);
+          }
+          if (container instanceof Window) {
+            ((Window) container).dispose();
+          }
+          container = null;
+          cancelButton = null;
+          downloadProgress = null;
+          loadingLabel = null;
         });
-    }
+  }
 
-    private void displayOnScreen() {
-        if (container instanceof Window) {
-            try {
-                Rectangle bounds = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
-                    .getDefaultConfiguration().getBounds();
-                int x = bounds.x + (bounds.width - container.getWidth()) / 2;
-                int y = bounds.y + (bounds.height - container.getHeight()) / 2;
+  private void displayOnScreen() {
+    if (container instanceof Window) {
+      try {
+        Rectangle bounds =
+            GraphicsEnvironment.getLocalGraphicsEnvironment()
+                .getDefaultScreenDevice()
+                .getDefaultConfiguration()
+                .getBounds();
+        int x = bounds.x + (bounds.width - container.getWidth()) / 2;
+        int y = bounds.y + (bounds.height - container.getHeight()) / 2;
 
-                container.setLocation(x, y);
-            } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Set splashscreen location", e);
-            }
-            container.setVisible(true);
-        }
+        container.setLocation(x, y);
+      } catch (Exception e) {
+        LOGGER.log(Level.SEVERE, "Set splashscreen location", e);
+      }
+      container.setVisible(true);
     }
+  }
 
-    public void setFelix(Map<String, String> serverProp, BundleContext bundleContext, Properties modulesi18n) {
-        AutoProcessor.process(serverProp, modulesi18n, bundleContext, this);
-    }
+  public void setFelix(
+      Map<String, String> serverProp, BundleContext bundleContext, Properties modulesi18n) {
+    AutoProcessor.process(serverProp, modulesi18n, bundleContext, this);
+  }
 }

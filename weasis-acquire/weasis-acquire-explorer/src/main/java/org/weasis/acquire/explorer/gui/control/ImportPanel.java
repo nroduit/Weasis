@@ -2,22 +2,20 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-
 package org.weasis.acquire.explorer.gui.control;
 
 import java.awt.Dimension;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.SwingWorker.StateValue;
-
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.ImportTask;
 import org.weasis.acquire.explorer.Messages;
@@ -34,68 +32,74 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 
 public class ImportPanel extends JPanel {
-    private static final long serialVersionUID = -8658686020451614960L;
+  private static final long serialVersionUID = -8658686020451614960L;
 
-    public static final ExecutorService IMPORT_IMAGES = ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
+  public static final ExecutorService IMPORT_IMAGES =
+      ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
 
-    private JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
-    private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
+  private JButton importBtn = new JButton(Messages.getString("ImportPanel.import"));
+  private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
 
-    private final ImageGroupPane centralPane;
+  private final ImageGroupPane centralPane;
 
-    // TODO create ACTION object fpr import
-    // so wherever it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION object
+  // TODO create ACTION object fpr import
+  // so wherever it's called (button / popup/ menuBar ,,) it can be disabled/enabled from the ACTION
+  // object
 
-    public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
-        this.centralPane = centralPane;
+  public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
+    this.centralPane = centralPane;
 
-        importBtn.setPreferredSize(new Dimension(150, 40));
-        importBtn.setFont(FontTools.getFont12Bold());
+    importBtn.setPreferredSize(new Dimension(150, 40));
+    importBtn.setFont(FontTools.getFont12Bold());
 
-        importBtn.addActionListener(e -> {
-            List<ImageElement> selected = AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
-            if (!selected.isEmpty()) {
-                AcquireImportDialog dialog = new AcquireImportDialog(this, selected);
-                JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
-            }
+    importBtn.addActionListener(
+        e -> {
+          List<ImageElement> selected =
+              AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
+          if (!selected.isEmpty()) {
+            AcquireImportDialog dialog = new AcquireImportDialog(this, selected);
+            JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+          }
         });
-        add(importBtn);
-        add(progressBar);
+    add(importBtn);
+    add(progressBar);
 
-        progressBar.setVisible(false);
-    }
+    progressBar.setVisible(false);
+  }
 
-    public ImageGroupPane getCentralPane() {
-        return centralPane;
-    }
+  public ImageGroupPane getCentralPane() {
+    return centralPane;
+  }
 
-    public void importImageList(Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
+  public void importImageList(
+      Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
 
-        ImportTask imporTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
+    ImportTask imporTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
 
-        imporTask.addPropertyChangeListener(evt -> {
-            if ("progress".equals(evt.getPropertyName())) {
-                int progress = (Integer) evt.getNewValue();
-                progressBar.setValue(progress);
+    imporTask.addPropertyChangeListener(
+        evt -> {
+          if ("progress".equals(evt.getPropertyName())) {
+            int progress = (Integer) evt.getNewValue();
+            progressBar.setValue(progress);
 
-            } else if ("state".equals(evt.getPropertyName())) {
+          } else if ("state".equals(evt.getPropertyName())) {
 
-                if (StateValue.STARTED == evt.getNewValue()) {
-                    importBtn.setEnabled(false);
-                    progressBar.setVisible(true);
-                    progressBar.setValue(0);
+            if (StateValue.STARTED == evt.getNewValue()) {
+              importBtn.setEnabled(false);
+              progressBar.setVisible(true);
+              progressBar.setValue(0);
 
-                } else if (StateValue.DONE == evt.getNewValue()) {
-                    importBtn.setEnabled(true);
-                    progressBar.setVisible(false);
-                }
+            } else if (StateValue.DONE == evt.getNewValue()) {
+              importBtn.setEnabled(true);
+              progressBar.setVisible(false);
             }
+          }
         });
 
-        IMPORT_IMAGES.execute(imporTask);
-    }
+    IMPORT_IMAGES.execute(imporTask);
+  }
 
-    public boolean isLoading() {
-        return !importBtn.isEnabled();
-    }
+  public boolean isLoading() {
+    return !importBtn.isEnabled();
+  }
 }

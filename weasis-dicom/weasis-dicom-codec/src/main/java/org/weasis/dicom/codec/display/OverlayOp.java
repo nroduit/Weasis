@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-
 package org.weasis.dicom.codec.display;
 
 import java.awt.Color;
@@ -14,7 +14,6 @@ import java.awt.image.RenderedImage;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
-
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,75 +32,82 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class OverlayOp extends AbstractOp {
-    private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOp.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOp.class);
 
-    public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
+  public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
 
-    public static final String P_SHOW = "overlay";  //NON-NLS
-    public static final String P_PR_ELEMENT = "pr.element"; 
-    public static final String P_IMAGE_ELEMENT = "img.element"; 
+  public static final String P_SHOW = "overlay"; // NON-NLS
+  public static final String P_PR_ELEMENT = "pr.element";
+  public static final String P_IMAGE_ELEMENT = "img.element";
 
-    public OverlayOp() {
-        setName(OP_NAME);
+  public OverlayOp() {
+    setName(OP_NAME);
+  }
+
+  public OverlayOp(OverlayOp op) {
+    super(op);
+  }
+
+  @Override
+  public OverlayOp copy() {
+    return new OverlayOp(this);
+  }
+
+  @Override
+  public void handleImageOpEvent(ImageOpEvent event) {
+    OpEvent type = event.getEventType();
+    if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
+      setParam(P_PR_ELEMENT, null);
+      setParam(P_IMAGE_ELEMENT, event.getImage());
+    } else if (OpEvent.ApplyPR.equals(type)) {
+      HashMap<String, Object> p = event.getParams();
+      if (p != null) {
+        setParam(
+            P_PR_ELEMENT,
+            Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
+                .filter(PRSpecialElement.class::isInstance)
+                .orElse(null));
+        setParam(P_IMAGE_ELEMENT, event.getImage());
+      }
     }
+  }
 
-    public OverlayOp(OverlayOp op) {
-        super(op);
-    }
+  @Override
+  public void process() throws Exception {
+    PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+    PlanarImage result = source;
+    Boolean overlay = (Boolean) params.get(P_SHOW);
 
-    @Override
-    public OverlayOp copy() {
-        return new OverlayOp(this);
-    }
+    if (overlay != null && overlay) {
+      RenderedImage imgOverlay = null;
+      ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
 
-    @Override
-    public void handleImageOpEvent(ImageOpEvent event) {
-        OpEvent type = event.getEventType();
-        if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
-            setParam(P_PR_ELEMENT, null);
-            setParam(P_IMAGE_ELEMENT, event.getImage());
-        } else if (OpEvent.ApplyPR.equals(type)) {
-            HashMap<String, Object> p = event.getParams();
-            if (p != null) {
-                setParam(P_PR_ELEMENT, Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
-                    .filter(PRSpecialElement.class::isInstance).orElse(null));
-                setParam(P_IMAGE_ELEMENT, event.getImage());
+      if (image != null) {
+        boolean overlays = LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay));
+
+        if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
+          DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
+          try {
+            if (image.getKey() instanceof Integer) {
+              int frame = (Integer) image.getKey();
+              Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
+              Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
+              if (height != null && width != null) {
+                imgOverlay =
+                    OverlayUtils.getBinaryOverlays(
+                        image, reader.getDicomObject(), frame, width, height, params);
+              }
             }
+          } catch (IOException e) {
+            LOGGER.error("Applying overlays", e);
+          }
         }
+      }
+      result =
+          imgOverlay == null
+              ? source
+              : ImageProcessor.overlay(source.toMat(), imgOverlay, Color.WHITE);
     }
-
-    @Override
-    public void process() throws Exception {
-        PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
-        PlanarImage result = source;
-        Boolean overlay = (Boolean) params.get(P_SHOW);
-
-        if (overlay != null && overlay) {
-            RenderedImage imgOverlay = null;
-            ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-
-            if (image != null) {
-                boolean overlays = LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay));
-
-                if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
-                    DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
-                    try {
-                        if (image.getKey() instanceof Integer) {
-                            int frame = (Integer) image.getKey();
-                            Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
-                            Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
-                            if (height != null && width != null) {
-                                imgOverlay = OverlayUtils.getBinaryOverlays(image, reader.getDicomObject(), frame,
-                                    width, height, params);
-                            }
-                        }
-                    } catch (IOException e) {
-                        LOGGER.error("Applying overlays", e);
-                    }
-                }
-            }
-            result = imgOverlay == null ? source : ImageProcessor.overlay(source.toMat(), imgOverlay, Color.WHITE);
-        }
-        params.put(Param.OUTPUT_IMG, result);
-    }
+    params.put(Param.OUTPUT_IMG, result);
+  }
 }

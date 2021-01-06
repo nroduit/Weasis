@@ -2,18 +2,16 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0.
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-
 package org.weasis.base.ui.internal;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
-
 import javax.swing.LookAndFeel;
-
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.*;
@@ -24,59 +22,63 @@ import org.weasis.base.ui.gui.WeasisWin;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.util.StringUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.pref.GeneralSetting;
+import org.weasis.core.util.StringUtil;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
-    @Override
-    public void start(final BundleContext bundleContext) throws Exception {
-        // Starts core bundles for initialization before calling UI components
-        Bundle bundle = FrameworkUtil.getBundle(BundleTools.class);
-        if (bundle != null) {
-            bundle.start();
-        }
-        bundle = FrameworkUtil.getBundle(UIManager.class);
-        if (bundle != null) {
-            bundle.start();
-        }
-        String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
-        if (StringUtil.hasText(className)) {
-            LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
-            if (lf == null || !className.equals(lf.getClass().getName())) {
-                GeneralSetting.setLookAndFeel(className);
-            }
-        }
+  @Override
+  public void start(final BundleContext bundleContext) throws Exception {
+    // Starts core bundles for initialization before calling UI components
+    Bundle bundle = FrameworkUtil.getBundle(BundleTools.class);
+    if (bundle != null) {
+      bundle.start();
+    }
+    bundle = FrameworkUtil.getBundle(UIManager.class);
+    if (bundle != null) {
+      bundle.start();
+    }
+    String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
+    if (StringUtil.hasText(className)) {
+      LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
+      if (lf == null || !className.equals(lf.getClass().getName())) {
+        GeneralSetting.setLookAndFeel(className);
+      }
+    }
 
-        // WeasisWin must be instantiate in the EDT but required to end before the bundle startup
-        GuiExecutor.instance().invokeAndWait(() -> {
-            final WeasisWin mainWindow = new WeasisWin();
-            // Register "weasis" command
-            Dictionary<String, Object> dict = new Hashtable<>();
-            dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); //NON-NLS
-            dict.put(CommandProcessor.COMMAND_FUNCTION, WeasisWin.functions.toArray(new String[WeasisWin.functions.size()]));
-            bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
-            try {
+    // WeasisWin must be instantiate in the EDT but required to end before the bundle startup
+    GuiExecutor.instance()
+        .invokeAndWait(
+            () -> {
+              final WeasisWin mainWindow = new WeasisWin();
+              // Register "weasis" command
+              Dictionary<String, Object> dict = new Hashtable<>();
+              dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); // NON-NLS
+              dict.put(
+                  CommandProcessor.COMMAND_FUNCTION,
+                  WeasisWin.functions.toArray(new String[WeasisWin.functions.size()]));
+              bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
+              try {
                 mainWindow.createMainPanel();
                 mainWindow.showWindow();
-            } catch (Exception ex) {
+              } catch (Exception ex) {
                 // It is better to exit than to let run a zombie process
                 LOGGER.error("Cannot start GUI", ex);
                 System.exit(-1);
-            }
-            MainWindowListener listener = BundlePreferences.getService(bundleContext, MainWindowListener.class);
-            if (listener != null) {
+              }
+              MainWindowListener listener =
+                  BundlePreferences.getService(bundleContext, MainWindowListener.class);
+              if (listener != null) {
                 listener.setMainWindow(mainWindow);
-            }
-        });
-    }
+              }
+            });
+  }
 
-    @Override
-    public void stop(BundleContext bundleContext) throws Exception {
-        // Let osgi services doing their job
-    }
-
+  @Override
+  public void stop(BundleContext bundleContext) throws Exception {
+    // Let osgi services doing their job
+  }
 }
