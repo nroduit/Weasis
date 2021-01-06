@@ -10,6 +10,9 @@
 package org.weasis.dicom.qr;
 
 
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
+import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -18,15 +21,15 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -46,7 +49,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
@@ -62,20 +64,15 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.MediaSeriesGroupNode;
-import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.FileUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.core.util.StringUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
-import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ImportDicom;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -83,6 +80,8 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
+import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
+import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.ConnectOptions;
@@ -90,13 +89,10 @@ import org.weasis.dicom.param.DicomParam;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.tool.DicomListener;
 
-import com.github.lgooddatepicker.components.DatePicker;
-import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
-import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
-
 public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrView.class);
+    private DicomWebNode retrieveNode;
 
     public enum Period {
         ALL(Messages.getString("DicomQrView.all_dates"), null),
@@ -139,20 +135,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         private final LocalDate start;
         private final LocalDate end;
 
-        private Period(String name, LocalDate date) {
+        Period(String name, LocalDate date) {
             this.displayName = name;
             this.start = date;
             this.end = date;
         }
 
-        private Period(String name, LocalDate start, LocalDate end) {
+        Period(String name, LocalDate start, LocalDate end) {
             this.displayName = name;
             this.start = start;
             this.end = end;
-        }
-
-        public String getDisplayName() {
-            return displayName;
         }
 
         public LocalDate getStart() {
@@ -316,7 +308,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         panel5.add(clearBtn);
         JButton searchBtn = new JButton(Messages.getString("DicomQrView.search"));
         searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
-        searchBtn.addActionListener(e -> cfind());
+        searchBtn.addActionListener(e -> dicomQuery());
         panel5.add(searchBtn);
         return panel5;
     }
@@ -433,7 +425,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         endDatePicker.setDate(null);
     }
 
-    private void cfind() {
+    private void dicomQuery() {
         SearchParameters searchParams = buildCurrentSearchParameters();
         List<DicomParam> p = searchParams.getParameters();
         // Clear model
@@ -448,36 +440,37 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
             }
         }
 
-        // see http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_C.6
-        addReturnTags(p, CFind.PatientName);
-        addReturnTags(p, CFind.PatientID);
-        addReturnTags(p, CFind.PatientSex);
-        addReturnTags(p, CFind.PatientBirthDate);
-        addReturnTags(p, CFind.IssuerOfPatientID);
-
-        addReturnTags(p, CFind.StudyInstanceUID);
-        addReturnTags(p, CFind.StudyDescription);
-        addReturnTags(p, CFind.StudyDate);
-        addReturnTags(p, CFind.StudyTime);
-        addReturnTags(p, CFind.AccessionNumber);
-        addReturnTags(p, CFind.ReferringPhysicianName);
-        addReturnTags(p, CFind.StudyID);
-        addReturnTags(p, new DicomParam(Tag.InstitutionName));
-        addReturnTags(p, new DicomParam(Tag.ModalitiesInStudy));
-        addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedSeries));
-        addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedInstances));
-
         AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
-        AbstractDicomNode callingNode = (AbstractDicomNode) comboCallingNode.getSelectedItem();
-        if (selectedItem instanceof DefaultDicomNode && callingNode instanceof DefaultDicomNode) {
+        if (selectedItem instanceof DefaultDicomNode) {
             final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
+            DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
+
+            // see http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_C.6
+            addReturnTags(p, CFind.PatientName);
+            addReturnTags(p, CFind.PatientID);
+            addReturnTags(p, CFind.PatientSex);
+            addReturnTags(p, CFind.PatientBirthDate);
+            addReturnTags(p, CFind.IssuerOfPatientID);
+
+            addReturnTags(p, CFind.StudyInstanceUID);
+            addReturnTags(p, CFind.StudyDescription);
+            addReturnTags(p, CFind.StudyDate);
+            addReturnTags(p, CFind.StudyTime);
+            addReturnTags(p, CFind.AccessionNumber);
+            addReturnTags(p, CFind.ReferringPhysicianName);
+            addReturnTags(p, CFind.StudyID);
+            addReturnTags(p, new DicomParam(Tag.InstitutionName));
+            addReturnTags(p, new DicomParam(Tag.ModalitiesInStudy));
+            addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedSeries));
+            addReturnTags(p, new DicomParam(Tag.NumberOfStudyRelatedInstances));
+
             AdvancedParams params = new AdvancedParams();
             ConnectOptions connectOptions = new ConnectOptions();
             connectOptions.setConnectTimeout(3000);
             connectOptions.setAcceptTimeout(5000);
             params.setConnectOptions(connectOptions);
-            final DicomState state = CFind.process(params, ((DefaultDicomNode) callingNode).getDicomNodeWithOnlyAET(),
-                node.getDicomNode(), p.toArray(new DicomParam[p.size()]));
+            final DicomState state = CFind.process(params, callingNode.getDicomNodeWithOnlyAET(),
+                node.getDicomNode(), p.toArray(new DicomParam[0]));
             if (state.getStatus() == Status.Success) {
                 displayResult(state);
             } else {
@@ -486,12 +479,25 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                     JOptionPane.ERROR_MESSAGE));
             }
         } else if (selectedItem instanceof DicomWebNode) {
-            throw new IllegalAccessError("Not implemented yet");
+            final DicomWebNode node = (DicomWebNode) selectedItem;
+            Properties props = new Properties();
+            props.setProperty(RsQueryParams.P_DICOMWEB_URL, node.getUrl().toString());
+            //props.setProperty(RsQueryParams.P_QUERY_EXT, "&includedefaults=false");
+            this.retrieveNode = node;
+            RsQuery rsquery = new RsQuery(dicomModel,props, p, node.getHeaders());
+            try {
+                executor.invokeAll(Arrays.asList(rsquery));
+                tree.setCheckTreeModel(new RetrieveTreeModel(dicomModel));
+                tree.revalidate();
+                tree.repaint();
+            } catch (Exception e) {
+                LOGGER.error("", e);
+            }
         }
     }
 
     private static void addReturnTags(List<DicomParam> list, DicomParam p) {
-        if (!list.stream().anyMatch(d -> d.getTag() == p.getTag())) {
+        if (list.stream().noneMatch(d -> d.getTag() == p.getTag())) {
             list.add(p);
         }
     }
@@ -506,69 +512,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 LOGGER.trace("===========================================");
                 LOGGER.trace("{}", item.toString(100, 150));
 
-                PatientComparator patientComparator = new PatientComparator(item);
-                String patientPseudoUID = patientComparator.buildPatientPseudoUID();
-                MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
-                if (patient == null) {
-                    patient = new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID,
-                        DicomModel.patient.getTagView()) {
-                        @Override
-                        public String toString() {
-                            StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.PatientName));
-                            buf.append(" [");
-                            buf.append(getDisplayValue(this, Tag.PatientID));
-                            buf.append("] ");
-                            buf.append(getDisplayValue(this, Tag.PatientBirthDate));
-                            buf.append(" ");
-                            buf.append(getDisplayValue(this, Tag.PatientSex));
-                            return buf.toString();
-                        }
-                    };
-                    DicomMediaUtils.writeMetaData(patient, item);
-                    dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-                }
-
-                String studyUID = item.getString(Tag.StudyInstanceUID);
-                MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
-                if (study == null) {
-                    study =
-                        new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView()) {
-                            @Override
-                            public String toString() {
-                                StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.StudyDescription));
-                                buf.append(" [");
-                                buf.append(getDisplayValue(this, Tag.ModalitiesInStudy));
-                                buf.append("] ");
-                                LocalDateTime studyDate = TagD.dateTime(Tag.StudyDate, Tag.StudyTime, this);
-                                if (studyDate != null) {
-                                    buf.append(TagUtil.formatDateTime(studyDate));
-                                    buf.append(" ");
-                                }
-                                buf.append(getDisplayValue(this, Tag.AccessionNumber));
-                                return buf.toString();
-                            }
-                        };
-                    DicomMediaUtils.writeMetaData(study, item);
-                    dicomModel.addHierarchyNode(patient, study);
-                }
+                RsQuery.populateDicomModel(dicomModel, item);
             }
         }
-
         tree.setCheckTreeModel(new RetrieveTreeModel(dicomModel));
         tree.revalidate();
         tree.repaint();
-    }
-
-    private String getDisplayValue(MediaSeriesGroupNode node, int tagID) {
-        TagW tag = TagD.get(tagID);
-        if (tag != null) {
-            Object value = node.getTagValue(tag);
-            if (value != null) {
-                return tag.getFormattedTagValue(value, null);
-            }
-        }
-        return StringUtil.EMPTY_STRING;
-
     }
 
     protected void initialize(boolean afirst) {
@@ -586,7 +535,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         comboDestinationNode.removeActionListener(destNodeListener);
         comboDestinationNode.removeAllItems();
         AbstractDicomNode.loadDicomNodes(comboDestinationNode, AbstractDicomNode.Type.DICOM, UsageType.RETRIEVE);
-        // AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE);
+        AbstractDicomNode.loadDicomNodes(comboDestinationNode, AbstractDicomNode.Type.WEB, UsageType.RETRIEVE, WebType.QIDORS);
         restoreNodeSelection(comboDestinationNode.getModel(), LAST_SEL_NODE);
         String lastType = DicomQrFactory.IMPORT_PERSISTENCE.getProperty(LAST_RETRIEVE_TYPE);
         if (lastType != null) {
@@ -631,11 +580,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         LocalDate sDate = startDatePicker.getDate();
         LocalDate eDate = endDatePicker.getDate();
         if (sDate != null || eDate != null) {
-            StringBuilder range = new StringBuilder();
-            range.append(TagD.formatDicomDate(sDate));
-            range.append("-");
-            range.append(TagD.formatDicomDate(eDate));
-            p.getParameters().add(new DicomParam(Tag.StudyDate, range.toString()));
+            String range = TagD.formatDicomDate(sDate)
+                + "-"
+                + TagD.formatDicomDate(eDate);
+            p.getParameters().add(new DicomParam(Tag.StudyDate, range));
         }
         return p;
     }
@@ -701,6 +649,18 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     public void importDICOM(DicomModel explorerDcmModel, JProgressBar info) {
         List<String> studies = getCheckedStudies(tree.getCheckboxTree().getCheckingPaths());
         if (!studies.isEmpty()) {
+            Object selectedItem = getComboDestinationNode().getSelectedItem();
+            if (selectedItem instanceof DicomWebNode && ((DicomWebNode) selectedItem).getWebType() == WebType.QIDORS) {
+                List<AbstractDicomNode> webNodes =
+                    AbstractDicomNode.loadDicomNodes(
+                        AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADORS);
+                String host = RetrieveTask.getHostname(((DicomWebNode) selectedItem).getUrl().getHost());
+                String m1 = Messages.getString("DicomQrView.no.url.matches.with.the.qido");
+                DicomWebNode wnode = RetrieveTask.getWadoUrl(this, host,webNodes, m1 );
+                if (wnode != null) {
+                    this.retrieveNode = wnode;
+                }
+            }
             executor.execute(new RetrieveTask(studies, explorerDcmModel, this));
         }
     }
@@ -729,4 +689,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         return dicomModel;
     }
 
+    public DicomWebNode getRetrieveNode() {
+        return retrieveNode;
+    }
 }

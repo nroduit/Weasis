@@ -61,11 +61,11 @@ public class RsQueryResult extends AbstractQueryResult {
 
     private static final boolean multipleParams =
         LangUtil.getEmptytoFalse(System.getProperty("dicom.qido.query.multi.params"));
-    private static final String STUDY_QUERY = multiParams(
+    public static final String STUDY_QUERY = multiParams(
         "&includefield=00080020,00080030,00080050,00080061,00080090,00081030,00100010,00100020,00100021,00100030,00100040,0020000D,00200010"); //NON-NLS
-    private static final String SERIES_QUERY = multiParams("0008103E,00080060,0020000E,00200011,00081190"); //NON-NLS
-    private static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190");
-    private static final String QIDO_REQUEST = "QIDO-RS request: {}"; //NON-NLS
+    public static final String SERIES_QUERY = multiParams("0008103E,00080060,0020000E,00200011,00081190"); //NON-NLS
+    public static final String INSTANCE_QUERY = multiParams("00080018,00200013,00081190");
+    public static final String QIDO_REQUEST = "QIDO-RS request: {}"; //NON-NLS
 
     private final RsQueryParams rsQueryParams;
     private final WadoParameters wadoParameters;
@@ -338,11 +338,11 @@ public class RsQueryResult extends AbstractQueryResult {
                 List<Attributes> series = parseJSON(buf.toString());
                 if (!series.isEmpty()) {
                     Attributes dataset = series.get(0);
-                    MediaSeriesGroup patient = getPatient(dataset);
-                    MediaSeriesGroup study = getStudy(patient, dataset);
+                    MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
+                    MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
                     for (Attributes seriesDataset : series) {
                         Series<?> dicomSeries = getSeries(study, seriesDataset, defaultStartDownloading);
-                        fillInstance(seriesDataset, study, dicomSeries);
+                        fillInstance(seriesDataset, dicomSeries);
                     }
                     studyHashSet.add(dataset.getString(Tag.StudyInstanceUID));
                 }
@@ -375,8 +375,8 @@ public class RsQueryResult extends AbstractQueryResult {
                 List<Attributes> instances = parseJSON(buf.toString());
                 if (!instances.isEmpty()) {
                     Attributes dataset = instances.get(0);
-                    MediaSeriesGroup patient = getPatient(dataset);
-                    MediaSeriesGroup study = getStudy(patient, dataset);
+                    MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
+                    MediaSeriesGroup study = getStudy(patient, dataset, rsQueryParams.getDicomModel());
                     Series<?> dicomSeries = getSeries(study, dataset, defaultStartDownloading);
                     String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
                     SeriesInstanceList seriesInstanceList =
@@ -408,11 +408,11 @@ public class RsQueryResult extends AbstractQueryResult {
                 List<Attributes> series = parseJSON(buf.toString());
                 if (!series.isEmpty()) {
                     // Get patient from each study in case IssuerOfPatientID is different
-                    MediaSeriesGroup patient = getPatient(studyDataSet);
-                    MediaSeriesGroup study = getStudy(patient, studyDataSet);
+                    MediaSeriesGroup patient = getPatient(studyDataSet, rsQueryParams.getDicomModel());
+                    MediaSeriesGroup study = getStudy(patient, studyDataSet, rsQueryParams.getDicomModel());
                     for (Attributes seriesDataset : series) {
                         Series<?> dicomSeries = getSeries(study, seriesDataset, startDownloading);
-                        fillInstance(seriesDataset, study, dicomSeries);
+                        fillInstance(seriesDataset, dicomSeries);
                     }
                 }
             } catch (Exception e) {
@@ -421,7 +421,7 @@ public class RsQueryResult extends AbstractQueryResult {
         }
     }
 
-    private void fillInstance(Attributes seriesDataset, MediaSeriesGroup study, Series<?> dicomSeries) {
+    private void fillInstance(Attributes seriesDataset, Series<?> dicomSeries) {
         String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
         if (StringUtil.hasText(serieInstanceUID)) {
             String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
@@ -448,7 +448,7 @@ public class RsQueryResult extends AbstractQueryResult {
         }
     }
 
-    private void addSopInstance(Attributes instanceDataSet, SeriesInstanceList seriesInstanceList,
+    public static void addSopInstance(Attributes instanceDataSet, SeriesInstanceList seriesInstanceList,
         String seriesRetrieveURL) {
         String sopUID = instanceDataSet.getString(Tag.SOPInstanceUID);
         Integer frame = DicomMediaUtils.getIntegerFromDicomElement(instanceDataSet, Tag.InstanceNumber, null);
@@ -458,17 +458,15 @@ public class RsQueryResult extends AbstractQueryResult {
             sop = new SopInstance(sopUID, frame);
             String rurl = instanceDataSet.getString(Tag.RetrieveURL);
             if (!StringUtil.hasText(rurl)) {
-                StringBuilder b = new StringBuilder(seriesRetrieveURL);
-                b.append("/instances/"); //NON-NLS
-                b.append(sopUID);
-                rurl = b.toString();
+                String b = seriesRetrieveURL + "/instances/" + sopUID; //NON-NLS
+                rurl = b;
             }
             sop.setDirectDownloadFile(rurl);
             seriesInstanceList.addSopInstance(sop);
         }
     }
 
-    private MediaSeriesGroup getPatient(Attributes patientDataset) {
+    public static MediaSeriesGroup getPatient(Attributes patientDataset, DicomModel model) {
         if (patientDataset == null) {
             throw new IllegalArgumentException("patientDataset cannot be null");
         }
@@ -476,7 +474,6 @@ public class RsQueryResult extends AbstractQueryResult {
         PatientComparator patientComparator = new PatientComparator(patientDataset);
         String patientPseudoUID = patientComparator.buildPatientPseudoUID();
 
-        DicomModel model = rsQueryParams.getDicomModel();
         MediaSeriesGroup patient = model.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
         if (patient == null) {
             patient =
@@ -496,12 +493,11 @@ public class RsQueryResult extends AbstractQueryResult {
         return patient;
     }
 
-    private MediaSeriesGroup getStudy(MediaSeriesGroup patient, final Attributes studyDataset) {
+    public static MediaSeriesGroup getStudy(MediaSeriesGroup patient, final Attributes studyDataset, DicomModel model) {
         if (studyDataset == null) {
             throw new IllegalArgumentException("studyDataset cannot be null");
         }
         String studyUID = studyDataset.getString(Tag.StudyInstanceUID);
-        DicomModel model = rsQueryParams.getDicomModel();
         MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
         if (study == null) {
             study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());

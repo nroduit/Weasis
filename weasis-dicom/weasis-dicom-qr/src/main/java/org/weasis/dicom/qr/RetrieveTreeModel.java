@@ -54,7 +54,7 @@ public class RetrieveTreeModel {
         this.model = buildModel(dicomModel);
         this.rootNode = (DefaultMutableTreeNode) model.getRoot();
         this.checkingModel = new DefaultTreeCheckingModel(model);
-        this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<TreePath>());
+        this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<>());
     }
 
     public DefaultMutableTreeNode getRootNode() {

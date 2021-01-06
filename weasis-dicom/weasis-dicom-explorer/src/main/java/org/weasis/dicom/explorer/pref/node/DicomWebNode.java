@@ -25,12 +25,12 @@ import org.weasis.dicom.codec.TransferSyntax;
 
 public class DicomWebNode extends AbstractDicomNode {
 
-    private static final String T_URL = "url"; //NON-NLS
-    private static final String T_WEB_TYPE = "webtype"; //NON-NLS
-    private static final String T_HEADER = "headers"; //NON-NLS
+    public static final String T_URL = "url"; //NON-NLS
+    public static final String T_WEB_TYPE = "webtype"; //NON-NLS
+    public static final String T_HEADER = "headers"; //NON-NLS
     
     public enum WebType {
-        STOWRS("STOW-RS"), WADO("WADO"), WADORS("WADO-RS"); // NON-NLS
+        DICOMWEB("DICOMWeb (all RESTful services)"), QIDORS("QIDO-RS (query)"), STOWRS("STOW-RS (store)"), WADO("WADO-URI (non-RS)"), WADORS("WADO-RS (retrieve)"); // NON-NLS
 
         String title;
 
@@ -112,7 +112,14 @@ public class DicomWebNode extends AbstractDicomNode {
     }
 
     public static UsageType getUsageType(WebType webType) {
-        return DicomWebNode.WebType.STOWRS.equals(webType) ? UsageType.STORAGE : UsageType.RETRIEVE;
+        if (WebType.DICOMWEB.equals(webType)) {
+            return UsageType.BOTH;
+        } else {
+            if (WebType.STOWRS.equals(webType)) {
+                return UsageType.STORAGE;
+            }
+            return UsageType.RETRIEVE;
+        }
     }
 
     public static DicomWebNode buildDicomWebNode(XMLStreamReader xmler) throws MalformedURLException {
