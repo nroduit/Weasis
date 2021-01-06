@@ -1,104 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>weasis-dicom-parent</artifactId>
-		<groupId>org.weasis.dicom</groupId>
-		<!--suppress MavenPropertyInParent -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>weasis-dicom-parent</artifactId>
+    <groupId>org.weasis.dicom</groupId>
+    <!--suppress MavenPropertyInParent -->
     <version>${revision}${changelist}</version>
-		<relativePath>../weasis-dicom-parent/pom.xml</relativePath>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<artifactId>weasis-dicom-codec</artifactId>
-	<packaging>jar</packaging>
-	<name>DICOM - Codecs and parsers for DICOM [${project.artifactId}]</name>
+    <relativePath>../weasis-dicom-parent/pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <artifactId>weasis-dicom-codec</artifactId>
+  <packaging>jar</packaging>
+  <name>DICOM - Codecs and parsers for DICOM [${project.artifactId}]</name>
 
-	<repositories>
-		<repository>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-			<id>dcm4che</id>
-			<name>dcm4che Repository</name>
-			<url>http://www.dcm4che.org/maven2</url>
-		</repository>
-	</repositories>
+  <repositories>
+    <repository>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+      <id>dcm4che</id>
+      <name>dcm4che Repository</name>
+      <url>http://www.dcm4che.org/maven2</url>
+    </repository>
+  </repositories>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-scr-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<executions>
-					<execution>
-						<id>unpack-dependencies</id>
-						<phase>generate-resources</phase>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<configuration>
-							<includeArtifactIds>dcm4che-dict</includeArtifactIds>
-							<includes>uids.xml,dataelements.xml</includes>
-							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<groupId>biz.aQute.bnd</groupId>
-				<artifactId>bnd-maven-plugin</artifactId>
-				<configuration>
-					<bnd>
-						Implementation-Version: ${weasis-dicom-tools.version}
-						Export-Package: !org.weasis.dicom.codec.internal,org.weasis.dicom.codec.*,org.weasis.dicom.*,org.dcm4che3.*
-					</bnd>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	<dependencies>
-		<dependency>
-			<groupId>org.weasis</groupId>
-			<artifactId>weasis-dicom-tools</artifactId>
-			<version>${weasis-dicom-tools.version}</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.weasis.core</groupId>
-					<artifactId>weasis-core-img</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>junit</groupId>
-					<artifactId>junit</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.imageio</groupId>
-			<artifactId>weasis-imageio-codec</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jogamp.java3d</groupId>
-			<artifactId>vecmath</artifactId>
-		</dependency>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-scr-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-dependencies</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>unpack-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>dcm4che-dict</includeArtifactIds>
+              <includes>uids.xml,dataelements.xml</includes>
+              <outputDirectory>${project.build.directory}/classes</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Implementation-Version: ${weasis-dicom-tools.version}
+            Export-Package: !org.weasis.dicom.codec.internal,org.weasis.dicom.codec.*,\
+            org.weasis.dicom.*,org.dcm4che3.*
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis</groupId>
+      <artifactId>weasis-dicom-tools</artifactId>
+      <version>${weasis-dicom-tools.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.weasis.core</groupId>
+          <artifactId>weasis-core-img</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>junit</groupId>
+          <artifactId>junit</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.imageio</groupId>
+      <artifactId>weasis-imageio-codec</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.jogamp.java3d</groupId>
+      <artifactId>vecmath</artifactId>
+    </dependency>
 
-		<!-- FOR TESTS -->
-		<dependency>
-			<groupId>org.assertj</groupId>
-			<artifactId>assertj-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito2</artifactId>
-		</dependency>
-	</dependencies>
+    <!-- FOR TESTS -->
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-module-junit4</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito2</artifactId>
+    </dependency>
+  </dependencies>
 </project>

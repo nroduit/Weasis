@@ -1,5 +1,5 @@
 <root>
-    <item name='java.net.URI java.lang.String getScheme()'>
-        <annotation name='org.jetbrains.annotations.NonNls'/>
-    </item>
+  <item name='java.net.URI java.lang.String getScheme()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
 </root>

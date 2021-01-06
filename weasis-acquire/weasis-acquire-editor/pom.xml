@@ -1,79 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>weasis-parent</artifactId>
-		<groupId>org.weasis</groupId>
-		<!--suppress MavenPropertyInParent -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>weasis-parent</artifactId>
+    <groupId>org.weasis</groupId>
+    <!--suppress MavenPropertyInParent -->
     <version>${revision}${changelist}</version>
-		<relativePath>../../weasis-parent/pom.xml</relativePath>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.weasis.acquire</groupId>
-	<artifactId>weasis-acquire-editor</artifactId>
-	<packaging>jar</packaging>
-	<name>Acquire - Media editor [${project.artifactId}]</name>
+    <relativePath>../../weasis-parent/pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.weasis.acquire</groupId>
+  <artifactId>weasis-acquire-editor</artifactId>
+  <packaging>jar</packaging>
+  <name>Acquire - Media editor [${project.artifactId}]</name>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-scr-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>biz.aQute.bnd</groupId>
-				<artifactId>bnd-maven-plugin</artifactId>
-				<configuration>
-					<bnd>
-						Export-Package: !org.weasis.acquire.explorer.*,org.weasis.acquire.*
-					</bnd>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-scr-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Export-Package: !org.weasis.acquire.explorer.*,org.weasis.acquire.*
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.weasis.thirdparty</groupId>
-			<artifactId>docking-frames</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-img</artifactId>
-			<version>${weasis.core.img.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-api</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-ui</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.base</groupId>
-			<artifactId>weasis-base-viewer2d</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.acquire</groupId>
-			<artifactId>weasis-acquire-explorer</artifactId>
-			<version>${project.version}</version>
-			<scope>provided</scope>
-		</dependency>
+  <dependencies>
+    <dependency>
+      <groupId>org.weasis.thirdparty</groupId>
+      <artifactId>docking-frames</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-img</artifactId>
+      <version>${weasis.core.img.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-api</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-ui</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.base</groupId>
+      <artifactId>weasis-base-viewer2d</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.acquire</groupId>
+      <artifactId>weasis-acquire-explorer</artifactId>
+      <version>${project.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
-		<!-- dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId> <version>19.0</version> </dependency -->
+    <!-- dependency> <groupId>com.google.guava</groupId> <artifactId>guava</artifactId> <version>19.0</version> </dependency -->
 
-		<!--dependency> <groupId>com.github.jiconfont</groupId> <artifactId>jiconfont-swing</artifactId> <version>1.0.0</version> 
-			</dependency -->
-		<!--dependency> <groupId>com.github.jiconfont</groupId> <artifactId>jiconfont-google_material_design_icons</artifactId> 
-			<version>2.2.0.1</version> <scope>import</scope> </dependency -->
+    <!--dependency> <groupId>com.github.jiconfont</groupId> <artifactId>jiconfont-swing</artifactId> <version>1.0.0</version>
+      </dependency -->
+    <!--dependency> <groupId>com.github.jiconfont</groupId> <artifactId>jiconfont-google_material_design_icons</artifactId>
+      <version>2.2.0.1</version> <scope>import</scope> </dependency -->
 
-	</dependencies>
+  </dependencies>
 </project>

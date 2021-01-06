@@ -1,55 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>org.weasis.base</groupId>
-		<artifactId>weasis-base-ui-mr</artifactId>
-		<!--suppress MavenPropertyInParent -->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.weasis.base</groupId>
+    <artifactId>weasis-base-ui-mr</artifactId>
+    <!--suppress MavenPropertyInParent -->
     <version>${revision}${changelist}</version>
-	</parent>
-	<artifactId>weasis-base-ui-base</artifactId>
-	<packaging>jar</packaging>
-	<name>Base - Multi-release java 8 UI [${project.artifactId}]</name>
+  </parent>
+  <artifactId>weasis-base-ui-base</artifactId>
+  <packaging>jar</packaging>
+  <name>Base - Multi-release java 8 UI [${project.artifactId}]</name>
 
-	<properties>
-		<maven.install.skip>true</maven.install.skip>
-	</properties>
+  <properties>
+    <maven.install.skip>true</maven.install.skip>
+  </properties>
 
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-scr-plugin</artifactId>
-			</plugin>
-			<plugin>
-				<groupId>biz.aQute.bnd</groupId>
-				<artifactId>bnd-maven-plugin</artifactId>
-				<configuration>
-					<bnd>
-						Bundle-SymbolicName: weasis-base-ui
-						Multi-Release: true
-						Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
-					</bnd>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-scr-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Bundle-SymbolicName: weasis-base-ui
+            Multi-Release: true
+            Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
-	<dependencies>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.gogo.command</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.gogo.runtime</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-img</artifactId>
-			<version>${weasis.core.img.version}</version>
-			<scope>provided</scope>
-		</dependency>
-	</dependencies>
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.gogo.command</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.gogo.runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-img</artifactId>
+      <version>${weasis.core.img.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 </project>

@@ -9,7 +9,7 @@
  */
 package org.weasis.core.api.image.util;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Objects;
 
 public class CIELab {

@@ -10,7 +10,7 @@
     <all-permissions/>
   </security>
   <resources>
-  	<!-- Allows to get the file in pack200 compression -->
+    <!-- Allows to get the file in pack200 compression -->
     <property name="jnlp.packEnabled" value="true"/>
     <jar href="substance.jar"/>
   </resources>

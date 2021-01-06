@@ -5,21 +5,22 @@
   <target name="addTrustedLibraryProperty">
     <jar file="${jarFile}" update="true">
       <manifest>
-        <attribute name="Permissions" value="all-permissions" />
-        <attribute name="Application-Name" value="Weasis" />
-        <attribute name="Trusted-Library" value="true" />
-        <attribute name="Codebase" value="*" />
-        <attribute name="Application-Library-Allowable-Codebase" value="*" />
-        <attribute name="Caller-Allowable-Codebase" value="*" />
+        <attribute name="Permissions" value="all-permissions"/>
+        <attribute name="Application-Name" value="Weasis"/>
+        <attribute name="Trusted-Library" value="true"/>
+        <attribute name="Codebase" value="*"/>
+        <attribute name="Application-Library-Allowable-Codebase" value="*"/>
+        <attribute name="Caller-Allowable-Codebase" value="*"/>
       </manifest>
     </jar>
   </target>
 
   <target name="addTrustedLibraries">
-    <ac:foreach target="addTrustedLibraryProperty" param="jarFile" xmlns:ac="antlib:net.sf.antcontrib">
+    <ac:foreach target="addTrustedLibraryProperty" param="jarFile"
+      xmlns:ac="antlib:net.sf.antcontrib">
       <path>
-      	<!-- Process only the root jars managed by JWS -->
-        <fileset dir="target/tmp" includes="*.jar" />
+        <!-- Process only the root jars managed by JWS -->
+        <fileset dir="target/tmp" includes="*.jar"/>
       </path>
     </ac:foreach>
   </target>
