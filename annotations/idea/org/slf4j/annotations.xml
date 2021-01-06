@@ -8,6 +8,9 @@
     <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Object, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.NonNls'/>
     </item>
+    <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Object...)'>
+        <annotation name='org.jetbrains.annotations.NonNls'/>
+    </item>
     <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Throwable)'>
         <annotation name='org.jetbrains.annotations.NonNls'/>
     </item>
