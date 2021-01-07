@@ -36,8 +36,8 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
         public void addSeries(MediaSeries<MediaElement> series) {
           if (series != null) {
             Iterable<MediaElement> list = series.getMedias(null, null);
-            synchronized (
-                series) { // NOSONAR lock object is the list for iterating its elements safely
+            synchronized ( // NOSONAR lock object is the list for iterating its elements safely
+                series) {
               for (MediaElement m : list) {
                 // As SUN JRE supports only Gnome and responds "true" for
                 // Desktop.isDesktopSupported()
