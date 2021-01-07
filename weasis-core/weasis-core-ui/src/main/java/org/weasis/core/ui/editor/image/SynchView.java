@@ -66,9 +66,7 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_s"),
             "Stack", // NON-NLS
             Mode.STACK,
-            new ImageIcon(
-                SynchView.class
-                    .getResource("/icon/22x22/sequence.png")),
+            new ImageIcon(SynchView.class.getResource("/icon/22x22/sequence.png")),
             actions);
   }
 

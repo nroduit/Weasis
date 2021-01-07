@@ -145,9 +145,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
           new DropDownButton(
               "layout", // NON-NLS
               new DropButtonIcon(
-                  new ImageIcon(
-                      MouseActions.class
-                          .getResource("/icon/32x32/layout.png")))) {
+                  new ImageIcon(MouseActions.class.getResource("/icon/32x32/layout.png")))) {
 
             @Override
             protected JPopupMenu getPopupMenu() {

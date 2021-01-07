@@ -835,12 +835,7 @@ public class WeasisLauncher {
     }
 
     getGeneralProperty(
-        "org.apache.sling.commons.log.file.number",
-        "5",
-        serverProp,
-        currentProps,
-        true,
-        true);
+        "org.apache.sling.commons.log.file.number", "5", serverProp, currentProps, true, true);
     getGeneralProperty(
         "org.apache.sling.commons.log.file.size",
         "10MB", // NON-NLS
@@ -849,12 +844,7 @@ public class WeasisLauncher {
         true,
         true);
     getGeneralProperty(
-        "org.apache.sling.commons.log.stack.limit",
-        "3",
-        serverProp,
-        currentProps,
-        true,
-        true);
+        "org.apache.sling.commons.log.stack.limit", "3", serverProp, currentProps, true, true);
     getGeneralProperty(
         "org.apache.sling.commons.log.pattern",
         "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", // NON-NLS
