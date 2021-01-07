@@ -41,10 +41,10 @@ public class ZoomToolBar extends WtoolBar {
 
     final DropDownButton zoom =
         new DropDownButton(
-            "zoom",
+            "zoom", // NON-NLS
             new DropButtonIcon(
                 new ImageIcon(
-                    MouseActions.class // NON-NLS
+                    MouseActions.class
                         .getResource("/icon/32x32/zoom.png")))) {
 
           @Override

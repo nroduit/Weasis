@@ -102,8 +102,8 @@ public class TagD extends TagW {
       Sex s = Sex.SEX_OTHER;
       if (StringUtil.hasText(sex)) {
         // Sex attribute can have the following values: M(male), F(female), or O(other)
-        return sex.toUpperCase().startsWith("F")
-            ? Sex.SEX_FEMALE // NON-NLS
+        return sex.toUpperCase().startsWith("F") // NON-NLS
+            ? Sex.SEX_FEMALE
             : sex.toUpperCase().startsWith("M") ? Sex.SEX_MALE : s; // NON-NLS
       }
       return s;

@@ -28,10 +28,10 @@ public class DicomWebNode extends AbstractDicomNode {
   public static final String T_HEADER = "headers"; // NON-NLS
 
   public enum WebType {
-    DICOMWEB("DICOMWeb (all RESTful services)"),
-    QIDORS("QIDO-RS (query)"),
-    STOWRS("STOW-RS (store)"),
-    WADO("WADO-URI (non-RS)"),
+    DICOMWEB("DICOMWeb (all RESTful services)"), // NON-NLS
+    QIDORS("QIDO-RS (query)"), // NON-NLS
+    STOWRS("STOW-RS (store)"), // NON-NLS
+    WADO("WADO-URI (non-RS)"), // NON-NLS
     WADORS("WADO-RS (retrieve)"); // NON-NLS
 
     String title;

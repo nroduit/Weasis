@@ -184,11 +184,11 @@ public class JMVUtils {
   }
 
   private static void addCheckActionToJFormattedTextField(final JFormattedTextField textField) {
-    textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check");
+    textField.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "check"); // NON-NLS
     textField
         .getActionMap()
         .put(
-            "check",
+            "check", // NON-NLS
             new AbstractAction() {
 
               @Override
@@ -438,12 +438,17 @@ public class JMVUtils {
     if (color == null) {
       return "";
     }
-    return "red = "
+    return Messages.getString("ByteLutCollection.red")
+        + " = "
         + color.getRed()
-        + ", green = "
+        + ", "
+        + Messages.getString("ByteLutCollection.green")
+        + " = "
         + color.getGreen()
-        + ", blue = "
-        + color.getBlue(); // NON-NLS
+        + ", "
+        + Messages.getString("ByteLutCollection.blue")
+        + " = "
+        + color.getBlue();
   }
 
   public static String getValueRGBasText2(Color color) {

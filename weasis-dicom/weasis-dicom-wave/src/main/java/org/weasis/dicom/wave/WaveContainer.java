@@ -85,7 +85,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
   public static final GridBagLayoutModel VIEWS_1x1 =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
-          "1x1",
+          "1x1", // NON-NLS
           1,
           1,
           WaveView.class.getName()); // NON-NLS

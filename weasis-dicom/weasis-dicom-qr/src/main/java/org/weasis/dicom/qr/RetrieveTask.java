@@ -363,9 +363,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
     retrieveNode.getHeaders().forEach(wadoParameters::addHttpTag);
     wadoParameters.addHttpTag(
-        "Accept",
+        "Accept", // NON-NLS
         Multipart.MULTIPART_RELATED
-            + ";type=\""
+            + ";type=\"" // NON-NLS
             + Multipart.ContentType.DICOM // NON-NLS
             + "\";"
             + props.getProperty(RsQueryParams.P_ACCEPT_EXT));

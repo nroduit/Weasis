@@ -94,8 +94,8 @@ public abstract class AbstractDicomNode {
   }
 
   public enum RetrieveType {
-    CMOVE("C-MOVE"),
-    CGET("C-GET"),
+    CMOVE("C-MOVE"), // NON-NLS
+    CGET("C-GET"), // NON-NLS
     WADO("WADO-URI"); // NON-NLS
 
     String title;

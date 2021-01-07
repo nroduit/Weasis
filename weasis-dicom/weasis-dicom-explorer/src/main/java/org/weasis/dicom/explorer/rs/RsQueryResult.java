@@ -77,9 +77,9 @@ public class RsQueryResult extends AbstractQueryResult {
     rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
     // Accept only multipart/related and retrieve dicom at the stored syntax
     wadoParameters.addHttpTag(
-        "Accept",
+        "Accept", // NON-NLS
         Multipart.MULTIPART_RELATED
-            + ";type=\""
+            + ";type=\"" // NON-NLS
             + Multipart.ContentType.DICOM // NON-NLS
             + "\";"
             + rsQueryParams.getProperties().getProperty(RsQueryParams.P_ACCEPT_EXT));

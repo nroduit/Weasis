@@ -293,8 +293,8 @@ public class ConfigData {
     if (!properties.containsKey(EXTENDED_PROPERTIES_PROP) && Utils.hasText(codeBaseExtUrl)) {
       String extConfigProp =
           String.format(
-              "%s/%s/%s",
-              codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE); // NON-NLS
+              "%s/%s/%s", // NON-NLS
+              codeBaseExtUrl, CONFIG_DIRECTORY, EXTENDED_PROPERTIES_FILE_VALUE);
       addProperty(EXTENDED_PROPERTIES_PROP, extConfigProp);
     }
 

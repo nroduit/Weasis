@@ -65,10 +65,10 @@ public class RemotePrefService {
 
   private String getRemoteLauncherUrl() throws UnsupportedEncodingException {
     return String.format(
-        "%s?%s=%s&%s=%s",
+        "%s?%s=%s&%s=%s", // NON-NLS
         remotePrefURL,
         P_REMOTE_PREF_USER,
-        getEncodedValue(user), // NON-NLS
+        getEncodedValue(user),
         P_REMOTE_PREF_PROFILE,
         getEncodedValue(profile));
   }

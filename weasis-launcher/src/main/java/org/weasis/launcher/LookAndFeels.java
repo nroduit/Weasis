@@ -20,38 +20,38 @@ public final class LookAndFeels {
   private LookAndFeels() {}
 
   private static final String[] NAMES = {
-    "Substance Autumn",
+    "Substance Autumn", // NON-NLS
     "Substance Business Black Steel", // NON-NLS
-    "Substance Business Blue Steel",
-    "Substance Business",
+    "Substance Business Blue Steel", // NON-NLS
+    "Substance Business", // NON-NLS
     "Substance Cerulean", // NON-NLS
-    "Substance Creme Coffee",
-    "Substance Creme",
-    "Substance Dust Coffee (saturated)",
+    "Substance Creme Coffee", // NON-NLS
+    "Substance Creme", // NON-NLS
+    "Substance Dust Coffee (saturated)", // NON-NLS
     "Substance Dust (saturated)", // NON-NLS
-    "Substance Gemini",
-    "Substance Graphite Aqua (dark)",
+    "Substance Gemini", // NON-NLS
+    "Substance Graphite Aqua (dark)", // NON-NLS
     "Substance Graphite Chalk (dark)", // NON-NLS
-    "Substance Graphite Electric (dark)",
-    "Substance Graphite Glass (dark)",
+    "Substance Graphite Electric (dark)", // NON-NLS
+    "Substance Graphite Glass (dark)", // NON-NLS
     "Substance Graphite Gold (dark)", // NON-NLS
-    "Substance Graphite (dark)",
-    "Substance Graphite Sienna (dark)",
-    "Substance Graphite Sunset (dark)",
+    "Substance Graphite (dark)", // NON-NLS
+    "Substance Graphite Sienna (dark)", // NON-NLS
+    "Substance Graphite Sunset (dark)", // NON-NLS
     "Substance Magellan (blue)", // NON-NLS
-    "Substance Mariner",
+    "Substance Mariner", // NON-NLS
     "Substance Mist Aqua", // NON-NLS
     "Substance Mist Silver", // NON-NLS
-    "Substance Moderate",
-    "Substance Nebula Amethyst",
-    "Substance Nebula Brick Wall",
+    "Substance Moderate", // NON-NLS
+    "Substance Nebula Amethyst", // NON-NLS
+    "Substance Nebula Brick Wall", // NON-NLS
     "Substance Nebula", // NON-NLS
-    "Substance Night Shade (dark)",
-    "Substance Raven (dark)",
-    "Substance Sahara",
+    "Substance Night Shade (dark)", // NON-NLS
+    "Substance Raven (dark)", // NON-NLS
+    "Substance Sahara", // NON-NLS
     "Substance Sentine", // NON-NLS
-    "Substance Twilight (dark)"
-  }; // NON-NLS
+    "Substance Twilight (dark)" // NON-NLS
+  };
 
   private static final String[] CLASSES = {
     "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel",

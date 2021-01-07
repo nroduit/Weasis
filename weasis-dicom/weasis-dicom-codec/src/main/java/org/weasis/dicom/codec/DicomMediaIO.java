@@ -1028,8 +1028,8 @@ public class DicomMediaIO implements DcmMediaReader {
       "DICOM Codec: " + DicomCodec.NAME, // NON-NLS
       "Version: " + Implementation.getVersionName(), // NON-NLS
       "Image decompression: OpenCV imgcodecs", // NON-NLS
-      "Version: " + Core.VERSION
-    }; // NON-NLS
+      "Version: " + Core.VERSION // NON-NLS
+    };
   }
 
   public Series<MediaElement> buildSeries(String seriesUID) {

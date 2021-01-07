@@ -232,9 +232,9 @@ public class WeasisWin {
     if (frame != null) {
       frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
       ImageIcon icon =
-          AppProperties.WEASIS_NAME.endsWith("Dicomizer")
-              ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png")
-              : ResourceUtil.getIconLogo64(); // NON-NLS
+          AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
+              ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") // NON-NLS
+              : ResourceUtil.getIconLogo64();
       if (icon != null) {
         frame.setIconImage(icon.getImage());
       }
@@ -1220,12 +1220,12 @@ public class WeasisWin {
 
   public void info(String[] argv) throws IOException {
     final String[] usage = {
-      "Show information about Weasis",
+      "Show information about Weasis", // NON-NLS
       "Usage: weasis:info (-v | -a)", // NON-NLS
       "  -v --version    show version", // NON-NLS
       "  -a --all        show weasis specifications", // NON-NLS
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
 
     Option opt = Options.compile(usage).parse(argv);
 
@@ -1240,9 +1240,9 @@ public class WeasisWin {
       out.println("  User: " + AppProperties.WEASIS_USER); // NON-NLS
       out.println("  OSGI native specs: " + System.getProperty("native.library.spec")); // NON-NLS
       out.format(
-          "  Operating system: %s %s %s",
+          "  Operating system: %s %s %s", // NON-NLS
           System.getProperty("os.name"),
-          System.getProperty("os.version"), // NON-NLS
+          System.getProperty("os.version"),
           System.getProperty("os.arch"));
       out.println();
       out.println("  Java vendor: " + System.getProperty("java.vendor")); // NON-NLS
@@ -1255,12 +1255,12 @@ public class WeasisWin {
 
   public void ui(String[] argv) throws IOException {
     final String[] usage = {
-      "Manage user interface",
+      "Manage user interface", // NON-NLS
       "Usage: weasis:ui (-q | -v)", // NON-NLS
       "  -q --quit        shutdown Weasis", // NON-NLS
       "  -v --visible     set window on top", // NON-NLS
-      "  -? --help        show help"
-    }; // NON-NLS
+      "  -? --help        show help" // NON-NLS
+    };
 
     Option opt = Options.compile(usage).parse(argv);
     if (opt.isSet("quit")) { // NON-NLS

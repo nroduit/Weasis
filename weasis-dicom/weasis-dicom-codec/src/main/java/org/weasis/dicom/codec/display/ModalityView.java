@@ -231,8 +231,8 @@ public class ModalityView {
     while (xmler.hasNext() && state) {
       switch (xmler.next()) {
         case XMLStreamConstants.START_ELEMENT:
-          if ("corner".equals(xmler.getName().getLocalPart())
-              && xmler.getAttributeCount() >= 1) { // NON-NLS
+          if ("corner".equals(xmler.getName().getLocalPart()) // NON-NLS
+              && xmler.getAttributeCount() >= 1) {
             String name = xmler.getAttributeValue(null, "name"); // NON-NLS
             CornerDisplay corner = getCornerDisplay(name);
             if (corner != null) {

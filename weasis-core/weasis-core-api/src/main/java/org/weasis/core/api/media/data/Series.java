@@ -42,8 +42,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
   public static final DataFlavor sequenceDataFlavor =
       createConstant(
-          DataFlavor.javaJVMLocalObjectMimeType + ";class=" + Series.class.getName(),
-          null); // NON-NLS
+          DataFlavor.javaJVMLocalObjectMimeType + ";class=" + Series.class.getName(), // NON-NLS
+          null);
 
   private static final Random RANDOM = new SecureRandom();
   private static final DataFlavor[] flavors = {sequenceDataFlavor};

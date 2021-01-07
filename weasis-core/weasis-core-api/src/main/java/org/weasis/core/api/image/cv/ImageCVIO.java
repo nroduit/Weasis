@@ -283,8 +283,8 @@ public class ImageCVIO implements MediaReader {
   @Override
   public String[] getReaderDescription() {
     return new String[] {
-      "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION
-    }; // NON-NLS
+      "Image Codec: " + codec.getCodecName(), "Version: " + Core.VERSION // NON-NLS
+    };
   }
 
   public ImageReader getDefaultReader(String mimeType) {

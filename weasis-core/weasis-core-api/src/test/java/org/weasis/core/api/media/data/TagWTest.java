@@ -241,7 +241,7 @@ public class TagWTest {
     assertThat(TagW.getFormattedText(value, "$V  ")).isEqualTo(value); // NON-NLS
     assertThat(TagW.getFormattedText(value, "  $V")).isEqualTo(value); // NON-NLS
     assertThat(TagW.getFormattedText(value, "test: $V")).isEqualTo("test: " + value); // NON-NLS
-    assertThat(TagW.getFormattedText(value, "test: $V and $V"))
+    assertThat(TagW.getFormattedText(value, "test: $V and $V")) // NON-NLS
         .isEqualTo("test: " + value + " and $V"); // NON-NLS
 
     assertThat(TagW.getFormattedText(STRING_ARRAY, "test: $V and $V plus $V")) // NON-NLS

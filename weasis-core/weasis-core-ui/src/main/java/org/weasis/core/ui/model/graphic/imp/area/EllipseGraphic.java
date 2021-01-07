@@ -131,9 +131,9 @@ public class EllipseGraphic extends RectangleGraphic {
         if (AREA.getComputed()) {
           Double val = Math.PI * rect.getWidth() * ratio * rect.getHeight() * ratio / 4.0;
           String unit =
-              "pix".equals(adapter.getUnit())
+              "pix".equals(adapter.getUnit()) // NON-NLS
                   ? adapter.getUnit()
-                  : adapter.getUnit() + "2"; // NON-NLS
+                  : adapter.getUnit() + "2";
           measVal.add(new MeasureItem(AREA, val, unit));
         }
         if (PERIMETER.getComputed()) {

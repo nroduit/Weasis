@@ -46,7 +46,7 @@ public class AppProperties {
 
   /** The User-Agent header to be used with HttpURLConnection */
   public static final String WEASIS_USER_AGENT =
-      (System.getProperty("http.agent") + " Java/" + System.getProperty("java.version"));
+      (System.getProperty("http.agent") + " Java/" + System.getProperty("java.version")); // NON-NLS
 
   /** The directory for writing temporary files */
   public static final File APP_TEMP_DIR;
@@ -68,8 +68,8 @@ public class AppProperties {
         new File(
             tdir,
             "weasis-"
-                + System.getProperty("user.name", "tmp")
-                + "." // NON-NLS
+                + System.getProperty("user.name", "tmp") // NON-NLS
+                + "."
                 + System.getProperty("weasis.source.id", UNKNOWN));
     System.setProperty("weasis.tmp.dir", APP_TEMP_DIR.getAbsolutePath());
     try {

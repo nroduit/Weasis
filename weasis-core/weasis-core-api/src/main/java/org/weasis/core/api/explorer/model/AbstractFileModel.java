@@ -198,10 +198,10 @@ public abstract class AbstractFileModel implements TreeModel, DataExplorerModel 
       "Close images", // NON-NLS
       "Usage: dicom:close (-a | ([-g UID]... [-s UID]...)) ", // NON-NLS
       "  -a --all         close all series", // NON-NLS
-      "  -g --group=UID   close a group from its UID",
+      "  -g --group=UID   close a group from its UID", // NON-NLS
       "  -s --series=UID   close an series/image from its UID", // NON-NLS
-      "  -? --help        show help"
-    }; // NON-NLS
+      "  -? --help        show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> gargs = opt.getList("group"); // NON-NLS
     final List<String> iargs = opt.getList("series"); // NON-NLS

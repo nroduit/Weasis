@@ -466,8 +466,8 @@ public class AcquireManager {
       "  -i --inbound     Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64/GZip]", // NON-NLS
       "  -s --iurlsafe    Open Patient Context from an XML data containing all DICOM Tags, decoding syntax is [Base64_URL_SAFE/GZip]", // NON-NLS
       "  -u --url         Open Patient Context from an URL (XML file containing all DICOM TAGs)", // NON-NLS
-      "  -? --help        show help"
-    }; // NON-NLS
+      "  -? --help        show help" // NON-NLS
+    };
 
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();

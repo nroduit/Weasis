@@ -240,9 +240,9 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
         if (AREA.getComputed()) {
           Double val = rect.getWidth() * rect.getHeight() * ratio * ratio;
           String unit =
-              "pix".equals(adapter.getUnit())
+              "pix".equals(adapter.getUnit()) // NON-NLS
                   ? adapter.getUnit()
-                  : adapter.getUnit() + "2"; // NON-NLS
+                  : adapter.getUnit() + "2";
           measVal.add(new MeasureItem(AREA, val, unit));
         }
         if (PERIMETER.getComputed()) {

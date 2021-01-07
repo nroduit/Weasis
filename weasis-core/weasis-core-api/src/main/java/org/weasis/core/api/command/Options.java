@@ -25,18 +25,15 @@ public class Options implements Option {
 
   public static final String NL = System.getProperty("line.separator", "\n"); // NON-NLS
 
-  // Note: need to double \ within ""
   private static final String REGEX =
-      "(?x)\\s*"
-          + "(?:-([^-]))?"
-          + // 1: short-opt-1 // NON-NLS
-          "(?:,?\\s*-(\\w))?"
-          + // 2: short-opt-2 NON-NLS
-          "(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?"
-          + // 3: long-opt-1 and 4:arg-1 NON-NLS
-          "(?:,?\\s*--(\\w[\\w-]*))?"
-          + // 5: long-opt-2 NON-NLS
-          ".*?(?:\\(default=(.*)\\))?\\s*"; // 6: default NON-NLS
+      new StringBuilder()
+          .append("(?x)\\s*") // NON-NLS
+          .append("(?:-([^-]))?") // NON-NLS  // 1: short-opt-1
+          .append("(?:,?\\s*-(\\w))?") // NON-NLS // 2: short-opt-2
+          .append("(?:,?\\s*--(\\w[\\w-]*)(=\\w+)?)?") // NON-NLS // 3: long-opt-1 and 4:arg-1
+          .append("(?:,?\\s*--(\\w[\\w-]*))?") // NON-NLS // 5: long-opt-2
+          .append(".*?(?:\\(default=(.*)\\))?\\s*") // NON-NLS  // 6: default
+          .toString(); // NON-NLS
 
   private static final int GROUP_SHORT_OPT_1 = 1;
   private static final int GROUP_SHORT_OPT_2 = 2;
@@ -75,10 +72,10 @@ public class Options implements Option {
     final String[] usage = {
       "test - test Options usage", // NON-NLS
       "  text before Usage: is displayed when usage() is called and no error has occurred.", // NON-NLS
-      "  so can be used as a simple help message.",
+      "  so can be used as a simple help message.", // NON-NLS
       "",
       "Usage: testOptions [OPTION]... PATTERN [FILES]...", // NON-NLS
-      "  Output control: arbitrary non-option text can be included.",
+      "  Output control: arbitrary non-option text can be included.", // NON-NLS
       "  -? --help                show help", // NON-NLS
       "  -c --count=COUNT           show COUNT lines", // NON-NLS
       "  -h --no-filename         suppress the prefixing filename on output", // NON-NLS
@@ -90,8 +87,8 @@ public class Options implements Option {
       "                           ACTION is 'read', 'recurse', or 'skip'", // NON-NLS
       "  -D --devices=ACTION      how to handle devices, FIFOs and sockets", // NON-NLS
       "                           ACTION is 'read' or 'skip'", // NON-NLS
-      "  -R, -r --recursive       equivalent to --directories=recurse"
-    }; // NON-NLS
+      "  -R, -r --recursive       equivalent to --directories=recurse" // NON-NLS
+    };
 
     Option opt = Options.compile(usage).parse(args);
 

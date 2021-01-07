@@ -98,11 +98,11 @@ public class DicomPrintOptionPane extends JPanel {
         new DefaultComboBoxModel<>(
             new String[] {
               DicomPrintOptions.DEF_MEDIUM_TYPE,
-              "CLEAR FILM",
-              "MAMMO CLEAR FILM",
-              "MAMMO BLUE FILM",
-              "PAPER"
-            })); // NON-NLS
+              "CLEAR FILM", // NON-NLS
+              "MAMMO CLEAR FILM", // NON-NLS
+              "MAMMO BLUE FILM", // NON-NLS
+              "PAPER" // NON-NLS
+            }));
     GridBagConstraints gbcMediumTypeComboBox = new GridBagConstraints();
     gbcMediumTypeComboBox.anchor = GridBagConstraints.WEST;
     gbcMediumTypeComboBox.insets = new Insets(0, 0, 5, 5);

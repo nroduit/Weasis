@@ -980,15 +980,15 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     final String[] usage = {
       "Load DICOM files remotely or locally", // NON-NLS
       "Usage: dicom:get ([-l PATH]... [-w URI]... [-r URI]... [-p] [-i DATA]... [-z URI]...)", // NON-NLS
-      "PATH is either a directory(recursive) or a file",
+      "PATH is either a directory(recursive) or a file", // NON-NLS
       "  -l --local=PATH   open DICOMs from local disk", // NON-NLS
       "  -r --remote=URI   open DICOMs from an URI", // NON-NLS
-      "  -w --wado=URI     open DICOMs from an XML manifest",
+      "  -w --wado=URI     open DICOMs from an XML manifest", // NON-NLS
       "  -z --zip=URI      open DICOM ZIP from an URI", // NON-NLS
       "  -p --portable     open DICOMs from configured directories at the same level of the executable", // NON-NLS
       "  -i --iwado=DATA   open DICOMs from an XML manifest (GZIP-Base64)", // NON-NLS
-      "  -? --help         show help"
-    }; // NON-NLS
+      "  -? --help         show help" // NON-NLS
+    };
 
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> largs = opt.getList("local"); // NON-NLS
@@ -1126,8 +1126,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", // NON-NLS
       "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
       "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", // NON-NLS
-      "  -? --help                  show help"
-    }; // NON-NLS
+      "  -? --help                  show help" // NON-NLS
+    };
 
     final Option opt = Options.compile(usage).parse(argv);
     final String rsUrl = opt.get("url"); // NON-NLS
@@ -1189,9 +1189,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "Usage: dicom:close  (-a | ([-y UID]... [-s UID]...))", // NON-NLS
       "  -a --all           close all the patients", // NON-NLS
       "  -y --study=UID     close a study, UID is Study Instance UID", // NON-NLS
-      "  -s --series=UID    close a series, UID is Series Instance UID",
-      "  -? --help          show help"
-    }; // NON-NLS
+      "  -s --series=UID    close a series, UID is Series Instance UID", // NON-NLS
+      "  -? --help          show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> yargs = opt.getList("study"); // NON-NLS
     final List<String> sargs = opt.getList("series"); // NON-NLS

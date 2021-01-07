@@ -518,7 +518,7 @@ public class WeasisLauncher {
                     } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
                       pane.setToolTipText(null);
                     } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                      if (System.getProperty(P_OS_NAME, "unknown")
+                      if (System.getProperty(P_OS_NAME, "unknown") // NON-NLS
                           .toLowerCase()
                           .startsWith("linux")) { // NON-NLS
                         try {
@@ -635,8 +635,8 @@ public class WeasisLauncher {
     try {
       // wait for gosh command to be registered
       for (int i = 0;
-          (i < 100) && commandSessionGet(commandSession, "gogo:gosh") == null;
-          ++i) { // NON-NLS
+          (i < 100) && commandSessionGet(commandSession, "gogo:gosh") == null; // NON-NLS
+          ++i) {
         TimeUnit.MILLISECONDS.sleep(10);
       }
 
@@ -840,28 +840,28 @@ public class WeasisLauncher {
         serverProp,
         currentProps,
         true,
-        true); // NON-NLS
+        true);
     getGeneralProperty(
         "org.apache.sling.commons.log.file.size",
-        "10MB",
+        "10MB", // NON-NLS
         serverProp,
         currentProps,
         true,
-        true); // NON-NLS
+        true);
     getGeneralProperty(
         "org.apache.sling.commons.log.stack.limit",
         "3",
         serverProp,
         currentProps,
         true,
-        true); // NON-NLS
+        true);
     getGeneralProperty(
         "org.apache.sling.commons.log.pattern",
-        "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}",
+        "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}", // NON-NLS
         serverProp,
         currentProps,
         false,
-        true); // NON-NLS
+        true);
 
     loadI18nModules();
 

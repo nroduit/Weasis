@@ -70,41 +70,41 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public static final GridBagLayoutModel VIEWS_1x1 =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
-          String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"),
+          String.format(Messages.getString("ImageViewerPlugin.1"), "1x1"), // NON-NLS
           1,
           1,
-          view2dClass.getName()); // NON-NLS
+          view2dClass.getName());
   public static final GridBagLayoutModel VIEWS_2x1 =
       new GridBagLayoutModel(
           "2x1", // NON-NLS
-          String.format(F_VIEWS, "2x1"),
+          String.format(F_VIEWS, "2x1"), // NON-NLS
           2,
           1,
-          view2dClass.getName()); // NON-NLS
+          view2dClass.getName());
   public static final GridBagLayoutModel VIEWS_1x2 =
       new GridBagLayoutModel(
           "1x2", // NON-NLS
-          String.format(F_VIEWS, "1x2"),
+          String.format(F_VIEWS, "1x2"), // NON-NLS
           1,
           2,
-          view2dClass.getName()); // NON-NLS
+          view2dClass.getName());
   public static final GridBagLayoutModel VIEWS_2x2_f2 =
       new GridBagLayoutModel(
-          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), // NON-NLS
-          "layout_c2x1",
-          Messages.getString("ImageViewerPlugin.layout_c2x1")); // NON-NLS
+          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"),
+          "layout_c2x1", // NON-NLS
+          Messages.getString("ImageViewerPlugin.layout_c2x1"));
   public static final GridBagLayoutModel VIEWS_2_f1x2 =
       new GridBagLayoutModel(
-          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), // NON-NLS
-          "layout_c1x2",
-          Messages.getString("ImageViewerPlugin.layout_c1x2")); // NON-NLS
+          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"),
+          "layout_c1x2", // NON-NLS
+          Messages.getString("ImageViewerPlugin.layout_c1x2"));
   public static final GridBagLayoutModel VIEWS_2x2 =
       new GridBagLayoutModel(
           "2x2", // NON-NLS
-          String.format(F_VIEWS, "2x2"),
+          String.format(F_VIEWS, "2x2"), // NON-NLS
           2,
           2,
-          view2dClass.getName()); // NON-NLS
+          view2dClass.getName());
 
   /** The current focused <code>ImagePane</code>. The default is 0. */
   protected ViewCanvas<E> selectedImagePane = null;

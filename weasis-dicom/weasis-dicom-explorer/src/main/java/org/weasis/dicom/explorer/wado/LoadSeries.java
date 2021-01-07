@@ -617,7 +617,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     if (StringUtil.hasText(addParams)) {
       addParams =
           Arrays.stream(addParams.split("&"))
-              .filter(p -> !p.startsWith("transferSyntax") && !p.startsWith("anonymize"))
+              .filter(p -> !p.startsWith("transferSyntax") && !p.startsWith("anonymize")) // NON-NLS
               .collect(Collectors.joining("&")); // NON-NLS
     }
     // TODO set quality as a preference

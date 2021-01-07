@@ -85,7 +85,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   public static final GridBagLayoutModel VIEWS_2x1_r1xc2_histo =
       new GridBagLayoutModel(
-          View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"),
+          View2dContainer.class.getResourceAsStream("/config/layoutModelHisto.xml"), // NON-NLS
           "layout_histo", // NON-NLS
           Messages.getString("View2dContainer.histogram"));
   // Unmodifiable list of the default layout elements

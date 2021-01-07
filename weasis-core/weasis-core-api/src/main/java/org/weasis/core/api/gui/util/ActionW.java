@@ -32,9 +32,9 @@ public class ActionW implements KeyActionValue {
   public static final ActionW ZOOM =
       new ActionW(
           Messages.getString("ActionW.zoom"),
-          "zoom",
+          "zoom", // NON-NLS
           KeyEvent.VK_Z,
-          0, // NON-NLS
+          0,
           getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16));
   public static final ActionW SCROLL_SERIES =
       new ActionW(
@@ -46,8 +46,8 @@ public class ActionW implements KeyActionValue {
   public static final ActionW ROTATION =
       new ActionW(
           Messages.getString("ActionW.rotate"),
-          "rotation",
-          KeyEvent.VK_R, // NON-NLS
+          "rotation", // NON-NLS
+          KeyEvent.VK_R,
           0,
           getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16));
 
@@ -91,9 +91,9 @@ public class ActionW implements KeyActionValue {
   public static final ActionW PAN =
       new ActionW(
           Messages.getString("ActionW.pan"),
-          "pan",
+          "pan", // NON-NLS
           KeyEvent.VK_T,
-          0, // NON-NLS
+          0,
           getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16));
   public static final ActionW DRAWINGS =
       new ActionW(Messages.getString("ActionW.draw"), "drawings", 0, 0, null); // NON-NLS
@@ -137,9 +137,9 @@ public class ActionW implements KeyActionValue {
   public static final ActionW KO_TOOGLE_STATE =
       new ActionW(
           Messages.getString("ActionW.toggle_ko"),
-          "ko_toogle_state",
+          "ko_toogle_state", // NON-NLS
           KeyEvent.VK_K,
-          0, // NON-NLS
+          0,
           null);
   public static final ActionW KO_SELECTION =
       new ActionW(Messages.getString("ActionW.select_ko"), "ko_selection", 0, 0, null); // NON-NLS

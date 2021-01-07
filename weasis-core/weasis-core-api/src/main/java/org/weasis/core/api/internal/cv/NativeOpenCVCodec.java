@@ -27,33 +27,52 @@ public class NativeOpenCVCodec implements Codec {
 
   private static final String[] readerMIMETypes = {
     "image/bmp",
-    "image/x-bmp",
-    "image/x-windows-bmp",
-    "image/jpeg", // NON-NLS
-    "image/pjpeg",
+    "image/x-bmp", // NON-NLS
+    "image/x-windows-bmp", // NON-NLS
+    "image/jpeg",
+    "image/pjpeg", // NON-NLS
     "image/png",
     "image/x-portable-bitmap",
     "image/x-portable-graymap",
     "image/x-portable-greymap", // NON-NLS
     "image/x-portable-pixmap",
     "image/x-portable-anymap",
-    "application/x-portable-anymap",
+    "application/x-portable-anymap", // NON-NLS
     "image/cmu-raster", // NON-NLS
-    "application/x-cmu-raster",
-    "image/x-cmu-raster",
+    "application/x-cmu-raster", // NON-NLS
+    "image/x-cmu-raster", // NON-NLS
     "image/tiff",
-    "image/x-tiff",
-    "image/hdr",
+    "image/x-tiff", // NON-NLS
+    "image/hdr", // NON-NLS
     "image/jp2", // NON-NLS
-    "image/jp2k",
-    "image/j2k",
-    "image/j2c"
-  }; // NON-NLS
+    "image/jp2k", // NON-NLS
+    "image/j2k", // NON-NLS
+    "image/j2c" // NON-NLS
+  };
   private static final String[] readerFileSuffixes = {
-    "bm", "bmp", "dib", "jpeg", "jpg", "jpe", "png", "x-png", // NON-NLS
-    "pbm", "pgm", "ppm", "pxm", "pnm", "ras", "rast", "tiff", "tif", "hdr", "jp2", "jp2k", "j2k",
-    "j2c"
-  }; // NON-NLS
+    "bm",
+    "bmp",
+    "dib",
+    "jpeg",
+    "jpg",
+    "jpe",
+    "png",
+    "x-png",
+    "pbm",
+    "pgm",
+    "ppm",
+    "pxm",
+    "pnm",
+    "ras",
+    "rast",
+    "tiff",
+    "tif",
+    "hdr",
+    "jp2",
+    "jp2k", // NON-NLS
+    "j2k",
+    "j2c" // NON-NLS
+  };
 
   private static final String[] writerMIMETypes = {};
   private static final String[] writerFileSuffixes = {};

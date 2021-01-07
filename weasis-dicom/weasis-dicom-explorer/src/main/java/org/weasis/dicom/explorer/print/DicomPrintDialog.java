@@ -47,15 +47,15 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomPrintDialog.class);
 
   public enum FilmSize {
-    IN8X10("8INX10IN", 8, 10),
-    IN8_5X11("8_5INX11IN", 8.5, 11),
+    IN8X10("8INX10IN", 8, 10), // NON-NLS
+    IN8_5X11("8_5INX11IN", 8.5, 11), // NON-NLS
     IN10X12("10INX12IN", 10, 12), // NON-NLS
     IN10X14(
         "10INX14IN", // NON-NLS
         10,
         14),
-    IN11X14("11INX14IN", 11, 14),
-    IN11X17("11INX17IN", 11, 17),
+    IN11X14("11INX14IN", 11, 14), // NON-NLS
+    IN11X17("11INX17IN", 11, 17), // NON-NLS
     IN14X14("14INX14IN", 14, 14), // NON-NLS
     IN14X17(
         "14INX17IN", // NON-NLS
@@ -63,7 +63,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         17),
     CM24X24("24CMX24CM", convertMM2Inch(240), convertMM2Inch(240)), // NON-NLS
     CM24X30(
-        "24CMX30CM",
+        "24CMX30CM", // NON-NLS
         convertMM2Inch(240), // NON-NLS
         convertMM2Inch(300)),
     A4("A4", convertMM2Inch(210), convertMM2Inch(297)), // NON-NLS

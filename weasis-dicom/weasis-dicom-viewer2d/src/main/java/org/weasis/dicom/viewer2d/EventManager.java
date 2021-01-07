@@ -123,13 +123,13 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   public static final List<String> functions =
       Collections.unmodifiableList(
           Arrays.asList(
-              "zoom",
-              "wl",
-              "move",
-              "scroll",
-              "layout",
-              "mouseLeftAction",
-              "synch",
+              "zoom", // NON-NLS
+              "wl", // NON-NLS
+              "move", // NON-NLS
+              "scroll", // NON-NLS
+              "layout", // NON-NLS
+              "mouseLeftAction", // NON-NLS
+              "synch", // NON-NLS
               "reset")); // NON-NLS
 
   /** The single instance of this singleton class. */
@@ -1683,8 +1683,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "  -s --set=VALUE        [decimal value]  set a new value from 0.0 to 12.0 (zoom magnitude, 0.0 => default, -200.0 => best fit, -100.0 => real size)", // NON-NLS
       "  -i --increase=NUMBER  increase of some amount", // NON-NLS
       "  -d --decrease=NUMBER  decrease of some amount", // NON-NLS
-      "  -? --help             show help"
-    }; // NON-NLS
+      "  -? --help             show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
@@ -1734,8 +1734,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "Change the window/level values of the selected image (increase or decrease into a normalized range of 4096)", // NON-NLS
       "Usage: dcmview2d:wl -- WIN LEVEL", // NON-NLS
       "WIN and LEVEL are Integer. It is mandatory to have '--' (end of options) for negative values", // NON-NLS
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
@@ -1769,8 +1769,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "Pan the selected image", // NON-NLS
       "Usage: dcmview2d:move -- X Y", // NON-NLS
       "X and Y are Integer. It is mandatory to have '--' (end of options) for negative values", // NON-NLS
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
@@ -1801,8 +1801,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "  -s --set=NUMBER       set a new value from 1 to series size", // NON-NLS
       "  -i --increase=NUMBER  increase of some amount", // NON-NLS
       "  -d --decrease=NUMBER  decrease of some amount", // NON-NLS
-      "  -? --help             show help"
-    }; // NON-NLS
+      "  -? --help             show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
 
     if (opt.isSet("help")
@@ -1843,8 +1843,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "Usage: dcmview2d:layout ( -n NUMBER | -i ID )", // NON-NLS
       "  -n --number=NUMBER  select the best matching number of views", // NON-NLS
       "  -i --id=ID          select the layout from its identifier", // NON-NLS
-      "  -? --help           show help"
-    }; // NON-NLS
+      "  -? --help           show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
 
     if (opt.isSet("help") || !opt.isOnlyOneOptionActivate("number", "id")) { // NON-NLS
@@ -1883,8 +1883,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "Change the mouse left action", // NON-NLS
       "Usage: dcmview2d:mouseLeftAction COMMAND", // NON-NLS
       "COMMAND is (sequence|winLevel|zoom|pan|rotation|crosshair|measure|draw|contextMenu|none)", // NON-NLS
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
@@ -1936,12 +1936,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     final String[] usage = {
       "Set a synchronization mode", // NON-NLS
       "Usage: dcmview2d:synch VALUE", // NON-NLS
-      "VALUE is "
+      "VALUE is " // NON-NLS
           + View2dContainer.DEFAULT_SYNCH_LIST.stream()
               .map(SynchView::getCommand) // NON-NLS
               .collect(Collectors.joining("|", "(", ")")),
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 
@@ -1982,8 +1982,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       "Usage: dcmview2d:reset (-a | COMMAND...)", // NON-NLS
       "COMMAND is (winLevel|zoom|pan|rotation)", // NON-NLS
       "  -a --all        reset to original display", // NON-NLS
-      "  -? --help       show help"
-    }; // NON-NLS
+      "  -? --help       show help" // NON-NLS
+    };
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> args = opt.args();
 

@@ -102,9 +102,9 @@ public class PRManager {
           String name = org.weasis.dicom.codec.Messages.getString("PresetWindowLevel.full");
           presets.add(
               new PresetWindowLevel(
-                  name + " [PR]",
+                  name + " [PR]", // NON-NLS
                   autoPR.getWindow(),
-                  autoPR.getLevel(), // NON-NLS
+                  autoPR.getLevel(),
                   autoPR.getShape()));
         }
       }

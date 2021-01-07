@@ -40,9 +40,9 @@ public final class ImageFileHelper {
         extension = extension.toLowerCase(Locale.ENGLISH);
         String description =
             extension.toUpperCase(Locale.ENGLISH)
-                + " - Image Files (."
+                + " - Image Files (." // NON-NLS
                 + extension
-                + ")"; // NON-NLS
+                + ")";
         extensionMap.put(extension, description);
       }
     }
@@ -53,9 +53,8 @@ public final class ImageFileHelper {
     if (file.isFile()) {
       String fileName = file.getName().toLowerCase(Locale.ENGLISH);
       int index = fileName.lastIndexOf('.');
-      return (index > 0 && index < fileName.length() - 1)
-          ? readerFileExtensionMap.containsKey(fileName.substring(index + 1))
-          : false;
+      return index > 0 && index < fileName.length() - 1 && readerFileExtensionMap
+          .containsKey(fileName.substring(index + 1));
     }
     return false;
   }

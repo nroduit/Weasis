@@ -544,12 +544,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       boolean nosquarePixel = MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY());
       int width =
           source == null || nosquarePixel
-              ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns")))
-              : source.width(); // NON-NLS
+              ? img.getRescaleWidth(getImageSize(img, TagW.ImageWidth, TagW.get("Columns"))) // NON-NLS
+              : source.width();
       int height =
           source == null || nosquarePixel
-              ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows")))
-              : source.height(); // NON-NLS
+              ? img.getRescaleHeight(getImageSize(img, TagW.ImageHeight, TagW.get("Rows"))) // NON-NLS
+              : source.height();
       return new Rectangle(0, 0, width, height);
     }
     return new Rectangle(0, 0, 512, 512);

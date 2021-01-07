@@ -71,7 +71,7 @@ public class MagicMimeEntry {
 
   @Override
   public String toString() {
-    return "MimeMagicType: "
+    return "MimeMagicType: " // NON-NLS
         + checkBytesFrom
         + ", "
         + type
@@ -80,7 +80,7 @@ public class MagicMimeEntry {
         + ", "
         + mimeType
         + ", "
-        + mimeEnc; // NON-NLS
+        + mimeEnc;
   }
 
   private int howManyGreaterThans(String aLine) {

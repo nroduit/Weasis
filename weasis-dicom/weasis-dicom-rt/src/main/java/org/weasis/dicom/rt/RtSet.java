@@ -691,7 +691,7 @@ public class RtSet {
                       new IsoDose(
                           doseMaxLevel,
                           new Color(120, 0, 0, isoFillTransparency),
-                          "Max",
+                          "Max", // NON-NLS
                           plan.getRxDose()))); // NON-NLS
           dose.getIsoDoseSet()
               .put(

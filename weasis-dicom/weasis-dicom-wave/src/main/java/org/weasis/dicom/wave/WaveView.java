@@ -581,16 +581,16 @@ public class WaveView extends JPanel implements SeriesViewerListener {
         g2.drawString(birthDate.toString(), 0, drawY);
         TagW studyDesTag = TagD.get(Tag.StudyDescription);
         g2.drawString(
-            studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"),
-            midWidth, // NON-NLS
+            studyDesTag.getFormattedTagValue(study.getTagValue(studyDesTag), "$V:l$40$"), // NON-NLS
+            midWidth,
             drawY);
         drawY += fontHeight;
 
         TagW patIDTag = TagD.get(Tag.PatientID);
         g2.drawString(
-            patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"),
+            patIDTag.getFormattedTagValue(patient.getTagValue(patIDTag), "ID: $V"), // NON-NLS
             0,
-            drawY); // NON-NLS
+            drawY);
         TagW studyAcNbTag = TagD.get(Tag.AccessionNumber);
         g2.drawString(
             studyAcNbTag.getFormattedTagValue(study.getTagValue(studyAcNbTag), null),

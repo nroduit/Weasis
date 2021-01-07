@@ -182,8 +182,8 @@ public class BundleTools {
     if (!isLocalSession() || isStoreLocalSession()) {
       String sURL =
           String.format(
-              "%s?user=%s&profile=%s",
-              remotePrefURL, // NON-NLS
+              "%s?user=%s&profile=%s", // NON-NLS
+              remotePrefURL,
               getEncodedValue(AppProperties.WEASIS_USER),
               getEncodedValue(AppProperties.WEASIS_PROFILE));
       URLParameters urlParameters = getURLParameters(true);

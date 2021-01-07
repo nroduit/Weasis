@@ -60,10 +60,10 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
   static final GridBagLayoutModel DEFAULT_VIEW =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
-          "1x1",
+          "1x1", // NON-NLS
           1,
           1,
-          AuView.class.getName()); // NON-NLS
+          AuView.class.getName());
 
   static {
     SYNCH_LIST.add(SynchView.NONE);

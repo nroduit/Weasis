@@ -88,8 +88,8 @@ public class WPropertiesTest {
     Assert.assertEquals(
         "different double",
         Double.NEGATIVE_INFINITY,
-        prop.getDoubleProperty("double", 0.0),
-        0.0); // NON-NLS
+        prop.getDoubleProperty("double", 0.0), // NON-NLS
+        0.0);
     prop.putDoubleProperty("double", Double.NaN); // NON-NLS
     Assert.assertEquals(
         "different double", Double.NaN, prop.getDoubleProperty("double", 0.0), 0.0); // NON-NLS

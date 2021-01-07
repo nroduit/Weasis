@@ -113,10 +113,10 @@ public class Activator implements BundleActivator, ServiceListener {
               + "audit-" // NON-NLS
               + AppProperties.WEASIS_USER
               + ".log",
-          "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}",
+          "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* {5}", // NON-NLS
           null,
           null,
-          "0"); // NON-NLS
+          "0");
       AuditLog.LOGGER.info("Start audit log session");
     } else {
       ServiceReference<ConfigurationAdmin> configurationAdminReference =

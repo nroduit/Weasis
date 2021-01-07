@@ -32,7 +32,7 @@ public class FileCache {
   }
 
   public boolean isElementInMemory() {
-    return reader.getUri().getScheme().startsWith("data");
+    return reader.getUri().getScheme().startsWith("data"); // NON-NLS
   }
 
   public Optional<File> getOriginalFile() {

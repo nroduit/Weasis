@@ -55,12 +55,12 @@ public class FileModel extends AbstractFileModel {
   @Override
   public void get(String[] argv) throws IOException {
     final String[] usage = {
-      "Load images remotely or locally",
+      "Load images remotely or locally", // NON-NLS
       "Usage: image:get ([-f file]... [-u url]...)", // NON-NLS
       "  -f --file=FILE     open an image from a file", // NON-NLS
       "  -u --url=URL       open an image from an URL", // NON-NLS
-      "  -? --help          show help"
-    }; // NON-NLS
+      "  -? --help          show help" // NON-NLS
+    };
 
     final Option opt = Options.compile(usage).parse(argv);
     final List<String> fargs = opt.getList("file");

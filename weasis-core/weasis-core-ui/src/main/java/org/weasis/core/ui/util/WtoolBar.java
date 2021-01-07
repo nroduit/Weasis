@@ -116,7 +116,8 @@ public class WtoolBar extends JPanel implements Toolbar {
 
   /** Adds a new button to this toolbar */
   public Component add(AbstractButton button) {
-    boolean substanceLaf = javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance");
+    boolean substanceLaf =
+        javax.swing.UIManager.getLookAndFeel().getName().startsWith("Substance"); // NON-NLS
     if (useCustomUI && !substanceLaf) {
       installButtonUI(button);
     }

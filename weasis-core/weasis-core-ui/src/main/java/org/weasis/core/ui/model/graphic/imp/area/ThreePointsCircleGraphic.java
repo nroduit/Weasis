@@ -150,9 +150,9 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
         }
         if (AREA.getComputed()) {
           String unit =
-              "pix".equals(adapter.getUnit())
+              "pix".equals(adapter.getUnit()) // NON-NLS
                   ? adapter.getUnit()
-                  : adapter.getUnit() + "2"; // NON-NLS
+                  : adapter.getUnit() + "2";
           measVal.add(new MeasureItem(AREA, Math.PI * radiusPt * radiusPt * ratio * ratio, unit));
         }
 

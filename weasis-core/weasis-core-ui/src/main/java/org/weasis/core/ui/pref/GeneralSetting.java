@@ -426,9 +426,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
     AuditLog.createOrUpdateLogger(
         context,
         "default.log",
-        new String[] {"org"},
+        new String[] {"org"}, // NON-NLS
         level.toString(),
-        logFile, // NON-NLS
+        logFile,
         pattern,
         fileNb,
         fileSize,

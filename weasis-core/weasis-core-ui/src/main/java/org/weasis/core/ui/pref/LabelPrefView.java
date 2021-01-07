@@ -213,8 +213,8 @@ public class LabelPrefView extends AbstractItemDialogPage {
     }
     jComboSize.setSelectedIndex(index);
     jComboName.setSelectedItem(
-        "default".equals(viewSetting.getFontName())
-            ? Messages // NON-NLS
+        "default".equals(viewSetting.getFontName()) // NON-NLS
+            ? Messages
                 .getString("LabelPrefView.default")
             : viewSetting.getFontName());
   }

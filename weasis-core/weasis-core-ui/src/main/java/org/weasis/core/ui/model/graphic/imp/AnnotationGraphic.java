@@ -353,8 +353,8 @@ public class AnnotationGraphic extends AbstractDragGraphic {
         }
       }
       labelHeight =
-          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight()
-              + 2; // NON-NLS
+          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() // NON-NLS
+              + 2;
       labelWidth = maxWidth;
     }
   }

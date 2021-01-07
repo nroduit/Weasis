@@ -79,10 +79,10 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
   public static final GridBagLayoutModel VIEWS_1x1 =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
-          "1x1",
+          "1x1", // NON-NLS
           1,
           1,
-          SRView.class.getName()); // NON-NLS
+          SRView.class.getName());
 
   static {
     LAYOUT_LIST.add(VIEWS_1x1);

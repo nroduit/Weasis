@@ -40,8 +40,8 @@ public class SerializationSuite extends ModelListHelper {
     String expected =
         String.format(
             TPL_XML_PREFIX
-                + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>",
-            UUID_1); // NON-NLS
+                + "<presentation uuid=\"%s\"><references/><layers/><graphics/></presentation>", // NON-NLS
+            UUID_1);
     assertThat(actual).isEqualTo(expected);
   }
 
@@ -175,10 +175,10 @@ public class SerializationSuite extends ModelListHelper {
                 + serializeWithoutHeader(angleGraphic)
                 + serializeWithoutHeader(cobbAngleGraphic)
                 + "</graphics>" // NON-NLS
-                + "</presentation>",
+                + "</presentation>", // NON-NLS
             UUID_1,
             UUID_3,
-            UUID_2); // NON-NLS
+            UUID_2);
 
     assertThat(actual).isEqualTo(expected);
   }
@@ -261,10 +261,10 @@ public class SerializationSuite extends ModelListHelper {
                 + serializeWithoutHeader(angleGraphic)
                 + serializeWithoutHeader(cobbAngleGraphic)
                 + "</graphics>" // NON-NLS
-                + "</presentation>",
+                + "</presentation>", // NON-NLS
             UUID_1,
             UUID_3,
-            UUID_2); // NON-NLS
+            UUID_2);
 
     assertThat(actual).isEqualTo(expected);
     consoleDisplay(model);

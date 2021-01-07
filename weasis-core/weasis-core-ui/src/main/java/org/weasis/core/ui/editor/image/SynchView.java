@@ -22,8 +22,8 @@ public class SynchView implements GUIEntry {
   public static final SynchView NONE =
       new SynchView(
           Messages.getString("SynchView.none"),
-          "None",
-          Mode.NONE, // NON-NLS
+          "None", // NON-NLS
+          Mode.NONE,
           new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")),
           new HashMap<String, Boolean>());
   public static final SynchView DEFAULT_TILE;
@@ -49,8 +49,8 @@ public class SynchView implements GUIEntry {
     DEFAULT_TILE =
         new SynchView(
             Messages.getString("SynchView.def_t"),
-            "Tile",
-            Mode.TILE, // NON-NLS
+            "Tile", // NON-NLS
+            Mode.TILE,
             new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")),
             actions);
 
@@ -64,10 +64,10 @@ public class SynchView implements GUIEntry {
     DEFAULT_STACK =
         new SynchView(
             Messages.getString("SynchView.def_s"),
-            "Stack",
+            "Stack", // NON-NLS
             Mode.STACK,
             new ImageIcon(
-                SynchView.class // NON-NLS
+                SynchView.class
                     .getResource("/icon/22x22/sequence.png")),
             actions);
   }

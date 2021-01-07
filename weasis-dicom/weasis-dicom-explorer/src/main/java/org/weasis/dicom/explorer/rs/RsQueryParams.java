@@ -88,7 +88,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         String name = val[0].trim().toLowerCase();
         String value = val[1].trim();
         // Hack for dcm4chee-arc integration
-        if ("authorization".equals(name)
+        if ("authorization".equals(name) // NON-NLS
             && value.length() > 14
             && value.startsWith("&access_token=")) { // NON-NLS
           value = "Bearer " + value.substring(14); // NON-NLS

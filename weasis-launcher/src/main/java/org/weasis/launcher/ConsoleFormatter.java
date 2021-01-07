@@ -22,7 +22,7 @@ public class ConsoleFormatter extends Formatter {
       new MessageFormat(
           System.getProperty(
                   "org.apache.sling.commons.log.pattern",
-                  "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}")
+                  "{0,date,dd.MM.yyyy HH:mm:ss.SSS} *{4}* [{2}] {3}: {5}") // NON-NLS
               + "\n"); // NON-NLS
 
   public ConsoleFormatter() {

@@ -1167,8 +1167,8 @@ public class DicomMediaUtils {
                     // per GE docs, may have been updated during post-processing into new series
                     String privateCreator = dicomObject.getString(0x00090010);
                     Date privateScanDateTime = getDateFromDicomElement(dcm, 0x0009100d, null);
-                    if ("GEMS_PETD_01".equals(privateCreator)
-                        && privateScanDateTime != null) { // NON-NLS
+                    if ("GEMS_PETD_01".equals(privateCreator) // NON-NLS
+                        && privateScanDateTime != null) {
                       scanDate = privateScanDateTime;
                     } else {
                       scanDate = null;

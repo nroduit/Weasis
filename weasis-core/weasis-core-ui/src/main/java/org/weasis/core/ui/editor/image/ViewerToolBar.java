@@ -143,10 +143,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
       final DropDownButton layout =
           new DropDownButton(
-              "layout",
+              "layout", // NON-NLS
               new DropButtonIcon(
                   new ImageIcon(
-                      MouseActions.class // NON-NLS
+                      MouseActions.class
                           .getResource("/icon/32x32/layout.png")))) {
 
             @Override
