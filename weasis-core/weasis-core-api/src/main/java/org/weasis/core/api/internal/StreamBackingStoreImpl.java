@@ -330,7 +330,7 @@ public class StreamBackingStoreImpl implements BackingStore {
         }
         if (http.getUrlConnection() instanceof HttpURLConnection) {
           NetworkUtil.readResponse(
-              (HttpURLConnection) http.getUrlConnection(), urlParams.getHeaders());
+              (HttpURLConnection) http.getUrlConnection(), urlParams.getUnmodifiableHeaders());
         }
       }
     }
