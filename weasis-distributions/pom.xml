@@ -603,7 +603,7 @@
             </goals>
             <configuration>
               <includes>
-                <inlcude>org.weasis:weasis-i18n-dist</inlcude>
+                <include>org.weasis:weasis-i18n-dist</include>
               </includes>
             </configuration>
           </execution>
