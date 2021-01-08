@@ -248,7 +248,7 @@ jobs:
             --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign --verbose
             cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
           fi
-          echo "APP_ARTIFACT=weassis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
+          echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
       - name: Notarize Build
         shell: bash

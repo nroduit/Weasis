@@ -46,7 +46,7 @@ public class URLParameters {
       Boolean useCaches,
       Long ifModifiedSince,
       Boolean allowUserInteraction) {
-    this.headers = headers == null ? Collections.emptyMap() :  Collections.unmodifiableMap(headers);
+    this.headers = headers == null ? Collections.emptyMap() : Collections.unmodifiableMap(headers);
     this.ifModifiedSince = ifModifiedSince == null ? 0L : ifModifiedSince;
     this.connectTimeout =
         connectTimeout == null ? NetworkUtil.getUrlConnectionTimeout() : connectTimeout;
