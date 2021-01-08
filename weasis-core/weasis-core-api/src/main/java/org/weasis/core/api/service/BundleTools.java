@@ -193,7 +193,7 @@ public class BundleTools {
       }
       if (http.getUrlConnection() instanceof HttpURLConnection) {
         NetworkUtil.readResponse(
-            (HttpURLConnection) http.getUrlConnection(), urlParameters.getHeaders());
+            (HttpURLConnection) http.getUrlConnection(), urlParameters.getUnmodifiableHeaders());
       }
     }
   }

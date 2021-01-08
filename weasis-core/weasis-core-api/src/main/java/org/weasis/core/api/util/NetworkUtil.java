@@ -80,9 +80,9 @@ public class NetworkUtil {
 
   private static ClosableURLConnection prepareConnection(
       URLConnection urlConnection, URLParameters urlParameters) throws StreamIOException {
-    Map<String, String> headers = urlParameters.getHeaders();
+    Map<String, String> headers = urlParameters.getUnmodifiableHeaders();
 
-    if (headers != null && headers.size() > 0) {
+    if (!headers.isEmpty()) {
       for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
         Entry<String, String> element = iter.next();
         urlConnection.setRequestProperty(element.getKey(), element.getValue());

@@ -524,8 +524,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         if (thumURL != null) {
           thumURL +=
               "/thumbnail?viewport=" + Thumbnail.MAX_SIZE + "%2C" + +Thumbnail.MAX_SIZE; // NON-NLS
-          params = new URLParameters(new HashMap<>(urlParams.getHeaders()));
-          params.getHeaders().put("Accept", "image/jpeg"); // NON-NLS
+          HashMap<String, String> headers = new HashMap<>(urlParams.getUnmodifiableHeaders());
+          headers.put("Accept", "image/jpeg"); // NON-NLS
+          params = new URLParameters(headers);
         }
       } else {
         thumURL = (String) dicomSeries.getTagValue(TagW.DirectDownloadThumbnail);
