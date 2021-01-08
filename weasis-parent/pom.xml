@@ -307,6 +307,10 @@
         <configuration>
           <java>
             <googleJavaFormat/>
+            <toggleOffOn>
+              <off>@formatter:off</off>
+              <on>@formatter:on</on>
+            </toggleOffOn>
             <licenseHeader>
               <!-- @formatter:off -->
               <content>
