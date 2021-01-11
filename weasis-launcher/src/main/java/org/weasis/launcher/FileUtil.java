@@ -21,9 +21,11 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -189,11 +191,20 @@ public class FileUtil {
       fileDate = Long.toString(last);
     }
     // Rebuild a cache for resources based on the last modified date
-    if (!cacheDir.canRead() || date == null || !date.equals(fileDate)) {
+    if (date == null || !date.equals(fileDate) || isEmpty(cacheDir.toPath())) {
       recursiveDelete(cacheDir, false);
       unzip(urlConnection.getInputStream(), cacheDir);
     }
     return fileDate;
+  }
+
+  public static boolean isEmpty(Path path) throws IOException {
+    if (Files.isDirectory(path)) {
+      try (Stream<Path> entries = Files.list(path)) {
+        return !entries.findFirst().isPresent();
+      }
+    }
+    return false;
   }
 
   public static URLConnection getAdaptedConnection(URL url, boolean useCaches) throws IOException {

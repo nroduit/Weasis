@@ -25,6 +25,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -55,6 +56,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
+import sun.net.www.protocol.file.FileURLConnection;
 
 /**
  * @author Richard S. Hall
@@ -153,6 +155,7 @@ public class WeasisLauncher {
   public static final String P_HTTP_AUTHORIZATION = "http.authorization";
   public static final String P_NATIVE_LIB_SPEC = "native.library.spec";
   public static final String P_WEASIS_MIN_NATIVE_VERSION = "weasis.min.native.version";
+  public static final String P_WEASIS_RESOURCES_URL = "weasis.resources.url";
   public static final String F_RESOURCES = "resources"; // NON-NLS
   static final String MAC_OS_X = "Mac OS X"; // NON-NLS
 
@@ -801,8 +804,7 @@ public class WeasisLauncher {
     // General Preferences priority order:
     // 1) Last value (does not exist for first launch of Weasis in an operating system session).
     // 2) Java System property
-    // 3) Property defined in weasis/conf/config.properties or in ext-config.properties (extension
-    // of config)
+    // 3) Property defined in config.properties or in ext-config.properties
     // 4) default value
     final String lang =
         getGeneralProperty(
@@ -813,12 +815,7 @@ public class WeasisLauncher {
     // Set value back to the bundle context properties, sling logger uses
     // bundleContext.getProperty(prop)
     getGeneralProperty(
-        "org.apache.sling.commons.log.level",
-        "INFO",
-        serverProp,
-        currentProps,
-        true,
-        true); // NON-NLS
+        "org.apache.sling.commons.log.level", "INFO", serverProp, currentProps, true, true);
     // Empty string make the file log writer disable
     String logActivatation =
         getGeneralProperty(
@@ -958,16 +955,21 @@ public class WeasisLauncher {
     boolean update = false;
     // Loads the resource files
     String defaultResources = "/resources.zip"; // NON-NLS
-    String resPath =
-        serverProp.getOrDefault(
-            "weasis.resources.url",
-            configData.getProperty(P_WEASIS_CODEBASE_URL, "") + defaultResources);
-    File cacheDir = null;
     boolean mavenRepo = Utils.hasText(System.getProperty("maven.localRepository", null));
-    String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
-    boolean localRes = mavenRepo || new File(cdbl, F_RESOURCES).exists();
+    String resPath = configData.getProperty(P_WEASIS_RESOURCES_URL, null);
+    if (!Utils.hasText(resPath)) {
+      resPath = serverProp.getOrDefault(P_WEASIS_RESOURCES_URL, null);
+      if (!mavenRepo && !Utils.hasText(resPath)) {
+        String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null);
+        // Don try to guess remote URL from pure local distribution
+        if (Utils.hasText(cdb) && !cdb.startsWith("file:")) { // NON-NLS
+          resPath = cdb + defaultResources;
+        }
+      }
+    }
+    File cacheDir = null;
     try {
-      if (!localRes && resPath.endsWith(".zip") && !resPath.equals(defaultResources)) {
+      if (isZipResource(resPath)) {
         cacheDir =
             new File(
                 dir
@@ -995,6 +997,7 @@ public class WeasisLauncher {
         File f = new File(System.getProperty("user.dir"));
         cacheDir = new File(f.getParent(), "weasis-distributions" + File.separator + F_RESOURCES);
       } else {
+        String cdbl = configData.getProperty(P_WEASIS_CODEBASE_LOCAL);
         cacheDir = new File(cdbl, F_RESOURCES);
       }
     }
@@ -1109,6 +1112,22 @@ public class WeasisLauncher {
     conf.append("\n***** End of Configuration *****"); // NON-NLS
     LOGGER.log(Level.INFO, conf::toString);
     return loader;
+  }
+
+  private static boolean isZipResource(String path) {
+    if (Utils.hasText(path) && path.endsWith(".zip")) {
+      if (path.startsWith("file:")) { // NON-NLS
+        try {
+          FileURLConnection connection = (FileURLConnection) new URL(path).openConnection();
+          return connection.getContentLength() > 0;
+        } catch (IOException e) {
+          // Do nothing
+        }
+      } else {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void loadI18nModules() {
