@@ -9,11 +9,17 @@
  */
 package org.weasis.launcher;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.imageio.spi.IIORegistry;
 import javax.jnlp.ServiceManager;
@@ -66,6 +72,35 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     }
     for (Object provider : toRemove) {
       registry.deregisterServiceProvider(provider);
+    }
+
+    /**
+     * Overrides java.util.logging.Logger Configuration of the WeasisLauncher parents class since
+     * JavaWebStart can't instantiate CustomFileHandler class
+     */
+
+    // Create ${user.home}/log folder if not exist
+    String userHomeLogPath =
+        System.getProperty("user.home", "") + File.separator + ".weasis" + File.separator + "log";
+    new File(userHomeLogPath).mkdirs();
+
+    InputStream loggerProps =
+        WebstartLauncher.class.getResourceAsStream(
+            System.getProperty("java.logging.path", "/logging_jnlp.properties")); // NON-NLS
+    try {
+      LogManager.getLogManager().reset();
+      LogManager.getLogManager()
+          .readConfiguration(loggerProps); // NOSONAR boot log before slf4j, nothing sensitive
+
+      // force the ConsoleFormatter to be applied on each loggerHandlers
+      Enumeration<String> names = LogManager.getLogManager().getLoggerNames();
+      while (names.hasMoreElements()) {
+        Logger logger = LogManager.getLogManager().getLogger(names.nextElement());
+        if (logger == null) continue;
+        for (Handler handler : logger.getHandlers()) handler.setFormatter(new ConsoleFormatter());
+      }
+    } catch (SecurityException | IOException e) {
+      e.printStackTrace(); // NOSONAR cannot use logger
     }
   }
 
