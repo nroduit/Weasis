@@ -60,6 +60,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.apache.felix.framework.util.Util;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
+import org.weasis.launcher.WeasisLauncher.Type;
 
 public class ConfigData {
   private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
@@ -679,7 +680,8 @@ public class ConfigData {
       // Extended properties, add or override existing properties
       WeasisLauncher.readProperties(propURI, felixConfig);
     }
-    checkMinimalVersion(felixConfig);
+    if (Type.NATIVE.equals(System.getProperty("weasis.launch.type")))
+      checkMinimalVersion(felixConfig);
 
     if (felixConfig.isEmpty()) {
       throw new IllegalStateException("Cannot load weasis config!");
