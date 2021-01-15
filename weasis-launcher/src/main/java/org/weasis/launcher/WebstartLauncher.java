@@ -82,7 +82,12 @@ public class WebstartLauncher extends WeasisLauncher implements SingleInstanceLi
     // Create ${user.home}/log folder if not exist
     String userHomeLogPath =
         System.getProperty("user.home", "") + File.separator + ".weasis" + File.separator + "log";
-    new File(userHomeLogPath).mkdirs();
+
+    try {
+      new File(userHomeLogPath).mkdirs();
+    } catch (Exception e) {
+      e.printStackTrace(); // NOSONAR cannot use logger
+    }
 
     InputStream loggerProps =
         WebstartLauncher.class.getResourceAsStream(
