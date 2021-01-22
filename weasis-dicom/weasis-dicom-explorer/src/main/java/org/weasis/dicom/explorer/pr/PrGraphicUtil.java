@@ -52,7 +52,7 @@ public class PrGraphicUtil {
 
   public static Graphic buildGraphic(
       Attributes go,
-      Color color,
+      Color defaultColor,
       boolean labelVisible,
       double width,
       double height,
@@ -75,22 +75,18 @@ public class PrGraphicUtil {
      *
      * MATRIX not implemented
      */
-    boolean isDisp =
-        dcmSR ? false : "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
+    boolean isDisp = !dcmSR && "DISPLAY".equalsIgnoreCase(go.getString(Tag.GraphicAnnotationUnits));
 
     String type = go.getString(Tag.GraphicType);
     Integer groupID = DicomMediaUtils.getIntegerFromDicomElement(go, Tag.GraphicGroupID, null);
     boolean filled = getBooleanValue(go, Tag.GraphicFilled);
     Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
     Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-    Boolean dashed =
-        style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern));
-    if (style != null) {
-      int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
-      if (rgb != null) {
-        color = PresentationStateReader.getRGBColor(255, rgb);
-      }
-    }
+    boolean dashed = isDashedLine(style);
+    Color color = getPatternColor(style, defaultColor);
+
+    Attributes fillStyle = go.getNestedDataset(Tag.FillStyleSequence);
+    color = getFillPatternColor(fillStyle, color);
 
     Graphic shape = null;
     float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
@@ -290,9 +286,38 @@ public class PrGraphicUtil {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
+  public static boolean isDashedLine(Attributes style) {
+    return style != null && "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern));
+  }
+
+  public static Color getPatternColor(Attributes style, Color defaultColor) {
+    Color color = defaultColor;
+    if (style != null) {
+      int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
+      if (rgb != null) {
+        color = PresentationStateReader.getRGBColor(255, rgb);
+      }
+      Float fillOpacity =
+          DicomMediaUtils.getFloatFromDicomElement(style, Tag.PatternOnOpacity, null);
+      if (fillOpacity != null && fillOpacity < 1.0F) {
+        int opacity = (int) (fillOpacity * 255);
+        color = new Color((opacity << 24) | (color.getRGB() & 0x00ffffff), true);
+      }
+    }
+    return color;
+  }
+
+  public static Color getFillPatternColor(Attributes fillStyle, Color defaultColor) {
+    Color color = defaultColor;
+    if (fillStyle != null) {
+      color = getPatternColor(fillStyle, color);
+    }
+    return color;
+  }
+
   public static Graphic buildCompoundGraphic(
       Attributes go,
-      Color color,
+      Color defaultColor,
       boolean labelVisible,
       double width,
       double height,
@@ -313,14 +338,11 @@ public class PrGraphicUtil {
     boolean filled = getBooleanValue(go, Tag.GraphicFilled);
     Attributes style = go.getNestedDataset(Tag.LineStyleSequence);
     Float thickness = DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
-    Boolean dashed =
-        style == null ? Boolean.FALSE : "DASHED".equalsIgnoreCase(style.getString(Tag.LinePattern));
-    if (style != null) {
-      int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
-      if (rgb != null) {
-        color = PresentationStateReader.getRGBColor(255, rgb);
-      }
-    }
+    boolean dashed = isDashedLine(style);
+    Color color = getPatternColor(style, defaultColor);
+
+    Attributes fillStyle = go.getNestedDataset(Tag.FillStyleSequence);
+    color = getFillPatternColor(fillStyle, color);
 
     Graphic shape = null;
     float[] points = DicomMediaUtils.getFloatArrayFromDicomElement(go, Tag.GraphicData, null);
