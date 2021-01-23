@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
@@ -31,7 +32,9 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomImageUtils;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.LutParameters;
+import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -102,6 +105,19 @@ public class DicomImageElement extends ImageElement {
       }
       if (pixelValueUnit == null && "CT".equals(modality)) {
         pixelValueUnit = "HU";
+      } else if (pixelSpacingUnit == Unit.PIXEL && "US".equals(modality)) {
+        Attributes spatialCalib =
+            Ultrasound.getUniqueSpatialRegion(getMediaReader().getDicomObject());
+        if (spatialCalib != null) {
+          Double calibX =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
+          Double calibY =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
+          if (calibX != null && calibY != null) {
+            setPixelSize(calibX, calibY);
+            pixelSpacingUnit = Unit.CENTIMETER;
+          }
+        }
       }
     }
 
@@ -155,7 +171,7 @@ public class DicomImageElement extends ImageElement {
   @Override
   protected boolean isGrayImage(RenderedImage source) {
     Boolean val = (Boolean) getTagValue(TagW.MonoChrome);
-    return val == null ? true : val;
+    return val == null || val;
   }
 
   /**
@@ -163,7 +179,7 @@ public class DicomImageElement extends ImageElement {
    * Enumerated Values: 0000H = unsigned integer. 0001H = 2's complement
    *
    * @return true if Tag exist and if explicitly defined a signed
-   * @see DICOM standard PS 3.3 - §C.7.6.3 - Image Pixel Module
+   * @see "DICOM standard PS 3.3 - §C.7.6.3 - Image Pixel Module"
    */
   public boolean isPixelRepresentationSigned() {
     Integer pixelRepresentation = TagD.getTagValue(this, Tag.PixelRepresentation, Integer.class);
@@ -290,13 +306,12 @@ public class DicomImageElement extends ImageElement {
    * will be outside the range between the minimum and maximum values of the pixels in the native
    * image
    *
-   * @see DICOM standard PS 3.3 - §C.7.5.1.1.2 - Pixel Padding Value and Pixel Padding Range Limit
+   * @see "DICOM standard PS 3.3 - §C.7.5.1.1.2 - Pixel Padding Value and Pixel Padding Range Limit"
    */
   public Integer getPaddingValue() {
     return TagD.getTagValue(this, Tag.PixelPaddingValue, Integer.class);
   }
 
-  /** @see getPaddingValue() */
   public Integer getPaddingLimit() {
     return TagD.getTagValue(this, Tag.PixelPaddingRangeLimit, Integer.class);
   }
@@ -659,13 +674,7 @@ public class DicomImageElement extends ImageElement {
 
   /**
    * @param imageSource is the RenderedImage upon which transformation is done
-   * @param window is width from low to high input values around level. If null, getDefaultWindow()
-   *     value is used
-   * @param level is center of window values. If null, getDefaultLevel() value is used
-   * @param lutShape defines the shape of applied lookup table transformation. If null
-   *     getDefaultLutShape() is used
-   * @param pixPadding indicates if some padding values defined in ImageElement should be applied or
-   *     not. If null, TRUE is considered
+   * @param params the DICOM parameters
    * @return
    */
   @Override

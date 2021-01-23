@@ -467,6 +467,23 @@ public class DicomMediaUtils {
     return defaultValue;
   }
 
+  public static Long getLongFromDicomElement(Attributes dicom, int tag, Long defaultValue) {
+    return getLongFromDicomElement(dicom, tag, null, defaultValue);
+  }
+
+  public static Long getLongFromDicomElement(
+      Attributes dicom, int tag, String privateCreatorID, Long defaultValue) {
+    if (dicom == null || !dicom.containsValue(tag)) {
+      return defaultValue;
+    }
+    try {
+      return dicom.getLong(privateCreatorID, tag, defaultValue == null ? 0L : defaultValue);
+    } catch (NumberFormatException e) {
+      LOGGER.error("Cannot parse Long of {}: {} ", TagUtils.toString(tag), e.getMessage());
+    }
+    return defaultValue;
+  }
+
   public static Double getDoubleFromDicomElement(Attributes dicom, int tag, Double defaultValue) {
     return getDoubleFromDicomElement(dicom, tag, null, defaultValue);
   }

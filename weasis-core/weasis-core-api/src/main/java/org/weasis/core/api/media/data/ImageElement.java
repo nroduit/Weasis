@@ -184,9 +184,9 @@ public class ImageElement extends MediaElement {
 
   public void setPixelSize(double pixelSizeX, double pixelSizeY) {
     /*
-     * Image is always displayed with a 1/1 aspect ratio, otherwise it becomes very difficult (even impossible) to
-     * handle measurement tools. When the ratio is not 1/1, the image is stretched. The smallest ratio keeps the
-     * pixel size and the largest one is downscaled.
+     * Image is always displayed with a 1/1 aspect ratio, otherwise it becomes very difficult
+     * (even impossible) to handle measurement tools. When the ratio is not 1/1, the image is
+     * stretched. The smallest ratio keeps the pixel size and the largest one is downscaled.
      */
     this.pixelSizeX = pixelSizeX <= 0.0 ? 1.0 : pixelSizeX;
     this.pixelSizeY = pixelSizeY <= 0.0 ? 1.0 : pixelSizeY;
