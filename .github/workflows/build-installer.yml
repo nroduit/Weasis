@@ -69,7 +69,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, platform: x86, wsystem: linux, warc: x86 }
+          #- { os: ubuntu-latest, platform: x86, wsystem: linux, warc: x86 }
           - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
           - { os: macos-latest, platform: x64, wsystem: macosx, warc: x86-64 }
           #  - { os: windows-latest, platform: x86, wsystem: windows, warc: x86 }
@@ -91,7 +91,7 @@ jobs:
         id: jdk
         if: matrix.platform == 'x64'
         with:
-          feature: 17
+          feature: 16
 
       - name: Set up early-access Oracle JDK
         uses: actions/setup-java@v1
@@ -105,7 +105,7 @@ jobs:
         uses: actions/setup-java@v1
         if: matrix.platform == 'x86'
         with:
-          java-version: 17.0.0-ea.2
+          java-version: 16.0.0-ea.31
           architecture: x86
 
       - name: Download weasis-portable
