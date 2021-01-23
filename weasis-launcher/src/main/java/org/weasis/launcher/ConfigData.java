@@ -594,9 +594,9 @@ public class ConfigData {
 
         urlConnection.setRequestProperty("Accept", "application/xml"); // NON-NLS
         urlConnection.setConnectTimeout(
-            Integer.valueOf(System.getProperty("UrlConnectionTimeout", "1000"))); // NON-NLS
+            Integer.parseInt(System.getProperty("UrlConnectionTimeout", "1000"))); // NON-NLS
         urlConnection.setReadTimeout(
-            Integer.valueOf((System.getProperty("UrlReadTimeout", "2000")))); // NON-NLS
+            Integer.parseInt((System.getProperty("UrlReadTimeout", "2000")))); // NON-NLS
 
         if (urlConnection instanceof HttpURLConnection) {
           HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
@@ -680,8 +680,9 @@ public class ConfigData {
       // Extended properties, add or override existing properties
       WeasisLauncher.readProperties(propURI, felixConfig);
     }
-    if (Type.NATIVE.equals(System.getProperty("weasis.launch.type")))
+    if (Type.NATIVE.name().equals(System.getProperty("weasis.launch.type"))) {
       checkMinimalVersion(felixConfig);
+    }
 
     if (felixConfig.isEmpty()) {
       throw new IllegalStateException("Cannot load weasis config!");
