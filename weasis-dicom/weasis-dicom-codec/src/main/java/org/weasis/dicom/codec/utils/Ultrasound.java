@@ -12,11 +12,14 @@ package org.weasis.dicom.codec.utils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 
 public class Ultrasound {
+
+  private Ultrasound() {}
 
   public static List<Attributes> getRegions(Attributes attributes) {
     Sequence seq = attributes.getSequence(Tag.SequenceOfUltrasoundRegions);
@@ -40,7 +43,17 @@ public class Ultrasound {
         if (spatialCalib == null) {
           spatialCalib = r;
         } else {
-          return null; // currently cannot handle multiple spatial calibration
+          Double calib1X =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
+          Double calib1Y =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
+          Double calib2X =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
+          Double calib2Y =
+              DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
+          if (!Objects.equals(calib1X, calib2X) || !Objects.equals(calib1Y, calib2Y)) {
+            return null; // currently cannot handle multiple spatial calibration
+          }
         }
       }
     }
