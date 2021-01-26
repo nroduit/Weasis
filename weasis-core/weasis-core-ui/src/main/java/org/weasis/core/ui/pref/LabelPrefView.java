@@ -212,10 +212,10 @@ public class LabelPrefView extends AbstractItemDialogPage {
       }
     }
     jComboSize.setSelectedIndex(index);
-    jComboName.setSelectedItem(
-        "default".equals(viewSetting.getFontName()) // NON-NLS
-            ? Messages.getString("LabelPrefView.default")
-            : viewSetting.getFontName());
+    jComboName.setSelectedItem(viewSetting.getFontName());
+    if (jComboName.getSelectedItem() == null) { // Handle default
+      jComboName.setSelectedIndex(0);
+    }
   }
 
   public void apply() {
@@ -255,9 +255,10 @@ public class LabelPrefView extends AbstractItemDialogPage {
     } else if (jCheckBoxItalic.isSelected()) {
       style = Font.ITALIC;
     }
-    String name = jComboName.getSelectedItem().toString();
 
-    viewSetting.setFontName(DEFAULT_LABEL.equals(name) ? "default" : name); // NON-NLS
+    String name = (String) jComboName.getSelectedItem();
+    viewSetting.setFontName(
+        DEFAULT_LABEL.equals(name) || name == null ? "default" : name); // NON-NLS
     viewSetting.setFontSize(size);
     viewSetting.setFontType(style);
 
