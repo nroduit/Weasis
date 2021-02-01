@@ -211,10 +211,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     for (PreferencesImpl uchild : uchildren) {
       final String name = uchild.name();
-      if (!children.containsKey(name)) {
-        // create node
-        children.put(name, prefs.getOrCreateNode(name));
-      }
+      children.computeIfAbsent(name, prefs::getOrCreateNode);
       update(children.get(name), uchild);
     }
   }
