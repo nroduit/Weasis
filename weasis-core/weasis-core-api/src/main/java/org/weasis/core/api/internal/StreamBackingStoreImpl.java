@@ -68,6 +68,11 @@ public class StreamBackingStoreImpl implements BackingStore {
     prefRootDirectory.mkdirs();
   }
 
+  protected static void ErrLog(String errMsg, Throwable e) {
+    LOGGER.error(errMsg + "\n", e);
+    if (!(e.getCause() instanceof BackingStoreException)) LOGGER.error("", e.getCause());
+  }
+
   /**
    * This method is invoked to check if the backing store is accessible right now.
    *
@@ -162,21 +167,31 @@ public class StreamBackingStoreImpl implements BackingStore {
    *     org.apache.felix.prefs.PreferencesDescription)
    */
   @Override
-  public PreferencesImpl load(BackingStoreManager manager, PreferencesDescription desc)
-      throws BackingStoreException {
-    final PreferencesImpl prefs = loadFromeFile(manager, desc);
+  public PreferencesImpl load(BackingStoreManager manager, PreferencesDescription desc) {
 
-    PreferencesImpl remoteprefs = loadFromService(manager, desc);
-    if (remoteprefs != null) {
-      // merge with saved version
-      final PreferencesImpl n = remoteprefs.getOrCreateNode(prefs.absolutePath());
-      update(prefs, n);
+    PreferencesImpl localPrefs = null;
+    PreferencesImpl remotePrefs = null;
+
+    try {
+      localPrefs = loadFromeFile(manager, desc);
+      remotePrefs = loadFromService(manager, desc);
+    } catch (BackingStoreException e) {
+      ErrLog("Error on loading preferences.", e);
     }
-    return prefs;
+
+    if (remotePrefs != null) {
+      // if local don't exist create empty pref
+      if (localPrefs == null) localPrefs = new PreferencesImpl(desc, manager);
+
+      // merge with saved version
+      final PreferencesImpl updatePrefs = remotePrefs.getOrCreateNode(localPrefs.absolutePath());
+      update(localPrefs, updatePrefs);
+    }
+    return localPrefs;
   }
 
-  protected static void update(PreferencesImpl prefs, PreferencesImpl update) {
-    for (Entry<String, String> entry : update.getProperties().entrySet()) {
+  protected static void update(PreferencesImpl prefs, PreferencesImpl uprefs) {
+    for (Entry<String, String> entry : uprefs.getProperties().entrySet()) {
       String val = prefs.getProperties().get(entry.getKey());
       if (!Objects.equals(val, entry.getValue())) {
         prefs.put(entry.getKey(), entry.getValue());
@@ -188,9 +203,9 @@ public class StreamBackingStoreImpl implements BackingStore {
       children.put(child.name(), child);
     }
 
-    Collection<PreferencesImpl> uchildren = update.getChildren();
+    Collection<PreferencesImpl> uchildren = uprefs.getChildren();
 
-    if (update.getProperties().size() < prefs.getProperties().size()
+    if (uprefs.getProperties().size() < prefs.getProperties().size()
         || uchildren.size() < children.size()) {
       // Force the changeset to store remote prefs
       prefs
@@ -198,13 +213,13 @@ public class StreamBackingStoreImpl implements BackingStore {
           .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> ""));
     }
 
-    for (PreferencesImpl child : uchildren) {
-      final String name = child.name();
+    for (PreferencesImpl uchild : uchildren) {
+      final String name = uchild.name();
       if (!children.containsKey(name)) {
         // create node
-        prefs.node(name);
+        children.put(name, prefs.getOrCreateNode(name));
       }
-      update(children.get(name), child);
+      update(children.get(name), uchild);
     }
   }
 
@@ -228,10 +243,10 @@ public class StreamBackingStoreImpl implements BackingStore {
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
         factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
         xmler = factory.createXMLStreamReader(fileReader);
-        readStream(root, xmler);
         return readStream(root, xmler);
       } catch (XMLStreamException | IOException e) {
-        throw new BackingStoreException("Unable to load preferences.", e);
+        throw new BackingStoreException(
+            "Unable to load preferences from File: " + file.getPath(), e);
       } finally {
         FileUtil.safeClose(xmler);
       }
@@ -251,20 +266,44 @@ public class StreamBackingStoreImpl implements BackingStore {
     if (StringUtil.hasText(prefUrl)
         && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
       XMLStreamReader xmler = null;
+
+      String serviceURL = null;
+      try {
+        serviceURL = getURL(desc, prefUrl);
+      } catch (UnsupportedEncodingException e) {
+        throw new BackingStoreException("Unable to load preferences from Service: " + prefUrl, e);
+      }
+
       try (ClosableURLConnection c =
-              NetworkUtil.getUrlConnection(getURL(desc, prefUrl), getURLParameters(false));
+              NetworkUtil.getUrlConnection(serviceURL, getURLParameters(false));
           InputStream fileReader = c.getInputStream()) {
+
         final PreferencesImpl root = new PreferencesImpl(desc, manager);
-        XMLInputFactory factory = XMLInputFactory.newInstance();
-        // disable external entities for security
-        factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-        factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-        xmler = factory.createXMLStreamReader(fileReader);
-        return readStream(root, xmler);
-      } catch (XMLStreamException | IOException e) {
-        throw new BackingStoreException("Unable to load preferences.", e);
-      } finally {
-        FileUtil.safeClose(xmler);
+
+        try {
+          XMLInputFactory factory = XMLInputFactory.newInstance();
+          // disable external entities for security
+          factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+          factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+          xmler = factory.createXMLStreamReader(fileReader);
+          return readStream(root, xmler);
+        } catch (XMLStreamException e) {
+
+          boolean isHttpNoContent = false;
+          if (c.getUrlConnection() instanceof HttpURLConnection) {
+            isHttpNoContent =
+                HttpURLConnection.HTTP_NO_CONTENT
+                    == ((HttpURLConnection) c.getUrlConnection()).getResponseCode();
+          }
+          if (!isHttpNoContent)
+            throw new BackingStoreException(
+                "Unable to load preferences from Service: " + serviceURL, e);
+        } finally {
+          FileUtil.safeClose(xmler);
+        }
+      } catch (IOException e) {
+        throw new BackingStoreException(
+            "Unable to load preferences from Service: " + serviceURL, e);
       }
     }
     return null;
@@ -312,7 +351,7 @@ public class StreamBackingStoreImpl implements BackingStore {
       try {
         remoteStore(rootPrefs, prefUrl);
       } catch (BackingStoreException | IOException e) {
-        LOGGER.error("Cannot store preference file", e);
+        ErrLog("Cannot store preference file", e);
       }
     }
   }
