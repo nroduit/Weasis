@@ -426,7 +426,7 @@ public class ConfigData {
   }
 
   public void applyProxy(String dir) {
-    File file = new File(dir, "persitence.properties");
+    File file = new File(dir, "persistence.properties");
     if (!file.canRead()) {
       return;
     }
