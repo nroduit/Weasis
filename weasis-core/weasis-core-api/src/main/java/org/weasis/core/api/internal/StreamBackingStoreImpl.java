@@ -68,11 +68,6 @@ public class StreamBackingStoreImpl implements BackingStore {
     prefRootDirectory.mkdirs();
   }
 
-  protected static void ErrLog(String errMsg, Throwable e) {
-    LOGGER.error(errMsg + "\n", e);
-    if (!(e.getCause() instanceof BackingStoreException)) LOGGER.error("", e.getCause());
-  }
-
   /**
    * This method is invoked to check if the backing store is accessible right now.
    *
@@ -176,7 +171,8 @@ public class StreamBackingStoreImpl implements BackingStore {
       localPrefs = loadFromeFile(manager, desc);
       remotePrefs = loadFromService(manager, desc);
     } catch (BackingStoreException e) {
-      ErrLog("Error on loading preferences.", e);
+      LOGGER.error("Error on preferences loading\n", e);
+      if (!(e.getCause() instanceof BackingStoreException)) LOGGER.error("", e.getCause());
     }
 
     if (remotePrefs != null) {
@@ -234,16 +230,21 @@ public class StreamBackingStoreImpl implements BackingStore {
       throws BackingStoreException {
     this.checkAccess();
     final File file = getFile(desc);
+
     if (file != null && file.exists()) {
       XMLStreamReader xmler = null;
-      try (FileInputStream fileReader = new FileInputStream(file)) {
-        final PreferencesImpl root = new PreferencesImpl(desc, manager);
+
+      try (FileInputStream fileReader = new FileInputStream(file); ) {
+        final PreferencesImpl rootPref = new PreferencesImpl(desc, manager);
+
         XMLInputFactory factory = XMLInputFactory.newInstance();
         // disable external entities for security
         factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
         factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
         xmler = factory.createXMLStreamReader(fileReader);
-        return readStream(root, xmler);
+
+        return readStream(rootPref, xmler);
+
       } catch (XMLStreamException | IOException e) {
         throw new BackingStoreException(
             "Unable to load preferences from File: " + file.getPath(), e);
@@ -262,10 +263,11 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   protected PreferencesImpl loadFromService(
       BackingStoreManager manager, PreferencesDescription desc) throws BackingStoreException {
+
     String prefUrl = BundleTools.getServiceUrl();
+
     if (StringUtil.hasText(prefUrl)
         && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
-      XMLStreamReader xmler = null;
 
       String serviceURL = null;
       try {
@@ -274,37 +276,46 @@ public class StreamBackingStoreImpl implements BackingStore {
         throw new BackingStoreException("Unable to load preferences from Service: " + prefUrl, e);
       }
 
-      try (ClosableURLConnection c =
-              NetworkUtil.getUrlConnection(serviceURL, getURLParameters(false));
-          InputStream fileReader = c.getInputStream()) {
+      try (ClosableURLConnection conn =
+          NetworkUtil.getUrlConnection(serviceURL, getURLParameters(false)); ) {
 
-        final PreferencesImpl root = new PreferencesImpl(desc, manager);
+        return readRemotePref(new PreferencesImpl(desc, manager), conn);
 
-        try {
-          XMLInputFactory factory = XMLInputFactory.newInstance();
-          // disable external entities for security
-          factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-          factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
-          xmler = factory.createXMLStreamReader(fileReader);
-          return readStream(root, xmler);
-        } catch (XMLStreamException e) {
-
-          boolean isHttpNoContent = false;
-          if (c.getUrlConnection() instanceof HttpURLConnection) {
-            isHttpNoContent =
-                HttpURLConnection.HTTP_NO_CONTENT
-                    == ((HttpURLConnection) c.getUrlConnection()).getResponseCode();
-          }
-          if (!isHttpNoContent)
-            throw new BackingStoreException(
-                "Unable to load preferences from Service: " + serviceURL, e);
-        } finally {
-          FileUtil.safeClose(xmler);
-        }
       } catch (IOException e) {
         throw new BackingStoreException(
             "Unable to load preferences from Service: " + serviceURL, e);
       }
+    }
+    return null;
+  }
+
+  private PreferencesImpl readRemotePref(PreferencesImpl rootPref, ClosableURLConnection conn)
+      throws BackingStoreException, IOException {
+
+    XMLStreamReader xmler = null;
+
+    try (InputStream fileReader = conn.getInputStream(); ) {
+      XMLInputFactory factory = XMLInputFactory.newInstance();
+      // disable external entities for security
+      factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+      factory.setProperty(XMLInputFactory.SUPPORT_DTD, Boolean.FALSE);
+      xmler = factory.createXMLStreamReader(fileReader);
+
+      return readStream(rootPref, xmler);
+
+    } catch (XMLStreamException e) {
+      boolean isHttpNoContent = false;
+      if (conn.getUrlConnection() instanceof HttpURLConnection) {
+        isHttpNoContent =
+            HttpURLConnection.HTTP_NO_CONTENT
+                == ((HttpURLConnection) conn.getUrlConnection()).getResponseCode();
+      }
+      if (!isHttpNoContent)
+        throw new BackingStoreException(
+            "Unable to read remote preferences from Service: " + conn.getUrlConnection().getURL(),
+            e);
+    } finally {
+      FileUtil.safeClose(xmler);
     }
     return null;
   }
@@ -350,14 +361,13 @@ public class StreamBackingStoreImpl implements BackingStore {
     if (prefUrl != null) {
       try {
         remoteStore(rootPrefs, prefUrl);
-      } catch (BackingStoreException | IOException e) {
-        ErrLog("Cannot store preference file", e);
+      } catch (IOException e) {
+        LOGGER.error("Cannot store preference file\n", e);
       }
     }
   }
 
-  private void remoteStore(PreferencesImpl prefs, String prefUrl)
-      throws IOException, BackingStoreException {
+  private void remoteStore(PreferencesImpl prefs, String prefUrl) throws IOException {
     if (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession()) {
       File file = getFile(prefs.getDescription());
       if (file != null && file.exists()) {
