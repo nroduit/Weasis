@@ -24,16 +24,3 @@ jobs:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
-      - name: Extract Release Notes
-        id: extract_release_notes
-        uses: ffurrer2/extract-release-notes@v1
-      - name: Create Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: ${{ steps.extract-release-notes.outputs.release_notes }}
-          prerelease: ${{ contains(github.ref, '-rc') || contains(github.ref, '-b') || contains(github.ref, '-a') }}
-          draft: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
