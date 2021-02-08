@@ -180,6 +180,7 @@ public class SeriesThumbnail extends Thumbnail
           && thumbnailPath.getPath().startsWith(AppProperties.FILE_CACHE_DIR.getPath())) {
         FileUtil.delete(thumbnailPath); // delete old temp file
       }
+      removeImageFromCache();
       thumbnailPath = file;
       readable = true;
       /*

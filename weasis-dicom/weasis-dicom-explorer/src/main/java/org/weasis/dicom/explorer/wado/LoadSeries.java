@@ -223,15 +223,13 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
       LOGGER.info(
           "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}",
-          new Object[] {
-            AuditLog.MARKER_PERF,
-            getLoadType(),
-            dicomSeries.getTagValue(dicomSeries.getTagID()),
-            TagD.getTagValue(dicomSeries, Tag.Modality, String.class),
-            getImageNumber(),
-            (long) dicomSeries.getFileSize(),
-            getDownloadTime()
-          });
+          AuditLog.MARKER_PERF,
+          getLoadType(),
+          dicomSeries.getTagValue(dicomSeries.getTagID()),
+          TagD.getTagValue(dicomSeries, Tag.Modality, String.class),
+          getImageNumber(),
+          dicomSeries.getFileSize(),
+          getDownloadTime());
       dicomSeries.removeTag(DOWNLOAD_START_TIME);
 
       final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
