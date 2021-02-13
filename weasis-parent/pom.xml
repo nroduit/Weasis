@@ -328,14 +328,14 @@
             </licenseHeader>
           </java>
         </configuration>
-        <executions>
-          <execution>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
+<!--        <executions>-->
+<!--          <execution>-->
+<!--            <phase>verify</phase>-->
+<!--            <goals>-->
+<!--              <goal>check</goal>-->
+<!--            </goals>-->
+<!--          </execution>-->
+<!--        </executions>-->
       </plugin>
     </plugins>
 
@@ -362,13 +362,13 @@
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
             <executions>
-<!--              <execution>-->
-<!--                <id>attach-sources</id>-->
-<!--                <phase>verify</phase>-->
-<!--                <goals>-->
-<!--                  <goal>jar-no-fork</goal>-->
-<!--                </goals>-->
-<!--              </execution>-->
+              <execution>
+                <id>attach-sources</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
             </executions>
           </plugin>
         </plugins>
