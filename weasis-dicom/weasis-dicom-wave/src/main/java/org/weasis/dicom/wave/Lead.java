@@ -10,6 +10,8 @@
 package org.weasis.dicom.wave;
 
 import java.util.Objects;
+import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.codec.macro.Code;
 
 public class Lead {
 
@@ -71,5 +73,86 @@ public class Lead {
       }
     }
     return new Lead(title);
+  }
+
+  public static Lead buildLead(Code code) {
+    String title = code.getCodeMeaning();
+    String codeValue = code.getExistingCodeValue();
+    String schemeDesignator = code.getCodingSchemeDesignator();
+    if (StringUtil.hasText(codeValue)) {
+      Lead lead = null;
+      if ("MDC".equals(schemeDesignator)) {
+        lead = mdc2Lead(codeValue);
+      } else if ("SCPECG".equals(schemeDesignator)) {
+        lead = scpecg2Lead(codeValue);
+      }
+      if (lead != null) {
+        return lead;
+      }
+    }
+    return new Lead(title);
+  }
+
+  private static Lead mdc2Lead(String codeValue){
+    switch (codeValue) {
+      case "2:1":
+        return I;
+      case "2:2":
+        return II;
+      case "2:61":
+        return III;
+      case "2:62":
+        return AVR;
+      case "2:63":
+        return AVL;
+      case "2:64":
+        return AVF;
+      case "2:3":
+        return V1;
+      case "2:4":
+        return V2;
+      case "2:5":
+        return V3;
+      case "2:6":
+        return V4;
+      case "2:7":
+        return V5;
+      case "2:8":
+        return V6;
+      default:
+        return null;
+    }
+  }
+
+  private static Lead scpecg2Lead(String codeValue ){
+    // http://dicom.nema.org/medical/Dicom/current/output/chtml/part16/sect_CID_3001.html
+    switch (codeValue) {
+      case "5.6.3-9-1":
+        return I;
+      case "5.6.3-9-2":
+        return II;
+      case "5.6.3-9-61":
+        return III;
+      case "5.6.3-9-62":
+        return AVR;
+      case "5.6.3-9-63":
+        return AVL;
+      case "5.6.3-9-64":
+        return AVF;
+      case "5.6.3-9-3":
+        return V1;
+      case "5.6.3-9-4":
+        return V2;
+      case "5.6.3-9-5":
+        return V3;
+      case "5.6.3-9-6":
+        return V4;
+      case "5.6.3-9-7":
+        return V5;
+      case "5.6.3-9-8":
+        return V6;
+      default:
+        return null;
+    }
   }
 }
