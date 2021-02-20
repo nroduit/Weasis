@@ -15,7 +15,7 @@
 		<key>CFBundleIconFile</key>
 		<string>DEPLOY_ICON_FILE</string>
 		<key>CFBundleIdentifier</key>
-		<string>org.weasis</string>
+		<string>org.weasis.launcher</string>
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleSupportedPlatforms</key>
@@ -38,21 +38,6 @@
 		<string>DEPLOY_BUNDLE_COPYRIGHT</string>
 		<key>NSHighResolutionCapable</key>
 		<string>true</string>
-		<key>CFBundleURLTypes</key>
-		<array>
-			<dict>
-				<key>CFBundleTypeRole</key>
-				<string>Editor</string>
-				<key>CFBundleURLName</key>
-				<string>Weasis URI Handler</string>
-				<key>LSIsAppleDefaultForType</key>
-				<string>Yes</string>
-				<key>CFBundleURLSchemes</key>
-				<array>
-					<string>weasis</string>
-				</array>
-			</dict>
-		</array>
 		<key>UTImportedTypeDeclarations</key>
 		<array>
 			<dict>

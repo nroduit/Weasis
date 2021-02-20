@@ -19,7 +19,7 @@ SUBSTANCE_PKG="3.5.0"
 # jdk.jdwp.agent => package for debugging agent
 JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
 NAME="Weasis"
-IDENTIFIER="org.weasis.viewer"
+IDENTIFIER="org.weasis.launcher"
 
 # Aux functions:
 die ( ) {

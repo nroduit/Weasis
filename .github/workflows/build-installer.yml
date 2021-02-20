@@ -58,7 +58,7 @@ jobs:
     env:
       JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
       NAME: "Weasis"
-      IDENTIFIER: "org.weasis.viewer"
+      IDENTIFIER: "org.weasis.launcher"
       WEASIS_INPUT: "weasis-distributions/target/portable-dist/weasis-portable"
       WEASIS_OUTPUT: "weasis-distributions/target/native-dist"
       WEASIS_INPUT_BIN: "weasis-distributions/target/portable-dist/weasis-portable/weasis"
@@ -206,7 +206,13 @@ jobs:
           jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
           --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "${{ env.JDK_MODULES }}" \
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
-          --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+          "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+
+          if [ "$machine" = "macosx" ] ; then
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.RES }}/weasis-url-handler.app"
+              cp -Rf "${{ env.RES }}/weasis-url-handler.app" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/"
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+          fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }}/${{ env.NAME }})"
 
@@ -243,9 +249,10 @@ jobs:
               cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
             done
           elif [ "$machine" = "macosx" ] ; then
+            # Do not set verbose for public build
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
             --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
-            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign --verbose
+            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
             cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
