@@ -140,16 +140,9 @@ public class DicomMediaUtils {
     }
 
     int countValues = 0;
-    List<String> missingTagList = null;
-
     for (int tag : requiredTags) {
       if (dcmItems.containsValue(tag)) {
         countValues++;
-      } else {
-        if (missingTagList == null) {
-          missingTagList = new ArrayList<>(requiredTags.length);
-        }
-        missingTagList.add(TagUtils.toString(tag));
       }
     }
     return countValues == requiredTags.length;

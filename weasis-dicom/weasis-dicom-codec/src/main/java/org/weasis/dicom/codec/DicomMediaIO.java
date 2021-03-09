@@ -851,7 +851,7 @@ public class DicomMediaIO implements DcmMediaReader {
         if (dataType == DataBuffer.TYPE_FLOAT || dataType == DataBuffer.TYPE_DOUBLE) {
           dcmFlags |= Imgcodecs.DICOM_FLAG_FLOAT;
         }
-        if (TransferSyntax.RLE.getTransferSyntaxUID().equals(syntax)) {
+        if (UID.RLELossless.equals(syntax)) {
           dcmFlags |= Imgcodecs.DICOM_FLAG_RLE;
         }
 
