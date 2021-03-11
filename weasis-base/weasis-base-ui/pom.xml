@@ -4,18 +4,15 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
+    <artifactId>weasis-base-parent</artifactId>
     <groupId>org.weasis.base</groupId>
-    <artifactId>weasis-base-ui-mr</artifactId>
     <!--suppress MavenPropertyInParent -->
     <version>${revision}${changelist}</version>
+    <relativePath>../weasis-base-parent/pom.xml</relativePath>
   </parent>
-  <artifactId>weasis-base-ui-base</artifactId>
+  <artifactId>weasis-base-ui</artifactId>
   <packaging>jar</packaging>
-  <name>Base - Multi-release java 8 UI [${project.artifactId}]</name>
-
-  <properties>
-    <maven.install.skip>true</maven.install.skip>
-  </properties>
+  <name>Base UI [${project.artifactId}]</name>
 
   <build>
     <plugins>

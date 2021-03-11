@@ -21,10 +21,11 @@ import java.util.List;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.CIELab;
+import org.dcm4che3.img.util.DicomObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.util.CIELab;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
@@ -295,7 +296,7 @@ public class PrGraphicUtil {
     if (style != null) {
       int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
       if (rgb != null) {
-        color = PresentationStateReader.getRGBColor(255, rgb);
+        color = DicomObjectUtil.getRGBColor(255, rgb);
       }
       Float fillOpacity =
           DicomMediaUtils.getFloatFromDicomElement(style, Tag.PatternOnOpacity, null);

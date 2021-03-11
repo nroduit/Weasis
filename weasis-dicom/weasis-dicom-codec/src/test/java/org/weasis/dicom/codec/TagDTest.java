@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import org.dcm4che3.data.DatePrecision;
 import org.dcm4che3.util.DateUtils;
@@ -46,7 +47,7 @@ public class TagDTest {
     LocalDate date1 = TagD.getDicomDate("19930822");
     assertEquals(LocalDate.of(1993, 8, 22), date1);
 
-    date1 = TagD.getDicomDate("1993:08:22");
+    date1 = TagD.getDicomDate("1993.08.22");
     assertEquals(LocalDate.of(1993, 8, 22), date1);
   }
 
@@ -136,16 +137,16 @@ public class TagDTest {
     datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-    LocalDateTime time = TagD.getDicomDateTime(null, "1953082711");
+    TemporalAccessor time = TagD.getDicomDateTime( "1953082711");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300");
+    time = TagD.getDicomDateTime( "19530827111300");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300.0");
+    time = TagD.getDicomDateTime("19530827111300.0");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300.005");
+    time = TagD.getDicomDateTime( "19530827111300.005");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
   }
 

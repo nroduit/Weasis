@@ -23,6 +23,7 @@ import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
+import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.io.DicomOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,5 +236,11 @@ public class RawImageIO implements DcmMediaReader {
   @Override
   public boolean buildFile(File ouptut) {
     return false;
+  }
+
+  @Override
+  public DicomMetaData getDicomMetaData() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }

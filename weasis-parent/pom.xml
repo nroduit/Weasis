@@ -14,20 +14,19 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
-    <revision>3.7.1</revision>
+    <revision>4.0.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
-    <java-version>1.8</java-version>
-    <jdk-version>11</jdk-version>
+    <java-version>15</java-version>
+    <jdk-version>15</jdk-version>
     <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.5.3,)</enforcer.maven-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <javaws.version>1.6.0-17</javaws.version>
     <felix.framework.version>6.0.4</felix.framework.version>
-    <substance.version>1.9.2</substance.version>
+    <substance.version>3.5.0</substance.version>
     <xz.version>1.8</xz.version>
 
     <osgi.cmpn.version>7.0.0</osgi.cmpn.version>
@@ -47,9 +46,9 @@
     <slf4j.version>1.7.30</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.3p1</dockingframes.version>
-    <weasis-dicom-tools.version>5.23.0.1</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.5.0</weasis.core.img.version>
-    <weasis.opencv.native.version>4.5.0-dcm</weasis.opencv.native.version>
+    <weasis-dicom-tools.version>5.23.1-SNAPSHOT</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.5.1</weasis.core.img.version>
+    <weasis.opencv.native.version>4.5.1-dcm</weasis.opencv.native.version>
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>2.3.2</jaxb.osgi.version>
     <org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
@@ -114,6 +113,15 @@
               </goals>
             </execution>
           </executions>
+          <dependencies>
+            <!-- Override generator to support java 14 classes -->
+            <dependency>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>org.apache.felix.scr.generator</artifactId>
+              <version>1.18.5-rc</version>
+              <scope>compile</scope>
+            </dependency>
+          </dependencies>
         </plugin>
         <plugin>
           <groupId>biz.aQute.bnd</groupId>
@@ -425,13 +433,6 @@
 
       <!--The following dependencies are not required for compilation (required
         when loading the OSGI framework for debugging) -->
-      <dependency>
-        <groupId>org.weasis.thirdparty.javax.jnlp</groupId>
-        <artifactId>javaws</artifactId>
-        <version>${javaws.version}</version>
-        <type>jar</type>
-        <scope>provided</scope>
-      </dependency>
       <dependency>
         <groupId>org.apache.sling</groupId>
         <artifactId>org.apache.sling.commons.log</artifactId>

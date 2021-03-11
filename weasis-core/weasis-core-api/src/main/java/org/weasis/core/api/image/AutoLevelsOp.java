@@ -49,8 +49,8 @@ public class AutoLevelsOp extends AbstractOp {
     Boolean auto = (Boolean) params.get(P_AUTO_LEVEL);
 
     if (auto != null && auto && imageElement != null) {
-      double min = imageElement.getMinValue(null, true);
-      double max = imageElement.getMaxValue(null, true);
+      double min = imageElement.getMinValue(null);
+      double max = imageElement.getMaxValue(null);
       double slope = 255.0 / (max - min);
       double yint = 255.0 - slope * max;
       result = ImageProcessor.rescaleToByte(source.toImageCV(), slope, yint);

@@ -16,6 +16,9 @@ import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
+import org.weasis.opencv.op.lut.PresentationStateLut;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 public class WindowOp extends AbstractOp {
 
@@ -53,12 +56,11 @@ public class WindowOp extends AbstractOp {
           img.getImage();
         }
 
-        boolean pixelPadding =
-            LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-        setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(pixelPadding));
-        setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(pixelPadding));
-        setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(null, pixelPadding));
-        setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(null, pixelPadding));
+        WlPresentation wlp = getWlPresentation();
+        setParam(ActionW.WINDOW.cmd(), img.getDefaultWindow(wlp));
+        setParam(ActionW.LEVEL.cmd(), img.getDefaultLevel(wlp));
+        setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(wlp));
+        setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(wlp));
       }
     }
   }
@@ -74,6 +76,13 @@ public class WindowOp extends AbstractOp {
     }
 
     params.put(Param.OUTPUT_IMG, result);
+  }
+
+  public WlPresentation getWlPresentation() {
+    boolean pixelPadding =
+        LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
+    PresentationStateLut pr = (PresentationStateLut) getParam("pr.element"); // $NON-NLS-1$
+    return new DefaultWlPresentation(pr, pixelPadding);
   }
 
   public WindLevelParameters getWindLevelParameters() {

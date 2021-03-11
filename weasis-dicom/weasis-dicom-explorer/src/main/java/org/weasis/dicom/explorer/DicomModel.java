@@ -586,15 +586,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   public static List<PRSpecialElement> getPrSpecialElements(
-      MediaSeries<DicomImageElement> dicomSeries, String sopUID, Integer dicomFrameNumber) {
+      MediaSeries<DicomImageElement> dicomSeries, DicomImageElement img) {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
-
     if (!specialElementList.isEmpty()) {
       String referencedSeriesInstanceUID =
           TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getPRSpecialElements(
-          specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
+      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+      if (Objects.equals(seriesUID, referencedSeriesInstanceUID)) {
+        return DicomSpecialElement.getPRSpecialElements(specialElementList, img);
+      }
     }
     return Collections.emptyList();
   }
@@ -611,7 +612,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (model instanceof DicomModel) {
       MediaSeriesGroup patientGroup =
           ((DicomModel) model).getParent(dicomSeries, DicomModel.patient);
-
       if (patientGroup != null) {
         list = (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
       }

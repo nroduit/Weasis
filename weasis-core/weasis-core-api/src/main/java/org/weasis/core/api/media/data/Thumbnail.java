@@ -65,7 +65,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
   public static final int MAX_SIZE = 256;
 
   private static final NativeCache<Thumbnail, PlanarImage> mCache =
-      new NativeCache<Thumbnail, PlanarImage>(30_000_000) {
+      new NativeCache<>(30_000_000) {
 
         @Override
         protected void afterEntryRemove(Thumbnail key, PlanarImage img) {
@@ -226,7 +226,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     if ((cacheImage = mCache.get(this)) == null && readable && loading.compareAndSet(false, true)) {
       try {
         SwingWorker<Boolean, String> thumbnailReader =
-            new SwingWorker<Boolean, String>() {
+            new SwingWorker<>() {
               @Override
               protected void done() {
                 repaint();

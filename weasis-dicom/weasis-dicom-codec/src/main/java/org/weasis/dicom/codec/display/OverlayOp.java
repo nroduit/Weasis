@@ -9,12 +9,14 @@
  */
 package org.weasis.dicom.codec.display;
 
-import java.awt.Color;
-import java.awt.image.RenderedImage;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Optional;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.DicomImageReadParam;
+import org.dcm4che3.img.DicomMetaData;
+import org.dcm4che3.img.data.OverlayData;
+import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.stream.ImageDescriptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
@@ -22,14 +24,9 @@ import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
-import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.utils.OverlayUtils;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageProcessor;
 
 public class OverlayOp extends AbstractOp {
   private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOp.class);
@@ -37,7 +34,6 @@ public class OverlayOp extends AbstractOp {
   public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
 
   public static final String P_SHOW = "overlay"; // NON-NLS
-  public static final String P_PR_ELEMENT = "pr.element";
   public static final String P_IMAGE_ELEMENT = "img.element";
 
   public OverlayOp() {
@@ -57,16 +53,17 @@ public class OverlayOp extends AbstractOp {
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.getEventType();
     if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
-      setParam(P_PR_ELEMENT, null);
+      setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
       setParam(P_IMAGE_ELEMENT, event.getImage());
     } else if (OpEvent.ApplyPR.equals(type)) {
       HashMap<String, Object> p = event.getParams();
       if (p != null) {
-        setParam(
-            P_PR_ELEMENT,
+        PRSpecialElement pr =
             Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
                 .filter(PRSpecialElement.class::isInstance)
-                .orElse(null));
+                .map(PRSpecialElement.class::cast)
+                .orElse(null);
+        setParam(WindowAndPresetsOp.P_PR_ELEMENT, pr == null ? null : pr.getPrDicomObject());
         setParam(P_IMAGE_ELEMENT, event.getImage());
       }
     }
@@ -79,36 +76,26 @@ public class OverlayOp extends AbstractOp {
     Boolean overlay = (Boolean) params.get(P_SHOW);
 
     if (overlay != null && overlay) {
-      RenderedImage imgOverlay = null;
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-
       if (image != null) {
-        PRSpecialElement pr = (PRSpecialElement) params.get(P_PR_ELEMENT);
-        boolean overlays = LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay)) ||
-            (pr != null && LangUtil.getNULLtoFalse((Boolean) pr.getTagValue(TagW.HasOverlay)));
-
-        if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
+        if (image.getMediaReader() instanceof DicomMediaIO) {
           DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
-          try {
+          DicomMetaData md = reader.getDicomMetaData();
+          if (md != null) {
+            ImageDescriptor desc = md.getImageDescriptor();
             if (image.getKey() instanceof Integer) {
               int frame = (Integer) image.getKey();
-              Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
-              Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
-              if (height != null && width != null) {
-                imgOverlay =
-                    OverlayUtils.getBinaryOverlays(
-                        image, reader.getDicomObject(), frame, width, height, params);
+              DicomImageReadParam p = new DicomImageReadParam();
+              p.setPresentationState((PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT));
+              PlanarImage original = source;
+              if (!desc.getEmbeddedOverlay().isEmpty()) {
+                original = reader.getImageFragment(image, (Integer) image.getKey(), false);
               }
+              result = OverlayData.getOverlayImage(original, source, desc, p, frame);
             }
-          } catch (IOException e) {
-            LOGGER.error("Applying overlays", e);
           }
         }
       }
-      result =
-          imgOverlay == null
-              ? source
-              : ImageProcessor.overlay(source.toMat(), imgOverlay, Color.WHITE);
     }
     params.put(Param.OUTPUT_IMG, result);
   }

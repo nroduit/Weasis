@@ -224,7 +224,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         }
       };
   private final GroupRadioMenu<Period> groupDate =
-      new GroupRadioMenu<Period>() {
+      new GroupRadioMenu<>() {
         @Override
         public void contentsChanged(ListDataEvent e) {
           super.contentsChanged(e);

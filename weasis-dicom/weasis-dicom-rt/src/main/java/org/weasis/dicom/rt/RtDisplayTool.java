@@ -211,7 +211,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   private void loadData() {
     final RtSet rt = this.rtSet;
     SwingWorker<Boolean, Boolean> loadTask =
-        new SwingWorker<Boolean, Boolean>() {
+        new SwingWorker<>() {
 
           @Override
           protected Boolean doInBackground() throws Exception {

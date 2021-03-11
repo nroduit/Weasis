@@ -36,6 +36,8 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
@@ -59,7 +61,6 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.FilterOp;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.ImageOpNode;
-import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -101,15 +102,17 @@ import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
+import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
+import org.weasis.opencv.op.lut.LutShape;
 
 /**
  * The event processing center for this application. This class responses for loading data sets,
@@ -349,15 +352,22 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                       view2d
                           .getDisplayOpManager()
                           .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+          PRSpecialElement pr =
+              Optional.ofNullable(view2d.getActionValue(ActionW.PR_STATE.cmd()))
+                  .filter(PRSpecialElement.class::isInstance)
+                  .map(PRSpecialElement.class::cast)
+                  .orElse(null);
+          DefaultWlPresentation wlp =
+              new DefaultWlPresentation(pr == null ? null : pr.getPrDicomObject(), pixelPadding);
 
-          List<PresetWindowLevel> newPresetList = image.getPresetList(pixelPadding);
+          List<PresetWindowLevel> newPresetList = image.getPresetList(wlp);
 
           // Assume the image cannot display when win =1 and level = 0
           if (oldPreset != null
               || (windowAction.get().getSliderValue() <= 1
                   && levelAction.get().getSliderValue() == 0)) {
             if (isDefaultPresetSelected) {
-              newPreset = image.getDefaultPreset(pixelPadding);
+              newPreset = image.getDefaultPreset(wlp);
             } else {
               if (oldPreset != null) {
                 for (PresetWindowLevel preset : newPresetList) {
@@ -369,7 +379,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
               }
               // set default preset when the old preset is not available any more
               if (newPreset == null) {
-                newPreset = image.getDefaultPreset(pixelPadding);
+                newPreset = image.getDefaultPreset(wlp);
                 isDefaultPresetSelected = true;
               }
             }
@@ -399,17 +409,12 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                       .getDisplayOpManager()
                       .getParamValue(WindowOp.OP_NAME, ActionW.LEVEL_MAX.cmd());
 
-          PresentationStateReader prReader =
-              (PresentationStateReader)
-                  view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
           if (levelMin == null || levelMax == null) {
-            levelMin =
-                Math.min(levelValue - windowValue / 2.0, image.getMinValue(prReader, pixelPadding));
-            levelMax =
-                Math.max(levelValue + windowValue / 2.0, image.getMaxValue(prReader, pixelPadding));
+            levelMin = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
+            levelMax = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
           } else {
-            levelMin = Math.min(levelMin, image.getMinValue(prReader, pixelPadding));
-            levelMax = Math.max(levelMax, image.getMaxValue(prReader, pixelPadding));
+            levelMin = Math.min(levelMin, image.getMinValue(wlp));
+            levelMax = Math.max(levelMax, image.getMaxValue(wlp));
           }
 
           // FIX : setting actionInView here without firing a propertyChange avoid another call to
@@ -620,7 +625,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<PresetWindowLevel> newPresetAction() {
-    return new ComboItemListener<PresetWindowLevel>(ActionW.PRESET, null) {
+    return new ComboItemListener<>(ActionW.PRESET, null) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -630,7 +635,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<LutShape> newLutShapeAction() {
-    return new ComboItemListener<LutShape>(
+    return new ComboItemListener<>(
         ActionW.LUT_SHAPE,
         LutShape.DEFAULT_FACTORY_FUNCTIONS.toArray(
             new LutShape[LutShape.DEFAULT_FACTORY_FUNCTIONS.size()])) {
@@ -674,7 +679,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<Object> newKOSelectionAction() {
-    return new ComboItemListener<Object>(
+    return new ComboItemListener<>(
         ActionW.KO_SELECTION, new ActionState.NoneLabel[] {ActionState.NoneLabel.NONE}) {
       @Override
       public void itemStateChanged(Object object) {
@@ -758,7 +763,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     // Set default first as the list has been sorted
     luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
-    return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+    return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -773,8 +778,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<SeriesComparator<DicomImageElement>> newSortStackAction() {
-    return new ComboItemListener<SeriesComparator<DicomImageElement>>(
-        ActionW.SORTSTACK, SortSeriesStack.getValues()) {
+    return new ComboItemListener<>(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -1143,8 +1147,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       LutShape lutShapeItem = (LutShape) node.getParam(ActionW.LUT_SHAPE.cmd());
       boolean pixelPadding =
           LangUtil.getNULLtoTrue((Boolean) node.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-      PresentationStateReader prReader =
-          (PresentationStateReader) view2d.getActionValue(PresentationStateReader.TAG_PR_READER);
+      PrDicomObject prDicomObject =
+          PRManager.getPrDicomObject(view2d.getActionValue(ActionW.PR_STATE.cmd()));
+      DefaultWlPresentation wlp = new DefaultWlPresentation(prDicomObject, pixelPadding);
 
       getAction(ActionW.DEFAULT_PRESET, ToggleButtonListener.class)
           .ifPresent(a -> a.setSelectedWithoutTriggerAction(defaultPreset));
@@ -1166,13 +1171,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Double levelMin = (Double) node.getParam(ActionW.LEVEL_MIN.cmd());
         Double levelMax = (Double) node.getParam(ActionW.LEVEL_MAX.cmd());
         if (levelMin == null || levelMax == null) {
-          minLevel =
-              Math.min(levelValue - windowValue / 2.0, image.getMinValue(prReader, pixelPadding));
-          maxLevel =
-              Math.max(levelValue + windowValue / 2.0, image.getMaxValue(prReader, pixelPadding));
+          minLevel = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
+          maxLevel = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
         } else {
-          minLevel = Math.min(levelMin, image.getMinValue(prReader, pixelPadding));
-          maxLevel = Math.max(levelMax, image.getMaxValue(prReader, pixelPadding));
+          minLevel = Math.min(levelMin, image.getMinValue(wlp));
+          maxLevel = Math.max(levelMax, image.getMaxValue(wlp));
         }
         window = Math.max(windowValue, maxLevel - minLevel);
 
@@ -1183,8 +1186,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         levelAction.get().setRealMinMaxValue(minLevel, maxLevel, levelValue, false);
       }
 
-      List<PresetWindowLevel> presetList = image.getPresetList(pixelPadding);
-      if (prReader != null) {
+      List<PresetWindowLevel> presetList = image.getPresetList(wlp);
+      if (prDicomObject != null) {
         List<PresetWindowLevel> prPresets =
             (List<PresetWindowLevel>) view2d.getActionValue(PRManager.PR_PRESETS);
         if (prPresets != null && !prPresets.isEmpty()) {
@@ -1206,8 +1209,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Collection<LutShape> lutShapeList =
             imageDataType >= DataBuffer.TYPE_INT
                 ? Arrays.asList(LutShape.LINEAR)
-                : image.getLutShapeCollection(pixelPadding);
-        if (prReader != null
+                : image.getLutShapeCollection(wlp);
+        if (prDicomObject != null
             && lutShapeList != null
             && lutShapeItem != null
             && !lutShapeList.contains(lutShapeItem)) {
@@ -1311,7 +1314,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   if (ImageOrientation.hasSameOrientation(series, s)) {
                     pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), false);
                     // Only fully synch if no PR is applied (because can change pixel size)
-                    if (pane.getActionValue(PresentationStateReader.TAG_PR_READER) == null
+                    if (pane.getActionValue(ActionW.PR_STATE.cmd()) == null
                         && hasSameSize(series, s)) {
                       // If the image has the same reference and the same spatial calibration, all
                       // the actions are synchronized

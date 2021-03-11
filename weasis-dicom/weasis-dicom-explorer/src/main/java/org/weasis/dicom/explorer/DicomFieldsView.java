@@ -42,7 +42,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
+import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -163,15 +163,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       if (media != null) {
         MediaReader loader = media.getMediaReader();
         if (loader instanceof DicomMediaIO) {
-          DicomMetaData metaData = null;
-          try {
-            metaData = ((DicomMediaIO) loader).getStreamMetadata();
-          } catch (IOException e) {
-            LOGGER.error("Get metadata", e);
-          }
+          DicomMetaData metaData = ((DicomMediaIO) loader).getDicomMetaData();
           if (metaData != null) {
             printAttribute(metaData.getFileMetaInformation(), doc);
-            printAttribute(metaData.getAttributes(), doc);
+            printAttribute(metaData.getDicomObject(), doc);
           }
         } else if (loader instanceof DcmMediaReader) {
           printAttribute(((DcmMediaReader) loader).getDicomObject(), doc);

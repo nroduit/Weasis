@@ -13,6 +13,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -62,8 +63,8 @@ import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
-import org.weasis.dicom.web.Multipart;
-import org.weasis.dicom.web.StowrsMultiFiles;
+import org.weasis.dicom.web.ContentType;
+import org.weasis.dicom.web.DicomStowRS;
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
@@ -147,7 +148,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
   public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {
 
     ExplorerTask<Boolean, String> task =
-        new ExplorerTask<Boolean, String>(getTitle(), false) {
+        new ExplorerTask<>(getTitle(), false) {
 
           @Override
           protected Boolean doInBackground() throws Exception {
@@ -217,13 +218,15 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         }
       } else if (selectedItem instanceof DicomWebNode) {
         DicomWebNode destination = (DicomWebNode) selectedItem;
-        try (StowrsMultiFiles stowRS =
-            new StowrsMultiFiles(
+        try (DicomStowRS stowRS =
+            new DicomStowRS(
                 destination.getUrl().toString(),
-                Multipart.ContentType.DICOM,
+                ContentType.APPLICATION_DICOM,
                 AppProperties.WEASIS_NAME,
                 destination.getHeaders())) {
-          stowRS.uploadDicom(files, true);
+          for (String file : files) {
+            stowRS.uploadDicom(Path.of(file));
+          }
         } catch (Exception e) {
           showErrorMessage("StowRS error: {}", e, null); // NON-NLS
         }

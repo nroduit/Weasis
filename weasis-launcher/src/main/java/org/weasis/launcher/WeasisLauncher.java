@@ -20,13 +20,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URL;
-import java.util.Iterator;
+import java.net.URLConnection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -56,7 +55,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
-import sun.net.www.protocol.file.FileURLConnection;
 
 /**
  * @author Richard S. Hall
@@ -81,8 +79,7 @@ public class WeasisLauncher {
 
   public enum Type {
     DEFAULT,
-    NATIVE,
-    JWS
+    NATIVE
   }
 
   public enum State {
@@ -228,13 +225,6 @@ public class WeasisLauncher {
               System.exit(-1);
             }
           });
-    }
-
-    // If enabled, register a shutdown hook to make sure the framework is
-    // cleanly shutdown when the VM exits
-    if (Type.JWS == type) {
-      handleWebstartHookBug();
-      System.setProperty("http.bundle.cache", Boolean.FALSE.toString());
     }
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
@@ -1118,7 +1108,7 @@ public class WeasisLauncher {
     if (Utils.hasText(path) && path.endsWith(".zip")) {
       if (path.startsWith("file:")) { // NON-NLS
         try {
-          FileURLConnection connection = (FileURLConnection) new URL(path).openConnection();
+          URLConnection connection = new URL(path).openConnection();
           return connection.getContentLength() > 0;
         } catch (IOException e) {
           // Do nothing
@@ -1272,31 +1262,6 @@ public class WeasisLauncher {
       jvmVersionString = jvmVersionString.substring(verIndex + 2);
     }
     return Integer.parseInt(jvmVersionString);
-  }
-
-  /** @see <a href=https://bugs.openjdk.java.net/browse/JDK-8054639>Java Web start bug</a> */
-  private static void handleWebstartHookBug() {
-    if (getJavaMajorVersion() < 9) {
-      // there is a bug that arrived sometime around the mid java7 releases. shutdown hooks get
-      // created that
-      // shutdown loggers and close down the classloader jars that means that anything we try to do
-      // in our
-      // shutdown hook throws an exception, but only after some random amount of time
-      try {
-        Class<?> clazz = Class.forName("java.lang.ApplicationShutdownHooks");
-        Field field = clazz.getDeclaredField("hooks");
-        field.setAccessible(true); // NOSONAR only workaround to fix buggy java webstart classloader
-        Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
-        for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext(); ) {
-          Thread thread = it.next();
-          if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) {
-            it.remove();
-          }
-        }
-      } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "JWS shutdownHook", e);
-      }
-    }
   }
 
   private void shutdownHook() {

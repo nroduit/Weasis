@@ -66,6 +66,7 @@ import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.WlParams;
 
 public class HistogramView extends JComponent
     implements SeriesViewerListener, GraphicSelectionListener {
@@ -118,7 +119,7 @@ public class HistogramView extends JComponent
           }
         }
       } else if (EVENT.LUT.equals(type)) {
-        WindLevelParameters p = getWinLeveParameters();
+        WlParams p = getWinLeveParameters();
         if (p == null) {
           return;
         }
@@ -282,7 +283,7 @@ public class HistogramView extends JComponent
     return null;
   }
 
-  private DisplayByteLut[] getLut(WindLevelParameters p, Model colorModel) {
+  private DisplayByteLut[] getLut(WlParams p, Model colorModel) {
     DisplayByteLut[] lut = null;
     if (view2DPane != null) {
       int channels = view2DPane.getSourceImage().channels();

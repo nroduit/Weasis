@@ -45,6 +45,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Tuple3d;
 import org.jogamp.vecmath.Vector3d;
@@ -121,7 +122,6 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -140,6 +140,7 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
   private static final long serialVersionUID = 8334123827855840782L;
@@ -430,7 +431,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         val instanceof PRSpecialElement
             ? new PresentationStateReader((PRSpecialElement) val)
             : null;
-    actionsInView.put(PresentationStateReader.TAG_PR_READER, pr);
     boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
     actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
@@ -564,7 +564,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   /**
-   * @param newImg
    * @param img , newImg
    * @return true if the state has changed and if the view or at least the KO button need to be
    *     repaint
@@ -1020,16 +1019,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected void fillPixelInfo(
       final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
     if (c != null && c.length >= 1) {
-      boolean pixelPadding =
-          LangUtil.getNULLtoTrue(
-              (Boolean)
-                  getDisplayOpManager()
-                      .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
-
-      PresentationStateReader prReader =
-          (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);
+      WlPresentation wlp = null;
+      WindowOp wlOp = (WindowOp) getDisplayOpManager().getNode(WindowOp.OP_NAME);
+      if (wlOp != null) {
+        wlp = wlOp.getWlPresentation();
+      }
       for (int i = 0; i < c.length; i++) {
-        c[i] = imageElement.pixelToRealValue(c[i], prReader, pixelPadding).doubleValue();
+        c[i] = imageElement.pixelToRealValue(c[i], wlp).doubleValue();
       }
       pixelInfo.setValues(c);
     }

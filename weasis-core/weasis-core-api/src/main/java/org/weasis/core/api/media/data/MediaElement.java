@@ -62,7 +62,7 @@ public class MediaElement implements Tagable {
     Iterator<TagW> enumVal = tags.keySet().iterator();
     while (enumVal.hasNext()) {
       TagW e = enumVal.next();
-      if (e.id == id) {
+      if (e.getId() == id) {
         return e;
       }
     }

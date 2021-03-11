@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.Icon;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.PrDicomObject;
 import org.jogamp.vecmath.Vector3d;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
@@ -56,6 +57,7 @@ import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
  * The Class InfoLayer.
@@ -240,13 +242,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         sb.append(DecFormater.allNumber(level));
 
         if (image != null) {
-          PresentationStateReader prReader =
-              (PresentationStateReader)
-                  view2DPane.getActionValue(PresentationStateReader.TAG_PR_READER);
+          PrDicomObject prDicomObject =
+              PRManager.getPrDicomObject(view2DPane.getActionValue(ActionW.PR_STATE.cmd()));
           boolean pixelPadding =
               (Boolean) disOp.getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd());
-          double minModLUT = image.getMinValue(prReader, pixelPadding);
-          double maxModLUT = image.getMaxValue(prReader, pixelPadding);
+          DefaultWlPresentation wlp = new DefaultWlPresentation(prDicomObject, pixelPadding);
+          double minModLUT = image.getMinValue(wlp);
+          double maxModLUT = image.getMaxValue(wlp);
           double minp = level.doubleValue() - window.doubleValue() / 2.0;
           double maxp = level.doubleValue() + window.doubleValue() / 2.0;
           if (minp > maxModLUT || maxp < minModLUT) {

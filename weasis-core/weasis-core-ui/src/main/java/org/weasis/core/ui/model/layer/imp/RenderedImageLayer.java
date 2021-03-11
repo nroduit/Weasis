@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
@@ -35,16 +34,15 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
-import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 /**
  * The Class RenderedImageLayer.
@@ -497,15 +495,12 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     Number val = pixelValue;
     E imageElement = getSourceImage();
     if (imageElement != null) {
-      TagReadable tagable = null;
-      boolean pixelPadding = false;
+      WlPresentation wlp = null;
       WindowOp wlOp = (WindowOp) disOpManager.getNode(WindowOp.OP_NAME);
       if (wlOp != null) {
-        pixelPadding =
-            LangUtil.getNULLtoTrue((Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-        tagable = (TagReadable) wlOp.getParam("pr.element");
+        wlp = wlOp.getWlPresentation();
       }
-      val = imageElement.pixelToRealValue(pixelValue, tagable, pixelPadding);
+      val = imageElement.pixelToRealValue(pixelValue, wlp);
     }
 
     if (val != null) {

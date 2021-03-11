@@ -31,7 +31,6 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
-import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.editor.image.DisplayByteLut;
@@ -44,6 +43,7 @@ import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.WlParams;
 
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
     implements LayerAnnotation {
@@ -251,7 +251,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   }
 
   public void drawLUT(Graphics2D g2, Rectangle bound, float midfontHeight) {
-    WindLevelParameters p = getWinLeveParameters();
+    WlParams p = getWinLeveParameters();
     if (p != null && bound.height > 350) {
       DisplayByteLut lut = getLut(p);
       if (lut == null) {
@@ -322,7 +322,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     }
   }
 
-  private WindLevelParameters getWinLeveParameters() {
+  private WlParams getWinLeveParameters() {
     if (view2DPane != null) {
       OpManager dispOp = view2DPane.getDisplayOpManager();
       WindowOp wlOp = (WindowOp) dispOp.getNode(WindowOp.OP_NAME);
@@ -333,7 +333,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return null;
   }
 
-  private DisplayByteLut getLut(WindLevelParameters p) {
+  private DisplayByteLut getLut(WlParams p) {
     DisplayByteLut lut = null;
     if (view2DPane != null) {
       int channels = view2DPane.getSourceImage().channels();

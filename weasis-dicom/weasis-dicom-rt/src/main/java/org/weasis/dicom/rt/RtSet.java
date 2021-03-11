@@ -35,6 +35,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.img.util.DicomObjectUtil;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -291,7 +292,7 @@ public class RtSet {
           rgb = new int[] {rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)};
         }
 
-        Color color1 = PresentationStateReader.getRGBColor(255, rgb);
+        Color color1 = DicomObjectUtil.getRGBColor(255, rgb);
         Color color2 =
             new Color(
                 color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);

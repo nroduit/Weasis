@@ -29,6 +29,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -68,6 +69,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.util.LangUtil;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
  * The event processing center for this application. This class responses for loading data sets,
@@ -160,7 +162,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   private ComboItemListener<KernelData> newFilterAction() {
-    return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
+    return new ComboItemListener<>(ActionW.FILTER, KernelData.getAllFilters()) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -182,7 +184,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // Set default first as the list has been sorted
     luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
-    return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+    return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
       @Override
       public void itemStateChanged(Object object) {
         if (object instanceof ByteLut) {
@@ -205,7 +207,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // Only return the action if it is enabled
     if (action.isPresent()
         && Optional.ofNullable(getAction(action.get()))
-            .filter(a -> a.isActionEnabled())
+            .filter(ActionState::isActionEnabled)
             .isPresent()) {
       return action;
     }
@@ -355,10 +357,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                         defaultView2d
                             .getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+            DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
             getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultWindow(pixelPadding)));
+                .ifPresent(a -> a.setRealValue(img.getDefaultWindow(wlp)));
             getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultLevel(pixelPadding)));
+                .ifPresent(a -> a.setRealValue(img.getDefaultLevel(wlp)));
           }
         }
       }

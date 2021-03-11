@@ -614,14 +614,9 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
         if (specialElement instanceof PRSpecialElement) {
           for (ViewCanvas<DicomImageElement> view : view2ds) {
             if (view instanceof View2d) {
-              DicomImageElement img = view.getImage();
-              if (img != null) {
-                if (PresentationStateReader.isModuleAppicable(
-                    TagD.getTagValue(
-                        specialElement, Tag.ReferencedSeriesSequence, Attributes[].class),
-                    img)) {
-                  ((View2d) view).updatePR();
-                }
+              if (PresentationStateReader.isImageApplicable(
+                  (PRSpecialElement) specialElement, view.getImage())) {
+                ((View2d) view).updatePR();
               }
             }
           }

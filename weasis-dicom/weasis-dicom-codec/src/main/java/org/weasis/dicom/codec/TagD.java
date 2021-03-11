@@ -25,13 +25,13 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.xml.stream.XMLInputFactory;
@@ -39,11 +39,10 @@ import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.DatePrecision;
 import org.dcm4che3.data.ElementDictionary;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.util.DateUtils;
+import org.dcm4che3.img.util.DateTimeUtils;
 import org.dcm4che3.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -413,13 +412,13 @@ public class TagD extends TagW {
     } else if (TagType.DICOM_DATETIME.equals(type)) {
       if (vmMax > 1) {
         String[] ss = toStrings(data);
-        LocalDateTime[] is = new LocalDateTime[ss.length];
+        Temporal[] is = new Temporal[ss.length];
         for (int i = 0; i < is.length; i++) {
-          is[i] = TagD.getDicomDateTime(null, data);
+          is[i] = TagD.getDicomDateTime(data);
         }
         value = is;
       } else {
-        value = TagD.getDicomDateTime(null, data);
+        value = TagD.getDicomDateTime(data);
       }
     } else if (TagType.INTEGER.equals(type)) {
       if (vmMax > 1) {
@@ -791,13 +790,7 @@ public class TagD extends TagW {
   public static LocalDate getDicomDate(String date) {
     if (StringUtil.hasText(date)) {
       try {
-        if (date.length() > 8) {
-          StringBuilder buf = new StringBuilder(8);
-          // Try to fix old format yyyy.mm.dd (prior DICOM3.0)
-          date.chars().filter(Character::isDigit).forEachOrdered(i -> buf.append((char) i));
-          return LocalDate.parse(buf.toString().trim(), DICOM_DATE);
-        }
-        return LocalDate.parse(date, DICOM_DATE);
+        return DateTimeUtils.parseDA(date);
       } catch (Exception e) {
         LOGGER.error("Parse DICOM date", e);
       }
@@ -808,30 +801,18 @@ public class TagD extends TagW {
   public static LocalTime getDicomTime(String time) {
     if (StringUtil.hasText(time)) {
       try {
-        return LocalTime.parse(time.trim(), DICOM_TIME);
-      } catch (Exception e) {
-        try {
-          StringBuilder buf = new StringBuilder(8);
-          // Try to fix old format HH:MM:SS.frac (prior DICOM3.0)
-          time.chars().filter(i -> ':' != (char) i).forEachOrdered(i -> buf.append((char) i));
-          return LocalTime.parse(buf.toString().trim(), DICOM_TIME);
-        } catch (Exception e1) {
-          LOGGER.error("Parse DICOM time", e1);
-        }
+        return DateTimeUtils.parseTM(time);
+      } catch (Exception e1) {
+        LOGGER.error("Parse DICOM time", e1);
       }
     }
     return null;
   }
 
-  public static LocalDateTime getDicomDateTime(TimeZone tz, String value) {
-    return getDicomDateTime(tz, value, false);
-  }
-
-  public static LocalDateTime getDicomDateTime(TimeZone tz, String value, boolean ceil) {
+  public static Temporal getDicomDateTime(String value) {
     if (StringUtil.hasText(value)) {
       try {
-        Date date = DateUtils.parseDT(tz, value, ceil, new DatePrecision());
-        return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
+        return DateTimeUtils.parseDT(value);
       } catch (Exception e) {
         LOGGER.error("Parse DICOM dateTime", e);
       }
@@ -884,7 +865,7 @@ public class TagD extends TagW {
         if (TagType.DICOM_TIME.equals(type)) {
           return getDicomTime(val);
         } else if (TagType.DICOM_DATETIME.equals(type)) {
-          return getDicomDateTime(null, val);
+          return getDicomDateTime(val);
         } else {
           return getDicomDate(val);
         }
@@ -913,7 +894,7 @@ public class TagD extends TagW {
           if (TagType.TIME.equals(type)) {
             vals[i] = getDicomTime(strs[i]);
           } else if (TagType.DATETIME.equals(type)) {
-            vals[i] = getDicomDateTime(null, strs[i]);
+            vals[i] = getDicomDateTime(strs[i]);
           } else {
             vals[i] = getDicomDate(strs[i]);
           }

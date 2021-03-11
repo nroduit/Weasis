@@ -39,6 +39,7 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
 import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.util.StringUtil;
+import org.weasis.opencv.op.lut.WlParams;
 
 public class HistogramPanel extends JPanel {
   private static final Logger LOGGER = LoggerFactory.getLogger(HistogramPanel.class);
@@ -106,7 +107,7 @@ public class HistogramPanel extends JPanel {
     float lutLength = getWidth() - SLIDER_X * 2.0f;
     this.xAxisHistoRescaleRatio = lutLength / nbBins;
 
-    WindLevelParameters windLevel = data.getWindLevel();
+    WlParams windLevel = data.getWindLevel();
     double min = data.getPixMin();
     double max = data.getPixMax();
     double low = windLevel.getLevel() - windLevel.getWindow() / 2.0;
@@ -329,7 +330,7 @@ public class HistogramPanel extends JPanel {
     try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
       pw.println("Class,Occurrences"); // NON-NLS
       float[] histValues = data.getHistValues();
-      WindLevelParameters windLevel = data.getWindLevel();
+      WlParams windLevel = data.getWindLevel();
       double min = windLevel.getLevelMin();
       double max = windLevel.getLevelMax() + 1.0;
       double factor = (max - min) / histValues.length;
@@ -377,7 +378,7 @@ public class HistogramPanel extends JPanel {
       float lpos = (e.getX() - SLIDER_X) / xAxisHistoRescaleRatio;
       int i = Math.round(lpos);
       if (i >= 0 && i < histValues.length) {
-        WindLevelParameters windLevel = data.getWindLevel();
+        WlParams windLevel = data.getWindLevel();
         double min = windLevel.getLevelMin();
         double max = windLevel.getLevelMax() + 1.0;
         int val = (int) Math.ceil(i * (max - min) / histValues.length + min);

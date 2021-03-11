@@ -202,23 +202,17 @@ public class WeasisWin {
       LOGGER.debug("Error while receiving main window", e);
     }
 
-    if (container == null || container instanceof JFrame) {
-      JFrame jFrame = container == null ? new JFrame() : (JFrame) container;
-      frame = jFrame;
-      jFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
-      frame.addWindowListener(
-          new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent e) {
-              closeWindow();
-            }
-          });
-      rootPaneContainer = jFrame;
-    } else {
-      rootPaneContainer = container;
-      // Get Frame of JApplet to pass a parent frame to JDialog.
-      frame = (Frame) SwingUtilities.getAncestorOfClass(Frame.class, (Component) rootPaneContainer);
-    }
+    JFrame jFrame = container == null ? new JFrame() : (JFrame) container;
+    frame = jFrame;
+    jFrame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+    frame.addWindowListener(
+        new WindowAdapter() {
+          @Override
+          public void windowClosing(WindowEvent e) {
+            closeWindow();
+          }
+        });
+    rootPaneContainer = jFrame;
 
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.menu.menubar", true)) {
       rootPaneContainer.getRootPane().setJMenuBar(createMenuBar());
