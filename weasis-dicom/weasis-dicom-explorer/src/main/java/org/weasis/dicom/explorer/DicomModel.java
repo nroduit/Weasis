@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.Tree;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -73,6 +75,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
@@ -175,26 +178,62 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       return;
     }
     if (pt2 == null) {
-      pt.addMergeIdValue(newPatientUID);
-    } else {
-      Collection<MediaSeriesGroup> studies = getChildren(pt);
-      Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
-      for (MediaSeriesGroup st : studies) {
-        studyMap.put(st, getChildren(st));
+      pt2 =
+          new MediaSeriesGroupNode(
+              TagD.getUID(Level.PATIENT), newPatientUID, DicomModel.patient.getTagView());
+      Iterator<Entry<TagW, Object>> iter = pt.getTagEntrySetIterator();
+      while (iter.hasNext()) {
+        Entry<TagW, Object> e = iter.next();
+        pt2.setTag(e.getKey(), e.getValue());
       }
-
-      removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-
-      for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
-        MediaSeriesGroup st = stEntry.getKey();
-        addHierarchyNode(pt, st);
-        for (MediaSeriesGroup s : stEntry.getValue()) {
-          addHierarchyNode(st, s);
-        }
-      }
-      firePropertyChange(
-          new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT, DicomModel.this, pt, pt2));
+      addHierarchyNode(MediaSeriesGroupNode.rootNode, pt2);
     }
+    Collection<MediaSeriesGroup> studies = getChildren(pt);
+    Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
+    for (MediaSeriesGroup st : studies) {
+      studyMap.put(st, getChildren(st));
+    }
+
+    for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
+      MediaSeriesGroup st = stEntry.getKey();
+      removeHierarchyNode(pt, st);
+      addHierarchyNode(pt2, st);
+      for (MediaSeriesGroup s : stEntry.getValue()) {
+        addHierarchyNode(st, s);
+        firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+      }
+    }
+    removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+  }
+
+  public void mergeStudyUID(String oldStudyUID, String studyUID) {
+    MediaSeriesGroup studyGroup = getStudyNode(oldStudyUID);
+    MediaSeriesGroup studyGroup2 = getStudyNode(studyUID);
+
+    if (studyGroup == null || Objects.equals(studyGroup, studyGroup2)) {
+      return;
+    }
+
+    MediaSeriesGroup patient = getParent(studyGroup, DicomModel.patient);
+    if (studyGroup2 == null) {
+      studyGroup2 =
+          new MediaSeriesGroupNode(
+              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+      Iterator<Entry<TagW, Object>> iter = studyGroup.getTagEntrySetIterator();
+      while (iter.hasNext()) {
+        Entry<TagW, Object> e = iter.next();
+        studyGroup2.setTag(e.getKey(), e.getValue());
+      }
+      addHierarchyNode(patient, studyGroup2);
+    }
+
+    Collection<MediaSeriesGroup> seriesGroups = getChildren(studyGroup);
+    for (MediaSeriesGroup s : seriesGroups) {
+      removeHierarchyNode(studyGroup, s);
+      addHierarchyNode(studyGroup2, s);
+      firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+    }
+    removeHierarchyNode(patient, studyGroup);
   }
 
   public MediaSeriesGroup getStudyNode(String studyUID) {

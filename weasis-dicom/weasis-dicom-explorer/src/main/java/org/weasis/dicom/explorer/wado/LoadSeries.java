@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -714,7 +715,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       int start = url.indexOf("&transferSyntax="); // NON-NLS
       if (start != -1) {
         int end = url.indexOf('&', start + 16);
-        buffer.append(url.substring(0, start + 16));
+        buffer.append(url, 0, start + 16);
         buffer.append(TransferSyntax.EXPLICIT_VR_LE.getTransferSyntaxUID());
         if (end != -1) {
           buffer.append(url.substring(end));
@@ -856,7 +857,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
       int bytesTransferred;
       if (overrideList == null) {
-        if (wadoParams.isWadoRS()) {
+        if (wadoParams != null && wadoParams.isWadoRS()) {
           int[] readBytes = {0};
           Multipart.Handler handler =
               new Handler() {
@@ -994,11 +995,20 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         if (firstImageToDisplay) {
           MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
           if (patient != null) {
+            String oldDicomPtUID = (String) patient.getTagValue(TagW.PatientPseudoUID);
             String dicomPtUID = (String) reader.getTagValue(TagW.PatientPseudoUID);
-            if (!patient.getTagValue(TagW.PatientPseudoUID).equals(dicomPtUID)) {
+            if (!Objects.equals(oldDicomPtUID, dicomPtUID)) {
               // Fix when patientUID in xml have different patient name
-              dicomModel.mergePatientUID(
-                  (String) patient.getTagValue(TagW.PatientPseudoUID), dicomPtUID);
+              dicomModel.mergePatientUID(oldDicomPtUID, dicomPtUID);
+            }
+          }
+          MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
+          if (study != null) {
+            String oldStudyUID = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
+            String studyUID = TagD.getTagValue(reader, Tag.StudyInstanceUID, String.class);
+            if (!Objects.equals(oldStudyUID, studyUID)) {
+              // Fix when StudyInstanceUID in xml have different patient name
+              dicomModel.mergeStudyUID(oldStudyUID, studyUID);
             }
           }
         }

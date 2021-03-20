@@ -21,12 +21,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAccessor;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -622,10 +620,22 @@ public class DicomMediaUtils {
     // Study Group
     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
       DicomMediaIO.tagManager.readTags(Level.STUDY, header, group);
+      if (!group.matchIdValue(header.getString(Tag.StudyInstanceUID))) {
+        LOGGER.warn(
+            "Inconsistent Study Instance UID between DICOM objets: {} and {}",
+            group.getTagValue(TagD.getUID(Level.STUDY)),
+            header.getString(Tag.StudyInstanceUID));
+      }
     }
     // Series Group
     else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
       DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
+      if (!group.matchIdValue(header.getString(Tag.SeriesInstanceUID))) {
+        LOGGER.warn(
+            "Inconsistent Series Instance UID between DICOM objets: {} and {}",
+            group.getTagValue(TagD.getUID(Level.STUDY)),
+            header.getString(Tag.SeriesInstanceUID));
+      }
       // Build patient age if not present
       group.setTagNoNull(
           TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));

@@ -18,6 +18,4 @@ public interface MediaSeriesGroup extends Tagable {
   TagW getTagElement(int id);
 
   void dispose();
-
-  void addMergeIdValue(Object valueID);
 }
