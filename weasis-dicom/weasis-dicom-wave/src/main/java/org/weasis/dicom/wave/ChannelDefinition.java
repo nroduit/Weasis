@@ -35,7 +35,7 @@ public class ChannelDefinition {
     this.position = position;
     Attributes channelSourceSequence =
         Objects.requireNonNull(
-                dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence");
+            dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence");
     this.lead = Lead.buildLead(new Code(channelSourceSequence));
     Double chSensisvity =
         DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivity, null);

@@ -84,8 +84,10 @@ public class OverlayOp extends AbstractOp {
 
       if (image != null) {
         PRSpecialElement pr = (PRSpecialElement) params.get(P_PR_ELEMENT);
-        boolean overlays = LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay)) ||
-            (pr != null && LangUtil.getNULLtoFalse((Boolean) pr.getTagValue(TagW.HasOverlay)));
+        boolean overlays =
+            LangUtil.getNULLtoFalse((Boolean) image.getTagValue(TagW.HasOverlay))
+                || (pr != null
+                    && LangUtil.getNULLtoFalse((Boolean) pr.getTagValue(TagW.HasOverlay)));
 
         if (overlays && image.getMediaReader() instanceof DicomMediaIO) {
           DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();

@@ -93,7 +93,7 @@ public class Lead {
     return new Lead(title);
   }
 
-  private static Lead mdc2Lead(String codeValue){
+  private static Lead mdc2Lead(String codeValue) {
     switch (codeValue) {
       case "2:1":
         return I;
@@ -124,7 +124,7 @@ public class Lead {
     }
   }
 
-  private static Lead scpecg2Lead(String codeValue ){
+  private static Lead scpecg2Lead(String codeValue) {
     // http://dicom.nema.org/medical/Dicom/current/output/chtml/part16/sect_CID_3001.html
     switch (codeValue) {
       case "5.6.3-9-1":
