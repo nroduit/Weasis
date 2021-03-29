@@ -375,7 +375,9 @@ public class DicomMediaUtils {
     if (computeOnlyIfNull) {
       String s = dicom.getString(privateCreatorID, tag, defaultValue);
       if (StringUtil.hasText(s)) {
-        return s;
+        if (StringUtil.hasText(TagD.getDicomPeriod(s))) {
+          return s;
+        }
       }
     }
 
