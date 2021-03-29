@@ -97,7 +97,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
   protected abstract void initializePages();
 
-  public void showPageFirstPage() {
+  public void showFirstPage() {
     if (pagesRoot.getChildCount() > 0) {
       tree.setSelectionRow(0);
     }
@@ -105,7 +105,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
   public void showPage(String title) {
     if (!selectPage(title, pagesRoot)) {
-      showPageFirstPage();
+      showFirstPage();
     }
   }
 
@@ -206,6 +206,17 @@ public abstract class AbstractWizardDialog extends JDialog {
           }
         });
     expandTree(tree, pagesRoot, 2);
+  }
+
+  public PageProps getSelectedPage() {
+    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+    if (selectedNode != null) {
+      Object object = selectedNode.getUserObject();
+      if (object instanceof PageProps) {
+          return (PageProps) object;
+      }
+    }
+    return null;
   }
 
   public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {

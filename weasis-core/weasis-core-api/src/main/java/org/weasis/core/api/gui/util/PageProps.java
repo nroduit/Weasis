@@ -14,13 +14,6 @@ public interface PageProps {
   void resetoDefaultValues();
 
   /**
-   * Returns the key used to identify this page in a multiple page config dialog.
-   *
-   * @return the key, must not be <code>null</code> and unique within the page.
-   */
-  String getKey();
-
-  /**
    * Returns the human readable tile of the page which is displayed in the config dialog's tree view
    * and title bar.
    *
