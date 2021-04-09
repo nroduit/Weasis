@@ -17,11 +17,28 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependency</id>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>scribejava-core</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
+            -includeresource.all: lib/=target/dependency/;lib:=true
             Export-Package: org.weasis.core.api.*
+            -exportcontents: com.github.scribejava.*
           </bnd>
         </configuration>
       </plugin>
@@ -32,6 +49,15 @@
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.prefs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.thirdparty</groupId>
+      <artifactId>jaxb-osgi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.scribejava</groupId>
+      <artifactId>scribejava-core</artifactId>
+      <version>${scribejava.version}</version>
     </dependency>
     <!-- FOR TESTS -->
     <dependency>

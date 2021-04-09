@@ -96,6 +96,7 @@ public class DicomNodeDialog extends JDialog {
     content.setLayout(gridBagLayout);
     descriptionLabel = new JLabel();
     GridBagConstraints gbcDescriptionLabel = new GridBagConstraints();
+    gbcDescriptionLabel.anchor = GridBagConstraints.EAST;
     gbcDescriptionLabel.insets = new Insets(0, 0, 5, 5);
     gbcDescriptionLabel.gridx = 0;
     gbcDescriptionLabel.gridy = 0;
@@ -104,6 +105,7 @@ public class DicomNodeDialog extends JDialog {
     descriptionLabel.setText(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
     descriptionTf = new JTextField();
     GridBagConstraints gbcDescriptionTf = new GridBagConstraints();
+    gbcDescriptionTf.anchor = GridBagConstraints.WEST;
     gbcDescriptionTf.insets = new Insets(0, 0, 5, 5);
     gbcDescriptionTf.gridx = 1;
     gbcDescriptionTf.gridy = 0;
@@ -113,7 +115,7 @@ public class DicomNodeDialog extends JDialog {
     aeTitleLabel = new JLabel();
     aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON);
     GridBagConstraints gbcAeTitleLabel = new GridBagConstraints();
-    gbcAeTitleLabel.anchor = GridBagConstraints.SOUTHEAST;
+    gbcAeTitleLabel.anchor = GridBagConstraints.EAST;
     gbcAeTitleLabel.insets = new Insets(0, 0, 5, 5);
     gbcAeTitleLabel.gridx = 0;
     gbcAeTitleLabel.gridy = 1;

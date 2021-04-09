@@ -1,0 +1,10 @@
+<root>
+  <item
+    name='com.github.scribejava.core.model.OAuthRequest void addHeader(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item
+    name='com.github.scribejava.core.model.Response java.lang.String getHeader(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

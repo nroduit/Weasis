@@ -9,6 +9,9 @@
  */
 package org.weasis.core.api.util;
 
+import com.github.scribejava.core.model.OAuthRequest;
+import com.github.scribejava.core.model.Verb;
+import com.github.scribejava.core.oauth.OAuth20Service;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +29,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.util.StreamIOException;
 import org.weasis.core.util.StringUtil;
@@ -63,6 +68,14 @@ public class NetworkUtil {
     return uri;
   }
 
+  public static HttpResponse getHttpResponse(
+      String url, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
+    if (authMethod == null) {
+      return prepareConnection(new URL(url).openConnection(), urlParameters);
+    }
+    return prepareAuthConnection(new OAuthRequest(Verb.GET, url), urlParameters, authMethod);
+  }
+
   public static ClosableURLConnection getUrlConnection(String url, URLParameters urlParameters)
       throws IOException {
     return prepareConnection(new URL(url).openConnection(), urlParameters);
@@ -76,6 +89,27 @@ public class NetworkUtil {
   private static void updateHeadersWithAppProperties(URLConnection urlConnection) {
     urlConnection.setRequestProperty("User-Agent", AppProperties.WEASIS_USER_AGENT);
     urlConnection.setRequestProperty("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase());
+  }
+
+  private static AuthResponse prepareAuthConnection(
+      OAuthRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
+    Map<String, String> headers = urlParameters.getUnmodifiableHeaders();
+    if (!headers.isEmpty()) {
+      for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
+        Entry<String, String> element = iter.next();
+        request.addHeader(element.getKey(), element.getValue());
+      }
+    }
+    request.addHeader("User-Agent", AppProperties.WEASIS_USER_AGENT);
+    request.addHeader("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase());
+
+    try {
+      OAuth20Service service = OAuth2ServiceFactory.getService(authMethod);
+      service.signRequest(authMethod.getToken(), request);
+      return new AuthResponse(service.execute(request));
+    } catch (Exception e) {
+      throw new StreamIOException(e);
+    }
   }
 
   private static ClosableURLConnection prepareConnection(
@@ -177,6 +211,15 @@ public class NetworkUtil {
       }
     }
     return c;
+  }
+
+  public static boolean urlValidator(String url) {
+    try {
+      new URL(url).toURI();
+      return true;
+    } catch (URISyntaxException | MalformedURLException exception) {
+      return false;
+    }
   }
 
   private static void writeErrorResponse(HttpURLConnection httpURLConnection) throws IOException {

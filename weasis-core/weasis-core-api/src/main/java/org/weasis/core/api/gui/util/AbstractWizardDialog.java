@@ -209,11 +209,12 @@ public abstract class AbstractWizardDialog extends JDialog {
   }
 
   public PageProps getSelectedPage() {
-    DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
+    DefaultMutableTreeNode selectedNode =
+        (DefaultMutableTreeNode) tree.getLastSelectedPathComponent();
     if (selectedNode != null) {
       Object object = selectedNode.getUserObject();
       if (object instanceof PageProps) {
-          return (PageProps) object;
+        return (PageProps) object;
       }
     }
     return null;

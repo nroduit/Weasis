@@ -28,18 +28,29 @@ import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipStudyNode;
 @SuppressWarnings("serial")
 public class RetrieveTree extends JPanel {
 
+  private RetrieveTreeModel retrieveTreeModel;
+
+  public RetrieveTree() {
+    this(new RetrieveTreeModel());
+  }
+
   public RetrieveTree(DicomModel dicomModel) {
     this(new RetrieveTreeModel(dicomModel));
   }
 
   public RetrieveTree(RetrieveTreeModel retrieveTreeModel) {
     this.setLayout(new FlowLayout(FlowLayout.LEFT));
-    setCheckTreeModel(retrieveTreeModel);
+    setRetrieveTreeModel(retrieveTreeModel);
   }
 
-  public void setCheckTreeModel(final RetrieveTreeModel retrieveTreeModel) {
+  public RetrieveTreeModel getRetrieveTreeModel() {
+    return retrieveTreeModel;
+  }
+
+  public void setRetrieveTreeModel(RetrieveTreeModel retrieveTreeModel) {
+    this.retrieveTreeModel = Objects.requireNonNull(retrieveTreeModel);
     CheckboxTree checkboxTree =
-        new CheckboxTree(Objects.requireNonNull(retrieveTreeModel).getModel()) {
+        new CheckboxTree(retrieveTreeModel.getModel()) {
           @Override
           public String getToolTipText(MouseEvent evt) {
             if (getRowForLocation(evt.getX(), evt.getY()) == -1) {

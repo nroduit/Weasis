@@ -339,8 +339,11 @@ public abstract class AbstractDicomNode {
         AbstractDicomNode node;
         if (AbstractDicomNode.Type.WEB == type) {
           WebType wt = WebType.valueOf(xmler.getAttributeValue(null, DicomWebNode.T_WEB_TYPE));
-          if (webType != null && wt != WebType.DICOMWEB && wt != webType) {
-            return;
+          if (webType != null) {
+            if (webType == WebType.WADO && webType != wt
+                || webType != wt && wt != WebType.DICOMWEB) {
+              return;
+            }
           }
           node = DicomWebNode.buildDicomWebNode(xmler);
         } else if (AbstractDicomNode.Type.PRINTER == type) {

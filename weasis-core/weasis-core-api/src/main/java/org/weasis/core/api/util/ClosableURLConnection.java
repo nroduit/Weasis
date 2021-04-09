@@ -15,8 +15,11 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class ClosableURLConnection implements AutoCloseable {
+public class ClosableURLConnection implements HttpResponse {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ClosableURLConnection.class);
 
   private final URLConnection urlConnection;
 
@@ -31,8 +34,26 @@ public class ClosableURLConnection implements AutoCloseable {
     }
   }
 
+  @Override
   public InputStream getInputStream() throws IOException {
     return urlConnection.getInputStream();
+  }
+
+  @Override
+  public int getResponseCode() {
+    if (urlConnection instanceof HttpURLConnection) {
+      try {
+        return ((HttpURLConnection) urlConnection).getResponseCode();
+      } catch (IOException e) {
+        LOGGER.error("Get code", e);
+      }
+    }
+    return HttpURLConnection.HTTP_OK;
+  }
+
+  @Override
+  public String getHeaderField(String key) {
+    return urlConnection.getHeaderField(key);
   }
 
   public OutputStream getOutputStream() throws IOException {

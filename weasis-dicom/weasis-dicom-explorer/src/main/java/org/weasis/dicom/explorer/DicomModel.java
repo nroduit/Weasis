@@ -587,13 +587,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getKoSpecialElements(
-          specialElementList, referencedSeriesInstanceUID);
-    }
-    return Collections.emptyList();
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getKoSpecialElements(
+        specialElementList, referencedSeriesInstanceUID);
   }
 
   public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
@@ -601,13 +598,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getRejectionKoSpecialElements(
-          specialElementList, referencedSeriesInstanceUID);
-    }
-    return Collections.emptyList();
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getRejectionKoSpecialElements(
+        specialElementList, referencedSeriesInstanceUID);
   }
 
   public static RejectedKOSpecialElement getRejectionKoSpecialElement(
@@ -615,13 +609,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getRejectionKoSpecialElement(
-          specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
-    }
-    return null;
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getRejectionKoSpecialElement(
+        specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
   }
 
   public static List<PRSpecialElement> getPrSpecialElements(
@@ -1164,6 +1155,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", // NON-NLS
       "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", // NON-NLS
       "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
+      "  --auth-uid=UID             UID of the Weasis authentication method", // NON-NLS
+      "  --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request", // NON-NLS
+      "  --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)", // NON-NLS
       "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", // NON-NLS
       "  -? --help                  show help" // NON-NLS
     };
@@ -1196,6 +1190,19 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     if (opt.isSet("show-whole-study")) { // NON-NLS
       props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
+    }
+
+    String authUID = opt.get("auth-uid"); // NON-NLS
+    if (StringUtil.hasText(authUID)) {
+      props.setProperty(RsQueryParams.P_AUTH_UID, authUID);
+    }
+    String oidcIssuer = opt.get("oidc-iss"); // NON-NLS
+    if (StringUtil.hasText(oidcIssuer)) {
+      props.setProperty(RsQueryParams.P_OIDC_ISSUER, oidcIssuer);
+    }
+    String oidcLogin = opt.get("oidc-login"); // NON-NLS
+    if (StringUtil.hasText(oidcLogin)) {
+      props.setProperty(RsQueryParams.P_OIDC_USER, oidcLogin);
     }
 
     GuiExecutor.instance()

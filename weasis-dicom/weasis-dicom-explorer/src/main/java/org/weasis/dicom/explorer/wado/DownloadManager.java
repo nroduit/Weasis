@@ -15,6 +15,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -46,6 +47,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -87,6 +89,9 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomWebNode;
+import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
 import org.weasis.dicom.mf.ArcParameters;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
@@ -414,6 +419,7 @@ public class DownloadManager {
     final WadoParameters wadoParameters =
         new WadoParameters(
             arcID, wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+    params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, ArcParameters.TAG_ARC_QUERY);
   }
 
@@ -430,6 +436,7 @@ public class DownloadManager {
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
         new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+    params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, WadoParameters.TAG_WADO_QUERY);
   }
 
@@ -499,7 +506,7 @@ public class DownloadManager {
     }
     for (LoadSeries loadSeries : params.getSeriesMap().values()) {
       String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+      boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
       if (!ps) {
         loadSeries.startDownloadImageReference(wadoParameters);
       }
@@ -660,17 +667,36 @@ public class DownloadManager {
     dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
 
     if (!seriesInstanceList.isEmpty()) {
+      AuthMethod authMethod = params.wadoUri == null ? null : params.wadoUri.getAuthMethod();
       final LoadSeries loadSeries =
           new LoadSeries(
               dicomSeries,
               model,
+              authMethod,
               BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                   LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
+              true,
               true);
       loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
       params.getSeriesMap().put(seriesUID, loadSeries);
     }
     return dicomSeries;
+  }
+
+  static DicomWebNode getWadoUrl(String url) {
+    List<AbstractDicomNode> webNodes =
+        AbstractDicomNode.loadDicomNodes(
+            AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADO);
+    for (AbstractDicomNode n : webNodes) {
+      if (n instanceof DicomWebNode) {
+        DicomWebNode wn = (DicomWebNode) n;
+        URL wadoURL = wn.getUrl();
+        if (wadoURL != null && wadoURL.toString().equals(url)) {
+          return wn;
+        }
+      }
+    }
+    return null;
   }
 
   private static void readPresentation(XMLStreamReader xmler, ReaderParams params)
@@ -835,6 +861,7 @@ public class DownloadManager {
   static class ReaderParams {
     private final DicomModel model;
     private final Map<String, LoadSeries> seriesMap;
+    private DicomWebNode wadoUri;
 
     public ReaderParams(DicomModel model, Map<String, LoadSeries> seriesMap) {
       this.model = model;

@@ -109,8 +109,7 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
 
       if (!seriesInstanceList.isEmpty()) {
         String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
-        boolean ps =
-            modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+        boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
         final LoadSeries loadSeries =
             new LoadSeries(
                 dicomSeries,
