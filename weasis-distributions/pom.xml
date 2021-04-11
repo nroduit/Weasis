@@ -21,7 +21,7 @@
     <tmp.dir>${project.build.directory}/tmp</tmp.dir>
     <tmp.bundle.dir>${project.build.directory}/tmp/bundle</tmp.bundle.dir>
 
-    <xz.ext></xz.ext>
+    <xz.ext/>
     <windowsName>weasis-native</windowsName>
   </properties>
 
@@ -103,7 +103,7 @@
                 <jre>
                   <path>jre/windows</path>
                   <minVersion>1.8.0</minVersion>
-                  <maxVersion></maxVersion>
+                  <maxVersion/>
                   <initialHeapSize>64</initialHeapSize>
                   <maxHeapSize>768</maxHeapSize>
                   <!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, otherwise
@@ -236,21 +236,21 @@
                   <name>jnlp.app.version</name>
                   <value>${app.version}</value>
                   <regex>^.+-SNAPSHOT$</regex>
-                  <replacement></replacement>
+                  <replacement/>
                   <failIfNoMatch>false</failIfNoMatch>
                 </regexPropertySetting>
                 <regexPropertySetting>
                   <name>jnlp.felix.framework.version</name>
                   <value>${felix.framework.version}</value>
                   <regex>^.+-SNAPSHOT$</regex>
-                  <replacement></replacement>
+                  <replacement/>
                   <failIfNoMatch>false</failIfNoMatch>
                 </regexPropertySetting>
                 <regexPropertySetting>
                   <name>jnlp.substance.version</name>
                   <value>${substance.version}</value>
                   <regex>^.+-SNAPSHOT$</regex>
-                  <replacement></replacement>
+                  <replacement/>
                   <failIfNoMatch>false</failIfNoMatch>
                 </regexPropertySetting>
               </regexPropertySettings>
@@ -400,6 +400,24 @@
                   <groupId>org.jogamp.java3d</groupId>
                   <artifactId>vecmath</artifactId>
                   <version>${org.jogamp.java3d.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.fasterxml.jackson.core</groupId>
+                  <artifactId>jackson-databind</artifactId>
+                  <version>${jackson.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.fasterxml.jackson.core</groupId>
+                  <artifactId>jackson-core</artifactId>
+                  <version>${jackson.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.fasterxml.jackson.core</groupId>
+                  <artifactId>jackson-annotations</artifactId>
+                  <version>${jackson.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 
