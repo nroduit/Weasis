@@ -40,7 +40,7 @@ public class AdvancedShape implements Shape {
    * For instance, this first shape defines measurement areas or path lines. Other shape are usually
    * dedicated to decorative drawings, with or without invariant size according to the view.
    */
-  public List<BasicShape> shapeList;
+  public final List<BasicShape> shapeList;
 
   protected AffineTransform transform;
   private Graphic graphic;

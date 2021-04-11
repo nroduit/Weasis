@@ -105,8 +105,15 @@ public class NetworkUtil {
 
     try {
       OAuth20Service service = OAuth2ServiceFactory.getService(authMethod);
+      if (service == null) {
+        throw new IllegalStateException(
+            "Not a valid authentication method: " + authMethod.toString());
+      }
       service.signRequest(authMethod.getToken(), request);
       return new AuthResponse(service.execute(request));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new StreamIOException(e);
     } catch (Exception e) {
       throw new StreamIOException(e);
     }

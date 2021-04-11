@@ -11,7 +11,7 @@ package org.weasis.core.api.util;
 
 import java.net.InetAddress;
 import java.net.ServerSocket;
-import java.util.Random;
+import java.security.SecureRandom;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.net.ServerSocketFactory;
@@ -20,7 +20,7 @@ public class SocketUtil {
 
   public static final int PORT_MIN = 1024;
   public static final int PORT_MAX = 65535;
-  private static final Random random = new Random(System.nanoTime());
+  private static final SecureRandom random = new SecureRandom();
 
   private SocketUtil() {}
 

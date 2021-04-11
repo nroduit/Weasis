@@ -256,17 +256,15 @@ public class WeasisWin {
   }
 
   public boolean closeWindow() {
-    if (busy) {
-      // TODO add a message, Please wait or kill
-      return false;
-    }
-    if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) {
-      int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
-      if (option == JOptionPane.YES_OPTION) {
+    if (!busy) {
+      if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) {
+        int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
+        if (option == JOptionPane.YES_OPTION) {
+          return closeAllRunnable();
+        }
+      } else {
         return closeAllRunnable();
       }
-    } else {
-      return closeAllRunnable();
     }
     return false;
   }

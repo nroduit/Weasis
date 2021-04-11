@@ -120,6 +120,9 @@ public class DefaultAuthMethod implements AuthMethod {
       return service.refreshAccessToken(code);
     } catch (Exception e) {
       LOGGER.error("Cannot get refreshToken", e);
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       return null;
     }
   }
@@ -139,6 +142,9 @@ public class DefaultAuthMethod implements AuthMethod {
         } catch (Exception e) {
           token = null;
           LOGGER.error("Cannot get refreshToken", e);
+          if (e instanceof InterruptedException) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
     }
