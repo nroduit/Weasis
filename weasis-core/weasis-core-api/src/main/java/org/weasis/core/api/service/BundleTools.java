@@ -79,7 +79,9 @@ public class BundleTools {
 
     if (!propsFile.canRead()) {
       try {
-        propsFile.createNewFile();
+        if(!propsFile.createNewFile()){
+          LOGGER.warn("File already exist {}", propsFile.getPath());
+        }
       } catch (IOException e) {
         LOGGER.error("Cannot write {}", propsFile.getPath(), e);
       }

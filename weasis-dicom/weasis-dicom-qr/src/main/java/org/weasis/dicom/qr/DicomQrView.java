@@ -23,10 +23,11 @@ import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
@@ -41,18 +42,24 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
+import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
+import org.dcm4che3.net.service.QueryRetrieveLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.auth.OAuth2ServiceFactory;
+import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DropDownButton;
@@ -77,6 +84,7 @@ import org.weasis.dicom.explorer.ImportDicom;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
@@ -193,8 +201,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final JPanel panelGroup = new JPanel();
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
   private final JTextField tfSearch = new JTextField();
-  private final DicomModel dicomModel = new DicomModel();
-  private final RetrieveTree tree = new RetrieveTree(dicomModel);
+  private final RetrieveTree tree = new RetrieveTree();
   private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private final JComboBox<TagW> comboTags =
@@ -254,6 +261,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       };
   private final DateChangeListener dateChangeListener = a -> groupDate.setSelected(null);
   private final ActionListener destNodeListener = evt -> applySelectedArchive();
+  private final ChangeListener queryListener = e -> dicomQuery();
   private final DatePicker startDatePicker = buildDatePicker();
   private final DatePicker endDatePicker = buildDatePicker();
   private final JComboBox<RetrieveType> comboDicomRetrieveType =
@@ -262,9 +270,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DicomListener dicomListener;
   private final ExecutorService executor =
       ThreadUtil.buildNewFixedThreadExecutor(3, "Dicom Q/R task"); // NON-NLS
+  private final JSpinner limitSpinner = new JSpinner();
+  private final JSpinner pageSpinner = new JSpinner();
+  private QueryProcess process;
+  private AuthMethod authMethod;
+  private final CircularProgressBar progressBar = new CircularProgressBar();
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
+    JMVUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
+    JMVUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
     initGUI();
     tree.setBorder(
         BorderFactory.createCompoundBorder(
@@ -351,7 +366,20 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     panel5.setAlignmentY(Component.TOP_ALIGNMENT);
     panel5.setAlignmentX(Component.LEFT_ALIGNMENT);
     panel5.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
-    panel5.add(Box.createHorizontalStrut(350));
+
+    JPanel panel6 = new JPanel();
+    panel6.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
+    panel6.add(new JLabel("Limit" + StringUtil.COLON));
+    limitSpinner.setToolTipText("Enter O to have no limit");
+    panel6.add(limitSpinner);
+    panel6.add(Box.createHorizontalStrut(15));
+    panel6.add(new JLabel("Page" + StringUtil.COLON));
+    pageSpinner.addChangeListener(queryListener);
+    panel6.add(pageSpinner);
+    panel5.add(panel6);
+    progressBar.setEnabled(false);
+    panel5.add(progressBar);
+    panel5.add(Box.createHorizontalStrut(100));
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
@@ -495,15 +523,19 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     groupMod.selectAll();
     startDatePicker.setDate(null);
     endDatePicker.setDate(null);
+    pageSpinner.removeChangeListener(queryListener);
+    pageSpinner.setValue(1);
+    pageSpinner.addChangeListener(queryListener);
+    limitSpinner.setValue(10);
+    stopCurrentProcess();
   }
 
   private void dicomQuery() {
+    stopCurrentProcess();
     SearchParameters searchParams = buildCurrentSearchParameters();
     List<DicomParam> p = searchParams.getParameters();
-    // Clear model
-    dicomModel.dispose();
 
-    if (p.isEmpty()) {
+    if (p.isEmpty() && (Integer) limitSpinner.getValue() < 1) {
       String message = Messages.getString("DicomQrView.msg_empty_query");
       int response =
           JOptionPane.showOptionDialog(
@@ -519,6 +551,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         return;
       }
     }
+
+    AtomicBoolean running = new AtomicBoolean(true);
 
     AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
     if (selectedItem instanceof DefaultDicomNode) {
@@ -549,37 +583,95 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       connectOptions.setConnectTimeout(3000);
       connectOptions.setAcceptTimeout(5000);
       params.setConnectOptions(connectOptions);
-      final DicomState state =
-          CFind.process(
-              params,
-              callingNode.getDicomNodeWithOnlyAET(),
-              node.getDicomNode(),
-              p.toArray(new DicomParam[0]));
-      if (state.getStatus() == Status.Success) {
-        displayResult(state);
-      } else {
-        LOGGER.error("Dicom cfind error: {}", state.getMessage());
-        GuiExecutor.instance()
-            .execute(
-                () ->
-                    JOptionPane.showMessageDialog(
-                        basePanel, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
-      }
+
+      Runnable runnable =
+          () -> {
+            GuiExecutor.instance()
+                .execute(
+                    () -> {
+                      progressBar.setEnabled(true);
+                      progressBar.setIndeterminate(true);
+                    });
+            final DicomState state =
+                CFind.process(
+                    params,
+                    callingNode.getDicomNodeWithOnlyAET(),
+                    node.getDicomNode(),
+                    (Integer) limitSpinner.getValue(),
+                    QueryRetrieveLevel.STUDY,
+                    p.toArray(new DicomParam[0]));
+
+            if (running.get()) {
+              GuiExecutor.instance()
+                  .execute(
+                      () -> {
+                        progressBar.setEnabled(false);
+                        progressBar.setIndeterminate(false);
+                        if (state.getStatus() == Status.Success) {
+                          displayResult(state);
+                        } else {
+                          LOGGER.error("Dicom cfind error: {}", state.getMessage());
+                          JOptionPane.showMessageDialog(
+                              basePanel, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                        }
+                      });
+            }
+          };
+      process = new QueryProcess(runnable, "DICOM C-FIND", running); // $NON-NLS-1$
+      process.start();
     } else if (selectedItem instanceof DicomWebNode) {
       final DicomWebNode node = (DicomWebNode) selectedItem;
+      AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
+      if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
+        String oldCode = auth.getCode();
+        authMethod = auth;
+        if (authMethod.getToken() == null) {
+          return;
+        }
+        if (!Objects.equals(oldCode, authMethod.getCode())) {
+          AuthenticationPersistence.saveMethod();
+        }
+      }
+
       Properties props = new Properties();
       props.setProperty(RsQueryParams.P_DICOMWEB_URL, node.getUrl().toString());
+      Integer limit = (Integer) limitSpinner.getValue();
+      Integer page = (Integer) pageSpinner.getValue();
+      if (limit > 0) {
+        props.setProperty(
+            RsQueryParams.P_PAGE_EXT,
+            String.format("&limit=%d&offset=%d", limit, (page - 1) * limit));
+      }
       // props.setProperty(RsQueryParams.P_QUERY_EXT, "&includedefaults=false");
       this.retrieveNode = node;
-      RsQuery rsquery = new RsQuery(dicomModel, props, p, node.getHeaders());
-      try {
-        executor.invokeAll(Arrays.asList(rsquery));
-        tree.setCheckTreeModel(new RetrieveTreeModel(dicomModel));
-        tree.revalidate();
-        tree.repaint();
-      } catch (Exception e) {
-        LOGGER.error("", e);
-      }
+      RsQuery rsquery = new RsQuery(new DicomModel(), props, p, authMethod, node.getHeaders());
+      Runnable runnable =
+          () -> {
+            try {
+              GuiExecutor.instance()
+                  .execute(
+                      () -> {
+                        progressBar.setEnabled(true);
+                        progressBar.setIndeterminate(true);
+                      });
+              rsquery.call();
+              if (running.get()) {
+                GuiExecutor.instance()
+                    .execute(
+                        () -> {
+                          progressBar.setEnabled(false);
+                          progressBar.setIndeterminate(false);
+                          tree.setRetrieveTreeModel(new RetrieveTreeModel(rsquery.getDicomModel()));
+                          tree.revalidate();
+                          tree.repaint();
+                        });
+              }
+            } catch (Exception e) {
+              LOGGER.error("", e);
+            }
+          };
+      process = new QueryProcess(runnable, "QIDO-RS", running); // $NON-NLS-1$
+      process.start();
     }
   }
 
@@ -591,6 +683,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void displayResult(DicomState state) {
     List<Attributes> items = state.getDicomRSP();
+    DicomModel dicomModel = new DicomModel();
     if (items != null) {
       for (int i = 0; i < items.size(); i++) {
         Attributes item = items.get(i);
@@ -602,7 +695,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         RsQuery.populateDicomModel(dicomModel, item);
       }
     }
-    tree.setCheckTreeModel(new RetrieveTreeModel(dicomModel));
+    tree.setRetrieveTreeModel(new RetrieveTreeModel(dicomModel));
     tree.revalidate();
     tree.repaint();
   }
@@ -645,6 +738,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     boolean dcmOption = selectedItem instanceof DefaultDicomNode;
     comboDicomRetrieveType.setEnabled(dcmOption);
     comboCallingNode.setEnabled(dcmOption);
+    pageSpinner.setEnabled(!dcmOption);
+    pageSpinner.removeChangeListener(queryListener);
+    pageSpinner.setValue(1);
+    pageSpinner.addChangeListener(queryListener);
+    stopCurrentProcess();
   }
 
   public void resetSettingsToDefault() {
@@ -714,6 +812,24 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   protected void updateChanges() {}
 
+  protected void stopCurrentProcess() {
+    final QueryProcess t = process;
+    if (t != null) {
+      process = null;
+      t.running.set(false);
+      t.interrupt();
+    }
+    GuiExecutor.instance()
+        .execute(
+            () -> {
+              progressBar.setEnabled(false);
+              progressBar.setIndeterminate(false);
+              tree.setRetrieveTreeModel(new RetrieveTreeModel());
+              tree.revalidate();
+              tree.repaint();
+            });
+  }
+
   @Override
   public void closeAdditionalWindow() {
     applyChange();
@@ -780,10 +896,23 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public DicomModel getDicomModel() {
-    return dicomModel;
+    return tree.getRetrieveTreeModel().getDicomModel();
   }
 
   public DicomWebNode getRetrieveNode() {
     return retrieveNode;
+  }
+
+  public AuthMethod getAuthMethod() {
+    return authMethod;
+  }
+
+  static class QueryProcess extends Thread {
+    AtomicBoolean running;
+
+    public QueryProcess(Runnable runnable, String name, AtomicBoolean running) {
+      super(runnable, name);
+      this.running = running;
+    }
   }
 }

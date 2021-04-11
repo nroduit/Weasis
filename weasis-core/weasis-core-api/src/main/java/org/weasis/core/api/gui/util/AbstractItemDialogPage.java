@@ -11,32 +11,23 @@ package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
 @SuppressWarnings("serial")
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
-  protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
-  private final String key;
   private final String title;
   private List<PageProps> subPageList;
   private int pagePosition;
 
   public AbstractItemDialogPage(String title) {
     this.title = title == null ? "item" : title; // NON-NLS
-    key = String.valueOf(keyGenerator.incrementAndGet());
     this.pagePosition = 1000;
   }
 
   public void deselectPageAction() {}
 
   public void selectPageAction() {}
-
-  @Override
-  public String getKey() {
-    return key;
-  }
 
   @Override
   public String getTitle() {

@@ -284,8 +284,10 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   }
 
   private static void addValueToModel(List<Object[]> list, Object column1, Object column2) {
-    Object[] row = new Object[] {column1, column2};
-    list.add(row);
+    if (column1 != null && column2 != null) {
+      Object[] row = new Object[] {column1, column2};
+      list.add(row);
+    }
   }
 
   private void readFiltersFrequency(Attributes attributes, List<Object[]> list) {

@@ -278,6 +278,9 @@ public class WeasisLauncher {
       mFelix.waitForStop(0);
       System.exit(0);
     } catch (Throwable ex) {
+      if (ex instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       exitStatus = -1;
       LOGGER.log(Level.SEVERE, "Cannot not start framework.", ex);
       LOGGER.log(Level.SEVERE, "Weasis cache will be cleaned at next launch.");
@@ -927,6 +930,9 @@ public class WeasisLauncher {
           });
     } catch (Exception e) {
       LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel {0}", look);
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
     }
     currentProps.put(P_WEASIS_LOOK, look);
 
@@ -1273,6 +1279,9 @@ public class WeasisLauncher {
       }
     } catch (Exception ex) {
       System.err.println("Error stopping framework: " + ex); // NON-NLS
+      if (ex instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
     } finally {
       cleanImageCache();
       stopSingletonServer();

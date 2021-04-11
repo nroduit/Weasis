@@ -140,11 +140,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     FlowLayout flowLayout = (FlowLayout) panel.getLayout();
     flowLayout.setAlignment(FlowLayout.LEFT);
     add(panel, BorderLayout.NORTH);
-    applyAllViews.setSelected(AbstractInfoLayer.applyToAllView);
+    applyAllViews.setSelected(AbstractInfoLayer.applyToAllView.get());
     applyAllViews.addActionListener(
         e -> {
-          AbstractInfoLayer.applyToAllView = applyAllViews.isSelected();
-          if (AbstractInfoLayer.applyToAllView) {
+          AbstractInfoLayer.applyToAllView.set(applyAllViews.isSelected());
+          if (AbstractInfoLayer.applyToAllView.get()) {
             synchronized (UIManager.VIEWER_PLUGINS) {
               for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
                 if (p instanceof ImageViewerPlugin) {

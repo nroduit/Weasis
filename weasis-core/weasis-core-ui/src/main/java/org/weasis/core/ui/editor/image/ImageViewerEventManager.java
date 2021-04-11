@@ -179,7 +179,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             if (wait.get() > 0) {
               try {
                 Thread.sleep(wait.get());
-              } catch (Exception e) {
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
               }
             }
           }

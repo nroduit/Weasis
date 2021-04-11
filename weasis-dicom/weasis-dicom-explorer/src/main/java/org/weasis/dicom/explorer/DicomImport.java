@@ -24,9 +24,13 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomImport.class);
+
+  private static final String LAST_PAGE = "last.dicom.import.page";
 
   private boolean cancelVeto = false;
   private final DicomModel dicomModel;
@@ -65,7 +69,7 @@ public class DicomImport extends AbstractWizardDialog {
 
     initializePages();
     pack();
-    showPageFirstPage();
+    showPage(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_PAGE));
   }
 
   @Override
@@ -125,6 +129,10 @@ public class DicomImport extends AbstractWizardDialog {
 
   @Override
   public void dispose() {
+    PageProps page = getSelectedPage();
+    if (page != null) {
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_PAGE, page.getTitle());
+    }
     closeAllPages();
     super.dispose();
   }

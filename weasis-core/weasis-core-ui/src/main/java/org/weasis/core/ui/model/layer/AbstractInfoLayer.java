@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.image.OpManager;
@@ -51,7 +52,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   private static final long serialVersionUID = 1338490067849040408L;
 
   public static final String P_ALL_VIEWS = "annotations.all.views";
-  public static volatile boolean applyToAllView = true;
+  public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
   public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();
   private static final Map<String, String> conversionMapForStorage = new HashMap<>();
 
@@ -105,7 +106,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences pref = p.node("infolayer"); // NON-NLS
-      applyToAllView = pref.getBoolean("allViews", true);
+      applyToAllView.set(pref.getBoolean("allViews", true));
 
       Iterator<Entry<String, Boolean>> d = defaultDisplayPreferences.entrySet().iterator();
       while (d.hasNext()) {
@@ -119,7 +120,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences pref = p.node("infolayer"); // NON-NLS
-      BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView);
+      BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView.get());
 
       Iterator<Entry<String, String>> d = conversionMapForStorage.entrySet().iterator();
       while (d.hasNext()) {
@@ -209,7 +210,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
   @Override
   public Boolean getDisplayPreferences(String item) {
-    if (applyToAllView) {
+    if (applyToAllView.get()) {
       return Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
     }
     return Optional.ofNullable(

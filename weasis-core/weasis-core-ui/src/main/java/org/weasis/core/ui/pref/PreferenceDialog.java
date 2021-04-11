@@ -50,7 +50,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     gbcHorizontalStrut.gridx = 0;
     gbcHorizontalStrut.gridy = 0;
     jPanelButtom.add(horizontalStrut, gbcHorizontalStrut);
-    showPageFirstPage();
+    showFirstPage();
   }
 
   @Override

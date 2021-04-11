@@ -263,7 +263,9 @@ public class DicomMediaUtils {
     if (computeOnlyIfNull) {
       String s = dicom.getString(privateCreatorID, tag, defaultValue);
       if (StringUtil.hasText(s)) {
-        return s;
+        if (StringUtil.hasText(TagD.getDicomPeriod(s))) {
+          return s;
+        }
       }
     }
 
@@ -508,10 +510,22 @@ public class DicomMediaUtils {
     // Study Group
     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
       DicomMediaIO.tagManager.readTags(Level.STUDY, header, group);
+      if (!group.matchIdValue(header.getString(Tag.StudyInstanceUID))) {
+        LOGGER.warn(
+            "Inconsistent Study Instance UID between DICOM objets: {} and {}",
+            group.getTagValue(TagD.getUID(Level.STUDY)),
+            header.getString(Tag.StudyInstanceUID));
+      }
     }
     // Series Group
     else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
       DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
+      if (!group.matchIdValue(header.getString(Tag.SeriesInstanceUID))) {
+        LOGGER.warn(
+            "Inconsistent Series Instance UID between DICOM objets: {} and {}",
+            group.getTagValue(TagD.getUID(Level.STUDY)),
+            header.getString(Tag.SeriesInstanceUID));
+      }
       // Build patient age if not present
       group.setTagNoNull(
           TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));

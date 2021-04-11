@@ -248,8 +248,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
   }
 
   private void loadThumbnail(
-      final MediaElement media, final boolean keepMediaCache, final OpManager opManager)
-      throws Exception {
+      final MediaElement media, final boolean keepMediaCache, final OpManager opManager) {
     try {
       File file = thumbnailPath;
       boolean noPath = file == null || !file.canRead();
@@ -318,9 +317,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         PlanarImage thumb = null;
         try {
           PlanarImage img = future.get();
-          if (img == null) {
-            thumb = null;
-          } else {
+          if (img != null) {
             int width = img.width();
             int height = img.height();
             if (width > thumbnailSize || height > thumbnailSize) {
@@ -340,7 +337,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
         } catch (ExecutionException e) {
           LOGGER.error("Cannot read thumbnail pixel data!: {}", file, e);
         }
-        if ((thumb == null && media != null) || (thumb != null && thumb.width() <= 0)) {
+        if (thumb == null || thumb.width() <= 0) {
           readable = false;
         } else {
           mCache.put(this, thumb);

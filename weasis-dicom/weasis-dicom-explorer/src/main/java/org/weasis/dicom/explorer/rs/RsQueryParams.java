@@ -10,17 +10,21 @@
 package org.weasis.dicom.explorer.rs;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.UUID;
 import javax.swing.JOptionPane;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.auth.AuthProvider;
+import org.weasis.core.api.auth.AuthRegistration;
+import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.util.LangUtil;
@@ -30,6 +34,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -44,6 +49,10 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
   public static final String P_RETRIEVE_EXT = "retrieve.ext";
   public static final String P_SHOW_WHOLE_STUDY = "show.whole.study";
   public static final String P_ACCEPT_EXT = "accept.ext";
+  public static final String P_AUTH_UID = "auth.uid";
+  public static final String P_OIDC_ISSUER = "oidc.issuer";
+  public static final String P_OIDC_USER = "oidc.user";
+  public static final String P_PAGE_EXT = "page.size";
 
   private final DicomModel dicomModel;
   private final Map<String, LoadSeries> seriesMap;
@@ -75,7 +84,30 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
     this.seriesMap = new HashMap<>();
     this.queryHeaders = queryHeaders == null ? Collections.emptyMap() : queryHeaders;
     this.retrieveHeaders = retrieveHeaders == null ? Collections.emptyMap() : retrieveHeaders;
-    this.arcConfig = new RsQueryResult(this);
+    String uid = properties.getProperty(RsQueryParams.P_AUTH_UID);
+    AuthMethod method = null;
+    if (StringUtil.hasText(uid)) {
+      method = AuthenticationPersistence.getAuthMethod(uid);
+    }
+    if (method == null) {
+      String issuer = properties.getProperty(RsQueryParams.P_OIDC_ISSUER);
+      if (StringUtil.hasText(issuer)) {
+        if (issuer.endsWith("/")) {
+          issuer = issuer.substring(0, issuer.length() - 1);
+        }
+        AuthProvider p =
+            new AuthProvider(
+                "OIDC",
+                issuer + "/protocol/openid-connect/auth",
+                issuer + "/protocol/openid-connect/token",
+                issuer + "/protocol/openid-connect/revoke",
+                true);
+        AuthRegistration r = new AuthRegistration(null, null, "openid");
+        r.setUser(properties.getProperty(RsQueryParams.P_OIDC_USER));
+        method = new DefaultAuthMethod(UUID.randomUUID().toString(), p, r);
+      }
+    }
+    this.arcConfig = new RsQueryResult(this, method);
   }
 
   public static Map<String, String> getHeaders(List<String> urlHeaders) {
@@ -130,7 +162,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
 
     for (final LoadSeries loadSeries : seriesMap.values()) {
       String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+      boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
       if (!ps) {
         loadSeries.startDownloadImageReference(wp);
       }
@@ -153,9 +185,9 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         String stuID = getReqStudyUID();
         String anbID = getReqAccessionNumber();
         if (StringUtil.hasText(anbID)) {
-          arcConfig.buildFromStudyAccessionNumber(Arrays.asList(anbID));
+          arcConfig.buildFromStudyAccessionNumber(Collections.singletonList(anbID));
         } else if (StringUtil.hasText(stuID)) {
-          arcConfig.buildFromStudyInstanceUID(Arrays.asList(stuID));
+          arcConfig.buildFromStudyInstanceUID(Collections.singletonList(stuID));
 
         } else {
           LOGGER.error("Not ID found for STUDY request type: {}", requestType);
@@ -166,7 +198,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
       } else if (InvokeImageDisplay.PATIENT_LEVEL.equals(requestType)) {
         String patID = getReqPatientID();
         if (StringUtil.hasText(patID)) {
-          arcConfig.buildFromPatientID(Arrays.asList(patID));
+          arcConfig.buildFromPatientID(Collections.singletonList(patID));
         }
       } else if (requestType != null) {
         LOGGER.error("Not supported IID request type: {}", requestType);

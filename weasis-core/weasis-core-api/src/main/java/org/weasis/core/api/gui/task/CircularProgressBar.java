@@ -64,32 +64,34 @@ public class CircularProgressBar extends JProgressBar {
   }
 
   private void draw(Graphics2D g2) {
-    int h = this.getHeight();
-    int w = this.getWidth();
-    int range = this.getMaximum() - this.getMinimum();
-    if (range < 1) {
-      range = 1;
+    if (isEnabled()) {
+      int h = this.getHeight();
+      int w = this.getWidth();
+      int range = this.getMaximum() - this.getMinimum();
+      if (range < 1) {
+        range = 1;
+      }
+      int a = 360 - this.getValue() * 360 / range;
+      String str = LocalUtil.getPercentInstance().format((double) this.getValue() / range);
+
+      float x = w / 2.0f - g2.getFontMetrics().stringWidth(str) / 2.0f;
+
+      final float fontHeight = FontTools.getAccurateFontHeight(g2);
+      final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
+
+      float y = h / 2.0f + midfontHeight;
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setPaint(Color.WHITE);
+      g2.fillArc(0, 0, w, h, 0, 360);
+
+      g2.setPaint(BACK_COLOR);
+      g2.fillArc(0, 0, w, h, a, 360 - a);
+
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+
+      g2.setPaint(Color.BLACK);
+      g2.drawString(str, x, y);
     }
-    int a = 360 - this.getValue() * 360 / range;
-    String str = LocalUtil.getPercentInstance().format((double) this.getValue() / range);
-
-    float x = w / 2.0f - g2.getFontMetrics().stringWidth(str) / 2.0f;
-
-    final float fontHeight = FontTools.getAccurateFontHeight(g2);
-    final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-
-    float y = h / 2.0f + midfontHeight;
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    g2.setPaint(Color.WHITE);
-    g2.fillArc(0, 0, w, h, 0, 360);
-
-    g2.setPaint(BACK_COLOR);
-    g2.fillArc(0, 0, w, h, a, 360 - a);
-
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
-
-    g2.setPaint(Color.BLACK);
-    g2.drawString(str, x, y);
   }
 
   @Override
