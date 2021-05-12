@@ -26,7 +26,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>scribejava-core</includeArtifactIds>
+              <includeArtifactIds>scribejava-core,scribejava-java8</includeArtifactIds>
             </configuration>
           </execution>
         </executions>
@@ -37,6 +37,9 @@
         <configuration>
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
+            Import-Package: \
+            !jakarta.xml.bind;resolution:=optional,\
+            !org.apache.commons.codec.binary;resolution:=optional,*
             Export-Package: org.weasis.core.api.*
             -exportcontents: com.github.scribejava.*
           </bnd>
@@ -57,6 +60,11 @@
     <dependency>
       <groupId>com.github.scribejava</groupId>
       <artifactId>scribejava-core</artifactId>
+      <version>${scribejava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.scribejava</groupId>
+      <artifactId>scribejava-java8</artifactId>
       <version>${scribejava.version}</version>
     </dependency>
     <!-- FOR TESTS -->
