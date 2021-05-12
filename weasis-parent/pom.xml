@@ -26,9 +26,9 @@
 
     <app.version>${revision}${changelist}</app.version>
     <javaws.version>1.6.0-17</javaws.version>
-    <felix.framework.version>6.0.4</felix.framework.version>
+    <felix.framework.version>7.0.0</felix.framework.version>
     <substance.version>1.9.2</substance.version>
-    <xz.version>1.8</xz.version>
+    <xz.version>1.9</xz.version>
 
     <osgi.cmpn.version>7.0.0</osgi.cmpn.version>
 
@@ -53,12 +53,12 @@
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>2.3.2</jaxb.osgi.version>
     <org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
-    <jackson.version>2.12.0</jackson.version>
-    <scribejava.version>8.1.0</scribejava.version>
+    <jackson.version>2.12.3</jackson.version>
+    <scribejava.version>8.3.1</scribejava.version>
 
-    <assertj.version>3.18.1</assertj.version>
+    <assertj.version>3.19.0</assertj.version>
     <powermock.version>2.0.9</powermock.version>
-    <bean-matchers.version>0.12</bean-matchers.version>
+    <bean-matchers.version>0.13</bean-matchers.version>
   </properties>
 
   <licenses>
