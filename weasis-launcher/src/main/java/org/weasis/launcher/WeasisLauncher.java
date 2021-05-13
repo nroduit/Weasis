@@ -176,7 +176,6 @@ public class WeasisLauncher {
     final Type launchType = Type.DEFAULT;
     System.setProperty("weasis.launch.type", launchType.name());
 
-    setSystemProperties(argv);
     WeasisLauncher instance = new WeasisLauncher(new ConfigData(argv));
     instance.launch(launchType);
   }
@@ -298,23 +297,6 @@ public class WeasisLauncher {
       resetBundleCache();
     } finally {
       Runtime.getRuntime().halt(exitStatus);
-    }
-  }
-
-  @Deprecated
-  private static void setSystemProperties(String[] argv) {
-    for (int i = 0; i < argv.length; i++) {
-      // @Deprecated : use properties with the prefix "jnlp.weasis" instead
-      if (argv[i].startsWith("-VMP") && argv[i].length() > 4) { // NON-NLS
-        String[] vmarg = argv[i].substring(4).split("=", 2);
-        argv[i] = "";
-        if (vmarg.length == 2) {
-          if (vmarg[1].startsWith("\"") && vmarg[1].endsWith("\"")) {
-            vmarg[1] = vmarg[1].substring(1, vmarg[1].length() - 1);
-          }
-          System.setProperty(vmarg[0], Util.substVars(vmarg[1], vmarg[0], null, null));
-        }
-      }
     }
   }
 

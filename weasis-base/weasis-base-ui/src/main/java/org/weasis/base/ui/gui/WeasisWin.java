@@ -91,7 +91,6 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
-import javax.swing.SwingUtilities;
 import javax.swing.TransferHandler;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
@@ -223,15 +222,13 @@ public class WeasisWin {
 
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
-    if (frame != null) {
-      frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
-      ImageIcon icon =
-          AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
-              ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") // NON-NLS
-              : ResourceUtil.getIconLogo64();
-      if (icon != null) {
-        frame.setIconImage(icon.getImage());
-      }
+    frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
+    ImageIcon icon =
+        AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
+            ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") // NON-NLS
+            : ResourceUtil.getIconLogo64();
+    if (icon != null) {
+      frame.setIconImage(icon.getImage());
     }
 
     DesktopAdapter.buildDesktopMenu(this);
