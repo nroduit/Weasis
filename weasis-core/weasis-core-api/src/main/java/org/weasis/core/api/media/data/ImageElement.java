@@ -99,6 +99,11 @@ public class ImageElement extends MediaElement {
     return maxPixelValue != null && minPixelValue != null;
   }
 
+  public void resetImageAvailable() {
+    this.maxPixelValue = null;
+    this.minPixelValue = null;
+  }
+
   protected boolean isGrayImage(RenderedImage source) {
     // Binary images have indexColorModel
     return source.getSampleModel().getNumBands() <= 1
@@ -376,6 +381,9 @@ public class ImageElement extends MediaElement {
       if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
         manager.setFirstNode(cacheImage);
         img = manager.process();
+        // Compute again the min/max with the manager (preprocessing)
+        resetImageAvailable();
+        findMinMaxValues(img, true);
       }
 
       if (img != null) {

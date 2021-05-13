@@ -497,6 +497,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     imageLayer.setPreprocessing(opManager);
     if (opManager != null || spatialTransformation) {
       // Reset preprocessing cache
+      if (opManager == null && m != null) {
+        m.resetImageAvailable();
+      }
       imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
     }
 

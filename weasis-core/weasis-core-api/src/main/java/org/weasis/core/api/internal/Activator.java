@@ -50,7 +50,7 @@ public class Activator implements BundleActivator, ServiceListener {
     initLoggerAndAudit(bundleContext);
     File file = ResourceUtil.getResource("presets.xml");
     if(file.canRead()) {
-      System.setProperty("weasis.presets.path", file.getPath());
+      System.setProperty("dicom.presets.path", file.getPath());
     }
   }
 

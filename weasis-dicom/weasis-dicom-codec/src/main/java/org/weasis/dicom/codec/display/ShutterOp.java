@@ -117,7 +117,7 @@ public class ShutterOp extends AbstractOp {
     }
 
     // Potentially override the shutter in the original dicom
-    if (shutter && params.get(P_PS_VALUE) != null && pr != null) {
+    if (shutter && pr != null) {
       ImageCV imgOverlay = null;
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
       List<OverlayData> overlays = pr.getShutterOverlays();

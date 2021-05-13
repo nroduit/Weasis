@@ -382,7 +382,7 @@ public class PRManager {
               if (style != null) {
                 int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
                 if (rgb != null) {
-                  rgbColor = DicomObjectUtil.getRGBColor(255, rgb);
+                  rgbColor = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
                 }
               }
 

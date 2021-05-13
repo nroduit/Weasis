@@ -292,7 +292,7 @@ public class RtSet {
           rgb = new int[] {rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)};
         }
 
-        Color color1 = DicomObjectUtil.getRGBColor(255, rgb);
+        Color color1 = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
         Color color2 =
             new Color(
                 color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);

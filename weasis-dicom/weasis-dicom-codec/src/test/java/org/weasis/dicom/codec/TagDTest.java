@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -37,13 +38,12 @@ public class TagDTest {
    * <p>Note The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters of
    * the format YYYY.MM.DD for this VR. Use of this format is not compliant.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomDate() throws Exception {
+  public void testGetDicomDate() {
     LocalDate date1 = TagD.getDicomDate("19930822");
     assertEquals(LocalDate.of(1993, 8, 22), date1);
 
@@ -75,13 +75,12 @@ public class TagDTest {
    * <p>Notes: 1. The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters
    * of the format HH:MM:SS.frac for this VR. Use of this format is not compliant.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomTime() throws Exception {
+  public void testGetDicomTime() {
     LocalTime time = TagD.getDicomTime("070907.0705 ");
     assertEquals(LocalTime.of(7, 9, 7, 70_500_000), time);
 
@@ -92,7 +91,7 @@ public class TagDTest {
     assertEquals(LocalTime.of(10, 10), time);
 
     time = TagD.getDicomTime("021 ");
-    assertEquals(null, time);
+    assertNull(time);
 
     // Does not support leap second:
     // http://stackoverflow.com/questions/30984599/how-does-the-oracle-java-jvm-know-a-leap-second-is-occurring
@@ -120,13 +119,12 @@ public class TagDTest {
    * <p>A 24-hour clock is used. Midnight shall be represented by only "0000" since "2400" would
    * violate the hour range.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomDateTime() throws Exception {
+  public void testGetDicomDateTime() {
 
     Date date = DateUtils.parseDA(null, "1993:08:22");
     LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -151,7 +149,7 @@ public class TagDTest {
   }
 
   @Test
-  public void testGetDicomPatientSex() throws Exception {
+  public void testGetDicomPatientSex() {
     String sex = TagD.getDicomPatientSex(null);
     assertEquals("", sex);
 
@@ -175,7 +173,7 @@ public class TagDTest {
   }
 
   @Test
-  public void testGetDicomPersonName() throws Exception {
+  public void testGetDicomPersonName() {
     String name = TagD.getDicomPersonName(null);
     assertEquals("", name);
 
@@ -187,7 +185,7 @@ public class TagDTest {
   }
 
   @Test
-  public void testGetDicomPeriod() throws Exception {
+  public void testGetDicomPeriod() {
     String period = TagD.getDicomPeriod(null);
     assertEquals("", period);
 

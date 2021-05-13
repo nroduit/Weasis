@@ -626,11 +626,14 @@ public class DicomMediaIO implements DcmMediaReader {
             "Start reading dicom image frame: {} sopUID: {}",
             frame,
             TagD.getTagValue(this, Tag.SOPInstanceUID));
-        try (DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi)) {
-          reader.setInput(new DicomFileInputStream(original.get().toPath()));
+        DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
+        try (DicomFileInputStream inputStream = new DicomFileInputStream(original.get().toPath())) {
+          reader.setInput(inputStream);
           ImageDescriptor desc = reader.getImageDescriptor();
           PlanarImage img = reader.getPlanarImage(frame, null);
           return noEmbeddedOverlay ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc) : img;
+        } finally {
+          reader.dispose();
         }
       }
     }
@@ -861,8 +864,9 @@ public class DicomMediaIO implements DcmMediaReader {
     }
     Path path = file.get().toPath();
 
-    try (DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi)) {
-      reader.setInput(new DicomFileInputStream(path));
+    DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
+    try (DicomFileInputStream inputStream = new DicomFileInputStream(path)) {
+      reader.setInput(inputStream);
       DicomMetaData dicomMetaData = reader.getStreamMetadata();
       Attributes dcm = dicomMetaData.getDicomObject();
       this.numberOfFrame = dcm.getInt(Tag.NumberOfFrames, 0);
@@ -884,6 +888,8 @@ public class DicomMediaIO implements DcmMediaReader {
       }
       HEADER_CACHE.put(this, dicomMetaData);
       return dicomMetaData;
+    } finally {
+      reader.dispose();
     }
   }
 }
