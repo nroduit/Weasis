@@ -408,7 +408,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
             // US: unsigned 16 bit linear
 
             AudioFormat audioFormat;
-            if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) { // NON-NLS
+            if ("MB".equals(spInterpretation) || "AB".equals(spInterpretation)) {
               int frameSize =
                   (numChannels == AudioSystem.NOT_SPECIFIED
                           || bitsPerSample == AudioSystem.NOT_SPECIFIED)
@@ -425,9 +425,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
                       attributes.bigEndian());
             } else {
               boolean signed =
-                  "UB".equals(spInterpretation) || "US".equals(spInterpretation)
-                      ? false
-                      : true; // NON-NLS
+                  !"UB".equals(spInterpretation) && !"US".equals(spInterpretation);
               audioFormat =
                   new AudioFormat(
                       (float) sampleRate,

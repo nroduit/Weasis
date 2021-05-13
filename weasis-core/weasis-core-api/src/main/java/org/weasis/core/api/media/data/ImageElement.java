@@ -101,11 +101,8 @@ public class ImageElement extends MediaElement {
 
   protected boolean isGrayImage(RenderedImage source) {
     // Binary images have indexColorModel
-    if (source.getSampleModel().getNumBands() > 1
-        || source.getColorModel() instanceof IndexColorModel) {
-      return false;
-    }
-    return true;
+    return source.getSampleModel().getNumBands() <= 1
+        && !(source.getColorModel() instanceof IndexColorModel);
   }
 
   public LutShape getDefaultShape(WlPresentation wlp) {
@@ -125,11 +122,11 @@ public class ImageElement extends MediaElement {
   }
 
   public double getMaxValue(WlPresentation wlp) {
-    return maxPixelValue == null ? 0.0 : maxPixelValue;
+    return getPixelMax();
   }
 
   public double getMinValue(WlPresentation wlp) {
-    return minPixelValue == null ? 0.0 : minPixelValue;
+    return getPixelMin();
   }
 
   public double getPixelMax() {
@@ -262,8 +259,6 @@ public class ImageElement extends MediaElement {
   /**
    * Loads the original image. Must load and return the original image.
    *
-   * @throws Exception
-   * @throws IOException
    */
   protected PlanarImage loadImage() throws Exception {
     return mediaIO.getImageFragment(this);
@@ -273,6 +268,11 @@ public class ImageElement extends MediaElement {
     return getRenderedImage(imageSource, null);
   }
 
+  /**
+   * @param imageSource is the RenderedImage upon which transformation is done
+   * @param params rendering parameters
+   * @return PlanarImage
+   */
   public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
     if (imageSource == null) {
       return null;
