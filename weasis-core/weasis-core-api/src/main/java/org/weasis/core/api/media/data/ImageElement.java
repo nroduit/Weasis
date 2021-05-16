@@ -113,11 +113,8 @@ public class ImageElement extends MediaElement {
 
   protected boolean isGrayImage(RenderedImage source) {
     // Binary images have indexColorModel
-    if (source.getSampleModel().getNumBands() > 1
-        || source.getColorModel() instanceof IndexColorModel) {
-      return false;
-    }
-    return true;
+    return source.getSampleModel().getNumBands() <= 1
+        && !(source.getColorModel() instanceof IndexColorModel);
   }
 
   public LutShape getDefaultShape(boolean pixelPadding) {
@@ -137,11 +134,11 @@ public class ImageElement extends MediaElement {
   }
 
   public double getMaxValue(TagReadable tagable, boolean pixelPadding) {
-    return maxPixelValue == null ? 0.0 : maxPixelValue;
+    return getPixelMax();
   }
 
   public double getMinValue(TagReadable tagable, boolean pixelPadding) {
-    return minPixelValue == null ? 0.0 : minPixelValue;
+    return getPixelMin();
   }
 
   public double getPixelMax() {
@@ -282,8 +279,6 @@ public class ImageElement extends MediaElement {
   /**
    * Loads the original image. Must load and return the original image.
    *
-   * @throws Exception
-   * @throws IOException
    */
   protected PlanarImage loadImage() throws Exception {
     return mediaIO.getImageFragment(this);
@@ -295,12 +290,8 @@ public class ImageElement extends MediaElement {
 
   /**
    * @param imageSource is the RenderedImage upon which transformation is done
-   * @param window is width from low to high input values around level. If null, getDefaultWindow()
-   *     value is used
-   * @param level is center of window values. If null, getDefaultLevel() value is used
-   * @param pixelPadding indicates if some padding values defined in ImageElement should be applied
-   *     or not. If null, TRUE is considered
-   * @return
+   * @param params rendering parameters
+   * @return PlanarImage
    */
   public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
     if (imageSource == null) {
