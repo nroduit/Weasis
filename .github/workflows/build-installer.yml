@@ -13,9 +13,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
-          java-version: 15
+          distribution: 'adopt'
+          java-version: '11'
 
       - name: Cache local Maven repository
         uses: actions/cache@v2
@@ -94,19 +95,21 @@ jobs:
           feature: 16
 
       - name: Set up early-access Oracle JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         if: matrix.platform == 'x64'
         with:
           java-version: ${{ steps.jdk.outputs.version }}
+          distribution: jdkfile
           jdkFile: ${{ steps.jdk.outputs.file }}
           architecture: ${{ matrix.platform }}
 
       - name: Set up JDK for x86 (not provide by Oracle)
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         if: matrix.platform == 'x86'
         with:
-          java-version: 16.0.0-ea.36
+          java-version: 16
           architecture: x86
+          distribution: 'adopt'
 
       - name: Download weasis-portable
         uses: actions/download-artifact@v2
