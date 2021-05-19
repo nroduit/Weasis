@@ -197,7 +197,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           String host = getHostname(node.getDicomNode().getHostname());
           String m1 = Messages.getString("RetrieveTask.no_wado_url_match");
           DicomWebNode wnode = getWadoUrl(dicomQrView, host, webNodes, m1);
-          if (wnode == null) return null;
+          DicomModel dicomModel = dicomQrView.getDicomModel();
+          if (wnode == null || dicomModel == null) return null;
           WadoParameters wadoParameters =
               new WadoParameters(
                   "local", wnode.getUrl().toString(), false, null, null, null); // NON-NLS
@@ -208,7 +209,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
               params,
               callingNode.getDicomNodeWithOnlyAET(),
               node.getDicomNode(),
-              dicomQrView.getDicomModel(),
+              dicomModel,
               studies);
           ArcQuery arquery = new ArcQuery(Collections.singletonList(query));
           String wadoXmlGenerated = arquery.xmlManifest(null);
@@ -302,7 +303,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       if (n instanceof DicomWebNode) {
         DicomWebNode wn = (DicomWebNode) n;
         URL url = wn.getUrl();
-        if (url != null && getHostname(url.getHost()).contains(host)) {
+        if (WebType.WADO.equals(wn.getWebType())
+            && url != null
+            && getHostname(url.getHost()).contains(host)) {
           wadoURLs.add(wn);
         }
       }
@@ -347,6 +350,9 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
   private void fillSeries() {
     DicomModel dicomModel = dicomQrView.getDicomModel();
+    if (dicomModel == null) {
+      return;
+    }
     DicomWebNode retrieveNode = dicomQrView.getRetrieveNode();
 
     String baseUrl = retrieveNode.getUrl().toString();
@@ -383,7 +389,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       try {
         LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
         URLParameters urlParameters = new URLParameters(retrieveNode.getHeaders());
-        List<Attributes> series = RsQuery.parseJSON(buf.toString(), urlParameters);
+        List<Attributes> series =
+            RsQueryResult.parseJSON(buf.toString(), dicomQrView.getAuthMethod(), urlParameters);
         if (!series.isEmpty()) {
           for (Attributes seriesDataset : series) {
             Series<?> dicomSeries =
@@ -488,6 +495,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           new LoadSeries(
               dicomSeries,
               explorerDcmModel,
+              dicomQrView.getAuthMethod(),
               BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                   LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
               true,
@@ -515,7 +523,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
       try {
         LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-        List<Attributes> instances = RsQuery.parseJSON(buf.toString(), urlParameters);
+        List<Attributes> instances =
+            RsQueryResult.parseJSON(buf.toString(), dicomQrView.getAuthMethod(), urlParameters);
         if (!instances.isEmpty()) {
           SeriesInstanceList seriesInstanceList =
               (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);

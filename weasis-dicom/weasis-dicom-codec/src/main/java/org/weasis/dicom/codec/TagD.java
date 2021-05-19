@@ -932,7 +932,7 @@ public class TagD extends TagW {
     // 3 digits followed by one of the characters 'D' (Day),'W' (Week), 'M' (Month) or 'Y' (Year)
     // For ex: DICOM (0010,1010) = 031Y
     if (value.length() < 2) {
-      return "";
+      return StringUtil.EMPTY_STRING;
     }
 
     String unit;
@@ -950,7 +950,6 @@ public class TagD extends TagW {
         unit = ChronoUnit.DAYS.toString();
         break;
       default:
-        LOGGER.error("Get period format: \"{}\" is not valid", value);
         return StringUtil.EMPTY_STRING;
     }
 

@@ -9,35 +9,26 @@
  */
 package org.weasis.dicom.qr;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.Callable;
-import javax.json.Json;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.json.JSONReader;
-import org.dcm4che3.json.JSONReader.Callback;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.ClosableURLConnection;
-import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
@@ -47,22 +38,22 @@ import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.rs.RsQueryResult;
-import org.weasis.dicom.explorer.wado.LoadSeries;
 import org.weasis.dicom.param.DicomParam;
 
 public class RsQuery implements Callable<Boolean> {
   private static final Logger LOGGER = LoggerFactory.getLogger(RsQuery.class);
 
   private final DicomModel dicomModel;
-  private final Map<String, LoadSeries> seriesMap;
   private final Properties properties;
   private final Map<String, String> queryHeaders;
   protected final List<DicomParam> queries;
+  private final AuthMethod authMethod;
 
   public RsQuery(
       DicomModel dicomModel,
       Properties properties,
       List<DicomParam> queries,
+      AuthMethod authMethod,
       Map<String, String> queryHeaders) {
     this.dicomModel = Objects.requireNonNull(dicomModel);
     this.properties = Objects.requireNonNull(properties);
@@ -75,9 +66,12 @@ public class RsQuery implements Callable<Boolean> {
     } else {
       throw new IllegalArgumentException("DICOMWeb URL cannot be null");
     }
-
-    this.seriesMap = new HashMap<>();
+    this.authMethod = authMethod;
     this.queryHeaders = queryHeaders == null ? Collections.emptyMap() : queryHeaders;
+  }
+
+  public DicomModel getDicomModel() {
+    return dicomModel;
   }
 
   public String getBaseUrl() {
@@ -123,9 +117,11 @@ public class RsQuery implements Callable<Boolean> {
     try {
       buf.append(RsQueryResult.STUDY_QUERY);
       buf.append(properties.getProperty(RsQueryParams.P_QUERY_EXT, ""));
+      buf.append(properties.getProperty(RsQueryParams.P_PAGE_EXT, ""));
 
       LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-      List<Attributes> studies = parseJSON(buf.toString(), new URLParameters(queryHeaders));
+      List<Attributes> studies =
+          RsQueryResult.parseJSON(buf.toString(), authMethod, new URLParameters(queryHeaders));
       for (Attributes studyDataSet : studies) {
         fillSeries(studyDataSet);
       }
@@ -146,7 +142,8 @@ public class RsQuery implements Callable<Boolean> {
 
       try {
         LOGGER.debug(RsQueryResult.QIDO_REQUEST, buf);
-        List<Attributes> series = parseJSON(buf.toString(), new URLParameters(queryHeaders));
+        List<Attributes> series =
+            RsQueryResult.parseJSON(buf.toString(), authMethod, new URLParameters(queryHeaders));
         if (!series.isEmpty()) {
           RsQuery.populateDicomModel(dicomModel, studyDataSet);
         }
@@ -154,18 +151,6 @@ public class RsQuery implements Callable<Boolean> {
         LOGGER.error("QIDO-RS all series with studyUID {}", studyInstanceUID, e);
       }
     }
-  }
-
-  static List<Attributes> parseJSON(String url, URLParameters urlParameters) throws IOException {
-    List<Attributes> items = new ArrayList<>();
-    try (ClosableURLConnection httpCon = NetworkUtil.getUrlConnection(new URL(url), urlParameters);
-        InputStreamReader instream =
-            new InputStreamReader(httpCon.getInputStream(), StandardCharsets.UTF_8)) {
-      JSONReader reader = new JSONReader(Json.createParser(instream));
-      Callback callback = (fmi, dataset) -> items.add(dataset);
-      reader.readDatasets(callback);
-    }
-    return items;
   }
 
   static void populateDicomModel(DicomModel dicomModel, Attributes item) {

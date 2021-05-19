@@ -46,12 +46,22 @@ public class RetrieveTreeModel {
   private final DefaultTreeModel model;
   private final TreeCheckingModel checkingModel;
   private final List<TreePath> defaultSelectedPaths;
+  private final DicomModel dicomModel;
+
+  public RetrieveTreeModel() {
+    this(null);
+  }
 
   public RetrieveTreeModel(DicomModel dicomModel) {
-    this.model = buildModel(dicomModel);
+    this.dicomModel = dicomModel == null ? new DicomModel() : dicomModel;
+    this.model = buildModel(this.dicomModel);
     this.rootNode = (DefaultMutableTreeNode) model.getRoot();
     this.checkingModel = new DefaultTreeCheckingModel(model);
     this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<>());
+  }
+
+  public DicomModel getDicomModel() {
+    return dicomModel;
   }
 
   public DefaultMutableTreeNode getRootNode() {
@@ -167,19 +177,17 @@ public class RetrieveTreeModel {
           File path = thumb.getThumbnailPath();
           if (path != null) {
             URL url = path.toURI().toURL();
-            if (url != null) {
-              StringBuilder buf = new StringBuilder();
-              buf.append("<html>");
-              buf.append("<img src=\""); // NON-NLS
-              buf.append(url.toString());
-              buf.append("\"><br>"); // NON-NLS
-              LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
-              if (date != null) {
-                buf.append(TagUtil.formatDateTime(date));
-              }
-              buf.append("</html>");
-              return buf.toString();
+            StringBuilder buf = new StringBuilder();
+            buf.append("<html>");
+            buf.append("<img src=\""); // NON-NLS
+            buf.append(url.toString());
+            buf.append("\"><br>"); // NON-NLS
+            LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
+            if (date != null) {
+              buf.append(TagUtil.formatDateTime(date));
             }
+            buf.append("</html>");
+            return buf.toString();
           }
         } catch (Exception e) {
           LOGGER.error("Display tooltip", e);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>weasis-core-parent</artifactId>
     <groupId>org.weasis.core</groupId>
@@ -17,11 +17,31 @@
   <build>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependency</id>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>scribejava-core,scribejava-java8</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
+            -includeresource.all: lib/=target/dependency/;lib:=true
+            Import-Package: \
+            !jakarta.xml.bind;resolution:=optional,\
+            !org.apache.commons.codec.binary;resolution:=optional,*
             Export-Package: org.weasis.core.api.*
+            -exportcontents: com.github.scribejava.*
           </bnd>
         </configuration>
       </plugin>
@@ -32,6 +52,20 @@
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.prefs</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.thirdparty</groupId>
+      <artifactId>jaxb-osgi</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.github.scribejava</groupId>
+      <artifactId>scribejava-core</artifactId>
+      <version>${scribejava.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.github.scribejava</groupId>
+      <artifactId>scribejava-java8</artifactId>
+      <version>${scribejava.version}</version>
     </dependency>
     <!-- FOR TESTS -->
     <dependency>

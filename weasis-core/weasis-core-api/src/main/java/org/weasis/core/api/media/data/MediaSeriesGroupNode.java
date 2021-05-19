@@ -9,10 +9,8 @@
  */
 package org.weasis.core.api.media.data;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import org.weasis.core.api.Messages;
@@ -25,7 +23,6 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
   private final TagW tagID;
   private final TagView displayTag;
   private final HashMap<TagW, Object> tags = new HashMap<>();
-  private final List<Object> oldIds = new ArrayList<>();
 
   public MediaSeriesGroupNode(TagW tagID, Object identifier, TagView displayTag) {
     this.tagID = Objects.requireNonNull(tagID);
@@ -44,25 +41,8 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
   }
 
   @Override
-  public void addMergeIdValue(Object valueID) {
-    if (!oldIds.contains(valueID)) {
-      oldIds.add(valueID);
-    }
-  }
-
-  @Override
   public boolean matchIdValue(Object valueID) {
-    Object v = tags.get(tagID);
-
-    if (Objects.equals(v, valueID)) {
-      return true;
-    }
-    for (Object id : oldIds) {
-      if (Objects.equals(id, valueID)) {
-        return true;
-      }
-    }
-    return false;
+    return Objects.equals(tags.get(tagID), valueID);
   }
 
   @Override
@@ -73,45 +53,44 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    Object val = tags.get(tagID);
-    result = prime * result + ((val == null) ? tags.hashCode() : val.hashCode());
-    return result;
+    return Objects.hash(tags.get(tagID));
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (obj == null) {
-      return false;
-    }
-    if (!(obj instanceof MediaSeriesGroup)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
     // According to the implementation of MediaSeriesGroupNode, the identifier cannot be null
-    return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) obj).getTagValue(tagID));
+    return Objects.equals(tags.get(tagID), ((MediaSeriesGroup) o).getTagValue(tagID));
   }
 
   @Override
   public void setTag(TagW tag, Object value) {
     if (tag != null) {
-      tags.put(tag, value);
+      if (!tag.equals(tagID)) {
+        tags.put(tag, value);
+      }
     }
   }
 
   public void removeTag(TagW tag) {
     if (tag != null) {
-      tags.remove(tag);
+      if (!tag.equals(tagID)) {
+        tags.remove(tag);
+      }
     }
   }
 
   @Override
   public void setTagNoNull(TagW tag, Object value) {
     if (tag != null && value != null) {
-      tags.put(tag, value);
+      if (!tag.equals(tagID)) {
+        tags.put(tag, value);
+      }
     }
   }
 
@@ -122,9 +101,7 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
   @Override
   public TagW getTagElement(int id) {
-    Iterator<TagW> enumVal = tags.keySet().iterator();
-    while (enumVal.hasNext()) {
-      TagW e = enumVal.next();
+    for (TagW e : tags.keySet()) {
       if (e.getId() == id) {
         return e;
       }

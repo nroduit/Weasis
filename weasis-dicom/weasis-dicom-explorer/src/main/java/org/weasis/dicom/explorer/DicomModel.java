@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -38,6 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.explorer.ObservableEvent.BasicAction;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.Tree;
 import org.weasis.core.api.explorer.model.TreeModel;
@@ -73,6 +75,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.RejectedKOSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
@@ -175,26 +178,62 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       return;
     }
     if (pt2 == null) {
-      pt.addMergeIdValue(newPatientUID);
-    } else {
-      Collection<MediaSeriesGroup> studies = getChildren(pt);
-      Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
-      for (MediaSeriesGroup st : studies) {
-        studyMap.put(st, getChildren(st));
+      pt2 =
+          new MediaSeriesGroupNode(
+              TagD.getUID(Level.PATIENT), newPatientUID, DicomModel.patient.getTagView());
+      Iterator<Entry<TagW, Object>> iter = pt.getTagEntrySetIterator();
+      while (iter.hasNext()) {
+        Entry<TagW, Object> e = iter.next();
+        pt2.setTag(e.getKey(), e.getValue());
       }
-
-      removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
-
-      for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
-        MediaSeriesGroup st = stEntry.getKey();
-        addHierarchyNode(pt, st);
-        for (MediaSeriesGroup s : stEntry.getValue()) {
-          addHierarchyNode(st, s);
-        }
-      }
-      firePropertyChange(
-          new ObservableEvent(ObservableEvent.BasicAction.UDPATE_PARENT, DicomModel.this, pt, pt2));
+      addHierarchyNode(MediaSeriesGroupNode.rootNode, pt2);
     }
+    Collection<MediaSeriesGroup> studies = getChildren(pt);
+    Map<MediaSeriesGroup, Collection<MediaSeriesGroup>> studyMap = new HashMap<>();
+    for (MediaSeriesGroup st : studies) {
+      studyMap.put(st, getChildren(st));
+    }
+
+    for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
+      MediaSeriesGroup st = stEntry.getKey();
+      removeHierarchyNode(pt, st);
+      addHierarchyNode(pt2, st);
+      for (MediaSeriesGroup s : stEntry.getValue()) {
+        addHierarchyNode(st, s);
+        firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+      }
+    }
+    removeHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
+  }
+
+  public void mergeStudyUID(String oldStudyUID, String studyUID) {
+    MediaSeriesGroup studyGroup = getStudyNode(oldStudyUID);
+    MediaSeriesGroup studyGroup2 = getStudyNode(studyUID);
+
+    if (studyGroup == null || Objects.equals(studyGroup, studyGroup2)) {
+      return;
+    }
+
+    MediaSeriesGroup patient = getParent(studyGroup, DicomModel.patient);
+    if (studyGroup2 == null) {
+      studyGroup2 =
+          new MediaSeriesGroupNode(
+              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+      Iterator<Entry<TagW, Object>> iter = studyGroup.getTagEntrySetIterator();
+      while (iter.hasNext()) {
+        Entry<TagW, Object> e = iter.next();
+        studyGroup2.setTag(e.getKey(), e.getValue());
+      }
+      addHierarchyNode(patient, studyGroup2);
+    }
+
+    Collection<MediaSeriesGroup> seriesGroups = getChildren(studyGroup);
+    for (MediaSeriesGroup s : seriesGroups) {
+      removeHierarchyNode(studyGroup, s);
+      addHierarchyNode(studyGroup2, s);
+      firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
+    }
+    removeHierarchyNode(patient, studyGroup);
   }
 
   public MediaSeriesGroup getStudyNode(String studyUID) {
@@ -548,13 +587,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getKoSpecialElements(
-          specialElementList, referencedSeriesInstanceUID);
-    }
-    return Collections.emptyList();
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getKoSpecialElements(
+        specialElementList, referencedSeriesInstanceUID);
   }
 
   public static Collection<RejectedKOSpecialElement> getRejectionKoSpecialElements(
@@ -562,13 +598,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getRejectionKoSpecialElements(
-          specialElementList, referencedSeriesInstanceUID);
-    }
-    return Collections.emptyList();
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getRejectionKoSpecialElements(
+        specialElementList, referencedSeriesInstanceUID);
   }
 
   public static RejectedKOSpecialElement getRejectionKoSpecialElement(
@@ -576,13 +609,10 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
 
-    if (specialElementList != null) {
-      String referencedSeriesInstanceUID =
-          TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getRejectionKoSpecialElement(
-          specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
-    }
-    return null;
+    String referencedSeriesInstanceUID =
+        TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+    return DicomSpecialElement.getRejectionKoSpecialElement(
+        specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
   }
 
   public static List<PRSpecialElement> getPrSpecialElements(
@@ -1125,6 +1155,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", // NON-NLS
       "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", // NON-NLS
       "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
+      "  --auth-uid=UID             UID of the Weasis authentication method", // NON-NLS
+      "  --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request", // NON-NLS
+      "  --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)", // NON-NLS
       "  --show-whole-study         when downloading a series, show all the other series (ready for download) from the same study", // NON-NLS
       "  -? --help                  show help" // NON-NLS
     };
@@ -1157,6 +1190,19 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     if (opt.isSet("show-whole-study")) { // NON-NLS
       props.setProperty(RsQueryParams.P_SHOW_WHOLE_STUDY, Boolean.TRUE.toString());
+    }
+
+    String authUID = opt.get("auth-uid"); // NON-NLS
+    if (StringUtil.hasText(authUID)) {
+      props.setProperty(RsQueryParams.P_AUTH_UID, authUID);
+    }
+    String oidcIssuer = opt.get("oidc-iss"); // NON-NLS
+    if (StringUtil.hasText(oidcIssuer)) {
+      props.setProperty(RsQueryParams.P_OIDC_ISSUER, oidcIssuer);
+    }
+    String oidcLogin = opt.get("oidc-login"); // NON-NLS
+    if (StringUtil.hasText(oidcLogin)) {
+      props.setProperty(RsQueryParams.P_OIDC_USER, oidcLogin);
     }
 
     GuiExecutor.instance()

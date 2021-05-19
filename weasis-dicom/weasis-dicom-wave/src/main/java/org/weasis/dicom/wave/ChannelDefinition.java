@@ -12,6 +12,7 @@ package org.weasis.dicom.wave;
 import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.weasis.dicom.codec.macro.Code;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class ChannelDefinition {
@@ -32,11 +33,10 @@ public class ChannelDefinition {
    */
   public ChannelDefinition(Attributes dcm, int position) {
     this.position = position;
-    String title =
+    Attributes channelSourceSequence =
         Objects.requireNonNull(
-                dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence")
-            .getString(Tag.CodeMeaning);
-    this.lead = Lead.buildLead(title);
+            dcm.getNestedDataset(Tag.ChannelSourceSequence), "no ChannelSourceSequence");
+    this.lead = Lead.buildLead(new Code(channelSourceSequence));
     Double chSensisvity =
         DicomMediaUtils.getDoubleFromDicomElement(dcm, Tag.ChannelSensitivity, null);
     if (chSensisvity == null) {

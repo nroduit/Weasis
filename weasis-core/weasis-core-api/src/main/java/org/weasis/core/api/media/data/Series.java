@@ -328,7 +328,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   @Override
   public boolean isOpen() {
     Boolean open = (Boolean) getTagValue(TagW.SeriesOpen);
-    return open == null ? false : open;
+    return open != null && open;
   }
 
   @Override

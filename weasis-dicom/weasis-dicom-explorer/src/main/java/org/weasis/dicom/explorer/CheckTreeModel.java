@@ -259,7 +259,11 @@ public class CheckTreeModel {
       if (desc != null) {
         buf.append(desc);
       }
-      buf.append(" -- (").append(getChildCount()).append(" instances)"); // NON-NLS
+      int child = getChildCount();
+      if (newElement) {
+        child = Math.max(1, child); // Fix instance build on the fly
+      }
+      buf.append(" -- ").append(child).append(" instance(s)"); // NON-NLS
       if (newElement) {
         buf.append("</html>");
       }

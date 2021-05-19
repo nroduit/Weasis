@@ -30,9 +30,7 @@ public class ExportToolBar extends WtoolBar {
           new JButton(new ImageIcon(ExportToolBar.class.getResource("/icon/32x32/dcm-export.png")));
       btnExport.setToolTipText(Messages.getString("ExportToolBar.export_dcm"));
       btnExport.addActionListener(
-          e ->
-              ImportToolBar.showAction(
-                  ExportToolBar.this, model, Messages.getString("LocalExport.local_dev"), true));
+          e -> ImportToolBar.showAction(ExportToolBar.this, model, null, true));
       add(btnExport);
     }
   }

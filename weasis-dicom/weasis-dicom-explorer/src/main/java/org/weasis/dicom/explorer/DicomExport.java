@@ -35,6 +35,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
+import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.codec.DicomSeries;
@@ -42,6 +43,8 @@ import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomExport extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomExport.class);
+
+  private static final String LAST_PAGE = "last.dicom.export.page";
 
   private final DicomModel dicomModel;
   private final CheckTreeModel treeModel;
@@ -81,7 +84,7 @@ public class DicomExport extends AbstractWizardDialog {
 
     initializePages();
     pack();
-    showPageFirstPage();
+    showPage(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_PAGE));
   }
 
   @Override
@@ -138,28 +141,24 @@ public class DicomExport extends AbstractWizardDialog {
       if (!openSeriesSet.isEmpty() && rootNode instanceof DefaultMutableTreeNode) {
         List<TreePath> selectedSeriesPathsList = new ArrayList<>();
 
-        if (rootNode instanceof DefaultMutableTreeNode) {
-          Enumeration<?> enumTreeNode =
-              ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration();
-          while (enumTreeNode.hasMoreElements()) {
-            Object child = enumTreeNode.nextElement();
-            if (child instanceof DefaultMutableTreeNode) {
-              DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) child;
-              if (treeNode.getLevel() != 3) { // 3 stands for Series Level
-                continue;
-              }
+        Enumeration<?> enumTreeNode = ((DefaultMutableTreeNode) rootNode).breadthFirstEnumeration();
+        while (enumTreeNode.hasMoreElements()) {
+          Object child = enumTreeNode.nextElement();
+          if (child instanceof DefaultMutableTreeNode) {
+            DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) child;
+            if (treeNode.getLevel() != 3) { // 3 stands for Series Level
+              continue;
+            }
 
-              Object userObject = treeNode.getUserObject();
-              if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
-                selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
-              }
+            Object userObject = treeNode.getUserObject();
+            if (userObject instanceof DicomSeries && openSeriesSet.contains(userObject)) {
+              selectedSeriesPathsList.add(new TreePath(treeNode.getPath()));
             }
           }
         }
 
         if (!selectedSeriesPathsList.isEmpty()) {
-          TreePath[] seriesCheckingPaths =
-              selectedSeriesPathsList.toArray(new TreePath[selectedSeriesPathsList.size()]);
+          TreePath[] seriesCheckingPaths = selectedSeriesPathsList.toArray(new TreePath[0]);
           checkingModel.setCheckingPaths(seriesCheckingPaths);
           treeModel.setDefaultSelectionPaths(selectedSeriesPathsList);
         }
@@ -191,6 +190,10 @@ public class DicomExport extends AbstractWizardDialog {
 
   @Override
   public void dispose() {
+    PageProps page = getSelectedPage();
+    if (page != null) {
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_PAGE, page.getTitle());
+    }
     closeAllPages();
     super.dispose();
   }

@@ -22,6 +22,7 @@ import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
+import org.weasis.core.util.FileUtil;
 
 /** The Class AbstractBufferHandler. */
 public abstract class AbstractBufferHandler {
@@ -115,8 +116,7 @@ public abstract class AbstractBufferHandler {
             Messages.getString("AbstractBufferHandler.unable_save"),
             Messages.getString("AbstractBufferHandler.save"),
             0);
-        File file = new File(getPath());
-        file.delete();
+        FileUtil.delete(new File(getPath()));
         return false;
       } else {
         isDirty = false;
@@ -164,7 +164,7 @@ public abstract class AbstractBufferHandler {
           Messages.getString("AbstractBufferHandler.unable_save"),
           Messages.getString("AbstractBufferHandler.save"),
           0);
-      file.delete();
+      FileUtil.delete(file);
       return false;
     } else {
       isDirty = false;

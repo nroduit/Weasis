@@ -551,7 +551,7 @@ public class AcquireManager {
     if (tagable != null) {
       if (GLOBAL.containsSameTagValues(tagable, Global.patientDicomGroupNumber)) {
         GLOBAL.updateAllButPatient(tagable);
-        getBySeries().stream().forEach(SeriesGroup::updateDicomTags);
+        getBySeries().forEach(SeriesGroup::updateDicomTags);
         notifyPatientContextUpdated();
       } else {
         if (!isAcquireImagesAllPublished()) {

@@ -478,7 +478,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             if (elapsedFrame < waitTimeMillis) {
               try {
                 Thread.sleep(waitTimeMillis - elapsedFrame);
-              } catch (Exception e) {
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
               }
             }
 

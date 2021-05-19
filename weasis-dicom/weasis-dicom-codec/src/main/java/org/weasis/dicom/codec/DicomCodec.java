@@ -160,7 +160,7 @@ public class DicomCodec implements Codec {
 
     /**
      * Set value for dicom root UID which should be registered at the
-     * http://www.iana.org/assignments/enterprise-numbers <br>
+     * https://www.iana.org/assignments/enterprise-numbers <br>
      * Default value is 2.25, this enables users to generate OIDs without any registration procedure
      *
      * @see http://www.dclunie.com/medical-image-faq/html/part2.html#UUID <br>

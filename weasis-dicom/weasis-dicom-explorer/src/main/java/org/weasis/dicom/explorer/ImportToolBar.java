@@ -25,6 +25,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.WtoolBar;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class ImportToolBar extends WtoolBar {
@@ -40,10 +41,7 @@ public class ImportToolBar extends WtoolBar {
       final JButton btnImport =
           new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png")));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
-      btnImport.addActionListener(
-          e ->
-              showAction(
-                  ImportToolBar.this, model, Messages.getString("LocalImport.local_dev"), false));
+      btnImport.addActionListener(e -> showAction(ImportToolBar.this, model, null, false));
       add(btnImport);
     }
 
@@ -108,7 +106,9 @@ public class ImportToolBar extends WtoolBar {
     Window win = SwingUtilities.getWindowAncestor(parent);
     AbstractWizardDialog dialog =
         export ? new DicomExport(win, model) : new DicomImport(win, model);
-    dialog.showPage(pageName);
+    if (StringUtil.hasText(pageName)) {
+      dialog.showPage(pageName);
+    }
     ColorLayerUI.showCenterScreen(dialog, layer);
     return dialog;
   }
@@ -120,7 +120,7 @@ public class ImportToolBar extends WtoolBar {
         new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")),
         event -> {
           if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
-            showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
+            showAction(parent, model, null, false);
           } else {
             JOptionPane.showMessageDialog(
                 (Component) event.getSource(), Messages.getString("DicomExplorer.export_perm"));

@@ -9,9 +9,8 @@
  */
 package org.weasis.dicom.explorer.rs;
 
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URL;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -28,12 +27,13 @@ import org.dcm4che3.json.JSONReader;
 import org.dcm4che3.json.JSONReader.Callback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.ClosableURLConnection;
+import org.weasis.core.api.util.HttpResponse;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.util.LangUtil;
@@ -70,9 +70,11 @@ public class RsQueryResult extends AbstractQueryResult {
   private final RsQueryParams rsQueryParams;
   private final WadoParameters wadoParameters;
   private final boolean defaultStartDownloading;
+  private final AuthMethod authMethod;
 
-  public RsQueryResult(RsQueryParams rsQueryParams) {
+  public RsQueryResult(RsQueryParams rsQueryParams, AuthMethod authMethod) {
     this.rsQueryParams = rsQueryParams;
+    this.authMethod = authMethod;
     this.wadoParameters = new WadoParameters("", true, true);
     rsQueryParams.getRetrieveHeaders().forEach(wadoParameters::addHttpTag);
     // Accept only multipart/related and retrieve dicom at the stored syntax
@@ -119,7 +121,9 @@ public class RsQueryResult extends AbstractQueryResult {
         buf.append(rsQueryParams.getProperties().getProperty(RsQueryParams.P_QUERY_EXT, ""));
 
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> studies = parseJSON(buf.toString());
+        List<Attributes> studies =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!studies.isEmpty()) {
           Collections.sort(studies, getStudyComparator());
           applyAllFilters(studies);
@@ -130,16 +134,25 @@ public class RsQueryResult extends AbstractQueryResult {
     }
   }
 
-  private List<Attributes> parseJSON(String url) throws IOException {
+  public static List<Attributes> parseJSON(
+      String url, AuthMethod authMethod, URLParameters urlParameters) throws Exception {
     List<Attributes> items = new ArrayList<>();
-    try (ClosableURLConnection httpCon =
-            NetworkUtil.getUrlConnection(
-                new URL(url), new URLParameters(rsQueryParams.getQueryHeaders()));
+    try (HttpResponse response = NetworkUtil.getHttpResponse(url, urlParameters, authMethod);
         InputStreamReader instream =
-            new InputStreamReader(httpCon.getInputStream(), StandardCharsets.UTF_8)) {
-      JSONReader reader = new JSONReader(Json.createParser(instream));
-      Callback callback = (fmi, dataset) -> items.add(dataset);
-      reader.readDatasets(callback);
+            new InputStreamReader(response.getInputStream(), StandardCharsets.UTF_8)) {
+      int code = response.getResponseCode();
+      if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_PARTIAL) {
+        JSONReader reader = new JSONReader(Json.createParser(instream));
+        Callback callback = (fmi, dataset) -> items.add(dataset);
+        reader.readDatasets(callback);
+      }
+      if (code == HttpURLConnection.HTTP_ENTITY_TOO_LARGE) {
+        throw new IllegalStateException(
+            "The size of the results exceeds the maximum payload size supported by the origin server.");
+      } else if (authMethod != null && code == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        authMethod.resetToken();
+        authMethod.getToken();
+      }
     }
     return items;
   }
@@ -203,7 +216,7 @@ public class RsQueryResult extends AbstractQueryResult {
         if (StringUtil.hasText(m)) {
           boolean remove = true;
           for (String mod : rsQueryParams.getModalitiesInStudy().split(",")) {
-            if (m.indexOf(mod) != -1) {
+            if (m.contains(mod)) {
               remove = false;
               break;
             }
@@ -291,7 +304,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> studies = parseJSON(buf.toString());
+        List<Attributes> studies =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         for (Attributes studyDataSet : studies) {
           fillSeries(studyDataSet, startDownloading);
         }
@@ -314,7 +329,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> studies = parseJSON(buf.toString());
+        List<Attributes> studies =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         for (Attributes studyDataSet : studies) {
           fillSeries(studyDataSet, defaultStartDownloading);
         }
@@ -344,7 +361,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> series = parseJSON(buf.toString());
+        List<Attributes> series =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!series.isEmpty()) {
           Attributes dataset = series.get(0);
           MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
@@ -381,7 +400,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> instances = parseJSON(buf.toString());
+        List<Attributes> instances =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!instances.isEmpty()) {
           Attributes dataset = instances.get(0);
           MediaSeriesGroup patient = getPatient(dataset, rsQueryParams.getDicomModel());
@@ -414,7 +435,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> series = parseJSON(buf.toString());
+        List<Attributes> series =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!series.isEmpty()) {
           // Get patient from each study in case IssuerOfPatientID is different
           MediaSeriesGroup patient = getPatient(studyDataSet, rsQueryParams.getDicomModel());
@@ -441,7 +464,9 @@ public class RsQueryResult extends AbstractQueryResult {
 
       try {
         LOGGER.debug(QIDO_REQUEST, buf);
-        List<Attributes> instances = parseJSON(buf.toString());
+        List<Attributes> instances =
+            parseJSON(
+                buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!instances.isEmpty()) {
           SeriesInstanceList seriesInstanceList =
               (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList);
@@ -570,6 +595,7 @@ public class RsQueryResult extends AbstractQueryResult {
           new LoadSeries(
               dicomSeries,
               rsQueryParams.getDicomModel(),
+              authMethod,
               BundleTools.SYSTEM_PREFERENCES.getIntProperty(
                   LoadSeries.CONCURRENT_DOWNLOADS_IN_SERIES, 4),
               true,
