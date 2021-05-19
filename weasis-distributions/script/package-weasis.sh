@@ -35,7 +35,7 @@ case "$arc" in
 i?86)   arc="x86";;
 amd64)  arc="x86_64";;
 x86_64) arc="x86_64";;
-armv7?) arc="armv7a";;
+armv7?) arc="aarch32";;
 armv8?) arc="aarch64";;
 aarch64) arc="aarch64";;
 * ) die "The machine architecture '$arc' -> is not supported.";;

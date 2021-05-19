@@ -460,7 +460,7 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-linux-armv7a</artifactId>
+                  <artifactId>weasis-opencv-core-linux-aarch32</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
@@ -870,10 +870,10 @@
       </activation>
       <build>
         <plugins>
-          <plugin>
+<!--          <plugin>
             <groupId>com.akathist.maven.plugins.launch4j</groupId>
             <artifactId>launch4j-maven-plugin</artifactId>
-          </plugin>
+          </plugin>-->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
