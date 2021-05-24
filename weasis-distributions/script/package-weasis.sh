@@ -239,7 +239,11 @@ elif [ "$machine" = "windows" ] ; then
   declare -a signArgs=()
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  if [[ "$arc" ==  aarch* ]] ; then
+    declare -a customOptions=("--java-options" "-Dos.arch=$arc" "--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  else
+    declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  fi  
   declare -a signArgs=()
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" "--illegal-access=warn" \
@@ -267,7 +271,12 @@ if [ "$PACKAGE" = "YES" ] ; then
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
-    declare -a installerTypes=("deb" "rpm")
+    if [[ "$arc" ==  aarch* ]] ; then
+      declare -a installerTypes=("deb")
+    else
+      declare -a installerTypes=("deb" "rpm")
+    fi 
+    
     for installerType in ${installerTypes[@]}; do
       $JPKGCMD --type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
