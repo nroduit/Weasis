@@ -821,13 +821,15 @@ public class ConfigData {
       if (osArch.equals("pentium")
           || osArch.equals("i386")
           || osArch.equals("i486")
-          || osArch.equals("i586") // NON-NLS
+          || osArch.equals("i586")
           || osArch.equals("i686")) {
         osArch = "x86"; // NON-NLS
       } else if (osArch.equals("amd64")
           || osArch.equals("em64t")
-          || osArch.equals("x86_64")) { // NON-NLS
+          || osArch.equals("x86_64")) {
         osArch = "x86-64"; // NON-NLS
+      } else if (osArch.equals("arm")) {
+        osArch = "armv7a"; // NON-NLS
       } else if (osArch.equals("power ppc")) {
         osArch = "powerpc"; // NON-NLS
       } else if (osArch.equals("psc1k")) {

@@ -15,7 +15,7 @@
 	<name>OpenCV - Linux aarch64 [${project.artifactId}]</name>
 	<version>${weasis.opencv.native.version}</version>
 	<properties>
-		<native.configuration>libopencv_java.so; processor=arm; osname=Linux</native.configuration>
+		<native.configuration>libopencv_java.so; processor=aarch64; osname=Linux</native.configuration>
 	</properties>
 
 	<build>

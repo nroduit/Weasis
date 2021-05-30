@@ -11,11 +11,11 @@
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 	<packaging>jar</packaging>
-	<artifactId>weasis-opencv-core-linux-aarch32</artifactId>
-	<name>OpenCV - Linux aarch32 (armv7a) [${project.artifactId}]</name>
+	<artifactId>weasis-opencv-core-linux-armv7a</artifactId>
+	<name>OpenCV - Linux armv7a [${project.artifactId}]</name>
 	<version>${weasis.opencv.native.version}</version>
 	<properties>
-		<native.configuration>libopencv_java.so; processor=aarch32; osname=Linux</native.configuration>
+		<native.configuration>libopencv_java.so; processor=armv7a; osname=Linux</native.configuration>
 	</properties>
 
 	<build>

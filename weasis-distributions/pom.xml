@@ -460,7 +460,7 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-linux-aarch32</artifactId>
+                  <artifactId>weasis-opencv-core-linux-armv7a</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>

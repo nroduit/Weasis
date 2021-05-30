@@ -28,30 +28,6 @@ die ( ) {
   exit 1
 }
 
-# Get the machine architecture
-arc=$(uname -m)
-case "$arc" in
-  x86)    arc="x86";;
-i?86)   arc="x86";;
-amd64)  arc="x86_64";;
-x86_64) arc="x86_64";;
-armv7?) arc="aarch32";;
-armv8?) arc="aarch64";;
-aarch64) arc="aarch64";;
-* ) die "The machine architecture '$arc' -> is not supported.";;
-esac
-
-# Get the system name
-machine="$(uname -s)"
-case "${machine}" in
-  Linux*)     machine="linux";;
-Darwin*)    machine="macosx";;
-CYGWIN*)    machine="windows";;
-*) die "The system '$machine' -> is not supported.";;
-esac
-
-ARC_OS="$machine-$arc"
-
 POSITIONAL=()
 while [[ $# -gt 0 ]]
 do
@@ -119,6 +95,22 @@ if [ -z "$INPUT_PATH" ] ; then
   INPUT_PATH="${rootdir}/weasis-distributions/target/portable-dist/weasis-portable"
 fi
 
+cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
+xz --decompress weasis-core-img.jar.xz
+ARC_OS=$("$JDK_PATH_UNIX/bin/java" -cp "weasis-core-img.jar" org.weasis.core.util.NativeLibrary)
+rm -f weasis-core-img.jar
+if [ -z "$ARC_OS" ] ; then
+  die "Cannot get Java system architecture"
+fi
+machine=$(echo "${ARC_OS}" | cut -d'-' -f1)
+arc=$(echo "${ARC_OS}" | cut -d'-' -f2)
+
+# Should be removed after weasis-core-img update
+if [[ "$arc" ==  arm* ]] ; then
+  arc=armv7a
+  ARC_OS=$machine-$arc
+fi
+
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
   OUTPUT_PATH_UNIX=$(cygpath -u "$OUTPUT_PATH")
@@ -171,19 +163,8 @@ if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION )) ; then
   die "Your version of java is too low to run this script.\nPlease update to $REQUIRED_TEXT_VERSION or higher"
 fi
 
-if ( "$JAVACMD" -version 2>&1 | grep -q "64" ) ; then
-  if [ "$arc" = "x86" ] ; then
-    die "The 64-bit JDK is not compatible with the running architecture ($ARC_OS)"
-  fi
-  ARC_NAME="x86-64"
-  ARC_OS="$machine-x86-64"
-else
-  ARC_NAME="x86"
-  ARC_OS="$machine-x86"
-fi
-
 if [ -z "$OUTPUT_PATH" ] ; then
-  OUTPUT_PATH="weasis-$ARC_OS-jdk$REQUIRED_TEXT_VERSION-$WEASIS_VERSION"
+  OUTPUT_PATH="weasis-$ARC_OS-jdk$INSTALLED_MAJOR_VERSION-$WEASIS_VERSION"
   OUTPUT_PATH_UNIX="$OUTPUT_PATH"
 fi
 
@@ -203,7 +184,7 @@ WEASIS_CLEAN_VERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
 rm -f "$INPUT_DIR"/*.jar.pack.gz
 
 # Remove the unrelated native packages
-find "$INPUT_DIR"/bundle/*-x86* -type f ! -name '*-'${ARC_OS}'-*'  -exec rm -f {} \;
+find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'${ARC_OS}'-*'  -exec rm -f {} \;
 
 # Special case with 32-bit architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
@@ -211,14 +192,7 @@ if [ "$arc" = "x86" ] ; then
 fi
 
 # Replace substance available for Java 11
-mvn dependency:get -Dartifact=org.pushing-pixels:radiance-substance-all:$SUBSTANCE_PKG -DremoteRepositories=https://raw.github.com/nroduit/mvn-repo/master/
-MVN_REPO=$(mvn help:evaluate -Dexpression=settings.localRepository | grep -v '\[INFO\]')
-SUBSTANCE_FILE="${MVN_REPO//[$'\t\r\n']}/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
-if [[ -r "$SUBSTANCE_FILE" ]] ; then
-  cp -fv "${SUBSTANCE_FILE}" "${INPUT_DIR}/substance.jar"
-else
-  echo "Warning: cannot copy Substance file: ${SUBSTANCE_FILE}"
-fi
+curl -L -o "${INPUT_DIR}/substance.jar" "https://raw.github.com/nroduit/mvn-repo/master/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
 
 # Remove previous package
 if [ -d "${OUTPUT_PATH}" ] ; then
@@ -239,8 +213,8 @@ elif [ "$machine" = "windows" ] ; then
   declare -a signArgs=()
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  if [[ "$arc" ==  aarch* ]] ; then
-    declare -a customOptions=("--java-options" "-Dos.arch=$arc" "--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  if [[ "$arc" ==  *ar* ]] ; then
+    declare -a customOptions=("--java-options" "-Dos.arch=$arc" "--java-options" "-splash:\$APPDIR/resources/images/about-round.png" --jlink-options "--strip-native-commands --no-man-pages --no-header-files" )
   else
     declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
   fi  
@@ -271,7 +245,7 @@ if [ "$PACKAGE" = "YES" ] ; then
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
-    if [[ "$arc" ==  aarch* ]] ; then
+    if [[ "$arc" ==  *ar* ]] ; then
       declare -a installerTypes=("deb")
     else
       declare -a installerTypes=("deb" "rpm")
