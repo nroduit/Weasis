@@ -1,12 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.dicom.explorer.pref.node;
 
 import java.awt.BorderLayout;
@@ -19,7 +19,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.JButton;
@@ -31,160 +30,228 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
-
-import org.weasis.core.api.util.StringUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 public class HttpHeadersEditor extends JDialog {
-    private DefaultListSelectionModel selctedModel = new DefaultListSelectionModel();
-    private JPanel panel1 = new JPanel();
-    private BorderLayout borderLayout1 = new BorderLayout();
-    private JButton jButtonClose = new JButton();
-    private GridBagLayout gridBagLayout3 = new GridBagLayout();
-    private JPanel jPanelComponentBar = new JPanel();
-    private JList<String> jList1 = new JList<>();
-    private JPanel jPanelComponentAction = new JPanel();
-    private JButton jButtonDelete = new JButton();
-    private JButton jButtonEdit = new JButton();
-    private GridBagLayout gridBagLayout2 = new GridBagLayout();
-    private JButton jButtonAdd = new JButton();
-    private JScrollPane jScrollPane1 = new JScrollPane();
-    private DicomWebNode node;
+  private DefaultListSelectionModel selctedModel = new DefaultListSelectionModel();
+  private JPanel panel1 = new JPanel();
+  private BorderLayout borderLayout1 = new BorderLayout();
+  private JButton jButtonClose = new JButton();
+  private GridBagLayout gridBagLayout3 = new GridBagLayout();
+  private JPanel jPanelComponentBar = new JPanel();
+  private JList<String> jList1 = new JList<>();
+  private JPanel jPanelComponentAction = new JPanel();
+  private JButton jButtonDelete = new JButton();
+  private JButton jButtonEdit = new JButton();
+  private GridBagLayout gridBagLayout2 = new GridBagLayout();
+  private JButton jButtonAdd = new JButton();
+  private JScrollPane jScrollPane1 = new JScrollPane();
+  private DicomWebNode node;
 
-    public HttpHeadersEditor(Window parent, DicomWebNode node) {
-        super(parent, Messages.getString("DicomWebNodeDialog.httpHeaders"), ModalityType.APPLICATION_MODAL); //$NON-NLS-1$
-        this.node = node;
-        jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        jbInit();
-        initializeList();
-        jList1.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent evt) {
-                if (evt.getClickCount() == 2) {
-                    editHeader();
-                } 
+  public HttpHeadersEditor(Window parent, DicomWebNode node) {
+    super(
+        parent,
+        Messages.getString("DicomWebNodeDialog.httpHeaders"),
+        ModalityType.APPLICATION_MODAL);
+    this.node = node;
+    jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    jbInit();
+    initializeList();
+    jList1.addMouseListener(
+        new MouseAdapter() {
+          @Override
+          public void mouseClicked(MouseEvent evt) {
+            if (evt.getClickCount() == 2) {
+              editHeader();
             }
+          }
         });
-        pack();
+    pack();
+  }
+
+  private void jbInit() {
+    this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+    selctedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+    Border border1 = BorderFactory.createEmptyBorder(5, 5, 5, 5);
+    Border border2 =
+        BorderFactory.createCompoundBorder(
+            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    panel1.setLayout(borderLayout1);
+
+    jButtonClose.setText(Messages.getString("HttpHeadersEditor.close"));
+    jButtonClose.addActionListener(e -> cancel());
+    jPanelComponentBar.setLayout(gridBagLayout3);
+    jList1.setBorder(border2);
+    jList1.setSelectionModel(selctedModel);
+    jPanelComponentAction.setLayout(gridBagLayout2);
+    jButtonDelete.addActionListener(e -> deleteSelectedComponents());
+    jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete"));
+
+    jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit"));
+    jButtonEdit.addActionListener(e -> editHeader());
+
+    jButtonAdd.addActionListener(e -> add());
+    jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add"));
+
+    jScrollPane1.setBorder(border1);
+    jScrollPane1.setPreferredSize(new Dimension(300, 150));
+    panel1.add(jPanelComponentBar, BorderLayout.SOUTH);
+
+    jPanelComponentBar.add(
+        jButtonClose,
+        new GridBagConstraints(
+            2,
+            0,
+            1,
+            1,
+            0.5,
+            0.0,
+            GridBagConstraints.EAST,
+            GridBagConstraints.NONE,
+            new Insets(10, 0, 10, 20),
+            0,
+            0));
+    panel1.add(jPanelComponentAction, BorderLayout.EAST);
+    panel1.add(jScrollPane1, BorderLayout.CENTER);
+    jScrollPane1.getViewport().add(jList1, null);
+    this.getContentPane().add(panel1, BorderLayout.CENTER);
+    jPanelComponentAction.add(
+        jButtonEdit,
+        new GridBagConstraints(
+            0,
+            1,
+            1,
+            1,
+            1.0,
+            0.0,
+            GridBagConstraints.CENTER,
+            GridBagConstraints.NONE,
+            new Insets(7, 5, 0, 10),
+            0,
+            0));
+    jPanelComponentAction.add(
+        jButtonAdd,
+        new GridBagConstraints(
+            0,
+            0,
+            1,
+            1,
+            0.0,
+            0.0,
+            GridBagConstraints.CENTER,
+            GridBagConstraints.NONE,
+            new Insets(15, 0, 0, 5),
+            0,
+            0));
+    jPanelComponentAction.add(
+        jButtonDelete,
+        new GridBagConstraints(
+            0,
+            2,
+            1,
+            1,
+            0.0,
+            0.0,
+            GridBagConstraints.CENTER,
+            GridBagConstraints.NONE,
+            new Insets(7, 0, 0, 5),
+            0,
+            0));
+  }
+
+  // Overridden so we can exit when window is closed
+  @Override
+  protected void processWindowEvent(WindowEvent e) {
+    if (e.getID() == WindowEvent.WINDOW_CLOSING) {
+      cancel();
+    }
+    super.processWindowEvent(e);
+  }
+
+  // Close the dialog
+  public void cancel() {
+    dispose();
+  }
+
+  private synchronized void initializeList() {
+    if (node.getHeaders().isEmpty()) {
+      jList1.setListData(new String[0]);
+    } else {
+      jList1.setListData(
+          node.getHeaders().entrySet().stream()
+              .map(m -> m.getKey() + StringUtil.COLON_AND_SPACE + m.getValue())
+              .toArray(String[]::new));
+    }
+  }
+
+  public void deleteSelectedComponents() {
+    if (isNoComponentSelected()) {
+      return;
     }
 
-    private void jbInit() {
-        this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-        selctedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        
-        Border border1 = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-        Border border2 = BorderFactory.createCompoundBorder(BorderFactory.createEtchedBorder(),
-            BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel1.setLayout(borderLayout1);
+    List<String> selItems = jList1.getSelectedValuesList();
+    for (String val : selItems) {
+      String[] kv = val.split(":", 2);
+      if (kv.length == 2) {
+        node.removeHeader(kv[0]);
+      }
+    }
+    selctedModel.clearSelection();
+    initializeList();
+  }
 
-        jButtonClose.setText(Messages.getString("HttpHeadersEditor.close")); //$NON-NLS-1$
-        jButtonClose.addActionListener(e -> cancel());
-        jPanelComponentBar.setLayout(gridBagLayout3);
-        jList1.setBorder(border2);
-        jList1.setSelectionModel(selctedModel);
-        jPanelComponentAction.setLayout(gridBagLayout2);
-        jButtonDelete.addActionListener(e -> deleteSelectedComponents());
-        jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete")); //$NON-NLS-1$
-
-        jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit")); //$NON-NLS-1$
-        jButtonEdit.addActionListener(e -> editHeader());
-
-        jButtonAdd.addActionListener(e -> add());
-        jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add")); //$NON-NLS-1$
-
-        jScrollPane1.setBorder(border1);
-        jScrollPane1.setPreferredSize(new Dimension(300, 150));
-        panel1.add(jPanelComponentBar, BorderLayout.SOUTH);
-
-        jPanelComponentBar.add(jButtonClose, new GridBagConstraints(2, 0, 1, 1, 0.5, 0.0, GridBagConstraints.EAST,
-            GridBagConstraints.NONE, new Insets(10, 0, 10, 20), 0, 0));
-        panel1.add(jPanelComponentAction, BorderLayout.EAST);
-        panel1.add(jScrollPane1, BorderLayout.CENTER);
-        jScrollPane1.getViewport().add(jList1, null);
-        this.getContentPane().add(panel1, BorderLayout.CENTER);
-        jPanelComponentAction.add(jButtonEdit, new GridBagConstraints(0, 1, 1, 1, 1.0, 0.0, GridBagConstraints.CENTER,
-            GridBagConstraints.NONE, new Insets(7, 5, 0, 10), 0, 0));
-        jPanelComponentAction.add(jButtonAdd, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-            GridBagConstraints.NONE, new Insets(15, 0, 0, 5), 0, 0));
-        jPanelComponentAction.add(jButtonDelete, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER,
-            GridBagConstraints.NONE, new Insets(7, 0, 0, 5), 0, 0));
+  public void editHeader() {
+    if (isNoComponentSelected()) {
+      return;
     }
 
-    // Overridden so we can exit when window is closed
-    @Override
-    protected void processWindowEvent(WindowEvent e) {
-        if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            cancel();
-        }
-        super.processWindowEvent(e);
+    List<String> selItems = jList1.getSelectedValuesList();
+    if (selItems.size() == 1) {
+      modifiy(selItems.get(0));
+    } else {
+      JOptionPane.showMessageDialog(
+          this,
+          Messages.getString("HttpHeadersEditor.msg_onlyone"),
+          this.getTitle(),
+          JOptionPane.ERROR_MESSAGE);
     }
+  }
 
-    // Close the dialog
-    public void cancel() {
-        dispose();
+  private boolean isNoComponentSelected() {
+    if (selctedModel.isSelectionEmpty()) {
+      JOptionPane.showMessageDialog(
+          this,
+          Messages.getString("HttpHeadersEditor.msg_noheader"),
+          this.getTitle(),
+          JOptionPane.ERROR_MESSAGE);
+      return true;
     }
+    return false;
+  }
 
-    private synchronized void initializeList() {
-        if (node.getHeaders().isEmpty()) {
-            jList1.setListData(new String[0]);
-        } else {
-            jList1.setListData(node.getHeaders().entrySet().stream().map(m -> m.getKey() + StringUtil.COLON_AND_SPACE + m.getValue()) 
-                .toArray(String[]::new));
-        }
+  private void add() {
+    modifiy(null);
+  }
+
+  private void modifiy(String input) {
+    String property =
+        (String)
+            JOptionPane.showInputDialog(
+                this,
+                Messages.getString("HttpHeadersEditor.msg_keyValue"),
+                this.getTitle(),
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                input);
+    if (StringUtil.hasLength(property)) {
+      String[] kv = property.split(":", 2);
+      if (kv.length == 2) {
+        node.addHeader(kv[0].trim(), kv[1].trim());
+      }
+      initializeList();
     }
-
-    public void deleteSelectedComponents() {
-        if (isNoComponentSelected()) {
-            return;
-        }
-
-        List<String> selItems = jList1.getSelectedValuesList();
-        for (String val : selItems) {
-            String[] kv = val.split(":", 2); //$NON-NLS-1$
-            if (kv.length == 2) {
-                node.removeHeader(kv[0]);
-            }
-        }
-        selctedModel.clearSelection();
-        initializeList();
-    }
-
-    public void editHeader() {
-        if (isNoComponentSelected()) {
-            return;
-        }
-
-        List<String> selItems = jList1.getSelectedValuesList();
-        if (selItems.size() == 1) {
-            modifiy(selItems.get(0));
-        } else {
-            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_onlyone"), this.getTitle(), //$NON-NLS-1$
-                JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private boolean isNoComponentSelected() {
-        if (selctedModel.isSelectionEmpty()) {
-            JOptionPane.showMessageDialog(this, Messages.getString("HttpHeadersEditor.msg_noheader"), this.getTitle(), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-            return true;
-        }
-        return false;
-    }
-
-    private void add() {
-        modifiy(null);
-    }
-
-    private void modifiy(String input) {
-        String property =
-            (String) JOptionPane.showInputDialog(this, Messages.getString("HttpHeadersEditor.msg_keyValue"), //$NON-NLS-1$
-                this.getTitle(), JOptionPane.PLAIN_MESSAGE, null, null, input);
-        if (StringUtil.hasLength(property)) {
-            String[] kv = property.split(":", 2); //$NON-NLS-1$
-            if (kv.length == 2) {
-                node.addHeader(kv[0].trim(), kv[1].trim());
-            }
-            initializeList();
-        }
-    }
+  }
 }

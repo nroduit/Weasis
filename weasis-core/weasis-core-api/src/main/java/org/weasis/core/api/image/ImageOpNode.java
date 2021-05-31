@@ -1,57 +1,52 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.core.api.image;
 
 import java.util.Map;
-
 import org.weasis.core.api.util.Copyable;
 
 public interface ImageOpNode extends Copyable<ImageOpNode> {
 
-    public final class Param {
+  public final class Param {
 
-        public static final String NAME = "op.display.name"; //$NON-NLS-1$
-        public static final String ENABLE = "op.enable"; //$NON-NLS-1$
+    public static final String NAME = "op.display.name";
+    public static final String ENABLE = "op.enable";
 
-        public static final String INPUT_IMG = "op.input.img"; //$NON-NLS-1$
-        public static final String OUTPUT_IMG = "op.output.img"; //$NON-NLS-1$
+    public static final String INPUT_IMG = "op.input.img";
+    public static final String OUTPUT_IMG = "op.output.img";
 
-        private Param() {
-        }
-    }
+    private Param() {}
+  }
 
-    void process() throws Exception;
+  void process() throws Exception;
 
-    boolean isEnabled();
+  boolean isEnabled();
 
-    void setEnabled(boolean enabled);
+  void setEnabled(boolean enabled);
 
-    String getName();
+  String getName();
 
-    void setName(String name);
+  void setName(String name);
 
-    Object getParam(String key);
+  Object getParam(String key);
 
-    void setParam(String key, Object value);
+  void setParam(String key, Object value);
 
-    void setAllParameters(Map<String, Object> map);
+  void setAllParameters(Map<String, Object> map);
 
-    void removeParam(String key);
+  void removeParam(String key);
 
-    void clearParams();
+  void clearParams();
 
-    /**
-     * Clear all the parameter values starting by "op.input" or "op.output"
-     */
-    void clearIOCache();
+  /** Clear all the parameter values starting by "op.input" or "op.output" */
+  void clearIOCache();
 
-    void handleImageOpEvent(ImageOpEvent event);
-
+  void handleImageOpEvent(ImageOpEvent event);
 }

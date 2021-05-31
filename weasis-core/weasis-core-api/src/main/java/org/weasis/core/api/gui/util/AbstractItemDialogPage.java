@@ -1,119 +1,106 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import javax.swing.JPanel;
-
 import org.weasis.core.api.gui.Insertable;
 
 @SuppressWarnings("serial")
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
-    protected static final AtomicInteger keyGenerator = new AtomicInteger(0);
-    private final String key;
-    private final String title;
-    private List<PageProps> subPageList;
-    private int pagePosition;
+  private final String title;
+  private List<PageProps> subPageList;
+  private int pagePosition;
 
-    public AbstractItemDialogPage(String title) {
-        this.title = title == null ? "item" : title; //$NON-NLS-1$
-        key = String.valueOf(keyGenerator.incrementAndGet());
-        this.pagePosition = 1000;
-    }
+  public AbstractItemDialogPage(String title) {
+    this.title = title == null ? "item" : title; // NON-NLS
+    this.pagePosition = 1000;
+  }
 
-    public void deselectPageAction() {
-    }
+  public void deselectPageAction() {}
 
-    public void selectPageAction() {
-    }
+  public void selectPageAction() {}
 
-    @Override
-    public String getKey() {
-        return key;
-    }
+  @Override
+  public String getTitle() {
+    return title;
+  }
 
-    @Override
-    public String getTitle() {
-        return title;
+  public void addSubPage(PageProps subPage) {
+    if (subPageList == null) {
+      subPageList = new ArrayList<>();
     }
+    subPageList.add(subPage);
+  }
 
-    public void addSubPage(PageProps subPage) {
-        if (subPageList == null) {
-            subPageList = new ArrayList<>();
-        }
-        subPageList.add(subPage);
+  public void removeSubPage(PageProps subPage) {
+    if (subPageList == null) {
+      return;
     }
+    subPageList.remove(subPage);
+  }
 
-    public void removeSubPage(PageProps subPage) {
-        if (subPageList == null) {
-            return;
-        }
-        subPageList.remove(subPage);
+  @Override
+  public PageProps[] getSubPages() {
+    if (subPageList == null) {
+      return new PageProps[0];
     }
+    final PageProps[] subPages = new PageProps[subPageList.size()];
+    subPageList.toArray(subPages);
+    return subPages;
+  }
 
-    @Override
-    public PageProps[] getSubPages() {
-        if (subPageList == null) {
-            return new PageProps[0];
-        }
-        final PageProps[] subPages = new PageProps[subPageList.size()];
-        subPageList.toArray(subPages);
-        return subPages;
+  public void resetAllSubPagesToDefaultValues() {
+    if (subPageList == null) {
+      return;
     }
+    for (PageProps subPage : subPageList) {
+      subPage.resetoDefaultValues();
+    }
+  }
 
-    public void resetAllSubPagesToDefaultValues() {
-        if (subPageList == null) {
-            return;
-        }
-        for (PageProps subPage : subPageList) {
-            subPage.resetoDefaultValues();
-        }
-    }
+  @Override
+  public String toString() {
+    return title;
+  }
 
-    @Override
-    public String toString() {
-        return title;
-    }
+  @Override
+  public Type getType() {
+    return Insertable.Type.PREFERENCES;
+  }
 
-    @Override
-    public Type getType() {
-        return Insertable.Type.PREFERENCES;
-    }
+  @Override
+  public String getComponentName() {
+    return title;
+  }
 
-    @Override
-    public String getComponentName() {
-        return title;
-    }
+  @Override
+  public boolean isComponentEnabled() {
+    return isEnabled();
+  }
 
-    @Override
-    public boolean isComponentEnabled() {
-        return isEnabled();
+  @Override
+  public void setComponentEnabled(boolean enabled) {
+    if (enabled != isComponentEnabled()) {
+      setEnabled(enabled);
     }
+  }
 
-    @Override
-    public void setComponentEnabled(boolean enabled) {
-        if (enabled != isComponentEnabled()) {
-            setEnabled(enabled);
-        }
-    }
+  @Override
+  public int getComponentPosition() {
+    return pagePosition;
+  }
 
-    @Override
-    public int getComponentPosition() {
-        return pagePosition;
-    }
-
-    @Override
-    public void setComponentPosition(int position) {
-        this.pagePosition = position;
-    }
+  @Override
+  public void setComponentPosition(int position) {
+    this.pagePosition = position;
+  }
 }

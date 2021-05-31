@@ -1,0 +1,5 @@
+<root>
+  <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

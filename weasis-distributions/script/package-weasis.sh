@@ -5,21 +5,21 @@
 
 # Specify the required Java version.
 # Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=13
+REQUIRED_TEXT_VERSION=14
 
 # Build Parameters
-PACKAGE=YES
-SUBSTANCE_PKG="2.5.0-rc"
 REVISON_INC="1"
+PACKAGE=YES
+# Package for Java 11 (remove in weasis 4)
+SUBSTANCE_PKG="3.5.0"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
 # jdk.localedata => other locale (en_us) data are included in the jdk.localedata
 # jdk.jdwp.agent => package for debugging agent
-JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
+JDK_MODULES="java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
 NAME="Weasis"
-IDENTIFIER="org.weasis.viewer"
-JVM_ARGS="-Dgosh.port=17179 #-Daudit.log=true #-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8789"
+IDENTIFIER="org.weasis.launcher"
 
 # Aux functions:
 die ( ) {
@@ -59,7 +59,7 @@ do
 echo "Usage: package-weasis.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the current platform with the minimal required parameters"
-echo "        package-weasis.sh --input /home/user/weasis-portable --jdk /home/user/jdk-13"
+echo "        package-weasis.sh --input /home/user/weasis-portable --jdk /home/user/jdk-16"
 echo ""
 echo "Options:"
 echo " --help -h
@@ -71,7 +71,7 @@ echo " --output -o
 Path of the base output directory.
 Default value is the current directory"
 echo " --jdk -j
-Path of the jdk with the jpackage module (>= jdk-13)"
+Path of the jdk with the jpackage module (>= jdk-16+12)"
 echo " --jdk-modules
 List of modules to build the Java Runtime
 If not set, a minimal default list is applied"
@@ -107,14 +107,23 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-RES="resources/$machine"
+
+curPath=$(dirname "$(readlink -f "$0")")
+rootdir="$(dirname "$curPath")"
+rootdir="$(dirname "$rootdir")"
+
+if [ -z "$INPUT_PATH" ] ; then
+  INPUT_PATH="${rootdir}/weasis-distributions/target/portable-dist/weasis-portable"
+fi
 
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
   OUTPUT_PATH_UNIX=$(cygpath -u "$OUTPUT_PATH")
+  RES="${curPath}\resources\$machine"
 else
   INPUT_PATH_UNIX="$INPUT_PATH"
   OUTPUT_PATH_UNIX="$OUTPUT_PATH"
+  RES="${curPath}/resources/$machine"
 fi
 
 # Set custom JDK path (>= JDK 11)
@@ -175,11 +184,6 @@ if [ -z "$OUTPUT_PATH" ] ; then
   OUTPUT_PATH_UNIX="$OUTPUT_PATH"
 fi
 
-echo Output path = "${OUTPUT_PATH}"
-if [ "$machine" = "windows" ] ; then
-  echo Output unix path = "${OUTPUT_PATH_UNIX}"
-fi
-
 
 if [ "$machine" = "windows" ] ; then
   INPUT_DIR="$INPUT_PATH\\weasis"
@@ -188,15 +192,9 @@ else
   IMAGE_PATH="$OUTPUT_PATH/$NAME"
   INPUT_DIR="$INPUT_PATH_UNIX/weasis"
 fi
-MAC_SIGN=""
+
 WEASIS_CLEAN_VERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
-if [ "$machine" = "macosx" ] ; then
-  WEASIS_VERSION="$WEASIS_CLEAN_VERSION"
-  JVM_ARGS="-Dapple.laf.useScreenMenuBar=true $JVM_ARGS"
-  if [[ ! -x "$CERTIFICATE" ]] ; then
-    MAC_SIGN="--mac-sign"
-  fi
-fi
+
 
 # Remove pack jar for launcher
 rm -f "$INPUT_DIR"/*.jar.pack.gz
@@ -223,92 +221,60 @@ fi
 if [ -d "${OUTPUT_PATH}" ] ; then
   rm -rf "${OUTPUT_PATH}"
 fi
-if [ -d "${OUTPUT_PATH}-debug" ] ; then
-  rm -rf "${OUTPUT_PATH}-debug"
-fi
-
-# Build Java Runtime
-$JLINKCMD --add-modules "$JDK_MODULES" --output "$OUTPUT_PATH/runtime"
-
-$JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
---main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
---resource-dir "$RES" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --verbose
-
-# Build exe for debugging in the console and copy them into the debug folder
-if [ "$machine" == "windows" ] ; then
-  $JPKGCMD --package-type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH-debug" --name "$NAME" \
-  --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --runtime-image "$OUTPUT_PATH/runtime" \
-  --resource-dir "$RES" --java-options "$JVM_ARGS" --app-version "$WEASIS_VERSION" --win-console --verbose
-  mkdir "$IMAGE_PATH\\debug"
-  cp "$OUTPUT_PATH-debug\\$NAME\\$NAME.exe"  "$IMAGE_PATH\\debug\\$NAME.exe"
-fi
-
-
 
 if [ "$machine" = "macosx" ] ; then
-  OUT_APP="$OUTPUT_PATH_UNIX/$NAME.app/Contents/app"
-  APP_FOLDER_NAME="app"
-elif [ "$machine" = "linux" ] ; then
-  OUT_APP="$OUTPUT_PATH_UNIX/$NAME/lib/app"
-  APP_FOLDER_NAME="lib\/app"
-else
-  OUT_APP="$OUTPUT_PATH_UNIX/$NAME/app"
-  APP_FOLDER_NAME="app"
-fi
-
-if [ "$machine" = "windows" ] ; then
-  LAUNCHER_CP=";\$ROOTDIR\\\\$APP_FOLDER_NAME\\\\"
-else
-  LAUNCHER_CP=":\$ROOTDIR\/$APP_FOLDER_NAME\/"
-fi
-
-match="app.name"
-insertWeasis='app.splash=resources\/images\/about-round.png\
-#app.memory=50%\
-app.identifier='"$IDENTIFIER"'\
-app.classpath='"${LAUNCHER_CP:1}"'felix.jar'"$LAUNCHER_CP"'substance.jar'"$LAUNCHER_CP"'weasis-launcher.jar\
-'
-sed -i.bck '/^app\.identifier/d' "$OUT_APP/$NAME.cfg"
-sed -i.bck '/^app\.classpath/d' "$OUT_APP/$NAME.cfg"
-sed -i.bck "s/$match/$insertWeasis$match/" "$OUT_APP/$NAME.cfg"
-rm -f "$OUT_APP/$NAME.cfg.bck"
-
-
-if [ "$machine" = "linux" ] ; then
-  cp "$RES/Dicomizer.desktop" "$OUTPUT_PATH_UNIX/$NAME/lib/weasis-Dicomizer.desktop"
+  DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
+  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true")
+  if [[ ! -x "$CERTIFICATE" ]] ; then
+    declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER" "--mac-signing-key-user-name" "$CERTIFICATE"  "--mac-sign")
+  else
+    declare -a signArgs=("--mac-package-identifier" "$IDENTIFIER")
+  fi
 elif [ "$machine" = "windows" ] ; then
-  # Fix icon of second launcher
-  cp "$RES/Dicomizer.ico" "$OUTPUT_PATH_UNIX/$NAME/Dicomizer.ico"
-elif [ "$machine" = "macosx" ] ; then
-  cp -Rf "$RES/weasis-uri-handler.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
-  cp -Rf "$RES/Dicomizer.app" "$OUTPUT_PATH_UNIX/$NAME.app/Contents/MacOS/"
+  DICOMIZER_CONFIG="Dicomizer=$RES\dicomizer-launcher.properties"
+  declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
+  declare -a signArgs=()
+else
+  DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
+  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+  declare -a signArgs=()
 fi
+declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" "--illegal-access=warn" \
+"--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
+"--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
+"--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
+"--java-options" "--add-opens=java.base/java.net=ALL-UNNAMED" "--java-options" "--add-opens=java.base/java.lang=ALL-UNNAMED" \
+"--java-options" "--add-opens=java.base/java.security=ALL-UNNAMED" "--java-options" "--add-opens=java.base/java.io=ALL-UNNAMED" \
+"--java-options" "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED" "--java-options" "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED" \
+"--java-options" "--add-opens=java.desktop/com.sun.awt=ALL-UNNAMED" )
+
+$JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
+--main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
+--add-launcher ${DICOMIZER_CONFIG} --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
+--verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
 if [ "$PACKAGE" = "YES" ] ; then
-  FILE_ASSOC="file-associations.properties"
   VENDOR="Weasis Team"
-  COPYRIGHT="© 2009-2019 Weasis Team"
+  COPYRIGHT="© 2009-2020 Weasis Team"
   if [ "$machine" = "windows" ] ; then
     [ "$ARC_NAME" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
-    $JPKGCMD --package-type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/$ARC_NAME" \
-    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" \
-    --win-menu --win-menu-group "$NAME" --win-upgrade-uuid "$UPGRADE_UID" \
-    --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-    --vendor "$VENDOR" --file-associations "$FILE_ASSOC" --verbose
+    $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/$ARC_NAME" \
+    --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
+    --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in ${installerTypes[@]}; do
-      $JPKGCMD --package-type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES/$installerType" \
+      $JPKGCMD --type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
-      --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "$FILE_ASSOC" \
+      --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
       --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
     done
   elif [ "$machine" = "macosx" ] ; then
-    $JPKGCMD --package-type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES" \
-    --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --mac-package-identifier "$IDENTIFIER" \
-    --mac-signing-key-user-name "$CERTIFICATE" --verbose "$MAC_SIGN"
+    $JPKGCMD --type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES" \
+    --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
+    --verbose "${signArgs[@]}"
   fi
 fi
-

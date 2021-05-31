@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>weasis-parent</artifactId>
+    <groupId>org.weasis</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-parent/pom.xml</relativePath>
+  </parent>
+  <groupId>org.weasis.samples</groupId>
+  <artifactId>weasis-plugin-archetype</artifactId>
+  <packaging>pom</packaging>
+  <name>Default Plug-ins Achetypes [${project.artifactId}]</name>
+
+  <modules>
+    <module>weasis-plugin-base-viewer</module>
+    <module>weasis-plugin-dicom-viewer</module>
+  </modules>
+
+  <build>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.archetype</groupId>
+        <artifactId>archetype-packaging</artifactId>
+        <version>2.2</version>
+      </extension>
+    </extensions>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <artifactId>maven-archetype-plugin</artifactId>
+          <version>2.2</version>
+          <extensions>true</extensions>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+</project>

@@ -1,49 +1,48 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.core.ui.model.layer;
 
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.weasis.core.ui.model.utils.UUIDable;
 
 @XmlJavaTypeAdapter(AbstractGraphicLayer.Adapter.class)
 public interface Layer extends Comparable<Layer>, UUIDable {
 
-    void setVisible(Boolean visible);
+  void setVisible(Boolean visible);
 
-    Boolean getVisible();
+  Boolean getVisible();
 
-    void setLevel(Integer level);
+  void setLevel(Integer level);
 
-    Integer getLevel();
+  Integer getLevel();
 
-    LayerType getType();
+  LayerType getType();
 
-    void setType(LayerType type);
+  void setType(LayerType type);
 
-    /**
-     * Set a name to the layer. The default value is null and toString() gets the layer type name.
-     *
-     * @param layerName
-     */
-    void setName(String layerName);
+  /**
+   * Set a name to the layer. The default value is null and toString() gets the layer type name.
+   *
+   * @param layerName
+   */
+  void setName(String layerName);
 
-    String getName();
+  String getName();
 
-    @Override
-    default int compareTo(Layer obj) {
-        if (obj == null) {
-            return 1;
-        }
-        int thisVal = this.getLevel();
-        int anotherVal = obj.getLevel();
-        return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
+  @Override
+  default int compareTo(Layer obj) {
+    if (obj == null) {
+      return 1;
     }
+    int thisVal = this.getLevel();
+    int anotherVal = obj.getLevel();
+    return thisVal < anotherVal ? -1 : (thisVal == anotherVal ? 0 : 1);
+  }
 }

@@ -1,12 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.dicom.codec;
 
 import org.dcm4che3.data.Attributes;
@@ -29,26 +29,26 @@ import org.dcm4che3.data.Tag;
  */
 public class RejectedKOSpecialElement extends AbstractKOSpecialElement {
 
-    public RejectedKOSpecialElement(DicomMediaIO mediaIO) {
-        super(mediaIO);
-    }
+  public RejectedKOSpecialElement(DicomMediaIO mediaIO) {
+    super(mediaIO);
+  }
 
-    public static boolean isRejectionKOS(DicomMediaIO mediaIO) {
-        if (mediaIO != null) {
-            Attributes dcmItems = mediaIO.getDicomObject();
-            if (dcmItems != null) {
-                Attributes item = dcmItems.getNestedDataset(Tag.ConceptNameCodeSequence);
-                if (item != null) {
-                    String cm = item.getString(Tag.CodeMeaning, null);
-                    if (cm != null) {
-                        return "Rejected for Quality Reasons".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Rejected for Patient Safety Reasons".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Incorrect Modality Worklist Entry".equalsIgnoreCase(cm) //$NON-NLS-1$
-                            || "Data Retention Policy Expired".equalsIgnoreCase(cm); //$NON-NLS-1$
-                    }
-                }
-            }
+  public static boolean isRejectionKOS(DicomMediaIO mediaIO) {
+    if (mediaIO != null) {
+      Attributes dcmItems = mediaIO.getDicomObject();
+      if (dcmItems != null) {
+        Attributes item = dcmItems.getNestedDataset(Tag.ConceptNameCodeSequence);
+        if (item != null) {
+          String cm = item.getString(Tag.CodeMeaning, null);
+          if (cm != null) {
+            return "Rejected for Quality Reasons".equalsIgnoreCase(cm) // NON-NLS
+                || "Rejected for Patient Safety Reasons".equalsIgnoreCase(cm) // NON-NLS
+                || "Incorrect Modality Worklist Entry".equalsIgnoreCase(cm) // NON-NLS
+                || "Data Retention Policy Expired".equalsIgnoreCase(cm); // NON-NLS
+          }
         }
-        return false;
+      }
     }
+    return false;
+  }
 }

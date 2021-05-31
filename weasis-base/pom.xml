@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<parent>
-		<artifactId>weasis-parent</artifactId>
-		<groupId>org.weasis</groupId>
-		<version>3.6.0-SNAPSHOT</version>
-		<relativePath>../weasis-parent/pom.xml</relativePath>
-	</parent>
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.weasis.base</groupId>
-	<artifactId>weasis-base</artifactId>
-	<packaging>pom</packaging>
-	<name>Default Plug-ins [${project.artifactId}]</name>
-	
-	<modules>
-		<module>weasis-base-parent</module>
-		<module>weasis-base-ui-mr</module>
-		<module>weasis-base-explorer</module>
-		<module>weasis-base-viewer2d</module>
-	</modules>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>weasis-parent</artifactId>
+    <groupId>org.weasis</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-parent/pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.weasis.base</groupId>
+  <artifactId>weasis-base</artifactId>
+  <packaging>pom</packaging>
+  <name>Base plugins [${project.artifactId}]</name>
+
+  <modules>
+    <module>weasis-base-parent</module>
+    <module>weasis-base-ui-mr</module>
+    <module>weasis-base-explorer</module>
+    <module>weasis-base-viewer2d</module>
+  </modules>
 </project>

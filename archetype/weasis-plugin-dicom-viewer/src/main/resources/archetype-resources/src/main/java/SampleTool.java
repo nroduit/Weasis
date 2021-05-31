@@ -2,7 +2,7 @@
 #set( $symbol_dollar = '$' )
 #set( $symbol_escape = '\' )
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -10,6 +10,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
+
 package ${package};
 
 import java.awt.Component;
@@ -30,7 +31,7 @@ public class SampleTool extends PluginTool {
 
     public SampleTool(Type type) {
         super(BUTTON_NAME, "Sample Tool", type, 120);
-        dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png"))); //${symbol_dollar}NON-NLS-1${symbol_dollar}
+        dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png")));
         setDockableWidth(290);
     }
 

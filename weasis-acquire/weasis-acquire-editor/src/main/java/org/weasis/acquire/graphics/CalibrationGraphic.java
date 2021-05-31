@@ -1,21 +1,19 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.acquire.graphics;
 
 import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
-
 import javax.swing.Icon;
 import javax.swing.JOptionPane;
-
 import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionToolFactory;
@@ -36,83 +34,90 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class CalibrationGraphic extends LineGraphic {
-    private static final long serialVersionUID = -6996238746877983645L;
+  private static final long serialVersionUID = -6996238746877983645L;
 
-    public CalibrationGraphic() {
-        super();
-        setColorPaint(Color.RED);
+  public CalibrationGraphic() {
+    super();
+    setColorPaint(Color.RED);
+  }
+
+  public CalibrationGraphic(CalibrationGraphic calibrationGraphic) {
+    super(calibrationGraphic);
+  }
+
+  @Override
+  public void buildShape(MouseEventDouble mouseevent) {
+    super.buildShape(mouseevent);
+    ViewCanvas<ImageElement> view = AcquireObject.getView();
+    GraphicModel graphicManager = view.getGraphicManager();
+    if (graphicManager
+        .getModels()
+        .removeIf(g -> g.getLayer().getType() == getLayerType() && g != this)) {
+      graphicManager.fireChanged();
     }
 
-    public CalibrationGraphic(CalibrationGraphic calibrationGraphic) {
-        super(calibrationGraphic);
-    }
-
-    @Override
-    public void buildShape(MouseEventDouble mouseevent) {
-        super.buildShape(mouseevent);
-        ViewCanvas<ImageElement> view = AcquireObject.getView();
-        GraphicModel graphicManager = view.getGraphicManager();
-        if (graphicManager.getModels().removeIf(g -> g.getLayer().getType() == getLayerType() && g != this)) {
-            graphicManager.fireChanged();
-        }
-
-        if (!getResizingOrMoving()) {
-            CalibrationView calibrationDialog = new CalibrationView(this, view, false);
-            int res = JOptionPane.showConfirmDialog(view.getJComponent(), calibrationDialog,
-                Messages.getString("CalibrationGraphic.calib"), //$NON-NLS-1$
-                JOptionPane.OK_CANCEL_OPTION);
-            if (res == JOptionPane.OK_OPTION) {
-                calibrationDialog.applyNewCalibration();
-                if (calibrationDialog.isApplyingToSeries()) {
-                    ImageElement image = view.getImage();
-                    if (image != null) {
-                        AcquireImageInfo info = AcquireManager.findByImage(image);
-                        if (info != null) {
-                            List<AcquireImageInfo> list = AcquireManager.findbySeries(info.getSeries());
-                            for (AcquireImageInfo acquireImageInfo : list) {
-                                ImageElement img = acquireImageInfo.getImage();
-                                if (img != image) {
-                                    img.setPixelSpacingUnit(image.getPixelSpacingUnit());
-                                    img.setPixelSize(image.getPixelSize());
-                                }
-                            }
-                        }
-                    }
+    if (!getResizingOrMoving()) {
+      CalibrationView calibrationDialog = new CalibrationView(this, view, false);
+      int res =
+          JOptionPane.showConfirmDialog(
+              view.getJComponent(),
+              calibrationDialog,
+              Messages.getString("CalibrationGraphic.calib"),
+              JOptionPane.OK_CANCEL_OPTION);
+      if (res == JOptionPane.OK_OPTION) {
+        calibrationDialog.applyNewCalibration();
+        if (calibrationDialog.isApplyingToSeries()) {
+          ImageElement image = view.getImage();
+          if (image != null) {
+            AcquireImageInfo info = AcquireManager.findByImage(image);
+            if (info != null) {
+              List<AcquireImageInfo> list = AcquireManager.findbySeries(info.getSeries());
+              for (AcquireImageInfo acquireImageInfo : list) {
+                ImageElement img = acquireImageInfo.getImage();
+                if (img != image) {
+                  img.setPixelSpacingUnit(image.getPixelSpacingUnit());
+                  img.setPixelSize(image.getPixelSize());
                 }
+              }
             }
-
-            view.getEventManager().getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
-                .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
+          }
         }
-    }
+      }
 
-    @Override
-    public Icon getIcon() {
-        return LineGraphic.ICON;
+      view.getEventManager()
+          .getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
+          .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
     }
+  }
 
-    @Override
-    public LayerType getLayerType() {
-        return LayerType.ACQUIRE;
-    }
+  @Override
+  public Icon getIcon() {
+    return LineGraphic.ICON;
+  }
 
-    @Override
-    public String getUIName() {
-        return Messages.getString("CalibrationGraphic.calib_line"); //$NON-NLS-1$
-    }
+  @Override
+  public LayerType getLayerType() {
+    return LayerType.ACQUIRE;
+  }
 
-    @Override
-    public List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
-        return Collections.emptyList();
-    }
+  @Override
+  public String getUIName() {
+    return Messages.getString("CalibrationGraphic.calib_line");
+  }
 
-    @Override
-    public List<Measurement> getMeasurementList() {
-        return Collections.emptyList();
-    }
+  @Override
+  public List<MeasureItem> computeMeasurements(
+      MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
+    return Collections.emptyList();
+  }
 
-    @Override
-    public CalibrationGraphic copy() {
-        return new CalibrationGraphic(this);
-    }
+  @Override
+  public List<Measurement> getMeasurementList() {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public CalibrationGraphic copy() {
+    return new CalibrationGraphic(this);
+  }
 }

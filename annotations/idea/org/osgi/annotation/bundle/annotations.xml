@@ -1,0 +1,5 @@
+<root>
+  <item name='org.osgi.annotation.bundle.Header java.lang.String value()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

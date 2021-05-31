@@ -1,0 +1,5 @@
+<root>
+  <item name='org.osgi.service.component.annotations.Component java.lang.String[] property()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

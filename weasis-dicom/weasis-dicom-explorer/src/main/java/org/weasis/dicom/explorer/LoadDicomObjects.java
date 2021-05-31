@@ -1,19 +1,18 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.dicom.explorer;
 
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Optional;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
@@ -37,220 +36,239 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 
 /**
- * @note This class is a pure copy of LoadLocalDicom taking care only of the DicomObject and not the file
- *
+ * @note This class is a pure copy of LoadLocalDicom taking care only of the DicomObject and not the
+ *     file
  * @version $Rev$ $Date$
  */
-
 public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
 
-    private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicomObjects.class);
-    
-    private final Attributes[] dicomObjectsToLoad;
-    private final DicomModel dicomModel;
+  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicomObjects.class);
 
-    private boolean openPlugin = true;
+  private final Attributes[] dicomObjectsToLoad;
+  private final DicomModel dicomModel;
 
-    public LoadDicomObjects(DataExplorerModel explorerModel, Attributes... dcmObjects) {
-        super(Messages.getString("DicomExplorer.loading"), false); //$NON-NLS-1$
+  private boolean openPlugin = true;
 
-        if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
-            throw new IllegalArgumentException("invalid parameters"); //$NON-NLS-1$
+  public LoadDicomObjects(DataExplorerModel explorerModel, Attributes... dcmObjects) {
+    super(Messages.getString("DicomExplorer.loading"), false);
+
+    if (dcmObjects == null || dcmObjects.length < 1 || !(explorerModel instanceof DicomModel)) {
+      throw new IllegalArgumentException("invalid parameters");
+    }
+
+    this.dicomModel = (DicomModel) explorerModel;
+    this.dicomObjectsToLoad = dcmObjects;
+  }
+
+  @Override
+  protected Boolean doInBackground() throws Exception {
+    dicomModel.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+    addSelectionAndnotify();
+    return true;
+  }
+
+  @Override
+  protected void done() {
+    dicomModel.firePropertyChange(
+        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+    LOGGER.info("End of loading DICOM locally");
+  }
+
+  public void addSelectionAndnotify() {
+
+    openPlugin = true;
+
+    final ArrayList<SeriesThumbnail> thumbs = new ArrayList<>(dicomObjectsToLoad.length);
+
+    for (Attributes dicom : dicomObjectsToLoad) {
+      if (isCancelled()) {
+        return;
+      }
+
+      try {
+        DicomMediaIO loader = new DicomMediaIO(dicom);
+        if (loader.isReadableDicom()) {
+          // Issue: must handle adding image to viewer and building thumbnail (middle image)
+          SeriesThumbnail t = buildDicomStructure(loader);
+          if (t != null) {
+            thumbs.add(t);
+          }
+        }
+      } catch (URISyntaxException e) {
+        LOGGER.debug("", e);
+      }
+    }
+
+    for (final SeriesThumbnail t : thumbs) {
+      MediaSeries<MediaElement> series = t.getSeries();
+      // Avoid to rebuild most of CR series thumbnail
+      if (series != null && series.size(null) > 2) {
+        GuiExecutor.instance().execute(t::reBuildThumbnail);
+      }
+    }
+  }
+
+  private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {
+
+    SeriesThumbnail thumb = null;
+    String patientPseudoUID = (String) dicomReader.getTagValue(TagD.getUID(Level.PATIENT));
+    MediaSeriesGroup patient =
+        dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
+    if (patient == null) {
+      patient =
+          new MediaSeriesGroupNode(
+              TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
+      dicomReader.writeMetaData(patient);
+      dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
+      LOGGER.info("Adding patient: {}", patient);
+    }
+
+    String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
+    MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
+    if (study == null) {
+      study =
+          new MediaSeriesGroupNode(
+              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+      dicomReader.writeMetaData(study);
+      dicomModel.addHierarchyNode(patient, study);
+    }
+
+    String seriesUID = (String) dicomReader.getTagValue(TagD.get(Tag.SeriesInstanceUID));
+    Series<?> dicomSeries = (Series<?>) dicomModel.getHierarchyNode(study, seriesUID);
+    try {
+      if (dicomSeries == null) {
+        dicomSeries = dicomReader.buildSeries(seriesUID);
+        dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
+        dicomSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
+        dicomReader.writeMetaData(dicomSeries);
+        dicomModel.addHierarchyNode(study, dicomSeries);
+        MediaElement[] medias = dicomReader.getMediaElement();
+        if (medias != null) {
+          for (MediaElement media : medias) {
+            dicomModel.applySplittingRules(dicomSeries, media);
+            media.setTag(TagW.ObjectToSave, Boolean.TRUE);
+          }
+          if (medias.length > 0) {
+            dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+          }
         }
 
-        this.dicomModel = (DicomModel) explorerModel;
-        this.dicomObjectsToLoad = dcmObjects;
-    }
+        // Load image and create thumbnail in this Thread
+        SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+        if (t == null) {
+          t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
+          dicomSeries.setTag(TagW.Thumbnail, t);
+          Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
+        }
 
-    @Override
-    protected Boolean doInBackground() throws Exception {
-        dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-        addSelectionAndnotify();
-        return true;
-    }
+        if (DicomModel.isSpecialModality(dicomSeries)) {
+          dicomModel.addSpecialModality(dicomSeries);
+          Arrays.stream(medias)
+              .filter(DicomSpecialElement.class::isInstance)
+              .map(DicomSpecialElement.class::cast)
+              .findFirst()
+              .ifPresent(
+                  d ->
+                      dicomModel.firePropertyChange(
+                          new ObservableEvent(
+                              ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+        } else {
+          dicomModel.firePropertyChange(
+              new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
+        }
 
-    @Override
-    protected void done() {
-        dicomModel
-            .firePropertyChange(new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-        LOGGER.info("End of loading DICOM locally"); //$NON-NLS-1$
-    }
+        // After the thumbnail is sent to interface, it will be return to be rebuilt later
+        thumb = t;
 
-    public void addSelectionAndnotify() {
+        Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+        if (splitNb != null) {
+          dicomModel.firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
+        }
 
-        openPlugin = true;
-
-        final ArrayList<SeriesThumbnail> thumbs = new ArrayList<>(dicomObjectsToLoad.length);
-
-        for (Attributes dicom : dicomObjectsToLoad) {
-            if (isCancelled()) {
-                return;
+        if (openPlugin) {
+          SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
+          if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
+            openPlugin = false;
+            ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
+          }
+        }
+      } else {
+        // Test if SOPInstanceUID already exists
+        if (isSOPInstanceUIDExist(
+            study,
+            dicomSeries,
+            seriesUID,
+            TagD.getTagValue(dicomReader, Tag.SOPInstanceUID, String.class))) {
+          return null;
+        }
+        MediaElement[] medias = dicomReader.getMediaElement();
+        if (medias != null) {
+          for (MediaElement media : medias) {
+            dicomModel.applySplittingRules(dicomSeries, media);
+            media.setTag(TagW.ObjectToSave, Boolean.TRUE);
+          }
+          if (medias.length > 0) {
+            dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
+            // Refresh the number of images on the thumbnail
+            Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
+            if (t != null) {
+              t.repaint();
             }
+          }
 
-            try {
-                DicomMediaIO loader = new DicomMediaIO(dicom);
-                if (loader.isReadableDicom()) {
-                    // Issue: must handle adding image to viewer and building thumbnail (middle image)
-                    SeriesThumbnail t = buildDicomStructure(loader);
-                    if (t != null) {
-                        thumbs.add(t);
-                    }
-                }
-            } catch (URISyntaxException e) {
-                LOGGER.debug("", e); //$NON-NLS-1$
-            }
-
-        }
-
-        for (final SeriesThumbnail t : thumbs) {
-            MediaSeries<MediaElement> series = t.getSeries();
-            // Avoid to rebuild most of CR series thumbnail
-            if (series != null && series.size(null) > 2) {
-                GuiExecutor.instance().execute(t::reBuildThumbnail);
-            }
-        }
-    }
-
-    private SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {
-
-        SeriesThumbnail thumb = null;
-        String patientPseudoUID = (String) dicomReader.getTagValue(TagD.getUID(Level.PATIENT));
-        MediaSeriesGroup patient = dicomModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, patientPseudoUID);
-        if (patient == null) {
-            patient =
-                new MediaSeriesGroupNode(TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
-            dicomReader.writeMetaData(patient);
-            dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
-            LOGGER.info("Adding patient: {}", patient); //$NON-NLS-1$
-        }
-
-        String studyUID = (String) dicomReader.getTagValue(TagD.getUID(Level.STUDY));
-        MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
-        if (study == null) {
-            study = new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
-            dicomReader.writeMetaData(study);
-            dicomModel.addHierarchyNode(patient, study);
-        }
-
-        String seriesUID = (String) dicomReader.getTagValue(TagD.get(Tag.SeriesInstanceUID));
-        Series<?> dicomSeries = (Series<?>) dicomModel.getHierarchyNode(study, seriesUID);
-        try {
-            if (dicomSeries == null) {
-                dicomSeries = dicomReader.buildSeries(seriesUID);
-                dicomSeries.setTag(TagW.ExplorerModel, dicomModel);
-                dicomSeries.setTag(TagW.ObjectToSave, Boolean.TRUE);
-                dicomReader.writeMetaData(dicomSeries);
-                dicomModel.addHierarchyNode(study, dicomSeries);
-                MediaElement[] medias = dicomReader.getMediaElement();
-                if (medias != null) {
-                    for (MediaElement media : medias) {
-                        dicomModel.applySplittingRules(dicomSeries, media);
-                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
-                    }
-                    if (medias.length > 0) {
-                        dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
-                    }
-                }
-
-                // Load image and create thumbnail in this Thread
-                SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                if (t == null) {
-                    t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
-                    dicomSeries.setTag(TagW.Thumbnail, t);
-                    Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
-                }
-
-                if (DicomModel.isSpecialModality(dicomSeries)) {
-                    dicomModel.addSpecialModality(dicomSeries);
-                    Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                        .map(DicomSpecialElement.class::cast).findFirst().ifPresent(d -> dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
-                } else {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
-                }
-
-                // After the thumbnail is sent to interface, it will be return to be rebuilt later
-                thumb = t;
-
-                Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                if (splitNb != null) {
-                    dicomModel.firePropertyChange(
-                        new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
-                }
-
-                if (openPlugin) {
-                    SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
-                    if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                        openPlugin = false;
-                        ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
-                    }
-                }
-            } else {
-                // Test if SOPInstanceUID already exists
-                if (isSOPInstanceUIDExist(study, dicomSeries, seriesUID,
-                    TagD.getTagValue(dicomReader, Tag.SOPInstanceUID, String.class))) {
-                    return null;
-                }
-                MediaElement[] medias = dicomReader.getMediaElement();
-                if (medias != null) {
-                    for (MediaElement media : medias) {
-                        dicomModel.applySplittingRules(dicomSeries, media);
-                        media.setTag(TagW.ObjectToSave, Boolean.TRUE);
-                    }
-                    if (medias.length > 0) {
-                        dicomSeries.setFileSize(dicomSeries.getFileSize() + medias[0].getLength());
-                        // Refresh the number of images on the thumbnail
-                        Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
-                        if (t != null) {
-                            t.repaint();
-                        }
-                    }
-
-                    if (DicomModel.isSpecialModality(dicomSeries)) {
-                        dicomModel.addSpecialModality(dicomSeries);
-                        Arrays.stream(medias).filter(DicomSpecialElement.class::isInstance)
-                            .map(DicomSpecialElement.class::cast).findFirst()
-                            .ifPresent(d -> dicomModel.firePropertyChange(
-                                new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
-                    }
-
-                    // If Split series or special DICOM element update the explorer view and View2DContainer
-                    Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-                    if (splitNb != null) {
+          if (DicomModel.isSpecialModality(dicomSeries)) {
+            dicomModel.addSpecialModality(dicomSeries);
+            Arrays.stream(medias)
+                .filter(DicomSpecialElement.class::isInstance)
+                .map(DicomSpecialElement.class::cast)
+                .findFirst()
+                .ifPresent(
+                    d ->
                         dicomModel.firePropertyChange(
-                            new ObservableEvent(ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            LOGGER.error("Build DICOM hierarchy", e); //$NON-NLS-1$
-        }
-        return thumb;
-    }
+                            new ObservableEvent(
+                                ObservableEvent.BasicAction.UPDATE, dicomModel, null, d)));
+          }
 
-    private boolean isSOPInstanceUIDExist(MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {
-        TagW sopTag = TagD.getUID(Level.INSTANCE);
-        if (dicomSeries.hasMediaContains(sopTag, sopUID)) {
-            return true;
+          // If Split series or special DICOM element update the explorer view and View2DContainer
+          Integer splitNb = (Integer) dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+          if (splitNb != null) {
+            dicomModel.firePropertyChange(
+                new ObservableEvent(
+                    ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
+          }
         }
-        Object splitNb = dicomSeries.getTagValue(TagW.SplitSeriesNumber);
-        if (splitNb != null && study != null) {
-            String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-            if (uid != null) {
-                for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
-                    if (dicomSeries != group && group instanceof Series) {
-                        Series s = (Series) group;
-                        if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))) {
-                            if (s.hasMediaContains(sopTag, sopUID)) {
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+      }
+    } catch (Exception e) {
+      LOGGER.error("Build DICOM hierarchy", e);
     }
+    return thumb;
+  }
+
+  private boolean isSOPInstanceUIDExist(
+      MediaSeriesGroup study, Series dicomSeries, String seriesUID, Object sopUID) {
+    TagW sopTag = TagD.getUID(Level.INSTANCE);
+    if (dicomSeries.hasMediaContains(sopTag, sopUID)) {
+      return true;
+    }
+    Object splitNb = dicomSeries.getTagValue(TagW.SplitSeriesNumber);
+    if (splitNb != null && study != null) {
+      String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
+      if (uid != null) {
+        for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
+          if (dicomSeries != group && group instanceof Series) {
+            Series s = (Series) group;
+            if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))) {
+              if (s.hasMediaContains(sopTag, sopUID)) {
+                return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
 }

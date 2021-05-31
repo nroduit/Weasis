@@ -1,0 +1,309 @@
+name: Build installers
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.stepversion.outputs.version }}
+      cleanversion: ${{ steps.stepcleanversion.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK for compilation
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        shell: bash
+        run: |
+          mvn -B clean install
+          mvn -B -Dportable=true -P compressXZ -f weasis-distributions clean install
+
+      - name: Retrieve version
+        shell: bash
+        run: |
+          FVERSION=$(awk -F'[<>]' '/<revision>/{print $3}' weasis-parent/pom.xml)$(awk -F'[<>]' '/<changelist>/{print $3}' weasis-parent/pom.xml)
+          echo "WEASIS_VERSION=${FVERSION}" >> $GITHUB_ENV
+
+      - name: Set compatible version
+        shell: bash
+        run: |
+          CVERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
+          echo "WEASIS_CLEAN_VERSION=${CVERSION}" >> $GITHUB_ENV
+
+      - id: stepversion
+        run: echo ::set-output name=version::${{ env.WEASIS_VERSION }}
+      - id: stepcleanversion
+        run: echo ::set-output name=version::${{ env.WEASIS_CLEAN_VERSION }}
+
+      - name: Upload weasis portable distribution
+        uses: actions/upload-artifact@v2
+        with:
+          name: weasis-portable-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/portable-dist/weasis-portable.zip
+
+  jpackage:
+    env:
+      JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
+      NAME: "Weasis"
+      IDENTIFIER: "org.weasis.launcher"
+      WEASIS_INPUT: "weasis-distributions/target/portable-dist/weasis-portable"
+      WEASIS_OUTPUT: "weasis-distributions/target/native-dist"
+      WEASIS_INPUT_BIN: "weasis-distributions/target/portable-dist/weasis-portable/weasis"
+      SUBSTANCE_PKG: "3.5.0"  # Package for Java 11 (remove in weasis 4)
+    runs-on: ${{ matrix.os }}
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          #- { os: ubuntu-latest, platform: x86, wsystem: linux, warc: x86 }
+          - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
+          - { os: macos-latest, platform: x64, wsystem: macosx, warc: x86-64 }
+          #  - { os: windows-latest, platform: x86, wsystem: windows, warc: x86 }
+          - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
+
+    steps:
+      - name: Set output version from build
+        shell: bash
+        run: |
+          echo ${{needs.build.outputs.version}}
+          echo ${{needs.build.outputs.cleanversion}}
+          echo "WEASIS_VERSION=${{needs.build.outputs.version}}" >> $GITHUB_ENV
+          echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+
+      - name: Download early-access Oracle JDK
+        uses: sormuras/download-jdk@v1
+        id: jdk
+        if: matrix.platform == 'x64'
+        with:
+          feature: 16
+
+      - name: Set up early-access Oracle JDK
+        uses: actions/setup-java@v2
+        if: matrix.platform == 'x64'
+        with:
+          java-version: ${{ steps.jdk.outputs.version }}
+          distribution: jdkfile
+          jdkFile: ${{ steps.jdk.outputs.file }}
+          architecture: ${{ matrix.platform }}
+
+      - name: Set up JDK for x86 (not provide by Oracle)
+        uses: actions/setup-java@v2
+        if: matrix.platform == 'x86'
+        with:
+          java-version: 16
+          architecture: x86
+          distribution: 'adopt'
+
+      - name: Download weasis-portable
+        uses: actions/download-artifact@v2
+        with:
+          name: weasis-portable-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/portable-dist
+
+      - name: Adapt linux-i386 architecture
+        if: matrix.wsystem == 'linux' && matrix.warc == 'x86'
+        shell: bash
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -y -qq
+          cat  << 'EOF' > dpkg.bash
+          #!/bin/bash
+          if [ "$1" = "--print-architecture" ] ; then
+            command echo "i386"
+          else
+            command dpkg2 "$@"
+          fi
+          EOF
+
+          DPKGDIR=$(dirname -- "$(which dpkg)")
+          dpkg --print-architecture
+          sudo mv ${DPKGDIR}/dpkg ${DPKGDIR}/dpkg2
+          sudo cp dpkg.bash ${DPKGDIR}/dpkg
+          sudo chmod --reference=${DPKGDIR}/dpkg2 ${DPKGDIR}/dpkg
+          dpkg --print-architecture
+
+      - name: Unzip portable version
+        shell: bash
+        run: |
+          unzip -o "weasis-distributions/target/portable-dist/weasis-portable.zip" -d "${{ env.WEASIS_INPUT }}"
+
+      - name: Remove binaries not releated to the current architecture
+        shell: bash
+        run: |
+          # Remove pack jar for launcher
+          rm -f ${{ env.WEASIS_INPUT_BIN }}/*.jar.pack.gz
+          # Remove the unrelated native packages
+          find ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-* -type f ! -name *weasis-opencv-core-${{ matrix.wsystem }}-${{ matrix.warc }}-* -exec rm -f {} \;
+          # Special case with 32-bit architecture, remove 64-bit lib
+          if [ "${{ matrix.warc }}" = "x86" ] ; then
+            rm -f ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-${{ matrix.wsystem }}-x86-64-*
+          fi
+          echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
+
+      - name: Replace substance by a more recent version for Java 11
+        # Should be removed in Weasis 4
+        shell: bash
+        run: |
+          curl -L -o "${{ env.WEASIS_INPUT }}/substance.jar" "https://raw.github.com/nroduit/mvn-repo/master/org/pushing-pixels/radiance-substance-all/${{ env.SUBSTANCE_PKG }}/radiance-substance-all-${{ env.SUBSTANCE_PKG }}.jar"
+          echo "$(ls -la ${{ env.WEASIS_INPUT }})"
+
+      - name: Import Developer Certificate
+        uses: apple-actions/import-codesign-certs@v1
+        if: matrix.wsystem == 'macosx'
+        id: cert
+        with:
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE_DEVELOPMENT }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - name: Import Installer Certificate
+        uses: apple-actions/import-codesign-certs@v1
+        if: matrix.wsystem == 'macosx'
+        with:
+          create-keychain: "false"
+          keychain-password: ${{ steps.cert.outputs.keychain-password }}
+          p12-file-base64: ${{ secrets.MACOS_CERTIFICATE_INSTALLER }}
+          p12-password: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+
+      - name: Build app binary with jpackage
+        shell: bash
+        env:
+          RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
+        run: |
+          machine=${{ matrix.wsystem }}
+          if [ "$machine" = "macosx" ] ; then
+            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true")
+            declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
+          elif [ "$machine" = "windows" ] ; then
+            declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
+            declare -a signArgs=()
+          else
+            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
+            declare -a signArgs=()
+          fi
+          declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" "--illegal-access=warn" \
+          "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
+          "--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
+          "--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
+          "--java-options" "--add-opens=java.base/java.net=ALL-UNNAMED" "--java-options" "--add-opens=java.base/java.lang=ALL-UNNAMED" \
+          "--java-options" "--add-opens=java.base/java.security=ALL-UNNAMED" "--java-options" "--add-opens=java.base/java.io=ALL-UNNAMED" \
+          "--java-options" "--add-opens=java.desktop/javax.imageio.stream=ALL-UNNAMED" "--java-options" "--add-opens=java.desktop/javax.imageio=ALL-UNNAMED" \
+          "--java-options" "--add-opens=java.desktop/com.sun.awt=ALL-UNNAMED" )
+
+          jpackage --type app-image --input "${{ env.WEASIS_INPUT_BIN }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" \
+          --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "${{ env.JDK_MODULES }}" \
+          --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
+          "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+
+          if [ "$machine" = "macosx" ] ; then
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.RES }}/weasis-url-handler.app"
+              cp -Rf "${{ env.RES }}/weasis-url-handler.app" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/"
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+          fi
+
+          echo "$(ls -la ${{ env.WEASIS_OUTPUT }}/${{ env.NAME }})"
+
+      - name: Build package with jpackage
+        shell: bash
+        env:
+          RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
+          FILE_ASSOC: "weasis-distributions/script/file-associations.properties"
+          VENDOR: "Weasis Team"
+          COPYRIGHT: "© 2009-2020 Weasis Team"
+        run: |
+          mkdir -p final-dist
+          machine=${{ matrix.wsystem }}
+          ARC_NAME=${{ matrix.warc }}
+          if [ "$machine" = "windows" ] ; then
+            [ "$ARC_NAME" = "x86" ] && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
+            jpackage --type "msi" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}/msi/${ARC_NAME}" \
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID" \
+            --win-menu --win-menu-group "${{ env.NAME }}" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" \
+            --vendor "${{ env.VENDOR }}" --file-associations "${{ env.FILE_ASSOC }}" --verbose
+            cp ${{ env.WEASIS_OUTPUT }}/*.msi final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.msi
+          elif [ "$machine" = "linux" ] ; then
+            if [ "${ARC_NAME}" = "x86" ] ; then
+              declare -a installerTypes=("deb")
+            else
+              declare -a installerTypes=("deb" "rpm")
+            fi
+            for installerType in ${installerTypes[@]}; do
+              jpackage --type "${installerType}" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
+              --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --description "Weasis DICOM viewer" --vendor "${{ env.VENDOR }}" \
+              --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --file-associations "${{ env.FILE_ASSOC }}" \
+              --linux-app-release "1" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
+              --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
+              cp ${{ env.WEASIS_OUTPUT }}/*.${installerType} final-dist
+            done
+          elif [ "$machine" = "macosx" ] ; then
+            # Do not set verbose for public build
+            jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
+            --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
+            --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
+            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
+          fi
+          echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
+
+      - name: Notarize Build
+        shell: bash
+        if: matrix.wsystem == 'macosx'
+        run: |
+          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
+          # create temporary files
+          NOTARIZE_APP_LOG=$(mktemp -t notarize-app)
+          NOTARIZE_INFO_LOG=$(mktemp -t notarize-info)
+
+          # delete temporary files on exit
+          function finish {
+          rm "$NOTARIZE_APP_LOG" "$NOTARIZE_INFO_LOG"
+          }
+          trap finish EXIT
+
+
+          # submit app for notarization
+          if xcrun altool --notarize-app --primary-bundle-id "org.test.${{ env.NAME }}" --username "${{ secrets.MACOS_NOTARIZATION_USER}}" --password "${{ secrets.MACOS_NOTARIZATION_PWD }}" -f "$BUNDLE_PKG" > "$NOTARIZE_APP_LOG" 2>&1; then
+          cat "$NOTARIZE_APP_LOG"
+          RequestUUID=$(awk -F ' = ' '/RequestUUID/ {print $2}' "$NOTARIZE_APP_LOG")
+
+          # check status periodically
+          while sleep 60 && date; do
+           # check notarization status
+           if xcrun altool --notarization-info "$RequestUUID" --username "${{ secrets.MACOS_NOTARIZATION_USER}}" --password "${{ secrets.MACOS_NOTARIZATION_PWD }}" > "$NOTARIZE_INFO_LOG" 2>&1; then
+             cat "$NOTARIZE_INFO_LOG"
+
+             # once notarization is complete, run stapler and exit
+             if ! grep -q "Status: in progress" "$NOTARIZE_INFO_LOG"; then
+               xcrun stapler staple "$BUNDLE_PKG"
+               exit $?
+             fi
+           else
+             cat "$NOTARIZE_INFO_LOG" 1>&2
+             exit 1
+           fi
+          done
+          else
+          cat "$NOTARIZE_APP_LOG" 1>&2
+          exit 1
+          fi
+
+      - name: Upload the final opencv binary
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.APP_ARTIFACT }}
+          path: final-dist

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License 2.0 which is available at
@@ -7,6 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  *******************************************************************************/
+
 #set( $symbol_pound = '#' )
 #set( $symbol_dollar = '$' )
 #set( $symbol_escape = '\' )
@@ -32,7 +33,7 @@ public class SampleToolBar<E extends ImageElement> extends WtoolBar {
 
         final JButton helpButton = new JButton();
         helpButton.setToolTipText("User Guide");
-        helpButton.setIcon(new ImageIcon(SampleToolBar.class.getResource("/icon/32x32/help-browser.png"))); //${symbol_dollar}NON-NLS-1${symbol_dollar}
+        helpButton.setIcon(new ImageIcon(SampleToolBar.class.getResource("/icon/32x32/help-browser.png")));
         helpButton.addActionListener(new ActionListener() {
 
             @Override
@@ -40,8 +41,8 @@ public class SampleToolBar<E extends ImageElement> extends WtoolBar {
                 if (e.getSource() instanceof Component) {
                     URL url;
                     try {
-                        url = new URL("http://www.dcm4che.org/confluence/display/WEA/User+Guide"); //${symbol_dollar}NON-NLS-1${symbol_dollar}
-                        JMVUtils.OpenInDefaultBrowser((Component) e.getSource(), url);
+                        url = new URL("http://www.dcm4che.org/confluence/display/WEA/User+Guide");
+                        JMVUtils.openInDefaultBrowser((Component) e.getSource(), url);
                     } catch (MalformedURLException e1) {
                         e1.printStackTrace();
                     }

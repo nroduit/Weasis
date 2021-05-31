@@ -1,12 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Color;
@@ -20,10 +20,8 @@ import java.beans.PropertyChangeListener;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-
 import javax.swing.Action;
 import javax.swing.ImageIcon;
-
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
@@ -33,114 +31,114 @@ import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 
 public interface ViewCanvas<E extends ImageElement>
-    extends Canvas, Image2DViewer<E>, PropertyChangeListener, FocusListener, ImageLayerChangeListener<E>, KeyListener {
+    extends Canvas,
+        Image2DViewer<E>,
+        PropertyChangeListener,
+        FocusListener,
+        ImageLayerChangeListener<E>,
+        KeyListener {
 
-    public static final String ZOOM_TYPE_CMD = "zoom.type"; //$NON-NLS-1$
-    public static final ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png")); //$NON-NLS-1$
-    public static final int CENTER_POINTER = 1 << 1;
-    public static final int HIGHLIGHTED_POINTER = 1 << 2;
+  public static final String ZOOM_TYPE_CMD = "zoom.type";
+  public static final ImageIcon SYNCH_ICON =
+      new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
+  public static final int CENTER_POINTER = 1 << 1;
+  public static final int HIGHLIGHTED_POINTER = 1 << 2;
 
-    public static final Color focusColor = Color.orange;
-    public static final Color lostFocusColor = new Color(255, 224, 178);
+  public static final Color focusColor = Color.orange;
+  public static final Color lostFocusColor = new Color(255, 224, 178);
 
-    void registerDefaultListeners();
+  void registerDefaultListeners();
 
-    void copyActionWState(HashMap<String, Object> actionsInView);
+  void copyActionWState(HashMap<String, Object> actionsInView);
 
-    ImageViewerEventManager<E> getEventManager();
+  ImageViewerEventManager<E> getEventManager();
 
-    void updateSynchState();
+  void updateSynchState();
 
-    PixelInfo getPixelInfo(Point p);
+  PixelInfo getPixelInfo(Point p);
 
-    Panner<E> getPanner();
+  Panner<E> getPanner();
 
-    void setSeries(MediaSeries<E> series);
+  void setSeries(MediaSeries<E> series);
 
-    void setSeries(MediaSeries<E> newSeries, E selectedMedia);
+  void setSeries(MediaSeries<E> newSeries, E selectedMedia);
 
-    void setFocused(Boolean focused);
+  void setFocused(Boolean focused);
 
-    double getRealWorldViewScale();
+  double getRealWorldViewScale();
 
-    LayerAnnotation getInfoLayer();
+  LayerAnnotation getInfoLayer();
 
-    int getTileOffset();
+  int getTileOffset();
 
-    void setTileOffset(int tileOffset);
+  void setTileOffset(int tileOffset);
 
-    /**
-     * Center the image into the view.
-     * 
-     */
-    void center();
+  /** Center the image into the view. */
+  void center();
 
-    /**
-     * Set the offset from the center of the view. (0,0) will center the image into the view.
-     * 
-     * @param modelOffsetX
-     *            the X-offset
-     * @param modelOffsetY
-     *            the Y-offset
-     */
-    void setCenter(Double modelOffsetX, Double modelOffsetY);
+  /**
+   * Set the offset from the center of the view. (0,0) will center the image into the view.
+   *
+   * @param modelOffsetX the X-offset
+   * @param modelOffsetY the Y-offset
+   */
+  void setCenter(Double modelOffsetX, Double modelOffsetY);
 
-    void moveOrigin(PanPoint point);
+  void moveOrigin(PanPoint point);
 
-    Comparator<E> getCurrentSortComparator();
+  Comparator<E> getCurrentSortComparator();
 
-    void setActionsInView(String action, Object value);
+  void setActionsInView(String action, Object value);
 
-    void setActionsInView(String action, Object value, Boolean repaint);
+  void setActionsInView(String action, Object value, Boolean repaint);
 
-    void setSelected(Boolean selected);
+  void setSelected(Boolean selected);
 
-    Font getFont();
+  Font getFont();
 
-    Font getLayerFont();
+  Font getLayerFont();
 
-    void setDrawingsVisibility(Boolean visible);
+  void setDrawingsVisibility(Boolean visible);
 
-    Object getLensActionValue(String action);
+  Object getLensActionValue(String action);
 
-    void changeZoomInterpolation(Integer interpolation);
+  void changeZoomInterpolation(Integer interpolation);
 
-    OpManager getDisplayOpManager();
+  OpManager getDisplayOpManager();
 
-    void disableMouseAndKeyListener();
+  void disableMouseAndKeyListener();
 
-    void iniDefaultMouseListener();
+  void iniDefaultMouseListener();
 
-    void iniDefaultKeyListener();
+  void iniDefaultKeyListener();
 
-    int getPointerType();
+  int getPointerType();
 
-    void setPointerType(int pointerType);
+  void setPointerType(int pointerType);
 
-    void addPointerType(int i);
+  void addPointerType(int i);
 
-    void resetPointerType(int i);
+  void resetPointerType(int i);
 
-    Point2D getHighlightedPosition();
+  Point2D getHighlightedPosition();
 
-    void drawPointer(Graphics2D g, Double x, Double y);
+  void drawPointer(Graphics2D g, Double x, Double y);
 
-    List<Action> getExportToClipboardAction();
+  List<Action> getExportToClipboardAction();
 
-    void enableMouseAndKeyListener(MouseActions mouseActions);
+  void enableMouseAndKeyListener(MouseActions mouseActions);
 
-    void resetZoom();
+  void resetZoom();
 
-    void resetPan();
+  void resetPan();
 
-    void reset();
+  void reset();
 
-    List<ViewButton> getViewButtons();
+  List<ViewButton> getViewButtons();
 
-    void closeLens();
+  void closeLens();
 
-    void updateCanvas(boolean triggerViewModelChangeListeners);
+  void updateCanvas(boolean triggerViewModelChangeListeners);
 
-    void updateGraphicSelectionListener(ImageViewerPlugin<E> viewerPlugin);
-
+  void updateGraphicSelectionListener(ImageViewerPlugin<E> viewerPlugin);
 }

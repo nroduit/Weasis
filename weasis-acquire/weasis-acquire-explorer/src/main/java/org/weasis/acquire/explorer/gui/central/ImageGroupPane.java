@@ -1,22 +1,20 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.weasis.acquire.explorer.AcquireManager;
@@ -39,96 +37,101 @@ import org.weasis.core.ui.util.WtoolBar;
 @SuppressWarnings("serial")
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
-    public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<Toolbar>(1));
+  public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<Toolbar>(1));
 
-    public final AcquireTabPanel tabbedPane;
+  public final AcquireTabPanel tabbedPane;
 
-    public ImageGroupPane(String pluginName, JIThumbnailCache thumbCache) {
-        super(pluginName);
-        this.tabbedPane = new AcquireTabPanel(thumbCache);
-        // Add standard toolbars
-        final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
-        String bundleName = context.getBundle().getSymbolicName();
-        String componentName = InsertableUtil.getCName(this.getClass());
-        String key = "enable"; //$NON-NLS-1$
+  public ImageGroupPane(String pluginName, JIThumbnailCache thumbCache) {
+    super(pluginName);
+    this.tabbedPane = new AcquireTabPanel(thumbCache);
+    // Add standard toolbars
+    final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+    String bundleName = context.getBundle().getSymbolicName();
+    String componentName = InsertableUtil.getCName(this.getClass());
+    String key = "enable"; // NON-NLS
 
-        if (InsertableUtil.getBooleanProperty(BundleTools.SYSTEM_PREFERENCES, bundleName, componentName,
-            InsertableUtil.getCName(AcquireToolBar.class), key, true)) {
-            toolBar.add(ToolBarContainer.EMPTY);
-        }
-
-        init();
+    if (InsertableUtil.getBooleanProperty(
+        BundleTools.SYSTEM_PREFERENCES,
+        bundleName,
+        componentName,
+        InsertableUtil.getCName(AcquireToolBar.class),
+        key,
+        true)) {
+      toolBar.add(ToolBarContainer.EMPTY);
     }
 
-    private void init() {
-        setLayout(new BorderLayout());
-        add(tabbedPane, BorderLayout.CENTER);
-    }
+    init();
+  }
 
-    @Override
-    public List<MediaSeries<ImageElement>> getOpenSeries() {
-        return null;
-    }
+  private void init() {
+    setLayout(new BorderLayout());
+    add(tabbedPane, BorderLayout.CENTER);
+  }
 
-    @Override
-    public void addSeries(MediaSeries<ImageElement> series) {
-        // Do nothing
-    }
+  @Override
+  public List<MediaSeries<ImageElement>> getOpenSeries() {
+    return null;
+  }
 
-    @Override
-    public void removeSeries(MediaSeries<ImageElement> series) {
-        // Do nothing
-    }
+  @Override
+  public void addSeries(MediaSeries<ImageElement> series) {
+    // Do nothing
+  }
 
-    @Override
-    public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
-        if (menuRoot != null) {
-            menuRoot.removeAll();
-            // JMenuItem item = new JMenuItem("Build a new study");
-            // item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID),
-            // UIDUtils.createUID()));
-            // menuRoot.add(item);
-            JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all")); //$NON-NLS-1$
-            item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
-            menuRoot.add(item2);
-        }
-        return menuRoot;
-    }
+  @Override
+  public void removeSeries(MediaSeries<ImageElement> series) {
+    // Do nothing
+  }
 
-    @Override
-    public synchronized List<Toolbar> getToolBar() {
-        return toolBar;
+  @Override
+  public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
+    if (menuRoot != null) {
+      menuRoot.removeAll();
+      // JMenuItem item = new JMenuItem("Build a new study");
+      // item.addActionListener(e -> AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID),
+      // UIDUtils.createUID()));
+      // menuRoot.add(item);
+      JMenuItem item2 = new JMenuItem(Messages.getString("ImageGroupPane.rm_all"));
+      item2.addActionListener(e -> AcquireManager.getInstance().removeAllImages());
+      menuRoot.add(item2);
     }
+    return menuRoot;
+  }
 
-    @Override
-    public WtoolBar getStatusBar() {
-        return null;
-    }
+  @Override
+  public synchronized List<Toolbar> getToolBar() {
+    return toolBar;
+  }
 
-    @Override
-    public List<DockableTool> getToolPanel() {
-        return null;
-    }
+  @Override
+  public WtoolBar getStatusBar() {
+    return null;
+  }
 
-    @Override
-    public void setSelected(boolean selected) {
-        if (selected) {
-            EventManager.getInstance()
-                .fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
-            tabbedPane.refreshGUI();
-        }
-    }
+  @Override
+  public List<DockableTool> getToolPanel() {
+    return null;
+  }
 
-    @Override
-    public void setSelectedAndGetFocus() {
-        super.setSelectedAndGetFocus();
-        updateAll();
+  @Override
+  public void setSelected(boolean selected) {
+    if (selected) {
+      EventManager.getInstance()
+          .fireSeriesViewerListeners(new SeriesViewerEvent(this, null, null, EVENT.SELECT_VIEW));
+      tabbedPane.refreshGUI();
     }
+  }
 
-    private void updateAll() {
-        tabbedPane.clearUnusedSeries(AcquireManager.getBySeries());
-        tabbedPane.setSelected(tabbedPane.getSelected());
-        tabbedPane.revalidate();
-        tabbedPane.repaint();
-    }
+  @Override
+  public void setSelectedAndGetFocus() {
+    super.setSelectedAndGetFocus();
+    updateAll();
+  }
+
+  private void updateAll() {
+    tabbedPane.clearUnusedSeries(AcquireManager.getBySeries());
+    tabbedPane.setSelected(tabbedPane.getSelected());
+    tabbedPane.revalidate();
+    tabbedPane.repaint();
+  }
 }

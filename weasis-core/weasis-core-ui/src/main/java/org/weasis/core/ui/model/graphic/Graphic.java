@@ -1,12 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.core.ui.model.graphic;
 
 import java.awt.Color;
@@ -22,9 +22,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -41,209 +39,207 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
-    static final Color DEFAULT_COLOR = Color.YELLOW;
-    static final Integer DEFAULT_POINT_NUMBER = 1;
-    static final Float DEFAULT_LINE_THICKNESS = 1f;
-    static final Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
-    static final Boolean DEFAULT_FILLED = Boolean.FALSE;
-    static final Boolean DEFAULT_SELECTED = Boolean.FALSE;
-    static final Integer DEFAULT_PTS_SIZE = 10;
+  static final Color DEFAULT_COLOR = Color.YELLOW;
+  static final Integer DEFAULT_POINT_NUMBER = 1;
+  static final Float DEFAULT_LINE_THICKNESS = 1f;
+  static final Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
+  static final Boolean DEFAULT_FILLED = Boolean.FALSE;
+  static final Boolean DEFAULT_SELECTED = Boolean.FALSE;
+  static final Integer DEFAULT_PTS_SIZE = 10;
 
-    static final String ACTION_TO_FRONT = "toFront"; //$NON-NLS-1$
-    static final String ACTION_TO_BACK = "toBack"; //$NON-NLS-1$
-    static final String ACTION_REMOVE = "remove"; //$NON-NLS-1$
-    static final String ACTION_REMOVE_REPAINT = "remove.repaint"; //$NON-NLS-1$
+  static final String ACTION_TO_FRONT = "toFront";
+  static final String ACTION_TO_BACK = "toBack";
+  static final String ACTION_REMOVE = "remove"; // NON-NLS
+  static final String ACTION_REMOVE_REPAINT = "remove.repaint";
 
-    static final Integer HANDLE_SIZE = 6;
-    static final Integer SELECTION_SIZE = 10;
-    static final Integer UNDEFINED = -1;
+  static final Integer HANDLE_SIZE = 6;
+  static final Integer SELECTION_SIZE = 10;
+  static final Integer UNDEFINED = -1;
 
-    default List<MeasureItem> computeMeasurements(MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
-        return Collections.emptyList();
-    }
+  default List<MeasureItem> computeMeasurements(
+      MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
+    return Collections.emptyList();
+  }
 
-    default List<Measurement> getMeasurementList() {
-        return Collections.emptyList();
-    }
+  default List<Measurement> getMeasurementList() {
+    return Collections.emptyList();
+  }
 
-    /**
-     * @param affineTransform
-     *            Current transform applied to the view. Should be used to compute invariantSizedShape bounding
-     *            rectangle in union with drawing shape bounding rectangle.
-     * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
-     *         Coordinates are given in RealCoordinates. <br>
-     *         Null is return if shape is Null
-     *
-     * @since v1.1.0 - new in Graphic interface
-     */
-    Rectangle getBounds(AffineTransform transform);
+  /**
+   * @param affineTransform Current transform applied to the view. Should be used to compute
+   *     invariantSizedShape bounding rectangle in union with drawing shape bounding rectangle.
+   * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
+   *     Coordinates are given in RealCoordinates. <br>
+   *     Null is return if shape is Null
+   * @since v1.1.0 - new in Graphic interface
+   */
+  Rectangle getBounds(AffineTransform transform);
 
-    /**
-     * @return Shape bounding rectangle relative to affineTransform<br>
-     *         Handle points bounding rectangles are also included, knowing they have invariant size according to
-     *         current view.<br>
-     *         Any other invariant sized shape bounding rectangles are included if shape is instanceof AdvancedShape
-     */
-    Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
+  /**
+   * @return Shape bounding rectangle relative to affineTransform<br>
+   *     Handle points bounding rectangles are also included, knowing they have invariant size
+   *     according to current view.<br>
+   *     Any other invariant sized shape bounding rectangles are included if shape is instanceof
+   *     AdvancedShape
+   */
+  Rectangle getTransformedBounds(Shape shape, AffineTransform transform);
 
-    /**
-     * Returns the line thickness value (default value: <b>1</b>).
-     *
-     * @return The line thickness value
-     */
-    Float getLineThickness();
+  /**
+   * Returns the line thickness value (default value: <b>1</b>).
+   *
+   * @return The line thickness value
+   */
+  Float getLineThickness();
 
-    /**
-     * Returns a build Stroke object regarding the line thickness value.
-     *
-     * @param lineThickness
-     *            Line thickness
-     * @return New Stroke object with defined thickness
-     */
-    Stroke getStroke(Float lineThickness);
+  /**
+   * Returns a build Stroke object regarding the line thickness value.
+   *
+   * @param lineThickness Line thickness
+   * @return New Stroke object with defined thickness
+   */
+  Stroke getStroke(Float lineThickness);
 
-    /**
-     * Returns graphic's color (Default value: <b>Color.YELLOW</b>)
-     *
-     * @return Graphic's color
-     */
-    Paint getColorPaint();
+  /**
+   * Returns graphic's color (Default value: <b>Color.YELLOW</b>)
+   *
+   * @return Graphic's color
+   */
+  Paint getColorPaint();
 
-    /**
-     * Returns <b>TRUE</b> if the graphic is filled, <b>FALSE</b> otherwise (Default value: <b>FALSE</b>)
-     *
-     * @return <b>TRUE</b> or <b>FALSE</b>
-     */
-    Boolean getFilled();
+  /**
+   * Returns <b>TRUE</b> if the graphic is filled, <b>FALSE</b> otherwise (Default value:
+   * <b>FALSE</b>)
+   *
+   * @return <b>TRUE</b> or <b>FALSE</b>
+   */
+  Boolean getFilled();
 
-    /**
-     * Returns the Handle size (Default value: <b>6</b>)
-     *
-     * @return The Handle size
-     */
-    Integer getHandleSize();
+  /**
+   * Returns the Handle size (Default value: <b>6</b>)
+   *
+   * @return The Handle size
+   */
+  Integer getHandleSize();
 
-    Graphic deepCopy();
+  Graphic deepCopy();
 
-    void buildShape();
+  void buildShape();
 
-    Area getArea(AffineTransform transform);
+  Area getArea(AffineTransform transform);
 
-    void setLabel(String[] label, ViewCanvas<?> view2d);
+  void setLabel(String[] label, ViewCanvas<?> view2d);
 
-    void setSelected(Boolean flag);
+  void setSelected(Boolean flag);
 
-    Boolean getSelected();
+  Boolean getSelected();
 
-    void paint(Graphics2D g2, AffineTransform transform);
+  void paint(Graphics2D g2, AffineTransform transform);
 
-    void paintLabel(Graphics2D g2, AffineTransform transform);
+  void paintLabel(Graphics2D g2, AffineTransform transform);
 
-    void updateLabel(Object source, ViewCanvas<?> view2d);
+  void updateLabel(Object source, ViewCanvas<?> view2d);
 
-    Rectangle getRepaintBounds(AffineTransform transform);
+  Rectangle getRepaintBounds(AffineTransform transform);
 
-    GraphicLabel getGraphicLabel();
+  GraphicLabel getGraphicLabel();
 
-    Boolean getLabelVisible();
+  Boolean getLabelVisible();
 
-    ViewCanvas getDefaultView2d(MouseEvent mouseEvent);
+  ViewCanvas getDefaultView2d(MouseEvent mouseEvent);
 
-    Boolean intersects(Rectangle rectangle, AffineTransform transform);
+  Boolean intersects(Rectangle rectangle, AffineTransform transform);
 
-    void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
+  void addPropertyChangeListener(PropertyChangeListener propertychangelistener);
 
-    void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
+  void removePropertyChangeListener(PropertyChangeListener propertychangelistener);
 
-    void fireRemoveAction();
+  void fireRemoveAction();
 
-    void toFront();
+  void toFront();
 
-    void toBack();
+  void toBack();
 
-    boolean isShapeValid();
+  boolean isShapeValid();
 
-    /**
-     * @return False if last dragging point equals the previous one
-     */
-    default Boolean isLastPointValid() {
-        List<Point2D.Double> pts = getPts();
-        int size = pts.size();
-        Point2D lastPt = size > 0 ? pts.get(size - 1) : null;
-        Point2D previousPt = size > 1 ? pts.get(size - 2) : null;
+  /** @return False if last dragging point equals the previous one */
+  default Boolean isLastPointValid() {
+    List<Point2D.Double> pts = getPts();
+    int size = pts.size();
+    Point2D lastPt = size > 0 ? pts.get(size - 1) : null;
+    Point2D previousPt = size > 1 ? pts.get(size - 2) : null;
 
-        return lastPt == null || !lastPt.equals(previousPt);
-    }
+    return lastPt == null || !lastPt.equals(previousPt);
+  }
 
-    Shape getShape();
+  Shape getShape();
 
-    Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
+  Rectangle getTransformedBounds(GraphicLabel label, AffineTransform transform);
 
-    void moveLabel(Double deltaX, Double deltaY);
+  void moveLabel(Double deltaX, Double deltaY);
 
-    Boolean isGraphicComplete();
+  Boolean isGraphicComplete();
 
-    List<Point2D.Double> getPts();
+  List<Point2D.Double> getPts();
 
-    Integer getPtsNumber();
+  Integer getPtsNumber();
 
-    boolean isOnGraphicLabel(MouseEventDouble mouseEvent);
+  boolean isOnGraphicLabel(MouseEventDouble mouseEvent);
 
-    int getHandlePointIndex(MouseEventDouble mouseEvent);
+  int getHandlePointIndex(MouseEventDouble mouseEvent);
 
-    Rectangle getRepaintBounds(MouseEvent mouseEvent);
+  Rectangle getRepaintBounds(MouseEvent mouseEvent);
 
-    Area getArea(MouseEvent mouseEvent);
+  Area getArea(MouseEvent mouseEvent);
 
-    void fireRemoveAndRepaintAction();
+  void fireRemoveAndRepaintAction();
 
-    void setLineThickness(Float lineThickness);
+  void setLineThickness(Float lineThickness);
 
-    void setPaint(Color newPaintColor);
+  void setPaint(Color newPaintColor);
 
-    void setPointNumber(Integer pointNumber);
+  void setPointNumber(Integer pointNumber);
 
-    /**
-     * Set the list of points. Do not use this method when building a graphic programmatically, use
-     * buildGraphic(List<Point2D.Double> pts) instead.
-     *
-     * @param pts
-     */
-    void setPts(List<Point2D.Double> pts);
+  /**
+   * Set the list of points. Do not use this method when building a graphic programmatically, use
+   * buildGraphic(List<Point2D.Double> pts) instead.
+   *
+   * @param pts
+   */
+  void setPts(List<Point2D.Double> pts);
 
-    void setLabelVisible(Boolean labelVisible);
+  void setLabelVisible(Boolean labelVisible);
 
-    void setFilled(Boolean filled);
+  void setFilled(Boolean filled);
 
-    void setShape(Shape newShape, MouseEvent mouseEvent);
+  void setShape(Shape newShape, MouseEvent mouseEvent);
 
-    Boolean getVariablePointsNumber();
+  Boolean getVariablePointsNumber();
 
-    void setVariablePointsNumber(Boolean variablePointsNumber);
+  void setVariablePointsNumber(Boolean variablePointsNumber);
 
-    LayerType getLayerType();
+  LayerType getLayerType();
 
-    void removeAllPropertyChangeListener();
+  void removeAllPropertyChangeListener();
 
-    void setLayer(GraphicLayer layer);
+  void setLayer(GraphicLayer layer);
 
-    GraphicLayer getLayer();
+  GraphicLayer getLayer();
 
-    /**
-     * This is the method for building a new graphic with a list of points. This method is an adapter as the constructor
-     * must have no parameter for serialization.
-     *
-     * @param pts
-     * @return
-     * @throws InvalidShapeException
-     */
-    Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException;
+  /**
+   * This is the method for building a new graphic with a list of points. This method is an adapter
+   * as the constructor must have no parameter for serialization.
+   *
+   * @param pts
+   * @return
+   * @throws InvalidShapeException
+   */
+  Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException;
 
-    void setLayerType(LayerType layerType);
+  void setLayerType(LayerType layerType);
 
-    void setClassID(Integer classID);
+  void setClassID(Integer classID);
 
-    Integer getClassID();
+  Integer getClassID();
 
-    void setLabel(GraphicLabel label);
+  void setLabel(GraphicLabel label);
 }

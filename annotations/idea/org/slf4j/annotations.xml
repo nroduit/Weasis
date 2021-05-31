@@ -1,0 +1,68 @@
+<root>
+  <item name='org.slf4j.Logger void debug(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Object, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Object...)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void debug(java.lang.String, java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void error(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void error(java.lang.String, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void error(java.lang.String, java.lang.Object, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void error(java.lang.String, java.lang.Object...)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void error(java.lang.String, java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void info(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object...)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void trace(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void trace(java.lang.String, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void warn(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void warn(java.lang.String, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void warn(java.lang.String, java.lang.Object, java.lang.Object)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void warn(java.lang.String, java.lang.Object...)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.slf4j.Logger void warn(java.lang.String, java.lang.Throwable)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

@@ -1,126 +1,125 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.dicom.codec.macro;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 
 public class ReferencedRequest extends Module {
-    public ReferencedRequest(Attributes dcmItems) {
-        super(dcmItems);
+  public ReferencedRequest(Attributes dcmItems) {
+    super(dcmItems);
+  }
+
+  public ReferencedRequest() {
+    super(new Attributes());
+  }
+
+  public static Collection<ReferencedRequest> toReferencedRequestMacros(Sequence seq) {
+    if (seq == null || seq.isEmpty()) {
+      return Collections.emptyList();
     }
 
-    public ReferencedRequest() {
-        super(new Attributes());
+    ArrayList<ReferencedRequest> list = new ArrayList<>(seq.size());
+
+    for (Attributes attr : seq) {
+      list.add(new ReferencedRequest(attr));
     }
 
-    public static Collection<ReferencedRequest> toReferencedRequestMacros(Sequence seq) {
-        if (seq == null || seq.isEmpty()) {
-            return Collections.emptyList();
-        }
+    return list;
+  }
 
-        ArrayList<ReferencedRequest> list = new ArrayList<>(seq.size());
+  public String getStudyInstanceUID() {
+    return dcmItems.getString(Tag.StudyInstanceUID);
+  }
 
-        for (Attributes attr : seq) {
-            list.add(new ReferencedRequest(attr));
-        }
+  public void setStudyInstanceUID(String s) {
+    dcmItems.setString(Tag.StudyInstanceUID, VR.UI, s);
+  }
 
-        return list;
-    }
+  public SOPInstanceReference getReferencedStudySOPInstance() {
+    Attributes item = dcmItems.getNestedDataset(Tag.ReferencedStudySequence);
+    return item != null ? new SOPInstanceReference(item) : null;
+  }
 
-    public String getStudyInstanceUID() {
-        return dcmItems.getString(Tag.StudyInstanceUID);
-    }
+  public void setReferencedStudySOPInstance(SOPInstanceReference refSOP) {
+    updateSequence(Tag.ReferencedStudySequence, refSOP);
+  }
 
-    public void setStudyInstanceUID(String s) {
-        dcmItems.setString(Tag.StudyInstanceUID, VR.UI, s);
-    }
+  public String getAccessionNumber() {
+    return dcmItems.getString(Tag.AccessionNumber);
+  }
 
-    public SOPInstanceReference getReferencedStudySOPInstance() {
-        Attributes item = dcmItems.getNestedDataset(Tag.ReferencedStudySequence);
-        return item != null ? new SOPInstanceReference(item) : null;
-    }
+  public void setAccessionNumber(String s) {
+    dcmItems.setString(Tag.AccessionNumber, VR.SH, s);
+  }
 
-    public void setReferencedStudySOPInstance(SOPInstanceReference refSOP) {
-        updateSequence(Tag.ReferencedStudySequence, refSOP);
-    }
+  public String getPlacerOrderNumberImagingServiceRequest() {
+    return dcmItems.getString(Tag.PlacerOrderNumberImagingServiceRequest);
+  }
 
-    public String getAccessionNumber() {
-        return dcmItems.getString(Tag.AccessionNumber);
-    }
+  public void setPlacerOrderNumberImagingServiceRequest(String s) {
+    dcmItems.setString(Tag.PlacerOrderNumberImagingServiceRequest, VR.LO, s);
+  }
 
-    public void setAccessionNumber(String s) {
-        dcmItems.setString(Tag.AccessionNumber, VR.SH, s);
-    }
+  public String getFillerOrderNumberImagingServiceRequest() {
+    return dcmItems.getString(Tag.FillerOrderNumberImagingServiceRequest);
+  }
 
-    public String getPlacerOrderNumberImagingServiceRequest() {
-        return dcmItems.getString(Tag.PlacerOrderNumberImagingServiceRequest);
-    }
+  public void setFillerOrderNumberImagingServiceRequest(String s) {
+    dcmItems.setString(Tag.FillerOrderNumberImagingServiceRequest, VR.LO, s);
+  }
 
-    public void setPlacerOrderNumberImagingServiceRequest(String s) {
-        dcmItems.setString(Tag.PlacerOrderNumberImagingServiceRequest, VR.LO, s);
-    }
+  public String getRequestedProcedureID() {
+    return dcmItems.getString(Tag.RequestedProcedureID);
+  }
 
-    public String getFillerOrderNumberImagingServiceRequest() {
-        return dcmItems.getString(Tag.FillerOrderNumberImagingServiceRequest);
-    }
+  public void setRequestedProcedureID(String s) {
+    dcmItems.setString(Tag.RequestedProcedureID, VR.SH, s);
+  }
 
-    public void setFillerOrderNumberImagingServiceRequest(String s) {
-        dcmItems.setString(Tag.FillerOrderNumberImagingServiceRequest, VR.LO, s);
-    }
+  public String getRequestedProcedureDescription() {
+    return dcmItems.getString(Tag.RequestedProcedureDescription);
+  }
 
-    public String getRequestedProcedureID() {
-        return dcmItems.getString(Tag.RequestedProcedureID);
-    }
+  public void setRequestedProcedureDescription(String s) {
+    dcmItems.setString(Tag.RequestedProcedureDescription, VR.LO, s);
+  }
 
-    public void setRequestedProcedureID(String s) {
-        dcmItems.setString(Tag.RequestedProcedureID, VR.SH, s);
-    }
+  public Code getRequestedProcedureCode() {
+    Attributes item = dcmItems.getNestedDataset(Tag.RequestedProcedureCodeSequence);
+    return item != null ? new Code(item) : null;
+  }
 
-    public String getRequestedProcedureDescription() {
-        return dcmItems.getString(Tag.RequestedProcedureDescription);
-    }
+  public void setRequestedProcedureCode(Code code) {
+    updateSequence(Tag.RequestedProcedureCodeSequence, code);
+  }
 
-    public void setRequestedProcedureDescription(String s) {
-        dcmItems.setString(Tag.RequestedProcedureDescription, VR.LO, s);
-    }
+  public String getReasonForTheRequestedProcedure() {
+    return dcmItems.getString(Tag.ReasonForTheRequestedProcedure);
+  }
 
-    public Code getRequestedProcedureCode() {
-        Attributes item = dcmItems.getNestedDataset(Tag.RequestedProcedureCodeSequence);
-        return item != null ? new Code(item) : null;
-    }
+  public void setReasonForTheRequestedProcedure(String s) {
+    dcmItems.setString(Tag.ReasonForTheRequestedProcedure, VR.LO, s);
+  }
 
-    public void setRequestedProcedureCode(Code code) {
-        updateSequence(Tag.RequestedProcedureCodeSequence, code);
-    }
+  public Code getReasonForRequestedProcedureCode() {
+    Attributes item = dcmItems.getNestedDataset(Tag.ReasonForRequestedProcedureCodeSequence);
+    return item != null ? new Code(item) : null;
+  }
 
-    public String getReasonForTheRequestedProcedure() {
-        return dcmItems.getString(Tag.ReasonForTheRequestedProcedure);
-    }
-
-    public void setReasonForTheRequestedProcedure(String s) {
-        dcmItems.setString(Tag.ReasonForTheRequestedProcedure, VR.LO, s);
-    }
-
-    public Code getReasonForRequestedProcedureCode() {
-        Attributes item = dcmItems.getNestedDataset(Tag.ReasonForRequestedProcedureCodeSequence);
-        return item != null ? new Code(item) : null;
-    }
-
-    public void setReasonForRequestedProcedureCode(Code code) {
-        updateSequence(Tag.ReasonForRequestedProcedureCodeSequence, code);
-    }
+  public void setReasonForRequestedProcedureCode(Code code) {
+    updateSequence(Tag.ReasonForRequestedProcedureCodeSequence, code);
+  }
 }

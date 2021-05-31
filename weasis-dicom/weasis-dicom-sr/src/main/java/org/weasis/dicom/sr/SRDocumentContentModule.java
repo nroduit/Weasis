@@ -1,16 +1,15 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.dicom.sr;
 
 import java.util.Date;
-
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
@@ -20,74 +19,73 @@ import org.weasis.dicom.codec.macro.SOPInstanceReference;
 
 public class SRDocumentContentModule extends Module {
 
-    public SRDocumentContentModule(Attributes dcmItems) {
-        super(dcmItems);
-    }
+  public SRDocumentContentModule(Attributes dcmItems) {
+    super(dcmItems);
+  }
 
-    public Code getNestedCode(int tag) {
-        Attributes item = dcmItems.getNestedDataset(tag);
-        return item != null ? new Code(item) : null;
-    }
+  public Code getNestedCode(int tag) {
+    Attributes item = dcmItems.getNestedDataset(tag);
+    return item != null ? new Code(item) : null;
+  }
 
-    public String getValueType() {
-        return dcmItems.getString(Tag.ValueType);
-    }
+  public String getValueType() {
+    return dcmItems.getString(Tag.ValueType);
+  }
 
-    public Code getConceptNameCode() {
-        return getNestedCode(Tag.ConceptNameCodeSequence);
-    }
+  public Code getConceptNameCode() {
+    return getNestedCode(Tag.ConceptNameCodeSequence);
+  }
 
-    public Date getDateTime() {
-        return dcmItems.getDate(Tag.DateTime);
-    }
+  public Date getDateTime() {
+    return dcmItems.getDate(Tag.DateTime);
+  }
 
-    public Date getDate() {
-        return dcmItems.getDate(Tag.Date);
-    }
+  public Date getDate() {
+    return dcmItems.getDate(Tag.Date);
+  }
 
-    public Date getTime() {
-        return dcmItems.getDate(Tag.Time);
-    }
+  public Date getTime() {
+    return dcmItems.getDate(Tag.Time);
+  }
 
-    public String getPersonName() {
-        return dcmItems.getString(Tag.PersonName);
-    }
+  public String getPersonName() {
+    return dcmItems.getString(Tag.PersonName);
+  }
 
-    public String getUID() {
-        return dcmItems.getString(Tag.UID);
-    }
+  public String getUID() {
+    return dcmItems.getString(Tag.UID);
+  }
 
-    public String getTextValue() {
-        return dcmItems.getString(Tag.TextValue);
-    }
+  public String getTextValue() {
+    return dcmItems.getString(Tag.TextValue);
+  }
 
-    public Attributes getMeasuredValue() {
-        return dcmItems.getNestedDataset(Tag.MeasuredValueSequence);
-    }
+  public Attributes getMeasuredValue() {
+    return dcmItems.getNestedDataset(Tag.MeasuredValueSequence);
+  }
 
-    public Code getNumericValueQualifierCode() {
-        return getNestedCode(Tag.NumericValueQualifierCodeSequence);
-    }
+  public Code getNumericValueQualifierCode() {
+    return getNestedCode(Tag.NumericValueQualifierCodeSequence);
+  }
 
-    public Code getConceptCode() {
-        return getNestedCode(Tag.ConceptCodeSequence);
-    }
+  public Code getConceptCode() {
+    return getNestedCode(Tag.ConceptCodeSequence);
+  }
 
-    public SOPInstanceReference getReferencedSOPInstance() {
-        Attributes item = dcmItems.getNestedDataset(Tag.ConceptCodeSequence);
-        return item != null ? new SOPInstanceReference(item) : null;
-    }
+  public SOPInstanceReference getReferencedSOPInstance() {
+    Attributes item = dcmItems.getNestedDataset(Tag.ConceptCodeSequence);
+    return item != null ? new SOPInstanceReference(item) : null;
+  }
 
-    public Sequence getContent() {
-        return dcmItems.getSequence(Tag.ContentSequence);
-    }
+  public Sequence getContent() {
+    return dcmItems.getSequence(Tag.ContentSequence);
+  }
 
-    public String getContinuityOfContent() {
-        return dcmItems.getString(Tag.ContinuityOfContent);
-    }
+  public String getContinuityOfContent() {
+    return dcmItems.getString(Tag.ContinuityOfContent);
+  }
 
-    public Date getObservationDateTime() {
-        return dcmItems.getDate(Tag.ObservationDateTime);
-    }
-
+  public Date getObservationDateTime() {
+    return dcmItems.getDate(Tag.ObservationDateTime);
+  }
 }

@@ -1,14 +1,15 @@
-[![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0) [![Build Status](https://travis-ci.com/nroduit/Weasis.svg?branch=master)](https://travis-ci.com/nroduit/Weasis)   
-[![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=ncloc)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=security_rating)](https://sonarcloud.io/component_measures?id=org.weasis%3Aweasis-framework) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=org.weasis%3Aweasis-framework&metric=alert_status)](https://sonarcloud.io/dashboard?id=org.weasis%3Aweasis-framework)    
+[![License](https://img.shields.io/badge/License-EPL%202.0-blue.svg)](https://opensource.org/licenses/EPL-2.0) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)   ![Maven Build](https://github.com/nroduit/weasis/workflows/Build/badge.svg)  
+[![Sonar](https://sonarcloud.io/api/project_badges/measure?project=weasis&metric=ncloc)](https://sonarcloud.io/component_measures?id=weasis) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=weasis&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=weasis) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=weasis&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=weasis) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=weasis&metric=security_rating)](https://sonarcloud.io/component_measures?id=weasis) [![Sonar](https://sonarcloud.io/api/project_badges/measure?project=weasis&metric=alert_status)](https://sonarcloud.io/dashboard?id=weasis)   
 
 Weasis is a free medical DICOM viewer used in healthcare by hospitals, health networks, multicenter research trials, and patients.
 
 ![Weasis](weasis-distributions/resources/images/about.png)
 
 * [General information](https://nroduit.github.io)
-* [Live Demo with different datasets](https://nroduit.github.io/en/demo)
 * [Download binary releases](https://nroduit.github.io/en/getting-started)
+* [Live Demo with different datasets](https://nroduit.github.io/en/demo)
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
+* [Google group](https://groups.google.com/forum/#!forum/dcm4che)
 
 # Build Weasis
 

@@ -1,12 +1,12 @@
-/*******************************************************************************
- * Copyright (c) 2009-2020 Nicolas Roduit and other contributors.
+/*
+ * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
- * This program and the accompanying materials are made available under the
- * terms of the Eclipse Public License 2.0 which is available at
- * http://www.eclipse.org/legal/epl-2.0.
+ * This program and the accompanying materials are made available under the terms of the Eclipse
+ * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
- * SPDX-License-Identifier: EPL-2.0
- *******************************************************************************/
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+ */
 package org.weasis.base.viewer2d;
 
 import java.awt.Component;
@@ -17,13 +17,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -47,188 +45,197 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.DefaultAction;
 
-@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class, immediate = false)
+@org.osgi.service.component.annotations.Component(
+    service = SeriesViewerFactory.class,
+    immediate = false)
 public class ViewerFactory implements SeriesViewerFactory {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
 
-    public static final String NAME = Messages.getString("ViewerFactory.img_viewer"); //$NON-NLS-1$
+  public static final String NAME = Messages.getString("ViewerFactory.img_viewer");
 
-    private static final DefaultAction preferencesAction = new DefaultAction(Messages.getString("OpenImageAction.img"), //$NON-NLS-1$
-        new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")), //$NON-NLS-1$
-        ViewerFactory::getOpenImageAction);
+  private static final DefaultAction preferencesAction =
+      new DefaultAction(
+          Messages.getString("OpenImageAction.img"),
+          new ImageIcon(SeriesViewerFactory.class.getResource("/icon/16x16/img-import.png")),
+          ViewerFactory::getOpenImageAction);
 
-    public ViewerFactory() {
-        super();
-    }
+  public ViewerFactory() {
+    super();
+  }
 
-    @Override
-    public Icon getIcon() {
-        return MimeInspector.imageIcon;
-    }
+  @Override
+  public Icon getIcon() {
+    return MimeInspector.imageIcon;
+  }
 
-    @Override
-    public String getUIName() {
-        return NAME;
-    }
+  @Override
+  public String getUIName() {
+    return NAME;
+  }
 
-    @Override
-    public String getDescription() {
-        return NAME;
-    }
+  @Override
+  public String getDescription() {
+    return NAME;
+  }
 
-    @Override
-    public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-        GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
-        String uid = null;
-        if (properties != null) {
-            Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-            if (obj instanceof GridBagLayoutModel) {
-                model = (GridBagLayoutModel) obj;
-            } else {
-                obj = properties.get(ViewCanvas.class.getName());
-                if (obj instanceof Integer) {
-                    ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
-                    if (layout instanceof ComboItemListener) {
-                        Object[] list = ((ComboItemListener) layout).getAllItem();
-                        for (Object m : list) {
-                            if (m instanceof GridBagLayoutModel) {
-                                if (getViewTypeNumber((GridBagLayoutModel) m, ViewCanvas.class) >= (Integer) obj) {
-                                    model = (GridBagLayoutModel) m;
-                                    break;
-                                }
-                            }
-                        }
-                    }
+  @Override
+  public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
+    GridBagLayoutModel model = ImageViewerPlugin.VIEWS_1x1;
+    String uid = null;
+    if (properties != null) {
+      Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
+      if (obj instanceof GridBagLayoutModel) {
+        model = (GridBagLayoutModel) obj;
+      } else {
+        obj = properties.get(ViewCanvas.class.getName());
+        if (obj instanceof Integer) {
+          ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
+          if (layout instanceof ComboItemListener) {
+            Object[] list = ((ComboItemListener) layout).getAllItem();
+            for (Object m : list) {
+              if (m instanceof GridBagLayoutModel) {
+                if (getViewTypeNumber((GridBagLayoutModel) m, ViewCanvas.class) >= (Integer) obj) {
+                  model = (GridBagLayoutModel) m;
+                  break;
                 }
+              }
             }
-            // Set UID
-            Object val = properties.get(ViewerPluginBuilder.UID);
-            if (val instanceof String) {
-                uid = (String) val;
-            }
+          }
         }
-        View2dContainer instance = new View2dContainer(model, uid);
-        if (properties != null) {
-            Object obj = properties.get(DataExplorerModel.class.getName());
-            if (obj instanceof DataExplorerModel) {
-                // Register the PropertyChangeListener
-                DataExplorerModel m = (DataExplorerModel) obj;
-                m.addPropertyChangeListener(instance);
-            }
-        }
-
-        return instance;
+      }
+      // Set UID
+      Object val = properties.get(ViewerPluginBuilder.UID);
+      if (val instanceof String) {
+        uid = (String) val;
+      }
+    }
+    View2dContainer instance = new View2dContainer(model, uid);
+    if (properties != null) {
+      Object obj = properties.get(DataExplorerModel.class.getName());
+      if (obj instanceof DataExplorerModel) {
+        // Register the PropertyChangeListener
+        DataExplorerModel m = (DataExplorerModel) obj;
+        m.addPropertyChangeListener(instance);
+      }
     }
 
-    public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
-        int val = 0;
-        if (layout != null && defaultClass != null) {
-            Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
-            while (enumVal.hasNext()) {
-                try {
-                    Class<?> clazz = Class.forName(enumVal.next().getType());
-                    if (defaultClass.isAssignableFrom(clazz)) {
-                        val++;
-                    }
-                } catch (Exception e) {
-                    LOGGER.error("Checking view type", e); //$NON-NLS-1$
+    return instance;
+  }
+
+  public static int getViewTypeNumber(GridBagLayoutModel layout, Class<?> defaultClass) {
+    int val = 0;
+    if (layout != null && defaultClass != null) {
+      Iterator<LayoutConstraints> enumVal = layout.getConstraints().keySet().iterator();
+      while (enumVal.hasNext()) {
+        try {
+          Class<?> clazz = Class.forName(enumVal.next().getType());
+          if (defaultClass.isAssignableFrom(clazz)) {
+            val++;
+          }
+        } catch (Exception e) {
+          LOGGER.error("Checking view type", e);
+        }
+      }
+    }
+    return val;
+  }
+
+  public static void closeSeriesViewer(View2dContainer view2dContainer) {
+    // Unregister the PropertyChangeListener
+    ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(view2dContainer);
+  }
+
+  @Override
+  public boolean canReadMimeType(String mimeType) {
+    if (mimeType != null && mimeType.startsWith("image/")) { // NON-NLS
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
+    if (viewer instanceof View2dContainer) {
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public int getLevel() {
+    return 5;
+  }
+
+  @Override
+  public List<Action> getOpenActions() {
+    if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) {
+      return Collections.emptyList();
+    }
+    return Arrays.asList(preferencesAction);
+  }
+
+  @Override
+  public boolean canAddSeries() {
+    return true;
+  }
+
+  @Override
+  public boolean canExternalizeSeries() {
+    return true;
+  }
+
+  static void getOpenImageAction(ActionEvent e) {
+    String directory =
+        BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", ""); // NON-NLS
+    JFileChooser fileChooser = new JFileChooser(directory);
+
+    fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+    fileChooser.setMultiSelectionEnabled(true);
+
+    FileFormatFilter.setImageDecodeFilters(fileChooser);
+    File[] selectedFiles;
+    if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
+        || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
+      return;
+    } else {
+      MediaSeries<MediaElement> series = null;
+      for (File file : selectedFiles) {
+        String mimeType = MimeInspector.getMimeType(file);
+        if (mimeType != null && mimeType.startsWith("image")) {
+          Codec codec = BundleTools.getCodec(mimeType, null);
+          if (codec != null) {
+            MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
+            if (reader != null) {
+              if (series == null) {
+                // TODO improve group model for image, uid for group ?
+                series = reader.getMediaSeries();
+              } else {
+                MediaElement[] elements = reader.getMediaElement();
+                if (elements != null) {
+                  for (MediaElement media : elements) {
+                    series.addMedia(media);
+                  }
                 }
+              }
             }
+          }
         }
-        return val;
+      }
+
+      if (series != null && series.size(null) > 0) {
+        ViewerPluginBuilder.openSequenceInDefaultPlugin(
+            series, ViewerPluginBuilder.DefaultDataModel, true, false);
+      } else {
+        Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+        JOptionPane.showMessageDialog(
+            c,
+            Messages.getString("OpenImageAction.error_open_msg"),
+            Messages.getString("OpenImageAction.open_img"),
+            JOptionPane.WARNING_MESSAGE);
+      }
+      BundleTools.LOCAL_UI_PERSISTENCE.setProperty(
+          "last.open.image.dir", selectedFiles[0].getParent());
     }
-
-    public static void closeSeriesViewer(View2dContainer view2dContainer) {
-        // Unregister the PropertyChangeListener
-        ViewerPluginBuilder.DefaultDataModel.removePropertyChangeListener(view2dContainer);
-    }
-
-    @Override
-    public boolean canReadMimeType(String mimeType) {
-        if (mimeType != null && mimeType.startsWith("image/")) { //$NON-NLS-1$
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-        if (viewer instanceof View2dContainer) {
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public int getLevel() {
-        return 5;
-    }
-
-    @Override
-    public List<Action> getOpenActions() {
-        if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) { //$NON-NLS-1$
-            return Collections.emptyList();
-        }
-        return Arrays.asList(preferencesAction);
-    }
-
-    @Override
-    public boolean canAddSeries() {
-        return true;
-    }
-
-    @Override
-    public boolean canExternalizeSeries() {
-        return true;
-    }
-
-    static void getOpenImageAction(ActionEvent e) {
-        String directory = BundleTools.LOCAL_UI_PERSISTENCE.getProperty("last.open.image.dir", "");//$NON-NLS-1$ //$NON-NLS-2$
-        JFileChooser fileChooser = new JFileChooser(directory);
-
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-        fileChooser.setMultiSelectionEnabled(true);
-
-        FileFormatFilter.setImageDecodeFilters(fileChooser);
-        File[] selectedFiles;
-        if (fileChooser.showOpenDialog(UIManager.getApplicationWindow()) != JFileChooser.APPROVE_OPTION
-            || (selectedFiles = fileChooser.getSelectedFiles()) == null) {
-            return;
-        } else {
-            MediaSeries<MediaElement> series = null;
-            for (File file : selectedFiles) {
-                String mimeType = MimeInspector.getMimeType(file);
-                if (mimeType != null && mimeType.startsWith("image")) { //$NON-NLS-1$
-                    Codec codec = BundleTools.getCodec(mimeType, null);
-                    if (codec != null) {
-                        MediaReader reader = codec.getMediaIO(file.toURI(), mimeType, null);
-                        if (reader != null) {
-                            if (series == null) {
-                                // TODO improve group model for image, uid for group ?
-                                series = reader.getMediaSeries();
-                            } else {
-                                MediaElement[] elements = reader.getMediaElement();
-                                if (elements != null) {
-                                    for (MediaElement media : elements) {
-                                        series.addMedia(media);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (series != null && series.size(null) > 0) {
-                ViewerPluginBuilder.openSequenceInDefaultPlugin(series, ViewerPluginBuilder.DefaultDataModel, true,
-                    false);
-            } else {
-                Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
-                JOptionPane.showMessageDialog(c, Messages.getString("OpenImageAction.error_open_msg"), //$NON-NLS-1$
-                    Messages.getString("OpenImageAction.open_img"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
-            }
-            BundleTools.LOCAL_UI_PERSISTENCE.setProperty("last.open.image.dir", selectedFiles[0].getParent()); //$NON-NLS-1$
-        }
-    }
+  }
 }
