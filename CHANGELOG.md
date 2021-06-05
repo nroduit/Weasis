@@ -1,5 +1,23 @@
 # Changelog
 
+## [v3.7.1](https://github.com/nroduit/Weasis/tree/v3.7.1) (2021-06-05)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.7.0...v3.7.1)
+
+**Implemented enhancements:**
+
+- Better management of inconsistent UIDs between the manifest and the file [\#186](https://github.com/nroduit/Weasis/issues/186)
+- Support service account auth for Cloud Healthcare API integration [\#125](https://github.com/nroduit/Weasis/issues/125)
+
+**Fixed bugs:**
+
+- Trailing whitespace in AE title of DICOM node [\#192](https://github.com/nroduit/Weasis/issues/192)
+- Uppercase DCM Files cannot be imported [\#190](https://github.com/nroduit/Weasis/issues/190)
+- GSPS object is not rendered properly [\#181](https://github.com/nroduit/Weasis/issues/181)
+- Weasis 3.7 fails to register the weasis:// protocol on macOS [\#180](https://github.com/nroduit/Weasis/issues/180)
+- Sorting channel issue in ECG [\#178](https://github.com/nroduit/Weasis/issues/178)
+- On Windows the Dicomizer exe launches the viewer  [\#176](https://github.com/nroduit/Weasis/issues/176)
+
 ## [v3.7.0](https://github.com/nroduit/Weasis/tree/v3.7.0) (2021-02-02)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.2...v3.7.0)
