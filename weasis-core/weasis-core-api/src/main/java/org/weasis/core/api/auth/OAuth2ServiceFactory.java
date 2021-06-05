@@ -2,7 +2,7 @@
  * Copyright (c) 2021 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -34,14 +34,14 @@ public class OAuth2ServiceFactory {
       };
   private static final AuthProvider googleProvider =
       new AuthProvider(
-          "Google Cloud Healthcare", //NON-NLS
+          "Google Cloud Healthcare", // NON-NLS
           "https://accounts.google.com/o/oauth2/v2/auth",
           "https://oauth2.googleapis.com/token",
           "https://oauth2.googleapis.com/revoke",
           true);
   public static final DefaultAuthMethod googleAuthTemplate =
       new DefaultAuthMethod(
-          "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1", //NON-NLS
+          "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1", // NON-NLS
           googleProvider,
           new AuthRegistration(
               null,
@@ -49,9 +49,10 @@ public class OAuth2ServiceFactory {
               "https://www.googleapis.com/auth/cloud-healthcare https://www.googleapis.com/auth/cloudplatformprojects.readonly"));
   public static final DefaultAuthMethod keycloackTemplate =
       new DefaultAuthMethod(
-          "68c845fc-93c5-11eb-b2f8-0f5db063091d", //NON-NLS
-          buildKeycloackProvider("Default Keycloack", "http://localhost:8080/", "master"), //NON-NLS
-          new AuthRegistration(null, null, "openid")); //NON-NLS
+          "68c845fc-93c5-11eb-b2f8-0f5db063091d", // NON-NLS
+          buildKeycloackProvider(
+              "Default Keycloack", "http://localhost:8080/", "master"), // NON-NLS
+          new AuthRegistration(null, null, "openid")); // NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
 
@@ -59,12 +60,12 @@ public class OAuth2ServiceFactory {
 
   public static AuthProvider buildKeycloackProvider(String name, String baseUrl, String realm) {
     String baseUrlWithRealm =
-        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim(); //NON-NLS
+        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim(); // NON-NLS
     return new AuthProvider(
         name,
-        baseUrlWithRealm + "/protocol/openid-connect/auth", //NON-NLS
-        baseUrlWithRealm + "/protocol/openid-connect/token", //NON-NLS
-        baseUrlWithRealm + "/protocol/openid-connect/revoke", //NON-NLS
+        baseUrlWithRealm + "/protocol/openid-connect/auth", // NON-NLS
+        baseUrlWithRealm + "/protocol/openid-connect/token", // NON-NLS
+        baseUrlWithRealm + "/protocol/openid-connect/revoke", // NON-NLS
         true);
   }
 

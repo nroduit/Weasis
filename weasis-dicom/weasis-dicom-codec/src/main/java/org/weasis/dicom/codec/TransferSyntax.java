@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -17,8 +17,7 @@ public enum TransferSyntax {
 
   IMPLICIT_VR("1.2.840.10008.1.2", "Implicit VR Endian (default)"), // NON-NLS
 
-  DEFLATE_EXPLICIT_VR_LE(
-      "1.2.840.10008.1.2.1.99", "Deflate Explicit VR Little Endian"), // NON-NLS
+  DEFLATE_EXPLICIT_VR_LE("1.2.840.10008.1.2.1.99", "Deflate Explicit VR Little Endian"), // NON-NLS
 
   EXPLICIT_VR_LE("1.2.840.10008.1.2.1", "Explicit VR Little Endian"), // NON-NLS
 
@@ -44,8 +43,7 @@ public enum TransferSyntax {
 
   JPEG2000("1.2.840.10008.1.2.4.91", "JPEG 2000"), // NON-NLS
 
-  JPEG2000_LOSSLESS_2(
-      "1.2.840.10008.1.2.4.92", "JPEG 2000 Part 2 (Lossless Only)"), // NON-NLS
+  JPEG2000_LOSSLESS_2("1.2.840.10008.1.2.4.92", "JPEG 2000 Part 2 (Lossless Only)"), // NON-NLS
 
   JPEG2000_2("1.2.840.10008.1.2.4.93", "JPEG 2000 Part 2"), // NON-NLS
 

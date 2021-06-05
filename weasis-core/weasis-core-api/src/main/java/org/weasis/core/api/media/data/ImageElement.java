@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -13,7 +13,6 @@ import java.awt.Point;
 import java.awt.image.DataBuffer;
 import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -276,10 +275,7 @@ public class ImageElement extends MediaElement {
     return false;
   }
 
-  /**
-   * Loads the original image. Must load and return the original image.
-   *
-   */
+  /** Loads the original image. Must load and return the original image. */
   protected PlanarImage loadImage() throws Exception {
     return mediaIO.getImageFragment(this);
   }

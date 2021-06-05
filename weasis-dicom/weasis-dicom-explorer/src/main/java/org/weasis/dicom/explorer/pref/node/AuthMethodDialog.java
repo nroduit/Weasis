@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -17,7 +17,6 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
-import java.text.MessageFormat;
 import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -55,7 +54,7 @@ public class AuthMethodDialog extends JDialog {
   private final JTextField authorizationURI = new JTextField(50);
   private final JTextField tokenURI = new JTextField(50);
   private final JTextField revokeTokenURI = new JTextField(50);
-  private final JCheckBox oidc = new JCheckBox("OpenID Connect"); //NON-NLS
+  private final JCheckBox oidc = new JCheckBox("OpenID Connect"); // NON-NLS
   private final JTextField clientID = new JTextField(50);
   private final JTextField clientSecret = new JTextField(50);
   private final JTextField scope = new JTextField(50);
@@ -142,7 +141,12 @@ public class AuthMethodDialog extends JDialog {
             JTextField textFieldRealm = new JTextField();
 
             Object[] inputFields = {
-                Messages.getString("name"), textFieldName, "Base URL", textFieldURL, "Realm", textFieldRealm //NON-NLS
+              Messages.getString("name"),
+              textFieldName,
+              "Base URL",
+              textFieldURL,
+              "Realm",
+              textFieldRealm // NON-NLS
             };
 
             int option =
@@ -174,7 +178,7 @@ public class AuthMethodDialog extends JDialog {
     flowLayout.setHgap(10);
 
     JLabel idlabel = new JLabel();
-    idlabel.setText("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid() );
+    idlabel.setText("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid());
     content.add(idlabel);
     return content;
   }
@@ -187,16 +191,16 @@ public class AuthMethodDialog extends JDialog {
             spaceY,
             new TitledBorder(
                 null,
-                "Provider", //NON-NLS
+                "Provider", // NON-NLS
                 TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION,
                 TITLE_FONT,
                 TITLE_COLOR)));
 
-    buildGridConstraint(content, "Name", name, 0); //NON-NLS
-    buildGridConstraint(content, "Authorization URI", authorizationURI, 1); //NON-NLS
-    buildGridConstraint(content, "Token URI", tokenURI, 2); //NON-NLS
-    buildGridConstraint(content, "Revoke URI", revokeTokenURI, 3); //NON-NLS
+    buildGridConstraint(content, "Name", name, 0); // NON-NLS
+    buildGridConstraint(content, "Authorization URI", authorizationURI, 1); // NON-NLS
+    buildGridConstraint(content, "Token URI", tokenURI, 2); // NON-NLS
+    buildGridConstraint(content, "Revoke URI", revokeTokenURI, 3); // NON-NLS
     GridBagConstraints g = new GridBagConstraints();
     g.anchor = GridBagConstraints.WEST;
     g.insets = new Insets(0, 0, 5, 5);
@@ -229,14 +233,14 @@ public class AuthMethodDialog extends JDialog {
             spaceY,
             new TitledBorder(
                 null,
-                "Registration", //NON-NLS
+                "Registration", // NON-NLS
                 TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION,
                 TITLE_FONT,
                 TITLE_COLOR)));
-    buildGridConstraint(content, "Client ID", clientID, 0); //NON-NLS
-    buildGridConstraint(content, "Client Secret", clientSecret, 1); //NON-NLS
-    buildGridConstraint(content, "Scope", scope, 2); //NON-NLS
+    buildGridConstraint(content, "Client ID", clientID, 0); // NON-NLS
+    buildGridConstraint(content, "Client Secret", clientSecret, 1); // NON-NLS
+    buildGridConstraint(content, "Scope", scope, 2); // NON-NLS
     return content;
   }
 
@@ -268,7 +272,10 @@ public class AuthMethodDialog extends JDialog {
         || !StringUtil.hasText(tURI)
         || !NetworkUtil.urlValidator(tURI)) {
       JOptionPane.showMessageDialog(
-          this, Messages.getString("missing.fields"), Messages.getString("error"), JOptionPane.ERROR_MESSAGE);
+          this,
+          Messages.getString("missing.fields"),
+          Messages.getString("error"),
+          JOptionPane.ERROR_MESSAGE);
       return;
     }
 
