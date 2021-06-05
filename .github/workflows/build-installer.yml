@@ -270,7 +270,7 @@ jobs:
         shell: bash
         if: matrix.wsystem == 'macosx'
         run: |
-          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
+          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
           # create temporary files
           NOTARIZE_APP_LOG=$(mktemp -t notarize-app)
           NOTARIZE_INFO_LOG=$(mktemp -t notarize-info)
