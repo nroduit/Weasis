@@ -105,12 +105,6 @@ fi
 machine=$(echo "${ARC_OS}" | cut -d'-' -f1)
 arc=$(echo "${ARC_OS}" | cut -d'-' -f2)
 
-# Should be removed after weasis-core-img update
-if [[ "$arc" ==  arm* ]] ; then
-  arc=armv7a
-  ARC_OS=$machine-$arc
-fi
-
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
   OUTPUT_PATH_UNIX=$(cygpath -u "$OUTPUT_PATH")
@@ -186,7 +180,7 @@ rm -f "$INPUT_DIR"/*.jar.pack.gz
 # Remove the unrelated native packages
 find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'${ARC_OS}'-*'  -exec rm -f {} \;
 
-# Special case with 32-bit architecture, remove 64-bit lib
+# Special case with 32-bit x86 architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name '*-${machine}-x86-64-*'  -exec rm -f {} \;
 fi
@@ -213,11 +207,7 @@ elif [ "$machine" = "windows" ] ; then
   declare -a signArgs=()
 else
   DICOMIZER_CONFIG="Dicomizer=$RES/dicomizer-launcher.properties"
-  if [[ "$arc" ==  *ar* ]] ; then
-    declare -a customOptions=("--java-options" "-Dos.arch=$arc" "--java-options" "-splash:\$APPDIR/resources/images/about-round.png" --jlink-options "--strip-native-commands --no-man-pages --no-header-files" )
-  else
-    declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
-  fi  
+  declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
   declare -a signArgs=()
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" "--illegal-access=warn" \
@@ -245,10 +235,10 @@ if [ "$PACKAGE" = "YES" ] ; then
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
-    if [[ "$arc" ==  *ar* ]] ; then
-      declare -a installerTypes=("deb")
-    else
+    if [ "$arc" = "x86-64" ] ; then
       declare -a installerTypes=("deb" "rpm")
+    else
+      declare -a installerTypes=("deb")
     fi 
     
     for installerType in ${installerTypes[@]}; do
