@@ -24,3 +24,4 @@ jobs:
           branch: master
           commit_message: "Automatic changelog update"
           file_pattern: "CHANGELOG.md"
+          push_options: --force

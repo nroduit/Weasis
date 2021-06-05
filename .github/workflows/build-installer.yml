@@ -55,6 +55,12 @@ jobs:
           name: weasis-portable-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/portable-dist/weasis-portable.zip
 
+      - name: Upload weasis web distribution
+        uses: actions/upload-artifact@v2
+        with:
+          name: weasis-web-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/web-dist/weasis.war
+
   jpackage:
     env:
       JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
@@ -256,7 +262,7 @@ jobs:
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
             --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
             --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
-            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
+            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
@@ -264,7 +270,7 @@ jobs:
         shell: bash
         if: matrix.wsystem == 'macosx'
         run: |
-          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
+          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg"
           # create temporary files
           NOTARIZE_APP_LOG=$(mktemp -t notarize-app)
           NOTARIZE_INFO_LOG=$(mktemp -t notarize-info)

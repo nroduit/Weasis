@@ -69,7 +69,7 @@
         <plugin>
           <groupId>com.akathist.maven.plugins.launch4j</groupId>
           <artifactId>launch4j-maven-plugin</artifactId>
-          <version>1.7.23</version>
+          <version>2.1.1</version>
           <executions>
             <execution>
               <id>l4j-clui</id>
@@ -460,6 +460,18 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
+                  <artifactId>weasis-opencv-core-linux-armv7a</artifactId>
+                  <version>${weasis.opencv.native.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.opencv</groupId>
+                  <artifactId>weasis-opencv-core-linux-aarch64</artifactId>
+                  <version>${weasis.opencv.native.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -843,6 +855,28 @@
                 </configuration>
               </execution>
             </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>portable.builder.no.exe</id>
+      <activation>
+        <!-- Build portable distribution -->
+        <property>
+          <name>portable-noexe</name>
+          <value>true</value>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
           </plugin>
         </plugins>
       </build>
