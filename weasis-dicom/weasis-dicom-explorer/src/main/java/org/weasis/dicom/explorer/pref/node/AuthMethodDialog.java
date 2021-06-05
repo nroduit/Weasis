@@ -65,7 +65,6 @@ public class AuthMethodDialog extends JDialog {
     this.parentCombobox = parentCombobox;
     comboBoxAuth.addItem(OAuth2ServiceFactory.googleAuthTemplate);
     comboBoxAuth.addItem(OAuth2ServiceFactory.keycloackTemplate);
-    initComponents();
     if (authMethod == null) {
       this.authMethod =
           new DefaultAuthMethod(
@@ -76,6 +75,7 @@ public class AuthMethodDialog extends JDialog {
     } else {
       this.authMethod = authMethod;
     }
+    initComponents();
     fill(this.authMethod);
     pack();
   }
@@ -87,6 +87,7 @@ public class AuthMethodDialog extends JDialog {
 
     rootPane.setLayout(new BoxLayout(rootPane, BoxLayout.Y_AXIS));
     rootPane.add(getHeader());
+    rootPane.add(getHeader2());
     rootPane.add(getProvider());
     rootPane.add(getRegistration());
     rootPane.add(getFooter());
@@ -161,6 +162,19 @@ public class AuthMethodDialog extends JDialog {
           }
           fill(m);
         });
+    return content;
+  }
+
+  public JPanel getHeader2() {
+    final JPanel content = new JPanel();
+    FlowLayout flowLayout = (FlowLayout) content.getLayout();
+    flowLayout.setVgap(0);
+    flowLayout.setAlignment(FlowLayout.LEADING);
+    flowLayout.setHgap(10);
+
+    JLabel idlabel = new JLabel();
+    idlabel.setText("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid() );
+    content.add(idlabel);
     return content;
   }
 

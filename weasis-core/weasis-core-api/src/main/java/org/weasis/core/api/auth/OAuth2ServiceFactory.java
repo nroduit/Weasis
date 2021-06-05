@@ -31,7 +31,6 @@ public class OAuth2ServiceFactory {
           return null;
         }
       };
-  private static final String GOOGLE_HEALTHCARE = "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1"; // NON-NLS
   private static final AuthProvider googleProvider =
       new AuthProvider(
           "Google Cloud Healthcare",
@@ -41,7 +40,7 @@ public class OAuth2ServiceFactory {
           true);
   public static final DefaultAuthMethod googleAuthTemplate =
       new DefaultAuthMethod(
-          GOOGLE_HEALTHCARE,
+          "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1",
           googleProvider,
           new AuthRegistration(
               null,
@@ -52,8 +51,6 @@ public class OAuth2ServiceFactory {
           "68c845fc-93c5-11eb-b2f8-0f5db063091d",
           buildKeycloackProvider("Default Keycloack", "http://localhost:8080/", "master"),
           new AuthRegistration(null, null, "openid"));
-
-  public static final String KHEOPS_DEMO = "3a0bfbec-8fa0-11eb-b3aa-43ea461ff0cb"; // NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
 
