@@ -2,4 +2,7 @@
   <item name='java.lang.Class java.io.InputStream getResourceAsStream(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.lang.String int indexOf(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
 </root>

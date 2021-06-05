@@ -98,11 +98,11 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
         AuthProvider p =
             new AuthProvider(
                 "OIDC",
-                issuer + "/protocol/openid-connect/auth",
-                issuer + "/protocol/openid-connect/token",
-                issuer + "/protocol/openid-connect/revoke",
+                issuer + "/protocol/openid-connect/auth", //NON-NLS
+                issuer + "/protocol/openid-connect/token", //NON-NLS
+                issuer + "/protocol/openid-connect/revoke", //NON-NLS
                 true);
-        AuthRegistration r = new AuthRegistration(null, null, "openid");
+        AuthRegistration r = new AuthRegistration(null, null, "openid"); //NON-NLS
         r.setUser(properties.getProperty(RsQueryParams.P_OIDC_USER));
         method = new DefaultAuthMethod(UUID.randomUUID().toString(), p, r);
       }

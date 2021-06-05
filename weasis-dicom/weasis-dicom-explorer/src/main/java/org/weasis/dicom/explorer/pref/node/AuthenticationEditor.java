@@ -56,7 +56,7 @@ public class AuthenticationEditor extends JDialog {
   private final JComboBox<AuthMethod> comboBox;
 
   public AuthenticationEditor(Window parent, JComboBox<AuthMethod> comboBox) {
-    super(parent, "Authentication Manager", ModalityType.APPLICATION_MODAL);
+    super(parent, Messages.getString("authentication.manager"), ModalityType.APPLICATION_MODAL);
     this.comboBox = comboBox;
     jList1.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jbInit();
@@ -214,14 +214,14 @@ public class AuthenticationEditor extends JDialog {
       modifiy(selItems.get(0));
     } else {
       JOptionPane.showMessageDialog(
-          this, "No item is selected!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+          this, Messages.getString("no.item"), this.getTitle(), JOptionPane.ERROR_MESSAGE);
     }
   }
 
   private boolean isNoComponentSelected() {
     if (selctedModel.isSelectionEmpty()) {
       JOptionPane.showMessageDialog(
-          this, "Only one item must be selected!", this.getTitle(), JOptionPane.ERROR_MESSAGE);
+          this, Messages.getString("only.one.item"), this.getTitle(), JOptionPane.ERROR_MESSAGE);
       return true;
     }
     return false;
@@ -232,7 +232,7 @@ public class AuthenticationEditor extends JDialog {
   }
 
   private void modifiy(AuthMethod input) {
-    AuthMethodDialog dialog = new AuthMethodDialog(this, "Authentication Method", input, comboBox);
+    AuthMethodDialog dialog = new AuthMethodDialog(this, Messages.getString("auth.method"), input, comboBox);
     JMVUtils.showCenterScreen(dialog);
     if (input == null) {
       initializeList();

@@ -17,6 +17,7 @@ import com.github.scribejava.core.model.OAuth2AccessToken;
 import com.github.scribejava.core.oauth.OAuth20Service;
 import java.util.HashMap;
 import java.util.Map;
+import org.weasis.core.api.Messages;
 import org.weasis.core.api.util.SocketUtil;
 
 public class OAuth2ServiceFactory {
@@ -25,7 +26,7 @@ public class OAuth2ServiceFactory {
   public static final DefaultAuthMethod noAuth =
       new DefaultAuthMethod(
           NO,
-          new AuthProvider("No authentication", null, null, null, false),
+          new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
           new AuthRegistration(null, null, null)) {
         public OAuth2AccessToken getToken() {
           return null;
@@ -33,14 +34,14 @@ public class OAuth2ServiceFactory {
       };
   private static final AuthProvider googleProvider =
       new AuthProvider(
-          "Google Cloud Healthcare",
+          "Google Cloud Healthcare", //NON-NLS
           "https://accounts.google.com/o/oauth2/v2/auth",
           "https://oauth2.googleapis.com/token",
           "https://oauth2.googleapis.com/revoke",
           true);
   public static final DefaultAuthMethod googleAuthTemplate =
       new DefaultAuthMethod(
-          "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1",
+          "2c5dc28c-8fa0-11eb-9321-7fffcd64cef1", //NON-NLS
           googleProvider,
           new AuthRegistration(
               null,
@@ -48,9 +49,9 @@ public class OAuth2ServiceFactory {
               "https://www.googleapis.com/auth/cloud-healthcare https://www.googleapis.com/auth/cloudplatformprojects.readonly"));
   public static final DefaultAuthMethod keycloackTemplate =
       new DefaultAuthMethod(
-          "68c845fc-93c5-11eb-b2f8-0f5db063091d",
-          buildKeycloackProvider("Default Keycloack", "http://localhost:8080/", "master"),
-          new AuthRegistration(null, null, "openid"));
+          "68c845fc-93c5-11eb-b2f8-0f5db063091d", //NON-NLS
+          buildKeycloackProvider("Default Keycloack", "http://localhost:8080/", "master"), //NON-NLS
+          new AuthRegistration(null, null, "openid")); //NON-NLS
 
   private static final Map<String, OAuth20Service> services = new HashMap<>();
 
@@ -58,12 +59,12 @@ public class OAuth2ServiceFactory {
 
   public static AuthProvider buildKeycloackProvider(String name, String baseUrl, String realm) {
     String baseUrlWithRealm =
-        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim();
+        baseUrl + (baseUrl.endsWith("/") ? "" : "/") + "auth/realms/" + realm.trim(); //NON-NLS
     return new AuthProvider(
         name,
-        baseUrlWithRealm + "/protocol/openid-connect/auth",
-        baseUrlWithRealm + "/protocol/openid-connect/token",
-        baseUrlWithRealm + "/protocol/openid-connect/revoke",
+        baseUrlWithRealm + "/protocol/openid-connect/auth", //NON-NLS
+        baseUrlWithRealm + "/protocol/openid-connect/token", //NON-NLS
+        baseUrlWithRealm + "/protocol/openid-connect/revoke", //NON-NLS
         true);
   }
 

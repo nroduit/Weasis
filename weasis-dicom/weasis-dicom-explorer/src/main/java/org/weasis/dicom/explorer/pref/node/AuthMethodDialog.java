@@ -17,6 +17,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
+import java.text.MessageFormat;
 import java.util.UUID;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -54,7 +55,7 @@ public class AuthMethodDialog extends JDialog {
   private final JTextField authorizationURI = new JTextField(50);
   private final JTextField tokenURI = new JTextField(50);
   private final JTextField revokeTokenURI = new JTextField(50);
-  private final JCheckBox oidc = new JCheckBox("OpenID Connect");
+  private final JCheckBox oidc = new JCheckBox("OpenID Connect"); //NON-NLS
   private final JTextField clientID = new JTextField(50);
   private final JTextField clientSecret = new JTextField(50);
   private final JTextField scope = new JTextField(50);
@@ -127,10 +128,10 @@ public class AuthMethodDialog extends JDialog {
     flowLayout.setHgap(10);
 
     JLabel headersLabel = new JLabel();
-    headersLabel.setText("Template" + StringUtil.COLON);
+    headersLabel.setText(Messages.getString("template") + StringUtil.COLON);
     content.add(headersLabel);
     content.add(comboBoxAuth);
-    JButton btnfill = new JButton("Fill");
+    JButton btnfill = new JButton(Messages.getString("fill"));
     content.add(btnfill);
     btnfill.addActionListener(
         e -> {
@@ -141,14 +142,14 @@ public class AuthMethodDialog extends JDialog {
             JTextField textFieldRealm = new JTextField();
 
             Object[] inputFields = {
-              "Name", textFieldName, "Base URL", textFieldURL, "Realm", textFieldRealm
+                Messages.getString("name"), textFieldName, "Base URL", textFieldURL, "Realm", textFieldRealm //NON-NLS
             };
 
             int option =
                 JOptionPane.showConfirmDialog(
                     this,
                     inputFields,
-                    "Enter Keycloak Information",
+                    Messages.getString("enter.keycloak.inf"),
                     JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.PLAIN_MESSAGE);
 
@@ -186,16 +187,16 @@ public class AuthMethodDialog extends JDialog {
             spaceY,
             new TitledBorder(
                 null,
-                "Provider",
+                "Provider", //NON-NLS
                 TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION,
                 TITLE_FONT,
                 TITLE_COLOR)));
 
-    buildGridConstraint(content, "Name", name, 0);
-    buildGridConstraint(content, "Authorization URI", authorizationURI, 1);
-    buildGridConstraint(content, "Token URI", tokenURI, 2);
-    buildGridConstraint(content, "Revoke URI", revokeTokenURI, 3);
+    buildGridConstraint(content, "Name", name, 0); //NON-NLS
+    buildGridConstraint(content, "Authorization URI", authorizationURI, 1); //NON-NLS
+    buildGridConstraint(content, "Token URI", tokenURI, 2); //NON-NLS
+    buildGridConstraint(content, "Revoke URI", revokeTokenURI, 3); //NON-NLS
     GridBagConstraints g = new GridBagConstraints();
     g.anchor = GridBagConstraints.WEST;
     g.insets = new Insets(0, 0, 5, 5);
@@ -228,14 +229,14 @@ public class AuthMethodDialog extends JDialog {
             spaceY,
             new TitledBorder(
                 null,
-                "Registration",
+                "Registration", //NON-NLS
                 TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION,
                 TITLE_FONT,
                 TITLE_COLOR)));
-    buildGridConstraint(content, "Client ID", clientID, 0);
-    buildGridConstraint(content, "Client Secret", clientSecret, 1);
-    buildGridConstraint(content, "Scope", scope, 2);
+    buildGridConstraint(content, "Client ID", clientID, 0); //NON-NLS
+    buildGridConstraint(content, "Client Secret", clientSecret, 1); //NON-NLS
+    buildGridConstraint(content, "Scope", scope, 2); //NON-NLS
     return content;
   }
 
@@ -267,7 +268,7 @@ public class AuthMethodDialog extends JDialog {
         || !StringUtil.hasText(tURI)
         || !NetworkUtil.urlValidator(tURI)) {
       JOptionPane.showMessageDialog(
-          this, "Missing mandatory fields or malformed URL", "Error", JOptionPane.ERROR_MESSAGE);
+          this, Messages.getString("missing.fields"), Messages.getString("error"), JOptionPane.ERROR_MESSAGE);
       return;
     }
 

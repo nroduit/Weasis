@@ -136,7 +136,7 @@ public class DicomWebNodeDialog extends JDialog {
     myFormat.setMaximumIntegerDigits(65535);
     myFormat.setMaximumFractionDigits(0);
 
-    JLabel lblAuth = new JLabel("Authentication" + StringUtil.COLON);
+    JLabel lblAuth = new JLabel(Messages.getString("authentication") + StringUtil.COLON);
     GridBagConstraints gbcLblAuth = new GridBagConstraints();
     gbcLblAuth.anchor = GridBagConstraints.EAST;
     gbcLblAuth.insets = new Insets(0, 0, 5, 5);
@@ -152,7 +152,7 @@ public class DicomWebNodeDialog extends JDialog {
     gbcComboBoxAuth.gridx = 1;
     gbcComboBoxAuth.gridy = 3;
     content.add(comboBoxAuth, gbcComboBoxAuth);
-    JButton btnAuth = new JButton("Manager");
+    JButton btnAuth = new JButton(Messages.getString("manager"));
     GridBagConstraints gbcButtonAuth = new GridBagConstraints();
     gbcButtonAuth.anchor = GridBagConstraints.LINE_START;
     gbcButtonAuth.insets = new Insets(0, 0, 5, 5);
@@ -162,7 +162,7 @@ public class DicomWebNodeDialog extends JDialog {
     btnAuth.addActionListener(e -> manageAuth());
 
     JLabel headersLabel = new JLabel();
-    headersLabel.setText("HTTP (Optional)" + StringUtil.COLON);
+    headersLabel.setText(Messages.getString("http.optional") + StringUtil.COLON);
     GridBagConstraints gbchttpitleLabel = new GridBagConstraints();
     gbchttpitleLabel.anchor = GridBagConstraints.EAST;
     gbchttpitleLabel.insets = new Insets(0, 0, 5, 5);
