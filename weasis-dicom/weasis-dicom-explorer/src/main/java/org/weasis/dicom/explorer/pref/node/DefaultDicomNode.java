@@ -66,7 +66,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
     if (aeTitle.length() > 16) {
       throw new IllegalArgumentException("AET has more than 16 characters");
     }
-    this.aeTitle = aeTitle;
+    this.aeTitle = aeTitle.trim();
   }
 
   public String getHostname() {
