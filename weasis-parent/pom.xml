@@ -14,8 +14,8 @@
   <properties>
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
-    <revision>3.7.1</revision>
-    <changelist></changelist>  <!-- Remove "-SNAPSHOT" for release -->
+    <revision>3.7.2</revision>
+    <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>1.8</java-version>
     <jdk-version>11</jdk-version>
