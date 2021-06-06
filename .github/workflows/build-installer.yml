@@ -231,7 +231,7 @@ jobs:
           RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "weasis-distributions/script/file-associations.properties"
           VENDOR: "Weasis Team"
-          COPYRIGHT: "© 2009-2020 Weasis Team"
+          COPYRIGHT: "© 2009-2021 Weasis Team"
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
