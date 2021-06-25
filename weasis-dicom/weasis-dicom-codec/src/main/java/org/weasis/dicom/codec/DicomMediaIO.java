@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec;
 
 import java.awt.image.DataBuffer;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -780,8 +781,8 @@ public class DicomMediaIO implements DcmMediaReader {
   private static Mat getMatBuffer(ExtendSegmentedInputImageStream extParams) throws IOException {
     try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) {
 
-      Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
-      Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
+      long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
+      Mat buf = new Mat(1, (int) cols, CvType.CV_8UC1);
       long[] pos = extParams.getSegmentPositions();
       int offset = 0;
       for (int i = 0; i < pos.length; i++) {
@@ -796,10 +797,23 @@ public class DicomMediaIO implements DcmMediaReader {
     }
   }
 
+  private static Mat getRawData(BulkData bulkData) {
+    try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
+      Mat buf = new Mat(1, bulkData.length(), CvType.CV_8UC1);
+      byte[] b = new byte[bulkData.length()];
+      input.read(b, 0, b.length);
+      buf.put(0, 0, b);
+      return buf;
+    } catch (Exception e) {
+      LOGGER.error("Reading Waveform data");
+    }
+    return new Mat();
+  }
+
   private PlanarImage getUncacheImage(MediaElement media, int frame) throws IOException {
     FileCache cache = media.getFileCache();
-    Optional<File> orinigal = cache.getOriginalFile();
-    if (orinigal.isPresent()) {
+    Optional<File> cacheOriginalFile = cache.getOriginalFile();
+    if (cacheOriginalFile.isPresent()) {
       readMetaData();
       String syntax = tsuid;
       boolean rawData = !compressedData || isRLELossless();
@@ -821,8 +835,7 @@ public class DicomMediaIO implements DcmMediaReader {
                 : Imgcodecs.DICOM_FLAG_UNSIGNED;
 
         // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error
-        // made by some
-        // constructors). RGB color model doesn't make sense for lossy jpeg.
+        // made by some constructors). RGB color model doesn't make sense for lossy jpeg.
         // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
         if (pmi.name().startsWith("YBR")
             || ("RGB".equalsIgnoreCase(pmi.name()) // NON-NLS
@@ -864,7 +877,7 @@ public class DicomMediaIO implements DcmMediaReader {
 
         if (rawData) {
           int bits = bitsStored <= 8 && bitsAllocated > 8 ? 9 : bitsStored; // Fix #94
-          int streamVR = pixeldataVR == null ? 1 : pixeldataVR.vr.numEndianBytes();
+          int streamVR = pixeldataVR.vr.numEndianBytes();
           MatOfInt dicomparams =
               new MatOfInt(
                   Imgcodecs.IMREAD_UNCHANGED,
@@ -876,13 +889,22 @@ public class DicomMediaIO implements DcmMediaReader {
                   bits,
                   banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE,
                   streamVR);
+
+          if (UID.DeflatedExplicitVRLittleEndian.equals(syntax) && pixeldata != null) {
+            return ImageCV.toImageCV(
+                Imgcodecs.dicomRawMatRead(getRawData(pixeldata), dicomparams, pmi.name()));
+          }
           return ImageCV.toImageCV(
               Imgcodecs.dicomRawFileRead(
-                  orinigal.get().getAbsolutePath(), positions, lengths, dicomparams, pmi.name()));
+                  cacheOriginalFile.get().getAbsolutePath(),
+                  positions,
+                  lengths,
+                  dicomparams,
+                  pmi.name()));
         }
         return ImageCV.toImageCV(
             Imgcodecs.dicomJpgFileRead(
-                orinigal.get().getAbsolutePath(),
+                cacheOriginalFile.get().getAbsolutePath(),
                 positions,
                 lengths,
                 dcmFlags,
@@ -1064,7 +1086,7 @@ public class DicomMediaIO implements DcmMediaReader {
 
       offsets = new long[1];
       length = new int[offsets.length];
-      offsets[0] = pixeldata.offset() + frameIndex * frameLength;
+      offsets[0] = pixeldata.offset() + (long) frameIndex * frameLength;
       length[0] = frameLength;
     } else {
       int nbFragments = pixeldataFragments.size();
@@ -1216,7 +1238,7 @@ public class DicomMediaIO implements DcmMediaReader {
       // avoid a copy of pixeldata into temporary file
       dis.setURI(uri.toString());
       Attributes fmi = dis.readFileMetaInformation();
-      Attributes ds = dis.readDataset(-1, -1);
+      Attributes ds = dis.readDataset();
       if (fmi == null) {
         fmi = ds.createFileMetaInformation(dis.getTransferSyntax());
       }

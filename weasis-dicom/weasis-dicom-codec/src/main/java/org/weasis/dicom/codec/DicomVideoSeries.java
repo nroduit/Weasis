@@ -9,9 +9,10 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -70,14 +71,13 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         for (Object data : fragments) {
           if (data instanceof BulkData) {
             BulkData bulkData = (BulkData) data;
-            FileInputStream in = null;
+            InputStream in = null;
             FileOutputStream out = null;
             try {
               File videoFile =
                   File.createTempFile("video_", ".mpg", AppProperties.FILE_CACHE_DIR); // NON-NLS
-              in = new FileInputStream(media.getFile());
+              in = new BufferedInputStream(bulkData.openStream());
               out = new FileOutputStream(videoFile);
-              StreamUtils.skipFully(in, bulkData.offset());
               StreamUtils.copy(in, out, bulkData.length());
               media.setVideoFile(videoFile);
               this.add(media);

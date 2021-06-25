@@ -9,8 +9,8 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -65,13 +65,12 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
       Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
       if (data instanceof BulkData) {
         BulkData bulkData = (BulkData) data;
-        FileInputStream in = null;
+        BufferedInputStream in = null;
         FileOutputStream out = null;
         try {
           File file = File.createTempFile("encap_", extension, AppProperties.FILE_CACHE_DIR);
-          in = new FileInputStream(media.getFile());
+          in = new BufferedInputStream(bulkData.openStream());
           out = new FileOutputStream(file);
-          StreamUtils.skipFully(in, bulkData.offset());
           StreamUtils.copy(in, out, bulkData.length());
           media.setDocument(file);
           this.add(media);

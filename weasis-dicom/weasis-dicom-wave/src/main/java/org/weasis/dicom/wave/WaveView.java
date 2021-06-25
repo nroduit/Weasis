@@ -23,8 +23,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferShort;
 import java.awt.print.PageFormat;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
@@ -282,7 +283,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       this.seconds = sampleNumber / frequency;
       this.samplesPerSecond = (int) (sampleNumber / seconds);
 
-      readWaveformData(media, dcm);
+      readWaveformData(dcm);
       getMinMax(channels);
 
       this.scrollPane = new JScrollPane();
@@ -333,21 +334,20 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     annotationTool.readAnnotations(attributes);
   }
 
-  private void readWaveformData(DicomSpecialElement media, Attributes dcm) throws Exception {
+  private void readWaveformData(Attributes dcm) throws IOException {
     Object wdata = dcm.getValue(Tag.WaveformData);
-    ByteArrayOutputStream array = null;
+    ByteArrayOutputStream array;
     if (wdata instanceof BulkData) {
       BulkData bulkData = (BulkData) wdata;
-      try (FileInputStream in = new FileInputStream(media.getFile())) {
+      try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
         array = new ByteArrayOutputStream(bulkData.length());
-        StreamUtils.skipFully(in, bulkData.offset());
-        StreamUtils.copy(in, array, bulkData.length());
+        StreamUtils.copy(input, array);
       } catch (Exception e) {
         LOGGER.error("Reading Waveform data");
         return;
       }
     } else {
-      throw new Exception("Cannot read Waveform data");
+      throw new IOException("Cannot read Waveform data");
     }
 
     int bitsAllocated =
@@ -371,7 +371,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       DataBufferByte dataBuffer = new DataBufferByte(byteData, byteData.length, 0);
       waveData = new WaveByteData(dataBuffer, channelNumber, sampleNumber);
     } else {
-      throw new Exception("Unexpected bitsAllocated value: " + bitsAllocated);
+      throw new IOException("Unexpected bitsAllocated value: " + bitsAllocated);
     }
   }
 
