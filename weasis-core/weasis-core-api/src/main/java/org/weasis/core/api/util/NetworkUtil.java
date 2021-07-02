@@ -70,7 +70,7 @@ public class NetworkUtil {
 
   public static HttpResponse getHttpResponse(
       String url, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
-    if (authMethod == null) {
+    if (authMethod == null || OAuth2ServiceFactory.noAuth.equals(authMethod)) {
       return prepareConnection(new URL(url).openConnection(), urlParameters);
     }
     return prepareAuthConnection(new OAuthRequest(Verb.GET, url), urlParameters, authMethod);
