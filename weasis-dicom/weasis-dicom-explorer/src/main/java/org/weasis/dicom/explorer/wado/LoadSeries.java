@@ -333,7 +333,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     buf.append(" rate:"); // NON-NLS
     // rate in kB/s or B/ms
     DecimalFormat format = new DecimalFormat("#.##", LocalUtil.getDecimalFormatSymbols());
-    buf.append(val == null ? 0 : format.format(dicomSeries.getFileSize() / time));
+    buf.append(val == null || time == 0 ? 0 : format.format(dicomSeries.getFileSize() / time));
     return buf.toString();
   }
 
