@@ -65,7 +65,9 @@ public class AuthMethodDialog extends JDialog {
     this.parentCombobox = parentCombobox;
     comboBoxAuth.addItem(OAuth2ServiceFactory.googleAuthTemplate);
     comboBoxAuth.addItem(OAuth2ServiceFactory.keycloackTemplate);
+    boolean addAuth = false;
     if (authMethod == null) {
+      addAuth = true;
       this.authMethod =
           new DefaultAuthMethod(
               UUID.randomUUID().toString(),
@@ -75,18 +77,20 @@ public class AuthMethodDialog extends JDialog {
     } else {
       this.authMethod = authMethod;
     }
-    initComponents();
+    initComponents(addAuth);
     fill(this.authMethod);
     pack();
   }
 
-  private void initComponents() {
+  private void initComponents(boolean addAuth) {
     final JPanel rootPane = new JPanel();
     rootPane.setBorder(new EmptyBorder(10, 15, 10, 15));
     this.setContentPane(rootPane);
 
     rootPane.setLayout(new BoxLayout(rootPane, BoxLayout.Y_AXIS));
-    rootPane.add(getHeader());
+    if (addAuth) {
+      rootPane.add(getHeader());
+    }
     rootPane.add(getHeader2());
     rootPane.add(getProvider());
     rootPane.add(getRegistration());
