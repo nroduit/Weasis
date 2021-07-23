@@ -14,10 +14,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -29,6 +32,7 @@ import javax.imageio.stream.ImageInputStream;
 import org.opencv.core.Core;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
+import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -92,7 +96,8 @@ public class ImageCVIO implements MediaReader {
     if (cache.isRequireTransformation()) {
       file = cache.getTransformedFile();
       if (file == null) {
-        String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes());
+        String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes(
+            StandardCharsets.UTF_8));
         imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv");
         if (Files.isReadable(imgCachePath)) {
           file = imgCachePath.toFile();
@@ -108,9 +113,7 @@ public class ImageCVIO implements MediaReader {
 
     if (file != null) {
       PlanarImage img = readImage(file, imgCachePath == null);
-
       if (imgCachePath != null) {
-
         File rawFile = uncompress(imgCachePath, img, media);
         if (rawFile != null) {
           file = rawFile;
@@ -122,13 +125,35 @@ public class ImageCVIO implements MediaReader {
     }
     return null;
   }
+  private static void applyExifTags(ImageElement img, List<String> exifTags) {
+    if(exifTags.size() >= Imgcodecs.POS_COPYRIGHT) {
+      applyExifTag(img, TagW.ExifImageDescription, exifTags.get(Imgcodecs.POS_IMAGE_DESCRIPTION));
+      applyExifTag(img, TagW.ExifMake, exifTags.get(Imgcodecs.POS_MAKE));
+      applyExifTag(img, TagW.ExifModel, exifTags.get(Imgcodecs.POS_MODEL));
+      applyExifTag(img, TagW.ExifOrientation, exifTags.get(Imgcodecs.POS_ORIENTATION));
+      applyExifTag(img, TagW.ExifXResolution, exifTags.get(Imgcodecs.POS_XRESOLUTION));
+      applyExifTag(img, TagW.ExifYResolution, exifTags.get(Imgcodecs.POS_YRESOLUTION));
+      applyExifTag(img, TagW.ExifResolutionUnit, exifTags.get(Imgcodecs.POS_RESOLUTION_UNIT));
+      applyExifTag(img, TagW.ExifSoftware, exifTags.get(Imgcodecs.POS_SOFTWARE));
+      applyExifTag(img, TagW.ExifDateTime, exifTags.get(Imgcodecs.POS_DATE_TIME));
+      applyExifTag(img, TagW.ExifCopyright, exifTags.get(Imgcodecs.POS_COPYRIGHT));
+    }
+  }
+
+  private static void applyExifTag(ImageElement img, TagW tagW, String val) {
+    if(StringUtil.hasText(val)) {
+     img.setTag(tagW, val);
+    }
+  }
 
   private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
     PlanarImage img = null;
     if (file.getPath().endsWith(".wcv")) {
       img = new FileRawImage(file).read();
     } else if (codec instanceof NativeOpenCVCodec) {
-      img = ImageProcessor.readImageWithCvException(file);
+      List<String> exifTags = new ArrayList<>();
+      img = ImageProcessor.readImageWithCvException(file, exifTags);
+      applyExifTags(image, exifTags);
       if (img == null) {
         // Try ImageIO
         img = readImageIOImage(file);
@@ -189,22 +214,16 @@ public class ImageCVIO implements MediaReader {
 
   @Override
   public MediaElement[] getMediaElement() {
-    MediaElement element = getSingleImage();
-    if (element != null) {
-      return new MediaElement[] {element};
-    }
-    return null;
+    return new MediaElement[] {getSingleImage()};
   }
 
   @Override
   public MediaSeries<MediaElement> getMediaSeries() {
-    String sUID = null;
+    String sUID;
     MediaElement element = getSingleImage();
-    if (element != null) {
-      sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
-    }
+    sUID = (String) element.getTagValue(TagW.get("SeriesInstanceUID"));
     if (sUID == null) {
-      sUID = uri == null ? "unknown" : uri.toString(); // NON-NLS
+      sUID = uri.toString();
     }
     MediaSeries<MediaElement> series =
         new Series<MediaElement>(
@@ -241,10 +260,8 @@ public class ImageCVIO implements MediaReader {
         };
 
     ImageElement img = getSingleImage();
-    if (img != null) {
-      series.add(getSingleImage());
-      series.setTag(TagW.FileName, img.getName());
-    }
+    series.add(getSingleImage());
+    series.setTag(TagW.FileName, img.getName());
     return series;
   }
 
@@ -254,10 +271,12 @@ public class ImageCVIO implements MediaReader {
   }
 
   private ImageElement getSingleImage() {
-    if (image == null) {
-      image = new ImageElement(this, 0);
+    ImageElement img = image;
+    if (img == null) {
+      img = new ImageElement(this, 0);
+      image = img;
     }
-    return image;
+    return img;
   }
 
   @Override
@@ -289,9 +308,9 @@ public class ImageCVIO implements MediaReader {
 
   public ImageReader getDefaultReader(String mimeType) {
     if (mimeType != null) {
-      Iterator readers = ImageIO.getImageReadersByMIMEType(mimeType);
+      Iterator<ImageReader> readers = ImageIO.getImageReadersByMIMEType(mimeType);
       if (readers.hasNext()) {
-        return (ImageReader) readers.next();
+        return readers.next();
       }
     }
     return null;
@@ -300,7 +319,7 @@ public class ImageCVIO implements MediaReader {
   @Override
   public Object getTagValue(TagW tag) {
     MediaElement element = getSingleImage();
-    if (tag != null && element != null) {
+    if (tag != null) {
       return element.getTagValue(tag);
     }
     return null;

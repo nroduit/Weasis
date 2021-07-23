@@ -185,6 +185,18 @@ public class TagW implements Serializable {
 
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
+  /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
+  public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);
+  public static final TagW ExifMake = new TagW("ExifMake", TagType.STRING);
+  public static final TagW ExifModel = new TagW("ExifModel", TagType.STRING);
+  public static final TagW ExifOrientation = new TagW("ExifOrientation", TagType.STRING);
+  public static final TagW ExifXResolution = new TagW("ExifXResolution", TagType.STRING);
+  public static final TagW ExifYResolution = new TagW("ExifYResolution", TagType.STRING);
+  public static final TagW ExifResolutionUnit = new TagW("ExifResolutionUnit", TagType.STRING);
+  public static final TagW ExifSoftware = new TagW("ExifSoftware", TagType.STRING);
+  public static final TagW ExifDateTime = new TagW("ExifDateTime", TagType.STRING);
+  public static final TagW ExifCopyright = new TagW("ExifCopyright", TagType.STRING);
+
   static {
     addTag(ImageBitsPerPixel);
     addTag(ImageCache);

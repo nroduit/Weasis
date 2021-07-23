@@ -31,7 +31,7 @@
               <goal>copy-dependencies</goal>
             </goals>
             <configuration>
-              <includeArtifactIds>metadata-extractor,xmpcore,usbdrivedetector,powershell-lib-java</includeArtifactIds>
+              <includeArtifactIds>usbdrivedetector,powershell-lib-java</includeArtifactIds>
             </configuration>
           </execution>
         </executions>
@@ -123,11 +123,6 @@
       <artifactId>weasis-base-viewer2d</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.drewnoakes</groupId>
-      <artifactId>metadata-extractor</artifactId>
-      <version>2.11.0</version>
     </dependency>
     <dependency>
       <groupId>net.samuelcampos</groupId>

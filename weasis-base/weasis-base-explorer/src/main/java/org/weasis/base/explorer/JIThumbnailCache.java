@@ -162,7 +162,7 @@ public final class JIThumbnailCache {
       if (file != null && file.getName().endsWith(".wcv")) {
         File thumbFile = new File(ImageFiler.changeExtension(file.getPath(), ".jpg"));
         if (thumbFile.canRead()) {
-          img = ImageProcessor.readImage(thumbFile);
+          img = ImageProcessor.readImage(thumbFile, null);
         }
       }
 

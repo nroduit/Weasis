@@ -9,24 +9,18 @@
  */
 package org.weasis.acquire.explorer;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifDirectoryBase;
-import com.drew.metadata.exif.ExifIFD0Directory;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -76,7 +70,7 @@ public class AcquireImageInfo {
   private final SimpleOpManager preProcessOpManager;
   private final SimpleOpManager postProcessOpManager;
 
-  private AcquireImageValues defaultValues;
+  private final AcquireImageValues defaultValues;
   private AcquireImageValues currentValues;
   private AcquireImageValues nextValues;
   private final List<AcquireImageValues> steps;
@@ -85,6 +79,13 @@ public class AcquireImageInfo {
 
   public AcquireImageInfo(ImageElement image) {
     this.image = Objects.requireNonNull(image);
+    // Create a SOPInstanceUID if not present
+    TagW tagUid = TagD.getUID(Level.INSTANCE);
+    String uuid = (String) image.getTagValue(tagUid);
+    if (uuid == null) {
+      uuid = UIDUtils.createUID();
+      image.setTag(tagUid, uuid);
+    }
     readTags(image);
 
     this.setStatus(AcquireImageStatus.TO_PUBLISH);
@@ -359,7 +360,7 @@ public class AcquireImageInfo {
     this.status = Objects.requireNonNull(status);
   }
 
-  public static final Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
+  public static Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
     return imgInfo -> imgInfo.setStatus(status);
   }
 
@@ -370,111 +371,39 @@ public class AcquireImageInfo {
    * @param imageElement
    */
   private static void readTags(ImageElement imageElement) {
-
-    // Create a SOPInstanceUID if not present
-    TagW tagUid = TagD.getUID(Level.INSTANCE);
-    String uuid = (String) imageElement.getTagValue(tagUid);
-    if (uuid == null) {
-      uuid = UIDUtils.createUID();
-      imageElement.setTag(tagUid, uuid);
-    }
-
-    // Extract information from Exif TAG
+    // Convert Exif TAG to DICOM attributes
     Optional<File> file = imageElement.getFileCache().getOriginalFile();
+
     if (file.isPresent()) {
-      Date date = null;
-      try {
-        Metadata metadata = ImageMetadataReader.readMetadata(file.get());
-        if (metadata != null) {
-          ExifSubIFDDirectory directory =
-              metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-          if (directory != null) {
-            date = directory.getDate(ExifDirectoryBase.TAG_DATETIME_ORIGINAL);
-            if (date == null) {
-              date = directory.getDate(ExifDirectoryBase.TAG_DATETIME);
-            }
+      imageElement.setTagNoNull(
+          TagD.get(Tag.Manufacturer), imageElement.getTagValue(TagW.ExifMake));
+      imageElement.setTagNoNull(
+          TagD.get(Tag.ManufacturerModelName), imageElement.getTagValue(TagW.ExifModel));
 
-            imageElement.setTagNoNull(
-                TagD.get(Tag.DateOfSecondaryCapture),
-                directory.getDate(ExifDirectoryBase.TAG_DATETIME_DIGITIZED));
-          }
-          ExifIFD0Directory ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
-          if (ifd0 != null) {
-            imageElement.setTagNoNull(
-                TagD.get(Tag.Manufacturer), ifd0.getString(ExifDirectoryBase.TAG_MAKE));
-            imageElement.setTagNoNull(
-                TagD.get(Tag.ManufacturerModelName), ifd0.getString(ExifDirectoryBase.TAG_MODEL));
-
-            // try {
-            // int orientation =
-            // ifd0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
-            // } catch (MetadataException e) {
-            // e.printStackTrace();
-            // }
-
-            // AffineTransform affineTransform = new
-            // AffineTransform();
-            //
-            // switch (orientation) {
-            // case 1:
-            // break;
-            // case 2: // Flip X
-            // affineTransform.scale(-1.0, 1.0);
-            // affineTransform.translate(-width, 0);
-            // break;
-            // case 3: // PI rotation
-            // affineTransform.translate(width, height);
-            // affineTransform.rotate(Math.PI);
-            // break;
-            // case 4: // Flip Y
-            // affineTransform.scale(1.0, -1.0);
-            // affineTransform.translate(0, -height);
-            // break;
-            // case 5: // - PI/2 and Flip X
-            // affineTransform.rotate(-Math.PI / 2);
-            // affineTransform.scale(-1.0, 1.0);
-            // break;
-            // case 6: // -PI/2 and -width
-            // affineTransform.translate(height, 0);
-            // affineTransform.rotate(Math.PI / 2);
-            // break;
-            // case 7: // PI/2 and Flip
-            // affineTransform.scale(-1.0, 1.0);
-            // affineTransform.translate(-height, 0);
-            // affineTransform.translate(0, width);
-            // affineTransform.rotate(3 * Math.PI / 2);
-            // break;
-            // case 8: // PI / 2
-            // affineTransform.translate(0, width);
-            // affineTransform.rotate(3 * Math.PI / 2);
-            // break;
-            // default:
-            // break;
-            // }
-            //
-            // AffineTransformOp affineTransformOp = new
-            // AffineTransformOp(affineTransform,
-            // AffineTransformOp.TYPE_BILINEAR);
-            // BufferedImage destinationImage = new
-            // BufferedImage(originalImage.getHeight(),
-            // originalImage.getWidth(), originalImage.getType());
-            // destinationImage =
-            // affineTransformOp.filter(originalImage,
-            // destinationImage);
-          }
+      String date = (String) TagUtil.getTagValue(TagW.ExifDateTime, imageElement);
+      LocalDateTime dateTime = null;
+      if (StringUtil.hasText(date)) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+        try {
+          dateTime = LocalDateTime.parse(date, formatter);
+        } catch (DateTimeParseException ex) {
+          // Do nothing
         }
-      } catch (ImageProcessingException | IOException e) {
-        LOGGER.error("Error when reading exif tags", e);
       }
-      LocalDateTime dateTime =
-          date == null
-              ? LocalDateTime.from(
-                  Instant.ofEpochMilli(imageElement.getLastModified())
-                      .atZone(ZoneId.systemDefault()))
-              : TagUtil.toLocalDateTime(date);
+      if (dateTime == null) {
+        dateTime =
+            LocalDateTime.from(
+                Instant.ofEpochMilli(imageElement.getLastModified())
+                    .atZone(ZoneId.systemDefault()));
+      }
       imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
       imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
-      imageElement.setTagNoNull(TagD.get(Tag.ImageComments), file.get().getName());
+
+      String imgDescription = (String) imageElement.getTagValue(TagW.ExifImageDescription);
+      if (!StringUtil.hasText(imgDescription)) {
+        imgDescription = file.get().getName();
+      }
+      imageElement.setTagNoNull(TagD.get(Tag.ImageComments), imgDescription);
     }
   }
 }
