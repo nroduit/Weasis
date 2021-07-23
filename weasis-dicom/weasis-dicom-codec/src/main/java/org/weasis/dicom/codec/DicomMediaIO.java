@@ -837,18 +837,19 @@ public class DicomMediaIO implements DcmMediaReader {
         // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error
         // made by some constructors). RGB color model doesn't make sense for lossy jpeg.
         // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
+        boolean ybr = false;
         if (pmi.name().startsWith("YBR")
             || ("RGB".equalsIgnoreCase(pmi.name()) // NON-NLS
                 && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
-          boolean ybr = true;
+          ybr = true;
           if ("RGB".equalsIgnoreCase(pmi.name())) {
             String[] list =
                 BundleTools.SYSTEM_PREFERENCES
                     .getProperty("jpeg.lossy.rgb.manufacturer.list", "")
                     .split(","); // NON-NLS
             String manufacturer = getDicomObject().getString(Tag.Manufacturer);
-            for (int i = 0; i < list.length; i++) {
-              if (StringUtil.hasText(list[i]) && list[i].trim().equalsIgnoreCase(manufacturer)) {
+            for (String s : list) {
+              if (StringUtil.hasText(s) && s.trim().equalsIgnoreCase(manufacturer)) {
                 ybr = false;
                 break;
               }
@@ -857,6 +858,11 @@ public class DicomMediaIO implements DcmMediaReader {
           if (ybr) {
             dcmFlags |= Imgcodecs.DICOM_FLAG_YBR;
           }
+        }
+        if (ybr
+            && (TransferSyntax.JPEGLS_LOSSLESS.getTransferSyntaxUID().equals(syntax)
+                || TransferSyntax.JPEGLS_NEAR_LOSSLESS.getTransferSyntaxUID().equals(syntax))) {
+          dcmFlags |= Imgcodecs.DICOM_FLAG_FORCE_RGB_CONVERSION;
         }
         if (bigendian) {
           dcmFlags |= Imgcodecs.DICOM_FLAG_BIGENDIAN;
