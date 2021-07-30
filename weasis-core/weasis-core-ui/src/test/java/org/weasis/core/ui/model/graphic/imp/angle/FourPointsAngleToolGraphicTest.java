@@ -33,7 +33,7 @@ public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngl
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1294.5, 1528.0),
             new Point2D.Double(1456.5, 1498.0),

@@ -45,7 +45,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   String tpl;
   String serializationGraphic;
 
-  protected List<Point2D.Double> pts;
+  protected List<Point2D> pts;
 
   public abstract String getTemplate();
 

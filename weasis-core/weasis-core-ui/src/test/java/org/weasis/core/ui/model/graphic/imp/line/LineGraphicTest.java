@@ -33,7 +33,7 @@ public class LineGraphicTest extends GraphicTester<LineGraphic> {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
     COMPLETE_OBJECT.setColorPaint(Color.BLACK);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(new Point2D.Double(1028.5, 1110.0), new Point2D.Double(1231.5, 1285.0));
     COMPLETE_OBJECT.setPts(pts);
   }

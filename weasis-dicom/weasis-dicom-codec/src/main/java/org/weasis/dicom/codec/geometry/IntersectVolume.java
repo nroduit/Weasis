@@ -29,7 +29,7 @@ public class IntersectVolume extends LocalizerPoster {
   }
 
   @Override
-  public List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(
+  public List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
       Point3d tlhc,
@@ -55,7 +55,7 @@ public class IntersectVolume extends LocalizerPoster {
     }
     List<Point3d> intersections = getIntersectionsOfCubeWithZPlane(corners);
     if (intersections != null && !intersections.isEmpty()) {
-      List<Point2D.Double> pts = new ArrayList<>(intersections.size());
+      List<Point2D> pts = new ArrayList<>(intersections.size());
       for (Point3d point3d : intersections) {
         pts.add(transformPointInLocalizerPlaneIntoImageSpace(point3d));
       }

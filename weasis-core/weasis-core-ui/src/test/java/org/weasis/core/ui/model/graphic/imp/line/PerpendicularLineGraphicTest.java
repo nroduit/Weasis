@@ -33,7 +33,7 @@ public class PerpendicularLineGraphicTest extends GraphicTester<PerpendicularLin
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1131.5, 980.0),
             new Point2D.Double(1330.5, 1178.0),

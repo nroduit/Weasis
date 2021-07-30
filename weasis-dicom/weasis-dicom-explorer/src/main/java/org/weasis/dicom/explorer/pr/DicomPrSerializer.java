@@ -49,8 +49,8 @@ import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
@@ -130,9 +130,8 @@ public class DicomPrSerializer {
       if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
         if (offset != null) {
           Graphic graphic = g.copy();
-          for (Point2D.Double p : graphic.getPts()) {
-            p.x -= offset.getX();
-            p.y -= offset.getY();
+          for (Point2D p : graphic.getPts()) {
+            p.setLocation(p.getX() - offset.getX(), p.getY() - offset.getY());
           }
           GraphicLabel label = g.getGraphicLabel();
           graphic.buildShape();
@@ -253,12 +252,12 @@ public class DicomPrSerializer {
         .collect(Collectors.toList());
   }
 
-  private static double[] getGraphicsPoints(List<Point2D.Double> pts) {
+  private static double[] getGraphicsPoints(List<Point2D> pts) {
     double[] list = new double[pts.size() * 2];
     for (int i = 0; i < pts.size(); i++) {
-      Point2D.Double p = pts.get(i);
-      list[i * 2] = p.x;
-      list[i * 2 + 1] = p.y;
+      Point2D p = pts.get(i);
+      list[i * 2] = p.getX();
+      list[i * 2 + 1] = p.getY();
     }
     return list;
   }
@@ -275,10 +274,7 @@ public class DicomPrSerializer {
 
     if (graphic.getColorPaint() instanceof Color) {
       Color color = (Color) graphic.getColorPaint();
-      int[] rgb = CIELab.rgbToDicomLab(color);
-      if (rgb != null) {
-        styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, rgb);
-      }
+      styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, CIELab.rgbToDicomLab(color));
     }
     style.add(styles);
     return dcm;
@@ -286,35 +282,16 @@ public class DicomPrSerializer {
 
   private static void buildDicomGraphic(Graphic graphic, Sequence graphicSeq, Sequence textSeq) {
     Attributes dcm = getBasicGraphic(graphic);
-    List<Point2D.Double> pts;
+    List<Point2D> pts;
 
-    if (graphic instanceof RectangleGraphic) {
+    if (graphic instanceof ObliqueRectangleGraphic) {
       boolean ellipse = graphic instanceof EllipseGraphic;
       dcm.setString(
           Tag.GraphicType, VR.CS, ellipse ? PrGraphicUtil.ELLIPSE : PrGraphicUtil.POLYLINE);
-      RectangleGraphic rg = (RectangleGraphic) graphic;
-
-      if (ellipse) {
-        Point2D.Double wPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.W.getIndex());
-        Point2D.Double ePt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.E.getIndex());
-        Point2D.Double nPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.N.getIndex());
-        Point2D.Double sPt = rg.getHandlePoint(RectangleGraphic.eHandlePoint.S.getIndex());
-        pts =
-            wPt.distance(ePt) > nPt.distance(sPt)
-                ? Arrays.asList(wPt, ePt, nPt, sPt)
-                : Arrays.asList(nPt, sPt, wPt, ePt);
-      } else {
-        pts =
-            Arrays.asList(
-                rg.getHandlePoint(RectangleGraphic.eHandlePoint.NW.getIndex()),
-                rg.getHandlePoint(RectangleGraphic.eHandlePoint.NE.getIndex()),
-                rg.getHandlePoint(RectangleGraphic.eHandlePoint.SE.getIndex()),
-                rg.getHandlePoint(RectangleGraphic.eHandlePoint.SW.getIndex()),
-                rg.getHandlePoint(RectangleGraphic.eHandlePoint.NW.getIndex()));
-      }
+      pts = ((ObliqueRectangleGraphic) graphic).getRectanglePointList();
     } else if (graphic instanceof ThreePointsCircleGraphic) {
       dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.CIRCLE);
-      Point2D.Double centerPt = GeomUtil.getCircleCenter(graphic.getPts());
+      Point2D centerPt = GeomUtil.getCircleCenter(graphic.getPts());
       pts = Arrays.asList(centerPt, graphic.getPts().get(0));
     } else if (graphic instanceof PolygonGraphic) {
       dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
@@ -414,7 +391,7 @@ public class DicomPrSerializer {
     Shape shape = graphic.getShape();
 
     Attributes dcm = null;
-    List<Point2D.Double> points = new ArrayList<>();
+    List<Point2D> points = new ArrayList<>();
 
     PathIterator iterator = new FlatteningPathIterator(shape.getPathIterator(null), 2);
     double[] pts = new double[6];
@@ -441,7 +418,7 @@ public class DicomPrSerializer {
   }
 
   private static void addNewSubGraphic(
-      Attributes dcm, Sequence graphicSeq, List<Point2D.Double> points) {
+      Attributes dcm, Sequence graphicSeq, List<Point2D> points) {
     if (dcm != null && dcm.getParent() == null) {
       dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
       dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(points));

@@ -60,7 +60,7 @@ public class IntersectSlice extends LocalizerPoster {
   }
 
   @Override
-  public List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(
+  public List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
       Point3d tlhc,

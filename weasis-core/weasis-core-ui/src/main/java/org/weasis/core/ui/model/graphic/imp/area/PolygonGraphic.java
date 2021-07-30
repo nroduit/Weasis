@@ -163,15 +163,15 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
     Shape newShape = null;
-    Optional<Point2D.Double> firstHandlePoint = pts.stream().findFirst();
+    Optional<Point2D> firstHandlePoint = pts.stream().findFirst();
 
     if (firstHandlePoint.isPresent()) {
-      Point2D.Double p = firstHandlePoint.get();
+      Point2D p = firstHandlePoint.get();
 
       Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
       polygonPath.moveTo(p.getX(), p.getY());
 
-      for (Point2D.Double pt : pts) {
+      for (Point2D pt : pts) {
         if (pt == null) {
           break;
         }
@@ -194,7 +194,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     int lastPointIndex = pts.size() - 1;
 
     if (lastPointIndex > 0) {
-      Point2D.Double checkPoint = pts.get(lastPointIndex);
+      Point2D checkPoint = pts.get(lastPointIndex);
       if (Objects.equals(checkPoint, pts.get(--lastPointIndex))) {
         return false;
       }
@@ -286,7 +286,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
           Double o = null;
 
           MinimumEnclosingRectangle rect = new MinimumEnclosingRectangle(pts, false);
-          List<java.awt.geom.Point2D.Double> minRect = rect.getMinimumRectangle();
+          List<java.awt.geom.Point2D> minRect = rect.getMinimumRectangle();
           if (minRect.size() == 4) {
             l = ratio * minRect.get(0).distance(minRect.get(1));
             w = ratio * minRect.get(1).distance(minRect.get(2));
@@ -320,22 +320,25 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     return MEASUREMENT_LIST;
   }
 
+  protected final Area getPathArea() {
+    return getPathArea(pts);
+  }
   /**
    * Construct a polygon Area which represents a non-self-intersecting shape using a path Winding
    * Rule : WIND_NON_ZERO
    *
    * @return area of the closed polygon, or null if shape is invalid
    */
-  protected final Area getPathArea() {
+  public static Area getPathArea(List<Point2D> pts) {
 
-    Optional<Point2D.Double> firstHandlePoint = pts.stream().findFirst();
+    Optional<Point2D> firstHandlePoint = pts.stream().findFirst();
 
     if (firstHandlePoint.isPresent()) {
-      Point2D.Double p = firstHandlePoint.get();
+      Point2D p = firstHandlePoint.get();
       Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
       polygonPath.moveTo(p.getX(), p.getY());
 
-      for (Point2D.Double pt : pts) {
+      for (Point2D pt : pts) {
         if (pt == null) {
           return null;
         }
@@ -369,7 +372,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
       Double curX = NaN;
       Double curY = NaN;
 
-      Set<Point2D.Double> ptSet = new HashSet<>(lineSegmentList.size() * 2);
+      Set<Point2D> ptSet = new HashSet<>(lineSegmentList.size() * 2);
 
       while (!pathIt.isDone()) {
 
@@ -381,15 +384,15 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
           case PathIterator.SEG_CLOSE:
             break;
           case PathIterator.SEG_LINETO:
-            Point2D.Double ptP1 = new Point2D.Double(curX, curY);
-            Point2D.Double ptP2 = new Point2D.Double(lastX, lastY);
+            Point2D ptP1 = new Point2D.Double(curX, curY);
+            Point2D ptP2 = new Point2D.Double(lastX, lastY);
 
             BigDecimal dist =
                 BigDecimal.valueOf(ptP1.distance(ptP2)).setScale(10, RoundingMode.DOWN);
             if (dist.compareTo(BigDecimal.ZERO) != 0) {
-              for (Point2D.Double pt : new Point2D.Double[] {ptP1, ptP2}) {
+              for (Point2D pt : new Point2D[] {ptP1, ptP2}) {
                 boolean newPt = true;
-                for (Point2D.Double p : ptSet) {
+                for (Point2D p : ptSet) {
                   dist = BigDecimal.valueOf(p.distance(pt)).setScale(10, RoundingMode.DOWN);
                   if (dist.compareTo(BigDecimal.ZERO) == 0) {
                     pt.setLocation(p);
@@ -467,8 +470,8 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
       double cy = 0d;
 
       for (Line2D.Double line : lineSegmentList) {
-        Point2D.Double p1 = (Point2D.Double) line.getP1();
-        Point2D.Double p2 = (Point2D.Double) line.getP2();
+        Point2D p1 = line.getP1();
+        Point2D p2 = line.getP2();
 
         double tmp = (p1.getX() * p2.getY()) - (p2.getX() * p1.getY());
         area += tmp;
@@ -522,8 +525,8 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
       double area = 0d;
 
       for (Line2D.Double line : lineSegmentList) {
-        Point2D.Double p1 = (Point2D.Double) line.getP1();
-        Point2D.Double p2 = (Point2D.Double) line.getP2();
+        Point2D p1 = line.getP1();
+        Point2D p2 = line.getP2();
 
         area += (p1.getX() * p2.getY()) - (p2.getX() * p1.getY());
       }

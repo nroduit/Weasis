@@ -60,14 +60,14 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
   }
 
   // Let AB & CD two parallel line segments
-  protected Point2D.Double ptA;
-  protected Point2D.Double ptB;
-  protected Point2D.Double ptC;
-  protected Point2D.Double ptD;
+  protected Point2D ptA;
+  protected Point2D ptB;
+  protected Point2D ptC;
+  protected Point2D ptD;
 
   // Let E,F middle points of AB & CD
-  protected Point2D.Double ptE;
-  protected Point2D.Double ptF;
+  protected Point2D ptE;
+  protected Point2D ptF;
 
   // estimate if line segments are valid or not
   protected Boolean lineABvalid;
@@ -136,8 +136,8 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
         } else if (handlePointIndex == 2 || handlePointIndex == 3) {
           // drag point is C or D
 
-          Point2D.Double pt1 = (handlePointIndex == 2) ? ptC : ptD;
-          Point2D.Double pt2 = (handlePointIndex == 2) ? ptD : ptC;
+          Point2D pt1 = (handlePointIndex == 2) ? ptC : ptD;
+          Point2D pt2 = (handlePointIndex == 2) ? ptD : ptC;
           int hIndex = (handlePointIndex == 2) ? 3 : 2;
 
           Point2D ptI = GeomUtil.getPerpendicularPointToLine(ptA, ptB, pt1);
@@ -153,9 +153,9 @@ public class ParallelLineGraphic extends AbstractDragGraphic {
 
         } else if (handlePointIndex == 4 || handlePointIndex == 5) {
           // drag point is E middle of AB or F middle of CD
-          Point2D.Double pt0 = (handlePointIndex == 4) ? ptE : ptF;
-          Point2D.Double pt1 = (handlePointIndex == 4) ? ptA : ptC;
-          Point2D.Double pt2 = (handlePointIndex == 4) ? ptB : ptD;
+          Point2D pt0 = (handlePointIndex == 4) ? ptE : ptF;
+          Point2D pt1 = (handlePointIndex == 4) ? ptA : ptC;
+          Point2D pt2 = (handlePointIndex == 4) ? ptB : ptD;
           int hIndex1 = (handlePointIndex == 4) ? 0 : 2;
           int hIndex2 = (handlePointIndex == 4) ? 1 : 3;
 

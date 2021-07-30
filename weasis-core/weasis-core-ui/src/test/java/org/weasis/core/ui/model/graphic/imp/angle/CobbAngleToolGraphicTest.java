@@ -31,7 +31,7 @@ public class CobbAngleToolGraphicTest extends GraphicTester<CobbAngleToolGraphic
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1770.5, 1435.0),
             new Point2D.Double(1765.5, 1445.0),

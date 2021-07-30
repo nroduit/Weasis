@@ -31,7 +31,7 @@ public class PolylineGraphicTest extends GraphicTester<PolylineGraphic> {
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(935.5, 902.0),
             new Point2D.Double(1042.5, 863.0),

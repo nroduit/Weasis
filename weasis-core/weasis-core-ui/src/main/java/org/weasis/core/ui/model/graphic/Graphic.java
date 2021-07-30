@@ -66,7 +66,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   }
 
   /**
-   * @param affineTransform Current transform applied to the view. Should be used to compute
+   * @param transform Current transform applied to the view. Should be used to compute
    *     invariantSizedShape bounding rectangle in union with drawing shape bounding rectangle.
    * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
    *     Coordinates are given in RealCoordinates. <br>
@@ -163,7 +163,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   /** @return False if last dragging point equals the previous one */
   default Boolean isLastPointValid() {
-    List<Point2D.Double> pts = getPts();
+    List<Point2D> pts = getPts();
     int size = pts.size();
     Point2D lastPt = size > 0 ? pts.get(size - 1) : null;
     Point2D previousPt = size > 1 ? pts.get(size - 2) : null;
@@ -179,7 +179,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   Boolean isGraphicComplete();
 
-  List<Point2D.Double> getPts();
+  List<Point2D> getPts();
 
   Integer getPtsNumber();
 
@@ -201,11 +201,11 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   /**
    * Set the list of points. Do not use this method when building a graphic programmatically, use
-   * buildGraphic(List<Point2D.Double> pts) instead.
+   * buildGraphic(List<Point2D> pts) instead.
    *
    * @param pts
    */
-  void setPts(List<Point2D.Double> pts);
+  void setPts(List<Point2D> pts);
 
   void setLabelVisible(Boolean labelVisible);
 
@@ -233,7 +233,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    * @return
    * @throws InvalidShapeException
    */
-  Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException;
+  Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException;
 
   void setLayerType(LayerType layerType);
 

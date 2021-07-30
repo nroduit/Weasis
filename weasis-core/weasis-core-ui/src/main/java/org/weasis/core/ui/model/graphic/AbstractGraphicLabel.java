@@ -146,7 +146,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
   @Override
   public Rectangle2D getTransformedBounds(AffineTransform transform) {
     // Only translates origin because no rotation or scaling is applied
-    Point2D.Double anchorPoint =
+    Point2D anchorPoint =
         new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
     Optional.ofNullable(transform).ifPresent(t -> transform.transform(anchorPoint, anchorPoint));
 

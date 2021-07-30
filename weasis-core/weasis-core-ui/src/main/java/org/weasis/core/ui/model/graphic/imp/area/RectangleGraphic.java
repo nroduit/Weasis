@@ -106,7 +106,6 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
   @Override
   protected void prepareShape() throws InvalidShapeException {
-
     if (!isShapeValid()) {
       throw new InvalidShapeException("This shape cannot be drawn");
     }

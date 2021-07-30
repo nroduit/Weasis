@@ -32,7 +32,7 @@ public class RectangleGraphicTest extends GraphicTester<RectangleGraphic> {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
     COMPLETE_OBJECT.setFilled(Boolean.TRUE);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1440.5, 1161.0),
             new Point2D.Double(1769.5, 1328.0),

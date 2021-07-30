@@ -34,7 +34,7 @@ public class SelectGraphicTest extends GraphicTester<SelectGraphic> {
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1440.5, 1161.0),
             new Point2D.Double(1769.5, 1328.0),

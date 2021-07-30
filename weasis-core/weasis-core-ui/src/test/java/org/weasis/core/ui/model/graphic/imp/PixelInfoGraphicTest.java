@@ -37,7 +37,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
     COMPLETE_OBJECT.setLineThickness(2.0f);
     COMPLETE_OBJECT.setColorPaint(Color.PINK);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(new Point2D.Double(1665.5, 987.0), new Point2D.Double(1601.5, 1037.0));
     COMPLETE_OBJECT.setPts(pts);
     COMPLETE_OBJECT.setLabelWidth(112.53125);

@@ -34,7 +34,7 @@ public class ParallelLineGraphicTest extends GraphicTester<ParallelLineGraphic> 
     COMPLETE_OBJECT.setColorPaint(Color.CYAN);
     COMPLETE_OBJECT.setLineThickness(2.0f);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1861.5, 1567.0),
             new Point2D.Double(1672.5, 1358.0),

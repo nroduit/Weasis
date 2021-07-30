@@ -15,7 +15,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -464,7 +464,7 @@ public class PRManager {
                 }
 
                 try {
-                  List<Point2D.Double> pts = new ArrayList<>(2);
+                  List<Point2D> pts = new ArrayList<>(2);
                   pts.add(ptAnchor);
                   pts.add(ptBox);
                   Graphic g = new AnnotationGraphic().buildGraphic(pts);
@@ -478,9 +478,10 @@ public class PRManager {
                 }
               } else if (rect != null) {
                 try {
-                  Point2D.Double point = new Point2D.Double(rect.getMinX(), rect.getMinY());
+                  Point2D point = new Point2D.Double(rect.getMinX(), rect.getMinY());
                   AbstractGraphic pt =
-                      (AbstractGraphic) new PointGraphic().buildGraphic(Arrays.asList(point));
+                      (AbstractGraphic) new PointGraphic().buildGraphic(
+                          Collections.singletonList(point));
                   pt.setLineThickness(thickness);
                   pt.setLabelVisible(Boolean.TRUE);
                   AbstractGraphicModel.addGraphicToModel(view, layer, pt);

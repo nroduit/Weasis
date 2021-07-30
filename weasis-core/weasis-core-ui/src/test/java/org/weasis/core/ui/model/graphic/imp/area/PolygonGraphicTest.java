@@ -33,7 +33,7 @@ public class PolygonGraphicTest extends GraphicTester<PolygonGraphic> {
     COMPLETE_OBJECT.setFilled(Boolean.TRUE);
     COMPLETE_OBJECT.setLineThickness(2.0f);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1132.5, 1100.0),
             new Point2D.Double(1300.5, 1033.0),

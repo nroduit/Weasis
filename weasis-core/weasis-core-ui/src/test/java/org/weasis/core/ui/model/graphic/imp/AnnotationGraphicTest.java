@@ -36,7 +36,7 @@ public class AnnotationGraphicTest extends GraphicTester<AnnotationGraphic> {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
     COMPLETE_OBJECT.setLineThickness(8.0f);
     COMPLETE_OBJECT.setColorPaint(Color.GRAY);
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(new Point2D.Double(1281.5, 856.0), new Point2D.Double(1347.5, 1068.0));
     COMPLETE_OBJECT.setPts(pts);
     COMPLETE_OBJECT.setLabelHeight(13.125);

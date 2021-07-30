@@ -104,12 +104,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     // Do not build shape as labelBounds can be initialize only by the method setLabel()
   }
 
-  protected void setHandlePointList(Point2D.Double ptAnchor, Point2D.Double ptBox) {
-    Point2D.Double pt2 = (ptBox == null && ptAnchor != null) ? ptAnchor : ptBox;
-    Point2D.Double pt1 = (pt2 != null && pt2.equals(ptAnchor)) ? null : ptAnchor;
+  protected void setHandlePointList(Point2D ptAnchor, Point2D ptBox) {
+    Point2D pt2 = (ptBox == null && ptAnchor != null) ? ptAnchor : ptBox;
+    Point2D pt1 = (pt2 != null && pt2.equals(ptAnchor)) ? null : ptAnchor;
 
-    setHandlePoint(0, pt1 == null ? null : (Point2D.Double) pt1.clone());
-    setHandlePoint(1, pt2 == null ? null : (Point2D.Double) pt2.clone());
+    setHandlePoint(0, pt1 == null ? null : (Point2D) pt1.clone());
+    setHandlePoint(1, pt2 == null ? null : (Point2D) pt2.clone());
     buildShape(null);
   }
 

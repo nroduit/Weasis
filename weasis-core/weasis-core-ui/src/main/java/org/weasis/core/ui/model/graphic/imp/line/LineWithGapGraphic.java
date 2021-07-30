@@ -37,8 +37,8 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
   protected Integer gapSize = DEFAULT_GAP_SIZE;
 
   // Let AB be a simple a line segment
-  protected Point2D.Double ptA;
-  protected Point2D.Double ptB;
+  protected Point2D ptA;
+  protected Point2D ptB;
   protected Point2D centerGap;
 
   // estimate if line segment is valid or not
@@ -96,9 +96,9 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     this.gapSize = Optional.ofNullable(gapSize).orElse(DEFAULT_GAP_SIZE);
   }
 
-  protected void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {
-    setHandlePoint(0, ptStart == null ? null : (Point2D.Double) ptStart.clone());
-    setHandlePoint(1, ptEnd == null ? null : (Point2D.Double) ptEnd.clone());
+  protected void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
+    setHandlePoint(0, ptStart == null ? null : (Point2D) ptStart.clone());
+    setHandlePoint(1, ptEnd == null ? null : (Point2D) ptEnd.clone());
     buildShape(null);
   }
 

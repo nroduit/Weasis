@@ -31,7 +31,7 @@ public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1395.5, 1210.0),
             new Point2D.Double(2094.5, 1621.0),

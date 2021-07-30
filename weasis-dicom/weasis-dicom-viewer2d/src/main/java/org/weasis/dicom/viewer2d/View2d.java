@@ -564,8 +564,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   /**
-   * @param newImg
-   * @param img , newImg
+   * @param img
    * @return true if the state has changed and if the view or at least the KO button need to be
    *     repaint
    */
@@ -767,7 +766,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       DicomImageElement selImage, GraphicLayer layer, LocalizerPoster localizer, boolean center) {
     GeometryOfSlice sliceGeometry = selImage.getDispSliceGeometry();
     if (sliceGeometry != null) {
-      List<Point2D.Double> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
+      List<Point2D> pts = localizer.getOutlineOnLocalizerForThisGeometry(sliceGeometry);
       if (pts != null && !pts.isEmpty()) {
         Color color = center ? Color.blue : Color.cyan;
         try {
@@ -902,7 +901,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           boolean axial = SliceOrientation.AXIAL.equals(sliceOrientation);
           Point2D centerPt = new Point2D.Double(p.getX(), p.getY());
 
-          List<Point2D.Double> pts = new ArrayList<>();
+          List<Point2D> pts = new ArrayList<>();
           pts.add(new Point2D.Double(p.getX(), 0.0));
           pts.add(new Point2D.Double(p.getX(), dimensions.x));
 
@@ -910,7 +909,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           Color color1 = sagittal ? Color.GREEN : Color.BLUE;
           addCrosshairLine(layer, pts, color1, centerPt);
 
-          List<Point2D.Double> pts2 = new ArrayList<>();
+          List<Point2D> pts2 = new ArrayList<>();
           Color color2 = axial ? Color.GREEN : Color.RED;
           pts2.add(new Point2D.Double(0.0, p.getY()));
           pts2.add(new Point2D.Double(dimensions.y, p.getY()));
@@ -932,7 +931,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   }
 
   protected void addCrosshairLine(
-      GraphicLayer layer, List<Point2D.Double> pts, Color color, Point2D center) {
+      GraphicLayer layer, List<Point2D> pts, Color color, Point2D center) {
     if (pts != null && !pts.isEmpty()) {
       try {
         Graphic graphic;

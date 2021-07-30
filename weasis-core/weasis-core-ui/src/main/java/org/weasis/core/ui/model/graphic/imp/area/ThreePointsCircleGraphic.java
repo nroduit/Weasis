@@ -65,7 +65,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     MEASUREMENT_LIST.add(PERIMETER);
   }
 
-  protected Point2D.Double centerPt; // Let O be the center of the three point interpolated circle
+  protected Point2D centerPt; // Let O be the center of the three point interpolated circle
   protected Double radiusPt; // circle radius
 
   public ThreePointsCircleGraphic() {

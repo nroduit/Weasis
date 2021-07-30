@@ -51,7 +51,7 @@ public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
   }
 
   // Let O be center of perpendicular projections in Cobb's angle
-  protected Point2D.Double ptO;
+  protected Point2D ptO;
 
   public CobbAngleToolGraphic() {
     super(POINTS_NUMBER);

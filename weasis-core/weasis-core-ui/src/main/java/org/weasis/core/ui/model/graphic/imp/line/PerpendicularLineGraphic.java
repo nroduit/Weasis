@@ -61,10 +61,10 @@ public class PerpendicularLineGraphic extends AbstractDragGraphic {
   }
 
   // Let AB & CD two perpendicular line segments with D being the projected point C on AB
-  protected Point2D.Double ptA;
-  protected Point2D.Double ptB;
-  protected Point2D.Double ptC;
-  protected Point2D.Double ptD;
+  protected Point2D ptA;
+  protected Point2D ptB;
+  protected Point2D ptC;
+  protected Point2D ptD;
 
   // estimate if line segments are valid or not
   protected boolean lineABvalid;

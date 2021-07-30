@@ -31,7 +31,7 @@ public class AngleToolGraphicTest extends GraphicTester<AngleToolGraphic> {
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
             new Point2D.Double(1345.5, 815.0),
             new Point2D.Double(1313.5, 954.0),

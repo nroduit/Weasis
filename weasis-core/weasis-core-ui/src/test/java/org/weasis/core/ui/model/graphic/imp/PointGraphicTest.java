@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.Color;
 import java.awt.geom.Point2D;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -36,7 +36,7 @@ public class PointGraphicTest extends GraphicTester<PointGraphic> {
     COMPLETE_OBJECT.setLineThickness(3.0f);
     COMPLETE_OBJECT.setColorPaint(Color.RED);
 
-    List<Point2D.Double> pts = Arrays.asList(new Point2D.Double(1665.5, 987.0));
+    List<Point2D> pts = Collections.singletonList(new Point2D.Double(1665.5, 987.0));
     COMPLETE_OBJECT.setPts(pts);
   }
 

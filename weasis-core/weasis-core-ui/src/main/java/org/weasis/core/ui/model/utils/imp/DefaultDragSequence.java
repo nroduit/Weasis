@@ -80,7 +80,7 @@ public class DefaultDragSequence implements Draggable {
         if (Objects.equals(graphic.getPtsNumber(), Graphic.UNDEFINED)
             && mouseEvent.getClickCount() == 2
             && !mouseEvent.isConsumed()) {
-          List<Point2D.Double> handlePointList = graphic.getPts();
+          List<Point2D> handlePointList = graphic.getPts();
           if (!graphic.isLastPointValid()) {
             handlePointList.remove(handlePointList.size() - 1);
           }

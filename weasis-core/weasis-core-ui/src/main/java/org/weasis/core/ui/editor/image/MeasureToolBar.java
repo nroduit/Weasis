@@ -44,8 +44,8 @@ import org.weasis.core.ui.model.graphic.imp.angle.CobbAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.FourPointsAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.OpenAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
@@ -81,7 +81,7 @@ public class MeasureToolBar extends WtoolBar {
       measureGraphicList.add(new PolylineGraphic());
     }
     if (p.getBooleanProperty("weasis.measure.rectangle", true)) {
-      measureGraphicList.add(new RectangleGraphic());
+      measureGraphicList.add(new ObliqueRectangleGraphic());
     }
     if (p.getBooleanProperty("weasis.measure.ellipse", true)) {
       measureGraphicList.add(new EllipseGraphic());
@@ -131,7 +131,7 @@ public class MeasureToolBar extends WtoolBar {
       drawGraphicList.add(new PolylineGraphic());
     }
     if (p.getBooleanProperty("weasis.draw.rectangle", true)) {
-      drawGraphicList.add(new RectangleGraphic());
+      drawGraphicList.add(new ObliqueRectangleGraphic());
     }
     if (p.getBooleanProperty("weasis.draw.ellipse", true)) {
       drawGraphicList.add(new EllipseGraphic());

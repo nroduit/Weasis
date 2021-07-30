@@ -72,8 +72,8 @@ public class LineGraphic extends AbstractDragGraphic {
   }
 
   // Let AB be a simple a line segment
-  protected Point2D.Double ptA;
-  protected Point2D.Double ptB;
+  protected Point2D ptA;
+  protected Point2D ptB;
 
   // estimate if line segment is valid or not
   protected Boolean lineABvalid;
@@ -105,11 +105,11 @@ public class LineGraphic extends AbstractDragGraphic {
     return super.isShapeValid();
   }
 
-  public Point2D.Double getPtA() {
+  public Point2D getPtA() {
     return ptA;
   }
 
-  public Point2D.Double getPtB() {
+  public Point2D getPtB() {
     return ptB;
   }
 
@@ -117,9 +117,9 @@ public class LineGraphic extends AbstractDragGraphic {
     return lineABvalid;
   }
 
-  public void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {
-    setHandlePoint(0, ptStart == null ? null : (Point2D.Double) ptStart.clone());
-    setHandlePoint(1, ptEnd == null ? null : (Point2D.Double) ptEnd.clone());
+  public void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
+    setHandlePoint(0, ptStart == null ? null : (Point2D) ptStart.clone());
+    setHandlePoint(1, ptEnd == null ? null : (Point2D) ptEnd.clone());
     buildShape(null);
   }
 
