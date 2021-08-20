@@ -121,14 +121,6 @@ public class DicomSorter {
             if (c != 0) {
               return c;
             }
-            Integer sval1 = TagW.getTagValue(st1, TagW.SplitSeriesNumber, Integer.class);
-            Integer sval2 = TagW.getTagValue(st2, TagW.SplitSeriesNumber, Integer.class);
-            if (sval1 != null && sval2 != null) {
-              c = sval1.compareTo(sval2);
-              if (c != 0) {
-                return c;
-              }
-            }
           }
 
           if (c == 0 || (val1 == null && val2 == null)) {
