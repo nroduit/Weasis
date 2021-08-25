@@ -7,17 +7,13 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.core.api.util;
+package org.weasis.core.api.auth;
 
 import java.io.IOException;
-import java.io.InputStream;
 
-public interface HttpResponse extends AutoCloseable {
-  InputStream getInputStream() throws IOException;
+public interface BodySupplier<T> {
 
-  int getResponseCode();
+  T get() throws IOException;
 
-  String getHeaderField(String key);
-
-  String getResponseMessage();
+  long length();
 }

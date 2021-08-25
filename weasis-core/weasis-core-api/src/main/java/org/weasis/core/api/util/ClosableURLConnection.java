@@ -17,6 +17,7 @@ import java.net.URLConnection;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 
 public class ClosableURLConnection implements HttpResponse {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClosableURLConnection.class);
@@ -49,6 +50,18 @@ public class ClosableURLConnection implements HttpResponse {
       }
     }
     return HttpURLConnection.HTTP_OK;
+  }
+
+  @Override
+  public String getResponseMessage() {
+    if (urlConnection instanceof HttpURLConnection) {
+      try {
+        return ((HttpURLConnection) urlConnection).getResponseMessage();
+      } catch (IOException e) {
+        LOGGER.error("Get message", e);
+      }
+    }
+    return StringUtil.EMPTY_STRING;
   }
 
   @Override

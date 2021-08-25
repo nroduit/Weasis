@@ -80,10 +80,10 @@ public class OAuth2ServiceFactory {
       return null;
     }
     int port = SocketUtil.findAvailablePort();
-
     OAuth20Service oAuth20Service =
         new ServiceBuilder(registration.getClientId())
             .apiSecret(registration.getClientSecret())
+            .httpClient(new BasicHttpClient())
             .defaultScope(registration.getScope())
             .callback(CALLBACK_URL + port)
             .responseType(registration.getAuthorizationGrantType())

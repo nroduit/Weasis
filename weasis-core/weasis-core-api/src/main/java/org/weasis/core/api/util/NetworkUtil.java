@@ -70,10 +70,22 @@ public class NetworkUtil {
 
   public static HttpResponse getHttpResponse(
       String url, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
+    return getHttpResponse(url, urlParameters, authMethod, null);
+  }
+
+  public static HttpResponse getHttpResponse(
+      String url, URLParameters urlParameters, AuthMethod authMethod, OAuthRequest authRequest)
+      throws IOException {
     if (authMethod == null || OAuth2ServiceFactory.noAuth.equals(authMethod)) {
       return prepareConnection(new URL(url).openConnection(), urlParameters);
     }
-    return prepareAuthConnection(new OAuthRequest(Verb.GET, url), urlParameters, authMethod);
+    OAuthRequest request;
+    if (authRequest == null) {
+      request = new OAuthRequest(urlParameters.isHttpPost() ? Verb.POST : Verb.GET, url);
+    } else {
+      request = authRequest;
+    }
+    return prepareAuthConnection(request, urlParameters, authMethod);
   }
 
   public static ClosableURLConnection getUrlConnection(String url, URLParameters urlParameters)
@@ -106,8 +118,7 @@ public class NetworkUtil {
     try {
       OAuth20Service service = OAuth2ServiceFactory.getService(authMethod);
       if (service == null) {
-        throw new IllegalStateException(
-            "Not a valid authentication method: " + authMethod.toString());
+        throw new IllegalStateException("Not a valid authentication method: " + authMethod);
       }
       service.signRequest(authMethod.getToken(), request);
       return new AuthResponse(service.execute(request));

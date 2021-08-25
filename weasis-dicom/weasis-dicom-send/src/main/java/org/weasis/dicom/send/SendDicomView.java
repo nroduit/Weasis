@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import javax.swing.ComboBoxModel;
 import javax.swing.JComboBox;
@@ -29,6 +30,8 @@ import org.dcm4che3.net.Status;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -44,6 +47,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
+import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.CheckTreeModel;
@@ -54,6 +58,7 @@ import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.explorer.LocalExport;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.op.CStore;
@@ -63,7 +68,6 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.web.Multipart;
-import org.weasis.dicom.web.StowrsMultiFiles;
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
@@ -78,6 +82,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
 
   private final JPanel panel = new JPanel();
   private final JComboBox<AbstractDicomNode> comboNode = new JComboBox<>();
+  private AuthMethod authMethod;
 
   public SendDicomView(DicomModel dicomModel, CheckTreeModel treeModel) {
     super(Messages.getString("SendDicomView.title"));
@@ -216,16 +221,31 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
           LOGGER.info("Dicom send: {}", state.getMessage());
         }
       } else if (selectedItem instanceof DicomWebNode) {
-        DicomWebNode destination = (DicomWebNode) selectedItem;
-        try (StowrsMultiFiles stowRS =
-            new StowrsMultiFiles(
-                destination.getUrl().toString(),
+        final DicomWebNode node = (DicomWebNode) selectedItem;
+        AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
+        if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
+          String oldCode = auth.getCode();
+          authMethod = auth;
+          if (authMethod.getToken() == null) {
+            return false;
+          }
+          if (!Objects.equals(oldCode, authMethod.getCode())) {
+            AuthenticationPersistence.saveMethod();
+          }
+        }
+
+        try (StowRS stowRS =
+            new StowRS(
+                node.getUrl().toString(),
                 Multipart.ContentType.DICOM,
                 AppProperties.WEASIS_NAME,
-                destination.getHeaders())) {
-          stowRS.uploadDicom(files, true);
+                node.getHeaders())) {
+          DicomState state = stowRS.uploadDicom(files, true, authMethod);
+          if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
+            showErrorMessage(null, null, state);
+          }
         } catch (Exception e) {
-          showErrorMessage("StowRS error: {}", e, null); // NON-NLS
+          showErrorMessage("Stow-RS error: {}", e, null); // NON-NLS
         }
       }
     } finally {
@@ -244,7 +264,9 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             () ->
                 JOptionPane.showMessageDialog(
                     exportTree,
-                    state == null ? e.getMessage() : state.getMessage(),
+                    state == null
+                        ? Objects.requireNonNull(e).getMessage()
+                        : StringUtil.getTruncatedString(state.getMessage(), 150, Suffix.THREE_PTS),
                     getTitle(),
                     JOptionPane.ERROR_MESSAGE));
   }

@@ -514,8 +514,8 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       Properties props,
       URLParameters urlParameters) {
     String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    if (StringUtil.hasText(serieInstanceUID)) {
-      String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
+    String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
+    if (StringUtil.hasText(serieInstanceUID) && StringUtil.hasText(seriesRetrieveURL)) {
       StringBuilder buf = new StringBuilder(seriesRetrieveURL);
       buf.append("/instances?includefield="); // NON-NLS
       buf.append(RsQueryResult.INSTANCE_QUERY);

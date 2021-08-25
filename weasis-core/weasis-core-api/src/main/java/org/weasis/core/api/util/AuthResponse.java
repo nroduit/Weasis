@@ -43,6 +43,11 @@ public class AuthResponse implements HttpResponse {
   }
 
   @Override
+  public String getResponseMessage() {
+    return response.getMessage();
+  }
+
+  @Override
   public String getHeaderField(String key) {
     return response.getHeader(key);
   }
