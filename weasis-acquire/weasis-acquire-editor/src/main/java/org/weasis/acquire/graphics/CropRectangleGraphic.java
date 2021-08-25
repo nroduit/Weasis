@@ -17,6 +17,7 @@ import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
+import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.MaskOp;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -62,23 +63,21 @@ public class CropRectangleGraphic extends RectangleGraphic {
         updateCropDisplay(info);
 
         if (view != null) {
-          view.getImageLayer().setImage(view.getImage(), info.getPreProcessOpManager());
+          view.getImageLayer().setImage(view.getImage(), info.getPostProcessOpManager());
         }
       }
     }
   }
 
   public void updateCropDisplay(AcquireImageInfo imageInfo) {
-    ImageOpNode node = imageInfo.getPreProcessOpManager().getNode(MaskOp.OP_NAME);
-    if (node == null) {
-      node = new MaskOp();
-      imageInfo.addPreProcessImageOperationAction(node);
-    } else {
+    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(MaskOp.OP_NAME);
+    if (node != null) {
       node.clearIOCache();
+      node.setParam(MaskOp.P_SHOW, true);
+      node.setParam(MaskOp.P_SHAPE, imageInfo.getNextValues().getCropZone());
+      node.setParam(MaskOp.P_ALPHA, 0.7);
+      imageInfo.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
     }
-    node.setParam(MaskOp.P_SHOW, true);
-    node.setParam(MaskOp.P_SHAPE, imageInfo.getNextValues().getCropZone());
-    node.setParam(MaskOp.P_ALPHA, 0.7);
   }
 
   @Override

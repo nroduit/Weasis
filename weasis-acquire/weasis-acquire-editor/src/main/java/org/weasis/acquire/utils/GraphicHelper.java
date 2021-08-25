@@ -11,7 +11,6 @@ package org.weasis.acquire.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import org.weasis.core.api.media.data.ImageElement;
@@ -61,15 +60,10 @@ public class GraphicHelper {
     int xStart = (int) (((diagonal % GRID_SPACING) / 2) - hOffset);
     int yStart = (int) (((diagonal % GRID_SPACING) / 2) - vOffset);
 
-    AffineTransform transform = view.getInverseTransform();
-
     // Draw vertical lines
     for (int i = xStart - 1; i < width; i = i + GRID_SPACING) {
       Point2D.Double p1 = new Point2D.Double(i, x0);
       Point2D.Double p2 = new Point2D.Double(i, diagonal);
-      transform.transform(p1, p1);
-      transform.transform(p2, p2);
-
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }
 
@@ -77,9 +71,6 @@ public class GraphicHelper {
     for (int i = yStart - 1; i < height; i = i + GRID_SPACING) {
       Point2D.Double p1 = new Point2D.Double(y0, i);
       Point2D.Double p2 = new Point2D.Double(diagonal, i);
-      transform.transform(p1, p1);
-      transform.transform(p2, p2);
-
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }
   }

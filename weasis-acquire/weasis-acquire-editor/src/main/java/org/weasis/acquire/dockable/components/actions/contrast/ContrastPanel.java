@@ -74,8 +74,6 @@ public class ContrastPanel extends AbstractAcquireActionPanel
   @Override
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    info.clearPreProcess();
-
     AcquireImageValues next = info.getNextValues();
     next.setContrast(values.getContrast());
     next.setBrightness(values.getBrightness());
@@ -95,7 +93,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     applyNextValues();
     autoLevelListener.applyNextValues();
 
-    info.applyPreProcess(view);
+    info.applyCurrentProcessing(view);
   }
 
   @Override
@@ -110,21 +108,19 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     imageInfo.getNextValues().setBrightness(brightnessPanel.getSliderValue());
     imageInfo.getNextValues().setContrast(contrastPanel.getSliderValue());
     applyNextValues();
-    imageInfo.applyPreProcess(AcquireObject.getView());
+    imageInfo.applyCurrentProcessing(AcquireObject.getView());
   }
 
   @Override
   public void applyNextValues() {
     AcquireImageInfo imageInfo = AcquireObject.getImageInfo();
-    ImageOpNode node = imageInfo.getPreProcessOpManager().getNode(BrightnessOp.OP_NAME);
-    if (node == null) {
-      node = new BrightnessOp();
-      imageInfo.addPreProcessImageOperationAction(node);
-    } else {
+    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(BrightnessOp.OP_NAME);
+    if (node != null) {
       node.clearIOCache();
+      node.setParam(
+          BrightnessOp.P_BRIGTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
+      node.setParam(
+          BrightnessOp.P_CONTRAST_VALUE, (double) imageInfo.getNextValues().getContrast());
     }
-    node.setParam(
-        BrightnessOp.P_BRIGTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
-    node.setParam(BrightnessOp.P_CONTRAST_VALUE, (double) imageInfo.getNextValues().getContrast());
   }
 }

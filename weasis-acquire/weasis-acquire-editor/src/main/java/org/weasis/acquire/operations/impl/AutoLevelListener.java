@@ -24,19 +24,16 @@ public class AutoLevelListener extends AcquireObject implements ActionListener, 
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.getNextValues().toggleAutoLevel();
     applyNextValues();
-    imageInfo.applyPreProcess(getView());
+    imageInfo.applyCurrentProcessing(getView());
   }
 
   @Override
   public void applyNextValues() {
     AcquireImageInfo imageInfo = getImageInfo();
-    ImageOpNode node = imageInfo.getPreProcessOpManager().getNode(AutoLevelsOp.OP_NAME);
-    if (node == null) {
-      node = new AutoLevelsOp();
-      imageInfo.addPreProcessImageOperationAction(node);
-    } else {
+    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(AutoLevelsOp.OP_NAME);
+    if (node != null) {
       node.clearIOCache();
+      node.setParam(AutoLevelsOp.P_AUTO_LEVEL, imageInfo.getNextValues().isAutoLevel());
     }
-    node.setParam(AutoLevelsOp.P_AUTO_LEVEL, imageInfo.getNextValues().isAutoLevel());
   }
 }

@@ -15,12 +15,8 @@ import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
-import org.weasis.acquire.utils.GraphicHelper;
-import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.RotationOp;
 
 public class RotationActionListener extends AcquireObject
     implements ActionListener, OpValueChanged {
@@ -40,28 +36,21 @@ public class RotationActionListener extends AcquireObject
     imageInfo.getNextValues().setRotation(rotation);
     applyNextValues();
     rectifyAction.updateCropDisplay();
-    imageInfo.applyPreProcess(getView());
+    imageInfo.applyCurrentProcessing(getView());
   }
 
   @Override
   public void applyNextValues() {
+    applyNRotation(getImageInfo(), rectifyAction);
+  }
 
-    ViewCanvas<ImageElement> view = getView();
-    if (view != null) {
-      AcquireImageInfo imageInfo = getImageInfo();
-      int rotation = (imageInfo.getNextValues().getFullRotation() + 360) % 360;
-      RectangleGraphic cropGraphic = rectifyAction.getCurrentCropArea();
-      if (cropGraphic != null) {
-        GraphicModel graphicManager = view.getGraphicManager();
-        graphicManager
-            .getModels()
-            .removeIf(g -> g.getLayer().getType() == cropGraphic.getLayerType());
-      }
-      if (rotation % 90 != 0) {
-        GraphicHelper.newGridLayer(view);
-      }
-
-      view.setActionsInView(ActionW.ROTATION.cmd(), rotation);
+  static void applyNRotation(AcquireImageInfo imageInfo, RectifyAction rectifyAction) {
+    int rotation = (imageInfo.getNextValues().getFullRotation() + 720) % 360;
+    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(RotationOp.OP_NAME);
+    if (node != null) {
+      node.clearIOCache();
+      node.setParam(RotationOp.P_ROTATE, rotation);
     }
+    rectifyAction.updateGraphics(imageInfo);
   }
 }

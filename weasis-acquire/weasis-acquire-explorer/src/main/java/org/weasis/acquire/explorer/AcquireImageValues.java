@@ -9,11 +9,10 @@
  */
 package org.weasis.acquire.explorer;
 
-import com.privatejgoodies.common.base.Objects;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.Objects;
 import java.util.Optional;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.Copyable;
 
@@ -32,7 +31,6 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
   private int brightness = 0;
   private int contrast = 100;
   private boolean autoLevel = false;
-  private boolean flip = false;
   private Unit calibrationUnit = Unit.PIXEL;
   private double calibrationRatio = 1.0;
   private Double ratio = null;
@@ -49,7 +47,6 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
     setBrightness(object.brightness);
     setContrast(object.contrast);
     setAutoLevel(object.autoLevel);
-    setFlip(object.flip);
     setCalibrationUnit(object.calibrationUnit);
     setCalibrationRatio(object.calibrationRatio);
     setRatio(object.ratio);
@@ -132,18 +129,6 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
     this.autoLevel = !this.autoLevel;
   }
 
-  public boolean isFlip() {
-    return flip;
-  }
-
-  public void setFlip(boolean flip) {
-    this.flip = flip;
-  }
-
-  public void toggleFlip() {
-    this.flip = !this.flip;
-  }
-
   public int getRotation() {
     return rotation;
   }
@@ -161,104 +146,63 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + (autoLevel ? 1231 : 1237);
-    result = prime * result + brightness;
-    long temp;
-    temp = Double.doubleToLongBits(calibrationRatio);
-    result = prime * result + (int) (temp ^ (temp >>> 32));
-    result = prime * result + ((calibrationUnit == null) ? 0 : calibrationUnit.hashCode());
-    result = prime * result + contrast;
-    result = prime * result + ((cropZone == null) ? 0 : cropZone.hashCode());
-    result = prime * result + (flip ? 1231 : 1237);
-    result = prime * result + ((layerOffset == null) ? 0 : layerOffset.hashCode());
-    result = prime * result + orientation;
-    result = prime * result + rotation;
-    result = prime * result + ((ratio == null) ? 0 : ratio.hashCode());
-
-    return result;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    AcquireImageValues that = (AcquireImageValues) o;
+    return orientation == that.orientation
+        && rotation == that.rotation
+        && brightness == that.brightness
+        && contrast == that.contrast
+        && autoLevel == that.autoLevel
+        && Double.compare(that.calibrationRatio, calibrationRatio) == 0
+        && Objects.equals(cropZone, that.cropZone)
+        && Objects.equals(layerOffset, that.layerOffset)
+        && calibrationUnit == that.calibrationUnit
+        && Objects.equals(ratio, that.ratio);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    AcquireImageValues other = (AcquireImageValues) obj;
-    if (autoLevel != other.autoLevel) {
-      return false;
-    }
-    if (brightness != other.brightness) {
-      return false;
-    }
-    if (MathUtil.isDifferent(calibrationRatio, other.calibrationRatio)) {
-      return false;
-    }
-    if (calibrationUnit != other.calibrationUnit) {
-      return false;
-    }
-    if (contrast != other.contrast) {
-      return false;
-    }
-    if (cropZone == null) {
-      if (other.cropZone != null) {
-        return false;
-      }
-    } else if (!cropZone.equals(other.cropZone)) {
-      return false;
-    }
-    if (flip != other.flip) {
-      return false;
-    }
-    if (layerOffset == null) {
-      if (other.layerOffset != null) {
-        return false;
-      }
-    } else if (!layerOffset.equals(other.layerOffset)) {
-      return false;
-    }
-    if (orientation != other.orientation) {
-      return false;
-    }
-    if (rotation != other.rotation) {
-      return false;
-    }
-    return Objects.equals(ratio, other.ratio);
+  public int hashCode() {
+    return Objects.hash(
+        cropZone,
+        layerOffset,
+        orientation,
+        rotation,
+        brightness,
+        contrast,
+        autoLevel,
+        calibrationUnit,
+        calibrationRatio,
+        ratio);
   }
 
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("AcquireImageValues[cropZone=>"); // NON-NLS
-    builder.append(cropZone);
-    builder.append("layerOffset=>"); // NON-NLS
-    builder.append(layerOffset);
-    builder.append("orientation=>"); // NON-NLS
-    builder.append(orientation);
-    builder.append("rotation=>"); // NON-NLS
-    builder.append(rotation);
-    builder.append("brightness=>"); // NON-NLS
-    builder.append(brightness);
-    builder.append("contrast=>"); // NON-NLS
-    builder.append(contrast);
-    builder.append("autoLevel=>"); // NON-NLS
-    builder.append(autoLevel);
-    builder.append("flip=>"); // NON-NLS
-    builder.append(flip);
-    builder.append("calibrationUnit=>"); // NON-NLS
-    builder.append(calibrationUnit);
-    builder.append("calibrationRatio=>"); // NON-NLS
-    builder.append(calibrationRatio);
-    builder.append("ratio=>"); // NON-NLS
-    builder.append(ratio);
-    return builder.toString();
+    String builder = "AcquireImageValues[cropZone=>" // NON-NLS
+        + cropZone
+        + "layerOffset=>" // NON-NLS
+        + layerOffset
+        + "orientation=>" // NON-NLS
+        + orientation
+        + "rotation=>" // NON-NLS
+        + rotation
+        + "brightness=>" // NON-NLS
+        + brightness
+        + "contrast=>" // NON-NLS
+        + contrast
+        + "autoLevel=>" // NON-NLS
+        + autoLevel
+        + "calibrationUnit=>" // NON-NLS
+        + calibrationUnit
+        + "calibrationRatio=>" // NON-NLS
+        + calibrationRatio
+        + "ratio=>" // NON-NLS
+        + ratio;
+    return builder;
   }
 }

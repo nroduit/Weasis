@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -85,8 +84,7 @@ import org.xml.sax.SAXException;
 public class AcquireManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
-  public static final List<String> functions =
-      Collections.unmodifiableList(Arrays.asList("patient")); // NON-NLS
+  public static final List<String> functions = Collections.singletonList("patient"); // NON-NLS
   public static final Global GLOBAL = new Global();
 
   private static final int OPT_NONE = 0;

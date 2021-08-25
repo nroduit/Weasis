@@ -16,10 +16,8 @@ import java.awt.Rectangle;
 import java.util.Objects;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.Border;
-import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.rectify.lib.AbstractRectifyButton;
@@ -28,13 +26,11 @@ import org.weasis.acquire.dockable.components.actions.rectify.lib.btn.Rotate270B
 import org.weasis.acquire.dockable.components.actions.rectify.lib.btn.Rotate90Button;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
-import org.weasis.acquire.operations.impl.FlipActionListener;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -53,10 +49,8 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
   private final OrientationSliderComponent orientationPanel;
   private final AbstractRectifyButton rotate90btn;
   private final AbstractRectifyButton rotate270btn;
-  private final JCheckBox flipCheckBox = new JCheckBox(Messages.getString("RectifyPanel.flip_hz"));
 
   private final RectifyAction rectifyAction;
-  private final FlipActionListener flipActionListener;
 
   public RectifyPanel(RectifyAction rectifyAction) {
     this.rectifyAction = Objects.requireNonNull(rectifyAction);
@@ -64,7 +58,6 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     orientationPanel = new OrientationSliderComponent(this);
     rotate90btn = new Rotate90Button(rectifyAction);
     rotate270btn = new Rotate270Button(rectifyAction);
-    flipActionListener = new FlipActionListener(rectifyAction);
     add(createContent(), BorderLayout.NORTH);
   }
 
@@ -82,13 +75,6 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     panel.add(orientationPanel);
     panel.add(btnContent);
 
-    JPanel flipPanel = new JPanel();
-    flipPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
-    flipPanel.setBorder(border);
-    flipPanel.add(flipCheckBox);
-    flipCheckBox.addActionListener(flipActionListener);
-    panel.add(flipPanel);
-
     return panel;
   }
 
@@ -104,21 +90,18 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
   @Override
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    info.clearPreProcess();
 
     AcquireImageValues next = info.getNextValues();
-    next.setFlip(values.isFlip());
     next.setOrientation(values.getOrientation());
     next.setRotation(values.getRotation());
     next.setCropZone(values.getCropZone());
 
-    flipCheckBox.removeActionListener(flipActionListener);
     RectifyOrientationChangeListener listener = orientationPanel.getListener();
     orientationPanel.removeChangeListener(listener);
-    flipCheckBox.setSelected(next.isFlip());
     orientationPanel.setSliderValue(next.getOrientation());
+    orientationPanel.updatePanelTitle();
     orientationPanel.addChangeListener(listener);
-    flipCheckBox.addActionListener(flipActionListener);
+    rectifyAction.init(view.getGraphicManager(), next.getFullRotation());
     repaint();
 
     // Remove the crop before super.init() to get the entire image.
@@ -127,12 +110,10 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     info.getPostProcessOpManager()
         .setParamValue(
             RotationOp.OP_NAME, RotationOp.P_ROTATE, info.getDefaultValues().getFullRotation());
-    info.getPostProcessOpManager()
-        .setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, info.getDefaultValues().isFlip());
     view.updateCanvas(false);
     view.getImageLayer().setOffset(null);
     Rectangle area = ImageConversion.getBounds(view.getSourceImage());
-    if (area != null && area.width > 1 && area.height > 1) {
+    if (area.width > 1 && area.height > 1) {
       ((DefaultViewModel) view.getViewModel()).adjustMinViewScaleFromImage(area.width, area.height);
       view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
       view.getImageLayer().setOffset(new Point(area.x, area.y));
@@ -159,12 +140,11 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
       }
     }
 
-    flipActionListener.applyNextValues();
     listener.applyNextValues();
 
     next.setCropZone(next.getCropZone());
     rectifyAction.updateCropGraphic();
 
-    info.applyPreProcess(view);
+    info.applyCurrentProcessing(view);
   }
 }

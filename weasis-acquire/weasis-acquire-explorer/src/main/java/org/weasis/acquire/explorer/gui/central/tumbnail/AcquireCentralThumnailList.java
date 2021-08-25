@@ -28,7 +28,6 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -199,16 +198,11 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
                                       : info.getNextValues().getRotation() + 360 + angle;
                               info.getNextValues().setRotation(change);
 
-                              ImageOpNode node =
-                                  info.getPreProcessOpManager().getNode(RotationOp.OP_NAME);
-                              if (node == null) {
-                                node = new RotationOp();
-                                info.addPreProcessImageOperationAction(node);
-                              } else {
-                                node.clearIOCache();
-                              }
-                              node.setParam(
-                                  RotationOp.P_ROTATE, info.getNextValues().getFullRotation());
+                              info.getPostProcessOpManager()
+                                  .setParamValue(
+                                      RotationOp.OP_NAME,
+                                      RotationOp.P_ROTATE,
+                                      info.getNextValues().getFullRotation());
                             }))));
   }
 
