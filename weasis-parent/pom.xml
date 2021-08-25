@@ -26,11 +26,11 @@
 
     <app.version>${revision}${changelist}</app.version>
     <javaws.version>1.6.0-17</javaws.version>
-    <felix.framework.version>7.0.0</felix.framework.version>
+    <felix.framework.version>7.0.1</felix.framework.version>
     <substance.version>1.9.2</substance.version>
     <xz.version>1.9</xz.version>
 
-    <osgi.cmpn.version>7.0.0</osgi.cmpn.version>
+    <osgi.cmpn.version>8.0.0</osgi.cmpn.version>
 
     <felix.gogo.version>1.1.4</felix.gogo.version>
     <felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
@@ -174,7 +174,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -189,7 +189,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -199,7 +199,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>1.6.0</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -214,12 +214,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.2.1</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.2.4</version>
+          <version>1.2.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -305,7 +305,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.6.1</version>
+        <version>2.12.3</version>
         <configuration>
           <java>
             <googleJavaFormat/>
@@ -568,7 +568,7 @@
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>osgi.cmpn</artifactId>
-      <version>${osgi.cmpn.version}</version>
+      <version>7.0.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
