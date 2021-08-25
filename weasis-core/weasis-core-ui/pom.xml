@@ -40,6 +40,8 @@
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
             Import-Package: \
+            com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
+            resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
             com.sun.xml.internal.bind;resolution:=optional,javax.xml.bind;version=!,\
             javax.xml.bind.annotation;version=!,javax.xml.bind.annotation.adapters;version=!,\
             com.sun.xml.bind.v2;resolution:=optional,!sun.swing,*
@@ -95,12 +97,22 @@
     <dependency>
       <groupId>org.knowm.xchart</groupId>
       <artifactId>xchart</artifactId>
-      <version>3.5.0</version>
+      <version>3.8.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.madgag</groupId>
+          <artifactId>animated-gif-lib</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>de.rototor.pdfbox</groupId>
+          <artifactId>graphics2d</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>de.erichseifert.vectorgraphics2d</groupId>
       <artifactId>VectorGraphics2D</artifactId>
-      <version>0.11</version>
+      <version>0.13</version>
     </dependency>
 
     <!-- FOR TESTS -->
