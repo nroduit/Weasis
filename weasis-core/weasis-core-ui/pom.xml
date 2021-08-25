@@ -92,7 +92,7 @@
     <dependency>
       <groupId>com.github.lgooddatepicker</groupId>
       <artifactId>LGoodDatePicker</artifactId>
-      <version>11.1.0</version>
+      <version>11.2.1</version>
     </dependency>
     <dependency>
       <groupId>org.knowm.xchart</groupId>
