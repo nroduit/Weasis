@@ -1063,8 +1063,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     Integer nb = (Integer) dcmSeries.getTagValue(TagW.SplitSeriesNumber);
     // Convention -> split number inferior to 0 is a Series that has been replaced (ex. when a
-    // DicomSeries is
-    // converted DicomVideoSeries after downloading files).
+    // DicomSeries is converted DicomVideoSeries after downloading files).
     if (nb != null && nb < 0) {
       model.removeSeries(dcmSeries);
       repaintStudy = true;

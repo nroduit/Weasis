@@ -480,8 +480,8 @@ public class PRManager {
                 try {
                   Point2D point = new Point2D.Double(rect.getMinX(), rect.getMinY());
                   AbstractGraphic pt =
-                      (AbstractGraphic) new PointGraphic().buildGraphic(
-                          Collections.singletonList(point));
+                      (AbstractGraphic)
+                          new PointGraphic().buildGraphic(Collections.singletonList(point));
                   pt.setLineThickness(thickness);
                   pt.setLabelVisible(Boolean.TRUE);
                   AbstractGraphicModel.addGraphicToModel(view, layer, pt);

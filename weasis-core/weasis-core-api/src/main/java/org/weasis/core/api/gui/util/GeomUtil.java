@@ -136,8 +136,7 @@ public final class GeomUtil {
    *     If >0 && < AB , ptC point will be interior of AB<br>
    * @return New point ptC coordinates or null if any argument is invalid
    */
-  public static Point2D getColinearPointWithLength(
-      Point2D ptA, Point2D ptB, double newLength) {
+  public static Point2D getColinearPointWithLength(Point2D ptA, Point2D ptB, double newLength) {
     if (ptA != null && ptB != null) {
       return getColinearPointWithRatio(ptA, ptB, newLength / ptA.distance(ptB));
     }
@@ -200,8 +199,7 @@ public final class GeomUtil {
    *
    * @return intersect point. Null if segment lines are parallel
    */
-  public static Point2D getIntersectPoint(
-      Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+  public static Point2D getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (ptA == null || ptB == null || ptC == null || ptD == null) {
       return null;
     }
@@ -358,7 +356,8 @@ public final class GeomUtil {
 
     double perpX = -abY;
     double perpY = abX;
-    double perpSize = Math.sqrt(abX * abX + abY * abY);;
+    double perpSize = Math.sqrt(abX * abX + abY * abY);
+    ;
 
     double sideVectorX = dist * perpX / perpSize;
     double sideVectorY = dist * perpY / perpSize;

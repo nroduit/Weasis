@@ -96,8 +96,8 @@ public class ImageCVIO implements MediaReader {
     if (cache.isRequireTransformation()) {
       file = cache.getTransformedFile();
       if (file == null) {
-        String filename = StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes(
-            StandardCharsets.UTF_8));
+        String filename =
+            StringUtil.bytesToMD5(media.getMediaURI().toString().getBytes(StandardCharsets.UTF_8));
         imgCachePath = CACHE_UNCOMPRESSED_DIR.toPath().resolve(filename + ".wcv");
         if (Files.isReadable(imgCachePath)) {
           file = imgCachePath.toFile();
@@ -125,8 +125,9 @@ public class ImageCVIO implements MediaReader {
     }
     return null;
   }
+
   private static void applyExifTags(ImageElement img, List<String> exifTags) {
-    if(exifTags.size() >= Imgcodecs.POS_COPYRIGHT) {
+    if (exifTags.size() >= Imgcodecs.POS_COPYRIGHT) {
       applyExifTag(img, TagW.ExifImageDescription, exifTags.get(Imgcodecs.POS_IMAGE_DESCRIPTION));
       applyExifTag(img, TagW.ExifMake, exifTags.get(Imgcodecs.POS_MAKE));
       applyExifTag(img, TagW.ExifModel, exifTags.get(Imgcodecs.POS_MODEL));
@@ -141,8 +142,8 @@ public class ImageCVIO implements MediaReader {
   }
 
   private static void applyExifTag(ImageElement img, TagW tagW, String val) {
-    if(StringUtil.hasText(val)) {
-     img.setTag(tagW, val);
+    if (StringUtil.hasText(val)) {
+      img.setTag(tagW, val);
     }
   }
 

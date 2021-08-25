@@ -432,7 +432,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   }
 
   /**
-   * @param mouseevent
+   * @param mouseEvent
    * @return first selected graphic intersecting if exist, otherwise simply first graphic
    *     intersecting, or null
    */

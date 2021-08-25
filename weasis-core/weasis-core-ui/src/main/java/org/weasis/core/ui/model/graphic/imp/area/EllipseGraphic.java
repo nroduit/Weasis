@@ -100,7 +100,7 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
         double a = ptA.distance(ptB) / 2.0;
         double b = dist / 2.0;
 
-        Point2D ptx =  GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, b);
+        Point2D ptx = GeomUtil.getPerpendicularPointFromLine(ptA, ptB, ptC, b);
         double widthTwoThirds = a * 4 / 3;
         double rotationAngle = Math.atan2(ptA.getY() - ptB.getY(), ptA.getX() - ptB.getX());
         double dx1 = Math.sin(rotationAngle) * b;
@@ -109,7 +109,7 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
         double dy2 = Math.sin(rotationAngle) * widthTwoThirds;
 
         double topCenterX = ptx.getX() - dx1;
-        double topCenterY =  ptx.getY() + dy1;
+        double topCenterY = ptx.getY() + dy1;
         double topRightX = topCenterX + dx2;
         double topRightY = topCenterY + dy2;
         double topLeftX = topCenterX - dx2;
@@ -123,8 +123,10 @@ public class EllipseGraphic extends ObliqueRectangleGraphic {
         double bottomLeftY = bottomCenterY - dy2;
 
         polygonPath.moveTo(bottomCenterX, bottomCenterY);
-        polygonPath.curveTo(bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
-        polygonPath.curveTo(topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
+        polygonPath.curveTo(
+            bottomRightX, bottomRightY, topRightX, topRightY, topCenterX, topCenterY);
+        polygonPath.curveTo(
+            topLeftX, topLeftY, bottomLeftX, bottomLeftY, bottomCenterX, bottomCenterY);
       } else {
         polygonPath.lineTo(ptB.getX(), ptB.getY());
       }

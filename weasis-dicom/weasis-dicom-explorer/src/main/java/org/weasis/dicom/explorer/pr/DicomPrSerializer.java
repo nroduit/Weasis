@@ -417,8 +417,7 @@ public class DicomPrSerializer {
     addNewSubGraphic(dcm, graphicSeq, points);
   }
 
-  private static void addNewSubGraphic(
-      Attributes dcm, Sequence graphicSeq, List<Point2D> points) {
+  private static void addNewSubGraphic(Attributes dcm, Sequence graphicSeq, List<Point2D> points) {
     if (dcm != null && dcm.getParent() == null) {
       dcm.setString(Tag.GraphicType, VR.CS, PrGraphicUtil.POLYLINE);
       dcm.setDouble(Tag.GraphicData, VR.FL, getGraphicsPoints(points));

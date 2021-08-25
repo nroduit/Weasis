@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import org.weasis.core.api.gui.util.MathUtil;
 
 public class ConvexHull {
@@ -65,7 +64,8 @@ public class ConvexHull {
     Point2D p = pts.get(0);
     for (int i = 1; i < pts.size(); i++) {
       Point2D pc = pts.get(i);
-      if ((pc.getY() < p.getY()) || (MathUtil.isEqual(pc.getY(), p.getY()) && (pc.getX() < p.getX()))) {
+      if ((pc.getY() < p.getY())
+          || (MathUtil.isEqual(pc.getY(), p.getY()) && (pc.getX() < p.getX()))) {
         p = pc;
         Collections.swap(pts, 0, i);
       }
@@ -122,7 +122,9 @@ public class ConvexHull {
    * @return 0 if c is collinear with a-b
    */
   public static int getOrientation(Point2D a, Point2D b, Point2D c) {
-    return signum((b.getX() - a.getX()) * (c.getY() - a.getY()) - (b.getY() - a.getY()) * (c.getX() - a.getX()));
+    return signum(
+        (b.getX() - a.getX()) * (c.getY() - a.getY())
+            - (b.getY() - a.getY()) * (c.getX() - a.getX()));
   }
 
   private static class RadialSorter implements Comparator<Point2D> {

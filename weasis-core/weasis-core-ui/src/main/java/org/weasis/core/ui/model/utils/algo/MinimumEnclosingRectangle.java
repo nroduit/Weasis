@@ -93,8 +93,13 @@ public class MinimumEnclosingRectangle {
   }
 
   public static double distanceFromAB(Point2D p, Point2D a, Point2D b) {
-    double len2 = (b.getX() - a.getX()) * (b.getX() - a.getX()) + (b.getY() - a.getY()) * (b.getY()- a.getY());
-    double s = ((a.getY() - p.getY()) * (b.getX() - a.getX()) - (a.getX() - p.getX()) * (b.getY() - a.getY())) / len2;
+    double len2 =
+        (b.getX() - a.getX()) * (b.getX() - a.getX())
+            + (b.getY() - a.getY()) * (b.getY() - a.getY());
+    double s =
+        ((a.getY() - p.getY()) * (b.getX() - a.getX())
+                - (a.getX() - p.getX()) * (b.getY() - a.getY()))
+            / len2;
     return Math.abs(s) * Math.sqrt(len2);
   }
 

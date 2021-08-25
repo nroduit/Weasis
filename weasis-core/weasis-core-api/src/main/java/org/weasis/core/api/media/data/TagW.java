@@ -187,6 +187,7 @@ public class TagW implements Serializable {
 
   /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
   public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);
+
   public static final TagW ExifMake = new TagW("ExifMake", TagType.STRING);
   public static final TagW ExifModel = new TagW("ExifModel", TagType.STRING);
   public static final TagW ExifOrientation = new TagW("ExifOrientation", TagType.STRING);
