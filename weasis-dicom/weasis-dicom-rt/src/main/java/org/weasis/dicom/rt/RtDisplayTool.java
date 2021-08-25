@@ -800,6 +800,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
           if (patient != null) {
             String frameOfReferenceUID =
                 TagD.getTagValue(dcmSeries, Tag.FrameOfReferenceUID, String.class);
+            if(frameOfReferenceUID == null) {
+              frameOfReferenceUID = "";
+            }
             List<MediaElement> list =
                 getRelatedSpecialElements(dicomModel, patient, frameOfReferenceUID);
             RtSet set = RtSet_Cache.get(frameOfReferenceUID);
