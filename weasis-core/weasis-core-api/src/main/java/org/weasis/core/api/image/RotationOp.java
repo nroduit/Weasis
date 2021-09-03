@@ -9,9 +9,17 @@
  */
 package org.weasis.core.api.image;
 
+import java.util.Objects;
 import java.util.Optional;
 import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
+import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
@@ -43,7 +51,7 @@ public class RotationOp extends AbstractOp {
   public void process() throws Exception {
     PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
     PlanarImage result = source;
-    Integer rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
+    int rotationAngle = Optional.ofNullable((Integer) params.get(P_ROTATE)).orElse(0);
     rotationAngle = rotationAngle % 360;
 
     if (rotationAngle != 0) {
@@ -57,14 +65,34 @@ public class RotationOp extends AbstractOp {
         rotOp = Core.ROTATE_90_COUNTERCLOCKWISE;
       }
 
-      if (rotOp != null) {
-        result = ImageProcessor.getRotatedImage(source.toMat(), rotOp);
-      } else {
+      if (rotOp == null) {
         result =
-            ImageProcessor.getRotatedImage(
+            getRotatedImage(
                 source.toMat(), rotationAngle, source.width() / 2.0, source.height() / 2.0);
+      } else {
+        result = ImageProcessor.getRotatedImage(source.toMat(), rotOp);
       }
     }
     params.put(Param.OUTPUT_IMG, result);
+  }
+
+  public static ImageCV getRotatedImage(Mat source, double angle, double centerx, double centery) {
+    if (MathUtil.isEqualToZero(angle)) {
+      return ImageCV.toImageCV(source);
+    }
+    Mat srcImg = Objects.requireNonNull(source);
+    Point ptCenter = new Point(centerx, centery);
+    Mat rot = Imgproc.getRotationMatrix2D(ptCenter, -angle, 1.0);
+    ImageCV dstImg = new ImageCV();
+    // determine bounding rectangle
+    Rect bbox = new RotatedRect(ptCenter, srcImg.size(), -angle).boundingRect();
+    double[] matrix = new double[rot.cols() * rot.rows()];
+    // adjust transformation matrix
+    rot.get(0, 0, matrix);
+    matrix[2] += bbox.width / 2.0 - centerx;
+    matrix[rot.cols() + 2] += bbox.height / 2.0 - centery;
+    rot.put(0, 0, matrix);
+    Imgproc.warpAffine(srcImg, dstImg, rot, bbox.size());
+    return dstImg;
   }
 }

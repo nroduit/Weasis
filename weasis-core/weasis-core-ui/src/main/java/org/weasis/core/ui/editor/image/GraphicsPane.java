@@ -16,6 +16,7 @@ import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -28,15 +29,24 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JComponent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.image.AffineTransformOp;
+import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
+import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
+import org.weasis.core.util.LangUtil;
 
 /**
  * The Class GraphicsPane.
@@ -45,6 +55,8 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
  */
 public class GraphicsPane extends JComponent implements Canvas {
   private static final long serialVersionUID = -7830146632397526267L;
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(GraphicsPane.class);
 
   protected GraphicModel graphicManager;
   protected ViewModel viewModel;
@@ -244,7 +256,7 @@ public class GraphicsPane extends JComponent implements Canvas {
   @Override
   public Point2D getClipViewCoordinatesOffset() {
     Point2D p = getViewCoordinatesOffset();
-    p.setLocation(p.getX() < 0.0 ? 0.0 : p.getX(), p.getY() < 0.0 ? 0.0 : p.getY());
+    p.setLocation(Math.max(p.getX(), 0.0), Math.max(p.getY(), 0.0));
     return p;
   }
 
@@ -265,6 +277,79 @@ public class GraphicsPane extends JComponent implements Canvas {
     Point2D p = getClipViewCoordinatesOffset();
     return new Point(
         (int) Math.floor(p2.getX() + p.getX() + 0.5), (int) Math.floor(p2.getY() + p.getY() + 0.5));
+  }
+
+  protected void updateAffineTransform(
+      Image2DViewer<? extends ImageElement> view2d,
+      ImageOpNode node,
+      RenderedImageLayer<?> imageLayer,
+      double viewSizeShift) {
+    Rectangle2D modelArea = getViewModel().getModelArea();
+    double viewScale = getViewModel().getViewScale();
+
+    double rWidth = modelArea.getWidth();
+    double rHeight = modelArea.getHeight();
+
+    boolean flip = LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue((ActionW.FLIP.cmd())));
+    Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
+
+    affineTransform.setToScale(flip ? -viewScale : viewScale, viewScale);
+    if (rotationAngle != null && rotationAngle > 0) {
+      affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
+    }
+    if (flip) {
+      affineTransform.translate(-rWidth, 0.0);
+    }
+
+    if (node != null) {
+      Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
+
+      double diffX = 0.0;
+      double diffY = 0.0;
+      Rectangle2D viewBounds =
+          new Rectangle2D.Double(0, 0, getWidth() + viewSizeShift, getHeight() + viewSizeShift);
+      Rectangle2D srcBounds = getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
+
+      Rectangle2D dstBounds;
+      if (viewBounds.contains(srcBounds)) {
+        dstBounds = srcBounds;
+      } else {
+        dstBounds = viewBounds.createIntersection(srcBounds);
+
+        if (srcBounds.getX() < 0.0) {
+          diffX += srcBounds.getX();
+        }
+        if (srcBounds.getY() < 0.0) {
+          diffY += srcBounds.getY();
+        }
+      }
+
+      double[] fmx = new double[6];
+      affineTransform.getMatrix(fmx);
+      // adjust transformation matrix => move the center to keep all the image
+      fmx[4] -= imgBounds.getX() - diffX;
+      fmx[5] -= imgBounds.getY() - diffY;
+      affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
+
+      // Convert to openCV affine matrix
+      double[] m = new double[] {fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]};
+      node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
+
+      node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
+      imageLayer.updateDisplayOperations();
+    }
+
+    // Keep the coordinates of the original image when cropping
+    Point offset = view2d.getImageLayer().getOffset();
+    if (offset != null) {
+      affineTransform.translate(-offset.getX(), -offset.getY());
+    }
+
+    try {
+      inverseTransform.setTransform(affineTransform.createInverse());
+    } catch (NoninvertibleTransformException e) {
+      LOGGER.error("Create inverse transform", e);
+    }
   }
 
   @Override

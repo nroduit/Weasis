@@ -84,6 +84,7 @@ public class CalibrationGraphic extends LineGraphic {
         }
       }
 
+      mouseevent.consume();
       view.getEventManager()
           .getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
           .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));

@@ -40,11 +40,11 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     implements ChangeListener, OpValueChanged {
   private static final long serialVersionUID = -3978989511436089997L;
 
-  private final AbstractSliderComponent contrastPanel;
-  private final AbstractSliderComponent brightnessPanel;
+  private final AbstractSliderComponent contrastSlider;
+  private final AbstractSliderComponent brightnessSlider;
   private final AutoLevelListener autoLevelListener;
 
-  private JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
+  private final JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
 
   public ContrastPanel() {
     super();
@@ -52,15 +52,15 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     autoLevelListener = new AutoLevelListener();
     autoLevelBtn.addActionListener(autoLevelListener);
-    contrastPanel = new ContrastComponent(this);
-    brightnessPanel = new BrightnessComponent(this);
+    contrastSlider = new ContrastComponent(this);
+    brightnessSlider = new BrightnessComponent(this);
 
     JPanel content = new JPanel(new GridLayout(3, 1, 0, 10));
     content.setAlignmentX(Component.LEFT_ALIGNMENT);
     content.setAlignmentY(Component.TOP_ALIGNMENT);
     content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-    content.add(contrastPanel);
-    content.add(brightnessPanel);
+    content.add(contrastSlider);
+    content.add(brightnessSlider);
     content.add(autoLevelBtn);
 
     add(content, BorderLayout.NORTH);
@@ -80,14 +80,14 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     next.setAutoLevel(values.isAutoLevel());
 
     autoLevelBtn.removeActionListener(autoLevelListener);
-    contrastPanel.removeChangeListener(this);
-    brightnessPanel.removeChangeListener(this);
-    contrastPanel.setSliderValue(next.getContrast());
-    brightnessPanel.setSliderValue(next.getBrightness());
+    contrastSlider.removeChangeListener(this);
+    brightnessSlider.removeChangeListener(this);
+    contrastSlider.setSliderValue(next.getContrast());
+    brightnessSlider.setSliderValue(next.getBrightness());
     autoLevelBtn.setSelected(next.isAutoLevel());
     autoLevelBtn.addActionListener(autoLevelListener);
-    contrastPanel.addChangeListener(this);
-    brightnessPanel.addChangeListener(this);
+    contrastSlider.addChangeListener(this);
+    brightnessSlider.addChangeListener(this);
     repaint();
 
     applyNextValues();
@@ -105,8 +105,8 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     }
 
     AcquireImageInfo imageInfo = AcquireObject.getImageInfo();
-    imageInfo.getNextValues().setBrightness(brightnessPanel.getSliderValue());
-    imageInfo.getNextValues().setContrast(contrastPanel.getSliderValue());
+    imageInfo.getNextValues().setBrightness(brightnessSlider.getSliderValue());
+    imageInfo.getNextValues().setContrast(contrastSlider.getSliderValue());
     applyNextValues();
     imageInfo.applyCurrentProcessing(AcquireObject.getView());
   }

@@ -81,6 +81,7 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
       if (img != null) {
         thumbnailPath = null;
         readable = true;
+        removeImageFromCache();
         // Keep image in cache (do not release the current image after building thumbnail)
         buildThumbnail(img, true, view.getImageLayer().getPreprocessing());
         updateImageSize();

@@ -29,7 +29,7 @@ public interface AcquireAction extends ActionListener {
 
   void validate();
 
-  boolean cancel();
+  void cancel();
 
-  boolean reset(ActionEvent e);
+  void reset(ActionEvent e);
 }

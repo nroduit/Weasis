@@ -22,21 +22,20 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaP
 public class MetadataPanel extends AbstractAcquireActionPanel {
   private static final long serialVersionUID = -1474114784513035056L;
 
-  private AcquireMetadataPanel globalInfoPanel =
+  private final AcquireMetadataPanel globalInfoPanel =
       new AcquireGlobalMetaPanel(Messages.getString("MetadataPanel.global"));
-  private org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel
+  private final org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel
       serieInfoPanel =
           new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel(null);
-  private AcquireMetadataPanel imageInfoPanel =
+  private final AcquireMetadataPanel imageInfoPanel =
       new org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel(
           Messages.getString("MetadataPanel.image"));
-
-  private JPanel content = new JPanel(new GridLayout(3, 1));
 
   public MetadataPanel() {
     super();
     setLayout(new BorderLayout());
 
+    JPanel content = new JPanel(new GridLayout(3, 1));
     add(content, BorderLayout.NORTH);
 
     content.add(globalInfoPanel);

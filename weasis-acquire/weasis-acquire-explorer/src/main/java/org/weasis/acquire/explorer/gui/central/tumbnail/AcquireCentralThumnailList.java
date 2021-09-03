@@ -11,6 +11,7 @@ package org.weasis.acquire.explorer.gui.central.tumbnail;
 
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
+import java.awt.geom.AffineTransform;
 import java.util.Arrays;
 import java.util.List;
 import javax.swing.JDialog;
@@ -28,9 +29,11 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.StringUtil;
 
@@ -52,7 +55,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
     this.acquireTabPanel = acquireTabPanel;
   }
 
-  public SerieButton getSelectedSerie() {
+  public SerieButton getSelectedSeries() {
     if (acquireTabPanel != null) {
       return acquireTabPanel.getSelected();
     }
@@ -102,7 +105,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
       if (moveToMenu.getItemCount() > 3) {
         moveToMenu.addSeparator();
       }
-      moveToNewSerie(moveToMenu, medias);
+      moveToNewSeries(moveToMenu, medias);
 
       JMenu operationsMenu = new JMenu(Messages.getString("AcquireCentralThumnailList.operations"));
       operationRotate(
@@ -121,8 +124,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
           270);
 
       popupMenu.add(moveToMenu);
-      // TODO need do better
-      // popupMenu.add(operationsMenu);
+      popupMenu.add(operationsMenu);
 
       return popupMenu;
     }
@@ -162,7 +164,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
                 })));
   }
 
-  private void moveToNewSerie(JMenu moveToMenu, final List<E> medias) {
+  private void moveToNewSeries(JMenu moveToMenu, final List<E> medias) {
     moveToMenu.add(
         new JMenuItem(
             new DefaultAction(
@@ -191,18 +193,32 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
                         .forEach(
                             i -> {
                               AcquireImageInfo info = AcquireManager.findByImage(i);
-
-                              int change =
+                              int lastRotation = info.getNextValues().getFullRotation();
+                              int rotation =
                                   (info.getNextValues().getFullRotation() + angle >= 0)
                                       ? info.getNextValues().getRotation() + angle
                                       : info.getNextValues().getRotation() + 360 + angle;
-                              info.getNextValues().setRotation(change);
-
-                              info.getPostProcessOpManager()
-                                  .setParamValue(
-                                      RotationOp.OP_NAME,
-                                      RotationOp.P_ROTATE,
-                                      info.getNextValues().getFullRotation());
+                              info.getNextValues().setRotation(rotation);
+                              info.getNextValues().setCropZone(null);
+                              GraphicModel modelList =
+                                  (GraphicModel)
+                                      info.getImage().getTagValue(TagW.PresentationModel);
+                              if (modelList != null) {
+                                AffineTransform inverse =
+                                    info.getAffineTransform(lastRotation, true);
+                                AffineTransform transform =
+                                    info.getAffineTransform(
+                                        info.getNextValues().getFullRotation(), false);
+                                for (Graphic g : modelList.getModels()) {
+                                  g.getPts()
+                                      .forEach(
+                                          p -> {
+                                            inverse.transform(p, p);
+                                            transform.transform(p, p);
+                                          });
+                                  g.buildShape();
+                                }
+                              }
                             }))));
   }
 

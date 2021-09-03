@@ -257,8 +257,7 @@ public class CalibrationView extends JPanel {
             lineLength = 1.0;
           }
           double newRatio = inputCalibVal.doubleValue() / lineLength;
-          if ((Objects.nonNull(imgRatio) && MathUtil.isDifferent(newRatio, imgRatio))
-              || !Objects.equals(unit, imgUnit)) {
+          if (MathUtil.isDifferent(newRatio, imgRatio) || !Objects.equals(unit, imgUnit)) {
             applyCalibration(newRatio, unit);
           }
         }

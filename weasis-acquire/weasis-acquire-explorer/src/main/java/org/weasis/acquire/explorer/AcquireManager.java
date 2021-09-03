@@ -32,7 +32,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -69,6 +68,8 @@ import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -126,8 +127,10 @@ public class AcquireManager {
 
   public static void setCurrentView(ViewCanvas<ImageElement> view) {
     getInstance().currentView = view;
-    // Remove capabilities to open a view by dragging a thumbnail from the import panel.
-    view.getJComponent().setTransferHandler(null);
+    if (view != null) {
+      // Remove capabilities to open a view by dragging a thumbnail from the import panel.
+      view.getJComponent().setTransferHandler(null);
+    }
   }
 
   public static Collection<AcquireImageInfo> getAllAcquireImageInfo() {
@@ -291,7 +294,7 @@ public class AcquireManager {
                   s -> {
                     LocalDateTime start = s.getDate();
                     LocalDateTime end = imageDate;
-                    if (end.isBefore(start)) {
+                    if (end != null && end.isBefore(start)) {
                       start = imageDate;
                       end = s.getDate();
                     }
@@ -300,7 +303,7 @@ public class AcquireManager {
                   })
               .findFirst();
 
-      return series.isPresent() ? series.get() : getSeries(new SeriesGroup(imageDate));
+      return series.orElseGet(() -> getSeries(new SeriesGroup(imageDate)));
 
     } else {
       return getSeries(searchedSeries);
@@ -748,12 +751,17 @@ public class AcquireManager {
   private static void removeImageFromDataMapping(AcquireImageInfo imageInfo) {
     imagesInfoByURI.remove(imageInfo.getImage().getMediaURI());
     imagesInfoByUID.remove(imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)));
+    GraphicModel modelList =
+        (GraphicModel) imageInfo.getImage().getTagValue(TagW.PresentationModel);
+    if (modelList != null) {
+      for (GraphicLayer layer : new ArrayList<>(modelList.getLayers())) {
+        modelList.deleteByLayer(layer);
+      }
+    }
   }
 
   private static List<AcquireImageInfo> getAcquireImageInfoList() {
-    return imagesInfoByURI.entrySet().stream()
-        .map(Entry<URI, AcquireImageInfo>::getValue)
-        .collect(Collectors.toList());
+    return new ArrayList<>(imagesInfoByURI.values());
   }
 
   /**

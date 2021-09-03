@@ -47,17 +47,21 @@ public class RectifyOrientationChangeListener extends AcquireObject
     }
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.getNextValues().setOrientation(s.getValue());
+
+    imageInfo.getNextValues().setCropZone(null);
     applyNextValues();
     ViewCanvas<ImageElement> view = getView();
     if (view != null && s.getValueIsAdjusting()) {
       GraphicHelper.newGridLayer(view);
     }
-    rectifyAction.updateCropDisplay();
     imageInfo.applyCurrentProcessing(getView());
+    rectifyAction.updateCropDisplay();
   }
 
   @Override
   public void applyNextValues() {
-    RotationActionListener.applyNRotation(getImageInfo(), rectifyAction);
+    AcquireImageInfo imageInfo = getImageInfo();
+    imageInfo.applyNRotation(getView());
+    rectifyAction.updateGraphics(imageInfo);
   }
 }

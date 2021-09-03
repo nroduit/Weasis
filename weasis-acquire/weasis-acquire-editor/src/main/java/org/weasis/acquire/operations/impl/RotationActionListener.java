@@ -15,12 +15,10 @@ import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.operations.OpValueChanged;
-import org.weasis.core.api.image.ImageOpNode;
-import org.weasis.core.api.image.RotationOp;
 
 public class RotationActionListener extends AcquireObject
     implements ActionListener, OpValueChanged {
-  private int angle;
+  private final int angle;
   private final RectifyAction rectifyAction;
 
   public RotationActionListener(int angle, RectifyAction rectifyAction) {
@@ -34,23 +32,17 @@ public class RotationActionListener extends AcquireObject
 
     int rotation = (imageInfo.getNextValues().getRotation() + 720 + angle) % 360;
     imageInfo.getNextValues().setRotation(rotation);
+
+    imageInfo.getNextValues().setCropZone(null);
     applyNextValues();
-    rectifyAction.updateCropDisplay();
     imageInfo.applyCurrentProcessing(getView());
+    rectifyAction.updateCropDisplay();
   }
 
   @Override
   public void applyNextValues() {
-    applyNRotation(getImageInfo(), rectifyAction);
-  }
-
-  static void applyNRotation(AcquireImageInfo imageInfo, RectifyAction rectifyAction) {
-    int rotation = (imageInfo.getNextValues().getFullRotation() + 720) % 360;
-    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(RotationOp.OP_NAME);
-    if (node != null) {
-      node.clearIOCache();
-      node.setParam(RotationOp.P_ROTATE, rotation);
-    }
+    AcquireImageInfo imageInfo = getImageInfo();
+    imageInfo.applyNRotation(getView());
     rectifyAction.updateGraphics(imageInfo);
   }
 }

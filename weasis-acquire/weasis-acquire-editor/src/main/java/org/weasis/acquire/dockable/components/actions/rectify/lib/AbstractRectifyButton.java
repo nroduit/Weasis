@@ -16,7 +16,7 @@ import org.weasis.acquire.operations.impl.RotationActionListener;
 public abstract class AbstractRectifyButton extends JButton {
   private static final long serialVersionUID = -7409961577578876870L;
 
-  public AbstractRectifyButton(RotationActionListener actionListener) {
+  protected AbstractRectifyButton(RotationActionListener actionListener) {
     super();
     setIcon(getIcon());
     setToolTipText(getToolTip());

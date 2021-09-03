@@ -26,7 +26,7 @@ public abstract class AbstractSliderComponent extends AbstractComponent {
 
   protected JSlider slider;
 
-  public AbstractSliderComponent(AbstractAcquireActionPanel panel, String title) {
+  protected AbstractSliderComponent(AbstractAcquireActionPanel panel, String title) {
     super(panel, title);
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 

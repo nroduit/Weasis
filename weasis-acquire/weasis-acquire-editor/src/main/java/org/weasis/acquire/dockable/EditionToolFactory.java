@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 
@@ -35,7 +36,6 @@ import org.weasis.core.ui.model.graphic.Graphic;
  */
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
-    immediate = false,
     property = {"org.weasis.base.viewer2d.View2dContainer=true"})
 public class EditionToolFactory implements InsertableFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
@@ -76,6 +76,9 @@ public class EditionToolFactory implements InsertableFactory {
       eventManager.removeAction(ActionW.LUT);
       eventManager.removeAction(ActionW.LAYOUT);
       eventManager.removeAction(ActionW.SYNCH);
+      BundleTools.SYSTEM_PREFERENCES.setProperty(
+          "weasis.contextmenu.close", Boolean.FALSE.toString());
+
       eventManager.setAction(new BasicActionState(EDITON));
       eventManager.setAction(
           new ComboItemListener<Graphic>(

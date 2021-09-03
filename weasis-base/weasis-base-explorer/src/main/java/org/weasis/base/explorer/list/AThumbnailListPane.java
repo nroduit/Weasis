@@ -66,14 +66,10 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
     @Override
     public void valueChanged(final ListSelectionEvent e) {
       final Thread runner =
-          new Thread() {
-
-            @Override
-            public void run() {
-              SwingUtilities.invokeLater(
-                  () -> AThumbnailListPane.this.thumbnailList.listValueChanged(e));
-            }
-          };
+          new Thread(
+              () ->
+                  SwingUtilities.invokeLater(
+                      () -> AThumbnailListPane.this.thumbnailList.listValueChanged(e)));
       runner.start();
     }
   }

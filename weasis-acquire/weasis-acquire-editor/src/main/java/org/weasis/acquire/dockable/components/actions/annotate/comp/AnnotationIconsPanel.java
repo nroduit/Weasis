@@ -15,7 +15,6 @@ import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
-@SuppressWarnings("serial")
 public class AnnotationIconsPanel extends JPanel {
 
   public AnnotationIconsPanel() {

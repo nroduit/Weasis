@@ -176,8 +176,7 @@ public class DefaultViewModel implements ViewModel {
 
   protected void fireViewModelChanged() {
     if (enableViewModelChangeListeners) {
-      for (int i = 0; i < viewModelChangeListenerList.size(); i++) {
-        ViewModelChangeListener l = viewModelChangeListenerList.get(i);
+      for (ViewModelChangeListener l : viewModelChangeListenerList) {
         l.handleViewModelChanged(this);
       }
     }
@@ -200,7 +199,7 @@ public class DefaultViewModel implements ViewModel {
   }
 
   public void adjustMinViewScaleFromImage(int width, int height) {
-    double ratio = 250.0 / (width > height ? width : height);
+    double ratio = 250.0 / (Math.max(width, height));
     if (ratio < viewScaleMin) {
       this.viewScaleMin = ratio;
     }

@@ -9,20 +9,21 @@
  */
 package org.weasis.acquire.dockable.components.actions.rectify;
 
-import java.awt.Point;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.AcquireActionButtonsPanel;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
-import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.graphics.CropRectangleGraphic;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GeomUtil;
@@ -54,17 +55,24 @@ public class RectifyAction extends AbstractAcquireAction {
 
   private RectangleGraphic currentCropArea;
   private final List<Graphic> graphics;
-  private int prevRotation;
 
   public RectifyAction(AcquireActionButtonsPanel panel) {
     super(panel);
     this.graphics = new ArrayList<>();
   }
 
-  public void init(GraphicModel model, int rotation) {
-    this.prevRotation = rotation;
+  public void init(GraphicModel model, AcquireImageInfo imageInfo) {
     graphics.clear();
-    model.getModels().forEach(g -> graphics.add(g.copy()));
+
+    AffineTransform transform = getAffineTransform(imageInfo, true);
+    model
+        .getModels()
+        .forEach(
+            g -> {
+              Graphic copy = g.copy();
+              copy.getPts().forEach(p -> transform.transform(p, p));
+              graphics.add(copy);
+            });
 
     for (GraphicLayer layer : new ArrayList<>(model.getLayers())) {
       if (layer.getSerializable()) {
@@ -73,18 +81,11 @@ public class RectifyAction extends AbstractAcquireAction {
     }
   }
 
-  public List<Graphic> getGraphics() {
-    return graphics;
-  }
-
-  public int getPrevRotation() {
-    return prevRotation;
-  }
-
   protected void updateCropGraphic() {
     AcquireImageInfo imageInfo = getImageInfo();
     ViewCanvas<ImageElement> view = getView();
 
+    CropRectangleGraphic.updateCropDisplay(imageInfo);
     PlanarImage img = view.getSourceImage();
     if (img != null) {
       view.setSelected(false);
@@ -114,30 +115,23 @@ public class RectifyAction extends AbstractAcquireAction {
     }
   }
 
-  private static void buildAffineTransform(
-      AffineTransform transform,
-      AcquireImageValues imageValues,
-      Rectangle2D modelArea,
-      Point offset) {
-    int rotationAngle = imageValues.getFullRotation();
-
-    if (rotationAngle > 0) {
-      rotationAngle = (rotationAngle + 720) % 360;
-      transform.rotate(
-          Math.toRadians(rotationAngle), modelArea.getWidth() / 2.0, modelArea.getHeight() / 2.0);
-    }
-
-    if (offset != null) {
-      // TODO not consistent with image coordinates after crop
-      transform.translate(-offset.getX(), -offset.getY());
-    }
-  }
-
   @Override
-  public boolean cancel() {
-    boolean doCancel = super.cancel();
-    updateCropGraphic();
-    return doCancel;
+  public void cancel() {
+    AcquireImageInfo imageInfo = getImageInfo();
+    ViewCanvas<ImageElement> view = getView();
+    boolean dirty = imageInfo.isDirty();
+
+    if (dirty) {
+      if (view != null) {
+        imageInfo.removeLayer(view);
+        view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
+        AffineTransform transform =
+            imageInfo.getAffineTransform(imageInfo.getCurrentValues().getFullRotation(), false);
+        applyGraphicsTransformation(view, null, transform);
+      }
+      centralPanel.initValues(imageInfo, imageInfo.getCurrentValues());
+      updateCropGraphic();
+    }
   }
 
   @Override
@@ -147,20 +141,10 @@ public class RectifyAction extends AbstractAcquireAction {
 
     if (view.getImageLayer() instanceof RenderedImageLayer && currentCropArea != null) {
       view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
+      applyGraphicsTransformation(view, null, getAffineTransform(imageInfo, false));
 
-      Rectangle2D modelArea = view.getViewModel().getModelArea();
-      AffineTransform transform = getAffineTransform(imageInfo, modelArea);
-
-      for (Graphic g : graphics) {
-        Graphic copy = g.copy();
-        copy.getPts().forEach(p -> transform.transform(p, p));
-        copy.buildShape();
-        AbstractGraphicModel.addGraphicToModel(view, copy);
-      }
-
-      imageInfo
-          .getCurrentValues()
-          .setCropZone(null); // Force dirty value, rotation is always apply in post process
+      // Force dirty value, rotation is always apply in post process
+      imageInfo.getCurrentValues().setCropZone(null);
       imageInfo.getNextValues().setCropZone(currentCropArea.getShape().getBounds());
       view.setActionsInView(ActionW.ROTATION.cmd(), 0);
       view.setActionsInView(ActionW.FLIP.cmd(), false);
@@ -175,10 +159,28 @@ public class RectifyAction extends AbstractAcquireAction {
   }
 
   @Override
-  public boolean reset(ActionEvent e) {
-    boolean doReset = super.reset(e);
-    updateCropGraphic();
-    return doReset;
+  public void reset(ActionEvent e) {
+    AcquireImageInfo imageInfo = getImageInfo();
+    ViewCanvas<ImageElement> view = getView();
+    boolean dirty = imageInfo.isDirtyFromDefault();
+
+    if (dirty) {
+      int confirm =
+          JOptionPane.showConfirmDialog(
+              (Component) e.getSource(),
+              Messages.getString("AbstractAcquireAction.reset_msg"),
+              "",
+              JOptionPane.YES_NO_OPTION);
+      if (confirm == 0) {
+        if (view != null) {
+          imageInfo.removeLayer(view);
+          view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
+          applyGraphicsTransformation(view, null, imageInfo.getAffineTransform(0, false));
+        }
+        centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
+        updateCropGraphic();
+      }
+    }
   }
 
   public RectangleGraphic getCurrentCropArea() {
@@ -188,11 +190,7 @@ public class RectifyAction extends AbstractAcquireAction {
   public void updateCropDisplay() {
     Optional.ofNullable(currentCropArea)
         .map(CropRectangleGraphic.class::cast)
-        .ifPresent(
-            c -> {
-              c.updateCropDisplay(getImageInfo());
-              updateCropGraphic();
-            });
+        .ifPresent(c -> updateCropGraphic());
   }
 
   @Override
@@ -200,14 +198,19 @@ public class RectifyAction extends AbstractAcquireAction {
     return new RectifyPanel(this);
   }
 
-  public AffineTransform getAffineTransform(AcquireImageInfo imageInfo, Rectangle2D modelArea) {
-    AffineTransform transform = new AffineTransform();
-    int rotation = (imageInfo.getNextValues().getFullRotation() - getPrevRotation() + 720) % 360;
-    if (rotation != 0) {
-      transform.rotate(
-          Math.toRadians(rotation), modelArea.getWidth() / 2.0, modelArea.getHeight() / 2.0);
+  private AffineTransform getAffineTransform(AcquireImageInfo imageInfo, boolean inverse) {
+    return imageInfo.getAffineTransform(
+        (imageInfo.getNextValues().getFullRotation() + 720) % 360, inverse);
+  }
+
+  private void applyGraphicsTransformation(
+      ViewCanvas<ImageElement> view, GraphicLayer layer, AffineTransform transform) {
+    for (Graphic g : graphics) {
+      Graphic copy = g.copy();
+      copy.getPts().forEach(p -> transform.transform(p, p));
+      copy.buildShape();
+      AbstractGraphicModel.addGraphicToModel(view, layer, copy);
     }
-    return transform;
   }
 
   public void updateGraphics(AcquireImageInfo imageInfo) {
@@ -223,21 +226,14 @@ public class RectifyAction extends AbstractAcquireAction {
 
       view.getGraphicManager().deleteByLayerType(LayerType.DICOM_PR);
 
-      Rectangle2D modelArea = view.getViewModel().getModelArea();
-      AffineTransform transform = getAffineTransform(imageInfo, modelArea);
       GraphicLayer layer = new DefaultLayer(LayerType.DICOM_PR);
       layer.setName("Temp"); // NON-NLS
       layer.setSerializable(true);
       layer.setLocked(true);
       layer.setSelectable(false);
       layer.setLevel(380);
-      List<Graphic> graphics = getGraphics();
-      for (Graphic g : graphics) {
-        Graphic copy = g.copy();
-        copy.getPts().forEach(p -> transform.transform(p, p));
-        // copy.setShape(transform.createTransformedShape(g.getShape()), null);
-        AbstractGraphicModel.addGraphicToModel(view, layer, copy);
-      }
+
+      applyGraphicsTransformation(view, layer, getAffineTransform(imageInfo, false));
     }
   }
 }

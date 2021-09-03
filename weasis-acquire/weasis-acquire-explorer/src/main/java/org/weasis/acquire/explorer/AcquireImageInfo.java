@@ -11,20 +11,26 @@ package org.weasis.acquire.explorer;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
@@ -36,12 +42,13 @@ import org.weasis.core.api.image.MaskOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.StringUtil;
@@ -61,7 +68,6 @@ public class AcquireImageInfo {
   private final ImageElement image;
   private SeriesGroup seriesGroup;
   private final Attributes attributes;
-  private Layer layer;
   private AcquireImageStatus status;
 
   private final SimpleOpManager postProcessOpManager;
@@ -69,9 +75,6 @@ public class AcquireImageInfo {
   private final AcquireImageValues defaultValues;
   private AcquireImageValues currentValues;
   private AcquireImageValues nextValues;
-  private final List<AcquireImageValues> steps;
-
-  private String comment;
 
   public AcquireImageInfo(ImageElement image) {
     this.image = Objects.requireNonNull(image);
@@ -98,13 +101,6 @@ public class AcquireImageInfo {
     defaultValues = new AcquireImageValues();
     currentValues = defaultValues.copy();
     nextValues = defaultValues.copy();
-
-    steps = new ArrayList<>();
-    steps.add(currentValues);
-  }
-
-  public List<AcquireImageValues> getSteps() {
-    return steps;
   }
 
   public String getUID() {
@@ -115,10 +111,6 @@ public class AcquireImageInfo {
     return image;
   }
 
-  public Layer getLayer() {
-    return layer;
-  }
-
   public Attributes getAttributes() {
     return attributes;
   }
@@ -127,73 +119,96 @@ public class AcquireImageInfo {
     return this.postProcessOpManager;
   }
 
-  private static void addImageOperationAction(SimpleOpManager manager, ImageOpNode action) {
-    manager.addImageOperationAction(action);
-  }
-
   public void applyFinalProcessing(ViewCanvas<ImageElement> view) {
     boolean dirty = isDirty();
-
     if (dirty) {
-      int rotationAngle = nextValues.getFullRotation();
-      postProcessOpManager.setParamValue(RotationOp.OP_NAME, RotationOp.P_ROTATE, rotationAngle);
+      reloadFinalProcessing(view);
+    }
+  }
 
-      if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
-        Rectangle area = nextValues.getCropZone();
-        PlanarImage source = view.getSourceImage();
-        if (source != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
-          Rectangle imgBouds = ImageConversion.getBounds(source);
-          area = area.intersection(imgBouds);
-          if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
-            ((DefaultViewModel) view.getViewModel())
-                .adjustMinViewScaleFromImage(area.width, area.height);
-            view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
-            view.getImageLayer().setOffset(new Point(area.x, area.y));
-
-            postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
-          }
+  public void applyNRotation(ViewCanvas<ImageElement> view) {
+    int rotation = (nextValues.getFullRotation() + 720) % 360;
+    ImageOpNode node = postProcessOpManager.getNode(RotationOp.OP_NAME);
+    if (node != null) {
+      node.clearIOCache();
+      node.setParam(RotationOp.P_ROTATE, rotation);
+      Rectangle area = ImageConversion.getBounds(view.getSourceImage());
+      if (area.width > 1 && area.height > 1) {
+        ((DefaultViewModel) view.getViewModel())
+            .adjustMinViewScaleFromImage(area.width, area.height);
+        view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+        view.getImageLayer().setOffset(new Point(area.x, area.y));
+        if (nextValues.getCropZone() == null) {
+          nextValues.setCropZone(area);
         }
-        view.resetZoom();
       }
+    }
+  }
 
-      if (nextValues.getBrightness() != currentValues.getBrightness()
-          || nextValues.getContrast() != currentValues.getContrast()) {
-        postProcessOpManager.setParamValue(
-            BrightnessOp.OP_NAME,
-            BrightnessOp.P_BRIGTNESS_VALUE,
-            (double) nextValues.getBrightness());
-        postProcessOpManager.setParamValue(
-            BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) nextValues.getContrast());
+  public void reloadFinalProcessing(ViewCanvas<ImageElement> view) {
+    postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
+    applyNRotation(view);
+
+    Rectangle area = nextValues.getCropZone();
+    PlanarImage source = view.getSourceImage();
+    if (source != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
+      Rectangle imgBounds = ImageConversion.getBounds(source);
+      area = area.intersection(imgBounds);
+      if (area.width > 1 && area.height > 1 && !area.equals(imgBounds)) {
+        ((DefaultViewModel) view.getViewModel())
+            .adjustMinViewScaleFromImage(area.width, area.height);
+        view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+        view.getImageLayer().setOffset(new Point(area.x, area.y));
+
+        postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
       }
+    }
+    view.resetZoom();
 
+    if (nextValues.getBrightness() != currentValues.getBrightness()
+        || nextValues.getContrast() != currentValues.getContrast()) {
       postProcessOpManager.setParamValue(
-          AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL, nextValues.isAutoLevel());
+          BrightnessOp.OP_NAME,
+          BrightnessOp.P_BRIGTNESS_VALUE,
+          (double) nextValues.getBrightness());
+      postProcessOpManager.setParamValue(
+          BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) nextValues.getContrast());
+    }
 
-      if (!Objects.equals(nextValues.getRatio(), currentValues.getRatio())) {
-        postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
-        postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
-        postProcessOpManager.setParamValue(
-            ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[3]);
+    postProcessOpManager.setParamValue(
+        AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL, nextValues.isAutoLevel());
+
+    if (!Objects.equals(nextValues.getRatio(), currentValues.getRatio())) {
+      postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
+      postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
+      postProcessOpManager.setParamValue(
+          ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[3]);
+    }
+
+    // Reset preprocess cache
+    postProcessOpManager.clearNodeIOCache();
+    view.getImageLayer().setImage(image, postProcessOpManager);
+    updateTags(view.getImage());
+    updateImageGeometry(view);
+
+    // Next value become the current value. Register the step.
+    currentValues = nextValues;
+    nextValues = currentValues.copy();
+  }
+
+  public void updateImageGeometry(ViewCanvas<ImageElement> view) {
+    if (view != null) {
+      Panner<?> panner = view.getPanner();
+      if (panner != null) {
+        panner.updateImage();
       }
-
-      if (view != null) {
-        // Reset preprocess cache
-        postProcessOpManager.resetLastNodeOutputImage();
-        view.getImageLayer().setImage(image, postProcessOpManager);
-        updateTags(view.getImage());
-      }
-      //   preProcessOpManager.removeAllImageOperationAction();
-
-      // Next value become the current value. Register the step.
-      currentValues = nextValues;
-      nextValues = currentValues.copy();
-      steps.add(currentValues.copy());
     }
   }
 
   public void applyCurrentProcessing(ViewCanvas<ImageElement> view) {
     if (view != null) {
-      view.getImageLayer().setImage(view.getImage(), postProcessOpManager);
+      ImageLayer<ImageElement> imageLayer = view.getImageLayer();
+      imageLayer.setImage(image, postProcessOpManager);
     }
   }
 
@@ -251,8 +266,6 @@ public class AcquireImageInfo {
       view.getImageLayer().setImage(image, postProcessOpManager);
     }
 
-    steps.clear();
-    steps.add(defaultValues);
     currentValues = defaultValues.copy();
     nextValues = defaultValues.copy();
 
@@ -278,15 +291,7 @@ public class AcquireImageInfo {
 
   @Override
   public String toString() {
-    return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> "");
-  }
-
-  public String getComment() {
-    return comment;
-  }
-
-  public void setComment(String comment) {
-    this.comment = comment;
+    return Optional.ofNullable(image).map(ImageElement::getName).orElse("");
   }
 
   public AcquireImageStatus getStatus() {
@@ -299,6 +304,35 @@ public class AcquireImageInfo {
 
   public static Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
     return imgInfo -> imgInfo.setStatus(status);
+  }
+
+  public AffineTransform getAffineTransform(int rotation, boolean inverse) {
+    AffineTransform transform = new AffineTransform();
+    if (rotation != 0) {
+      PlanarImage img = image.getImage();
+      Rectangle2D modelArea = new Rectangle2D.Double(0.0, 0.0, img.width(), img.height());
+      double w = modelArea.getWidth();
+      double h = modelArea.getHeight();
+      org.opencv.core.Point ptCenter = new org.opencv.core.Point(w / 2.0, h / 2.0);
+      Mat rot = Imgproc.getRotationMatrix2D(ptCenter, -rotation, 1.0);
+
+      Rect bbox = new RotatedRect(ptCenter, new Size(w, h), -rotation).boundingRect();
+      double[] m = new double[rot.cols() * rot.rows()];
+      // adjust transformation matrix
+      rot.get(0, 0, m);
+      m[2] += bbox.width / 2.0 - ptCenter.x;
+      m[rot.cols() + 2] += bbox.height / 2.0 - ptCenter.y;
+
+      transform.setTransform(m[0], m[3], m[1], m[4], m[2], m[5]);
+      if (inverse) {
+        try {
+          return transform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+          LOGGER.error("Cannot create inverse transform for graphics");
+        }
+      }
+    }
+    return transform;
   }
 
   /**

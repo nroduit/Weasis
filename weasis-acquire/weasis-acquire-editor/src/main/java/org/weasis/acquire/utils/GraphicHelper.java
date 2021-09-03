@@ -37,7 +37,6 @@ public class GraphicHelper {
    * is a little bit bigger in case of rotation occurs.
    *
    * @param view Image view (will retrieve width and height)
-   * @return The new layer
    * @since 2.5.0
    */
   public static void newGridLayer(ViewCanvas<ImageElement> view) {
@@ -52,24 +51,20 @@ public class GraphicHelper {
     double hOffset = diagonal - width / 2.0;
     double vOffset = diagonal - height / 2.0;
 
-    // New start point
-    int x0 = (int) (0 - hOffset);
-    int y0 = (int) (0 - vOffset);
-
     // Calculate in witch pixel we should start vertically and horizontally
     int xStart = (int) (((diagonal % GRID_SPACING) / 2) - hOffset);
     int yStart = (int) (((diagonal % GRID_SPACING) / 2) - vOffset);
 
     // Draw vertical lines
     for (int i = xStart - 1; i < width; i = i + GRID_SPACING) {
-      Point2D.Double p1 = new Point2D.Double(i, x0);
+      Point2D.Double p1 = new Point2D.Double(i, -hOffset);
       Point2D.Double p2 = new Point2D.Double(i, diagonal);
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }
 
     // Draw horizontal lines
     for (int i = yStart - 1; i < height; i = i + GRID_SPACING) {
-      Point2D.Double p1 = new Point2D.Double(y0, i);
+      Point2D.Double p1 = new Point2D.Double(-vOffset, i);
       Point2D.Double p2 = new Point2D.Double(diagonal, i);
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }

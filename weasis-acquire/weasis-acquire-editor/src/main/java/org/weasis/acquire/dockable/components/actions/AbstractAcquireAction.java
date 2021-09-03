@@ -71,7 +71,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
   }
 
   @Override
-  public boolean cancel() {
+  public void cancel() {
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.removeLayer(getView());
     boolean dirty = imageInfo.isDirty();
@@ -79,11 +79,10 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     if (dirty) {
       centralPanel.initValues(imageInfo, imageInfo.getCurrentValues());
     }
-    return dirty;
   }
 
   @Override
-  public boolean reset(ActionEvent e) {
+  public void reset(ActionEvent e) {
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.removeLayer(getView());
     boolean dirty = imageInfo.isDirtyFromDefault();
@@ -99,7 +98,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
       }
     }
-    return dirty;
   }
 
   @Override

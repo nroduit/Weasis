@@ -183,7 +183,7 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
 
   @Override
   public String toString() {
-    String builder = "AcquireImageValues[cropZone=>" // NON-NLS
+    return "AcquireImageValues[cropZone=>" // NON-NLS
         + cropZone
         + "layerOffset=>" // NON-NLS
         + layerOffset
@@ -203,6 +203,5 @@ public class AcquireImageValues implements Copyable<AcquireImageValues> {
         + calibrationRatio
         + "ratio=>" // NON-NLS
         + ratio;
-    return builder;
   }
 }

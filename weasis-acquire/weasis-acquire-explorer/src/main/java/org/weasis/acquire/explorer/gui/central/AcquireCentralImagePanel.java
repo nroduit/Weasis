@@ -35,8 +35,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
   public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, JIThumbnailCache thumbCache) {
     setLayout(new BorderLayout());
     this.imageInfo = new AcquireCentralInfoPanel(null);
-    this.imageListPane =
-        new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>(), thumbCache);
+    this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<>(), thumbCache);
 
     imageListPane.setAcquireTabPanel(Objects.requireNonNull(acquireTabPanel));
     imageListPane.addListSelectionListener(this);
@@ -72,8 +71,8 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     imageListPane.setList(list);
   }
 
-  public void updateSerie(SeriesGroup newSerie) {
-    imageInfo.setSerie(newSerie);
+  public void updateSeries(SeriesGroup newSeriesGroup) {
+    imageInfo.setSerie(newSeriesGroup);
   }
 
   public IThumbnailModel<ImageElement> getFileListModel() {

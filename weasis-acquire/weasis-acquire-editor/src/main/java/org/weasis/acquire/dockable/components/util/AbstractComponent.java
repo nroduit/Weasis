@@ -20,7 +20,7 @@ public abstract class AbstractComponent extends JPanel {
   protected TitledBorder borderTitle;
   protected AbstractAcquireActionPanel panel;
 
-  public AbstractComponent(AbstractAcquireActionPanel panel, String title) {
+  protected AbstractComponent(AbstractAcquireActionPanel panel, String title) {
     this.title = title;
     this.borderTitle = new TitledBorder(getDisplayTitle());
     this.panel = panel;

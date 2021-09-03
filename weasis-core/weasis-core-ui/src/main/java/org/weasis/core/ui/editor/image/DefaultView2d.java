@@ -38,11 +38,11 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -629,9 +629,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             int channels = CvType.channels(image.type());
             int bpp = (elemSize * 8) / channels;
             String[] elements = new String[channels];
-            for (int i = 0; i < elements.length; i++) {
-              elements[i] = Integer.toString(bpp);
-            }
+            Arrays.fill(elements, Integer.toString(bpp));
             String pixSize = String.join(",", elements);
 
             AuditLog.LOGGER.info(
@@ -937,7 +935,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-    if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
+    if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
       graphicManager.draw(g2d, transform, inverseTransform, null);
     }
   }
@@ -975,73 +973,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   protected void updateAffineTransform() {
-    Rectangle2D modelArea = getViewModel().getModelArea();
-    double viewScale = getViewModel().getViewScale();
-
-    double rWidth = modelArea.getWidth();
-    double rHeight = modelArea.getHeight();
-
-    OpManager dispOp = getDisplayOpManager();
-    boolean flip = LangUtil.getNULLtoFalse((Boolean) actionsInView.get(ActionW.FLIP.cmd()));
-    Integer rotationAngle = (Integer) actionsInView.get(ActionW.ROTATION.cmd());
-
-    affineTransform.setToScale(flip ? -viewScale : viewScale, viewScale);
-    if (rotationAngle != null && rotationAngle > 0) {
-      affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-    }
-    if (flip) {
-      affineTransform.translate(-rWidth, 0.0);
-    }
-
-    ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
-    if (node != null) {
-      Rectangle2D imgBounds = affineTransform.createTransformedShape(modelArea).getBounds2D();
-
-      double diffx = 0.0;
-      double diffy = 0.0;
-      Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth(), getHeight());
-      Rectangle2D srcBounds = getImageViewBounds();
-
-      Rectangle2D dstBounds;
-      if (viewBounds.contains(srcBounds)) {
-        dstBounds = srcBounds;
-      } else {
-        dstBounds = viewBounds.createIntersection(srcBounds);
-
-        if (srcBounds.getX() < 0.0) {
-          diffx += srcBounds.getX();
-        }
-        if (srcBounds.getY() < 0.0) {
-          diffy += srcBounds.getY();
-        }
-      }
-
-      double[] fmx = new double[6];
-      affineTransform.getMatrix(fmx);
-      // adjust transformation matrix => move the center to keep all the image
-      fmx[4] -= imgBounds.getX() - diffx;
-      fmx[5] -= imgBounds.getY() - diffy;
-      affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
-
-      // Convert to openCV affine matrix
-      double[] m = new double[] {fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]};
-      node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
-
-      node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
-      imageLayer.updateDisplayOperations();
-    }
-
-    // Keep the coordinates of the original image when cropping
-    Point offset = getImageLayer().getOffset();
-    if (offset != null) {
-      affineTransform.translate(-offset.getX(), -offset.getY());
-    }
-
-    try {
-      inverseTransform.setTransform(affineTransform.createInverse());
-    } catch (NoninvertibleTransformException e) {
-      LOGGER.error("Create inverse transform", e);
-    }
+    ImageOpNode node = getDisplayOpManager().getNode(AffineTransformOp.OP_NAME);
+    super.updateAffineTransform(this, node, imageLayer, 0.0);
   }
 
   @Override
@@ -1235,9 +1168,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           // resize if to big
           int maxWidth = getWidth() / 3;
           int maxHeight = getHeight() / 3;
-          lens.setSize(
-              lens.getWidth() > maxWidth ? maxWidth : lens.getWidth(),
-              lens.getHeight() > maxHeight ? maxHeight : lens.getHeight());
+          lens.setSize(Math.min(lens.getWidth(), maxWidth), Math.min(lens.getHeight(), maxHeight));
           this.add(lens);
           lens.showLens(true);
 

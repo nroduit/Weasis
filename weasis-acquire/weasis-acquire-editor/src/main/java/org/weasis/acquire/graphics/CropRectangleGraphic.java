@@ -69,7 +69,7 @@ public class CropRectangleGraphic extends RectangleGraphic {
     }
   }
 
-  public void updateCropDisplay(AcquireImageInfo imageInfo) {
+  public static void updateCropDisplay(AcquireImageInfo imageInfo) {
     ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(MaskOp.OP_NAME);
     if (node != null) {
       node.clearIOCache();
