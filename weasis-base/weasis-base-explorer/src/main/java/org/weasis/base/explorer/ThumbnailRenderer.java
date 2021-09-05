@@ -92,8 +92,10 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
         iconCheckedLabel.setIcon(null);
       }
     }
-    this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
-    this.descriptionLabel.setText(value.getName());
+    if (value != null) {
+      this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
+      this.descriptionLabel.setText(value.getName());
+    }
     setBackground(isSelected ? list.getSelectionBackground() : back);
     return this;
   }
