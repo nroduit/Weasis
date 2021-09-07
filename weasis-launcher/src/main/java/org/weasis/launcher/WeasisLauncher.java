@@ -191,11 +191,6 @@ public class WeasisLauncher {
     // that overwrites anything in the config file.
     serverProp.put(Constants.FRAMEWORK_STORAGE, cacheDir);
 
-    // Remove bundle not designed for Java 8
-    if ("1.8".equals(System.getProperty("java.specification.version"))) { // NON-NLS
-      serverProp.remove("felix.auto.start.7");
-    }
-
     // Load local properties and clean if necessary the previous version
     WeasisLoader loader = loadProperties(serverProp, configData.getConfigOutput());
     WeasisMainFrame mainFrame = loader.getMainFrame();

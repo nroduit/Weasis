@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.layer;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlJavaTypeAdapter(AbstractGraphicLayer.Adapter.class)
 public interface GraphicLayer extends Layer {

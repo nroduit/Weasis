@@ -53,8 +53,6 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
-
     assertThat(actual.getLayerCount()).isEqualTo(0);
   }
 
@@ -90,8 +88,6 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
-
     assertThat(actual.getLayerCount()).isEqualTo(0);
   }
 
@@ -125,8 +121,6 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
-
     assertThat(actual.getLayerCount()).isEqualTo(0);
   }
 
@@ -159,8 +153,6 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedDragableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
-
-    assertThat(actual.getSelectGraphic()).isEqualTo(Optional.empty());
 
     assertThat(actual.getLayerCount()).isEqualTo(0);
   }

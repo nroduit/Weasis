@@ -12,8 +12,8 @@ package org.weasis.core.ui.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlList;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlList;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 public class ReferencedImage extends DefaultUUID {

@@ -25,7 +25,6 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            Import-Package: javax.xml.bind;version=!,*
             Export-Package:!org.weasis.dicom.explorer.internal,org.weasis.dicom.explorer.*
           </bnd>
         </configuration>

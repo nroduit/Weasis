@@ -37,10 +37,7 @@
         <configuration>
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
-            Import-Package: \
-            !jakarta.xml.bind;resolution:=optional,\
-            !org.apache.commons.codec.binary;resolution:=optional,\
-            javax.xml.bind;version=!,*
+            Import-Package: !org.apache.commons.codec.binary;resolution:=optional,*
             Export-Package: org.weasis.core.api.*
             -exportcontents: com.github.scribejava.*
           </bnd>

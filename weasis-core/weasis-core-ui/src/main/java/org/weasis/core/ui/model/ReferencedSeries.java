@@ -12,7 +12,7 @@ package org.weasis.core.ui.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElement;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 public class ReferencedSeries extends DefaultUUID {

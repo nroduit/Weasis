@@ -20,8 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -32,8 +30,6 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@XmlType(name = "rectangle")
-@XmlRootElement(name = "rectangle")
 public class RectangleGraphic extends AbstractDragGraphicArea {
   private static final long serialVersionUID = -2862114022989550927L;
 

@@ -11,8 +11,8 @@ package org.weasis.core.ui.serialize;
 
 import java.awt.geom.Point2D;
 import java.util.Objects;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public class PointAdapter {
 

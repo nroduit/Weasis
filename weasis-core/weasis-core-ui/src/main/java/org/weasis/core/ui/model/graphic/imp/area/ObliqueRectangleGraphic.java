@@ -22,8 +22,8 @@ import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
@@ -38,8 +38,8 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@XmlType(name = "oblique-rectangle")
-@XmlRootElement(name = "oblique-rectangle")
+@XmlType(name = "rectangle")
+@XmlRootElement(name = "rectangle")
 public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
   private static final long serialVersionUID = -2862114022989550927L;
 

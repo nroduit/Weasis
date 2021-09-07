@@ -42,9 +42,7 @@
             Import-Package: \
             com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
-            com.sun.xml.internal.bind;resolution:=optional,javax.xml.bind;version=!,\
-            javax.xml.bind.annotation;version=!,javax.xml.bind.annotation.adapters;version=!,\
-            com.sun.xml.bind.v2;resolution:=optional,!sun.swing,*
+            !sun.swing,*
             Export-Package: !org.weasis.core.ui.internal,org.weasis.core.ui.*
             -exportcontents: it.cnr.imaa.*,org.jdesktop.jxlayer.*,com.github.lgooddatepicker.*,\
             com.privatejgoodies.*,org.knowm.xchart.*,de.erichseifert.*

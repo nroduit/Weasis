@@ -14,7 +14,7 @@ import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public interface DragGraphic extends Graphic {
-  public static final Boolean DEFAULT_RESIZE_OR_MOVING = Boolean.FALSE;
+  Boolean DEFAULT_RESIZE_OR_MOVING = Boolean.FALSE;
 
   Boolean getResizingOrMoving();
 

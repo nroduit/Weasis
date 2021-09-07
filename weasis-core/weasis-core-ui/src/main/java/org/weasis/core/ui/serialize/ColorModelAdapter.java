@@ -11,8 +11,8 @@ package org.weasis.core.ui.serialize;
 
 import java.awt.Color;
 import java.awt.Paint;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.weasis.core.api.service.WProperties;
 
 public class ColorModelAdapter {

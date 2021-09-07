@@ -33,14 +33,10 @@ public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
 
     List<Point2D> pts =
         Arrays.asList(
-            new Point2D.Double(1395.5, 1210.0),
-            new Point2D.Double(2094.5, 1621.0),
-            new Point2D.Double(2094.5, 1210.0),
-            new Point2D.Double(1395.5, 1621.0),
-            new Point2D.Double(1745.0, 1210.0),
-            new Point2D.Double(1745.0, 1621.0),
-            new Point2D.Double(2094.5, 1415.5),
-            new Point2D.Double(1395.5, 1415.5));
+            new Point2D.Double(252.13800313643495, 91.52639832723474),
+            new Point2D.Double(311.46889702038686, 71.13957135389444),
+            new Point2D.Double(281.8034500784109, 81.33298484056459),
+            new Point2D.Double(294.2900410111563, 117.67216614483638));
     COMPLETE_OBJECT.setPts(pts);
   }
 

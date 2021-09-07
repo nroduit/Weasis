@@ -9,7 +9,7 @@
  */
 package org.weasis.core.ui.model.layer.imp;
 
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import org.weasis.core.ui.model.layer.AbstractGraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 

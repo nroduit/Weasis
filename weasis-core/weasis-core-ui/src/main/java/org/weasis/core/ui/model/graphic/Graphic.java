@@ -22,7 +22,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -39,22 +39,22 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
-  static final Color DEFAULT_COLOR = Color.YELLOW;
-  static final Integer DEFAULT_POINT_NUMBER = 1;
-  static final Float DEFAULT_LINE_THICKNESS = 1f;
-  static final Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
-  static final Boolean DEFAULT_FILLED = Boolean.FALSE;
-  static final Boolean DEFAULT_SELECTED = Boolean.FALSE;
-  static final Integer DEFAULT_PTS_SIZE = 10;
+  Color DEFAULT_COLOR = Color.YELLOW;
+  Integer DEFAULT_POINT_NUMBER = 1;
+  Float DEFAULT_LINE_THICKNESS = 1f;
+  Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
+  Boolean DEFAULT_FILLED = Boolean.FALSE;
+  Boolean DEFAULT_SELECTED = Boolean.FALSE;
+  Integer DEFAULT_PTS_SIZE = 10;
 
-  static final String ACTION_TO_FRONT = "toFront";
-  static final String ACTION_TO_BACK = "toBack";
-  static final String ACTION_REMOVE = "remove"; // NON-NLS
-  static final String ACTION_REMOVE_REPAINT = "remove.repaint";
+  String ACTION_TO_FRONT = "toFront";
+  String ACTION_TO_BACK = "toBack";
+  String ACTION_REMOVE = "remove"; // NON-NLS
+  String ACTION_REMOVE_REPAINT = "remove.repaint";
 
-  static final Integer HANDLE_SIZE = 6;
-  static final Integer SELECTION_SIZE = 10;
-  static final Integer UNDEFINED = -1;
+  Integer HANDLE_SIZE = 6;
+  Integer SELECTION_SIZE = 10;
+  Integer UNDEFINED = -1;
 
   default List<MeasureItem> computeMeasurements(
       MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {

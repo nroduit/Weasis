@@ -9,18 +9,18 @@
  */
 package org.weasis.core.ui.serialize;
 
-import com.sun.xml.bind.v2.ContextFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.Map;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
+import jakarta.xml.bind.JAXBContext;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.JAXBException;
+import jakarta.xml.bind.Marshaller;
+import jakarta.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamReader;
+import org.glassfish.jaxb.runtime.v2.ContextFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.ImageElement;
@@ -132,7 +132,7 @@ public class XmlSerializer {
       model.getModels().removeIf(g -> g.getLayer() == null);
       if (length > model.getModels().size()) {
         LOGGER.error(
-            "Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+            "Removing {} graphics without a attached layer", model.getModels().size() - length);
       }
       return model;
     } catch (Exception e) {
@@ -142,14 +142,11 @@ public class XmlSerializer {
   }
 
   public static JAXBContext getJaxbContext(Class<?>... clazz) throws JAXBException {
-    return getJaxbContext(null, clazz);
+    return ContextFactory.createContext(clazz, null);
   }
 
   public static JAXBContext getJaxbContext(Map<String, Object> properties, Class<?>... clazz)
       throws JAXBException {
-    if ("1.8".equals(System.getProperty("java.specification.version"))) { // NON-NLS
-      return JAXBContext.newInstance(clazz, properties);
-    }
     return ContextFactory.createContext(clazz, properties);
   }
 }

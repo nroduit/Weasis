@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.xml.bind.annotation.XmlRootElement;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
@@ -34,7 +33,6 @@ import org.weasis.core.ui.model.utils.imp.SelectedDragSequence;
  * @author Nicolas Roduit
  * @author Benoit Jacquemoud
  */
-@XmlRootElement(name = "selectGraphic")
 public class SelectGraphic extends RectangleGraphic {
   private static final long serialVersionUID = -7680605225823046153L;
 

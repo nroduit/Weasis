@@ -211,7 +211,6 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     InputStream xml0 = getClass().getResourceAsStream(getXmlFilePathCase0());
 
     E object0 = deserialize(xml0, getGraphicClass());
-    E expected0 = getExpectedDeserializeBasicGraphic();
     E copy0 = (E) object0.copy();
 
     testCopy(object0, copy0);
@@ -219,7 +218,6 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     InputStream xml1 = getClass().getResourceAsStream(getXmlFilePathCase1());
 
     E object1 = deserialize(xml1, getGraphicClass());
-    E expected1 = getExpectedDeserializeCompleteGraphic();
     E copy1 = (E) object1.copy();
 
     testCopy(copy1, object1);
@@ -230,7 +228,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   }
 
   protected final void checkGraphicInterfaceFields(Graphic result, Graphic expected) {
-    // assertThat(result.getPtsNumber()).isNotNull().isEqualTo(expected.getPtsNumber());
+    assertThat(result.getPts()).isEqualTo(expected.getPts());
     assertThat(result.getColorPaint()).isNotNull().isEqualTo(expected.getColorPaint());
     assertThat(result.getLineThickness()).isNotNull().isEqualTo(expected.getLineThickness());
     assertThat(result.getLabelVisible()).isNotNull().isEqualTo(expected.getLabelVisible());
