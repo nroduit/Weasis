@@ -25,7 +25,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -56,7 +58,6 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
-import sun.net.www.protocol.file.FileURLConnection;
 
 /**
  * @author Richard S. Hall
@@ -1119,9 +1120,9 @@ public class WeasisLauncher {
     if (Utils.hasText(path) && path.endsWith(".zip")) {
       if (path.startsWith("file:")) { // NON-NLS
         try {
-          FileURLConnection connection = (FileURLConnection) new URL(path).openConnection();
-          return connection.getContentLength() > 0;
-        } catch (IOException e) {
+          File file = Paths.get(new URL(path).toURI()).toFile();
+          return file.length() > 0;
+        } catch (IOException | URISyntaxException e) {
           // Do nothing
         }
       } else {
