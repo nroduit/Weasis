@@ -176,8 +176,7 @@ public class DicomCodec implements Codec {
     SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); // NON-NLS
 
     // Register SPI in imageio registry with the classloader of this bundle (provides also the
-    // classpath for
-    // discovering the SPI files). Here are the codecs:
+    // classpath for discovering the SPI files). Here are the codecs:
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);
     }
