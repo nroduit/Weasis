@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -25,9 +25,9 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import java.util.Optional;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -146,7 +146,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
   @Override
   public Rectangle2D getTransformedBounds(AffineTransform transform) {
     // Only translates origin because no rotation or scaling is applied
-    Point2D.Double anchorPoint =
+    Point2D anchorPoint =
         new Point2D.Double(labelBounds.getX() + offsetX, labelBounds.getY() + offsetY);
     Optional.ofNullable(transform).ifPresent(t -> transform.transform(anchorPoint, anchorPoint));
 

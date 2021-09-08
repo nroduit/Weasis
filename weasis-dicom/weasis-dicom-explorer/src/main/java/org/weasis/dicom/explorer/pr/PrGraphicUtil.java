@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -15,10 +15,10 @@ import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.CIELab;
@@ -101,7 +101,7 @@ public class PrGraphicUtil {
         int size = points.length / 2;
         if (size >= 2) {
           if (canBeEdited) {
-            List<Point2D.Double> handlePointList = new ArrayList<>(size);
+            List<Point2D> handlePointList = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
               double x = isDisp ? points[i * 2] * width : points[i * 2];
               double y = isDisp ? points[i * 2 + 1] * height : points[i * 2 + 1];
@@ -165,7 +165,7 @@ public class PrGraphicUtil {
           ellipse = rotate.createTransformedShape(ellipse);
         }
         // Only ellipse without rotation can be edited
-        if (canBeEdited && Objects.equals(rotation, 0)) {
+        if (canBeEdited && MathUtil.isEqualToZero(rotation)) {
           shape = new EllipseGraphic().buildGraphic(((Ellipse2D) ellipse).getFrame());
           setProperties(shape, thickness, color, labelVisible, filled, groupID);
         } else {
@@ -195,7 +195,7 @@ public class PrGraphicUtil {
         int pointSize = 3;
 
         if (canBeEdited) {
-          shape = new PointGraphic().buildGraphic(Arrays.asList(new Point2D.Double(x, y)));
+          shape = new PointGraphic().buildGraphic(Collections.singletonList(new Double(x, y)));
           ((PointGraphic) shape).setPointSize(pointSize);
           setProperties(shape, thickness, color, labelVisible, Boolean.TRUE, groupID);
         } else {

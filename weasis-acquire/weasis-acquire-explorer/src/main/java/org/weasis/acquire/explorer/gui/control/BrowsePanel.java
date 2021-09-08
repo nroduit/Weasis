@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -15,10 +15,10 @@ import java.awt.Insets;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import net.samuelcampos.usbdrivedectector.USBDeviceDetectorManager;
-import net.samuelcampos.usbdrivedectector.USBStorageDevice;
-import net.samuelcampos.usbdrivedectector.events.IUSBDriveListener;
-import net.samuelcampos.usbdrivedectector.events.USBStorageEvent;
+import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
+import net.samuelcampos.usbdrivedetector.USBStorageDevice;
+import net.samuelcampos.usbdrivedetector.events.IUSBDriveListener;
+import net.samuelcampos.usbdrivedetector.events.USBStorageEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireExplorer;

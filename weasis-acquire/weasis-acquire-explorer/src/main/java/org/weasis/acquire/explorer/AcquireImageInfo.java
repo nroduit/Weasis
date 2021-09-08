@@ -2,55 +2,53 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 package org.weasis.acquire.explorer;
 
-import com.drew.imaging.ImageMetadataReader;
-import com.drew.imaging.ImageProcessingException;
-import com.drew.metadata.Metadata;
-import com.drew.metadata.exif.ExifDirectoryBase;
-import com.drew.metadata.exif.ExifIFD0Directory;
-import com.drew.metadata.exif.ExifSubIFDDirectory;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
+import org.opencv.core.Mat;
+import org.opencv.core.Rect;
+import org.opencv.core.RotatedRect;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.image.AutoLevelsOp;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.CropOp;
-import org.weasis.core.api.image.FlipOp;
 import org.weasis.core.api.image.ImageOpNode;
+import org.weasis.core.api.image.MaskOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.GraphicModel;
-import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.StringUtil;
@@ -70,44 +68,39 @@ public class AcquireImageInfo {
   private final ImageElement image;
   private SeriesGroup seriesGroup;
   private final Attributes attributes;
-  private Layer layer;
   private AcquireImageStatus status;
 
-  private final SimpleOpManager preProcessOpManager;
   private final SimpleOpManager postProcessOpManager;
 
-  private AcquireImageValues defaultValues;
+  private final AcquireImageValues defaultValues;
   private AcquireImageValues currentValues;
   private AcquireImageValues nextValues;
-  private final List<AcquireImageValues> steps;
-
-  private String comment;
 
   public AcquireImageInfo(ImageElement image) {
     this.image = Objects.requireNonNull(image);
+    // Create a SOPInstanceUID if not present
+    TagW tagUid = TagD.getUID(Level.INSTANCE);
+    String uuid = (String) image.getTagValue(tagUid);
+    if (uuid == null) {
+      uuid = UIDUtils.createUID();
+      image.setTag(tagUid, uuid);
+    }
     readTags(image);
 
     this.setStatus(AcquireImageStatus.TO_PUBLISH);
     this.attributes = new Attributes();
-    this.preProcessOpManager = new SimpleOpManager();
+
     this.postProcessOpManager = new SimpleOpManager();
+    this.postProcessOpManager.addImageOperationAction(new RotationOp());
+    this.postProcessOpManager.addImageOperationAction(new MaskOp());
     this.postProcessOpManager.addImageOperationAction(new CropOp());
     this.postProcessOpManager.addImageOperationAction(new BrightnessOp());
     this.postProcessOpManager.addImageOperationAction(new AutoLevelsOp());
-    this.postProcessOpManager.addImageOperationAction(new RotationOp());
-    this.postProcessOpManager.addImageOperationAction(new FlipOp());
     this.postProcessOpManager.addImageOperationAction(new ZoomOp());
 
     defaultValues = new AcquireImageValues();
     currentValues = defaultValues.copy();
     nextValues = defaultValues.copy();
-
-    steps = new ArrayList<>();
-    steps.add(currentValues);
-  }
-
-  public List<AcquireImageValues> getSteps() {
-    return steps;
   }
 
   public String getUID() {
@@ -118,138 +111,104 @@ public class AcquireImageInfo {
     return image;
   }
 
-  public Layer getLayer() {
-    return layer;
-  }
-
   public Attributes getAttributes() {
     return attributes;
-  }
-
-  public SimpleOpManager getPreProcessOpManager() {
-    return this.preProcessOpManager;
   }
 
   public SimpleOpManager getPostProcessOpManager() {
     return this.postProcessOpManager;
   }
 
-  private static void addImageOperationAction(SimpleOpManager manager, ImageOpNode action) {
-    manager.addImageOperationAction(action);
-  }
-
-  private static void removeImageOpertationAction(
-      SimpleOpManager manager, Class<? extends ImageOpNode> cls) {
-    for (ImageOpNode op : manager.getOperations()) {
-      if (cls.isInstance(op)) {
-        manager.removeImageOperationAction(op);
-        break;
-      }
-    }
-  }
-
-  public void addPreProcessImageOperationAction(ImageOpNode action) {
-    addImageOperationAction(preProcessOpManager, action);
-  }
-
-  public void removePreProcessImageOperationAction(Class<? extends ImageOpNode> cls) {
-    removeImageOpertationAction(preProcessOpManager, cls);
-  }
-
-  public void addPostProcessImageOperationAction(ImageOpNode action) {
-    addImageOperationAction(postProcessOpManager, action);
-  }
-
-  public void applyPostProcess(ViewCanvas<ImageElement> view) {
+  public void applyFinalProcessing(ViewCanvas<ImageElement> view) {
     boolean dirty = isDirty();
-
     if (dirty) {
-      postProcessOpManager.setParamValue(
-          RotationOp.OP_NAME, RotationOp.P_ROTATE, nextValues.getFullRotation());
-
-      if (!Objects.equals(nextValues.getCropZone(), currentValues.getCropZone())) {
-        Rectangle area = nextValues.getCropZone();
-        Rectangle bounds = area;
-        PlanarImage source = view.getSourceImage();
-        int rotationAngle = nextValues.getFullRotation();
-        if (rotationAngle > 0) {
-          rotationAngle = (rotationAngle + 720) % 360;
-          AffineTransform transform =
-              AffineTransform.getRotateInstance(Math.toRadians(rotationAngle));
-          Point2D pMin = new Point2D.Double(area.getMinX(), area.getMinY());
-          Point2D pMax = new Point2D.Double(area.getMaxX(), area.getMaxY());
-
-          transform.transform(pMin, pMin);
-          transform.transform(pMax, pMax);
-
-          Rectangle2D rect = new Rectangle2D.Double();
-          rect.setFrameFromDiagonal(pMin, pMax);
-          bounds = rect.getBounds();
-        }
-        if (source != null
-            && bounds != null
-            && !bounds.equals(view.getViewModel().getModelArea())) {
-          Rectangle imgBouds = ImageConversion.getBounds(source);
-          area = area.intersection(imgBouds);
-          if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
-            ((DefaultViewModel) view.getViewModel())
-                .adjustMinViewScaleFromImage(bounds.width, bounds.height);
-            view.getViewModel().setModelArea(new Rectangle(0, 0, bounds.width, bounds.height));
-            view.getImageLayer().setOffset(new Point(area.x, area.y));
-
-            postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
-
-            view.resetZoom();
-          }
-        }
-      }
-
-      if (nextValues.getBrightness() != currentValues.getBrightness()
-          || nextValues.getContrast() != currentValues.getContrast()) {
-        postProcessOpManager.setParamValue(
-            BrightnessOp.OP_NAME,
-            BrightnessOp.P_BRIGTNESS_VALUE,
-            (double) nextValues.getBrightness());
-        postProcessOpManager.setParamValue(
-            BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) nextValues.getContrast());
-      }
-
-      postProcessOpManager.setParamValue(
-          AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL, nextValues.isAutoLevel());
-      postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_IMAGE_ELEMENT, image);
-      postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, nextValues.isFlip());
-
-      if (!Objects.equals(nextValues.getRatio(), currentValues.getRatio())) {
-        postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
-        postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
-        postProcessOpManager.setParamValue(
-            ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[1]);
-      }
-
-      if (view != null) {
-        // Reset preprocess cache
-        postProcessOpManager.resetLastNodeOutputImage();
-        view.getImageLayer().setImage(image, postProcessOpManager);
-        updateTags(view.getImage());
-      }
-      preProcessOpManager.removeAllImageOperationAction();
-
-      // Next value become the current value. Register the step.
-      currentValues = nextValues;
-      nextValues = currentValues.copy();
-      steps.add(currentValues.copy());
+      reloadFinalProcessing(view);
     }
   }
 
-  public void applyPreProcess(ViewCanvas<ImageElement> view) {
-    for (ImageOpNode action : postProcessOpManager.getOperations()) {
-      if (preProcessOpManager.getNode(action.getName()) == null) {
-        preProcessOpManager.addImageOperationAction(action.copy());
+  public void applyNRotation(ViewCanvas<ImageElement> view) {
+    int rotation = (nextValues.getFullRotation() + 720) % 360;
+    ImageOpNode node = postProcessOpManager.getNode(RotationOp.OP_NAME);
+    if (node != null) {
+      node.clearIOCache();
+      node.setParam(RotationOp.P_ROTATE, rotation);
+      Rectangle area = ImageConversion.getBounds(view.getSourceImage());
+      if (area.width > 1 && area.height > 1) {
+        ((DefaultViewModel) view.getViewModel())
+            .adjustMinViewScaleFromImage(area.width, area.height);
+        view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+        view.getImageLayer().setOffset(new Point(area.x, area.y));
+        if (nextValues.getCropZone() == null) {
+          nextValues.setCropZone(area);
+        }
       }
     }
+  }
 
+  public void reloadFinalProcessing(ViewCanvas<ImageElement> view) {
+    postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
+    applyNRotation(view);
+
+    Rectangle area = nextValues.getCropZone();
+    PlanarImage source = view.getSourceImage();
+    if (source != null && area != null && !area.equals(view.getViewModel().getModelArea())) {
+      Rectangle imgBounds = ImageConversion.getBounds(source);
+      area = area.intersection(imgBounds);
+      if (area.width > 1 && area.height > 1 && !area.equals(imgBounds)) {
+        ((DefaultViewModel) view.getViewModel())
+            .adjustMinViewScaleFromImage(area.width, area.height);
+        view.getViewModel().setModelArea(new Rectangle(0, 0, area.width, area.height));
+        view.getImageLayer().setOffset(new Point(area.x, area.y));
+
+        postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, area);
+      }
+    }
+    view.resetZoom();
+
+    if (nextValues.getBrightness() != currentValues.getBrightness()
+        || nextValues.getContrast() != currentValues.getContrast()) {
+      postProcessOpManager.setParamValue(
+          BrightnessOp.OP_NAME,
+          BrightnessOp.P_BRIGTNESS_VALUE,
+          (double) nextValues.getBrightness());
+      postProcessOpManager.setParamValue(
+          BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) nextValues.getContrast());
+    }
+
+    postProcessOpManager.setParamValue(
+        AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL, nextValues.isAutoLevel());
+
+    if (!Objects.equals(nextValues.getRatio(), currentValues.getRatio())) {
+      postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
+      postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
+      postProcessOpManager.setParamValue(
+          ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[3]);
+    }
+
+    // Reset preprocess cache
+    postProcessOpManager.clearNodeIOCache();
+    view.getImageLayer().setImage(image, postProcessOpManager);
+    updateTags(view.getImage());
+    updateImageGeometry(view);
+
+    // Next value become the current value. Register the step.
+    currentValues = nextValues;
+    nextValues = currentValues.copy();
+  }
+
+  public void updateImageGeometry(ViewCanvas<ImageElement> view) {
     if (view != null) {
-      view.getImageLayer().setImage(view.getImage(), preProcessOpManager);
+      Panner<?> panner = view.getPanner();
+      if (panner != null) {
+        panner.updateImage();
+      }
+    }
+  }
+
+  public void applyCurrentProcessing(ViewCanvas<ImageElement> view) {
+    if (view != null) {
+      ImageLayer<ImageElement> imageLayer = view.getImageLayer();
+      imageLayer.setImage(image, postProcessOpManager);
     }
   }
 
@@ -264,10 +223,6 @@ public class AcquireImageInfo {
   private void updateTags(ImageElement image) {
     this.image.setTag(TagW.ImageWidth, image.getTagValue(TagW.ImageWidth));
     this.image.setTag(TagW.ImageHeight, image.getTagValue(TagW.ImageHeight));
-  }
-
-  public void clearPreProcess() {
-    preProcessOpManager.removeAllImageOperationAction();
   }
 
   public AcquireImageValues getNextValues() {
@@ -296,7 +251,6 @@ public class AcquireImageInfo {
 
     postProcessOpManager.setParamValue(
         RotationOp.OP_NAME, RotationOp.P_ROTATE, defaultValues.getOrientation());
-    postProcessOpManager.setParamValue(FlipOp.OP_NAME, FlipOp.P_FLIP, defaultValues.isFlip());
     postProcessOpManager.setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
 
     postProcessOpManager.setParamValue(
@@ -307,14 +261,11 @@ public class AcquireImageInfo {
         BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) defaultValues.getContrast());
     postProcessOpManager.setParamValue(
         AutoLevelsOp.OP_NAME, AutoLevelsOp.P_AUTO_LEVEL, defaultValues.isAutoLevel());
-    postProcessOpManager.setParamValue(AutoLevelsOp.OP_NAME, AutoLevelsOp.P_IMAGE_ELEMENT, image);
 
     if (view != null) {
       view.getImageLayer().setImage(image, postProcessOpManager);
     }
 
-    steps.clear();
-    steps.add(defaultValues);
     currentValues = defaultValues.copy();
     nextValues = defaultValues.copy();
 
@@ -340,15 +291,7 @@ public class AcquireImageInfo {
 
   @Override
   public String toString() {
-    return Optional.ofNullable(image).map(ImageElement::getName).orElseGet(() -> "");
-  }
-
-  public String getComment() {
-    return comment;
-  }
-
-  public void setComment(String comment) {
-    this.comment = comment;
+    return Optional.ofNullable(image).map(ImageElement::getName).orElse("");
   }
 
   public AcquireImageStatus getStatus() {
@@ -359,8 +302,37 @@ public class AcquireImageInfo {
     this.status = Objects.requireNonNull(status);
   }
 
-  public static final Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
+  public static Consumer<AcquireImageInfo> changeStatus(AcquireImageStatus status) {
     return imgInfo -> imgInfo.setStatus(status);
+  }
+
+  public AffineTransform getAffineTransform(int rotation, boolean inverse) {
+    AffineTransform transform = new AffineTransform();
+    if (rotation != 0) {
+      PlanarImage img = image.getImage();
+      Rectangle2D modelArea = new Rectangle2D.Double(0.0, 0.0, img.width(), img.height());
+      double w = modelArea.getWidth();
+      double h = modelArea.getHeight();
+      org.opencv.core.Point ptCenter = new org.opencv.core.Point(w / 2.0, h / 2.0);
+      Mat rot = Imgproc.getRotationMatrix2D(ptCenter, -rotation, 1.0);
+
+      Rect bbox = new RotatedRect(ptCenter, new Size(w, h), -rotation).boundingRect();
+      double[] m = new double[rot.cols() * rot.rows()];
+      // adjust transformation matrix
+      rot.get(0, 0, m);
+      m[2] += bbox.width / 2.0 - ptCenter.x;
+      m[rot.cols() + 2] += bbox.height / 2.0 - ptCenter.y;
+
+      transform.setTransform(m[0], m[3], m[1], m[4], m[2], m[5]);
+      if (inverse) {
+        try {
+          return transform.createInverse();
+        } catch (NoninvertibleTransformException e) {
+          LOGGER.error("Cannot create inverse transform for graphics");
+        }
+      }
+    }
+    return transform;
   }
 
   /**
@@ -370,111 +342,39 @@ public class AcquireImageInfo {
    * @param imageElement
    */
   private static void readTags(ImageElement imageElement) {
-
-    // Create a SOPInstanceUID if not present
-    TagW tagUid = TagD.getUID(Level.INSTANCE);
-    String uuid = (String) imageElement.getTagValue(tagUid);
-    if (uuid == null) {
-      uuid = UIDUtils.createUID();
-      imageElement.setTag(tagUid, uuid);
-    }
-
-    // Extract information from Exif TAG
+    // Convert Exif TAG to DICOM attributes
     Optional<File> file = imageElement.getFileCache().getOriginalFile();
+
     if (file.isPresent()) {
-      Date date = null;
-      try {
-        Metadata metadata = ImageMetadataReader.readMetadata(file.get());
-        if (metadata != null) {
-          ExifSubIFDDirectory directory =
-              metadata.getFirstDirectoryOfType(ExifSubIFDDirectory.class);
-          if (directory != null) {
-            date = directory.getDate(ExifDirectoryBase.TAG_DATETIME_ORIGINAL);
-            if (date == null) {
-              date = directory.getDate(ExifDirectoryBase.TAG_DATETIME);
-            }
+      imageElement.setTagNoNull(
+          TagD.get(Tag.Manufacturer), imageElement.getTagValue(TagW.ExifMake));
+      imageElement.setTagNoNull(
+          TagD.get(Tag.ManufacturerModelName), imageElement.getTagValue(TagW.ExifModel));
 
-            imageElement.setTagNoNull(
-                TagD.get(Tag.DateOfSecondaryCapture),
-                directory.getDate(ExifDirectoryBase.TAG_DATETIME_DIGITIZED));
-          }
-          ExifIFD0Directory ifd0 = metadata.getFirstDirectoryOfType(ExifIFD0Directory.class);
-          if (ifd0 != null) {
-            imageElement.setTagNoNull(
-                TagD.get(Tag.Manufacturer), ifd0.getString(ExifDirectoryBase.TAG_MAKE));
-            imageElement.setTagNoNull(
-                TagD.get(Tag.ManufacturerModelName), ifd0.getString(ExifDirectoryBase.TAG_MODEL));
-
-            // try {
-            // int orientation =
-            // ifd0.getInt(ExifIFD0Directory.TAG_ORIENTATION);
-            // } catch (MetadataException e) {
-            // e.printStackTrace();
-            // }
-
-            // AffineTransform affineTransform = new
-            // AffineTransform();
-            //
-            // switch (orientation) {
-            // case 1:
-            // break;
-            // case 2: // Flip X
-            // affineTransform.scale(-1.0, 1.0);
-            // affineTransform.translate(-width, 0);
-            // break;
-            // case 3: // PI rotation
-            // affineTransform.translate(width, height);
-            // affineTransform.rotate(Math.PI);
-            // break;
-            // case 4: // Flip Y
-            // affineTransform.scale(1.0, -1.0);
-            // affineTransform.translate(0, -height);
-            // break;
-            // case 5: // - PI/2 and Flip X
-            // affineTransform.rotate(-Math.PI / 2);
-            // affineTransform.scale(-1.0, 1.0);
-            // break;
-            // case 6: // -PI/2 and -width
-            // affineTransform.translate(height, 0);
-            // affineTransform.rotate(Math.PI / 2);
-            // break;
-            // case 7: // PI/2 and Flip
-            // affineTransform.scale(-1.0, 1.0);
-            // affineTransform.translate(-height, 0);
-            // affineTransform.translate(0, width);
-            // affineTransform.rotate(3 * Math.PI / 2);
-            // break;
-            // case 8: // PI / 2
-            // affineTransform.translate(0, width);
-            // affineTransform.rotate(3 * Math.PI / 2);
-            // break;
-            // default:
-            // break;
-            // }
-            //
-            // AffineTransformOp affineTransformOp = new
-            // AffineTransformOp(affineTransform,
-            // AffineTransformOp.TYPE_BILINEAR);
-            // BufferedImage destinationImage = new
-            // BufferedImage(originalImage.getHeight(),
-            // originalImage.getWidth(), originalImage.getType());
-            // destinationImage =
-            // affineTransformOp.filter(originalImage,
-            // destinationImage);
-          }
+      String date = (String) TagUtil.getTagValue(TagW.ExifDateTime, imageElement);
+      LocalDateTime dateTime = null;
+      if (StringUtil.hasText(date)) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+        try {
+          dateTime = LocalDateTime.parse(date, formatter);
+        } catch (DateTimeParseException ex) {
+          // Do nothing
         }
-      } catch (ImageProcessingException | IOException e) {
-        LOGGER.error("Error when reading exif tags", e);
       }
-      LocalDateTime dateTime =
-          date == null
-              ? LocalDateTime.from(
-                  Instant.ofEpochMilli(imageElement.getLastModified())
-                      .atZone(ZoneId.systemDefault()))
-              : TagUtil.toLocalDateTime(date);
+      if (dateTime == null) {
+        dateTime =
+            LocalDateTime.from(
+                Instant.ofEpochMilli(imageElement.getLastModified())
+                    .atZone(ZoneId.systemDefault()));
+      }
       imageElement.setTagNoNull(TagD.get(Tag.ContentDate), dateTime.toLocalDate());
       imageElement.setTagNoNull(TagD.get(Tag.ContentTime), dateTime.toLocalTime());
-      imageElement.setTagNoNull(TagD.get(Tag.ImageComments), file.get().getName());
+
+      String imgDescription = (String) imageElement.getTagValue(TagW.ExifImageDescription);
+      if (!StringUtil.hasText(imgDescription)) {
+        imgDescription = file.get().getName();
+      }
+      imageElement.setTagNoNull(TagD.get(Tag.ImageComments), imgDescription);
     }
   }
 }

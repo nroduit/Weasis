@@ -57,4 +57,9 @@
       <p index="6" format="$V:l$25$">ImageComments</p>
     </corner>
   </modality>
+  <modality name="MG" extend="DEFAULT">
+    <corner name="BOTTOM_RIGHT">
+      <p index="7" format="Position: $V:l$25$">ViewPosition</p>
+    </corner>
+  </modality>
 </modalities>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <!-- Shared parent. Define the settings common to all projects using Weasis -->
   <groupId>org.weasis</groupId>
@@ -25,11 +25,11 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <felix.framework.version>7.0.0</felix.framework.version>
+    <felix.framework.version>7.0.1</felix.framework.version>
     <substance.version>3.5.0</substance.version>
     <xz.version>1.9</xz.version>
 
-    <osgi.cmpn.version>7.0.0</osgi.cmpn.version>
+    <osgi.cmpn.version>8.0.0</osgi.cmpn.version>
 
     <felix.gogo.version>1.1.4</felix.gogo.version>
     <felix.gogo.shell.version>1.1.4</felix.gogo.shell.version>
@@ -47,11 +47,11 @@
     <slf4j.version>1.7.30</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.3p1</dockingframes.version>
-    <weasis-dicom-tools.version>5.23.2.3-IMG-RELEASE</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.5.1</weasis.core.img.version>
-    <weasis.opencv.native.version>4.5.1-dcm</weasis.opencv.native.version>
+    <weasis-dicom-tools.version>5.24.0-IMG-RELEASE</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.5.3</weasis.core.img.version>
+    <weasis.opencv.native.version>4.5.3-dcm</weasis.opencv.native.version>
     <javax.json.version>1.1.6</javax.json.version>
-    <jaxb.osgi.version>2.3.2</jaxb.osgi.version>
+    <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
     <org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
     <jackson.version>2.12.3</jackson.version>
     <scribejava.version>8.3.1</scribejava.version>
@@ -64,14 +64,14 @@
   <licenses>
     <license>
       <name>Eclipse Public License v2.0</name>
-      <url>http://www.eclipse.org/legal/epl-v20.html</url>
+      <url>https://www.eclipse.org/legal/epl-v20.html</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
 
   <issueManagement>
-    <system>JIRA</system>
-    <url>http://www.dcm4che.org/jira/browse/WEA</url>
+    <system>Github</system>
+    <url>https://github.com/nroduit/Weasis/issues</url>
   </issueManagement>
 
   <repositories>
@@ -193,7 +193,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-resources-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.2.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -208,7 +208,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>3.1.1</version>
+          <version>3.1.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -218,7 +218,7 @@
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>exec-maven-plugin</artifactId>
-          <version>1.6.0</version>
+          <version>3.0.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -233,12 +233,12 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
-          <version>3.2.0</version>
+          <version>3.2.1</version>
         </plugin>
         <plugin>
           <groupId>org.codehaus.mojo</groupId>
           <artifactId>flatten-maven-plugin</artifactId>
-          <version>1.2.4</version>
+          <version>1.2.5</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -324,7 +324,7 @@
       <plugin>
         <groupId>com.diffplug.spotless</groupId>
         <artifactId>spotless-maven-plugin</artifactId>
-        <version>2.6.1</version>
+        <version>2.12.3</version>
         <configuration>
           <java>
             <googleJavaFormat/>
@@ -339,7 +339,7 @@
  * Copyright (c) $YEAR Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -596,7 +596,7 @@
     <dependency>
       <groupId>org.osgi</groupId>
       <artifactId>osgi.cmpn</artifactId>
-      <version>${osgi.cmpn.version}</version>
+      <version>7.0.0</version>
       <scope>provided</scope>
     </dependency>
     <dependency>

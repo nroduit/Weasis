@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -24,7 +24,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RectangularShape;
@@ -33,8 +32,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.UIManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -64,8 +61,6 @@ import org.weasis.opencv.data.PlanarImage;
 public class ZoomWin<E extends ImageElement> extends GraphicsPane
     implements ImageLayerChangeListener<E> {
   private static final long serialVersionUID = 3542710545706544620L;
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(ZoomWin.class);
 
   public static final String SYNCH_CMD = "synchronize"; // NON-NLS
   public static final String FREEZE_CMD = "freeze"; // NON-NLS
@@ -226,7 +221,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
 
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
-    if ((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd())) {
+    if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
       Rectangle2D b = new Rectangle2D.Double(0.0, 0.0, getWidth(), getHeight());
       view2d.getGraphicManager().draw(g2d, transform, inverseTransform, b);
     }
@@ -240,74 +235,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     // Set the position from the center of the image
     getViewModel().setModelOffset(getOffsetCenterX(), getOffsetCenterY());
 
-    Rectangle2D modelArea = getViewModel().getModelArea();
-    double viewScale = getViewModel().getViewScale();
-
-    double rWidth = modelArea.getWidth();
-    double rHeight = modelArea.getHeight();
-
-    OpManager dispOp = getDisplayOpManager();
-    boolean flip = LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue((ActionW.FLIP.cmd())));
-    Integer rotationAngle = (Integer) view2d.getActionValue(ActionW.ROTATION.cmd());
-
-    affineTransform.setToScale(flip ? -viewScale : viewScale, viewScale);
-    if (rotationAngle != null && rotationAngle > 0) {
-      affineTransform.rotate(Math.toRadians(rotationAngle), rWidth / 2.0, rHeight / 2.0);
-    }
-    if (flip) {
-      affineTransform.translate(-rWidth, 0.0);
-    }
-
-    ImageOpNode node = dispOp.getNode(AffineTransformOp.OP_NAME);
-    if (node != null) {
-      Rectangle2D imgBounds =
-          affineTransform.createTransformedShape(getViewModel().getModelArea()).getBounds2D();
-
-      double diffx = 0.0;
-      double diffy = 0.0;
-      Rectangle2D viewBounds = new Rectangle2D.Double(0, 0, getWidth() - 2.0, getHeight() - 2.0);
-      Rectangle2D srcBounds = getImageViewBounds(viewBounds.getWidth(), viewBounds.getHeight());
-
-      Rectangle2D dstBounds;
-      if (viewBounds.contains(srcBounds)) {
-        dstBounds = srcBounds;
-      } else {
-        dstBounds = viewBounds.createIntersection(srcBounds);
-
-        if (srcBounds.getX() < 0.0) {
-          diffx += srcBounds.getX();
-        }
-        if (srcBounds.getY() < 0.0) {
-          diffy += srcBounds.getY();
-        }
-      }
-
-      double[] fmx = new double[6];
-      affineTransform.getMatrix(fmx);
-      // adjust transformation matrix => move the center to keep all the image
-      fmx[4] -= imgBounds.getX() - diffx;
-      fmx[5] -= imgBounds.getY() - diffy;
-      affineTransform.setTransform(fmx[0], fmx[1], fmx[2], fmx[3], fmx[4], fmx[5]);
-
-      // Convert to openCV affine matrix
-      double[] m = new double[] {fmx[0], fmx[2], fmx[4], fmx[1], fmx[3], fmx[5]};
-      node.setParam(AffineTransformOp.P_AFFINE_MATRIX, m);
-
-      node.setParam(AffineTransformOp.P_DST_BOUNDS, dstBounds);
-      imageLayer.updateDisplayOperations();
-    }
-
-    // Keep the coordinates of the original image when cropping
-    Point offset = view2d.getImageLayer().getOffset();
-    if (offset != null) {
-      affineTransform.translate(-offset.getX(), -offset.getY());
-    }
-
-    try {
-      inverseTransform.setTransform(affineTransform.createInverse());
-    } catch (NoninvertibleTransformException e) {
-      LOGGER.error("Create inverse transform", e);
-    }
+    ImageOpNode node = getDisplayOpManager().getNode(AffineTransformOp.OP_NAME);
+    super.updateAffineTransform(view2d, node, imageLayer, -2.0);
   }
 
   public void setLensDecoration(

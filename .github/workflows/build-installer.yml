@@ -13,9 +13,10 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Set up JDK for compilation
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         with:
-          java-version: 15
+          distribution: 'adopt'
+          java-version: '11'
 
       - name: Cache local Maven repository
         uses: actions/cache@v2
@@ -53,6 +54,12 @@ jobs:
         with:
           name: weasis-portable-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/portable-dist/weasis-portable.zip
+
+      - name: Upload weasis web distribution
+        uses: actions/upload-artifact@v2
+        with:
+          name: weasis-web-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/web-dist/weasis.war
 
   jpackage:
     env:
@@ -94,19 +101,21 @@ jobs:
           feature: 16
 
       - name: Set up early-access Oracle JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         if: matrix.platform == 'x64'
         with:
           java-version: ${{ steps.jdk.outputs.version }}
+          distribution: jdkfile
           jdkFile: ${{ steps.jdk.outputs.file }}
           architecture: ${{ matrix.platform }}
 
       - name: Set up JDK for x86 (not provide by Oracle)
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@v2
         if: matrix.platform == 'x86'
         with:
-          java-version: 16.0.0-ea.36
+          java-version: 16
           architecture: x86
+          distribution: 'adopt'
 
       - name: Download weasis-portable
         uses: actions/download-artifact@v2
@@ -222,7 +231,7 @@ jobs:
           RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
           FILE_ASSOC: "weasis-distributions/script/file-associations.properties"
           VENDOR: "Weasis Team"
-          COPYRIGHT: "© 2009-2020 Weasis Team"
+          COPYRIGHT: "© 2009-2021 Weasis Team"
         run: |
           mkdir -p final-dist
           machine=${{ matrix.wsystem }}
@@ -253,7 +262,7 @@ jobs:
             jpackage --type "pkg" --app-image "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app" --dest "${{ env.WEASIS_OUTPUT }}" --name "${{ env.NAME }}" --resource-dir "${{ env.RES }}" \
             --license-file "${{ env.WEASIS_INPUT }}/Licence.txt" --copyright "${{ env.COPYRIGHT }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --mac-package-identifier "${{ env.IDENTIFIER }}" \
             --mac-signing-keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --mac-sign
-            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist
+            cp ${{ env.WEASIS_OUTPUT }}/*.pkg final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${ARC_NAME}.pkg
           fi
           echo "APP_ARTIFACT=weasis-${machine}-${ARC_NAME}-${{ env.WEASIS_CLEAN_VERSION }}" >> $GITHUB_ENV
 
@@ -261,7 +270,7 @@ jobs:
         shell: bash
         if: matrix.wsystem == 'macosx'
         run: |
-          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}.pkg"
+          BUNDLE_PKG="final-dist/${{ env.NAME }}-${{ env.WEASIS_CLEAN_VERSION }}-${{ matrix.warc }}.pkg"
           # create temporary files
           NOTARIZE_APP_LOG=$(mktemp -t notarize-app)
           NOTARIZE_INFO_LOG=$(mktemp -t notarize-info)

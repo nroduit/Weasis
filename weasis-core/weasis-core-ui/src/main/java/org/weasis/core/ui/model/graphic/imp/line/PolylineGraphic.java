@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -19,8 +19,8 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -105,14 +105,14 @@ public class PolylineGraphic extends AbstractDragGraphic {
   @Override
   public void buildShape(MouseEventDouble mouseEvent) {
     Shape newShape = null;
-    Optional<Point2D.Double> firstHandlePoint = pts.stream().findFirst();
+    Optional<Point2D> firstHandlePoint = pts.stream().findFirst();
 
     if (firstHandlePoint.isPresent()) {
-      Point2D.Double p = firstHandlePoint.get();
+      Point2D p = firstHandlePoint.get();
       Path2D polygonPath = new Path2D.Double(Path2D.WIND_NON_ZERO, pts.size());
       polygonPath.moveTo(p.getX(), p.getY());
 
-      for (Point2D.Double pt : pts) {
+      for (Point2D pt : pts) {
         if (pt == null) {
           break;
         }
@@ -155,10 +155,10 @@ public class PolylineGraphic extends AbstractDragGraphic {
         String unitStr = adapter.getUnit();
         // Get copy to be sure that point value are not modified any more and filter point equal to
         // null.
-        List<Point2D.Double> handlePointListcopy = new ArrayList<>(pts.size());
-        for (Point2D.Double handlePt : pts) {
+        List<Point2D> handlePointListcopy = new ArrayList<>(pts.size());
+        for (Point2D handlePt : pts) {
           if (handlePt != null) {
-            handlePointListcopy.add((Point2D.Double) handlePt.clone());
+            handlePointListcopy.add((Point2D) handlePt.clone());
           }
         }
 
@@ -178,11 +178,11 @@ public class PolylineGraphic extends AbstractDragGraphic {
     return MEASUREMENT_LIST;
   }
 
-  protected Double getPerimeter(List<Point2D.Double> handlePointList) {
+  protected Double getPerimeter(List<Point2D> handlePointList) {
     if (handlePointList.size() > 1) {
       double perimeter = 0d;
-      Point2D.Double pLast = handlePointList.get(0);
-      for (Point2D.Double p2 : handlePointList) {
+      Point2D pLast = handlePointList.get(0);
+      for (Point2D p2 : handlePointList) {
         perimeter += pLast.distance(p2);
         pLast = p2;
       }

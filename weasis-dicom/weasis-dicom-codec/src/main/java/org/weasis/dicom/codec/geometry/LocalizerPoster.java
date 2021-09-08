@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -37,7 +37,7 @@ import org.weasis.core.api.gui.util.MathUtil;
  * Vector shapes = localizerPoster.getOutlineOnLocalizerForThisGeometry(postImageGeometry);
  * </pre>
  *
- * @see com.pixelmed.geometry.GeometryOfSlice
+ * @see org.weasis.dicom.codec.geometry.GeometryOfSlice
  * @author David A. Clunie
  */
 public abstract class LocalizerPoster {
@@ -261,7 +261,7 @@ public abstract class LocalizerPoster {
         point.y / localizerVoxelSpacingArray[0] * scaleSubPixelWidthOfRow + 0.5);
   }
 
-  protected List<Point2D.Double> drawOutlineOnLocalizer(List<Point3d> corners) {
+  protected List<Point2D> drawOutlineOnLocalizer(List<Point3d> corners) {
     if (corners != null && !corners.isEmpty()) {
       Point3d[] cornersArray = new Point3d[corners.size()];
       return drawOutlineOnLocalizer(corners.toArray(cornersArray));
@@ -269,8 +269,8 @@ public abstract class LocalizerPoster {
     return null;
   }
 
-  protected List<Point2D.Double> drawOutlineOnLocalizer(Point3d[] corners) {
-    ArrayList<Point2D.Double> shapes = new ArrayList<>();
+  protected List<Point2D> drawOutlineOnLocalizer(Point3d[] corners) {
+    ArrayList<Point2D> shapes = new ArrayList<>();
     for (int i = 0; i < corners.length; ++i) {
       shapes.add(transformPointInLocalizerPlaneIntoImageSpace(corners[i]));
     }
@@ -300,7 +300,7 @@ public abstract class LocalizerPoster {
     return intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(a, b);
   }
 
-  protected List<Point2D.Double> drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(
+  protected List<Point2D> drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(
       Point3d[] corners) {
     int size = corners.length;
     double[] thisArray = new double[3];
@@ -405,7 +405,7 @@ public abstract class LocalizerPoster {
    * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row
    *     and column coordinates
    */
-  public abstract List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(
+  public abstract List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
       Point3d tlhc,
@@ -421,7 +421,7 @@ public abstract class LocalizerPoster {
    * @return vector of shapes {@link java.awt.Shape java.awt.Shape} to be drawn in the localizer row
    *     and column coordinates
    */
-  public final List<Point2D.Double> getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
+  public final List<Point2D> getOutlineOnLocalizerForThisGeometry(GeometryOfSlice geometry) {
     return getOutlineOnLocalizerForThisGeometry(
         geometry.getRow(),
         geometry.getColumn(),

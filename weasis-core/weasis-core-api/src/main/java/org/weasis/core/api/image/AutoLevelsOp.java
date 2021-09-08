@@ -2,25 +2,27 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
 package org.weasis.core.api.image;
 
+import java.awt.image.DataBuffer;
+import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class AutoLevelsOp extends AbstractOp {
   private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
 
   public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct");
-  public static final String P_IMAGE_ELEMENT = "img.element";
   /**
    * Set whether auto levels is applied to the image (Required parameter).
    *
@@ -43,19 +45,23 @@ public class AutoLevelsOp extends AbstractOp {
 
   @Override
   public void process() throws Exception {
-    ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
     PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
     PlanarImage result = source;
     Boolean auto = (Boolean) params.get(P_AUTO_LEVEL);
 
-    if (auto != null && auto && imageElement != null) {
-      double min = imageElement.getMinValue(null);
-      double max = imageElement.getMaxValue(null);
-      double slope = 255.0 / (max - min);
-      double yint = 255.0 - slope * max;
-      result = ImageProcessor.rescaleToByte(source.toImageCV(), slope, yint);
+    if (LangUtil.getNULLtoFalse(auto)) {
+      MinMaxLocResult val = ImageProcessor.findMinMaxValues(source.toMat());
+      if (val != null) {
+        int datatype = ImageConversion.convertToDataType(source.type());
+        double range = val.maxVal - val.minVal;
+        if (range < 1.0 && datatype == DataBuffer.TYPE_INT) {
+          range = 1.0;
+        }
+        double slope = 255.0 / range;
+        double yint = 255.0 - slope * val.maxVal;
+        result = ImageProcessor.rescaleToByte(source.toImageCV(), slope, yint);
+      }
     }
-
     params.put(Param.OUTPUT_IMG, result);
   }
 }

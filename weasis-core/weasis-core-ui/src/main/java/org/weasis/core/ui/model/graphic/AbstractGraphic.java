@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -35,14 +35,14 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlIDREF;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlIDREF;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.Image2DViewer;
@@ -72,7 +72,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected static final String NULL_MSG = "Null is not allowed"; // NON-NLS
 
   protected Integer pointNumber;
-  protected List<Point2D.Double> pts;
+  protected List<Point2D> pts;
   protected Paint colorPaint = DEFAULT_COLOR;
   protected Float lineThickness = DEFAULT_LINE_THICKNESS;
   protected Boolean labelVisible = DEFAULT_LABEL_VISISIBLE;
@@ -105,10 +105,10 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     this.graphicLabel = graphic.graphicLabel == null ? null : graphic.graphicLabel.copy();
 
     this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
-    List<Point2D.Double> ptsList =
+    List<Point2D> ptsList =
         graphic.pts.stream()
             .filter(Objects::nonNull)
-            .map(g -> (Point2D.Double) g.clone())
+            .map(g -> (Point2D) g.clone())
             .collect(Collectors.toList());
     try {
       initCopy(graphic);
@@ -144,12 +144,12 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   @XmlElement(name = "pt")
   @XmlJavaTypeAdapter(PointAdapter.Point2DAdapter.class)
   @Override
-  public List<Point2D.Double> getPts() {
+  public List<Point2D> getPts() {
     return pts;
   }
 
   @Override
-  public void setPts(List<Point2D.Double> pts) {
+  public void setPts(List<Point2D> pts) {
     this.pts =
         Optional.ofNullable(pts)
             .orElseGet(
@@ -161,7 +161,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   }
 
   @Override
-  public Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException {
+  public Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException {
     setPts(pts);
     if (!pts.isEmpty()) {
       prepareShape();
@@ -172,7 +172,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected abstract void prepareShape() throws InvalidShapeException;
 
   protected void initCopy(Graphic graphic) {
-    // Do noting at this level. Final graphics with new serializable fields must implement this
+    // Do nothing at this level. Final graphics with new serializable fields must implement this
     // method
   }
 
@@ -519,7 +519,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
       return null;
     }
     for (Point2D p : pts) {
-      newGraphic.getPts().add(p != null ? (Point2D.Double) p.clone() : null);
+      newGraphic.getPts().add(p != null ? (Point2D) p.clone() : null);
     }
     newGraphic.buildShape();
     return newGraphic;
@@ -559,19 +559,19 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return Objects.equals(pts.size(), pointNumber);
   }
 
-  public Point2D.Double getHandlePoint(int index) {
-    Predicate<List<Point2D.Double>> validateIndex = list -> list.size() > index;
-    Function<List<Point2D.Double>, Point2D.Double> getPoint = list -> list.get(index);
-    Function<Point2D.Double, Point2D.Double> cloneValue = point -> (Point2D.Double) point.clone();
+  public Point2D getHandlePoint(int index) {
+    Predicate<List<Point2D>> validateIndex = list -> list.size() > index;
+    Function<List<Point2D>, Point2D> getPoint = list -> list.get(index);
+    Function<Point2D, Point2D> cloneValue = point -> (Point2D) point.clone();
 
     return Optional.of(pts).filter(validateIndex).map(getPoint).map(cloneValue).orElse(null);
   }
 
   public List<Point2D> getHandlePointList() {
-    return pts.stream().map(p -> (Point2D.Double) p.clone()).collect(Collectors.toList());
+    return pts.stream().map(p -> (Point2D) p.clone()).collect(Collectors.toList());
   }
 
-  public void setHandlePoint(int index, Point2D.Double newPoint) {
+  public void setHandlePoint(int index, Point2D newPoint) {
     Optional.ofNullable(pts)
         .ifPresent(
             list -> {
@@ -880,7 +880,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
         }
       }
 
-      Point2D.Double[] handlePtArray = handlePts.toArray(new Point2D.Double[handlePts.size()]);
+      Point2D[] handlePtArray = handlePts.toArray(new Point2D[0]);
       transform.transform(handlePtArray, 0, handlePtArray, 0, handlePtArray.length);
 
       Paint oldPaint = g2d.getPaint();
@@ -920,7 +920,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     while (lastPointIndex > 0) {
       Point2D checkPoint = pts.get(lastPointIndex);
 
-      ListIterator<Point2D.Double> listIt = pts.listIterator(lastPointIndex--);
+      ListIterator<Point2D> listIt = pts.listIterator(lastPointIndex--);
 
       while (listIt.hasPrevious()) {
         if (checkPoint != null && checkPoint.equals(listIt.previous())) {

@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -10,7 +10,6 @@
 package org.weasis.core.ui.model.utils.algo;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,33 +17,32 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import org.weasis.core.api.gui.util.MathUtil;
 
 public class ConvexHull {
   public static final int COUNTERCLOCKWISE = 1;
   public static final int CLOCKWISE = -1;
 
-  private List<Point2D.Double> pts;
+  private List<Point2D> pts;
 
-  public ConvexHull(List<Point2D.Double> pts) {
+  public ConvexHull(List<Point2D> pts) {
     this.pts = removeDuplicates(pts);
   }
 
-  public static List<Point2D.Double> removeDuplicates(List<Point2D.Double> points) {
-    TreeSet<Point2D.Double> treeSet =
+  public static List<Point2D> removeDuplicates(List<Point2D> points) {
+    TreeSet<Point2D> treeSet =
         new TreeSet<>(
             (p1, p2) -> {
-              if (p1.y < p2.y) {
+              if (p1.getY() < p2.getY()) {
                 return -1;
               }
-              if (p1.y > p2.y) {
+              if (p1.getY() > p2.getY()) {
                 return +1;
               }
-              if (p1.x < p2.x) {
+              if (p1.getX() < p2.getX()) {
                 return -1;
               }
-              if (p1.x > p2.x) {
+              if (p1.getX() > p2.getX()) {
                 return +1;
               }
               return 0;
@@ -53,20 +51,21 @@ public class ConvexHull {
     return new ArrayList<>(treeSet);
   }
 
-  public List<Point2D.Double> getConvexHull() {
+  public List<Point2D> getConvexHull() {
 
     if (pts.size() < 3) {
       return pts;
     }
-    return grahamScan(preSort(pts)).stream().collect(Collectors.toList());
+    return new ArrayList<>(grahamScan(preSort(pts)));
   }
 
-  private static List<Double> preSort(List<Point2D.Double> pts) {
+  private static List<Point2D> preSort(List<Point2D> pts) {
 
-    Point2D.Double p = pts.get(0);
+    Point2D p = pts.get(0);
     for (int i = 1; i < pts.size(); i++) {
-      Point2D.Double pc = pts.get(i);
-      if ((pc.y < p.y) || (MathUtil.isEqual(pc.y, p.y) && (pc.x < p.x))) {
+      Point2D pc = pts.get(i);
+      if ((pc.getY() < p.getY())
+          || (MathUtil.isEqual(pc.getY(), p.getY()) && (pc.getX() < p.getX()))) {
         p = pc;
         Collections.swap(pts, 0, i);
       }
@@ -82,16 +81,16 @@ public class ConvexHull {
    * @param pts a list of points
    * @return a Deque containing the ordered points of the convex hull ring
    */
-  private static Deque<Point2D.Double> grahamScan(List<Point2D.Double> pts) {
-    ArrayDeque<Point2D.Double> ps = new ArrayDeque<>();
+  private static Deque<Point2D> grahamScan(List<Point2D> pts) {
+    ArrayDeque<Point2D> ps = new ArrayDeque<>();
     ps.addFirst(pts.get(2));
     ps.addFirst(pts.get(1));
     ps.addFirst(pts.get(0));
 
-    Point2D.Double p;
+    Point2D p;
     for (int i = 3; i < pts.size(); i++) {
       p = ps.removeLast();
-      Point2D.Double pc = pts.get(i);
+      Point2D pc = pts.get(i);
       while (!ps.isEmpty() && getOrientation(ps.peekLast(), p, pc) > 0) {
         p = ps.removeLast();
       }
@@ -122,27 +121,29 @@ public class ConvexHull {
    * @return -1 if c is clockwise, (right) from a-b
    * @return 0 if c is collinear with a-b
    */
-  public static int getOrientation(Point2D.Double a, Point2D.Double b, Point2D.Double c) {
-    return signum((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x));
+  public static int getOrientation(Point2D a, Point2D b, Point2D c) {
+    return signum(
+        (b.getX() - a.getX()) * (c.getY() - a.getY())
+            - (b.getY() - a.getY()) * (c.getX() - a.getX()));
   }
 
-  private static class RadialSorter implements Comparator<Point2D.Double> {
-    private Point2D.Double origin;
+  private static class RadialSorter implements Comparator<Point2D> {
+    private Point2D origin;
 
-    public RadialSorter(Point2D.Double origin) {
+    public RadialSorter(Point2D origin) {
       this.origin = origin;
     }
 
     @Override
-    public int compare(Point2D.Double p1, Point2D.Double p2) {
+    public int compare(Point2D p1, Point2D p2) {
       return polarCompare(origin, p1, p2);
     }
 
-    private static int polarCompare(Point2D.Double o, Point2D.Double p, Point2D.Double q) {
-      double dxp = p.x - o.x;
-      double dyp = p.y - o.y;
-      double dxq = q.x - o.x;
-      double dyq = q.y - o.y;
+    private static int polarCompare(Point2D o, Point2D p, Point2D q) {
+      double dxp = p.getX() - o.getX();
+      double dyp = p.getY() - o.getY();
+      double dxq = q.getX() - o.getX();
+      double dyq = q.getY() - o.getY();
 
       int orient = getOrientation(o, p, q);
       if (orient == COUNTERCLOCKWISE) {
@@ -156,7 +157,7 @@ public class ConvexHull {
       double op = dxp * dxp + dyp * dyp;
       double oq = dxq * dxq + dyq * dyq;
 
-      return (op < oq) ? -1 : (op > oq) ? 1 : 0;
+      return Double.compare(op, oq);
     }
   }
 }

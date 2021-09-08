@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -22,7 +22,7 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.MeasurableLayer;
@@ -39,22 +39,22 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
-  static final Color DEFAULT_COLOR = Color.YELLOW;
-  static final Integer DEFAULT_POINT_NUMBER = 1;
-  static final Float DEFAULT_LINE_THICKNESS = 1f;
-  static final Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
-  static final Boolean DEFAULT_FILLED = Boolean.FALSE;
-  static final Boolean DEFAULT_SELECTED = Boolean.FALSE;
-  static final Integer DEFAULT_PTS_SIZE = 10;
+  Color DEFAULT_COLOR = Color.YELLOW;
+  Integer DEFAULT_POINT_NUMBER = 1;
+  Float DEFAULT_LINE_THICKNESS = 1f;
+  Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
+  Boolean DEFAULT_FILLED = Boolean.FALSE;
+  Boolean DEFAULT_SELECTED = Boolean.FALSE;
+  Integer DEFAULT_PTS_SIZE = 10;
 
-  static final String ACTION_TO_FRONT = "toFront";
-  static final String ACTION_TO_BACK = "toBack";
-  static final String ACTION_REMOVE = "remove"; // NON-NLS
-  static final String ACTION_REMOVE_REPAINT = "remove.repaint";
+  String ACTION_TO_FRONT = "toFront";
+  String ACTION_TO_BACK = "toBack";
+  String ACTION_REMOVE = "remove"; // NON-NLS
+  String ACTION_REMOVE_REPAINT = "remove.repaint";
 
-  static final Integer HANDLE_SIZE = 6;
-  static final Integer SELECTION_SIZE = 10;
-  static final Integer UNDEFINED = -1;
+  Integer HANDLE_SIZE = 6;
+  Integer SELECTION_SIZE = 10;
+  Integer UNDEFINED = -1;
 
   default List<MeasureItem> computeMeasurements(
       MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
@@ -66,7 +66,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   }
 
   /**
-   * @param affineTransform Current transform applied to the view. Should be used to compute
+   * @param transform Current transform applied to the view. Should be used to compute
    *     invariantSizedShape bounding rectangle in union with drawing shape bounding rectangle.
    * @return Bounding rectangle of all the drawing shape. Handle points paintings not included.<br>
    *     Coordinates are given in RealCoordinates. <br>
@@ -163,7 +163,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   /** @return False if last dragging point equals the previous one */
   default Boolean isLastPointValid() {
-    List<Point2D.Double> pts = getPts();
+    List<Point2D> pts = getPts();
     int size = pts.size();
     Point2D lastPt = size > 0 ? pts.get(size - 1) : null;
     Point2D previousPt = size > 1 ? pts.get(size - 2) : null;
@@ -179,7 +179,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   Boolean isGraphicComplete();
 
-  List<Point2D.Double> getPts();
+  List<Point2D> getPts();
 
   Integer getPtsNumber();
 
@@ -201,11 +201,11 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   /**
    * Set the list of points. Do not use this method when building a graphic programmatically, use
-   * buildGraphic(List<Point2D.Double> pts) instead.
+   * buildGraphic(List<Point2D> pts) instead.
    *
    * @param pts
    */
-  void setPts(List<Point2D.Double> pts);
+  void setPts(List<Point2D> pts);
 
   void setLabelVisible(Boolean labelVisible);
 
@@ -233,7 +233,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    * @return
    * @throws InvalidShapeException
    */
-  Graphic buildGraphic(List<Point2D.Double> pts) throws InvalidShapeException;
+  Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException;
 
   void setLayerType(LayerType layerType);
 

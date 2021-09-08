@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -31,16 +31,12 @@ public class EllipseGraphicTest extends GraphicTester<EllipseGraphic> {
   static {
     COMPLETE_OBJECT.setUuid(GRAPHIC_UUID_1);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(
-            new Point2D.Double(1395.5, 1210.0),
-            new Point2D.Double(2094.5, 1621.0),
-            new Point2D.Double(2094.5, 1210.0),
-            new Point2D.Double(1395.5, 1621.0),
-            new Point2D.Double(1745.0, 1210.0),
-            new Point2D.Double(1745.0, 1621.0),
-            new Point2D.Double(2094.5, 1415.5),
-            new Point2D.Double(1395.5, 1415.5));
+            new Point2D.Double(252.13800313643495, 91.52639832723474),
+            new Point2D.Double(311.46889702038686, 71.13957135389444),
+            new Point2D.Double(281.8034500784109, 81.33298484056459),
+            new Point2D.Double(294.2900410111563, 117.67216614483638));
     COMPLETE_OBJECT.setPts(pts);
   }
 

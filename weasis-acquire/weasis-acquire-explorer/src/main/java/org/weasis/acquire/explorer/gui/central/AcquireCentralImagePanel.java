@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -35,8 +35,7 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
   public AcquireCentralImagePanel(AcquireTabPanel acquireTabPanel, JIThumbnailCache thumbCache) {
     setLayout(new BorderLayout());
     this.imageInfo = new AcquireCentralInfoPanel(null);
-    this.imageListPane =
-        new AcquireCentralTumbnailPane<>(new ArrayList<ImageElement>(), thumbCache);
+    this.imageListPane = new AcquireCentralTumbnailPane<>(new ArrayList<>(), thumbCache);
 
     imageListPane.setAcquireTabPanel(Objects.requireNonNull(acquireTabPanel));
     imageListPane.addListSelectionListener(this);
@@ -72,8 +71,8 @@ public class AcquireCentralImagePanel extends JPanel implements ListSelectionLis
     imageListPane.setList(list);
   }
 
-  public void updateSerie(SeriesGroup newSerie) {
-    imageInfo.setSerie(newSerie);
+  public void updateSeries(SeriesGroup newSeriesGroup) {
+    imageInfo.setSerie(newSeriesGroup);
   }
 
   public IThumbnailModel<ImageElement> getFileListModel() {

@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -27,12 +27,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlElements;
+import jakarta.xml.bind.annotation.XmlType;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -53,8 +53,8 @@ import org.weasis.core.ui.model.graphic.imp.angle.CobbAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.FourPointsAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.angle.OpenAngleToolGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.EllipseGraphic;
+import org.weasis.core.ui.model.graphic.imp.area.ObliqueRectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
-import org.weasis.core.ui.model.graphic.imp.area.RectangleGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.SelectGraphic;
 import org.weasis.core.ui.model.graphic.imp.area.ThreePointsCircleGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
@@ -107,7 +107,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     @XmlElement(name = "pixelInfo", type = PixelInfoGraphic.class),
     @XmlElement(name = "openAngle", type = OpenAngleToolGraphic.class),
     @XmlElement(name = "cobbAngle", type = CobbAngleToolGraphic.class),
-    @XmlElement(name = "rectangle", type = RectangleGraphic.class),
+    @XmlElement(name = "rectangle", type = ObliqueRectangleGraphic.class),
     @XmlElement(name = "ellipse", type = EllipseGraphic.class),
     @XmlElement(name = "fourPointsAngle", type = FourPointsAngleToolGraphic.class),
     @XmlElement(name = "line", type = LineGraphic.class),
@@ -432,7 +432,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   }
 
   /**
-   * @param mouseevent
+   * @param mouseEvent
    * @return first selected graphic intersecting if exist, otherwise simply first graphic
    *     intersecting, or null
    */

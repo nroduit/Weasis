@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -25,7 +25,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -33,7 +32,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -70,6 +68,8 @@ import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
+import org.weasis.core.ui.model.GraphicModel;
+import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
@@ -85,8 +85,7 @@ import org.xml.sax.SAXException;
 public class AcquireManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
 
-  public static final List<String> functions =
-      Collections.unmodifiableList(Arrays.asList("patient")); // NON-NLS
+  public static final List<String> functions = Collections.singletonList("patient"); // NON-NLS
   public static final Global GLOBAL = new Global();
 
   private static final int OPT_NONE = 0;
@@ -128,8 +127,10 @@ public class AcquireManager {
 
   public static void setCurrentView(ViewCanvas<ImageElement> view) {
     getInstance().currentView = view;
-    // Remove capabilities to open a view by dragging a thumbnail from the import panel.
-    view.getJComponent().setTransferHandler(null);
+    if (view != null) {
+      // Remove capabilities to open a view by dragging a thumbnail from the import panel.
+      view.getJComponent().setTransferHandler(null);
+    }
   }
 
   public static Collection<AcquireImageInfo> getAllAcquireImageInfo() {
@@ -293,7 +294,7 @@ public class AcquireManager {
                   s -> {
                     LocalDateTime start = s.getDate();
                     LocalDateTime end = imageDate;
-                    if (end.isBefore(start)) {
+                    if (end != null && end.isBefore(start)) {
                       start = imageDate;
                       end = s.getDate();
                     }
@@ -302,7 +303,7 @@ public class AcquireManager {
                   })
               .findFirst();
 
-      return series.isPresent() ? series.get() : getSeries(new SeriesGroup(imageDate));
+      return series.orElseGet(() -> getSeries(new SeriesGroup(imageDate)));
 
     } else {
       return getSeries(searchedSeries);
@@ -750,12 +751,17 @@ public class AcquireManager {
   private static void removeImageFromDataMapping(AcquireImageInfo imageInfo) {
     imagesInfoByURI.remove(imageInfo.getImage().getMediaURI());
     imagesInfoByUID.remove(imageInfo.getImage().getTagValue(TagD.getUID(Level.INSTANCE)));
+    GraphicModel modelList =
+        (GraphicModel) imageInfo.getImage().getTagValue(TagW.PresentationModel);
+    if (modelList != null) {
+      for (GraphicLayer layer : new ArrayList<>(modelList.getLayers())) {
+        modelList.deleteByLayer(layer);
+      }
+    }
   }
 
   private static List<AcquireImageInfo> getAcquireImageInfoList() {
-    return imagesInfoByURI.entrySet().stream()
-        .map(Entry<URI, AcquireImageInfo>::getValue)
-        .collect(Collectors.toList());
+    return new ArrayList<>(imagesInfoByURI.values());
   }
 
   /**

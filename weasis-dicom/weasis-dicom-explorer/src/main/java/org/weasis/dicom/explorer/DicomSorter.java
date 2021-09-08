@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -19,7 +19,6 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
@@ -120,14 +119,6 @@ public class DicomSorter {
             c = val1.compareTo(val2);
             if (c != 0) {
               return c;
-            }
-            Integer sval1 = TagW.getTagValue(st1, TagW.SplitSeriesNumber, Integer.class);
-            Integer sval2 = TagW.getTagValue(st2, TagW.SplitSeriesNumber, Integer.class);
-            if (sval1 != null && sval2 != null) {
-              c = sval1.compareTo(sval2);
-              if (c != 0) {
-                return c;
-              }
             }
           }
 

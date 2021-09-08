@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -17,6 +17,7 @@ import java.net.URLConnection;
 import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.util.StringUtil;
 
 public class ClosableURLConnection implements HttpResponse {
   private static final Logger LOGGER = LoggerFactory.getLogger(ClosableURLConnection.class);
@@ -49,6 +50,18 @@ public class ClosableURLConnection implements HttpResponse {
       }
     }
     return HttpURLConnection.HTTP_OK;
+  }
+
+  @Override
+  public String getResponseMessage() {
+    if (urlConnection instanceof HttpURLConnection) {
+      try {
+        return ((HttpURLConnection) urlConnection).getResponseMessage();
+      } catch (IOException e) {
+        LOGGER.error("Get message", e);
+      }
+    }
+    return StringUtil.EMPTY_STRING;
   }
 
   @Override

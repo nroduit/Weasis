@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -20,8 +20,6 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -32,8 +30,6 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-@XmlType(name = "rectangle")
-@XmlRootElement(name = "rectangle")
 public class RectangleGraphic extends AbstractDragGraphicArea {
   private static final long serialVersionUID = -2862114022989550927L;
 
@@ -106,7 +102,6 @@ public class RectangleGraphic extends AbstractDragGraphicArea {
 
   @Override
   protected void prepareShape() throws InvalidShapeException {
-
     if (!isShapeValid()) {
       throw new InvalidShapeException("This shape cannot be drawn");
     }

@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -369,11 +369,11 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     JPanel panel6 = new JPanel();
     panel6.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
-    panel6.add(new JLabel("Limit" + StringUtil.COLON));
-    limitSpinner.setToolTipText("Enter O to have no limit");
+    panel6.add(new JLabel(Messages.getString("limit") + StringUtil.COLON));
+    limitSpinner.setToolTipText(Messages.getString("no.limit"));
     panel6.add(limitSpinner);
     panel6.add(Box.createHorizontalStrut(15));
-    panel6.add(new JLabel("Page" + StringUtil.COLON));
+    panel6.add(new JLabel(Messages.getString("page") + StringUtil.COLON));
     pageSpinner.addChangeListener(queryListener);
     panel6.add(pageSpinner);
     panel5.add(panel6);
@@ -640,7 +640,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       if (limit > 0) {
         props.setProperty(
             RsQueryParams.P_PAGE_EXT,
-            String.format("&limit=%d&offset=%d", limit, (page - 1) * limit));
+            String.format("&limit=%d&offset=%d", limit, (page - 1) * limit)); // NON-NLS
       }
       // props.setProperty(RsQueryParams.P_QUERY_EXT, "&includedefaults=false");
       this.retrieveNode = node;

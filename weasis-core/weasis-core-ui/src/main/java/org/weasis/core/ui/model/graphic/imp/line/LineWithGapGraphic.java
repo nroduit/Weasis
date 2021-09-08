@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -14,11 +14,11 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.util.Optional;
 import javax.swing.Icon;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -37,8 +37,8 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
   protected Integer gapSize = DEFAULT_GAP_SIZE;
 
   // Let AB be a simple a line segment
-  protected Point2D.Double ptA;
-  protected Point2D.Double ptB;
+  protected Point2D ptA;
+  protected Point2D ptB;
   protected Point2D centerGap;
 
   // estimate if line segment is valid or not
@@ -96,9 +96,9 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     this.gapSize = Optional.ofNullable(gapSize).orElse(DEFAULT_GAP_SIZE);
   }
 
-  protected void setHandlePointList(Point2D.Double ptStart, Point2D.Double ptEnd) {
-    setHandlePoint(0, ptStart == null ? null : (Point2D.Double) ptStart.clone());
-    setHandlePoint(1, ptEnd == null ? null : (Point2D.Double) ptEnd.clone());
+  protected void setHandlePointList(Point2D ptStart, Point2D ptEnd) {
+    setHandlePoint(0, ptStart == null ? null : (Point2D) ptStart.clone());
+    setHandlePoint(1, ptEnd == null ? null : (Point2D) ptEnd.clone());
     buildShape(null);
   }
 

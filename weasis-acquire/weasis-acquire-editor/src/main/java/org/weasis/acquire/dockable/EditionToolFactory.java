@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -25,6 +25,7 @@ import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 
@@ -35,7 +36,6 @@ import org.weasis.core.ui.model.graphic.Graphic;
  */
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
-    immediate = false,
     property = {"org.weasis.base.viewer2d.View2dContainer=true"})
 public class EditionToolFactory implements InsertableFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
@@ -76,6 +76,9 @@ public class EditionToolFactory implements InsertableFactory {
       eventManager.removeAction(ActionW.LUT);
       eventManager.removeAction(ActionW.LAYOUT);
       eventManager.removeAction(ActionW.SYNCH);
+      BundleTools.SYSTEM_PREFERENCES.setProperty(
+          "weasis.contextmenu.close", Boolean.FALSE.toString());
+
       eventManager.setAction(new BasicActionState(EDITON));
       eventManager.setAction(
           new ComboItemListener<Graphic>(

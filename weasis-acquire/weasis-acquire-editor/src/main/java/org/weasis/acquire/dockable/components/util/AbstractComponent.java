@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -20,7 +20,7 @@ public abstract class AbstractComponent extends JPanel {
   protected TitledBorder borderTitle;
   protected AbstractAcquireActionPanel panel;
 
-  public AbstractComponent(AbstractAcquireActionPanel panel, String title) {
+  protected AbstractComponent(AbstractAcquireActionPanel panel, String title) {
     this.title = title;
     this.borderTitle = new TitledBorder(getDisplayTitle());
     this.panel = panel;

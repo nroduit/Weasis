@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -42,7 +42,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralTumbnailPane.class);
 
   public AcquireCentralTumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
-    super(new AcquireCentralThumnailList<E>(thumbCache));
+    super(new AcquireCentralThumnailList<>(thumbCache));
     setList(list);
     setTransferHandler(new SequenceHandler());
   }
@@ -73,8 +73,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
   }
 
   public void repaintList() {
-    // Require to repaint the scroll pane correctly (otherwise not all the elements of JList are
-    // repainted)
+    // Repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
     if (thumbnailList.asComponent() instanceof JComponent) {
       ((JComponent) thumbnailList.asComponent()).updateUI();
     }
@@ -145,7 +144,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
         if (object instanceof Series) {
 
           MediaElement media = ((Series) object).getMedia(0, null, null);
-          addToSerie(media);
+          addToSeries(media);
         }
       } catch (UnsupportedFlavorException | IOException e) {
         LOGGER.error("Drop thumnail", e);
@@ -154,14 +153,14 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
       return true;
     }
 
-    private void addToSerie(MediaElement media) {
+    private void addToSeries(MediaElement media) {
       if (media instanceof ImageElement) {
         AcquireCentralThumnailList tumbList =
             (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
         AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
         if (info != null) {
           SeriesGroup seriesGroup =
-              Optional.ofNullable(tumbList.getSelectedSerie())
+              Optional.ofNullable(tumbList.getSelectedSeries())
                   .map(SerieButton::getSerie)
                   .orElse(null);
           AcquireManager.importImage(info, seriesGroup, 0);
@@ -177,7 +176,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
             MediaElement[] medias = reader.getMediaElement();
             if (medias != null) {
               for (MediaElement mediaElement : medias) {
-                addToSerie(mediaElement);
+                addToSeries(mediaElement);
               }
             }
           }

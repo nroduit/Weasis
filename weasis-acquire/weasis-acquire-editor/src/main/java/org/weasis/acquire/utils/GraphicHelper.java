@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -11,7 +11,6 @@ package org.weasis.acquire.utils;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import org.weasis.core.api.media.data.ImageElement;
@@ -38,7 +37,6 @@ public class GraphicHelper {
    * is a little bit bigger in case of rotation occurs.
    *
    * @param view Image view (will retrieve width and height)
-   * @return The new layer
    * @since 2.5.0
    */
   public static void newGridLayer(ViewCanvas<ImageElement> view) {
@@ -53,33 +51,21 @@ public class GraphicHelper {
     double hOffset = diagonal - width / 2.0;
     double vOffset = diagonal - height / 2.0;
 
-    // New start point
-    int x0 = (int) (0 - hOffset);
-    int y0 = (int) (0 - vOffset);
-
     // Calculate in witch pixel we should start vertically and horizontally
     int xStart = (int) (((diagonal % GRID_SPACING) / 2) - hOffset);
     int yStart = (int) (((diagonal % GRID_SPACING) / 2) - vOffset);
 
-    AffineTransform transform = view.getInverseTransform();
-
     // Draw vertical lines
     for (int i = xStart - 1; i < width; i = i + GRID_SPACING) {
-      Point2D.Double p1 = new Point2D.Double(i, x0);
+      Point2D.Double p1 = new Point2D.Double(i, -hOffset);
       Point2D.Double p2 = new Point2D.Double(i, diagonal);
-      transform.transform(p1, p1);
-      transform.transform(p2, p2);
-
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }
 
     // Draw horizontal lines
     for (int i = yStart - 1; i < height; i = i + GRID_SPACING) {
-      Point2D.Double p1 = new Point2D.Double(y0, i);
+      Point2D.Double p1 = new Point2D.Double(-vOffset, i);
       Point2D.Double p2 = new Point2D.Double(diagonal, i);
-      transform.transform(p1, p1);
-      transform.transform(p2, p2);
-
       AbstractGraphicModel.addGraphicToModel(view, newLine(p1, p2));
     }
   }

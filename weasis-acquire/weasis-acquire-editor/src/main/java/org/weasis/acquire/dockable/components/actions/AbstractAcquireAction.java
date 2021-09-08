@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -71,7 +71,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
   }
 
   @Override
-  public boolean cancel() {
+  public void cancel() {
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.removeLayer(getView());
     boolean dirty = imageInfo.isDirty();
@@ -79,11 +79,10 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
     if (dirty) {
       centralPanel.initValues(imageInfo, imageInfo.getCurrentValues());
     }
-    return dirty;
   }
 
   @Override
-  public boolean reset(ActionEvent e) {
+  public void reset(ActionEvent e) {
     AcquireImageInfo imageInfo = getImageInfo();
     imageInfo.removeLayer(getView());
     boolean dirty = imageInfo.isDirtyFromDefault();
@@ -99,7 +98,6 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
         centralPanel.initValues(imageInfo, imageInfo.getDefaultValues());
       }
     }
-    return dirty;
   }
 
   @Override

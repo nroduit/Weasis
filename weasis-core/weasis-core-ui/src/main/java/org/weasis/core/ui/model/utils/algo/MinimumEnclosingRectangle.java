@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -17,24 +17,24 @@ import java.util.List;
 import org.weasis.core.api.gui.util.MathUtil;
 
 public class MinimumEnclosingRectangle {
-  private final List<Point2D.Double> points;
+  private final List<Point2D> points;
   private final boolean isConvex;
 
-  private List<Point2D.Double> cvxPts = null;
-  private Line2D.Double minDistSeg = new Line2D.Double();
-  private Point2D.Double minDistPt = null;
+  private List<Point2D> cvxPts = null;
+  private Line2D minDistSeg = new Line2D.Double();
+  private Point2D minDistPt = null;
   private double minDist = 0.0;
 
-  public MinimumEnclosingRectangle(List<Point2D.Double> points) {
+  public MinimumEnclosingRectangle(List<Point2D> points) {
     this(points, false);
   }
 
-  public MinimumEnclosingRectangle(List<java.awt.geom.Point2D.Double> points, boolean isConvex) {
+  public MinimumEnclosingRectangle(List<Point2D> points, boolean isConvex) {
     this.points = points;
     this.isConvex = isConvex;
   }
 
-  private void computeWidthConvex(List<Point2D.Double> pts) {
+  private void computeWidthConvex(List<Point2D> pts) {
     this.cvxPts = pts;
 
     int size = cvxPts.size();
@@ -45,18 +45,18 @@ public class MinimumEnclosingRectangle {
     } else if (size == 1) {
       minDist = 0.0;
       minDistPt = cvxPts.get(0);
-      minDistSeg.setLine(minDistPt.x, minDistPt.y, minDistPt.x, minDistPt.y);
+      minDistSeg.setLine(minDistPt.getX(), minDistPt.getY(), minDistPt.getX(), minDistPt.getY());
     } else if (size == 2 || size == 3) {
       minDist = 0.0;
       minDistPt = cvxPts.get(0);
-      Point2D.Double p2 = cvxPts.get(1);
-      minDistSeg.setLine(minDistPt.x, minDistPt.y, p2.x, p2.y);
+      Point2D p2 = cvxPts.get(1);
+      minDistSeg.setLine(minDistPt.getX(), minDistPt.getY(), p2.getX(), p2.getY());
     } else {
       searchRingMinDiameter(cvxPts);
     }
   }
 
-  private void searchRingMinDiameter(List<Point2D.Double> pts) {
+  private void searchRingMinDiameter(List<Point2D> pts) {
     minDist = Double.MAX_VALUE;
     int curIndex = 1;
 
@@ -66,7 +66,7 @@ public class MinimumEnclosingRectangle {
   }
 
   private int findMaxPerpendicularDistanceFromAB(
-      List<Point2D.Double> pts, Point2D.Double ptA, Point2D.Double ptB, int startIndex) {
+      List<Point2D> pts, Point2D ptA, Point2D ptB, int startIndex) {
     double maxDist = distanceFromAB(pts.get(startIndex), ptA, ptB);
     double nextDist = maxDist;
     int maxIndex = startIndex;
@@ -87,14 +87,19 @@ public class MinimumEnclosingRectangle {
     return maxIndex;
   }
 
-  private static int nextIndex(List<Point2D.Double> pts, int index) {
+  private static int nextIndex(List<Point2D> pts, int index) {
     int i = index + 1;
     return i >= pts.size() ? 0 : i;
   }
 
-  public static double distanceFromAB(Point2D.Double p, Point2D.Double a, Point2D.Double b) {
-    double len2 = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
-    double s = ((a.y - p.y) * (b.x - a.x) - (a.x - p.x) * (b.y - a.y)) / len2;
+  public static double distanceFromAB(Point2D p, Point2D a, Point2D b) {
+    double len2 =
+        (b.getX() - a.getX()) * (b.getX() - a.getX())
+            + (b.getY() - a.getY()) * (b.getY() - a.getY());
+    double s =
+        ((a.getY() - p.getY()) * (b.getX() - a.getX())
+                - (a.getX() - p.getX()) * (b.getY() - a.getY()))
+            / len2;
     return Math.abs(s) * Math.sqrt(len2);
   }
 
@@ -103,12 +108,12 @@ public class MinimumEnclosingRectangle {
    *
    * @return the minimum rectangle
    */
-  public List<Point2D.Double> getMinimumRectangle() {
+  public List<Point2D> getMinimumRectangle() {
     if (minDistPt == null) {
       if (isConvex) {
         computeWidthConvex(points);
       } else {
-        List<java.awt.geom.Point2D.Double> convexPts = (new ConvexHull(points)).getConvexHull();
+        List<java.awt.geom.Point2D> convexPts = (new ConvexHull(points)).getConvexHull();
         computeWidthConvex(convexPts);
       }
     }
@@ -150,7 +155,7 @@ public class MinimumEnclosingRectangle {
     Line2D.Double maxParaLine = getLine(-dy, dx, maxPara);
     Line2D.Double minParaLine = getLine(-dy, dx, minPara);
 
-    List<Point2D.Double> rect = new ArrayList<>();
+    List<Point2D> rect = new ArrayList<>();
     rect.add(
         intersection(
             maxParaLine.getP1(), maxParaLine.getP2(), maxPerpLine.getP1(), maxPerpLine.getP2()));
@@ -168,7 +173,7 @@ public class MinimumEnclosingRectangle {
   }
 
   /** Intersection point between two line segments. */
-  public static Point2D.Double intersection(Point2D u1, Point2D u2, Point2D w1, Point2D w2) {
+  public static Point2D intersection(Point2D u1, Point2D u2, Point2D w1, Point2D w2) {
 
     double ux = u1.getY() - u2.getY();
     double uy = u2.getX() - u1.getX();
@@ -194,8 +199,8 @@ public class MinimumEnclosingRectangle {
     return new Point2D.Double(xNorm, yNorm);
   }
 
-  private static double getC(double a, double b, Point2D.Double p) {
-    return a * p.y - b * p.x;
+  private static double getC(double a, double b, Point2D p) {
+    return a * p.getY() - b * p.getX();
   }
 
   private static Line2D.Double getLine(double a, double b, double c) {

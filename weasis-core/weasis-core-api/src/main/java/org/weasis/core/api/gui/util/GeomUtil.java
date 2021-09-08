@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -120,7 +120,7 @@ public final class GeomUtil {
   }
 
   /** @return midPoint or null if any argument is invalid */
-  public static Point2D.Double getMidPoint(Point2D ptA, Point2D ptB) {
+  public static Point2D getMidPoint(Point2D ptA, Point2D ptB) {
     if (ptA != null && ptB != null) {
       return new Point2D.Double((ptA.getX() + ptB.getX()) / 2.0, (ptA.getY() + ptB.getY()) / 2.0);
     }
@@ -136,8 +136,7 @@ public final class GeomUtil {
    *     If >0 && < AB , ptC point will be interior of AB<br>
    * @return New point ptC coordinates or null if any argument is invalid
    */
-  public static Point2D.Double getColinearPointWithLength(
-      Point2D ptA, Point2D ptB, double newLength) {
+  public static Point2D getColinearPointWithLength(Point2D ptA, Point2D ptB, double newLength) {
     if (ptA != null && ptB != null) {
       return getColinearPointWithRatio(ptA, ptB, newLength / ptA.distance(ptB));
     }
@@ -163,7 +162,7 @@ public final class GeomUtil {
   }
 
   /** @return median line or null if any argument is invalid */
-  public static Line2D.Double getMedianLine(Line2D line1, Line2D line2) {
+  public static Line2D getMedianLine(Line2D line1, Line2D line2) {
     if (line1 == null || line2 == null) {
       return null;
     }
@@ -188,7 +187,7 @@ public final class GeomUtil {
   }
 
   /** @return median line or null if any argument is invalid */
-  public static Line2D.Double getMedianLine(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+  public static Line2D getMedianLine(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (ptA == null || ptB == null || ptC == null || ptD == null) {
       return null;
     }
@@ -196,12 +195,11 @@ public final class GeomUtil {
   }
 
   /**
-   * Let ptA,ptB,ptC,ptD be 2-space position vectors. .......
+   * Let ptA,ptB,ptC,ptD be 2-space position vectors.
    *
-   * @return null if segment lines are parallel
+   * @return intersect point. Null if segment lines are parallel
    */
-  public static Point2D.Double getIntersectPoint(
-      Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
+  public static Point2D getIntersectPoint(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (ptA == null || ptB == null || ptC == null || ptD == null) {
       return null;
     }
@@ -228,7 +226,6 @@ public final class GeomUtil {
     return ptP;
   }
 
-  /** @return */
   public static Point2D getIntersectPoint(Line2D line1, Line2D line2) {
     if (line1 == null || line2 == null) {
       return null;
@@ -274,7 +271,6 @@ public final class GeomUtil {
     return null;
   }
 
-  /** @return */
   public static boolean lineParallel(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (ptA == null || ptB == null || ptC == null || ptD == null) {
       throw new IllegalArgumentException("All the points must not be null");
@@ -284,7 +280,6 @@ public final class GeomUtil {
             - (ptB.getY() - ptA.getY()) * (ptD.getX() - ptC.getX()));
   }
 
-  /** @return */
   public static boolean lineColinear(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (lineParallel(ptA, ptB, ptC, ptD)) {
       return MathUtil.isEqualToZero(
@@ -294,8 +289,7 @@ public final class GeomUtil {
     return false;
   }
 
-  /** @return */
-  public static Point2D.Double getPerpendicularPointToLine(Point2D ptA, Point2D ptB, Point2D ptC) {
+  public static Point2D getPerpendicularPointToLine(Point2D ptA, Point2D ptB, Point2D ptC) {
     if (ptA == null || ptB == null || ptA.equals(ptB) || ptC == null) {
       return null;
     }
@@ -309,7 +303,7 @@ public final class GeomUtil {
     return new Point2D.Double(ax + r * (bx - ax), ay + r * (by - ay));
   }
 
-  public static Point2D.Double getPerpendicularPointToLine(Line2D line, Point2D ptC) {
+  public static Point2D getPerpendicularPointToLine(Line2D line, Point2D ptC) {
     if (line == null || ptC == null) {
       return null;
     }
@@ -325,7 +319,7 @@ public final class GeomUtil {
    * @param distPC Distance from line to return Point ptC <br>
    *     If >0 angle between AB and PC is +90° <br>
    *     If <0 angle between AB and PC is -+90°
-   * @return ptC point
+   * @return perpendicular point
    */
   public static Point2D getPerpendicularPointFromLine(
       Point2D ptA, Point2D ptB, Point2D ptP, double distPC) {
@@ -350,30 +344,35 @@ public final class GeomUtil {
    * @param ptA Start of line segment
    * @param ptB End of line segment
    * @param dist Distance from AB line to the parallel CD line <br>
-   *     If >0 angle between AB and AC is +90° <br>
-   *     If <0 angle between AB and AC is -+90°
-   * @return
+   * @return parallel line
    */
   public static Line2D getParallelLine(Point2D ptA, Point2D ptB, double dist) {
     if (ptA == null || ptB == null || ptA.equals(ptB)) {
       return null;
     }
 
-    double distAB2 = ptA.distanceSq(ptB);
-    double ux = -(ptB.getY() - ptA.getY()) / distAB2;
-    double uy = (ptB.getX() - ptA.getX()) / distAB2;
+    double abX = ptB.getX() - ptA.getX();
+    double abY = ptB.getY() - ptA.getY();
 
-    Point2D ptC = new Point2D.Double(ptA.getX() + dist * ux, ptA.getY() + dist * uy);
-    Point2D ptD = new Point2D.Double(ptB.getX() + dist * ux, ptB.getY() + dist * uy);
+    double perpX = -abY;
+    double perpY = abX;
+    double perpSize = Math.sqrt(abX * abX + abY * abY);
+    ;
+
+    double sideVectorX = dist * perpX / perpSize;
+    double sideVectorY = dist * perpY / perpSize;
+
+    Point2D ptC = new Point2D.Double(ptA.getX() + sideVectorX, ptA.getY() + sideVectorY);
+    Point2D ptD = new Point2D.Double(ptB.getX() + sideVectorX, ptB.getY() + sideVectorY);
 
     return new Line2D.Double(ptC, ptD);
   }
 
   /**
    * @param ptList
-   * @return
+   * @return center point
    */
-  public static Point2D.Double getCircleCenter(List<Point2D.Double> ptList) {
+  public static Point2D getCircleCenter(List<Point2D> ptList) {
     if (ptList == null) {
       return null;
     }
@@ -390,8 +389,7 @@ public final class GeomUtil {
     }
   }
 
-  /** @return */
-  public static Point2D.Double getCircleCenter(Point2D ptA, Point2D ptB, Point2D ptC) {
+  public static Point2D getCircleCenter(Point2D ptA, Point2D ptB, Point2D ptC) {
     if (ptA == null || ptB == null || ptC == null) {
       return null;
     }
@@ -498,7 +496,6 @@ public final class GeomUtil {
     return scaleTransform.createTransformedShape(shape);
   }
 
-  /** @return */
   public static Rectangle2D getScaledRectangle(final Rectangle2D rect, double scalingFactor) {
     Rectangle2D newRect = null;
 
@@ -513,7 +510,6 @@ public final class GeomUtil {
     return newRect;
   }
 
-  /** @return */
   public static Shape getCornerShape(Point2D ptA, Point2D ptO, Point2D ptB, double cornerSize) {
     if (ptA == null || ptO == null || ptB == null || ptA.equals(ptO) || ptB.equals(ptO)) {
       return null;
@@ -558,14 +554,12 @@ public final class GeomUtil {
     return path;
   }
 
-  /** @return */
   public static Rectangle2D getGrowingRectangle(Rectangle2D rect, double growingSize) {
     Rectangle2D growingRect = rect != null ? (Rectangle2D) rect.clone() : null;
     growRectangle(growingRect, growingSize);
     return growingRect;
   }
 
-  /** @param growingSize */
   public static void growRectangle(Rectangle2D rect, double growingSize) {
     if (rect == null) {
       return;

@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -165,11 +165,11 @@ public class DownloadManager {
 
   public static void offerSeriesInQueue(final LoadSeries series) {
     if (series.getPriority().hasConcurrentDownload()) {
-      if(DownloadManager.PRIORITY_QUEUE.offer(series)){
+      if (DownloadManager.PRIORITY_QUEUE.offer(series)) {
         LOGGER.warn("Cannot add series {} to download queue", series.getDicomSeries());
       }
     } else {
-      if(DownloadManager.UNIQUE_QUEUE.offer(series)) {
+      if (DownloadManager.UNIQUE_QUEUE.offer(series)) {
         LOGGER.warn("Cannot add series {} to download queue", series.getDicomSeries());
       }
     }

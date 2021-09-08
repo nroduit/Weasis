@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -40,11 +40,11 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     implements ChangeListener, OpValueChanged {
   private static final long serialVersionUID = -3978989511436089997L;
 
-  private final AbstractSliderComponent contrastPanel;
-  private final AbstractSliderComponent brightnessPanel;
+  private final AbstractSliderComponent contrastSlider;
+  private final AbstractSliderComponent brightnessSlider;
   private final AutoLevelListener autoLevelListener;
 
-  private JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
+  private final JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
 
   public ContrastPanel() {
     super();
@@ -52,15 +52,15 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     autoLevelListener = new AutoLevelListener();
     autoLevelBtn.addActionListener(autoLevelListener);
-    contrastPanel = new ContrastComponent(this);
-    brightnessPanel = new BrightnessComponent(this);
+    contrastSlider = new ContrastComponent(this);
+    brightnessSlider = new BrightnessComponent(this);
 
     JPanel content = new JPanel(new GridLayout(3, 1, 0, 10));
     content.setAlignmentX(Component.LEFT_ALIGNMENT);
     content.setAlignmentY(Component.TOP_ALIGNMENT);
     content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-    content.add(contrastPanel);
-    content.add(brightnessPanel);
+    content.add(contrastSlider);
+    content.add(brightnessSlider);
     content.add(autoLevelBtn);
 
     add(content, BorderLayout.NORTH);
@@ -74,28 +74,26 @@ public class ContrastPanel extends AbstractAcquireActionPanel
   @Override
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     ViewCanvas<ImageElement> view = EventManager.getInstance().getSelectedViewPane();
-    info.clearPreProcess();
-
     AcquireImageValues next = info.getNextValues();
     next.setContrast(values.getContrast());
     next.setBrightness(values.getBrightness());
     next.setAutoLevel(values.isAutoLevel());
 
     autoLevelBtn.removeActionListener(autoLevelListener);
-    contrastPanel.removeChangeListener(this);
-    brightnessPanel.removeChangeListener(this);
-    contrastPanel.setSliderValue(next.getContrast());
-    brightnessPanel.setSliderValue(next.getBrightness());
+    contrastSlider.removeChangeListener(this);
+    brightnessSlider.removeChangeListener(this);
+    contrastSlider.setSliderValue(next.getContrast());
+    brightnessSlider.setSliderValue(next.getBrightness());
     autoLevelBtn.setSelected(next.isAutoLevel());
     autoLevelBtn.addActionListener(autoLevelListener);
-    contrastPanel.addChangeListener(this);
-    brightnessPanel.addChangeListener(this);
+    contrastSlider.addChangeListener(this);
+    brightnessSlider.addChangeListener(this);
     repaint();
 
     applyNextValues();
     autoLevelListener.applyNextValues();
 
-    info.applyPreProcess(view);
+    info.applyCurrentProcessing(view);
   }
 
   @Override
@@ -107,24 +105,22 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     }
 
     AcquireImageInfo imageInfo = AcquireObject.getImageInfo();
-    imageInfo.getNextValues().setBrightness(brightnessPanel.getSliderValue());
-    imageInfo.getNextValues().setContrast(contrastPanel.getSliderValue());
+    imageInfo.getNextValues().setBrightness(brightnessSlider.getSliderValue());
+    imageInfo.getNextValues().setContrast(contrastSlider.getSliderValue());
     applyNextValues();
-    imageInfo.applyPreProcess(AcquireObject.getView());
+    imageInfo.applyCurrentProcessing(AcquireObject.getView());
   }
 
   @Override
   public void applyNextValues() {
     AcquireImageInfo imageInfo = AcquireObject.getImageInfo();
-    ImageOpNode node = imageInfo.getPreProcessOpManager().getNode(BrightnessOp.OP_NAME);
-    if (node == null) {
-      node = new BrightnessOp();
-      imageInfo.addPreProcessImageOperationAction(node);
-    } else {
+    ImageOpNode node = imageInfo.getPostProcessOpManager().getNode(BrightnessOp.OP_NAME);
+    if (node != null) {
       node.clearIOCache();
+      node.setParam(
+          BrightnessOp.P_BRIGTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
+      node.setParam(
+          BrightnessOp.P_CONTRAST_VALUE, (double) imageInfo.getNextValues().getContrast());
     }
-    node.setParam(
-        BrightnessOp.P_BRIGTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
-    node.setParam(BrightnessOp.P_CONTRAST_VALUE, (double) imageInfo.getNextValues().getContrast());
   }
 }

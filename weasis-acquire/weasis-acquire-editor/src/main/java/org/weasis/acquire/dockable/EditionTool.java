@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -12,9 +12,7 @@ package org.weasis.acquire.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
 import java.util.Optional;
 import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
@@ -30,8 +28,8 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.base.viewer2d.dockable.ImageTool;
+import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -47,12 +45,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
   private static final long serialVersionUID = -3662409181835644699L;
 
   public static final String BUTTON_NAME = Messages.getString("EditionTool.title_btn");
-
   private final JScrollPane rootPane = new JScrollPane();
-
-  public static final Font TITLE_FONT = FontTools.getFont12Bold();
-  public static final Color TITLE_COLOR = Color.GRAY;
-
   private final AcquireActionButtonsPanel topPanel;
   private AbstractAcquireActionPanel centralPanel;
   private final AcquireSubmitButtonsPanel bottomPanel = new AcquireSubmitButtonsPanel();
@@ -107,7 +100,8 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
               AcquireActionButton button = topPanel.getSelected();
               button.getAcquireAction().validate(old, oldView);
             }
-            // topPanel.setSelected(topPanel.getSelected());
+            view.setActionsInView(ActionW.PREPROCESSING.cmd(), info.getPostProcessOpManager());
+            info.reloadFinalProcessing(view);
             centralPanel.initValues(info, info.getNextValues());
           }
         }
@@ -117,6 +111,8 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
           AcquireActionButton button = topPanel.getSelected();
           button.getAcquireAction().validate(old, oldView);
         }
+        AcquireManager.setCurrentAcquireImageInfo(null);
+        AcquireManager.setCurrentView(null);
         // Commit current editable
         centralPanel.stopEditing();
       }

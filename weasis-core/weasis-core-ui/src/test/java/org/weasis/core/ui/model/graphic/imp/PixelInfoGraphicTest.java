@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -37,7 +37,7 @@ public class PixelInfoGraphicTest extends GraphicTester<PixelInfoGraphic> {
     COMPLETE_OBJECT.setLineThickness(2.0f);
     COMPLETE_OBJECT.setColorPaint(Color.PINK);
 
-    List<Point2D.Double> pts =
+    List<Point2D> pts =
         Arrays.asList(new Point2D.Double(1665.5, 987.0), new Point2D.Double(1601.5, 1037.0));
     COMPLETE_OBJECT.setPts(pts);
     COMPLETE_OBJECT.setLabelWidth(112.53125);

@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -643,8 +643,8 @@ public class DicomMediaIO implements DcmMediaReader {
   private static Mat getMatBuffer(ExtendSegmentedInputImageStream extParams) throws IOException {
     try (RandomAccessFile raf = new RandomAccessFile(extParams.getFile(), "r")) {
 
-      Long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
-      Mat buf = new Mat(1, cols.intValue(), CvType.CV_8UC1);
+      long cols = Arrays.stream(extParams.getSegmentLengths()).sum();
+      Mat buf = new Mat(1, (int) cols, CvType.CV_8UC1);
       long[] pos = extParams.getSegmentPositions();
       int offset = 0;
       for (int i = 0; i < pos.length; i++) {
@@ -657,6 +657,19 @@ public class DicomMediaIO implements DcmMediaReader {
       }
       return buf;
     }
+  }
+
+  private static Mat getRawData(BulkData bulkData) {
+    try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
+      Mat buf = new Mat(1, bulkData.length(), CvType.CV_8UC1);
+      byte[] b = new byte[bulkData.length()];
+      input.read(b, 0, b.length);
+      buf.put(0, 0, b);
+      return buf;
+    } catch (Exception e) {
+      LOGGER.error("Reading Waveform data");
+    }
+    return new Mat();
   }
 
   private MediaElement getSingleImage() {

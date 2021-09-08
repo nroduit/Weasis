@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -66,7 +66,7 @@ public class AcquireTabPanel extends JPanel {
     imageList.refreshGUI();
   }
 
-  public void updateSerie(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
+  public void updateSeries(SeriesGroup seriesGroup, List<AcquireImageInfo> imageInfos) {
     if (imageInfos == null) {
       return;
     }
@@ -125,7 +125,7 @@ public class AcquireTabPanel extends JPanel {
     return selected == null ? null : selected.getSerie();
   }
 
-  private void removeSerie(SeriesGroup seriesGroup) {
+  private void removeSeries(SeriesGroup seriesGroup) {
 
     btnMap.remove(seriesGroup);
 
@@ -182,7 +182,7 @@ public class AcquireTabPanel extends JPanel {
       imageInfos.remove(imageInfo);
 
       if (imageInfos.isEmpty()) {
-        removeSerie(seriesGroup);
+        removeSeries(seriesGroup);
         serieList.refreshGUI();
       } else if (seriesGroup.equals(getSeriesGroup())) {
         setSelected(selected);
@@ -199,7 +199,7 @@ public class AcquireTabPanel extends JPanel {
       }
 
       if (imagePane.isEmpty()) {
-        removeSerie(seriesGroup);
+        removeSeries(seriesGroup);
         serieList.refreshGUI();
       } else if (seriesGroup.equals(getSeriesGroup())) {
         setSelected(selected);
@@ -210,7 +210,7 @@ public class AcquireTabPanel extends JPanel {
   public void clearUnusedSeries(List<SeriesGroup> usedSeries) {
     List<SeriesGroup> seriesToRemove =
         btnMap.keySet().stream().filter(s -> !usedSeries.contains(s)).collect(Collectors.toList());
-    seriesToRemove.stream().forEach(this::removeSerie);
+    seriesToRemove.forEach(this::removeSeries);
     serieList.refreshGUI();
   }
 
@@ -238,7 +238,7 @@ public class AcquireTabPanel extends JPanel {
     removeImages(selected.getSerie(), medias);
 
     medias.forEach(m -> m.setSeries(seriesGroup));
-    updateSerie(seriesGroup, AcquireManager.findbySeries(seriesGroup));
+    updateSeries(seriesGroup, AcquireManager.findbySeries(seriesGroup));
   }
 
   public void updateSeriesFromGlobaTags() {
@@ -261,7 +261,7 @@ public class AcquireTabPanel extends JPanel {
         .forEach(
             (k, v) -> {
               if (seriesGroups.contains(k)) {
-                updateSerie(k, v);
+                updateSeries(k, v);
               }
             });
   }

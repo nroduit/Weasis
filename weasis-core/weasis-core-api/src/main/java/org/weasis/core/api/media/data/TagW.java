@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -183,6 +183,19 @@ public class TagW implements Serializable {
   public static final TagW PrDicomObject = new TagW("PrDicomObject", TagType.OBJECT);
 
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
+
+  /** Basic EXIF tags: https://www.media.mit.edu/pia/Research/deepview/exif.html */
+  public static final TagW ExifImageDescription = new TagW("ExifImageDescription", TagType.STRING);
+
+  public static final TagW ExifMake = new TagW("ExifMake", TagType.STRING);
+  public static final TagW ExifModel = new TagW("ExifModel", TagType.STRING);
+  public static final TagW ExifOrientation = new TagW("ExifOrientation", TagType.STRING);
+  public static final TagW ExifXResolution = new TagW("ExifXResolution", TagType.STRING);
+  public static final TagW ExifYResolution = new TagW("ExifYResolution", TagType.STRING);
+  public static final TagW ExifResolutionUnit = new TagW("ExifResolutionUnit", TagType.STRING);
+  public static final TagW ExifSoftware = new TagW("ExifSoftware", TagType.STRING);
+  public static final TagW ExifDateTime = new TagW("ExifDateTime", TagType.STRING);
+  public static final TagW ExifCopyright = new TagW("ExifCopyright", TagType.STRING);
 
   static {
     addTag(ImageBitsPerPixel);

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>weasis-parent</artifactId>
     <groupId>org.weasis</groupId>
@@ -20,6 +20,8 @@
     <module>weasis-opencv-core-windows-x86-64</module>
     <module>weasis-opencv-core-linux-x86</module>
     <module>weasis-opencv-core-linux-x86-64</module>
+    <module>weasis-opencv-core-linux-armv7a</module>
+    <module>weasis-opencv-core-linux-aarch64</module>
     <module>weasis-opencv-core-macosx-x86-64</module>
   </modules>
 

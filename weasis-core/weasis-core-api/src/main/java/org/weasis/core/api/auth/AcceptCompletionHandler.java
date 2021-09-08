@@ -2,7 +2,7 @@
  * Copyright (c) 2021 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -19,6 +19,7 @@ import java.nio.channels.CompletionHandler;
 import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.Messages;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 
@@ -48,10 +49,9 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
             byteBuffer.get(body);
             String req = new String(body, StandardCharsets.UTF_8);
             String returnedMsg =
-                "HTTP/1.1 404 Not Found"
+                "HTTP/1.1 404 Not Found" // NON-NLS
                     + "\r\n\r\n"
-                    + // NON-NLS
-                    "Code transmission to Weasis has Failed!"
+                    + Messages.getString("code.has.failed")
                     + "\n";
             try {
               BufferedReader reader = new BufferedReader(new StringReader(req));
@@ -71,7 +71,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
                   returnedMsg =
                       "HTTP/1.1 200 OK" // NON-NLS
                           + "\r\n\r\n"
-                          + "The secret code has successfully been transmitted to Weasis";
+                          + Messages.getString("code.has.been.transmitted");
                   break;
                 }
                 line = reader.readLine();
@@ -80,7 +80,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
               LOGGER.error("Try to get code from callback", e);
               returnedMsg = returnedMsg + e.getMessage();
             } finally {
-              ByteBuffer buffer = ByteBuffer.wrap(returnedMsg.getBytes());
+              ByteBuffer buffer = ByteBuffer.wrap(returnedMsg.getBytes(StandardCharsets.UTF_8));
               channel.write(buffer, channel, new WriteHandler(buffer));
             }
           }

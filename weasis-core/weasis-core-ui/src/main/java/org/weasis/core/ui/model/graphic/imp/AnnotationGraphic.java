@@ -2,7 +2,7 @@
  * Copyright (c) 2009-2020 Weasis Team and other contributors.
  *
  * This program and the accompanying materials are made available under the terms of the Eclipse
- * Public License 2.0 which is available at http://www.eclipse.org/legal/epl-2.0, or the Apache
+ * Public License 2.0 which is available at https://www.eclipse.org/legal/epl-2.0, or the Apache
  * License, Version 2.0 which is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
@@ -27,14 +27,14 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -104,12 +104,12 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     // Do not build shape as labelBounds can be initialize only by the method setLabel()
   }
 
-  protected void setHandlePointList(Point2D.Double ptAnchor, Point2D.Double ptBox) {
-    Point2D.Double pt2 = (ptBox == null && ptAnchor != null) ? ptAnchor : ptBox;
-    Point2D.Double pt1 = (pt2 != null && pt2.equals(ptAnchor)) ? null : ptAnchor;
+  protected void setHandlePointList(Point2D ptAnchor, Point2D ptBox) {
+    Point2D pt2 = (ptBox == null && ptAnchor != null) ? ptAnchor : ptBox;
+    Point2D pt1 = (pt2 != null && pt2.equals(ptAnchor)) ? null : ptAnchor;
 
-    setHandlePoint(0, pt1 == null ? null : (Point2D.Double) pt1.clone());
-    setHandlePoint(1, pt2 == null ? null : (Point2D.Double) pt2.clone());
+    setHandlePoint(0, pt1 == null ? null : (Point2D) pt1.clone());
+    setHandlePoint(1, pt2 == null ? null : (Point2D) pt2.clone());
     buildShape(null);
   }
 
