@@ -266,13 +266,7 @@ public class Singleton {
       if ("1.8".equals(System.getProperty("java.specification.version"))) { // NON-NLS
         thread = new Thread(null, runnable, "SIThread", 0);
       } else {
-        // TODO call directly the constructor when Java 8 will be dropped
-        // thread = new Thread(null, runnable, "SIThread", 0, false);
-        Class<?> clazz = Class.forName("java.lang.Thread");
-        Constructor<?> constructor =
-            clazz.getConstructor(
-                ThreadGroup.class, Runnable.class, String.class, long.class, boolean.class);
-        thread = (Thread) constructor.newInstance(null, runnable, "SIThread", 0, false);
+        thread = new Thread(null, runnable, "SIThread", 0, false);
       }
 
       thread.setDaemon(true);

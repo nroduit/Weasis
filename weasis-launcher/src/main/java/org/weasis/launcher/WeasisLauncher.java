@@ -1009,7 +1009,7 @@ public class WeasisLauncher {
 
     // Clean cache if Weasis has crashed during the previous launch
     boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version"));
-    if (cleanCacheAfterCrash != null && Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
+    if (Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
       serverProp.put(
           Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
       localSourceProp.remove(P_WEASIS_CLEAN_CACHE);
@@ -1171,8 +1171,8 @@ public class WeasisLauncher {
     UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
     String laf = null;
     if (look != null) {
-      for (int i = 0, n = lafs.length; i < n; i++) {
-        if (lafs[i].getClassName().equals(look)) {
+      for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
+        if (lookAndFeelInfo.getClassName().equals(look)) {
           laf = look;
           break;
         }
@@ -1184,9 +1184,9 @@ public class WeasisLauncher {
       } else {
         // Try to set Nimbus, concurrent thread issue
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-        for (int i = 0, n = lafs.length; i < n; i++) {
-          if (lafs[i].getName().equals("Nimbus")) { // NON-NLS
-            laf = lafs[i].getClassName();
+        for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
+          if (lookAndFeelInfo.getName().equals("Nimbus")) { // NON-NLS
+            laf = lookAndFeelInfo.getClassName();
             break;
           }
         }
@@ -1235,18 +1235,8 @@ public class WeasisLauncher {
     } catch (IllegalArgumentException e) {
       LOGGER.log(Level.SEVERE, "Register shutdownHook", e);
     } catch (ClassNotFoundException e) {
-      LOGGER.log(Level.SEVERE, "Cannot find sun.misc.Signal for shutdown hook exstension", e);
+      LOGGER.log(Level.SEVERE, "Cannot find sun.misc.Signal for shutdown hook extension", e);
     }
-  }
-
-  public static int getJavaMajorVersion() {
-    // Handle new versioning from Java 9
-    String jvmVersionString = System.getProperty("java.specification.version");
-    int verIndex = jvmVersionString.indexOf("1.");
-    if (verIndex >= 0) {
-      jvmVersionString = jvmVersionString.substring(verIndex + 2);
-    }
-    return Integer.parseInt(jvmVersionString);
   }
 
   private void shutdownHook() {

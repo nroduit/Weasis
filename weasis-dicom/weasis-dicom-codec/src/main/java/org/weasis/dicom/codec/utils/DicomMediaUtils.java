@@ -765,7 +765,7 @@ public class DicomMediaUtils {
                 // Exclude negative value (case over midnight)
                 if (time > 0) {
                   double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                  // Weight convert in kg to g
+                  // Convert weight in kg to g
                   suvFactor = weight * 1000.0 / correctedDose;
                 }
               }

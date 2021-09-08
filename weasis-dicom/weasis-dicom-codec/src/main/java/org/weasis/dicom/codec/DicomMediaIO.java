@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -25,6 +26,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Implementation;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;

@@ -26,7 +26,6 @@
         <configuration>
           <bnd>
             Bundle-SymbolicName: weasis-base-ui
-            Multi-Release: true
             Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
           </bnd>
         </configuration>
