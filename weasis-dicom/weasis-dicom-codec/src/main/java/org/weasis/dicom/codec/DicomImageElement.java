@@ -275,7 +275,7 @@ public class DicomImageElement extends ImageElement {
   }
 
   public boolean containsPreset(PresetWindowLevel preset) {
-    if (preset != null && adapter != null) {
+    if (preset != null && adapter != null && adapter.getPresetCollectionSize() > 0) {
       List<PresetWindowLevel> collection = adapter.getPresetList(null);
       if (collection != null) {
         return collection.contains(preset);
