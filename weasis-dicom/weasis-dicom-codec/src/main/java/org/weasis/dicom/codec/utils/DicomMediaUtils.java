@@ -1227,7 +1227,7 @@ public class DicomMediaUtils {
           if (TagType.DICOM_TIME.equals(type)) {
             vals[i] = TagD.getDicomTime(strs[i]);
           } else if (TagType.DICOM_DATETIME.equals(type)) {
-            vals[i] = TagD.getDicomDateTime( strs[i]);
+            vals[i] = TagD.getDicomDateTime(strs[i]);
           } else {
             vals[i] = TagD.getDicomDate(strs[i]);
           }

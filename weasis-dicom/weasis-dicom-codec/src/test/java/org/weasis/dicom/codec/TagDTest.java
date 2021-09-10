@@ -135,16 +135,16 @@ public class TagDTest {
     datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-    TemporalAccessor time = TagD.getDicomDateTime( "1953082711");
+    TemporalAccessor time = TagD.getDicomDateTime("1953082711");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
 
-    time = TagD.getDicomDateTime( "19530827111300");
+    time = TagD.getDicomDateTime("19530827111300");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
     time = TagD.getDicomDateTime("19530827111300.0");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-    time = TagD.getDicomDateTime( "19530827111300.005");
+    time = TagD.getDicomDateTime("19530827111300.005");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
   }
 

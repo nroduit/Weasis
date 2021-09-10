@@ -11,7 +11,6 @@ package org.weasis.dicom.codec.display;
 
 import java.util.HashMap;
 import java.util.Optional;
-import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.data.OverlayData;

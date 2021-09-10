@@ -23,7 +23,6 @@ import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.image.PhotometricInterpretation;
-import org.dcm4che3.img.Transcoder;
 import org.dcm4che3.media.DicomDirReader;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordFactory;
@@ -266,7 +265,11 @@ public class DicomDirLoader {
                     iconInstance.getString(Tag.PhotometricInterpretation, "MONOCHROME2"));
             BufferedImage thumbnail =
                 new BufferedImage(
-                    pmi.createColorModel(8, DataBuffer.TYPE_BYTE, ColorSpace.getInstance(ColorSpace.CS_sRGB), iconInstance),
+                    pmi.createColorModel(
+                        8,
+                        DataBuffer.TYPE_BYTE,
+                        ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                        iconInstance),
                     raster,
                     false,
                     null);

@@ -318,11 +318,11 @@ public class PRManager {
           Attributes glm = glms.get(graphicLayerName);
           if (glm == null
               || !DicomObjectUtil.isImageFrameApplicableToReferencedImageSequence(
-              DicomObjectUtil.getSequence(gram, Tag.ReferencedImageSequence),
-              Tag.ReferencedFrameNumber,
-              imgSop,
-              dicomFrame,
-              false)) {
+                  DicomObjectUtil.getSequence(gram, Tag.ReferencedImageSequence),
+                  Tag.ReferencedFrameNumber,
+                  imgSop,
+                  dicomFrame,
+                  false)) {
             continue;
           }
 
@@ -352,8 +352,7 @@ public class PRManager {
             colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
           }
 
-          Color rgbColor =
-              DicomObjectUtil.getRGBColor(grayVal == null ? 255 : grayVal, colorRgb);
+          Color rgbColor = DicomObjectUtil.getRGBColor(grayVal == null ? 255 : grayVal, colorRgb);
 
           Sequence gos = gram.getSequence(Tag.GraphicObjectSequence);
 

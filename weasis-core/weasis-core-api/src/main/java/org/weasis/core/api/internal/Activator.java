@@ -49,7 +49,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     initLoggerAndAudit(bundleContext);
     File file = ResourceUtil.getResource("presets.xml");
-    if(file.canRead()) {
+    if (file.canRead()) {
       System.setProperty("dicom.presets.path", file.getPath());
     }
   }

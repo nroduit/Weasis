@@ -88,9 +88,7 @@ public class DicomCodec implements Codec {
         }
       };
 
-  private static final IIOServiceProvider[] dcm4cheCodecs = {
-    new DicomImageReaderSpi()
-  };
+  private static final IIOServiceProvider[] dcm4cheCodecs = {new DicomImageReaderSpi()};
 
   @Override
   public String[] getReaderMIMETypes() {

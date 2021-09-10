@@ -16,7 +16,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.function.Predicate;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.util.DicomObjectUtil;
@@ -89,7 +88,8 @@ public class PresentationStateReader implements Tagable {
     return tags.entrySet().iterator();
   }
 
-  private static Predicate<Attributes> isSequenceApplicable(DicomImageElement img, boolean sequenceRequired) {
+  private static Predicate<Attributes> isSequenceApplicable(
+      DicomImageElement img, boolean sequenceRequired) {
     return attributes -> isModuleAppicable(attributes, img, sequenceRequired);
   }
 
@@ -110,7 +110,8 @@ public class PresentationStateReader implements Tagable {
     return false;
   }
 
-  public static boolean isModuleAppicable(Attributes refImgSeqParent, DicomImageElement img, boolean sequenceRequired) {
+  public static boolean isModuleAppicable(
+      Attributes refImgSeqParent, DicomImageElement img, boolean sequenceRequired) {
     Objects.requireNonNull(refImgSeqParent);
     Objects.requireNonNull(img);
 
@@ -132,7 +133,8 @@ public class PresentationStateReader implements Tagable {
       // Rotation and then Flip
       actionsInView.put(TAG_PR_ROTATION, dicomObject.getInt(Tag.ImageRotation, 0));
       actionsInView.put(
-          TAG_PR_FLIP, "Y".equalsIgnoreCase(dicomObject.getString(Tag.ImageHorizontalFlip))); // NON-NLS
+          TAG_PR_FLIP,
+          "Y".equalsIgnoreCase(dicomObject.getString(Tag.ImageHorizontalFlip))); // NON-NLS
     }
   }
 
