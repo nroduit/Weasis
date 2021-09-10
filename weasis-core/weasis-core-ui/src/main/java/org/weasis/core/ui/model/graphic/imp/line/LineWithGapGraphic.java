@@ -9,16 +9,16 @@
  */
 package org.weasis.core.ui.model.graphic.imp.line;
 
-import java.awt.Shape;
-import java.awt.geom.Path2D;
-import java.awt.geom.Point2D;
-import java.util.Optional;
-import javax.swing.Icon;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.awt.Shape;
+import java.awt.geom.Path2D;
+import java.awt.geom.Point2D;
+import java.util.Optional;
+import javax.swing.Icon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;

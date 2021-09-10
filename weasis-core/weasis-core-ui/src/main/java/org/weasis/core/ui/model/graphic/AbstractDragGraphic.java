@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Robot;
@@ -18,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.SwingUtilities;
-import jakarta.xml.bind.annotation.XmlTransient;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;

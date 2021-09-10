@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.model.graphic.imp.area;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Point;
 import java.awt.Robot;
 import java.awt.geom.Line2D;
@@ -22,8 +24,6 @@ import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;

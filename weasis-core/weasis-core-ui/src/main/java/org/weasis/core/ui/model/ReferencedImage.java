@@ -9,11 +9,11 @@
  */
 package org.weasis.core.ui.model;
 
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import jakarta.xml.bind.annotation.XmlAttribute;
-import jakarta.xml.bind.annotation.XmlList;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 public class ReferencedImage extends DefaultUUID {

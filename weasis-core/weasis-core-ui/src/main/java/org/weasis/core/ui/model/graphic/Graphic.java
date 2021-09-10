@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.model.graphic;
 
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Paint;
@@ -22,7 +23,6 @@ import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import java.util.List;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.weasis.core.api.gui.util.GUIEntry;
 import org.weasis.core.api.gui.util.KeyActionValue;
 import org.weasis.core.api.image.util.MeasurableLayer;
