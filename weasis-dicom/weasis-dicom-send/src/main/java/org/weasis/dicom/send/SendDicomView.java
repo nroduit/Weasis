@@ -13,7 +13,6 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -69,7 +68,6 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.web.ContentType;
-import org.weasis.dicom.web.DicomStowRS;
 
 public class SendDicomView extends AbstractItemDialogPage implements ExportDicom {
 
@@ -236,19 +234,16 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
           }
         }
 
-        try (DicomStowRS stowRS =
-            new DicomStowRS(
+        try (StowRS stowRS =
+            new StowRS(
                 node.getUrl().toString(),
                 ContentType.APPLICATION_DICOM,
                 AppProperties.WEASIS_NAME,
                 node.getHeaders())) {
-          for (String file : files) {
-            stowRS.uploadDicom(Path.of(file));
+          DicomState state = stowRS.uploadDicom(files, true, authMethod);
+          if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
+            showErrorMessage(null, null, state);
           }
-//          DicomState state = stowRS.uploadDicom(files, true, authMethod);
-//          if (state.getStatus() != Status.Success && state.getStatus() != Status.Cancel) {
-//            showErrorMessage(null, null, state);
-//          }
         } catch (Exception e) {
           showErrorMessage("StowRS error: {}", e, null); // NON-NLS
         }
