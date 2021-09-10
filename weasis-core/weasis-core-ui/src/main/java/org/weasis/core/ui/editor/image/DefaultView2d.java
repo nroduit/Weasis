@@ -1019,6 +1019,71 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return imageLayer.getDisplayOpManager();
   }
 
+
+  public void propertyChange(SynchCineEvent synch) {
+    E imgElement = getImage();
+    graphicManager.deleteByLayerType(LayerType.CROSSLINES);
+
+    if (synch.getView() == this) {
+      if (tileOffset != 0) {
+        // Index could have changed when loading series.
+        imgElement =
+            series.getMedia(
+                synch.getSeriesIndex() + tileOffset,
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                getCurrentSortComparator());
+      } else if (synch.getMedia() instanceof ImageElement) {
+        imgElement = (E) synch.getMedia();
+      }
+    } else if (synch.getLocation() != null) {
+      Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+      if (cutlines != null && cutlines) {
+        if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+          // Compute cutlines from the location of selected image
+          computeCrosslines(synch.getLocation().doubleValue());
+        }
+      } else {
+        double location = synch.getLocation().doubleValue();
+        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and
+        // related
+        // to
+        // a specific series
+        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+        // if (offset != null) {
+        // location += offset;
+        // }
+        imgElement =
+            series.getNearestImage(
+                location,
+                tileOffset,
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                getCurrentSortComparator());
+
+        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+      }
+    } else {
+      // When no 3D information on the slice position
+      imgElement =
+          series.getMedia(
+              synch.getSeriesIndex() + tileOffset,
+              (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+              getCurrentSortComparator());
+
+      AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+    }
+
+    Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+    // Avoid to reset zoom when the mode is not best fit
+    if (zoomFactor != null && zoomFactor >= 0.0) {
+      Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+      actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
+      setImage(imgElement);
+      actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
+    } else {
+      setImage(imgElement);
+    }
+  }
+
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (series == null) {
@@ -1030,69 +1095,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (command.equals(ActionW.SYNCH.cmd())) {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       if (synch instanceof SynchCineEvent) {
-        SynchCineEvent value = (SynchCineEvent) synch;
-
-        E imgElement = getImage();
-        graphicManager.deleteByLayerType(LayerType.CROSSLINES);
-
-        if (value.getView() == this) {
-          if (tileOffset != 0) {
-            // Index could have changed when loading series.
-            imgElement =
-                series.getMedia(
-                    value.getSeriesIndex() + tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                    getCurrentSortComparator());
-          } else if (value.getMedia() instanceof ImageElement) {
-            imgElement = (E) value.getMedia();
-          }
-        } else if (value.getLocation() != null) {
-          Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-          if (cutlines != null && cutlines) {
-            if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-              // Compute cutlines from the location of selected image
-              computeCrosslines(value.getLocation().doubleValue());
-            }
-          } else {
-            double location = value.getLocation().doubleValue();
-            // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and
-            // related
-            // to
-            // a specific series
-            // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-            // if (offset != null) {
-            // location += offset;
-            // }
-            imgElement =
-                series.getNearestImage(
-                    location,
-                    tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                    getCurrentSortComparator());
-
-            AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
-          }
-        } else {
-          // When no 3D information on the slice position
-          imgElement =
-              series.getMedia(
-                  value.getSeriesIndex() + tileOffset,
-                  (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                  getCurrentSortComparator());
-
-          AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
-        }
-
-        Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        // Avoid to reset zoom when the mode is not best fit
-        if (zoomFactor != null && zoomFactor >= 0.0) {
-          Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
-          actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
-          setImage(imgElement);
-          actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
-        } else {
-          setImage(imgElement);
-        }
+        propertyChange( (SynchCineEvent) synch);
       } else {
         propertyChange(synch);
       }
