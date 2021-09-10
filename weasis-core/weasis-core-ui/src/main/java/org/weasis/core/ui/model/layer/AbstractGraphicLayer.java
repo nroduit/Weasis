@@ -9,12 +9,12 @@
  */
 package org.weasis.core.ui.model.layer;
 
-import java.util.Objects;
-import java.util.Optional;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import java.util.Objects;
+import java.util.Optional;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 @XmlAccessorType(XmlAccessType.NONE)

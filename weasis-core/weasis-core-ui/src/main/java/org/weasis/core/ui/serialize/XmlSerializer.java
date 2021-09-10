@@ -9,16 +9,16 @@
  */
 package org.weasis.core.ui.serialize;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.Reader;
-import java.io.Writer;
-import java.util.Map;
 import jakarta.xml.bind.JAXBContext;
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.JAXBException;
 import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.Map;
 import javax.xml.stream.XMLStreamReader;
 import org.glassfish.jaxb.runtime.v2.ContextFactory;
 import org.slf4j.Logger;

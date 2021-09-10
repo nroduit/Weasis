@@ -11,6 +11,8 @@ package org.weasis.core.ui.model.graphic.imp.area;
 
 import static java.lang.Double.NaN;
 
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Shape;
 import java.awt.event.KeyEvent;
 import java.awt.geom.Area;
@@ -29,8 +31,6 @@ import java.util.Optional;
 import java.util.Set;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;

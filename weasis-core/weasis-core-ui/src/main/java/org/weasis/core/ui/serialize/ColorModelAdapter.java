@@ -9,10 +9,10 @@
  */
 package org.weasis.core.ui.serialize;
 
-import java.awt.Color;
-import java.awt.Paint;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
+import java.awt.Color;
+import java.awt.Paint;
 import org.weasis.core.api.service.WProperties;
 
 public class ColorModelAdapter {

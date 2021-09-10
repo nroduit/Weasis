@@ -9,10 +9,10 @@
  */
 package org.weasis.core.ui.model.utils.imp;
 
-import java.util.Optional;
-import java.util.UUID;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlID;
+import java.util.Optional;
+import java.util.UUID;
 import org.weasis.core.ui.model.utils.UUIDable;
 
 public class DefaultUUID implements UUIDable {
