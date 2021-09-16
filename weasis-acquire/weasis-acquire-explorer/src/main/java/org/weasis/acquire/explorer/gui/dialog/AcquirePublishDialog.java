@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
+import javax.swing.ComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.DicomizeTask;
+import org.weasis.acquire.explorer.MediaImporterFactory;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
@@ -66,7 +68,7 @@ import org.weasis.opencv.data.PlanarImage;
 @SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
-
+  private static final String LAST_SEL_NODE = "lastSelectedNode";
   public static final String P_LAST_RESOLUTION = "last.resolution";
   public static final String PREFERENCE_NODE = "publish"; // NON-NLS
 
@@ -222,6 +224,18 @@ public class AcquirePublishDialog extends JDialog {
     if (!StringUtil.hasText(
         BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.acquire.dest.host"))) {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
+      AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
+      String desc = MediaImporterFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);
+      if (StringUtil.hasText(desc)) {
+        ComboBoxModel<AbstractDicomNode> model = comboNode.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+          if (desc.equals(model.getElementAt(i).getDescription())) {
+            model.setSelectedItem(model.getElementAt(i));
+            break;
+          }
+        }
+      }
+
       if (comboNode.getItemCount() == 0) {
         comboNode.addItem(getDestinationConfiguration());
       }
@@ -295,19 +309,16 @@ public class AcquirePublishDialog extends JDialog {
       return;
     }
 
-    List<AcquireImageInfo> overSizedSelected = getOversizedSelected(publishTree);
-    if (!overSizedSelected.isEmpty()) {
-      Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
-      for (AcquireImageInfo imgInfo : overSizedSelected) {
-        // calculate zoom ration
-        Double ratio = ImageInfoHelper.calculateRatio(imgInfo, resolution);
-
-        imgInfo.getCurrentValues().setRatio(ratio);
-        ImageOpNode node = imgInfo.getPostProcessOpManager().getNode(ZoomOp.OP_NAME);
-        if (node != null) {
-          node.clearIOCache();
-          node.setParam(ZoomOp.P_RATIO_X, ratio);
-          node.setParam(ZoomOp.P_RATIO_Y, ratio);
+    for (AcquireImageInfo imgInfo : toPublish) {
+      setZoomRatio(imgInfo, null);
+    }
+    Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
+    if (resolution != Resolution.ORIGINAL) {
+      List<AcquireImageInfo> overSizedSelected = getOversizedSelected(publishTree);
+      if (!overSizedSelected.isEmpty()) {
+        for (AcquireImageInfo imgInfo : overSizedSelected) {
+          // calculate zoom ration
+          setZoomRatio(imgInfo, ImageInfoHelper.calculateRatio(imgInfo, resolution));
         }
       }
     }
@@ -345,11 +356,8 @@ public class AcquirePublishDialog extends JDialog {
 
                 if (exportDirDicom != null) {
                   AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
-                  if (node instanceof DefaultDicomNode) {
-                    publishPanel.publishDirDicom(
-                        exportDirDicom, ((DefaultDicomNode) node).getDicomNode());
-                    clearAndHide();
-                  }
+                  publishPanel.publishDirDicom(exportDirDicom, node, toPublish);
+                  clearAndHide();
                 } else {
                   JOptionPane.showMessageDialog(
                       this,
@@ -374,6 +382,16 @@ public class AcquirePublishDialog extends JDialog {
     ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
   }
 
+  private static  void setZoomRatio(AcquireImageInfo imgInfo, Double ratio){
+    imgInfo.getCurrentValues().setRatio(ratio);
+    ImageOpNode node = imgInfo.getPostProcessOpManager().getNode(ZoomOp.OP_NAME);
+    if (node != null) {
+      node.clearIOCache();
+      node.setParam(ZoomOp.P_RATIO_X, ratio);
+      node.setParam(ZoomOp.P_RATIO_Y, ratio);
+    }
+  }
+
   private List<AcquireImageInfo> getSelectedImages(PublishTree tree) {
     return Arrays.stream(tree.getModel().getCheckingPaths())
         .map(o1 -> DefaultMutableTreeNode.class.cast(o1.getLastPathComponent()))
@@ -395,15 +413,20 @@ public class AcquirePublishDialog extends JDialog {
   }
 
   public void clearAndHide() {
-    Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
-    dispose();
-
+    final AbstractDicomNode node = (AbstractDicomNode) comboNode.getSelectedItem();
+    if (node != null) {
+      MediaImporterFactory.EXPORT_PERSISTENCE.setProperty(LAST_SEL_NODE, node.getDescription());
+    }
     Preferences prefs =
         BundlePreferences.getDefaultPreferences(
             FrameworkUtil.getBundle(this.getClass()).getBundleContext());
     if (prefs != null) {
       Preferences p = prefs.node(PREFERENCE_NODE);
-      BundlePreferences.putStringPreferences(p, P_LAST_RESOLUTION, resolution.name());
+      Resolution resolution = (Resolution) resolutionCombo.getSelectedItem();
+      if (resolution != null) {
+        BundlePreferences.putStringPreferences(p, P_LAST_RESOLUTION, resolution.name());
+      }
     }
+    dispose();
   }
 }

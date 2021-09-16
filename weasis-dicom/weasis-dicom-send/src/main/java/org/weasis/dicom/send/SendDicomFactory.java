@@ -26,8 +26,8 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExportDicom;
 
 @org.osgi.service.component.annotations.Component(
-    service = DicomExportFactory.class,
-    immediate = false)
+    service = DicomExportFactory.class
+)
 public class SendDicomFactory implements DicomExportFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SendDicomFactory.class);
@@ -52,7 +52,7 @@ public class SendDicomFactory implements DicomExportFactory {
   // ================================================================================
 
   @Activate
-  protected void activate(ComponentContext context) throws Exception {
+  protected void activate(ComponentContext context) {
     LOGGER.info("DICOM Send is activated");
     FileUtil.readProperties(
         new File(BundlePreferences.getDataFolder(context.getBundleContext()), "export.properties"),
