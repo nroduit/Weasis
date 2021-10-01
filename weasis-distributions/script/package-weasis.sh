@@ -51,9 +51,8 @@ Path of the base output directory.
 Default value is the current directory"
 echo " --jdk -j
 Path of the jdk with the jpackage module (>= jdk-16+12)"
-echo " --jdk-modules
-List of modules to build the Java Runtime
-If not set, a minimal default list is applied"
+echo " --temp
+Path of the temporary directory during build"
 echo " --mac-signing-key-user-name
 Key user name of the certificate to sign the bundle"
 exit 0
@@ -70,6 +69,11 @@ shift # past value
 ;;
 -o|--output)
 OUTPUT_PATH="$2"
+shift # past argument
+shift # past value
+;;
+--temp)
+TEMP_PATH="$2"
 shift # past argument
 shift # past value
 ;;
@@ -103,7 +107,7 @@ if [ -z "$ARC_OS" ] ; then
   die "Cannot get Java system architecture"
 fi
 machine=$(echo "${ARC_OS}" | cut -d'-' -f1)
-arc=$(echo "${ARC_OS}" | cut -d'-' -f2)
+arc=$(echo "${ARC_OS}" | cut -d'-' -f2-3)
 
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
@@ -136,11 +140,7 @@ REQUIRED_MAJOR_VERSION=$(echo $REQUIRED_TEXT_VERSION | sed -e 's/^1\.//' -e 's/\
 # Check jlink command.
 if [ -x "$JDK_PATH_UNIX/bin/jpackage" ] ; then
   JPKGCMD="$JDK_PATH_UNIX/bin/jpackage"
-  JLINKCMD="$JDK_PATH_UNIX/bin/jlink"
-  JDEPSCMD="$JDK_PATH_UNIX/bin/jdeps"
   JAVACMD="$JDK_PATH_UNIX/bin/java"
-  JAVACCMD="$JDK_PATH_UNIX/bin/javac"
-  JARCMD="$JDK_PATH_UNIX/bin/jar"
 else
   die "JAVA_HOME is not set and no 'jpackage' command could be found in your PATH. Specify a jdk path >=$REQUIRED_TEXT_VERSION."
 fi
@@ -151,7 +151,7 @@ echo "Found java version $INSTALLED_VERSION"
 echo "Java command path: $JAVACMD"
 
 # Remove double quotes, remove leading "1." if it exists and remove everything apart from the major version number.
-INSTALLED_MAJOR_VERSION=$(echo $INSTALLED_VERSION | sed -e 's/"//g' -e 's/^1\.//' -e 's/\..*//' -e 's/-.*//')
+INSTALLED_MAJOR_VERSION=$(echo "$INSTALLED_VERSION" | sed -e 's/"//g' -e 's/^1\.//' -e 's/\..*//' -e 's/-.*//')
 echo "Java major version: $INSTALLED_MAJOR_VERSION"
 if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION )) ; then
   die "Your version of java is too low to run this script.\nPlease update to $REQUIRED_TEXT_VERSION or higher"
@@ -171,18 +171,18 @@ else
   INPUT_DIR="$INPUT_PATH_UNIX/weasis"
 fi
 
-WEASIS_CLEAN_VERSION=$(echo $WEASIS_VERSION | sed -e 's/"//g' -e 's/-.*//')
+WEASIS_CLEAN_VERSION=$(echo "$WEASIS_VERSION" | sed -e 's/"//g' -e 's/-.*//')
 
 
 # Remove pack jar for launcher
 rm -f "$INPUT_DIR"/*.jar.pack.gz
 
 # Remove the unrelated native packages
-find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'${ARC_OS}'-*'  -exec rm -f {} \;
+find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*'  -exec rm -f {} \;
 
 # Special case with 32-bit x86 architecture, remove 64-bit lib
 if [ "$arc" = "x86" ] ; then
-  find "$INPUT_DIR"/bundle/*-x86* -type f -name '*-${machine}-x86-64-*'  -exec rm -f {} \;
+  find "$INPUT_DIR"/bundle/*-x86* -type f -name "*-${machine}-x86-64-*"  -exec rm -f {} \;
 fi
 
 # Replace substance available for Java 11
@@ -191,6 +191,16 @@ curl -L -o "${INPUT_DIR}/substance.jar" "https://raw.github.com/nroduit/mvn-repo
 # Remove previous package
 if [ -d "${OUTPUT_PATH}" ] ; then
   rm -rf "${OUTPUT_PATH}"
+fi
+
+if [ -z "$TEMP_PATH" ] ; then
+  declare -a tmpArgs=()
+else
+  declare -a tmpArgs=("--temp" "$TEMP_PATH")
+fi
+
+if [ -d "${TEMP_PATH}" ] ; then
+  rm -rf "${TEMP_PATH}"
 fi
 
 if [ "$machine" = "macosx" ] ; then
@@ -210,7 +220,7 @@ else
   declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" )
   declare -a signArgs=()
 fi
-declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" "--illegal-access=warn" \
+declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
@@ -221,8 +231,8 @@ declare -a commonOptions=("--java-options" "-Dgosh.port=17179" "--java-options" 
 
 $JPKGCMD --type app-image --input "$INPUT_DIR" --dest "$OUTPUT_PATH" --name "$NAME" \
 --main-jar weasis-launcher.jar --main-class org.weasis.launcher.AppLauncher --add-modules "$JDK_MODULES" \
---add-launcher ${DICOMIZER_CONFIG} --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
---verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
+--add-launcher "${DICOMIZER_CONFIG}" --resource-dir "$RES"  --app-version "$WEASIS_CLEAN_VERSION" \
+"${tmpArgs[@]}" --verbose "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
 if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
@@ -232,25 +242,23 @@ if [ "$PACKAGE" = "YES" ] ; then
     $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/$ARC_NAME" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
     --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-    --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" --verbose
+    --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" "${tmpArgs[@]}" --verbose
     mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
   elif [ "$machine" = "linux" ] ; then
-    if [ "$arc" = "x86-64" ] ; then
-      declare -a installerTypes=("deb" "rpm")
-    else
-      declare -a installerTypes=("deb")
-    fi 
-    
-    for installerType in ${installerTypes[@]}; do
+    declare -a installerTypes=("deb" "rpm")
+    for installerType in "${installerTypes[@]}"; do
       $JPKGCMD --type "$installerType" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH"  --name "$NAME" --resource-dir "$RES" \
       --license-file "$INPUT_PATH/Licence.txt" --description "Weasis DICOM viewer" --vendor "$VENDOR" \
       --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" --file-associations "${curPath}/file-associations.properties" \
       --linux-app-release "$REVISON_INC" --linux-package-name "weasis" --linux-deb-maintainer "Nicolas Roduit" --linux-rpm-license-type "EPL-2.0" \
-      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut --verbose
+      --linux-menu-group "Viewer;MedicalSoftware;Graphics;" --linux-app-category "science" --linux-shortcut "${tmpArgs[@]}" --verbose
+      if [ -d "${TEMP_PATH}" ] ; then
+        rm -rf "${TEMP_PATH}"
+      fi
     done
   elif [ "$machine" = "macosx" ] ; then
     $JPKGCMD --type "pkg" --app-image "$IMAGE_PATH.app" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES" \
     --license-file "$INPUT_PATH/Licence.txt" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
-    --verbose "${signArgs[@]}"
+    "${tmpArgs[@]}" --verbose "${signArgs[@]}"
   fi
 fi
