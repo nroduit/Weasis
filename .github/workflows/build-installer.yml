@@ -97,7 +97,7 @@ jobs:
         id: jdk
         if: matrix.platform == 'x64'
         with:
-          feature: 17
+          feature: 16
 
       - name: Set up early-access Oracle JDK
         uses: actions/setup-java@v2
