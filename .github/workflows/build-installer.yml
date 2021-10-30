@@ -95,7 +95,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v2
         with:
-          distribution: 'temurin'
+          distribution: 'zulu'
           java-version: '17'
 
       - name: Download weasis-portable
@@ -182,7 +182,7 @@ jobs:
               codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
           fi
 
-          echo "$(ls -la ${{ env.WEASIS_OUTPUT }}/${{ env.NAME }})"
+          echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
 
       - name: Build package with jpackage
         shell: bash
