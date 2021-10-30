@@ -92,21 +92,11 @@ jobs:
 
       - uses: actions/checkout@v2
 
-      - name: Download early-access Oracle JDK
-        uses: sormuras/download-jdk@v1
-        id: jdk
-        if: matrix.platform == 'x64'
-        with:
-          feature: 17
-
-      - name: Set up early-access Oracle JDK
+      - name: Set up JDK
         uses: actions/setup-java@v2
-        if: matrix.platform == 'x64'
         with:
-          java-version: ${{ steps.jdk.outputs.version }}
-          distribution: jdkfile
-          jdkFile: ${{ steps.jdk.outputs.file }}
-          architecture: ${{ matrix.platform }}
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Download weasis-portable
         uses: actions/download-artifact@v2
