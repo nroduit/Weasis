@@ -58,3 +58,4 @@ See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-
 * Native and DICOM printing
 * Read DICOM image containing float or double data (Parametric Map)
 * DICOM ECG Viewer
+
