@@ -62,8 +62,6 @@ import javax.swing.TransferHandler;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
-
-import com.fasterxml.jackson.databind.ser.std.StdKeySerializers;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,8 +95,6 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.dicom.codec.DcmMediaReader;
-import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -127,8 +123,6 @@ import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
-
-import org.dcm4che3.data.Attributes;
 
 /**
  * @author Nicolas Roduit
@@ -1289,12 +1283,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void keyPressed(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_O) {
-      List<Graphic> graphs = graphicManager.getAllGraphics();
-      List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) this.imageLayer.getSourceImage().getMediaReader()).getDicomObject());
-      graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(this, g.copy()));
-    }
-    else if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
       eventManager.nextLeftMouseAction();
     } else if (e.getModifiers() == 0
         && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
