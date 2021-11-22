@@ -43,7 +43,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   Integer DEFAULT_POINT_NUMBER = 1;
   Float DEFAULT_LINE_THICKNESS = 1f;
   Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
-  Boolean DEFAULT_FILLED = Boolean.TRUE;
+  Boolean DEFAULT_FILLED = Boolean.FALSE;
   Boolean DEFAULT_SELECTED = Boolean.FALSE;
   Integer DEFAULT_PTS_SIZE = 10;
 
