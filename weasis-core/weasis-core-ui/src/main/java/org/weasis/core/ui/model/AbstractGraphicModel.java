@@ -15,10 +15,8 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlType;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Point2D;
@@ -614,12 +612,21 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
       for (Graphic g : graphs)
       {
+        // TODO check if instance of DragGraphic
+        // TODO check if in measurement layer
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving())
         {
-          for (int i = 0; i < 3; i++)
+          for (int i = 0; i < 5; i++)
           {
-            Graphic c = dg.copy();
+            DragGraphic c = dg.copy();
+
+            List<Point2D> newPts = new ArrayList<Point2D>();
+            for (Point2D p : c.getPts())
+            {
+              newPts.add(new Point2D.Double(p.getX() - i * 20, p.getY() - i * 20));
+            }
+            c.setPts(newPts);
             c.setDuplicatedOn6Up(Boolean.TRUE);
             AbstractGraphicModel.addGraphicToModel(view2d, c);
           }
@@ -627,7 +634,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
       }
     }
-    
+
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
