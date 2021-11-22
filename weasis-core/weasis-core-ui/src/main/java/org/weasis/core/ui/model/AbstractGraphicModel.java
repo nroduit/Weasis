@@ -68,6 +68,9 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.dicom.codec.DcmMediaReader;
+import org.weasis.dicom.codec.utils.Ultrasound;
+import org.dcm4che3.data.Attributes;
 
 @XmlType(propOrder = {"referencedSeries", "layers", "models"})
 @XmlAccessorType(XmlAccessType.NONE)
@@ -610,7 +613,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     {
       if (graphs.get(0).isGraphicComplete())
       {
-        graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(view2d, g.copy()));
+        List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+
+        for (int i = 0; i < 3; ++i)
+        {
+          graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(view2d, g.copy()));
+        }
         duplicateGraphics = Boolean.FALSE;
       }
     }
@@ -621,7 +629,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
     g2d.translate(-0.5, -0.5);
-
   }
 
   private static void applyPaint(
