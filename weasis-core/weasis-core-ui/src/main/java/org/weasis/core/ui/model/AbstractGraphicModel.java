@@ -609,21 +609,25 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
     List<Graphic> graphs = this.getAllGraphics();
-    if (duplicateGraphics && (graphs.size() != 0))
+    if (graphs.size() != 0)
     {
-      if (graphs.get(0).isGraphicComplete())
+      List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+      for (Graphic g : graphs)
       {
-        List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
-
-        for (int i = 0; i < 3; ++i)
+        DragGraphic dg = (DragGraphic)g;
+        if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving())
         {
-          graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(view2d, g.copy()));
+          for (int i = 0; i < 3; i++)
+          {
+            Graphic c = dg.copy();
+            c.setDuplicatedOn6Up(Boolean.TRUE);
+            AbstractGraphicModel.addGraphicToModel(view2d, c);
+          }
+          dg.setDuplicatedOn6Up(Boolean.TRUE);
         }
-        duplicateGraphics = Boolean.FALSE;
       }
     }
-
-
+    
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));

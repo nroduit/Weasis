@@ -86,6 +86,8 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected Boolean variablePointsNumber = Boolean.FALSE;
   protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
+  protected Boolean duplicatedOn6Up = Boolean.FALSE;
+
   private GraphicLayer layer;
 
   public AbstractGraphic(Integer pointNumber) {
@@ -557,6 +559,14 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   @Override
   public Boolean isGraphicComplete() {
     return Objects.equals(pts.size(), pointNumber);
+  }
+
+  public Boolean isDuplicatedOn6Up() {
+    return duplicatedOn6Up;
+  }
+
+  public void setDuplicatedOn6Up(Boolean b) {
+    duplicatedOn6Up = b;
   }
 
   public Point2D getHandlePoint(int index) {
