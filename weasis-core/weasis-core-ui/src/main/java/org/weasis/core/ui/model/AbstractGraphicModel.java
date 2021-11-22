@@ -83,6 +83,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
   private Boolean changeFireingSuspended = Boolean.FALSE;
 
+  private Boolean duplicateGraphics = Boolean.TRUE;
+
   private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
   private Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
 
@@ -595,18 +597,31 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       Graphics2D g2d,
       AffineTransform transform,
       AffineTransform inverseTransform,
-      Rectangle2D viewClip) {
+      Rectangle2D viewClip,
+      DefaultView2d view2d) {
     // Get the visible view in real coordinates, note only Sun g2d return consistent clip area with
     // offset
     Shape area =
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
+    List<Graphic> graphs = this.getAllGraphics();
+    if (duplicateGraphics && (graphs.size() != 0))
+    {
+      if (graphs.get(0).isGraphicComplete())
+      {
+        graphs.forEach(g -> AbstractGraphicModel.addGraphicToModel(view2d, g.copy()));
+        duplicateGraphics = Boolean.FALSE;
+      }
+    }
+
+
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
     g2d.translate(-0.5, -0.5);
+
   }
 
   private static void applyPaint(
