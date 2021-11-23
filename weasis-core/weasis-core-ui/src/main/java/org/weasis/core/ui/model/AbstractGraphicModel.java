@@ -607,17 +607,20 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
     duplicateOnTo6up(view2d);
+    fireChanged();
 
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
+
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
+
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
     g2d.translate(-0.5, -0.5);
+
   }
 
   // for OA 6-up
-  void duplicateOnTo6up(DefaultView2d view2d)
-  {
+  void duplicateOnTo6up(DefaultView2d view2d)  {
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0)
     {
@@ -636,11 +639,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             List<Point2D> newPts = new ArrayList<Point2D>();
             for (Point2D p : c.getPts())
             {
-              newPts.add(new Point2D.Double(p.getX() - i * 20, p.getY() - i * 20));
+              newPts.add(new Point2D.Double(p.getX() - i * 50, p.getY() - i * 50));
             }
             c.setPts(newPts);
+
             c.buildShape(null);
             c.setDuplicatedOn6Up(Boolean.TRUE);
+
             AbstractGraphicModel.addGraphicToModel(view2d, c);
           }
           dg.setDuplicatedOn6Up(Boolean.TRUE);
