@@ -627,6 +627,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
               newPts.add(new Point2D.Double(p.getX() - i * 20, p.getY() - i * 20));
             }
             c.setPts(newPts);
+            c.buildShape(null);
             c.setDuplicatedOn6Up(Boolean.TRUE);
             AbstractGraphicModel.addGraphicToModel(view2d, c);
           }
