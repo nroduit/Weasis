@@ -632,7 +632,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving())
         {
-          for (int i = 0; i < 5; i++)
+          for (int i = 0; i < 6; i++)
           {
             DragGraphic c = dg.copy();
 
