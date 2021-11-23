@@ -606,6 +606,18 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
+    duplicateOnTo6up(view2d);
+
+    g2d.translate(0.5, 0.5);
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
+    models.forEach(g -> applyPaint(g, g2d, transform, bound));
+    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
+    g2d.translate(-0.5, -0.5);
+  }
+
+  // for OA 6-up
+  void duplicateOnTo6up(DefaultView2d view2d)
+  {
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0)
     {
@@ -635,13 +647,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         }
       }
     }
-
-    g2d.translate(0.5, 0.5);
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
-    models.forEach(g -> applyPaint(g, g2d, transform, bound));
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
-    g2d.translate(-0.5, -0.5);
   }
+
 
   private static void applyPaint(
       Graphic graphic, Graphics2D g2d, AffineTransform transform, Rectangle2D bounds) {
