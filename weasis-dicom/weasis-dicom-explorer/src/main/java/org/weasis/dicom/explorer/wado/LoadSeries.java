@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.wado;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,7 +18,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DecimalFormat;
@@ -56,6 +60,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.model.PerformanceModel;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.AuthResponse;
@@ -229,15 +234,63 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       this.dicomSeries.setSeriesLoader(null);
       DownloadManager.removeLoadSeries(this, dicomModel);
 
+      String loadType = getLoadType();
+      String seriesUID = (String) dicomSeries.getTagValue(dicomSeries.getTagID());
+      String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
+      int imageNumber = getImageNumber();
+      long fileSize = dicomSeries.getFileSize();
+      long time = getDownloadTime();
+      String rate = getDownloadRate(time);
+
       LOGGER.info(
-          "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}",
+          "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} time:{} rate:{}",
           AuditLog.MARKER_PERF,
-          getLoadType(),
-          dicomSeries.getTagValue(dicomSeries.getTagID()),
-          TagD.getTagValue(dicomSeries, Tag.Modality, String.class),
-          getImageNumber(),
-          dicomSeries.getFileSize(),
-          getDownloadTime());
+          loadType,
+          seriesUID,
+          modality,
+          imageNumber,
+          fileSize,
+          time,
+          rate);
+
+      if ("WADO".equals(loadType)) {
+        String configServicePath = BundleTools.getConfigServiceUrl();
+        if (StringUtil.hasText(configServicePath)) {
+          Map<String, String> map = new HashMap<>();
+          map.put("Content-Type", "application/json"); // NON-NLS
+          try {
+            URL url = new URL(configServicePath);
+            Map<String, String> params = URLParameters.splitParameter(url);
+            URLParameters urlParams = new URLParameters(map, true);
+            String user = params.get("user");
+            String host = params.get("host");
+            PerformanceModel model =
+                new PerformanceModel(
+                    StringUtil.hasText(user) ? user : AppProperties.WEASIS_USER,
+                    StringUtil.hasText(host) ? host : InetAddress.getLocalHost().getHostName(),
+                    loadType,
+                    seriesUID,
+                    modality,
+                    imageNumber,
+                    fileSize,
+                    time,
+                    rate);
+
+            ClosableURLConnection http = NetworkUtil.getUrlConnection(url, urlParams);
+            try (OutputStream out = http.getOutputStream()) {
+              OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8");
+              writer.write(new ObjectMapper().writeValueAsString(model));
+            }
+            if (http.getUrlConnection() instanceof HttpURLConnection) {
+              NetworkUtil.readResponse(
+                  (HttpURLConnection) http.getUrlConnection(), urlParams.getUnmodifiableHeaders());
+            }
+          } catch (Exception e) {
+            LOGGER.error("Cannot send log to the launchConfig service", e);
+          }
+        }
+      }
+
       dicomSeries.removeTag(DOWNLOAD_START_TIME);
 
       final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
@@ -324,17 +377,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return val;
   }
 
-  private String getDownloadTime() {
+  private long getDownloadTime() {
     Long val = (Long) dicomSeries.getTagValue(DOWNLOAD_START_TIME);
-    long time = val == null ? 0 : System.currentTimeMillis() - val;
-    StringBuilder buf = new StringBuilder();
-    buf.append("time:"); // NON-NLS
-    buf.append(time);
-    buf.append(" rate:"); // NON-NLS
+    return val == null ? 0 : System.currentTimeMillis() - val;
+  }
+
+  private String getDownloadRate(long time) {
     // rate in kB/s or B/ms
     DecimalFormat format = new DecimalFormat("#.##", LocalUtil.getDecimalFormatSymbols());
-    buf.append(val == null || time == 0 ? 0 : format.format(dicomSeries.getFileSize() / time));
-    return buf.toString();
+    return time <= 0 ? "0" : format.format(dicomSeries.getFileSize() / time);
   }
 
   private boolean isSOPInstanceUIDExist(
