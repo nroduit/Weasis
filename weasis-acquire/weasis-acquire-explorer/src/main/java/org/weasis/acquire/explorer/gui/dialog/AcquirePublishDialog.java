@@ -382,7 +382,7 @@ public class AcquirePublishDialog extends JDialog {
     ThreadUtil.buildNewSingleThreadExecutor("Dicomize").execute(dicomizeTask); // NON-NLS
   }
 
-  private static  void setZoomRatio(AcquireImageInfo imgInfo, Double ratio){
+  private static void setZoomRatio(AcquireImageInfo imgInfo, Double ratio) {
     imgInfo.getCurrentValues().setRatio(ratio);
     ImageOpNode node = imgInfo.getPostProcessOpManager().getNode(ZoomOp.OP_NAME);
     if (node != null) {

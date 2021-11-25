@@ -96,7 +96,7 @@ public class WeasisLauncher {
 
     private int index;
 
-    private State(int state) {
+    State(int state) {
       this.index = state;
     }
 

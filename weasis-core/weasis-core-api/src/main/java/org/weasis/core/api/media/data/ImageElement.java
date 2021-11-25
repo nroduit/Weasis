@@ -165,7 +165,7 @@ public class ImageElement extends MediaElement {
   }
 
   public double getPixelSize() {
-    return pixelSizeX <= pixelSizeY ? pixelSizeX : pixelSizeY;
+    return Math.min(pixelSizeX, pixelSizeY);
   }
 
   public void setPixelSize(double pixelSize) {
