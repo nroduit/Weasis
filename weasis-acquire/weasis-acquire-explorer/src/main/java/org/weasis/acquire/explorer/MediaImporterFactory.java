@@ -9,8 +9,10 @@
  */
 package org.weasis.acquire.explorer;
 
+import java.io.File;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.Properties;
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -20,12 +22,16 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
+import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.util.FileUtil;
 
 @org.osgi.service.component.annotations.Component(
     service = DataExplorerViewFactory.class,
     immediate = false)
 public class MediaImporterFactory implements DataExplorerViewFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
+
+  public static final Properties EXPORT_PERSISTENCE = new Properties();
 
   private AcquireExplorer explorer = null;
 
@@ -46,6 +52,9 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
   @Activate
   protected void activate(ComponentContext context) {
     registerCommands(context);
+    FileUtil.readProperties(
+        new File(BundlePreferences.getDataFolder(context.getBundleContext()), "publish.properties"),
+        EXPORT_PERSISTENCE);
   }
 
   @Deactivate
@@ -54,6 +63,11 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
       explorer.saveLastPath();
       AcquireManager.getInstance().unRegisterDataExplorerView();
       // TODO handle user message if all data is not published !!!
+      FileUtil.storeProperties(
+          new File(
+              BundlePreferences.getDataFolder(context.getBundleContext()), "publish.properties"),
+          EXPORT_PERSISTENCE,
+          null);
     }
   }
 

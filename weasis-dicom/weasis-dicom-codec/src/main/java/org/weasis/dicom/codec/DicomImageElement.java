@@ -112,8 +112,13 @@ public class DicomImageElement extends ImageElement {
           Double calibY =
               DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
           if (calibX != null && calibY != null) {
-            setPixelSize(calibX, calibY);
-            pixelSpacingUnit = Unit.CENTIMETER;
+            calibX = Math.abs(calibX);
+            calibY = Math.abs(calibY);
+            // Do not apply when value X and Y are different, otherwise the image will be stretched
+            if (MathUtil.isEqual(calibX, calibY)) {
+              setPixelSize(calibX, calibY);
+              pixelSpacingUnit = Unit.CENTIMETER;
+            }
           }
         }
       }

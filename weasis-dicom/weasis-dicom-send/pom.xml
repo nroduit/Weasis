@@ -24,6 +24,11 @@
       <plugin>
         <groupId>biz.aQute.bnd</groupId>
         <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Export-Package: org.weasis.dicom.send.*
+          </bnd>
+        </configuration>
       </plugin>
     </plugins>
   </build>

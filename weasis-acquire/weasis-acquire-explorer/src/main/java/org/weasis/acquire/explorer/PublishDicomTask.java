@@ -10,22 +10,16 @@
 package org.weasis.acquire.explorer;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import javax.swing.SwingWorker;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.op.CStore;
-import org.weasis.dicom.param.AdvancedParams;
-import org.weasis.dicom.param.ConnectOptions;
-import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 
@@ -40,19 +34,12 @@ import org.weasis.dicom.param.DicomState;
 public class PublishDicomTask extends SwingWorker<DicomState, File> {
   private static final Logger LOGGER = LoggerFactory.getLogger(PublishDicomTask.class);
 
-  private final File exportDirDicom;
-  private final DicomNode callingNode;
-  private final DicomNode destinationNode;
+  private Supplier<DicomState> publish;
+  private final DicomProgress dicomProgress;
 
-  private final DicomProgress dicomProgress = new DicomProgress();
-
-  public PublishDicomTask(File exportDirDicom, DicomNode destinationNode) {
-    this.exportDirDicom = Objects.requireNonNull(exportDirDicom);
-    this.destinationNode = Objects.requireNonNull(destinationNode);
-    this.callingNode =
-        new DicomNode(
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE")); // NON-NLS
-    LOGGER.debug("destinationNode is : {}", destinationNode);
+  public PublishDicomTask(Supplier<DicomState> publish, DicomProgress dicomProgress) {
+    this.publish = publish;
+    this.dicomProgress = Objects.requireNonNull(dicomProgress);
     initDicomProgress();
   }
 
@@ -71,19 +58,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
 
   @Override
   protected DicomState doInBackground() throws Exception {
-    List<String> exportFilesDicomPath = new ArrayList<>();
-    exportFilesDicomPath.add(exportDirDicom.getPath());
-    AdvancedParams params = new AdvancedParams();
-    ConnectOptions connectOptions = new ConnectOptions();
-    connectOptions.setConnectTimeout(3000);
-    connectOptions.setAcceptTimeout(5000);
-    params.setConnectOptions(connectOptions);
-    try {
-      return CStore.process(
-          params, callingNode, destinationNode, exportFilesDicomPath, dicomProgress);
-    } finally {
-      FileUtil.recursiveDelete(exportDirDicom);
-    }
+    return publish.get();
   }
 
   @Override

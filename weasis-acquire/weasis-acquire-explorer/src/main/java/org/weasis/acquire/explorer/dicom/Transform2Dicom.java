@@ -35,6 +35,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
@@ -74,25 +75,17 @@ public final class Transform2Dicom {
         Objects.requireNonNull((String) imageElement.getTagValue(TagD.getUID(Level.INSTANCE)));
 
     // Transform to JPEG
+    Integer orientation =
+        StringUtil.getInteger((String) imageElement.getTagValue(TagW.ExifOrientation));
     File imgFile = imageElement.getFileCache().getOriginalFile().orElse(null);
     if (imgFile == null
         || !imageElement.getMimeType().contains("jpeg")
-        || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())) {
+        || !imageInfo.getCurrentValues().equals(imageInfo.getDefaultValues())
+        || (orientation != null && orientation > 0)) {
 
       imgFile = new File(exportDirImage, sopInstanceUID + ".jpg");
       SimpleOpManager opManager = imageInfo.getPostProcessOpManager();
       PlanarImage transformedImage = imageElement.getImage(opManager, false);
-
-      // TODO should be handled in the transformation
-      // Rectangle area = (Rectangle) opManager.getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
-      // Integer rotationAngle = Optional
-      // .ofNullable((Integer) opManager.getParamValue(RotationOp.OP_NAME,
-      // RotationOp.P_ROTATE)).orElse(0);
-      // rotationAngle = rotationAngle % 360;
-      // if (area != null && rotationAngle != 0 && rotationAngle != 180) {
-      // transformedImage = TranslateDescriptor.create(transformedImage, (float) -area.getX(),
-      // (float) -area.getY(), null, null);
-      // }
 
       MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
       if (!ImageProcessor.writeImage(transformedImage.toImageCV(), imgFile, map)) {

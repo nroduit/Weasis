@@ -12,8 +12,13 @@ package org.weasis.acquire.explorer.gui.control;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -22,16 +27,35 @@ import javax.swing.SwingWorker.StateValue;
 import org.dcm4che3.net.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.acquire.explorer.AcquireImageInfo;
+import org.weasis.acquire.explorer.AcquireImageStatus;
+import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog;
+import org.weasis.core.api.auth.AuthMethod;
+import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.task.CircularProgressBar;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.util.FileUtil;
+import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
+import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
+import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
+import org.weasis.dicom.explorer.pref.node.DicomWebNode;
+import org.weasis.dicom.op.CStore;
+import org.weasis.dicom.param.AdvancedParams;
+import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomNode;
+import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
+import org.weasis.dicom.send.StowRS;
+import org.weasis.dicom.web.Multipart;
 
 @SuppressWarnings("serial")
 public class AcquirePublishPanel extends JPanel {
@@ -39,14 +63,12 @@ public class AcquirePublishPanel extends JPanel {
 
   private final JButton publishBtn = new JButton(Messages.getString("AcquirePublishPanel.publish"));
   private final CircularProgressBar progressBar = new CircularProgressBar(0, 100);
+  private AuthMethod authMethod;
 
   public static final ExecutorService PUBLISH_DICOM =
       ThreadUtil.buildNewSingleThreadExecutor("Publish Dicom"); // NON-NLS
 
   public AcquirePublishPanel() {
-    // setBorder(new TitledBorder(null, "Publish", TitledBorder.LEADING, TitledBorder.TOP, null,
-    // null));
-
     publishBtn.addActionListener(
         e -> {
           final AcquirePublishDialog dialog = new AcquirePublishDialog(AcquirePublishPanel.this);
@@ -62,13 +84,90 @@ public class AcquirePublishPanel extends JPanel {
     progressBar.setVisible(false);
   }
 
-  public void publishDirDicom(File exportDirDicom, DicomNode destinationNode) {
+  public void publishDirDicom(
+      File exportDirDicom, AbstractDicomNode destinationNode, List<AcquireImageInfo> toPublish) {
+    SwingWorker<DicomState, File> publishDicomTask = null;
+    if (destinationNode instanceof DefaultDicomNode) {
+      DicomNode destNdde = ((DefaultDicomNode) destinationNode).getDicomNode();
+      publishDicomTask = publishDicomDimse(exportDirDicom, destNdde);
+    } else if (destinationNode instanceof DicomWebNode) {
+      final DicomWebNode node = (DicomWebNode) destinationNode;
+      publishDicomTask = publishStow(exportDirDicom, node, toPublish);
+    }
 
-    SwingWorker<DicomState, File> publishDicomTask =
-        new PublishDicomTask(exportDirDicom, destinationNode);
-    publishDicomTask.addPropertyChangeListener(this::publishChanged);
+    if (publishDicomTask != null) {
+      publishDicomTask.addPropertyChangeListener(this::publishChanged);
+      PUBLISH_DICOM.execute(publishDicomTask);
+    }
+  }
 
-    PUBLISH_DICOM.execute(publishDicomTask);
+  public PublishDicomTask publishDicomDimse(File exportDirDicom, DicomNode destNdde) {
+    DicomProgress dicomProgress = new DicomProgress();
+    Supplier<DicomState> publish =
+        () -> {
+          List<String> exportFilesDicomPath = new ArrayList<>();
+          exportFilesDicomPath.add(exportDirDicom.getPath());
+          AdvancedParams params = new AdvancedParams();
+          ConnectOptions connectOptions = new ConnectOptions();
+          connectOptions.setConnectTimeout(3000);
+          connectOptions.setAcceptTimeout(5000);
+          params.setConnectOptions(connectOptions);
+          DicomNode callingNode =
+              new DicomNode(
+                  BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.aet", "WEASIS_AE")); // NON-NLS
+          try {
+            return CStore.process(
+                params, callingNode, destNdde, exportFilesDicomPath, dicomProgress);
+          } finally {
+            FileUtil.recursiveDelete(exportDirDicom);
+          }
+        };
+    return new PublishDicomTask(publish, dicomProgress);
+  }
+
+  public PublishDicomTask publishStow(
+      File exportDirDicom, DicomWebNode node, List<AcquireImageInfo> toPublish) {
+    AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
+    if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
+      String oldCode = auth.getCode();
+      authMethod = auth;
+      if (authMethod.getToken() == null) {
+        return null;
+      }
+      if (!Objects.equals(oldCode, authMethod.getCode())) {
+        AuthenticationPersistence.saveMethod();
+      }
+    }
+
+    Supplier<DicomState> publish =
+        () -> {
+          try (StowRS stowRS =
+              new StowRS(
+                  node.getUrl().toString(),
+                  Multipart.ContentType.DICOM,
+                  AppProperties.WEASIS_NAME,
+                  node.getHeaders())) {
+
+            DicomState state =
+                stowRS.uploadDicom(
+                    Arrays.asList(exportDirDicom.getAbsolutePath()), true, authMethod);
+            if (state.getStatus() == Status.Success) {
+              toPublish.forEach(
+                  i -> {
+                    i.setStatus(AcquireImageStatus.PUBLISHED);
+                    i.getImage().setTag(TagW.Checked, Boolean.TRUE);
+                    AcquireManager.getInstance().removeImage(i);
+                  });
+            }
+            return state;
+          } catch (Exception e) {
+            LOGGER.error("STOW-RS publish", e);
+            return DicomState.buildMessage(null, e.getMessage(), null);
+          } finally {
+            FileUtil.recursiveDelete(exportDirDicom);
+          }
+        };
+    return new PublishDicomTask(publish, new DicomProgress());
   }
 
   private void publishChanged(PropertyChangeEvent evt) {

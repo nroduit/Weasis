@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer.wado;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -17,20 +18,26 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import javax.swing.JProgressBar;
 import org.dcm4che3.data.Attributes;
@@ -56,12 +63,12 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.model.PerformanceModel;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.AuthResponse;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.HttpResponse;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.api.util.URLParameters;
@@ -101,12 +108,12 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   public static final File DICOM_TMP_DIR =
       AppProperties.buildAccessibleTempDirectory("downloading"); // NON-NLS
   public static final TagW DOWNLOAD_START_TIME = new TagW("DownloadSartTime", TagType.TIME);
+  public static final TagW DOWNLOAD_TIME = new TagW("DownloadTime", TagType.TIME);
+  public static final TagW DOWNLOAD_ERRORS = new TagW("DownloadErrors", TagType.INTEGER);
 
   public enum Status {
     DOWNLOADING,
-    PAUSED,
     COMPLETE,
-    CANCELLED,
     ERROR
   }
 
@@ -121,6 +128,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   private final boolean startDownloading;
   private final AuthMethod authMethod;
 
+  private final AtomicInteger errors;
   private volatile boolean hasError = false;
 
   public LoadSeries(
@@ -135,28 +143,15 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       int concurrentDownloads,
       boolean writeInCache,
       boolean startDownloading) {
-    super(Messages.getString("DicomExplorer.loading"), writeInCache, true);
-    if (dicomModel == null || dicomSeries == null) {
-      throw new IllegalArgumentException("null parameters");
-    }
-    this.dicomModel = dicomModel;
-    this.dicomSeries = dicomSeries;
-    this.authMethod = authMethod;
-    this.seriesInstanceList =
-        Optional.ofNullable(
-                (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
-            .orElseGet(SeriesInstanceList::new);
-    this.writeInCache = writeInCache;
-    this.progressBar = getBar();
-    if (!writeInCache) {
-      progressBar.setVisible(false);
-    }
-    this.dicomSeries.setSeriesLoader(this);
-    this.concurrentDownloads = concurrentDownloads;
-    this.urlParams =
-        new URLParameters(
-            getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
-    this.startDownloading = startDownloading;
+    this(
+        dicomSeries,
+        dicomModel,
+        authMethod,
+        null,
+        concurrentDownloads,
+        writeInCache,
+        startDownloading,
+        false);
   }
 
   public LoadSeries(
@@ -167,8 +162,28 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       int concurrentDownloads,
       boolean writeInCache,
       boolean startDownloading) {
+    this(
+        dicomSeries,
+        dicomModel,
+        authMethod,
+        progressBar,
+        concurrentDownloads,
+        writeInCache,
+        startDownloading,
+        true);
+  }
+
+  public LoadSeries(
+      Series<?> dicomSeries,
+      DicomModel dicomModel,
+      AuthMethod authMethod,
+      JProgressBar progressBar,
+      int concurrentDownloads,
+      boolean writeInCache,
+      boolean startDownloading,
+      boolean externalProgress) {
     super(Messages.getString("DicomExplorer.loading"), writeInCache, true);
-    if (dicomModel == null || dicomSeries == null || progressBar == null) {
+    if (dicomModel == null || dicomSeries == null || (progressBar == null && externalProgress)) {
       throw new IllegalArgumentException("null parameters");
     }
     this.dicomModel = dicomModel;
@@ -178,14 +193,22 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         Optional.ofNullable(
                 (SeriesInstanceList) dicomSeries.getTagValue(TagW.WadoInstanceReferenceList))
             .orElseGet(SeriesInstanceList::new);
-    this.progressBar = progressBar;
     this.writeInCache = writeInCache;
+    this.progressBar = externalProgress ? progressBar : getBar();
+    if (!externalProgress && !writeInCache) {
+      this.progressBar.setVisible(false);
+    }
     this.dicomSeries.setSeriesLoader(this);
     this.concurrentDownloads = concurrentDownloads;
     this.urlParams =
         new URLParameters(
             getHttpTags((WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters)));
     this.startDownloading = startDownloading;
+    Integer downloadErrors = (Integer) dicomSeries.getTagValue(DOWNLOAD_ERRORS);
+    if (downloadErrors == null) {
+      downloadErrors = 0;
+    }
+    this.errors = new AtomicInteger(downloadErrors);
   }
 
   @Override
@@ -208,6 +231,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     if (!isDone()) {
       boolean val = cancel();
       dicomSeries.setSeriesLoader(this);
+      dicomSeries.setTag(DOWNLOAD_TIME, getDownloadTime());
       return val;
     }
     return true;
@@ -229,16 +253,72 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       this.dicomSeries.setSeriesLoader(null);
       DownloadManager.removeLoadSeries(this, dicomModel);
 
+      String loadType = getLoadType();
+      String seriesUID = (String) dicomSeries.getTagValue(dicomSeries.getTagID());
+      String modality = TagD.getTagValue(dicomSeries, Tag.Modality, String.class);
+      int imageNumber = getImageNumber();
+      long fileSize = dicomSeries.getFileSize();
+      long time = getDownloadTime();
+      String rate = getDownloadRate(time);
+      Integer errors = (Integer) dicomSeries.getTagValue(DOWNLOAD_ERRORS);
+      if (errors == null) {
+        errors = 0;
+      }
+
       LOGGER.info(
-          "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} {}",
+          "{} type:{} seriesUID:{} modality:{} nbImages:{} size:{} time:{} rate:{} errors:{}",
           AuditLog.MARKER_PERF,
-          getLoadType(),
-          dicomSeries.getTagValue(dicomSeries.getTagID()),
-          TagD.getTagValue(dicomSeries, Tag.Modality, String.class),
-          getImageNumber(),
-          dicomSeries.getFileSize(),
-          getDownloadTime());
+          loadType,
+          seriesUID,
+          modality,
+          imageNumber,
+          fileSize,
+          time,
+          rate,
+          errors);
+
+      if ("WADO".equals(loadType)) {
+        String configServicePath = BundleTools.getConfigServiceUrl();
+        if (StringUtil.hasText(configServicePath)) {
+          Map<String, String> map = new HashMap<>();
+          map.put("Content-Type", "application/json"); // NON-NLS
+          try {
+            URL url = new URL(configServicePath);
+            Map<String, String> params = URLParameters.splitParameter(url);
+            URLParameters urlParams = new URLParameters(map, true);
+            String user = params.get("user"); // NON-NLS
+            String host = params.get("host"); // NON-NLS
+            PerformanceModel model =
+                new PerformanceModel(
+                    StringUtil.hasText(user) ? user : AppProperties.WEASIS_USER,
+                    StringUtil.hasText(host) ? host : InetAddress.getLocalHost().getHostName(),
+                    loadType,
+                    seriesUID,
+                    modality,
+                    imageNumber,
+                    fileSize,
+                    time,
+                    rate,
+                    errors);
+
+            ClosableURLConnection http = NetworkUtil.getUrlConnection(url, urlParams);
+            try (OutputStream out = http.getOutputStream()) {
+              OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8"); // NON-NLS
+              writer.write(new ObjectMapper().writeValueAsString(model));
+            }
+            if (http.getUrlConnection() instanceof HttpURLConnection) {
+              NetworkUtil.readResponse(
+                  (HttpURLConnection) http.getUrlConnection(), urlParams.getUnmodifiableHeaders());
+            }
+          } catch (Exception e) {
+            LOGGER.error("Cannot send log to the launchConfig service", e);
+          }
+        }
+      }
+
       dicomSeries.removeTag(DOWNLOAD_START_TIME);
+      dicomSeries.removeTag(DOWNLOAD_TIME);
+      dicomSeries.removeTag(DOWNLOAD_ERRORS);
 
       final SeriesThumbnail thumbnail = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
 
@@ -258,8 +338,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             (List<DicomSpecialElement>) dicomSeries.getTagValue(TagW.DicomSpecialElementList);
         if (list != null) {
           list.stream()
-              .filter(DicomSpecialElement.class::isInstance)
-              .map(DicomSpecialElement.class::cast)
+              .filter(Objects::nonNull)
               .findFirst()
               .ifPresent(
                   d ->
@@ -324,17 +403,26 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return val;
   }
 
-  private String getDownloadTime() {
+  private long getDownloadTime() {
     Long val = (Long) dicomSeries.getTagValue(DOWNLOAD_START_TIME);
-    long time = val == null ? 0 : System.currentTimeMillis() - val;
-    StringBuilder buf = new StringBuilder();
-    buf.append("time:"); // NON-NLS
-    buf.append(time);
-    buf.append(" rate:"); // NON-NLS
+    if (val == null) {
+      val = 0L;
+    } else {
+      val = System.currentTimeMillis() - val;
+      dicomSeries.setTag(DOWNLOAD_START_TIME, null);
+    }
+    Long time = (Long) dicomSeries.getTagValue(DOWNLOAD_TIME);
+    if (time == null) {
+      time = 0L;
+    }
+    return val + time;
+  }
+
+  private String getDownloadRate(long time) {
     // rate in kB/s or B/ms
-    DecimalFormat format = new DecimalFormat("#.##", LocalUtil.getDecimalFormatSymbols());
-    buf.append(val == null || time == 0 ? 0 : format.format(dicomSeries.getFileSize() / time));
-    return buf.toString();
+    DecimalFormat format =
+        new DecimalFormat("#.##", DecimalFormatSymbols.getInstance(Locale.ENGLISH));
+    return time <= 0 ? "0" : format.format((double) dicomSeries.getFileSize() / time);
   }
 
   private boolean isSOPInstanceUIDExist(
@@ -719,20 +807,9 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       this.status = Status.DOWNLOADING;
     }
 
-    public void pause() {
-      status = Status.PAUSED;
-    }
-
-    public void resume() {
-      status = Status.DOWNLOADING;
-    }
-
-    public void cancel() {
-      status = Status.CANCELLED;
-    }
-
     private void error() {
       status = Status.ERROR;
+      dicomSeries.setTag(DOWNLOAD_ERRORS, errors.incrementAndGet());
     }
 
     private HttpResponse replaceToDefaultTSUID() throws IOException {
@@ -759,7 +836,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       try {
         process();
       } catch (StreamIOException es) {
-        hasError = true; // network issue (allow to retry)
+        hasError = true; // network issue (allow retrying)
         error();
         LOGGER.error("Downloading", es);
       } catch (IOException | URISyntaxException e) {

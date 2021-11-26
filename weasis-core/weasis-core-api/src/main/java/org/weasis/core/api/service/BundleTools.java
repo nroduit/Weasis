@@ -149,7 +149,7 @@ public class BundleTools {
 
     if (!SYSTEM_PREFERENCES.equals(INIT_SYSTEM_PREFERENCES)) {
       FileUtil.storeProperties(propsFile, SYSTEM_PREFERENCES, null);
-      String remotePrefURL = getServiceUrl();
+      String remotePrefURL = getPrefServiceUrl();
       if (remotePrefURL != null) {
         try {
           storeLauncherPref(SYSTEM_PREFERENCES, remotePrefURL);
@@ -163,8 +163,12 @@ public class BundleTools {
     }
   }
 
-  public static String getServiceUrl() {
+  public static String getPrefServiceUrl() {
     return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.pref.url");
+  }
+
+  public static String getConfigServiceUrl() {
+    return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.config.url");
   }
 
   public static boolean isLocalSession() {

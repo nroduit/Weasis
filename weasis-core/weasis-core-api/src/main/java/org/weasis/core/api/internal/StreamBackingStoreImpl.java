@@ -261,7 +261,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   protected PreferencesImpl loadFromService(
       BackingStoreManager manager, PreferencesDescription desc) throws BackingStoreException {
 
-    String prefUrl = BundleTools.getServiceUrl();
+    String prefUrl = BundleTools.getPrefServiceUrl();
 
     if (StringUtil.hasText(prefUrl)
         && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
@@ -354,7 +354,7 @@ public class StreamBackingStoreImpl implements BackingStore {
       LOGGER.error("Cannot store preference file", e);
     }
 
-    String prefUrl = BundleTools.getServiceUrl();
+    String prefUrl = BundleTools.getPrefServiceUrl();
     if (prefUrl != null) {
       try {
         remoteStore(rootPrefs, prefUrl);
