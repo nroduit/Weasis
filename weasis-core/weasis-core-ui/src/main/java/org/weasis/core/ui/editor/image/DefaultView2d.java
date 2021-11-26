@@ -1019,7 +1019,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return imageLayer.getDisplayOpManager();
   }
 
-
   public void propertyChange(SynchCineEvent synch) {
     E imgElement = getImage();
     graphicManager.deleteByLayerType(LayerType.CROSSLINES);
@@ -1095,7 +1094,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (command.equals(ActionW.SYNCH.cmd())) {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       if (synch instanceof SynchCineEvent) {
-        propertyChange( (SynchCineEvent) synch);
+        propertyChange((SynchCineEvent) synch);
       } else {
         propertyChange(synch);
       }

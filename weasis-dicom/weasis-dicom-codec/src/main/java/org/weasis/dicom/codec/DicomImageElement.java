@@ -27,6 +27,7 @@ import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;

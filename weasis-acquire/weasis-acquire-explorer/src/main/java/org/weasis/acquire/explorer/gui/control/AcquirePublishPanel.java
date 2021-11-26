@@ -55,7 +55,7 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.send.StowRS;
-import org.weasis.dicom.web.Multipart;
+import org.weasis.dicom.web.ContentType;
 
 @SuppressWarnings("serial")
 public class AcquirePublishPanel extends JPanel {
@@ -144,7 +144,7 @@ public class AcquirePublishPanel extends JPanel {
           try (StowRS stowRS =
               new StowRS(
                   node.getUrl().toString(),
-                  Multipart.ContentType.DICOM,
+                  ContentType.APPLICATION_DICOM,
                   AppProperties.WEASIS_NAME,
                   node.getHeaders())) {
 
