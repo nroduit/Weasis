@@ -19,6 +19,7 @@ public class PerformanceModel {
   private long size;
   private long time;
   private String rate;
+  private int errors;
 
   public PerformanceModel(
       String userId,
@@ -29,7 +30,8 @@ public class PerformanceModel {
       int nbImages,
       long size,
       long time,
-      String rate) {
+      String rate,
+      int errors) {
     this.userId = userId;
     this.host = host;
     this.type = type;
@@ -39,6 +41,15 @@ public class PerformanceModel {
     this.size = size;
     this.time = time;
     this.rate = rate;
+    this.errors = errors;
+  }
+
+  public int getErrors() {
+    return errors;
+  }
+
+  public void setErrors(int errors) {
+    this.errors = errors;
   }
 
   public String getHost() {
