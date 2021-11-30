@@ -31,6 +31,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
+
+import org.dcm4che3.data.Tag;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -626,11 +628,19 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0)
     {
-      List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+      List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
       // TODO if appropriate number of regions for OA not present then don't proceed
-
       for (Graphic g : graphs)
       {
+
+        for (Attributes l : regions)
+        {
+          byte minx0 = ((byte [])l.getValue(Tag.RegionLocationMinX0))[0];
+          byte miny0 = ((byte [])l.getValue(Tag.RegionLocationMinY0))[0];
+          byte maxx1 = ((byte [])l.getValue(Tag.RegionLocationMaxX1))[0];
+          byte maxy1 = ((byte [])l.getValue(Tag.RegionLocationMaxY1))[0];
+          System.out.println("minx0: " + minx0 + ", miny0: " + miny0 + ", maxx1: " + maxx1 + ", maxy1: " + maxy1 + "\n");
+        }
         // TODO check if instance of DragGraphic
         // TODO check if in measurement layer
         DragGraphic dg = (DragGraphic)g;
