@@ -606,7 +606,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
-    duplicateOnTo6up(view2d);
+    duplicateTo6Up(view2d);
     fireChanged();
 
     g2d.translate(0.5, 0.5);
@@ -619,12 +619,16 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   }
 
-  // for OA 6-up
-  void duplicateOnTo6up(DefaultView2d view2d)  {
+  /*
+   * If an OA 6-up image is being displayed, duplicate any new measurements to each of the six regions.
+   */
+  void duplicateTo6Up(DefaultView2d view2d)  {
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0)
     {
       List<Attributes> l = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+      // TODO if appropriate number of regions for OA not present then don't proceed
+
       for (Graphic g : graphs)
       {
         // TODO check if instance of DragGraphic
@@ -632,13 +636,14 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving())
         {
+          // TODO figure out which region the new drawing is in, then duplicate to all others
           for (int i = 0; i < 6; i++)
           {
             DragGraphic c = dg.copy();
-
             List<Point2D> newPts = new ArrayList<Point2D>();
             for (Point2D p : c.getPts())
             {
+              // TODO put points in appropriate places
               newPts.add(new Point2D.Double(p.getX() - i * 50, p.getY() - i * 50));
             }
             c.setPts(newPts);
