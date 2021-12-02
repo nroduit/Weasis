@@ -626,15 +626,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0) {
 
-      Attributes dcmObject = ((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject();
-      List<Attributes> regions = Ultrasound.getRegions(dcmObject);
+      List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
 
-      // TODO if appropriate number of regions for OA not present then don't proceed
       for (Graphic g : graphs) {
 
-        // TODO check if instance of DragGraphic
-        // TODO turn Booleans i've added into bools
-        // TODO check if in measurement layer
+        // we only care about measurements we can drag
+        if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
+
         // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3)
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
