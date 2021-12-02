@@ -22,11 +22,8 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -66,6 +63,7 @@ import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
+import org.weasis.core.ui.model.utils.ByteArrayHelper;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -635,12 +633,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         for (Attributes l : regions)
         {
-          byte minx0 = ((byte [])l.getValue(Tag.RegionLocationMinX0))[0];
-          byte miny0 = ((byte [])l.getValue(Tag.RegionLocationMinY0))[0];
-          byte maxx1 = ((byte [])l.getValue(Tag.RegionLocationMaxX1))[0];
-          byte maxy1 = ((byte [])l.getValue(Tag.RegionLocationMaxY1))[0];
-          System.out.println("minx0: " + minx0 + ", miny0: " + miny0 + ", maxx1: " + maxx1 + ", maxy1: " + maxy1 + "\n");
+          long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMinX0)), 0);
+          long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMinY0)), 0);
+          long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMaxX1)), 0);
+          long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMaxY1)), 0);
+          System.out.println("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
         }
+
         // TODO check if instance of DragGraphic
         // TODO check if in measurement layer
         DragGraphic dg = (DragGraphic)g;
