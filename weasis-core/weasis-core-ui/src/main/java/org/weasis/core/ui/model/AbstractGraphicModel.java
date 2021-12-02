@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.model;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -624,44 +625,73 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
    */
   void duplicateTo6Up(DefaultView2d view2d)  {
     List<Graphic> graphs = this.getAllGraphics();
-    if (graphs.size() != 0)
-    {
-      List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
-      // TODO if appropriate number of regions for OA not present then don't proceed
-      for (Graphic g : graphs)
-      {
+    if (graphs.size() != 0) {
 
-        for (Attributes l : regions)
-        {
-          long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMinX0)), 0);
-          long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMinY0)), 0);
-          long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMaxX1)), 0);
-          long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])l.getValue(Tag.RegionLocationMaxY1)), 0);
-          System.out.println("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
-        }
+      Attributes dcmObject = ((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject();
+      List<Attributes> regions = Ultrasound.getRegions(dcmObject);
+
+      // TODO if appropriate number of regions for OA not present then don't proceed
+      for (Graphic g : graphs) {
 
         // TODO check if instance of DragGraphic
         // TODO check if in measurement layer
+        // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3)
         DragGraphic dg = (DragGraphic)g;
-        if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving())
-        {
-          // TODO figure out which region the new drawing is in, then duplicate to all others
-          for (int i = 0; i < 6; i++)
-          {
+        if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving()) {
+
+          //
+          // find the region that contains all the points in the graphic (possible there may not be one)
+          //
+          int regionWithMeasurement = -1; // -1 = invalid
+          for (int i = 0; i < regions.size(); i++) {
+            Attributes r = regions.get(i);
+            long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinX0)), 0);
+            long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinY0)), 0);
+            long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxX1)), 0);
+            long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxY1)), 0);
+
+            for (Point2D p : dg.getPts()) {
+              if (p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1) {
+                regionWithMeasurement = i;
+                break;
+              }
+            }
+
+            System.out.println("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
+          }
+
+          if (-1 == regionWithMeasurement) {
+            // TODO can we add logging?
+            System.out.println("-1 == regionWithMeasurement");
+            return;
+          }
+
+          System.out.println(regionWithMeasurement);
+
+          //
+          // draw the graphic on all the regions except the one that already has it
+          //
+          for (int i = 0; i < regions.size(); i++) {
+
+            if (i == regionWithMeasurement) { continue; }
+
+            Attributes r = regions.get(i);
+            long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinX0)), 0);
+            long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinY0)), 0);
+            long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxX1)), 0);
+            long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxY1)), 0);
+
             DragGraphic c = dg.copy();
             List<Point2D> newPts = new ArrayList<Point2D>();
-            for (Point2D p : c.getPts())
-            {
-              // TODO put points in appropriate places
-              newPts.add(new Point2D.Double(p.getX() - i * 50, p.getY() - i * 50));
+            for (Point2D p : c.getPts()) {
+              newPts.add(new Point2D.Double(p.getX() + x0, p.getY() + y0));
             }
             c.setPts(newPts);
-
             c.buildShape(null);
             c.setDuplicatedOn6Up(Boolean.TRUE);
-
             AbstractGraphicModel.addGraphicToModel(view2d, c);
           }
+
           dg.setDuplicatedOn6Up(Boolean.TRUE);
         }
       }
