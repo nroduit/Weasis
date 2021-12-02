@@ -179,9 +179,9 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   Boolean isGraphicComplete();
 
-  Boolean isDuplicatedOn6Up();
+  Boolean isHandledOn6up();
 
-  void setDuplicatedOn6Up(Boolean b);
+  void setHandledOn6up(Boolean b);
 
   List<Point2D> getPts();
 

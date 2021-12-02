@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.model;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
@@ -634,10 +633,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       for (Graphic g : graphs) {
 
         // TODO check if instance of DragGraphic
+        // TODO turn Booleans i've added into bools
         // TODO check if in measurement layer
         // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3)
         DragGraphic dg = (DragGraphic)g;
-        if (dg.isGraphicComplete() && !dg.isDuplicatedOn6Up() && !dg.getResizingOrMoving()) {
+        if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
+
+          dg.setHandledOn6up(Boolean.TRUE);
 
           //
           // find the region that contains all the points in the graphic (possible there may not be one)
@@ -650,11 +652,17 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxX1)), 0);
             long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxY1)), 0);
 
-            for (Point2D p : dg.getPts()) {
-              if (p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1) {
-                regionWithMeasurement = i;
-                break;
+            Boolean allPointsInRegion = Boolean.TRUE; // innocent until proven guilty
+            for (int j = 0; j < dg.getPts().size(); j++) {
+              Point2D p = dg.getPts().get(j);
+              if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
+                allPointsInRegion = Boolean.FALSE;
               }
+            }
+
+            if (allPointsInRegion) {
+              regionWithMeasurement = i;
+              break;
             }
 
             System.out.println("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
@@ -690,11 +698,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             }
             c.setPts(newPts);
             c.buildShape(null);
-            c.setDuplicatedOn6Up(Boolean.TRUE);
+            c.setHandledOn6up(Boolean.TRUE);
             AbstractGraphicModel.addGraphicToModel(view2d, c);
           }
-
-          dg.setDuplicatedOn6Up(Boolean.TRUE);
         }
       }
     }
