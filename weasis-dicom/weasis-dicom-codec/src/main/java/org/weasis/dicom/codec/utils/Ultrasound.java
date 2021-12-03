@@ -103,21 +103,17 @@ public class Ultrasound {
     }
   }
 
-  public static long getMinX0(Attributes a)
-  {
-    // TODO handle tag doesn't exist
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinX0)), 0);
+  public static Double getPhysicalDeltaX(Attributes region) {
+    return DicomMediaUtils.getDoubleFromDicomElement(region, Tag.PhysicalDeltaX, null);
   }
 
-  public static Integer getUnitsForXY(Attributes region) {
-    Integer unitX =
-            DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsXDirection, null);
-    Integer unitY =
-            DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsYDirection, null);
-    if (unitX != null && unitX.equals(unitY)) {
-      return unitX;
-    }
-    return null;
+  public static Double getPhysicalDeltaY(Attributes region) {
+    return DicomMediaUtils.getDoubleFromDicomElement(region, Tag.PhysicalDeltaY, null);
+  }
+
+  public static long getMinX0(Attributes a)
+  {
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinX0)), 0);
   }
 
   public static long getMinY0(Attributes a)

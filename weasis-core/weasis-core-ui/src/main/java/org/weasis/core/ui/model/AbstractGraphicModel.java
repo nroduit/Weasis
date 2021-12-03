@@ -679,6 +679,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           //
           long xoffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
           long yoffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
+          double xscale = Ultrasound.getPhysicalDeltaX(regions.get(regionWithMeasurement));
+          double yscale = Ultrasound.getPhysicalDeltaY(regions.get(regionWithMeasurement));
           for (int i = 0; i < regions.size(); i++) {
 
             if (i == regionWithMeasurement) { continue; }
@@ -689,9 +691,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             long x1 = Ultrasound.getMaxX1(r);
             long y1 = Ultrasound.getMaxY1(r);
 
+            double physicalDeltaX = Ultrasound.getPhysicalDeltaX(r);
+            double physicalDeltaY = Ultrasound.getPhysicalDeltaY(r);
+
             DragGraphic c = dg.copy();
             List<Point2D> newPts = new ArrayList<Point2D>();
             for (Point2D p : c.getPts()) {
+              //double newX = (p.getX() * xscale) - (xoffset * xscale)
               newPts.add(new Point2D.Double(p.getX() - xoffset + x0, p.getY() - yoffset + y0));
             }
             c.setPts(newPts);
