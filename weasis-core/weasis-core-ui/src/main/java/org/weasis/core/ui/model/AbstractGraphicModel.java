@@ -626,6 +626,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
    * If an OA 6-up image is being displayed, duplicate any new measurements to each of the six regions.
    */
   void duplicateTo6Up(DefaultView2d view2d)  {
+
     List<Graphic> graphs = this.getAllGraphics();
     if (graphs.size() != 0) {
 
@@ -636,7 +637,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         // we only care about measurements we can drag
         if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
 
-        // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3 (cm))
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
 
@@ -668,20 +668,21 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           }
 
           if (-1 == regionWithMeasurement) {
-            LOGGER.error("region with " + dg.getPts() + "not in one region, not replicating");
+            LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
             return;
           }
 
           //
-          // draw the graphic on all the regions except the one that already has it
+          // draw the graphic on all the regions
           //
           long sourceXOffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
           long sourceYOffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
           double sourceXScale = Ultrasound.getPhysicalDeltaX(regions.get(regionWithMeasurement));
           double sourceYScale = Ultrasound.getPhysicalDeltaY(regions.get(regionWithMeasurement));
+          int sourceUnits = Ultrasound.getUnitsForXY(regions.get(regionWithMeasurement));
           for (int i = 0; i < regions.size(); i++) {
 
-            if (i == regionWithMeasurement) { continue; }
+            if (i == regionWithMeasurement) { continue; }  // don't draw on the one that already has it
 
             Attributes r = regions.get(i);
             long x0 = Ultrasound.getMinX0(r);
@@ -691,6 +692,12 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             double xScale = Ultrasound.getPhysicalDeltaX(r);
             double yScale = Ultrasound.getPhysicalDeltaY(r);
 
+            if (sourceUnits != Ultrasound.getUnitsForXY(r))
+            {
+              LOGGER.warn("region " + i + " unit type " + Ultrasound.getUnitsForXY(r) + " does not equal source unit type " + sourceUnits + ".  not replicating.");
+              return;
+            }
+
             DragGraphic c = dg.copy();
             List<Point2D> newPts = new ArrayList<Point2D>();
             for (Point2D p : c.getPts()) {
@@ -699,6 +706,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
               newPts.add(new Point2D.Double(newX, newY));
             }
 
+            LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
             c.setPts(newPts);
             c.buildShape(null);
             c.setHandledOn6up(Boolean.TRUE);
