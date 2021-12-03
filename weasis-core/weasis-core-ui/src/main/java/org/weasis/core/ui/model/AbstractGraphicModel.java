@@ -605,7 +605,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
-    duplicateTo6Up(view2d);
+    duplicateToUltrasoundRegions(view2d);
     fireChanged();
 
     g2d.translate(0.5, 0.5);
@@ -621,7 +621,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   /*
    * If an OA 6-up image is being displayed, duplicate any new measurements to each of the six regions.
    */
-  void duplicateTo6Up(DefaultView2d view2d)  {
+  void duplicateToUltrasoundRegions(DefaultView2d view2d)  {
 
     for (Graphic g : this.getAllGraphics()) {
 
@@ -629,7 +629,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
 
       DragGraphic dg = (DragGraphic)g;
-      if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {  // only when ready
+
+      if (dg.isGraphicComplete() && !dg.isHandledForRegions() && !dg.getResizingOrMoving()) {  // only when ready
 
         //
         // find the region that contains all the points in the graphic (possible there may not be one)
@@ -659,7 +660,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         if (-1 == regionWithMeasurement) {
           LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
-          dg.setHandledOn6up(Boolean.TRUE);
+          dg.setHandledForRegions(Boolean.TRUE);
           return;
         }
 
@@ -701,10 +702,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
           c.setPts(newPts);
           c.buildShape(null);
-          c.setHandledOn6up(Boolean.TRUE);
+          c.setHandledForRegions(Boolean.TRUE);
           AbstractGraphicModel.addGraphicToModel(view2d, c);
         }
-        dg.setHandledOn6up(Boolean.TRUE);
+        dg.setHandledForRegions(Boolean.TRUE);
       }
     }
   }

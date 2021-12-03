@@ -86,7 +86,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected Boolean variablePointsNumber = Boolean.FALSE;
   protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-  protected Boolean handledOn6up = Boolean.FALSE;
+  protected Boolean handledForRegions = Boolean.FALSE;
 
   private GraphicLayer layer;
 
@@ -561,12 +561,12 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return Objects.equals(pts.size(), pointNumber);
   }
 
-  public Boolean isHandledOn6up() {
-    return handledOn6up;
+  public Boolean isHandledForRegions() {
+    return handledForRegions;
   }
 
-  public void setHandledOn6up(Boolean b) {
-    handledOn6up = b;
+  public void setHandledForRegions(Boolean b) {
+    handledForRegions = b;
   }
 
   public Point2D getHandlePoint(int index) {
