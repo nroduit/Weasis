@@ -38,10 +38,7 @@ import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.DragGraphic;
-import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.GraphicLabel;
-import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.graphic.*;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.PixelInfoGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
@@ -651,9 +648,16 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             if (dg2.getUuid() == dg.getUuid()) { continue; } // don't process the identical graphic
             if (dg.getRegionGroupID() != dg2.getRegionGroupID()) { continue; } // only process the ones in this group
 
+            // adjust position of graphic
             List<Point2D> newPts = createNewPointsForRegion(regions.get(findRegionWithMeasurement(regions, dg)), regions.get(findRegionWithMeasurement(regions, dg2)), dg);
             LOGGER.debug("due to change, redrawing shape with points " + newPts);
             dg2.setPts(newPts);
+
+            // adjust position of the label
+            AbstractGraphicLabel l = (AbstractGraphicLabel) dg2.getGraphicLabel();
+            l.setLabels(dg.getGraphicLabel().getLabels());
+            dg2.setLabel(l);
+
             dg2.buildShape(null);
           }
           dg.setHandledForRegions(Boolean.TRUE);
