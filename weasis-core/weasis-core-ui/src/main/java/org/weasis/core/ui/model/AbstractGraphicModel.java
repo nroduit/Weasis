@@ -653,7 +653,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             long x1 = Ultrasound.getMaxX1(r);
             long y1 = Ultrasound.getMaxY1(r);
 
-            Boolean allPointsInRegion = Boolean.TRUE; // innocent until proven guilty
+            Boolean allPointsInRegion = Boolean.TRUE;
             for (int j = 0; j < dg.getPts().size(); j++) {
               Point2D p = dg.getPts().get(j);
               if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
@@ -665,13 +665,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
               regionWithMeasurement = i;
               break;
             }
-            
-            LOGGER.debug("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
           }
 
           if (-1 == regionWithMeasurement) {
-            // TODO can we add logging?
-            System.out.println("-1 == regionWithMeasurement");
+            LOGGER.error("region with " + dg.getPts() + "not in one region, not replicating");
             return;
           }
 
@@ -701,6 +698,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
               double newY = ((p.getY() * yScale) - (sourceYOffset * sourceYScale) + (y0 * yScale)) / yScale;
               newPts.add(new Point2D.Double(newX, newY));
             }
+
             c.setPts(newPts);
             c.buildShape(null);
             c.setHandledOn6up(Boolean.TRUE);
