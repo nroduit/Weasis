@@ -87,6 +87,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
   protected Boolean handledForRegions = Boolean.FALSE;
+  protected String  regionGroupID = "";
 
   private GraphicLayer layer;
 
@@ -561,13 +562,15 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return Objects.equals(pts.size(), pointNumber);
   }
 
-  public Boolean isHandledForRegions() {
-    return handledForRegions;
-  }
+  public Boolean isHandledForRegions() { return handledForRegions; }
 
   public void setHandledForRegions(Boolean b) {
     handledForRegions = b;
   }
+
+  public String getRegionGroupID() { return regionGroupID; }
+
+  public void setRegionGroupID(String b) {  regionGroupID = b; }
 
   public Point2D getHandlePoint(int index) {
     Predicate<List<Point2D>> validateIndex = list -> list.size() > index;

@@ -183,6 +183,10 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   void setHandledForRegions(Boolean b);
 
+  String getRegionGroupID();
+
+  void setRegionGroupID(String b);
+
   List<Point2D> getPts();
 
   Integer getPtsNumber();

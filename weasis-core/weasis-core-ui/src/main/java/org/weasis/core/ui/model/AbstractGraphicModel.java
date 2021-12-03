@@ -28,6 +28,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
+
+import org.w3c.dom.Attr;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -630,75 +632,71 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
       DragGraphic dg = (DragGraphic)g;
 
+      // if we already drew the graphic but it is being changed
+      if (dg.getResizingOrMoving() && dg.isHandledForRegions()) {
+        dg.setHandledForRegions(Boolean.FALSE);
+      }
+
       if (dg.isGraphicComplete() && !dg.isHandledForRegions() && !dg.getResizingOrMoving()) {  // only when ready
+
+        List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+
+        // we have already drawn it once, and it changed, so change all the other ones
+        if ("" != dg.getRegionGroupID()) {
+
+          for (Graphic g2 : this.getAllGraphics()) {
+
+            DragGraphic dg2 = (DragGraphic) g2;
+
+            if (dg2.getUuid() == dg.getUuid()) { continue; } // don't process the identical graphic
+            if (dg.getRegionGroupID() != dg2.getRegionGroupID()) { continue; } // only process the ones in this group
+
+            List<Point2D> newPts = createNewPointsForRegion(regions.get(findRegionWithMeasurement(regions, dg)), regions.get(findRegionWithMeasurement(regions, dg2)), dg);
+            LOGGER.debug("due to change, redrawing shape with points " + newPts);
+            dg2.setPts(newPts);
+            dg2.buildShape(null);
+          }
+          dg.setHandledForRegions(Boolean.TRUE);
+          continue;
+        }
 
         //
         // find the region that contains all the points in the graphic (possible there may not be one)
         //
-        List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
-        int regionWithMeasurement = -1; // -1 = no region identified
-        for (int i = 0; i < regions.size(); i++) {
-          Attributes r = regions.get(i);
-          long x0 = Ultrasound.getMinX0(r);
-          long y0 = Ultrasound.getMinY0(r);
-          long x1 = Ultrasound.getMaxX1(r);
-          long y1 = Ultrasound.getMaxY1(r);
-
-          Boolean allPointsInRegion = Boolean.TRUE;
-          for (int j = 0; j < dg.getPts().size(); j++) {
-            Point2D p = dg.getPts().get(j);
-            if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
-              allPointsInRegion = Boolean.FALSE;
-            }
-          }
-
-          if (allPointsInRegion) {
-            regionWithMeasurement = i;
-            break;
-          }
+        if (0 == regions.size()) {
+          LOGGER.debug("no regions found, not replicating");
+          dg.setHandledForRegions(Boolean.TRUE);
+          continue;
         }
+
+        int regionWithMeasurement = findRegionWithMeasurement(regions, dg);
 
         if (-1 == regionWithMeasurement) {
           LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
           dg.setHandledForRegions(Boolean.TRUE);
-          return;
+          continue;
         }
 
         //
         // draw the graphic on all regions
         //
-        Attributes source = regions.get(regionWithMeasurement);
-        long sourceXOffset = Ultrasound.getMinX0(source);
-        long sourceYOffset = Ultrasound.getMinY0(source);
-        double sourceXScale = Ultrasound.getPhysicalDeltaX(source);
-        double sourceYScale = Ultrasound.getPhysicalDeltaY(source);
-        int sourceUnits = Ultrasound.getUnitsForXY(source);
+        dg.setRegionGroupID(UUID.randomUUID().toString());
+        int sourceUnits = Ultrasound.getUnitsForXY(regions.get(regionWithMeasurement));
         for (int i = 0; i < regions.size(); i++) {
 
           if (i == regionWithMeasurement) { continue; }  // don't draw on the one that already has it
 
-          Attributes r = regions.get(i);
-          long x0 = Ultrasound.getMinX0(r);
-          long y0 = Ultrasound.getMinY0(r);
-          long x1 = Ultrasound.getMaxX1(r);
-          long y1 = Ultrasound.getMaxY1(r);
-          double xScale = Ultrasound.getPhysicalDeltaX(r);
-          double yScale = Ultrasound.getPhysicalDeltaY(r);
-
-          if (sourceUnits != Ultrasound.getUnitsForXY(r))
+          Integer destUnits = Ultrasound.getUnitsForXY(regions.get(i));
+          if (sourceUnits != destUnits)
           {
-            LOGGER.warn("region " + i + " unit type " + Ultrasound.getUnitsForXY(r) + " does not equal source unit type " + sourceUnits + ".  not replicating.");
+            LOGGER.warn("destination region " + i + " unit type " + destUnits + " does not equal source unit type " + sourceUnits + ".  not replicating.");
             continue;
           }
 
           DragGraphic c = dg.copy();
-          List<Point2D> newPts = new ArrayList<Point2D>();
-          for (Point2D p : c.getPts()) {
-            double newX = ((p.getX() * xScale) - (sourceXOffset * sourceXScale) + (x0 * xScale)) / xScale;
-            double newY = ((p.getY() * yScale) - (sourceYOffset * sourceYScale) + (y0 * yScale)) / yScale;
-            newPts.add(new Point2D.Double(newX, newY));
-          }
+          c.setRegionGroupID(dg.getRegionGroupID());
 
+          List<Point2D> newPts = createNewPointsForRegion(regions.get(regionWithMeasurement), regions.get(i), dg);
           LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
           c.setPts(newPts);
           c.buildShape(null);
@@ -708,6 +706,72 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         dg.setHandledForRegions(Boolean.TRUE);
       }
     }
+  }
+
+  /*
+   * Given a list of regions, find the one that fully contains all points in the measurement.
+   *
+   * Returns the index of the region in which the measurement is contained, or -1 upon
+   * no region being found.
+   */
+  public static int findRegionWithMeasurement(List<Attributes> regions, DragGraphic dg)
+  {
+    int regionWithMeasurement = -1; // -1 = no region identified
+    for (int i = 0; i < regions.size(); i++) {
+
+      Attributes r = regions.get(i);
+      long x0 = Ultrasound.getMinX0(r);
+      long y0 = Ultrasound.getMinY0(r);
+      long x1 = Ultrasound.getMaxX1(r);
+      long y1 = Ultrasound.getMaxY1(r);
+
+      Boolean allPointsInRegion = Boolean.TRUE;
+      for (int j = 0; j < dg.getPts().size(); j++) {
+        Point2D p = dg.getPts().get(j);
+        if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
+          allPointsInRegion = Boolean.FALSE;
+        }
+      }
+
+      if (allPointsInRegion) {
+        regionWithMeasurement = i;
+        break;
+      }
+    }
+    return regionWithMeasurement;
+  }
+
+  /*
+   * Create the list of points for a new drag graphic "dg" to be replicated from
+   * the "source" to the "dest".
+   */
+  public static List<Point2D> createNewPointsForRegion(
+      Attributes source, Attributes dest, DragGraphic dg) {
+
+    List<Point2D> newPts = new ArrayList<Point2D>();
+
+    long sourceXOffset = Ultrasound.getMinX0(source);
+    long sourceYOffset = Ultrasound.getMinY0(source);
+    double sourceXScale = Ultrasound.getPhysicalDeltaX(source);
+    double sourceYScale = Ultrasound.getPhysicalDeltaY(source);
+
+    long destX0 = Ultrasound.getMinX0(dest);
+    long destY0 = Ultrasound.getMinY0(dest);
+    long destX1 = Ultrasound.getMaxX1(dest);
+    long destY1 = Ultrasound.getMaxY1(dest);
+    double destXScale = Ultrasound.getPhysicalDeltaX(dest);
+    double destYScale = Ultrasound.getPhysicalDeltaY(dest);
+    for (Point2D p : dg.getPts()) {
+      double newX =
+          ((p.getX() * destXScale) - (sourceXOffset * sourceXScale) + (destX0 * destXScale))
+              / destXScale;
+      double newY =
+          ((p.getY() * destYScale) - (sourceYOffset * sourceYScale) + (destY0 * destYScale))
+              / destYScale;
+      newPts.add(new Point2D.Double(newX, newY));
+    }
+
+    return newPts;
   }
 
 
