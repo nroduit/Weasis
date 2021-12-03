@@ -16,6 +16,7 @@ import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.weasis.core.ui.model.utils.ByteArrayHelper;
 
 public class Ultrasound {
 
@@ -101,4 +102,37 @@ public class Ultrasound {
         return "None"; // NON-NLS
     }
   }
+
+  public static long getMinX0(Attributes a)
+  {
+    // TODO handle tag doesn't exist
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinX0)), 0);
+  }
+
+  public static Integer getUnitsForXY(Attributes region) {
+    Integer unitX =
+            DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsXDirection, null);
+    Integer unitY =
+            DicomMediaUtils.getIntegerFromDicomElement(region, Tag.PhysicalUnitsYDirection, null);
+    if (unitX != null && unitX.equals(unitY)) {
+      return unitX;
+    }
+    return null;
+  }
+
+  public static long getMinY0(Attributes a)
+  {
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinY0)), 0);
+  }
+
+  public static long getMaxX1(Attributes a)
+  {
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxX1)), 0);
+  }
+
+  public static long getMaxY1(Attributes a)
+  {
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxX1)), 0);
+  }
+
 }

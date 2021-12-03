@@ -633,7 +633,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         // we only care about measurements we can drag
         if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
 
-        // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3)
+        // TODO clarify with Bryan how to use Ultrasound.getUnitsForXY(dcmObject) (which returns 3 (cm))
         DragGraphic dg = (DragGraphic)g;
         if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
 
@@ -645,10 +645,10 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           int regionWithMeasurement = -1; // -1 = invalid
           for (int i = 0; i < regions.size(); i++) {
             Attributes r = regions.get(i);
-            long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinX0)), 0);
-            long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinY0)), 0);
-            long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxX1)), 0);
-            long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxY1)), 0);
+            long x0 = Ultrasound.getMinX0(r);
+            long y0 = Ultrasound.getMinY0(r);
+            long x1 = Ultrasound.getMaxX1(r);
+            long y1 = Ultrasound.getMaxY1(r);
 
             Boolean allPointsInRegion = Boolean.TRUE; // innocent until proven guilty
             for (int j = 0; j < dg.getPts().size(); j++) {
@@ -677,17 +677,17 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           //
           // draw the graphic on all the regions except the one that already has it
           //
-          long xoffset = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])regions.get(regionWithMeasurement).getValue(Tag.RegionLocationMinX0)), 0);
-          long yoffset = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])regions.get(regionWithMeasurement).getValue(Tag.RegionLocationMinY0)), 0);
+          long xoffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
+          long yoffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
           for (int i = 0; i < regions.size(); i++) {
 
             if (i == regionWithMeasurement) { continue; }
 
             Attributes r = regions.get(i);
-            long x0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinX0)), 0);
-            long y0 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMinY0)), 0);
-            long x1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxX1)), 0);
-            long y1 = ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])r.getValue(Tag.RegionLocationMaxY1)), 0);
+            long x0 = Ultrasound.getMinX0(r);
+            long y0 = Ultrasound.getMinY0(r);
+            long x1 = Ultrasound.getMaxX1(r);
+            long y1 = Ultrasound.getMaxY1(r);
 
             DragGraphic c = dg.copy();
             List<Point2D> newPts = new ArrayList<Point2D>();
