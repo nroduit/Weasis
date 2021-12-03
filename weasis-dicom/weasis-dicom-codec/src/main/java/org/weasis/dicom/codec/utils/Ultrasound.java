@@ -128,7 +128,7 @@ public class Ultrasound {
 
   public static long getMaxY1(Attributes a)
   {
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxX1)), 0);
+    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxY1)), 0);
   }
 
 }

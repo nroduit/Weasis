@@ -629,7 +629,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
 
       DragGraphic dg = (DragGraphic)g;
-      if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
+      if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {  // only when ready
 
         //
         // find the region that contains all the points in the graphic (possible there may not be one)
