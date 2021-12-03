@@ -562,7 +562,20 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   @Override
   public void deleteSelectedGraphics(Canvas canvas, Boolean warningMessage) {
-    List<Graphic> list = getSelectedGraphics();
+
+    List<Graphic> list = new ArrayList<Graphic>();
+
+    // gather any graphics within ultrasound regions to also delete
+    for (Graphic g1 : getSelectedGraphics())
+    {
+      list.add(g1);
+      for (Graphic g2 : this.getAllGraphics())
+      {
+        if (g1.getUuid() == g2.getUuid()) { continue; }
+        if (g1.getRegionGroupID() == g2.getRegionGroupID()) { list.add(g2); }
+      }
+    }
+
     if (!list.isEmpty()) {
       int response = 0;
       if (warningMessage) {
@@ -625,7 +638,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     for (Graphic g : this.getAllGraphics()) {
 
       // we only care about measurements we can drag
-      if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
+      if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { continue; }
 
       DragGraphic dg = (DragGraphic)g;
 
