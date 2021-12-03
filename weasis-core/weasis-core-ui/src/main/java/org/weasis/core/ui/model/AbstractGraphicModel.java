@@ -704,6 +704,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           c.setHandledOn6up(Boolean.TRUE);
           AbstractGraphicModel.addGraphicToModel(view2d, c);
         }
+        dg.setHandledOn6up(Boolean.TRUE);
       }
     }
   }
