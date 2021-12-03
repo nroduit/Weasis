@@ -29,7 +29,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 
-import org.dcm4che3.data.Tag;
+
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -63,12 +64,12 @@ import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.GraphicModelChangeListener;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
-import org.weasis.core.ui.model.utils.ByteArrayHelper;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.dcm4che3.data.Attributes;
+import org.slf4j.Logger;
 
 @XmlType(propOrder = {"referencedSeries", "layers", "models"})
 @XmlAccessorType(XmlAccessType.NONE)
@@ -91,6 +92,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   private Predicate<Graphic> isLayerVisible = g -> g.getLayer().getVisible();
   private Predicate<Graphic> isGraphicSelected = g -> g.getSelected();
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphicModel.class);
 
   public AbstractGraphicModel() {
     this(null);
@@ -662,8 +665,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
               regionWithMeasurement = i;
               break;
             }
-
-            System.out.println("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
+            
+            LOGGER.debug("x0:" + x0 + " y0: " + y0 + " x1: " + x1 + " y1:" + y1);
           }
 
           if (-1 == regionWithMeasurement) {
@@ -672,15 +675,13 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             return;
           }
 
-          System.out.println(regionWithMeasurement);
-
           //
           // draw the graphic on all the regions except the one that already has it
           //
-          long xoffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
-          long yoffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
-          double xscale = Ultrasound.getPhysicalDeltaX(regions.get(regionWithMeasurement));
-          double yscale = Ultrasound.getPhysicalDeltaY(regions.get(regionWithMeasurement));
+          long sourceXOffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
+          long sourceYOffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
+          double sourceXScale = Ultrasound.getPhysicalDeltaX(regions.get(regionWithMeasurement));
+          double sourceYScale = Ultrasound.getPhysicalDeltaY(regions.get(regionWithMeasurement));
           for (int i = 0; i < regions.size(); i++) {
 
             if (i == regionWithMeasurement) { continue; }
@@ -690,15 +691,15 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             long y0 = Ultrasound.getMinY0(r);
             long x1 = Ultrasound.getMaxX1(r);
             long y1 = Ultrasound.getMaxY1(r);
-
-            double physicalDeltaX = Ultrasound.getPhysicalDeltaX(r);
-            double physicalDeltaY = Ultrasound.getPhysicalDeltaY(r);
+            double xScale = Ultrasound.getPhysicalDeltaX(r);
+            double yScale = Ultrasound.getPhysicalDeltaY(r);
 
             DragGraphic c = dg.copy();
             List<Point2D> newPts = new ArrayList<Point2D>();
             for (Point2D p : c.getPts()) {
-              //double newX = (p.getX() * xscale) - (xoffset * xscale)
-              newPts.add(new Point2D.Double(p.getX() - xoffset + x0, p.getY() - yoffset + y0));
+              double newX = ((p.getX() * xScale) - (sourceXOffset * sourceXScale) + (x0 * xScale)) / xScale;
+              double newY = ((p.getY() * yScale) - (sourceYOffset * sourceYScale) + (y0 * yScale)) / yScale;
+              newPts.add(new Point2D.Double(newX, newY));
             }
             c.setPts(newPts);
             c.buildShape(null);
