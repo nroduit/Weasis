@@ -28,9 +28,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
-
-
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -70,6 +67,7 @@ import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.dcm4che3.data.Attributes;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @XmlType(propOrder = {"referencedSeries", "layers", "models"})
 @XmlAccessorType(XmlAccessType.NONE)
@@ -84,8 +82,6 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();
   private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
   private Boolean changeFireingSuspended = Boolean.FALSE;
-
-  private Boolean duplicateGraphics = Boolean.TRUE;
 
   private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
   private Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
@@ -627,91 +623,86 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
    */
   void duplicateTo6Up(DefaultView2d view2d)  {
 
-    List<Graphic> graphs = this.getAllGraphics();
-    if (graphs.size() != 0) {
+    for (Graphic g : this.getAllGraphics()) {
 
-      List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+      // we only care about measurements we can drag
+      if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
 
-      for (Graphic g : graphs) {
+      DragGraphic dg = (DragGraphic)g;
+      if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
 
-        // we only care about measurements we can drag
-        if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { return; }
+        //
+        // find the region that contains all the points in the graphic (possible there may not be one)
+        //
+        List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+        int regionWithMeasurement = -1; // -1 = no region identified
+        for (int i = 0; i < regions.size(); i++) {
+          Attributes r = regions.get(i);
+          long x0 = Ultrasound.getMinX0(r);
+          long y0 = Ultrasound.getMinY0(r);
+          long x1 = Ultrasound.getMaxX1(r);
+          long y1 = Ultrasound.getMaxY1(r);
 
-        DragGraphic dg = (DragGraphic)g;
-        if (dg.isGraphicComplete() && !dg.isHandledOn6up() && !dg.getResizingOrMoving()) {
+          Boolean allPointsInRegion = Boolean.TRUE;
+          for (int j = 0; j < dg.getPts().size(); j++) {
+            Point2D p = dg.getPts().get(j);
+            if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
+              allPointsInRegion = Boolean.FALSE;
+            }
+          }
 
+          if (allPointsInRegion) {
+            regionWithMeasurement = i;
+            break;
+          }
+        }
+
+        if (-1 == regionWithMeasurement) {
+          LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
           dg.setHandledOn6up(Boolean.TRUE);
+          return;
+        }
 
-          //
-          // find the region that contains all the points in the graphic (possible there may not be one)
-          //
-          int regionWithMeasurement = -1; // -1 = invalid
-          for (int i = 0; i < regions.size(); i++) {
-            Attributes r = regions.get(i);
-            long x0 = Ultrasound.getMinX0(r);
-            long y0 = Ultrasound.getMinY0(r);
-            long x1 = Ultrasound.getMaxX1(r);
-            long y1 = Ultrasound.getMaxY1(r);
+        //
+        // draw the graphic on all regions
+        //
+        Attributes source = regions.get(regionWithMeasurement);
+        long sourceXOffset = Ultrasound.getMinX0(source);
+        long sourceYOffset = Ultrasound.getMinY0(source);
+        double sourceXScale = Ultrasound.getPhysicalDeltaX(source);
+        double sourceYScale = Ultrasound.getPhysicalDeltaY(source);
+        int sourceUnits = Ultrasound.getUnitsForXY(source);
+        for (int i = 0; i < regions.size(); i++) {
 
-            Boolean allPointsInRegion = Boolean.TRUE;
-            for (int j = 0; j < dg.getPts().size(); j++) {
-              Point2D p = dg.getPts().get(j);
-              if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
-                allPointsInRegion = Boolean.FALSE;
-              }
-            }
+          if (i == regionWithMeasurement) { continue; }  // don't draw on the one that already has it
 
-            if (allPointsInRegion) {
-              regionWithMeasurement = i;
-              break;
-            }
+          Attributes r = regions.get(i);
+          long x0 = Ultrasound.getMinX0(r);
+          long y0 = Ultrasound.getMinY0(r);
+          long x1 = Ultrasound.getMaxX1(r);
+          long y1 = Ultrasound.getMaxY1(r);
+          double xScale = Ultrasound.getPhysicalDeltaX(r);
+          double yScale = Ultrasound.getPhysicalDeltaY(r);
+
+          if (sourceUnits != Ultrasound.getUnitsForXY(r))
+          {
+            LOGGER.warn("region " + i + " unit type " + Ultrasound.getUnitsForXY(r) + " does not equal source unit type " + sourceUnits + ".  not replicating.");
+            continue;
           }
 
-          if (-1 == regionWithMeasurement) {
-            LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
-            return;
+          DragGraphic c = dg.copy();
+          List<Point2D> newPts = new ArrayList<Point2D>();
+          for (Point2D p : c.getPts()) {
+            double newX = ((p.getX() * xScale) - (sourceXOffset * sourceXScale) + (x0 * xScale)) / xScale;
+            double newY = ((p.getY() * yScale) - (sourceYOffset * sourceYScale) + (y0 * yScale)) / yScale;
+            newPts.add(new Point2D.Double(newX, newY));
           }
 
-          //
-          // draw the graphic on all the regions
-          //
-          long sourceXOffset = Ultrasound.getMinX0(regions.get(regionWithMeasurement));
-          long sourceYOffset = Ultrasound.getMinY0(regions.get(regionWithMeasurement));
-          double sourceXScale = Ultrasound.getPhysicalDeltaX(regions.get(regionWithMeasurement));
-          double sourceYScale = Ultrasound.getPhysicalDeltaY(regions.get(regionWithMeasurement));
-          int sourceUnits = Ultrasound.getUnitsForXY(regions.get(regionWithMeasurement));
-          for (int i = 0; i < regions.size(); i++) {
-
-            if (i == regionWithMeasurement) { continue; }  // don't draw on the one that already has it
-
-            Attributes r = regions.get(i);
-            long x0 = Ultrasound.getMinX0(r);
-            long y0 = Ultrasound.getMinY0(r);
-            long x1 = Ultrasound.getMaxX1(r);
-            long y1 = Ultrasound.getMaxY1(r);
-            double xScale = Ultrasound.getPhysicalDeltaX(r);
-            double yScale = Ultrasound.getPhysicalDeltaY(r);
-
-            if (sourceUnits != Ultrasound.getUnitsForXY(r))
-            {
-              LOGGER.warn("region " + i + " unit type " + Ultrasound.getUnitsForXY(r) + " does not equal source unit type " + sourceUnits + ".  not replicating.");
-              return;
-            }
-
-            DragGraphic c = dg.copy();
-            List<Point2D> newPts = new ArrayList<Point2D>();
-            for (Point2D p : c.getPts()) {
-              double newX = ((p.getX() * xScale) - (sourceXOffset * sourceXScale) + (x0 * xScale)) / xScale;
-              double newY = ((p.getY() * yScale) - (sourceYOffset * sourceYScale) + (y0 * yScale)) / yScale;
-              newPts.add(new Point2D.Double(newX, newY));
-            }
-
-            LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
-            c.setPts(newPts);
-            c.buildShape(null);
-            c.setHandledOn6up(Boolean.TRUE);
-            AbstractGraphicModel.addGraphicToModel(view2d, c);
-          }
+          LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
+          c.setPts(newPts);
+          c.buildShape(null);
+          c.setHandledOn6up(Boolean.TRUE);
+          AbstractGraphicModel.addGraphicToModel(view2d, c);
         }
       }
     }
