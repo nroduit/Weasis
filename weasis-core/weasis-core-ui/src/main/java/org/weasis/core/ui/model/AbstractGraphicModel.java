@@ -615,21 +615,21 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
+    // if they are present, duplicate the graphic to any ultrasound regions
     duplicateToUltrasoundRegions(view2d);
     fireChanged();
 
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
-
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
-
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
     g2d.translate(-0.5, -0.5);
 
   }
 
   /*
-   * If an OA 6-up image is being displayed, duplicate any new measurements to each of the six ultrasound regions.
+   * If an ultrasound image with multiple regions is being displayed, duplicate any new measurements
+   * to each of them.
    */
   void duplicateToUltrasoundRegions(DefaultView2d view2d)  {
 
@@ -640,16 +640,17 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
       DragGraphic dg = (DragGraphic)g;
 
-      // if we already drew the graphic but it is being changed
+      // we already drew the graphic but it is being changed
       if (dg.getResizingOrMoving() && dg.isHandledForUltrasoundRegions()) {
         dg.setHandledForUltrasoundRegions(Boolean.FALSE);
       }
 
-      if (dg.isGraphicComplete() && !dg.isHandledForUltrasoundRegions() && !dg.getResizingOrMoving()) {  // only when user done changing graphic
+      // only when user done changing graphic
+      if (dg.isGraphicComplete() && !dg.isHandledForUltrasoundRegions() && !dg.getResizingOrMoving()) {
 
         List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
 
-        // we have already drawn it once, and it changed, so change all the other ones
+        // we have already drawn it once on the regions, but it changed, so change all the other ones
         if ("" != dg.getUltrasoundRegionGroupID()) {
 
           for (Graphic g2 : this.getAllGraphics()) {
@@ -664,7 +665,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             LOGGER.debug("due to change of graphic within ultrasound region, redrawing shape with points " + newPts);
             dg2.setPts(newPts);
 
-            // adjust measurement label text if it changed
+            // adjust measurement label text
             AbstractGraphicLabel l = (AbstractGraphicLabel) dg2.getGraphicLabel();
             l.setLabels(dg.getGraphicLabel().getLabels());
             dg2.setLabel(l);
