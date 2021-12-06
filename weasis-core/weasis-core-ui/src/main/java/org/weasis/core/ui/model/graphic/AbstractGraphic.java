@@ -86,8 +86,8 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected Boolean variablePointsNumber = Boolean.FALSE;
   protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-  protected Boolean handledForRegions = Boolean.FALSE;
-  protected String  regionGroupID = "";
+  protected Boolean handledForUltrasoundRegions = Boolean.FALSE;
+  protected String ultrasoundRegionGroupID = "";
 
   private GraphicLayer layer;
 
@@ -562,15 +562,15 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return Objects.equals(pts.size(), pointNumber);
   }
 
-  public Boolean isHandledForRegions() { return handledForRegions; }
+  public Boolean isHandledForUltrasoundRegions() { return handledForUltrasoundRegions; }
 
-  public void setHandledForRegions(Boolean b) {
-    handledForRegions = b;
+  public void setHandledForUltrasoundRegions(Boolean b) {
+    handledForUltrasoundRegions = b;
   }
 
-  public String getRegionGroupID() { return regionGroupID; }
+  public String getUltrasoundRegionGroupID() { return ultrasoundRegionGroupID; }
 
-  public void setRegionGroupID(String b) {  regionGroupID = b; }
+  public void setUltrasoundRegionGroupID(String b) {  ultrasoundRegionGroupID = b; }
 
   public Point2D getHandlePoint(int index) {
     Predicate<List<Point2D>> validateIndex = list -> list.size() > index;

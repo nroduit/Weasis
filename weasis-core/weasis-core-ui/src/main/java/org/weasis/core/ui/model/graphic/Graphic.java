@@ -179,13 +179,13 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   Boolean isGraphicComplete();
 
-  Boolean isHandledForRegions();
+  Boolean isHandledForUltrasoundRegions();
 
-  void setHandledForRegions(Boolean b);
+  void setHandledForUltrasoundRegions(Boolean b);
 
-  String getRegionGroupID();
+  String getUltrasoundRegionGroupID();
 
-  void setRegionGroupID(String b);
+  void setUltrasoundRegionGroupID(String b);
 
   List<Point2D> getPts();
 
