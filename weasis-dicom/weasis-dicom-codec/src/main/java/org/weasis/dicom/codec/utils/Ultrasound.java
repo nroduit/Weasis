@@ -16,7 +16,6 @@ import java.util.Objects;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
-import org.weasis.core.ui.model.utils.ByteArrayHelper;
 
 public class Ultrasound {
 
@@ -113,22 +112,22 @@ public class Ultrasound {
 
   public static long getMinX0(Attributes a)
   {
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinX0)), 0);
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMinX0, null);
   }
 
   public static long getMinY0(Attributes a)
   {
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMinY0)), 0);
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMinY0, null);
   }
 
   public static long getMaxX1(Attributes a)
   {
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxX1)), 0);
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMaxX1, null);
   }
 
   public static long getMaxY1(Attributes a)
   {
-    return ByteArrayHelper.byteArrayToUInt32(ByteArrayHelper.reverse((byte[])a.getValue(Tag.RegionLocationMaxY1)), 0);
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMaxY1, null);
   }
 
 }
