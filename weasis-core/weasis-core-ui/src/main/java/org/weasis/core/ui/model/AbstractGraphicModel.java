@@ -719,31 +719,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
           DragGraphic c = dg.copy();
           c.setUltrasoundRegionGroupID(dg.getUltrasoundRegionGroupID());
-
           List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(regionWithMeasurement), regions.get(i), dg);
-
-          // check if this graphic has already been drawn (which can happen if a file with duplicated figures was previously saved is being loaded)
-          boolean ptsSame = false;
-          for (Graphic g2 : this.getAllGraphics()) {
-            if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) {
-              ptsSame = false;
-              continue;
-            }
-            DragGraphic dg2 = (DragGraphic) g2;
-            if (dg.getUuid() == dg2.getUuid()) { continue; } // don't process the identical graphic
-            if (0 != dg.getPts().size() && 0 != dg2.getPts().size() && dg.arePtsSame(dg2.getPts())) {
-              ptsSame = true;
-              break;
-            }
-          }
-
-          if (ptsSame)
-          {
-            LOGGER.debug("region with " + dg.getPts() + " already present, not re-adding");
-            dg.setHandledForUltrasoundRegions(Boolean.TRUE);
-            continue;
-          }
-
           LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
           c.setPts(newPts);
           c.buildShape(null);
@@ -938,6 +914,31 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   }
 
   public static void addGraphicToModel(ViewCanvas<?> canvas, GraphicLayer layer, Graphic graphic) {
+
+    // check if this graphic has already been drawn (which can happen if a file with duplicated figures was previously saved is being loaded)
+    boolean ptsSame = false;
+    if ((graphic instanceof DragGraphic) && (graphic.getLayerType() == LayerType.MEASURE)) {
+      DragGraphic dg1 = (DragGraphic) graphic;
+      for (Graphic g2 : canvas.getGraphicManager().getAllGraphics()) {
+        if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) {
+          ptsSame = false;
+          continue;
+        }
+        DragGraphic dg2 = (DragGraphic) g2;
+        if (dg1.getUuid() == dg2.getUuid()) {
+          continue;
+        } // don't process the identical graphic
+        if (0 != dg1.getPts().size() && 0 != dg2.getPts().size() && dg1.arePtsSame(dg2.getPts())) {
+          ptsSame = true;
+          break;
+        }
+      }
+      if (ptsSame) {
+        LOGGER.debug("region with " + dg1.getPts() + " already present, not re-adding");
+        return;
+      }
+    }
+
     GraphicModel gm = canvas.getGraphicManager();
     graphic.setLayer(
         Optional.ofNullable(layer)
