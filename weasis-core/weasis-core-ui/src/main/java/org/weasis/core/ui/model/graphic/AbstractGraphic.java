@@ -178,6 +178,26 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return pointSetSame;
   }
 
+  public int[] getXPtsAsArray()
+  {
+    int[] x = new int[this.getPts().size()];
+    for (int i = 0; i < this.getPts().size(); ++i)
+    {
+      x[i] = (int)this.getPts().get(i).getX();
+    }
+    return x;
+  }
+
+  public int[] getYPtsAsArray()
+  {
+    int[] y = new int[this.getPts().size()];
+    for (int i = 0; i < this.getPts().size(); ++i)
+    {
+      y[i] = (int)this.getPts().get(i).getY();
+    }
+    return y;
+  }
+
   @Override
   public Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException {
     setPts(pts);

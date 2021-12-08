@@ -651,10 +651,28 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
         List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
 
+        if (0 == regions.size()) {
+          LOGGER.debug("no ultrasound regions found, not replicating");
+          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+          continue;
+        }
+
+        //
+        // find the region that contains all the points in the graphic (possible there may not be one)
+        //
+        int regionWithMeasurement = findUltrasoundRegionWithMeasurement(regions, dg);
+        if (-1 == regionWithMeasurement) {
+          LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
+          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+          continue;
+        }
+
         // we have already drawn it once on the regions, but it changed, so change all the other ones
         if ("" != dg.getUltrasoundRegionGroupID()) {
 
           for (Graphic g2 : this.getAllGraphics()) {
+
+            if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) { continue; }
 
             DragGraphic dg2 = (DragGraphic) g2;
 
@@ -683,23 +701,37 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           dg.setHandledForUltrasoundRegions(Boolean.TRUE);
           continue;
         }
+        // we have not duplicated it
+        else
+        {
+          // check for a shape within a shape
+          for (Graphic g2 : this.getAllGraphics()) {
+            if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) { continue; }
+            DragGraphic dg2 = (DragGraphic) g2;
 
+            if (dg2.getUuid() == dg.getUuid()) { continue; } // don't process the identical graphic
 
-        if (0 == regions.size()) {
-          LOGGER.debug("no ultrasound regions found, not replicating");
-          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
-          continue;
+            if (findUltrasoundRegionWithMeasurement(regions, dg2) != regionWithMeasurement) { continue; }  // only care about those in the same region
+
+            Polygon p = new Polygon(dg.getXPtsAsArray(), dg.getYPtsAsArray(), dg.getPts().size());
+            boolean graphicInsideGraphic = true;
+            for (Point2D point : dg2.getPts())
+            {
+              if (!p.contains(point.getX(), point.getY()))
+              {
+                graphicInsideGraphic = false;
+                break;
+              }
+            }
+
+            if (graphicInsideGraphic)
+            {
+              dg.setPaint(Color.MAGENTA);
+            }
+
+          }
         }
 
-        //
-        // find the region that contains all the points in the graphic (possible there may not be one)
-        //
-        int regionWithMeasurement = findUltrasoundRegionWithMeasurement(regions, dg);
-        if (-1 == regionWithMeasurement) {
-          LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
-          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
-          continue;
-        }
 
         //
         // draw the graphic on all regions
