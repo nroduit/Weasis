@@ -15,24 +15,20 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlType;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
+
+import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
+
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -41,10 +37,7 @@ import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.DragGraphic;
-import org.weasis.core.ui.model.graphic.Graphic;
-import org.weasis.core.ui.model.graphic.GraphicLabel;
-import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.graphic.*;
 import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.graphic.imp.PixelInfoGraphic;
 import org.weasis.core.ui.model.graphic.imp.PointGraphic;
@@ -68,6 +61,11 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.dicom.codec.DcmMediaReader;
+import org.weasis.dicom.codec.utils.Ultrasound;
+import org.dcm4che3.data.Attributes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @XmlType(propOrder = {"referencedSeries", "layers", "models"})
 @XmlAccessorType(XmlAccessType.NONE)
@@ -88,6 +86,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   private Predicate<Graphic> isLayerVisible = g -> g.getLayer().getVisible();
   private Predicate<Graphic> isGraphicSelected = g -> g.getSelected();
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphicModel.class);
 
   public AbstractGraphicModel() {
     this(null);
@@ -561,7 +561,20 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   @Override
   public void deleteSelectedGraphics(Canvas canvas, Boolean warningMessage) {
-    List<Graphic> list = getSelectedGraphics();
+
+    // gather all graphics to delete, including those duplicated in ultrasound regions
+    List<Graphic> list = new ArrayList<Graphic>();
+    for (Graphic g1 : getSelectedGraphics())
+    {
+      list.add(g1);
+      for (Graphic g2 : this.getAllGraphics())
+      {
+        if (g1.getUuid() == g2.getUuid()) { continue; } // don't add the same graphic twice
+        if (g1.getUltrasoundRegionGroupID() != "" && g2.getUltrasoundRegionGroupID() != "" &&
+            g1.getUltrasoundRegionGroupID() == g2.getUltrasoundRegionGroupID()) { list.add(g2); }
+      }
+    }
+
     if (!list.isEmpty()) {
       int response = 0;
       if (warningMessage) {
@@ -595,19 +608,195 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       Graphics2D g2d,
       AffineTransform transform,
       AffineTransform inverseTransform,
-      Rectangle2D viewClip) {
+      Rectangle2D viewClip,
+      DefaultView2d view2d) {
     // Get the visible view in real coordinates, note only Sun g2d return consistent clip area with
     // offset
     Shape area =
         inverseTransform.createTransformedShape(viewClip == null ? g2d.getClipBounds() : viewClip);
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
+    // if they are present, duplicate the graphic to any ultrasound regions
+    duplicateToUltrasoundRegions(view2d);
+    fireChanged();
+
     g2d.translate(0.5, 0.5);
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
     g2d.translate(-0.5, -0.5);
+
   }
+
+  /*
+   * If an ultrasound image with multiple regions is being displayed, duplicate any new measurements
+   * to each of them.
+   */
+  void duplicateToUltrasoundRegions(DefaultView2d view2d)  {
+
+    for (Graphic g : this.getAllGraphics()) {
+
+      // for duplication, we only care about measurements we can drag
+      if (!(g instanceof DragGraphic) || (g.getLayerType() != LayerType.MEASURE)) { continue; }
+
+      DragGraphic dg = (DragGraphic)g;
+
+      // we already drew the graphic but it is being changed
+      if (dg.getResizingOrMoving() && dg.isHandledForUltrasoundRegions()) {
+        dg.setHandledForUltrasoundRegions(Boolean.FALSE);
+      }
+
+      // only when user done changing graphic
+      if (dg.isGraphicComplete() && !dg.isHandledForUltrasoundRegions() && !dg.getResizingOrMoving()) {
+
+        List<Attributes> regions = Ultrasound.getRegions(((DcmMediaReader) view2d.getImageLayer().getSourceImage().getMediaReader()).getDicomObject());
+
+        // we have already drawn it once on the regions, but it changed, so change all the other ones
+        if ("" != dg.getUltrasoundRegionGroupID()) {
+
+          for (Graphic g2 : this.getAllGraphics()) {
+
+            DragGraphic dg2 = (DragGraphic) g2;
+
+            if (dg2.getUuid() == dg.getUuid()) { continue; } // don't process the identical graphic
+            if (dg.getUltrasoundRegionGroupID() != dg2.getUltrasoundRegionGroupID()) { continue; } // only process the ones in this group
+
+            // adjust position of graphic
+            int i1 = findUltrasoundRegionWithMeasurement(regions, dg); // source
+            int i2 = findUltrasoundRegionWithMeasurement(regions, dg2); // destination
+            if (-1 == i1 || -1 == i2)
+            {
+              LOGGER.debug(String.format("either source or destination (%d, %d) is not within an ultrasound region.  skipping graphic", i1, i2));
+              continue;
+            }
+            List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(i1), regions.get(i2), dg);
+            LOGGER.debug("due to change of graphic within ultrasound region, redrawing shape with points " + newPts);
+            dg2.setPts(newPts);
+
+            // adjust measurement label text
+            AbstractGraphicLabel l = (AbstractGraphicLabel) dg2.getGraphicLabel();
+            l.setLabels(dg.getGraphicLabel().getLabels());
+            dg2.setLabel(l);
+
+            dg2.buildShape(null);
+          }
+          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+          continue;
+        }
+
+
+        if (0 == regions.size()) {
+          LOGGER.debug("no ultrasound regions found, not replicating");
+          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+          continue;
+        }
+
+        //
+        // find the region that contains all the points in the graphic (possible there may not be one)
+        //
+        int regionWithMeasurement = findUltrasoundRegionWithMeasurement(regions, dg);
+        if (-1 == regionWithMeasurement) {
+          LOGGER.debug("region with " + dg.getPts() + " not in one region, not replicating");
+          dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+          continue;
+        }
+
+        //
+        // draw the graphic on all regions
+        //
+        dg.setUltrasoundRegionGroupID(UUID.randomUUID().toString());
+        int sourceUnits = Ultrasound.getUnitsForXY(regions.get(regionWithMeasurement)); // for scaling
+        for (int i = 0; i < regions.size(); i++) {
+
+          if (i == regionWithMeasurement) { continue; }  // don't draw on the one that already has it
+
+          Integer destUnits = Ultrasound.getUnitsForXY(regions.get(i));
+          if (sourceUnits != destUnits)
+          {
+            LOGGER.warn("destination region " + i + " unit type " + destUnits + " does not equal source unit type " + sourceUnits + ".  not replicating.");
+            continue;
+          }
+
+          DragGraphic c = dg.copy();
+          c.setUltrasoundRegionGroupID(dg.getUltrasoundRegionGroupID());
+          List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(regionWithMeasurement), regions.get(i), dg);
+          LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
+          c.setPts(newPts);
+          c.buildShape(null);
+          c.setHandledForUltrasoundRegions(Boolean.TRUE);
+          AbstractGraphicModel.addGraphicToModel(view2d, c);
+        }
+        dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+      }
+    }
+  }
+
+  /*
+   * Given a list of ultrasound regions, find the one that fully contains all points in the measurement.
+   *
+   * Returns the index of the ultrasound region in which the measurement is contained, or -1 upon
+   * no region being found.
+   */
+  public static int findUltrasoundRegionWithMeasurement(List<Attributes> regions, DragGraphic dg)
+  {
+    int regionWithMeasurement = -1; // -1 = no region identified
+    for (int i = 0; i < regions.size(); i++) {
+
+      Attributes r = regions.get(i);
+      long x0 = Ultrasound.getMinX0(r);
+      long y0 = Ultrasound.getMinY0(r);
+      long x1 = Ultrasound.getMaxX1(r);
+      long y1 = Ultrasound.getMaxY1(r);
+
+      Boolean allPointsInRegion = Boolean.TRUE;
+      for (int j = 0; j < dg.getPts().size(); j++) {
+        Point2D p = dg.getPts().get(j);
+        if (!(p.getX() >= x0 && p.getX() <= x1 && p.getY() >= y0 && p.getY() <= y1)) {
+          allPointsInRegion = Boolean.FALSE;
+        }
+      }
+
+      if (allPointsInRegion) {
+        regionWithMeasurement = i;
+        break;
+      }
+    }
+    return regionWithMeasurement;
+  }
+
+  /*
+   * For ultrasound regions, create the list of points for a new
+   * graphic "dg" to be replicated from the "source" to the "dest".
+   */
+  public static List<Point2D> createNewPointsForUltrasoundRegion(
+      Attributes source, Attributes dest, DragGraphic dg) {
+
+    List<Point2D> newPts = new ArrayList<Point2D>();
+
+    long sourceXOffset = Ultrasound.getMinX0(source);
+    long sourceYOffset = Ultrasound.getMinY0(source);
+    double sourceXScale = Ultrasound.getPhysicalDeltaX(source);
+    double sourceYScale = Ultrasound.getPhysicalDeltaY(source);
+
+    long destX0 = Ultrasound.getMinX0(dest);
+    long destY0 = Ultrasound.getMinY0(dest);
+    long destX1 = Ultrasound.getMaxX1(dest);
+    long destY1 = Ultrasound.getMaxY1(dest);
+    double destXScale = Ultrasound.getPhysicalDeltaX(dest);
+    double destYScale = Ultrasound.getPhysicalDeltaY(dest);
+    for (Point2D p : dg.getPts()) {
+      double newX =
+          ((p.getX() * destXScale) - (sourceXOffset * sourceXScale) + (destX0 * destXScale))
+              / destXScale;
+      double newY =
+          ((p.getY() * destYScale) - (sourceYOffset * sourceYScale) + (destY0 * destYScale))
+              / destYScale;
+      newPts.add(new Point2D.Double(newX, newY));
+    }
+
+    return newPts;
+  }
+
 
   private static void applyPaint(
       Graphic graphic, Graphics2D g2d, AffineTransform transform, Rectangle2D bounds) {
@@ -725,6 +914,31 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   }
 
   public static void addGraphicToModel(ViewCanvas<?> canvas, GraphicLayer layer, Graphic graphic) {
+
+    // check if this graphic has already been drawn (which can happen if a file with duplicated figures was previously saved is being loaded)
+    boolean ptsSame = false;
+    if ((graphic instanceof DragGraphic) && (graphic.getLayerType() == LayerType.MEASURE)) {
+      DragGraphic dg1 = (DragGraphic) graphic;
+      for (Graphic g2 : canvas.getGraphicManager().getAllGraphics()) {
+        if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) {
+          ptsSame = false;
+          continue;
+        }
+        DragGraphic dg2 = (DragGraphic) g2;
+        if (dg1.getUuid() == dg2.getUuid()) {
+          continue;
+        } // don't process the identical graphic
+        if (0 != dg1.getPts().size() && 0 != dg2.getPts().size() && dg1.arePtsSame(dg2.getPts())) {
+          ptsSame = true;
+          break;
+        }
+      }
+      if (ptsSame) {
+        LOGGER.debug("region with " + dg1.getPts() + " already present, not re-adding");
+        return;
+      }
+    }
+
     GraphicModel gm = canvas.getGraphicManager();
     graphic.setLayer(
         Optional.ofNullable(layer)

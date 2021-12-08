@@ -86,6 +86,9 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
   protected Boolean variablePointsNumber = Boolean.FALSE;
   protected PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
+  protected Boolean handledForUltrasoundRegions = Boolean.FALSE;
+  protected String ultrasoundRegionGroupID = "";
+
   private GraphicLayer layer;
 
   public AbstractGraphic(Integer pointNumber) {
@@ -158,6 +161,21 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
                         Optional.ofNullable(getPtsNumber())
                             .filter(v -> v >= 0)
                             .orElse(DEFAULT_PTS_SIZE)));
+  }
+
+  public boolean arePtsSame(List<Point2D> points) {
+    if (this.getPts().size() != points.size()) {
+      return false;
+    }
+    boolean pointSetSame = true;
+    for (int i = 0; i < this.getPts().size(); ++i) {
+      Point2D p1 = this.getPts().get(i);
+      Point2D p2 = points.get(i);
+      if (Math.abs(p1.getX() - p2.getX()) > 0.001 || Math.abs(p1.getY() - p2.getY()) > 0.001) {
+        pointSetSame = false;
+      }
+    }
+    return pointSetSame;
   }
 
   @Override
@@ -559,6 +577,16 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return Objects.equals(pts.size(), pointNumber);
   }
 
+  public Boolean isHandledForUltrasoundRegions() { return handledForUltrasoundRegions; }
+
+  public void setHandledForUltrasoundRegions(Boolean b) {
+    handledForUltrasoundRegions = b;
+  }
+
+  public String getUltrasoundRegionGroupID() { return ultrasoundRegionGroupID; }
+
+  public void setUltrasoundRegionGroupID(String b) {  ultrasoundRegionGroupID = b; }
+
   public Point2D getHandlePoint(int index) {
     Predicate<List<Point2D>> validateIndex = list -> list.size() > index;
     Function<List<Point2D>, Point2D> getPoint = list -> list.get(index);
@@ -930,6 +958,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
     return true;
   }
+
 
   protected void fireMoveAction() {
     if (isGraphicComplete()) {

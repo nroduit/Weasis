@@ -101,4 +101,33 @@ public class Ultrasound {
         return "None"; // NON-NLS
     }
   }
+
+  public static Double getPhysicalDeltaX(Attributes region) {
+    return DicomMediaUtils.getDoubleFromDicomElement(region, Tag.PhysicalDeltaX, null);
+  }
+
+  public static Double getPhysicalDeltaY(Attributes region) {
+    return DicomMediaUtils.getDoubleFromDicomElement(region, Tag.PhysicalDeltaY, null);
+  }
+
+  public static long getMinX0(Attributes a)
+  {
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMinX0, null);
+  }
+
+  public static long getMinY0(Attributes a)
+  {
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMinY0, null);
+  }
+
+  public static long getMaxX1(Attributes a)
+  {
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMaxX1, null);
+  }
+
+  public static long getMaxY1(Attributes a)
+  {
+    return DicomMediaUtils.getLongFromDicomElement(a, Tag.RegionLocationMaxY1, null);
+  }
+
 }

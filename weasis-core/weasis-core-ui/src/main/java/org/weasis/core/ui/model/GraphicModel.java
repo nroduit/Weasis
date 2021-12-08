@@ -19,6 +19,7 @@ import java.util.Optional;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.Canvas;
+import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -76,10 +77,11 @@ public interface GraphicModel extends UUIDable {
    * @param clip
    */
   void draw(
-      Graphics2D g2d,
-      AffineTransform transform,
-      AffineTransform inverseTransform,
-      Rectangle2D viewClip);
+          Graphics2D g2d,
+          AffineTransform transform,
+          AffineTransform inverseTransform,
+          Rectangle2D viewClip,
+          DefaultView2d view2d);
 
   List<GraphicSelectionListener> getGraphicSelectionListeners();
 

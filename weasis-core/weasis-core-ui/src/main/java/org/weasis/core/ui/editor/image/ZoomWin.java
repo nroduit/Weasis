@@ -223,7 +223,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
     if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
       Rectangle2D b = new Rectangle2D.Double(0.0, 0.0, getWidth(), getHeight());
-      view2d.getGraphicManager().draw(g2d, transform, inverseTransform, b);
+      view2d.getGraphicManager().draw(g2d, transform, inverseTransform, b, view2d);
     }
   }
 

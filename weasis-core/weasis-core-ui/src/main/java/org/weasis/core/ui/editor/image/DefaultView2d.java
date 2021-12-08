@@ -936,7 +936,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
     if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
-      graphicManager.draw(g2d, transform, inverseTransform, null);
+      graphicManager.draw(g2d, transform, inverseTransform, null, this);
     }
   }
 

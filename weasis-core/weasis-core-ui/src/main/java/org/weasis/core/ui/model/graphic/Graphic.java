@@ -179,9 +179,19 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   Boolean isGraphicComplete();
 
+  Boolean isHandledForUltrasoundRegions();
+
+  void setHandledForUltrasoundRegions(Boolean b);
+
+  String getUltrasoundRegionGroupID();
+
+  void setUltrasoundRegionGroupID(String b);
+
   List<Point2D> getPts();
 
   Integer getPtsNumber();
+
+  boolean arePtsSame(List<Point2D> points);
 
   boolean isOnGraphicLabel(MouseEventDouble mouseEvent);
 
