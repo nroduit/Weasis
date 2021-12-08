@@ -570,7 +570,8 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
       for (Graphic g2 : this.getAllGraphics())
       {
         if (g1.getUuid() == g2.getUuid()) { continue; } // don't add the same graphic twice
-        if (g1.getUltrasoundRegionGroupID() == g2.getUltrasoundRegionGroupID()) { list.add(g2); }
+        if (g1.getUltrasoundRegionGroupID() != "" && g2.getUltrasoundRegionGroupID() != "" &&
+            g1.getUltrasoundRegionGroupID() == g2.getUltrasoundRegionGroupID()) { list.add(g2); }
       }
     }
 
@@ -720,6 +721,29 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
           c.setUltrasoundRegionGroupID(dg.getUltrasoundRegionGroupID());
 
           List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(regionWithMeasurement), regions.get(i), dg);
+
+          // check if this graphic has already been drawn (which can happen if a file with duplicated figures was previously saved is being loaded)
+          boolean ptsSame = false;
+          for (Graphic g2 : this.getAllGraphics()) {
+            if (!(g2 instanceof DragGraphic) || (g2.getLayerType() != LayerType.MEASURE)) {
+              ptsSame = false;
+              continue;
+            }
+            DragGraphic dg2 = (DragGraphic) g2;
+            if (dg.getUuid() == dg2.getUuid()) { continue; } // don't process the identical graphic
+            if (0 != dg.getPts().size() && 0 != dg2.getPts().size() && dg.arePtsSame(dg2.getPts())) {
+              ptsSame = true;
+              break;
+            }
+          }
+
+          if (ptsSame)
+          {
+            LOGGER.debug("region with " + dg.getPts() + " already present, not re-adding");
+            dg.setHandledForUltrasoundRegions(Boolean.TRUE);
+            continue;
+          }
+
           LOGGER.debug("replicating shape to region " + i + " with points " + newPts);
           c.setPts(newPts);
           c.buildShape(null);

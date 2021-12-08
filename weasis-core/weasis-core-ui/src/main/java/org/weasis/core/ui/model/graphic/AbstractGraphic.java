@@ -163,6 +163,21 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
                             .orElse(DEFAULT_PTS_SIZE)));
   }
 
+  public boolean arePtsSame(List<Point2D> points) {
+    if (this.getPts().size() != points.size()) {
+      return false;
+    }
+    boolean pointSetSame = true;
+    for (int i = 0; i < this.getPts().size(); ++i) {
+      Point2D p1 = this.getPts().get(i);
+      Point2D p2 = points.get(i);
+      if (Math.abs(p1.getX() - p2.getX()) > 0.001 || Math.abs(p1.getY() - p2.getY()) > 0.001) {
+        pointSetSame = false;
+      }
+    }
+    return pointSetSame;
+  }
+
   @Override
   public Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException {
     setPts(pts);
@@ -943,6 +958,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     }
     return true;
   }
+
 
   protected void fireMoveAction() {
     if (isGraphicComplete()) {
