@@ -13,7 +13,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.swing.JPanel;
@@ -82,10 +81,8 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     final Map<LayoutConstraints, Component> oldMap = layoutModel.getConstraints();
     final Map<LayoutConstraints, Component> map = new LinkedHashMap<>(oldMap.size());
     this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", ""); // NON-NLS
-    Iterator<LayoutConstraints> enumVal = oldMap.keySet().iterator();
 
-    while (enumVal.hasNext()) {
-      LayoutConstraints e = enumVal.next();
+    for (LayoutConstraints e : oldMap.keySet()) {
       Component v = oldMap.get(e);
       LayoutConstraints constraint = e.copy();
 

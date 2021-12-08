@@ -9,7 +9,13 @@
  */
 package org.weasis.core.api.util;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class URLParameters {
@@ -82,5 +88,37 @@ public class URLParameters {
 
   public boolean isAllowUserInteraction() {
     return allowUserInteraction;
+  }
+
+  public static Map<String, String> splitParameter(URL url) throws UnsupportedEncodingException {
+    Map<String, String> queryPairs = new LinkedHashMap<>();
+    String query = url.getQuery();
+    String[] pairs = query.split("&");
+    for (String pair : pairs) {
+      int idx = pair.indexOf("=");
+      queryPairs.put(
+          URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
+          URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+    }
+    return queryPairs;
+  }
+
+  public static Map<String, List<String>> splitMultipleValuesParameter(URL url)
+      throws UnsupportedEncodingException {
+    final Map<String, List<String>> queryPairs = new LinkedHashMap<>();
+    final String[] pairs = url.getQuery().split("&");
+    for (String pair : pairs) {
+      final int idx = pair.indexOf("=");
+      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+      if (!queryPairs.containsKey(key)) {
+        queryPairs.put(key, new LinkedList<>());
+      }
+      final String value =
+          idx > 0 && pair.length() > idx + 1
+              ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8")
+              : null;
+      queryPairs.get(key).add(value);
+    }
+    return queryPairs;
   }
 }

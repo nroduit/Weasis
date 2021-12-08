@@ -54,7 +54,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>
-            --illegal-access=warn
             --add-opens java.desktop/java.beans=ALL-UNNAMED
           </argLine>
         </configuration>
