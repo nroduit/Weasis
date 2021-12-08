@@ -661,7 +661,14 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             if (dg.getUltrasoundRegionGroupID() != dg2.getUltrasoundRegionGroupID()) { continue; } // only process the ones in this group
 
             // adjust position of graphic
-            List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(findUltrasoundRegionWithMeasurement(regions, dg)), regions.get(findUltrasoundRegionWithMeasurement(regions, dg2)), dg);
+            int i1 = findUltrasoundRegionWithMeasurement(regions, dg); // source
+            int i2 = findUltrasoundRegionWithMeasurement(regions, dg2); // destination
+            if (-1 == i1 || -1 == i2)
+            {
+              LOGGER.debug(String.format("either source or destination (%d, %d) is not within an ultrasound region.  skipping graphic", i1, i2));
+              continue;
+            }
+            List<Point2D> newPts = createNewPointsForUltrasoundRegion(regions.get(i1), regions.get(i2), dg);
             LOGGER.debug("due to change of graphic within ultrasound region, redrawing shape with points " + newPts);
             dg2.setPts(newPts);
 
