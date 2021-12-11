@@ -70,8 +70,8 @@ public class StowRS extends AbstractStowrs {
 
   private MultipartPayload getMultipartPayload(List<String> filesOrFolders, boolean recursive) {
     Map<String, String> headers = new HashMap<>();
-    headers.put("Content-Type", contentTypeValue);
-    headers.put("Accept", ContentType.XML.toString());
+    headers.put("Content-Type", contentTypeValue); //NON-NLS
+    headers.put("Accept", ContentType.XML.toString()); //NON-NLS
 
     MultipartPayload multipart = new MultipartPayload(MULTIPART_BOUNDARY, headers);
 
@@ -158,9 +158,9 @@ public class StowRS extends AbstractStowrs {
     String message;
     if (error == null) {
       state.setStatus(Status.Success);
-      message = "all the files has been transferred";
+      message = "all the files has been transferred"; //NON-NLS
     } else {
-      message = "one or more files has not been transferred";
+      message = "one or more files has not been transferred"; //NON-NLS
       state.setStatus(Status.OneOrMoreFailures);
       DicomProgress p = state.getProgress();
       if (p != null) {
@@ -177,7 +177,7 @@ public class StowRS extends AbstractStowrs {
               seq.stream()
                   .map(
                       s ->
-                          s.getString(Tag.ReferencedSOPInstanceUID, "Unknown SopUID")
+                          s.getString(Tag.ReferencedSOPInstanceUID, "Unknown SopUID") //NON-NLS
                               + " -> "
                               + s.getString(Tag.FailureReason))
                   .collect(Collectors.joining(", "));

@@ -1,0 +1,6 @@
+<root>
+  <item
+    name='java.time.format.DateTimeFormatter java.time.format.DateTimeFormatter ofPattern(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>
