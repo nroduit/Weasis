@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Changelog Generator from github issues
         id: generate_changelog_file
-        uses: heinrichreimer/github-changelog-generator-action@v2.2
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           compareLink: true
