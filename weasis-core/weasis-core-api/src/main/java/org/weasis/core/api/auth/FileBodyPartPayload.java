@@ -40,16 +40,16 @@ public class FileBodyPartPayload extends BodyPartPayload {
 
   private static Map<String, String> composeHeaders(String contentType, String filename) {
 
-    String contentDispositionHeader = "form-data"; //NON-NLS
+    String contentDispositionHeader = "form-data"; // NON-NLS
     if (filename != null) {
-      contentDispositionHeader += "; filename=\"" + filename + '"'; //NON-NLS
+      contentDispositionHeader += "; filename=\"" + filename + '"'; // NON-NLS
     }
     if (contentType == null) {
-      return Collections.singletonMap("Content-Disposition", contentDispositionHeader); //NON-NLS
+      return Collections.singletonMap("Content-Disposition", contentDispositionHeader); // NON-NLS
     } else {
       final Map<String, String> headers = new HashMap<>();
       headers.put(HttpClient.CONTENT_TYPE, contentType);
-      headers.put("Content-Disposition", contentDispositionHeader); //NON-NLS
+      headers.put("Content-Disposition", contentDispositionHeader); // NON-NLS
       return headers;
     }
   }

@@ -147,9 +147,9 @@ public class AuthMethodDialog extends JDialog {
             Object[] inputFields = {
               Messages.getString("name"),
               textFieldName,
-              "Base URL", //NON-NLS
+              "Base URL", // NON-NLS
               textFieldURL,
-              "Realm", //NON-NLS
+              "Realm", // NON-NLS
               textFieldRealm
             };
 

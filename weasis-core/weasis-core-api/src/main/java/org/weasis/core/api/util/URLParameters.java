@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class URLParameters {
 
-  public static final String UTF_8 = "UTF-8"; //NON-NLS
+  public static final String UTF_8 = "UTF-8"; // NON-NLS
   private final Map<String, String> headers;
   private final long ifModifiedSince;
   private final int connectTimeout;

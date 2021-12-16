@@ -260,8 +260,8 @@ public class BasicHttpClient implements HttpClient {
     for (Map.Entry<String, List<String>> headerField : conn.getHeaderFields().entrySet()) {
       final String key = headerField.getKey();
       final String value = headerField.getValue().get(0);
-      if ("Content-Encoding".equalsIgnoreCase(key)) { //NON-NLS
-        headers.put("Content-Encoding", value); //NON-NLS
+      if ("Content-Encoding".equalsIgnoreCase(key)) { // NON-NLS
+        headers.put("Content-Encoding", value); // NON-NLS
       } else {
         headers.put(key, value);
       }
