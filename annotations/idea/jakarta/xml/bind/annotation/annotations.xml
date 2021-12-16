@@ -1,0 +1,20 @@
+<root>
+  <item name='jakarta.xml.bind.annotation.XmlAttribute java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='jakarta.xml.bind.annotation.XmlElement java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='jakarta.xml.bind.annotation.XmlElementWrapper java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='jakarta.xml.bind.annotation.XmlRootElement java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='jakarta.xml.bind.annotation.XmlType java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='jakarta.xml.bind.annotation.XmlType java.lang.String[] propOrder()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

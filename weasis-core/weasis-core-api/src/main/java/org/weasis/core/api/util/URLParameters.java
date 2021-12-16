@@ -20,6 +20,7 @@ import java.util.Map;
 
 public class URLParameters {
 
+  public static final String UTF_8 = "UTF-8"; // NON-NLS
   private final Map<String, String> headers;
   private final long ifModifiedSince;
   private final int connectTimeout;
@@ -97,8 +98,8 @@ public class URLParameters {
     for (String pair : pairs) {
       int idx = pair.indexOf("=");
       queryPairs.put(
-          URLDecoder.decode(pair.substring(0, idx), "UTF-8"),
-          URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+          URLDecoder.decode(pair.substring(0, idx), UTF_8),
+          URLDecoder.decode(pair.substring(idx + 1), UTF_8));
     }
     return queryPairs;
   }
@@ -109,13 +110,13 @@ public class URLParameters {
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {
       final int idx = pair.indexOf("=");
-      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), "UTF-8") : pair;
+      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), UTF_8) : pair;
       if (!queryPairs.containsKey(key)) {
         queryPairs.put(key, new LinkedList<>());
       }
       final String value =
           idx > 0 && pair.length() > idx + 1
-              ? URLDecoder.decode(pair.substring(idx + 1), "UTF-8")
+              ? URLDecoder.decode(pair.substring(idx + 1), UTF_8)
               : null;
       queryPairs.get(key).add(value);
     }

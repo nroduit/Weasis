@@ -51,7 +51,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>
-            --illegal-access=warn
             --add-opens java.base/java.time=ALL-UNNAMED
             --add-opens java.base/java.time.format=ALL-UNNAMED
             --add-opens java.base/java.lang=ALL-UNNAMED

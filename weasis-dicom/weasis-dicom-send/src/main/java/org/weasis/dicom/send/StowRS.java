@@ -77,8 +77,8 @@ public class StowRS extends DicomStowRS {
         "multipart/related;type=\""
             + ContentType.APPLICATION_DICOM.getType()
             + "\";boundary="
-            + MULTIPART_BOUNDARY);
-    headers.put("Accept", Multipart.ContentType.XML.toString());
+            + MULTIPART_BOUNDARY); // NON-NLS
+    headers.put("Accept", Multipart.ContentType.XML.toString()); // NON-NLS
 
     MultipartPayload multipart = new MultipartPayload(MULTIPART_BOUNDARY, headers);
 
@@ -165,9 +165,9 @@ public class StowRS extends DicomStowRS {
     String message;
     if (error == null) {
       state.setStatus(Status.Success);
-      message = "all the files has been transferred";
+      message = "all the files has been transferred"; // NON-NLS
     } else {
-      message = "one or more files has not been transferred";
+      message = "one or more files has not been transferred"; // NON-NLS
       state.setStatus(Status.OneOrMoreFailures);
       DicomProgress p = state.getProgress();
       if (p != null) {
@@ -184,7 +184,7 @@ public class StowRS extends DicomStowRS {
               seq.stream()
                   .map(
                       s ->
-                          s.getString(Tag.ReferencedSOPInstanceUID, "Unknown SopUID")
+                          s.getString(Tag.ReferencedSOPInstanceUID, "Unknown SopUID") // NON-NLS
                               + " -> "
                               + s.getString(Tag.FailureReason))
                   .collect(Collectors.joining(", "));
