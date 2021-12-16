@@ -88,6 +88,20 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           1,
           2,
           view2dClass.getName());
+  public static final GridBagLayoutModel VIEWS_1x3 =
+      new GridBagLayoutModel(
+          "1x3", // NON-NLS
+          String.format(F_VIEWS, "1x3"), // NON-NLS
+          1,
+          3,
+          view2dClass.getName());
+  public static final GridBagLayoutModel VIEWS_1x4 =
+      new GridBagLayoutModel(
+          "1x4", // NON-NLS
+          String.format(F_VIEWS, "1x4"), // NON-NLS
+          1,
+          4,
+          view2dClass.getName());
   public static final GridBagLayoutModel VIEWS_2x2_f2 =
       new GridBagLayoutModel(
           ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"),
@@ -104,6 +118,20 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           String.format(F_VIEWS, "2x2"), // NON-NLS
           2,
           2,
+          view2dClass.getName());
+  public static final GridBagLayoutModel VIEWS_2x3 =
+      new GridBagLayoutModel(
+          "2x3", // NON-NLS
+          String.format(F_VIEWS, "2x3"), // NON-NLS
+          2,
+          3,
+          view2dClass.getName());
+  public static final GridBagLayoutModel VIEWS_2x4 =
+      new GridBagLayoutModel(
+          "2x4", // NON-NLS
+          String.format(F_VIEWS, "2x4"), // NON-NLS
+          2,
+          4,
           view2dClass.getName());
 
   /** The current focused <code>ImagePane</code>. The default is 0. */

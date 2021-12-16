@@ -115,12 +115,16 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
       Arrays.asList(
           VIEWS_1x1,
           VIEWS_1x2,
+          VIEWS_1x3,
+          VIEWS_1x4,
           VIEWS_2x1,
           VIEWS_2x2_f2,
           VIEWS_2_f1x2,
           VIEWS_2x1_r1xc2_dump,
           VIEWS_2x1_r1xc2_histo,
-          VIEWS_2x2);
+          VIEWS_2x2,
+          VIEWS_2x3,
+          VIEWS_2x4);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
   // is selected
@@ -844,7 +848,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
 
   private void addLayout(List<GridBagLayoutModel> list, int factorLimit, int rx, int ry) {
     for (int i = 1; i <= factorLimit; i++) {
-      if (i > 2 || i * ry > 2 || i * rx > 2) {
+      if (i > 2 || i * ry > 2 || i * rx > 4) {
         if (i * ry < 50 && i * rx < 50) {
           list.add(
               ImageViewerPlugin.buildGridBagLayoutModel(i * ry, i * rx, view2dClass.getName()));
