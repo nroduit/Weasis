@@ -116,7 +116,7 @@ import org.weasis.opencv.op.lut.LutShape;
 /**
  * The event processing center for this application. This class responses for loading data sets,
  * processing the events from the utility menu that includes changing the operation scope, the
- * layout, window/level, rotation angle, zoom factor, starting/stoping the cining-loop and etc.
+ * layout, window/level, rotation angle, zoom factor, starting/stoping the cining-loop etc.
  */
 public class EventManager extends ImageViewerEventManager<DicomImageElement>
     implements ActionListener {
@@ -218,7 +218,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       getSliderPreference(prefNode, ActionW.ZOOM, 0.1);
 
       /*
-       * Get first the local value if exist, otherwise try to get the default server configuration and finally if
+       * Get first the local value if existed, otherwise try to get the default server configuration and finally if
        * no value take the default value in parameter.
        */
       prefNode = prefs.node("other"); // NON-NLS
@@ -376,7 +376,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   }
                 }
               }
-              // set default preset when the old preset is not available any more
+              // set default preset when the old preset is not available anymore
               if (newPreset == null) {
                 newPreset = image.getDefaultPreset(wlp);
                 isDefaultPresetSelected = true;
@@ -1283,7 +1283,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                   pane.setActionsInView(ActionW.SYNCH_CROSSLINE.cmd(), true);
                   propertySupport.addPropertyChangeListener(ActionW.SCROLL_SERIES.cmd(), pane);
                 }
-                // Force to draw crosslines without changing the slice position
+                // Force drawing crosslines without changing the slice position
                 cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
               }
             }
@@ -1360,7 +1360,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                 // pane.updateSynchState();
               }
             }
-            // Force to draw crosslines without changing the slice position
+            // Force drawing crosslines without changing the slice position
             cineAction.ifPresent(a -> a.stateChanged(a.getSliderModel()));
 
           } else if (Mode.TILE.equals(synch.getMode())) {

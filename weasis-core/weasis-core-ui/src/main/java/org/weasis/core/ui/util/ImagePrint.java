@@ -109,7 +109,7 @@ public class ImagePrint implements Printable {
       } catch (Exception e) {
         // check for the annoying 'Printer is not accepting job' error.
         if (e.getMessage().indexOf("accepting job") != -1) { // NON-NLS
-          // recommend prompting the user at this point if they want to force it
+          // recommend prompting the user at this point if they want to force it,
           // so they'll know there may be a problem.
           int response =
               JOptionPane.showConfirmDialog(

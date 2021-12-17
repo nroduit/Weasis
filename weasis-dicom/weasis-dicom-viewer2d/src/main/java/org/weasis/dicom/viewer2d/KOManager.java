@@ -525,7 +525,7 @@ public final class KOManager {
     int imgIndex = newImageIndex < 0 ? 0 : newImageIndex;
     if (view2D == view2D.getEventManager().getSelectedViewPane()) {
       /*
-       * Update the sliceAction action according to nearest image when the filter hides the image of the previous
+       * Update the sliceAction action according to the nearest image when the filter hides the image of the previous
        * state. And update the action min and max.
        */
       ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);

@@ -221,7 +221,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
     private int width;
     /** @see java.awt.GridBagConstraints#gridheight */
     private int height;
-    /** @see java.awt.GridBagConstraints#weightX */
+    /** @see java.awt.GridBagConstraints#weightx */
     private double weightx;
     /** @see java.awt.GridBagConstraints#weighty */
     private double weighty;

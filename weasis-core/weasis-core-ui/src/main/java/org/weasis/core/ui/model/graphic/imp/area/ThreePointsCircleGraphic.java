@@ -114,7 +114,7 @@ public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
     updateLabel(mouseEvent, getDefaultView2d(mouseEvent));
   }
 
-  /** Force to display handles even during resizing or moving sequences */
+  /** Force displaying handles even during resizing or moving sequences */
   @Override
   public Boolean getResizingOrMoving() {
     return Boolean.FALSE;

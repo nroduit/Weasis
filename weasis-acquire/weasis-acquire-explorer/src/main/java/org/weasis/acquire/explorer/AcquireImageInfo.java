@@ -337,7 +337,7 @@ public class AcquireImageInfo {
 
   /**
    * Check if ImageElement has a SOPInstanceUID TAG value and if not create a new UUID. Read Exif
-   * metaData from from original file and populate relevant ImageElement TAGS. <br>
+   * metaData from original file and populate relevant ImageElement TAGS. <br>
    *
    * @param imageElement
    */

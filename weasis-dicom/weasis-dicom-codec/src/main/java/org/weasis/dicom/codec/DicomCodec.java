@@ -72,7 +72,7 @@ public class DicomCodec implements Codec {
                   && itemPointer.get(0).sequenceTag == Tag.WaveformSequence;
           }
           if (TagUtils.isPrivateTag(tag)) {
-            return length > 5000; // Do no read in memory private value more than 5 KB
+            return length > 5000; // Do not read in memory private value more than 5 KB
           }
 
           switch (vr) {

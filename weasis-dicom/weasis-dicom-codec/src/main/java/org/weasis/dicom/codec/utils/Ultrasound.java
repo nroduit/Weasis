@@ -52,7 +52,7 @@ public class Ultrasound {
           Double calib2Y =
               DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaY, null);
           if (!Objects.equals(calib1X, calib2X) || !Objects.equals(calib1Y, calib2Y)) {
-            return null; // currently cannot handle multiple spatial calibration
+            return null; // currently, cannot handle multiple spatial calibration
           }
         }
       }

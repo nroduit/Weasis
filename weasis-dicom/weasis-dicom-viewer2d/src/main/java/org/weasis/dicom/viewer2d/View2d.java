@@ -569,7 +569,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   /**
    * @param img
    * @return true if the state has changed and if the view or at least the KO button need to be
-   *     repaint
+   *     repainted
    */
   protected boolean updateKOselectedState(DicomImageElement img) {
 
@@ -755,7 +755,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           if (selImage != null) {
             // IntersectVolume: display a rectangle to show the slice thickness
             if (!addCrossline(selImage, layer, new IntersectVolume(sliceGeometry), true)) {
-              // When the volume limits are outside the image, get the only the intersection
+              // When the volume limits are outside the image, get only the intersection
               addCrossline(selImage, layer, slice, true);
             }
           }
@@ -838,7 +838,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     if (actionName.equals(ActionW.WINLEVEL.cmd())) {
-      // For window/level action set window action on x axis
+      // For window/level action set window action on x-axis
       MouseActionAdapter win = getAction(ActionW.WINDOW);
       if (win != null) {
         win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);

@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.StringUtil;
 
-/** The Class AuditLog allows to write specific traces for the application usage. */
+/** The Class AuditLog allows writing specific traces for the application usage. */
 public class AuditLog {
   // Share this logger
   public static final Logger LOGGER = LoggerFactory.getLogger(AuditLog.class);

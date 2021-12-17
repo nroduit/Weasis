@@ -187,7 +187,7 @@ public class DicomSpecialElement extends MediaElement {
    * @return the KOSpecialElement collection for the given parameters, if the referenced seriesUID
    *     is null all the KOSpecialElement from specialElements collection are returned. In any case
    *     all the KOSpecialElement that are writable will be added to the returned collection
-   *     whatever is the seriesUID. These KO are part of the new created ones by users of the
+   *     whatever is the seriesUID. These KO are part of the new created one's by users of the
    *     application
    */
   public static final Collection<KOSpecialElement> getKoSpecialElements(

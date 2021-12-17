@@ -33,8 +33,8 @@ public class GraphicHelper {
   private GraphicHelper() {}
 
   /**
-   * Create a new layer with a grid line. Lines are centralize vertically and horizontally. The grid
-   * is a little bit bigger in case of rotation occurs.
+   * Create a new layer with a grid line. Lines are centralized vertically and horizontally. The grid
+   * is a little bigger in case of rotation occurs.
    *
    * @param view Image view (will retrieve width and height)
    * @since 2.5.0

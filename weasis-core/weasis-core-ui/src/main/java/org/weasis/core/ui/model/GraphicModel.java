@@ -73,7 +73,8 @@ public interface GraphicModel extends UUIDable {
    *
    * @param g2d the 2D graphics context
    * @param transform
-   * @param clip
+   * @param inverseTransform
+   * @param viewClip
    */
   void draw(
       Graphics2D g2d,

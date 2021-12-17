@@ -108,9 +108,8 @@ public class SplittingModalityRules {
       }
 
       if (condition != null) {
-        // When all conditions match then the tag values not matching any more (media goes into a
-        // new
-        // sub-series)
+        // When all conditions match then the tag values not matching anymore (media goes into a
+        // new subseries)
         return !condition.match(newMedia);
       }
       return false;

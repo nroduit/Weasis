@@ -34,7 +34,7 @@ public class Module {
 
     if (module != null) {
       if (oldSequence != null) {
-        oldSequence.clear(); // Allows to remove parents of Attributes
+        oldSequence.clear(); // Allows removing parents of Attributes
       }
       Attributes attributes = module.getAttributes();
       if (attributes != null) {
@@ -54,7 +54,7 @@ public class Module {
 
     if (modules != null && !modules.isEmpty()) {
       if (oldSequence != null) {
-        oldSequence.clear(); // Allows to remove parents of Attributes
+        oldSequence.clear(); // Allows removing parents of Attributes
       }
       Sequence newSequence = dcmItems.newSequence(tag, modules.size());
       for (Module module : modules) {

@@ -262,7 +262,7 @@ public class DicomMediaIO implements DcmMediaReader {
   private MediaElement[] image = null;
   private String mimeType;
   private boolean hasPixel = false;
-  /** Used to indicate whether or not to skip large private dicom elements. */
+  /** Used to indicate whether to skip large private dicom elements. */
   private boolean skipLargePrivate = true;
 
   private final FileCache fileCache;

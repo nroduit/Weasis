@@ -148,7 +148,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png")));
     this.setDockableWidth(350);
     this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
-    // By default recalculate DVH only when it is missing for structure
+    // By default, recalculate DVH only when it is missing for structure
     this.cbDvhRecalculate.setSelected(false);
     this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
     this.lblRtStructureSet.setVisible(false);
@@ -329,7 +329,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     FlowLayout flDvh = (FlowLayout) panelDvh.getLayout();
     flDvh.setAlignment(FlowLayout.LEFT);
     panelHead.add(panelDvh);
-    // By default recalculate DVH only when it is missing for structure
+    // By default, recalculate DVH only when it is missing for structure
     panelDvh.add(cbDvhRecalculate);
     this.cbDvhRecalculate.setSelected(false);
     this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));

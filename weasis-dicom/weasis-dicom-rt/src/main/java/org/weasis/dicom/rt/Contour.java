@@ -245,7 +245,7 @@ public class Contour {
     double minY = Arrays.stream(this.getCoordinatesY()).min().getAsDouble();
     double maxY = Arrays.stream(this.getCoordinatesY()).max().getAsDouble();
 
-    // Outside of the contour bounding box
+    // Outside the contour bounding box
     if (contour.getCoordinateX() < minX
         || contour.getCoordinateX() > maxX
         || contour.getCoordinateY() < minY

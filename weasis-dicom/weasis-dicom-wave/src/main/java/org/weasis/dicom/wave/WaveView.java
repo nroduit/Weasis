@@ -197,7 +197,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
     if (series != null) {
       try {
-        // Should have only one object by series (if more, they are split in several sub-series in
+        // Should have only one object by series (if more, they are split in several subseries in
         // dicomModel)
         DicomSpecialElement s =
             DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);

@@ -225,7 +225,7 @@ public class PrGraphicUtil {
       }
     } else if (INTERPOLATED.equalsIgnoreCase(type)) {
       if (points != null && points.length >= 2) {
-        // Only non editable graphic (required control point tool)
+        // Only non-editable graphic (required control point tool)
         int size = points.length / 2;
         if (size >= 2) {
           Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, size);

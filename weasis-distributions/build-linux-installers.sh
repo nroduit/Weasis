@@ -112,10 +112,10 @@ for arc in "${ARCS[@]}"; do
   # Load the local images
   # docker buildx build --load --platform "$arc" -t weasis/builder:latest .
   if [[ "$arc" == *"64"* || "$arc" = "linux/s390x" ]]; then
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS="-Djdk.lang.Process.launchMechanism=vfork"; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /opt/java/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /opt/java/openjdk/ --temp /work/temp"
   else
     echo "32-bit needs to copy jdk on 32-bit file system"
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS="-Djdk.lang.Process.launchMechanism=vfork"; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /work/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /work/openjdk/ --temp /work/temp"
   fi
 done
 

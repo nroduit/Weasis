@@ -99,9 +99,9 @@ public class MagicMimeEntry {
     return i;
   }
 
-  // There are problems with the magic.mime file. It seems that some of the fields
-  // are space deliniated and not tab deliniated as defined in the spec.
-  // We will attempt to handle the case for space deliniation here so that we can parse
+  // There are problems with the magic.mime file. It seems that some fields
+  // are space delineated and not tab delineated as defined in the spec.
+  // We will attempt to handle the case for space delineation here so that we can parse
   // as much of the file as possible.
   void addEntry(String aLine) {
     String trimmed = aLine.replaceAll("^>*", "");
@@ -125,8 +125,8 @@ public class MagicMimeEntry {
           checkBytesFrom = Integer.parseInt(tok);
         }
       } catch (NumberFormatException e) {
-        // We could have a space delinitaed entry so lets try to handle this anyway
-        addEntry(trimmed.replaceAll("  ", "\t"));
+        // We could have a space delineated entry so lets try to handle this anyway
+        addEntry(trimmed.replaceAll(" {2}", "\t"));
         return;
       }
     }
@@ -288,7 +288,7 @@ public class MagicMimeEntry {
     ByteBuffer buf;
     if (STRING_TYPE == type) {
       int len;
-      // Lets check if its a between test
+      // Let's check if it's a between test
       int index = typeStr.indexOf('>');
       if (index != -1) {
         len = Integer.parseInt(typeStr.substring(index + 1, typeStr.length() - 1));

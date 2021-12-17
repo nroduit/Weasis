@@ -51,7 +51,7 @@ public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener,
 
   private void sortLocales() {
     Locale defaultLocale = Locale.getDefault();
-    // Allow to sort correctly string in each language
+    // Allow sorting correctly string in each language
     final Collator collator = Collator.getInstance(defaultLocale);
     Collections.sort(
         languages, (l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));

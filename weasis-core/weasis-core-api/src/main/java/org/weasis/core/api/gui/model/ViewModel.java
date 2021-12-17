@@ -31,7 +31,7 @@ public interface ViewModel {
   /**
    * Sets the offset from the center model coordinates (image center) to the view center.
    *
-   * <p>With (0.0,0.0) the image will be on the center of the view. Negative values will shift the
+   * <p>With (0.0,0.0) the image will be in the center of the view. Negative values will shift the
    * image on the bottom right.
    *
    * @param modelOffsetX the X-offset

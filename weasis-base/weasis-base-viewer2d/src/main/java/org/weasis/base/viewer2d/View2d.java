@@ -201,7 +201,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     if (actionName.equals(ActionW.WINLEVEL.cmd())) {
-      // For window/level action set window action on x axis
+      // For window/level action set window action on x-axis
       MouseActionAdapter win = getAction(ActionW.WINDOW);
       if (win != null) {
         win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);

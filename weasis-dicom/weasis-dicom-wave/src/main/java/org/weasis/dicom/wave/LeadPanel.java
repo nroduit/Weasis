@@ -329,7 +329,7 @@ public class LeadPanel extends JPanel {
 
   private void drawWaveData(Graphics2D g2, Dimension dim) {
     double cellHeight = dim.getHeight() / this.mvCellCount;
-    double halfHeight = dim.height / 2.0; // base line
+    double halfHeight = dim.height / 2.0; // baseline
 
     g2.setColor(Color.BLACK);
     Stroke stroke = new BasicStroke(1.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);

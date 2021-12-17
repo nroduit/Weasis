@@ -32,7 +32,7 @@ public class AffineTransformOp extends AbstractOp {
 
   public static final double[] identityMatrix = new double[] {1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
   /**
-   * Set a affine transformation (Required parameter).
+   * Set an affine transformation (Required parameter).
    *
    * <p>Double array (length of 6).
    */

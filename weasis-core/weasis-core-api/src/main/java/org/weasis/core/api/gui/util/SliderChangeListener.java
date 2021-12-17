@@ -110,7 +110,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
 
   public void setRealMinMaxValue(
       double min, double max, double value, boolean triggerChangedEvent) {
-    // Avoid to get infinity value and lock the slider
+    // Avoid getting infinity value and lock the slider
     if (max - min == 0) {
       max += 1;
     }

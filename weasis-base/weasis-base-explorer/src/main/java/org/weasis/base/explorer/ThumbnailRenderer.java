@@ -47,7 +47,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
   private static final Color back = new Color(242, 242, 242);
 
   public ThumbnailRenderer() {
-    // Cannot pass a boxLayout directly to super because it has a this reference
+    // Cannot pass a boxLayout directly to super because it has a reference
     super(null, true);
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     JPanel panel = new JPanel();

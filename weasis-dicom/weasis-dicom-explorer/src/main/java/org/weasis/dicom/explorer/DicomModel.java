@@ -925,7 +925,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
       } else if (original instanceof DicomVideoSeries || original instanceof DicomEncapDocSeries) {
         if (original.size(null) > 0) {
-          // Always split when it is a video or a encapsulated document
+          // Always split when it is a video or an encapsulated document
           if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
             splitSeries(dicomReader, original, media);
             return true;

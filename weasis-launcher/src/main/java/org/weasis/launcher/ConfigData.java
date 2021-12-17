@@ -657,7 +657,7 @@ public class ConfigData {
   }
 
   /**
-   * Reads application config files and compute WEASIS_CONFIG_HASH to check if those would have been
+   * Reads application config files and compute WEASIS_CONFIG_HASH to check if those had been
    * updated.
    */
   public Properties loadConfigProperties() {
@@ -688,7 +688,7 @@ public class ConfigData {
       throw new IllegalStateException("Cannot load weasis config!");
     }
 
-    // Build a hash the properties just after reading. It will allow to compare with a new app
+    // Build a hash the properties just after reading. It will allow comparing with a new app
     // instance.
     properties.put(P_WEASIS_CONFIG_HASH, String.valueOf(felixConfig.hashCode()));
 

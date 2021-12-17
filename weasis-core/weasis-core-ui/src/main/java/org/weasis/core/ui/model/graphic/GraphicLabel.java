@@ -37,7 +37,7 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
   Rectangle2D getLabelBounds();
 
   /**
-   * Should be used to check if mouse coordinates are inside/outside label bounding rectangle. Also
+   * Should be used to check if mouse coordinates are inside/outside label bounding rectangle. Also,
    * useful to check intersection with clipping rectangle.
    *
    * @param transform

@@ -30,7 +30,7 @@ public class MergeImgOp extends AbstractOp {
   /**
    * Opacity of the top image (Optional parameter).
    *
-   * <p>Integer value. Default value is 255 (highest value => no transparency).
+   * <p>Integer value. Default value is 255 (the highest value => no transparency).
    */
   public static final String P_OPACITY = "opacity"; // NON-NLS
 

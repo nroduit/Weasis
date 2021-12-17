@@ -111,13 +111,13 @@ public class WeasisLauncher {
   /** The property name used to specify whether the launcher should install a shutdown hook. */
   public static final String SHUTDOWN_HOOK_PROP = "felix.shutdown.hook";
   /**
-   * The property name used to specify an URL to the configuration property file to be used for the
+   * The property name used to specify a URL to the configuration property file to be used for the
    * created the framework instance.
    */
   public static final String CONFIG_PROPERTIES_PROP = "felix.config.properties";
   /** The default name used for the configuration properties file. */
   public static final String CONFIG_PROPERTIES_FILE_VALUE = "config.properties";
-  /** The property name used to specify an URL to the extended property file. */
+  /** The property name used to specify a URL to the extended property file. */
   public static final String EXTENDED_PROPERTIES_PROP = "felix.extended.config.properties";
   /** The default name used for the extended properties file. */
   public static final String EXTENDED_PROPERTIES_FILE_VALUE = "ext-config.properties"; // NON-NLS
@@ -933,7 +933,7 @@ public class WeasisLauncher {
       resPath = serverProp.getOrDefault(P_WEASIS_RESOURCES_URL, null);
       if (!mavenRepo && !Utils.hasText(resPath)) {
         String cdb = configData.getProperty(P_WEASIS_CODEBASE_URL, null);
-        // Don try to guess remote URL from pure local distribution
+        // Don't try to guess remote URL from pure local distribution
         if (Utils.hasText(cdb) && !cdb.startsWith("file:")) { // NON-NLS
           resPath = cdb + defaultResources;
         }

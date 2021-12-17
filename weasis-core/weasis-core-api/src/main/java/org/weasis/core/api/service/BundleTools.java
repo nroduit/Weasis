@@ -109,7 +109,7 @@ public class BundleTools {
             codec = c;
             break;
           }
-          // If the preferred codec cannot be find, the first-found codec is retained
+          // If the preferred codec cannot be found, the first-found codec is retained
           if (codec == null) {
             codec = c;
           }
@@ -130,7 +130,7 @@ public class BundleTools {
           INIT_SYSTEM_PREFERENCES.setProperty(
               key, context.getProperty("wp.init." + key)); // NON-NLS
         }
-        // In case the remote file is empty or has less properties than the local file, set a pref
+        // In case the remote file is empty or has fewer properties than the local file, set a pref
         // to force
         // rewriting both files
         String diffRemote = "wp.init.diff.remote.pref";

@@ -14,6 +14,7 @@ import java.util.Map.Entry;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
@@ -53,11 +54,11 @@ public class Global extends DefaultTagable {
   /**
    * Updates all Dicom Tags from the given document except Patient Dicom Group Tags
    *
-   * @param xml
+   * @param tagList list of tags
    */
-  public void updateAllButPatient(Tagable tagable) {
-    if (tagable != null) {
-      tagable
+  public void updateAllButPatient(TagReadable tagList) {
+    if (tagList != null) {
+      tagList
           .getTagEntrySetIterator()
           .forEachRemaining(
               i -> {

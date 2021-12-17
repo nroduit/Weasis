@@ -94,7 +94,7 @@ public class MipView extends View2d {
 
   @Override
   protected void setImage(DicomImageElement img) {
-    // Avoid to listen synch events
+    // Avoid listening synch events
   }
 
   public boolean isProcessRunning() {
@@ -202,7 +202,7 @@ public class MipView extends View2d {
     if (oldImage == null) {
       eventManager.updateComponentsListener(MipView.this);
     } else {
-      // Force to draw crosslines without changing the slice position
+      // Force drawing crosslines without changing the slice position
       ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
       if (sequence instanceof SliderCineListener) {
         SliderCineListener cineAction = (SliderCineListener) sequence;

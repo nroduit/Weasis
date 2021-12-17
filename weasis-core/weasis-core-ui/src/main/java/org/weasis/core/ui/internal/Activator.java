@@ -54,7 +54,7 @@ public class Activator implements BundleActivator, ServiceListener {
     MeasureTool.viewSetting.initMonitors();
     MeasureTool.viewSetting.applyPreferences(prefs);
 
-    // Must be instantiate in EDT
+    // Must be instantiated in EDT
     GuiExecutor.instance()
         .execute(
             () -> {
@@ -91,7 +91,7 @@ public class Activator implements BundleActivator, ServiceListener {
   @Override
   public synchronized void serviceChanged(final ServiceEvent event) {
 
-    // Must be instantiate in EDT
+    // Must be instantiated in EDT
     GuiExecutor.instance()
         .execute(
             () -> {

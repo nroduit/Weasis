@@ -236,7 +236,7 @@ public class AutoProcessor {
   }
 
   /**
-   * Processes the auto-install and auto-start properties from the specified configuration
+   * Processes the auto-installation and auto-start properties from the specified configuration
    * properties.
    */
   private static void processAutoProperties(
@@ -253,7 +253,7 @@ public class AutoProcessor {
                     org.osgi.service.startlevel.StartLevel.class.getName()));
 
     // Retrieve all auto-install and auto-start properties and install
-    // their associated bundles. The auto-install property specifies a
+    // their associated bundles. The auto-installation property specifies a
     // space-delimited list of bundle URLs to be automatically installed
     // into each new profile, while the auto-start property specifies
     // bundles to be installed and started. The start level to which the

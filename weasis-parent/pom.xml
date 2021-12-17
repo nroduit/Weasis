@@ -25,7 +25,7 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <felix.framework.version>7.0.1</felix.framework.version>
+    <felix.framework.version>7.0.3</felix.framework.version>
     <substance.version>3.5.0</substance.version>
     <xz.version>1.9</xz.version>
 
@@ -37,14 +37,14 @@
     <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
     <felix.configadmin.version>1.9.22</felix.configadmin.version>
     <felix.prefs.version>1.1.0</felix.prefs.version>
-    <felix.scr.version>2.1.26</felix.scr.version>
+    <felix.scr.version>2.1.28</felix.scr.version>
     <osgi.promise.version>1.2.0</osgi.promise.version>
     <osgi.function.version>1.2.0</osgi.function.version>
     <felix.metatype.version>1.2.4</felix.metatype.version>
     <felix.scr.annotations.version>1.12.0</felix.scr.annotations.version>
     <felix.scr.generator.version>1.18.5-rc3</felix.scr.generator.version>
 
-    <slf4j.version>1.7.30</slf4j.version>
+    <slf4j.version>1.7.32</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.3p1</dockingframes.version>
     <weasis-dicom-tools.version>5.24.2-IMG-RELEASE</weasis-dicom-tools.version>

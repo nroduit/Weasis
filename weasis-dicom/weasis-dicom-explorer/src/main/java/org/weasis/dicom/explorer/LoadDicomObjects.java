@@ -102,7 +102,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
 
     for (final SeriesThumbnail t : thumbs) {
       MediaSeries<MediaElement> series = t.getSeries();
-      // Avoid to rebuild most of CR series thumbnail
+      // Avoid rebuilding most of CR series thumbnail
       if (series != null && series.size(null) > 2) {
         GuiExecutor.instance().execute(t::reBuildThumbnail);
       }

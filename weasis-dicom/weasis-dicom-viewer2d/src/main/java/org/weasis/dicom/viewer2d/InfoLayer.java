@@ -165,7 +165,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       /*
        * IHE BIR RAD TF-­‐2: 4.16.4.2.2.5.8
        *
-       * Whether or not lossy compression has been applied, derived from Lossy Image 990 Compression (0028,2110),
+       * Whether lossy compression has been applied, derived from Lossy Image 990 Compression (0028,2110),
        * and if so, the value of Lossy Image Compression Ratio (0028,2112) and Lossy Image Compression Method
        * (0028,2114), if present (as per FDA Guidance for the Submission Of Premarket Notifications for Medical
        * Image Management Devices, July 27, 2000).

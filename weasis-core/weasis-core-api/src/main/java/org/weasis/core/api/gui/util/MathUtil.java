@@ -75,7 +75,7 @@ public class MathUtil {
   }
 
   public static double getOrientation(double x1, double y1, double x2, double y2) {
-    // Use arctan2 to handle to handle possible negative values
+    // Use arctan2 to handle possible negative values
     double teta = Math.atan2(y1 - y2, x1 - x2);
     double angle = Math.toDegrees(teta); // convert from radians to degrees
     // Return the orientation from 0 to 180 degrees

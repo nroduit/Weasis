@@ -103,7 +103,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
       List<DicomSpecialElement> specialElements =
           (List<DicomSpecialElement>) series.getTagValue(TagW.DicomSpecialElementList);
       if (specialElements != null && !specialElements.isEmpty()) {
-        // Should have only one object by series (if more, they are split in several sub-series in
+        // Should have only one object by series (if more, they are split in several subseries in
         // dicomModel)
         s = specialElements.get(0);
       }

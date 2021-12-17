@@ -227,7 +227,7 @@ public class Dvh {
 
     // Each i - bin is 1 cGy
     for (int i = 1; i < this.dvhData.length - 1; i++) {
-      // If bin (dose level) found that was received by less then 100% of ROI volume
+      // If bin (dose level) found that was received by less than 100% of ROI volume
       if (this.dvhData[i] < this.dvhData[0]) {
         minDose = (2 * i - 1) / 2.0;
         break;
@@ -246,7 +246,7 @@ public class Dvh {
 
     // Detect the increase from the right (each i - bin is 1 cGy)
     for (int i = dDvh.length - 1; i >= 0; i--) {
-      // If bin (dose level) found that was received by more then 0 % of ROI volume
+      // If bin (dose level) found that was received by more than 0 % of ROI volume
       if (dDvh[i] > 0.0) {
         maxDose = i + 1.0;
         break;

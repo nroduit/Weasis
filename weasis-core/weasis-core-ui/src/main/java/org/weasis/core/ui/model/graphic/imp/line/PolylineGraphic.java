@@ -84,7 +84,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
         Point2D checkPoint = pts.get(lastPointIndex);
         /*
          * Must not have two or several points with the same position at the end of the list (two points is the
-         * convention to have a uncompleted shape when drawing)
+         * convention to have an uncompleted shape when drawing)
          */
         for (int i = lastPointIndex - 1; i >= 0; i--) {
           if (checkPoint.equals(pts.get(i))) {
