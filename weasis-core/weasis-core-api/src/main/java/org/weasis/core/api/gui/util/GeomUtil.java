@@ -357,7 +357,6 @@ public final class GeomUtil {
     double perpX = -abY;
     double perpY = abX;
     double perpSize = Math.sqrt(abX * abX + abY * abY);
-    ;
 
     double sideVectorX = dist * perpX / perpSize;
     double sideVectorY = dist * perpY / perpSize;

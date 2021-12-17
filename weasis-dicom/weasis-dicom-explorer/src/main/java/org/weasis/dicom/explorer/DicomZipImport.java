@@ -40,8 +40,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   private static final String lastDICOMDIR = "lastDicomZip";
 
   private File selectedFile;
-  private JButton btnOpen;
-  private JLabel fileLabel = new JLabel();
+  private final JLabel fileLabel = new JLabel();
 
   public DicomZipImport() {
     super(Messages.getString("DicomZipImport.title"));
@@ -60,7 +59,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
             null,
             null));
     setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-    btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
+    JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
     btnOpen.addActionListener(e -> browseImgFile());
     add(btnOpen);
     add(fileLabel);

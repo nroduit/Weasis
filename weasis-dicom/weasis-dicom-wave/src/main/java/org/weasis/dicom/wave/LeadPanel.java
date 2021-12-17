@@ -44,8 +44,8 @@ public class LeadPanel extends JPanel {
   private int sampleNumber;
 
   private int selectedPosition;
-  private List<SignalMarker> markers;
-  private Measure measureType;
+  private final List<SignalMarker> markers;
+  private final Measure measureType;
   private final Font fontTitle = new Font("SanSerif", Font.BOLD, 11);
 
   public LeadPanel(WaveView view, WaveDataReadable data, ChannelDefinition channels) {

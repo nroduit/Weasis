@@ -17,7 +17,6 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
 import java.io.InputStream;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.swing.Icon;
@@ -107,9 +106,8 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
     this.icon = layoutModel.icon;
 
     this.constraints = new LinkedHashMap<>(layoutModel.constraints.size());
-    Iterator<LayoutConstraints> enumVal = layoutModel.constraints.keySet().iterator();
-    while (enumVal.hasNext()) {
-      this.constraints.put(enumVal.next().copy(), null);
+    for (LayoutConstraints layoutConstraints : layoutModel.constraints.keySet()) {
+      this.constraints.put(layoutConstraints.copy(), null);
     }
   }
 
@@ -126,9 +124,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         double stepX = getIconWidth() / dim.getWidth();
         double stepY = getIconHeight() / dim.getHeight();
 
-        Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
-        while (enumVal.hasNext()) {
-          LayoutConstraints l = enumVal.next();
+        for (LayoutConstraints l : constraints.keySet()) {
           Rectangle2D rect =
               new Rectangle2D.Double(
                   x + l.gridx * stepX,
@@ -173,9 +169,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
   public Dimension getGridSize() {
     int lastx = 0;
     int lasty = 0;
-    Iterator<LayoutConstraints> enumVal = constraints.keySet().iterator();
-    while (enumVal.hasNext()) {
-      LayoutConstraints key = enumVal.next();
+    for (LayoutConstraints key : constraints.keySet()) {
       if (key.gridx > lastx) {
         lastx = key.gridx;
       }
@@ -237,7 +231,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
     private Color color;
 
     private int tag = -1;
-    private StringBuilder name = new StringBuilder(80);
+    private final StringBuilder name = new StringBuilder(80);
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {

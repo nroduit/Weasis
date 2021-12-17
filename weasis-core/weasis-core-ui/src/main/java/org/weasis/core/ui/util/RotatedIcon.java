@@ -31,11 +31,11 @@ public class RotatedIcon implements Icon {
     DOWN,
     UP,
     UPSIDE_DOWN,
-    ABOUT_CENTER;
+    ABOUT_CENTER
   }
 
-  private Icon icon;
-  private Rotate rotate;
+  private final Icon icon;
+  private final Rotate rotate;
   private double angle;
 
   public RotatedIcon(Icon icon) {

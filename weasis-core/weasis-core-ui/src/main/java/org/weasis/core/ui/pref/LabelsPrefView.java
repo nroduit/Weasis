@@ -44,13 +44,6 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   private final JPanel panelList = new JPanel();
   private final JComboBox<Graphic> comboBoxTool;
 
-  private final ItemListener toolsListener =
-      e -> {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          selectTool((Graphic) e.getItem());
-        }
-      };
-
   public LabelsPrefView() {
     super(MeasureTool.LABEL_PREF_NAME);
     setComponentPosition(20);
@@ -95,6 +88,12 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     comboBoxTool = new JComboBox<>(tools.stream().toArray(Graphic[]::new));
     comboBoxTool.setMaximumRowCount(12);
     selectTool((Graphic) comboBoxTool.getSelectedItem());
+    ItemListener toolsListener =
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            selectTool((Graphic) e.getItem());
+          }
+        };
     comboBoxTool.addItemListener(toolsListener);
     panel.add(comboBoxTool);
     panel1.add(panelList);

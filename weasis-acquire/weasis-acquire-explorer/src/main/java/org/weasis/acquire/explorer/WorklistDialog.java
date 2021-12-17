@@ -49,12 +49,9 @@ import org.weasis.dicom.tool.ModalityWorklist;
 public class WorklistDialog extends JDialog {
 
   private JLabel selection;
-  private JButton okButton;
-  private JButton cancelButton;
-  private JPanel footPanel;
 
-  private DicomNode calling;
-  private DicomNode called;
+  private final DicomNode calling;
+  private final DicomNode called;
 
   private JScrollPane tableContainer;
 
@@ -91,7 +88,7 @@ public class WorklistDialog extends JDialog {
 
     this.getContentPane().add(tableContainer, BorderLayout.CENTER);
 
-    footPanel = new JPanel();
+    JPanel footPanel = new JPanel();
     FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
     flowLayout.setVgap(15);
     flowLayout.setAlignment(FlowLayout.RIGHT);
@@ -99,12 +96,12 @@ public class WorklistDialog extends JDialog {
     getContentPane().add(footPanel, BorderLayout.SOUTH);
     selection = new JLabel();
     footPanel.add(selection);
-    okButton = new JButton();
+    JButton okButton = new JButton();
     footPanel.add(okButton);
 
     okButton.setText(Messages.getString("WorklistDialog.apply"));
     okButton.addActionListener(e -> okButtonActionPerformed());
-    cancelButton = new JButton();
+    JButton cancelButton = new JButton();
     footPanel.add(cancelButton);
 
     cancelButton.setText(Messages.getString("WorklistDialog.cancel"));
@@ -140,8 +137,8 @@ public class WorklistDialog extends JDialog {
             row[j] = tags[j].getFormattedTagValue(tags[j].getValue(m), null);
           } else {
             Attributes parent = m;
-            for (int k = 0; k < pSeq.length; k++) {
-              Attributes p = parent.getNestedDataset(pSeq[k]);
+            for (int value : pSeq) {
+              Attributes p = parent.getNestedDataset(value);
               if (p == null) {
                 break;
               }

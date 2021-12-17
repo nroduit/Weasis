@@ -206,8 +206,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   }
 
   private static class CloseOthersAction extends CButton {
-    private CDockable dockable;
-    private boolean closeAll;
+    private final CDockable dockable;
+    private final boolean closeAll;
 
     public CloseOthersAction(CDockable dockable, boolean closeAll) {
       // prevent standard initialization of the action by calling the protected constructor

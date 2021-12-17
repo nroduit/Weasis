@@ -21,14 +21,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -94,7 +92,7 @@ public class WeasisLauncher {
     STOPPING(0x00000010),
     ACTIVE(0x00000020);
 
-    private int index;
+    private final int index;
 
     State(int state) {
       this.index = state;
@@ -606,26 +604,21 @@ public class WeasisLauncher {
           Proxy.newProxyInstance(
               loader,
               new Class[] {c},
-              new InvocationHandler() {
+              (proxy, method, args) -> {
+                String listenerMethod = method.getName();
 
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                  String listenerMethod = method.getName();
-
-                  if (listenerMethod.equals("beforeExecute")) {
-                    String arg = args[1].toString();
-                    if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { // NON-NLS
-                      // Force gogo to not use Expander to concatenate parameter with the current
-                      // directory
-                      // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
-                      commandSessionExecute(args[0], "gogo.option.noglob=on"); // NON-NLS
-                    }
-                  } else if (listenerMethod.equals("equals")) { // NON-NLS
-                    // Only add once in the set of listeners
-                    return proxy.getClass().isAssignableFrom((args[0].getClass()));
+                if (listenerMethod.equals("beforeExecute")) {
+                  String arg = args[1].toString();
+                  if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { // NON-NLS
+                    // Force gogo to not use Expander to concatenate parameter with the current
+                    // directory (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
+                    commandSessionExecute(args[0], "gogo.option.noglob=on"); // NON-NLS
                   }
-                  return null;
+                } else if (listenerMethod.equals("equals")) { // NON-NLS
+                  // Only add once in the set of listeners
+                  return proxy.getClass().isAssignableFrom((args[0].getClass()));
                 }
+                return null;
               });
       nameMethod.invoke(commandProcessor, listener);
     } catch (Exception e) {
@@ -1036,7 +1029,7 @@ public class WeasisLauncher {
 
     // Clean cache if Weasis has crashed during the previous launch
     boolean cleanCache = Boolean.parseBoolean(serverProp.get("weasis.clean.previous.version"));
-    if (cleanCacheAfterCrash != null && Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
+    if (Boolean.TRUE.toString().equals(cleanCacheAfterCrash)) {
       serverProp.put(
           Constants.FRAMEWORK_STORAGE_CLEAN, Constants.FRAMEWORK_STORAGE_CLEAN_ONFIRSTINIT);
       localSourceProp.remove(P_WEASIS_CLEAN_CACHE);
@@ -1198,8 +1191,8 @@ public class WeasisLauncher {
     UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
     String laf = null;
     if (look != null) {
-      for (int i = 0, n = lafs.length; i < n; i++) {
-        if (lafs[i].getClassName().equals(look)) {
+      for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
+        if (lookAndFeelInfo.getClassName().equals(look)) {
           laf = look;
           break;
         }
@@ -1211,9 +1204,9 @@ public class WeasisLauncher {
       } else {
         // Try to set Nimbus, concurrent thread issue
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-        for (int i = 0, n = lafs.length; i < n; i++) {
-          if (lafs[i].getName().equals("Nimbus")) { // NON-NLS
-            laf = lafs[i].getClassName();
+        for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
+          if (lookAndFeelInfo.getName().equals("Nimbus")) { // NON-NLS
+            laf = lookAndFeelInfo.getClassName();
             break;
           }
         }
@@ -1289,12 +1282,10 @@ public class WeasisLauncher {
         Field field = clazz.getDeclaredField("hooks");
         field.setAccessible(true); // NOSONAR only workaround to fix buggy java webstart classloader
         Map<?, Thread> hooks = (Map<?, Thread>) field.get(clazz);
-        for (Iterator<Thread> it = hooks.values().iterator(); it.hasNext(); ) {
-          Thread thread = it.next();
-          if ("javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName())) {
-            it.remove();
-          }
-        }
+        hooks
+            .values()
+            .removeIf(
+                thread -> "javawsSecurityThreadGroup".equals(thread.getThreadGroup().getName()));
       } catch (Exception e) {
         LOGGER.log(Level.SEVERE, "JWS shutdownHook", e);
       }

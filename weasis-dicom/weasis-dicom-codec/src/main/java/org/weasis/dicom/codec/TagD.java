@@ -84,7 +84,7 @@ public class TagD extends TagW {
     private final String value;
     private final String displayValue;
 
-    private Sex(String value, String displayValue) {
+    Sex(String value, String displayValue) {
       this.value = value;
       this.displayValue = displayValue;
     }
@@ -119,7 +119,7 @@ public class TagD extends TagW {
 
     private final String tag;
 
-    private Level(String tag) {
+    Level(String tag) {
       this.tag = tag;
     }
 
@@ -271,10 +271,7 @@ public class TagD extends TagW {
     } else if (!privateCreatorID.equals(other.privateCreatorID)) {
       return false;
     }
-    if (vr != other.vr) {
-      return false;
-    }
-    return true;
+    return vr == other.vr;
   }
 
   @Override
@@ -568,27 +565,19 @@ public class TagD extends TagW {
       int eventType;
       while (xmler.hasNext()) {
         eventType = xmler.next();
-        switch (eventType) {
-          case XMLStreamConstants.START_ELEMENT:
-            String key = xmler.getName().getLocalPart();
-            if ("dataelements".equals(key)) { // NON-NLS
-              while (xmler.hasNext()) {
-                eventType = xmler.next();
-                switch (eventType) {
-                  case XMLStreamConstants.START_ELEMENT:
-                    key = xmler.getName().getLocalPart();
-                    if ("el".equals(key)) {
-                      readElement(xmler, map);
-                    }
-                    break;
-                  default:
-                    break;
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+          String key = xmler.getName().getLocalPart();
+          if ("dataelements".equals(key)) { // NON-NLS
+            while (xmler.hasNext()) {
+              eventType = xmler.next();
+              if (eventType == XMLStreamConstants.START_ELEMENT) {
+                key = xmler.getName().getLocalPart();
+                if ("el".equals(key)) {
+                  readElement(xmler, map);
                 }
               }
             }
-            break;
-          default:
-            break;
+          }
         }
       }
     } catch (Exception e) {
@@ -766,7 +755,7 @@ public class TagD extends TagW {
         }
       }
     }
-    return list.toArray(new TagW[list.size()]);
+    return list.toArray(new TagW[0]);
   }
 
   public static TagW getUID(Level level) {

@@ -25,7 +25,7 @@ public class SynchView implements GUIEntry {
           "None", // NON-NLS
           Mode.NONE,
           new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")),
-          new HashMap<String, Boolean>());
+          new HashMap<>());
   public static final SynchView DEFAULT_TILE;
   public static final SynchView DEFAULT_STACK;
 

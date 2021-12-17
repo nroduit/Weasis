@@ -13,7 +13,7 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -150,7 +150,7 @@ public class AcquirePublishPanel extends JPanel {
 
             DicomState state =
                 stowRS.uploadDicom(
-                    Arrays.asList(exportDirDicom.getAbsolutePath()), true, authMethod);
+                    Collections.singletonList(exportDirDicom.getAbsolutePath()), true, authMethod);
             if (state.getStatus() == Status.Success) {
               toPublish.forEach(
                   i -> {

@@ -55,7 +55,7 @@ public class GlobalTest extends GlobalHelper {
     PowerMockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
 
     PowerMockito.mockStatic(TagD.class);
-    Arrays.stream(GlobalTag.values()).forEach(e -> e.prepareMock());
+    Arrays.stream(GlobalTag.values()).forEach(GlobalTag::prepareMock);
   }
 
   @Test

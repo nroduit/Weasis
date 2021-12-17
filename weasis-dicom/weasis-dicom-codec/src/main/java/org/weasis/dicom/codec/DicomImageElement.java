@@ -211,7 +211,7 @@ public class DicomImageElement extends ImageElement {
    */
   public boolean isModalityLutOutSigned(TagReadable tagable, boolean pixelPadding) {
     boolean signed = isPixelRepresentationSigned();
-    return getMinValue(tagable, pixelPadding) < 0 ? true : signed;
+    return getMinValue(tagable, pixelPadding) < 0 || signed;
   }
 
   public int getBitsStored() {
@@ -294,10 +294,8 @@ public class DicomImageElement extends ImageElement {
   public boolean isPhotometricInterpretationMonochrome() {
     String photometricInterpretation = getPhotometricInterpretation();
 
-    return photometricInterpretation != null
-        && //
-        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
-            || "MONOCHROME2".equalsIgnoreCase(photometricInterpretation));
+    return ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
+        || "MONOCHROME2".equalsIgnoreCase(photometricInterpretation));
   }
 
   /**
@@ -349,7 +347,7 @@ public class DicomImageElement extends ImageElement {
       double maxValue = super.getMaxValue(tagable, pixelPadding) * slope + intercept;
       bitsOutputLut =
           Integer.SIZE - Integer.numberOfLeadingZeros((int) Math.round(maxValue - minValue));
-      outputSigned = minValue < 0 ? true : isSigned;
+      outputSigned = minValue < 0 || isSigned;
       if (outputSigned && bitsOutputLut <= 8) {
         // Allows handling negative values with 8-bit image
         bitsOutputLut = 9;
@@ -379,13 +377,12 @@ public class DicomImageElement extends ImageElement {
    *
    * <p>The LUT Data contains the LUT entry values.
    *
-   * <p>The output range of the Modality LUT Module depends on whether Rescale Slope
-   * (0028,1053) and Rescale Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are
-   * used. In the case where Rescale Slope and Rescale Intercept are used, the output ranges from
-   * (minimum pixel value*Rescale Slope+Rescale Intercept) to (maximum pixel value*Rescale -
-   * Slope+Rescale Intercept), where the minimum and maximum pixel values are determined by Bits
-   * Stored and Pixel Representation. Note: This range may be signed even if Pixel Representation is
-   * unsigned.
+   * <p>The output range of the Modality LUT Module depends on whether Rescale Slope (0028,1053) and
+   * Rescale Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are used. In the case
+   * where Rescale Slope and Rescale Intercept are used, the output ranges from (minimum pixel
+   * value*Rescale Slope+Rescale Intercept) to (maximum pixel value*Rescale - Slope+Rescale
+   * Intercept), where the minimum and maximum pixel values are determined by Bits Stored and Pixel
+   * Representation. Note: This range may be signed even if Pixel Representation is unsigned.
    *
    * <p>In the case where the Modality LUT Sequence is used, the output range is from 0 to 2n-1
    * where n is the third value of LUT Descriptor. This range is always unsigned.

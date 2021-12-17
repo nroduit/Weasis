@@ -164,7 +164,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     if (triggerChangedEvent) {
       setSliderValue(value);
     } else {
-      boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
+      boolean ajusting = valueIsAdjusting || !model.getValueIsAdjusting();
       if (ajusting) {
         boolean oldTrigger = triggerAction;
         triggerAction = false;
@@ -182,7 +182,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
     if (triggerChangedEvent) {
       setRealValue(value);
     } else {
-      boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
+      boolean ajusting = valueIsAdjusting || !model.getValueIsAdjusting();
       if (ajusting) {
         boolean oldTrigger = triggerAction;
         triggerAction = false;
@@ -222,7 +222,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
 
   @Override
   public void stateChanged(ChangeEvent evt) {
-    boolean ajusting = valueIsAdjusting ? true : !model.getValueIsAdjusting();
+    boolean ajusting = valueIsAdjusting || !model.getValueIsAdjusting();
     if (triggerAction && ajusting) {
       stateChanged(model);
       AuditLog.LOGGER.info(

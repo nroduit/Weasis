@@ -11,7 +11,6 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -276,34 +275,30 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       if (synchButton == null) {
         synchButton =
             new ViewButton(
-                new ShowPopup() {
-
-                  @Override
-                  public void showPopup(Component invoker, int x, int y) {
-                    final SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
-                    if (synch == null) {
-                      return;
-                    }
-
-                    JPopupMenu popupMenu = new JPopupMenu();
-                    TitleMenuItem itemTitle =
-                        new TitleMenuItem(ActionW.SYNCH.getTitle(), popupMenu.getInsets());
-                    popupMenu.add(itemTitle);
-                    popupMenu.addSeparator();
-
-                    for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
-                      JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
-                      menuItem.addActionListener(
-                          e -> {
-                            if (e.getSource() instanceof JCheckBoxMenuItem) {
-                              JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
-                              synch.getActions().put(item.getText(), item.isSelected());
-                            }
-                          });
-                      popupMenu.add(menuItem);
-                    }
-                    popupMenu.show(invoker, x, y);
+                (invoker, x, y) -> {
+                  final SynchData synch = (SynchData) getActionValue(ActionW.SYNCH_LINK.cmd());
+                  if (synch == null) {
+                    return;
                   }
+
+                  JPopupMenu popupMenu = new JPopupMenu();
+                  TitleMenuItem itemTitle =
+                      new TitleMenuItem(ActionW.SYNCH.getTitle(), popupMenu.getInsets());
+                  popupMenu.add(itemTitle);
+                  popupMenu.addSeparator();
+
+                  for (Entry<String, Boolean> a : synch.getActions().entrySet()) {
+                    JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
+                    menuItem.addActionListener(
+                        e -> {
+                          if (e.getSource() instanceof JCheckBoxMenuItem) {
+                            JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                            synch.getActions().put(item.getText(), item.isSelected());
+                          }
+                        });
+                    popupMenu.add(menuItem);
+                  }
+                  popupMenu.show(invoker, x, y);
                 },
                 SYNCH_ICON);
         synchButton.setVisible(true);
@@ -1240,17 +1235,17 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     MouseMotionListener[] motionListeners = this.getMouseMotionListeners();
     KeyListener[] keyListeners = this.getKeyListeners();
     MouseWheelListener[] wheelListeners = this.getMouseWheelListeners();
-    for (int i = 0; i < listener.length; i++) {
-      this.removeMouseListener(listener[i]);
+    for (MouseListener mouseListener : listener) {
+      this.removeMouseListener(mouseListener);
     }
-    for (int i = 0; i < motionListeners.length; i++) {
-      this.removeMouseMotionListener(motionListeners[i]);
+    for (MouseMotionListener motionListener : motionListeners) {
+      this.removeMouseMotionListener(motionListener);
     }
-    for (int i = 0; i < keyListeners.length; i++) {
-      this.removeKeyListener(keyListeners[i]);
+    for (KeyListener keyListener : keyListeners) {
+      this.removeKeyListener(keyListener);
     }
-    for (int i = 0; i < wheelListeners.length; i++) {
-      this.removeMouseWheelListener(wheelListeners[i]);
+    for (MouseWheelListener wheelListener : wheelListeners) {
+      this.removeMouseWheelListener(wheelListener);
     }
     Optional.ofNullable(lens).ifPresent(ZoomWin<E>::disableMouseAndKeyListener);
   }
@@ -1503,7 +1498,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return list;
   }
 
-  public static final AffineTransform getAffineTransform(MouseEvent mouseevent) {
+  public static AffineTransform getAffineTransform(MouseEvent mouseevent) {
     if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
       return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
     }

@@ -15,9 +15,7 @@ import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.PreferencesPageFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 
-@org.osgi.service.component.annotations.Component(
-    service = PreferencesPageFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = PreferencesPageFactory.class)
 public class SeriesDownloadPrefFactory implements PreferencesPageFactory {
 
   @Override

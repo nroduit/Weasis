@@ -55,12 +55,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       new JCheckBox(Messages.getString("apply.to.all.views"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
-  private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
+  private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private DefaultMutableTreeNode image;
   private DefaultMutableTreeNode info;
   private DefaultMutableTreeNode drawings;
-  private TreePath rootPath;
   private JPanel panelFoot;
 
   public DisplayTool(String pluginName) {
@@ -95,7 +94,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
-    rootPath = new TreePath(rootNode.getPath());
+    TreePath rootPath = new TreePath(rootNode.getPath());
     tree.addCheckingPath(rootPath);
 
     tree.setShowsRootHandles(true);
@@ -249,7 +248,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       list.add(parent);
     }
     Collections.reverse(list);
-    return new TreePath(list.toArray(new TreeNode[list.size()]));
+    return new TreePath(list.toArray(new TreeNode[0]));
   }
 
   @Override

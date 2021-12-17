@@ -95,7 +95,7 @@ public enum LayerType {
   private final Boolean selectable;
   private final String defaultName;
 
-  private LayerType(
+  LayerType(
       Integer level,
       String defaultName,
       Boolean visible,

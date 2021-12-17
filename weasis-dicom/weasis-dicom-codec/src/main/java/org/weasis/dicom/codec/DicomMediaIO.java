@@ -296,7 +296,6 @@ public class DicomMediaIO implements DcmMediaReader {
 
   private int bitsStored;
   private int bitsAllocated;
-  private int highBit;
   /** Store the transfer syntax locally in case it gets modified to re-write the image */
   private String tsuid;
   /** Used to indicate whether to skip large private dicom elements. */
@@ -552,7 +551,7 @@ public class DicomMediaIO implements DcmMediaReader {
       bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, 8);
       bitsStored =
           DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, bitsAllocated);
-      highBit = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.HighBit, bitsStored - 1);
+      int highBit = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.HighBit, bitsStored - 1);
       if (highBit >= bitsAllocated) {
         highBit = bitsStored - 1;
       }
@@ -676,8 +675,8 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   public boolean containTag(int id) {
-    for (Iterator<TagW> it = tags.keySet().iterator(); it.hasNext(); ) {
-      if (it.next().getId() == id) {
+    for (TagW tagW : tags.keySet()) {
+      if (tagW.getId() == id) {
         return true;
       }
     }
@@ -1075,7 +1074,7 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   private boolean isRLELossless() {
-    return dis == null ? false : dis.getTransferSyntax().equals(UID.RLELossless);
+    return dis != null && dis.getTransferSyntax().equals(UID.RLELossless);
   }
 
   private ExtendSegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex)
@@ -1330,14 +1329,10 @@ public class DicomMediaIO implements DcmMediaReader {
       }
 
       // The signature content is 0x0D0A870A
-      if ((b[8] & 0xFF) != 0x0D
-          || (b[9] & 0xFF) != 0x0A
-          || (b[10] & 0xFF) != 0x87
-          || (b[11] & 0xFF) != 0x0A) {
-        return false;
-      }
-
-      return true;
+      return (b[8] & 0xFF) == 0x0D
+          && (b[9] & 0xFF) == 0x0A
+          && (b[10] & 0xFF) == 0x87
+          && (b[11] & 0xFF) == 0x0A;
     } finally {
       iis.reset();
     }

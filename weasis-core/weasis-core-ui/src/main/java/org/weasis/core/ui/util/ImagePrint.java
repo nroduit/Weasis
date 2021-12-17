@@ -21,7 +21,6 @@ import java.awt.print.Paper;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -47,8 +46,8 @@ public class ImagePrint implements Printable {
   private static final double POINTS_PER_INCH = 72.0;
 
   private Point printLoc;
-  private PrintOptions printOptions;
-  private ExportLayout<? extends ImageElement> layout;
+  private final PrintOptions printOptions;
+  private final ExportLayout<? extends ImageElement> layout;
 
   public ImagePrint(ExportLayout<? extends ImageElement> layout, PrintOptions printOptions) {
     this.layout = layout;
@@ -108,7 +107,7 @@ public class ImagePrint implements Printable {
         pj.print(aset);
       } catch (Exception e) {
         // check for the annoying 'Printer is not accepting job' error.
-        if (e.getMessage().indexOf("accepting job") != -1) { // NON-NLS
+        if (e.getMessage().contains("accepting job")) { // NON-NLS
           // recommend prompting the user at this point if they want to force it,
           // so they'll know there may be a problem.
           int response =
@@ -175,9 +174,7 @@ public class ImagePrint implements Printable {
     double wx = 0.0;
 
     final Map<LayoutConstraints, Component> elements = layout.layoutModel.getConstraints();
-    Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-    while (enumVal.hasNext()) {
-      Entry<LayoutConstraints, Component> e = enumVal.next();
+    for (Entry<LayoutConstraints, Component> e : elements.entrySet()) {
       LayoutConstraints key = e.getKey();
       Component value = e.getValue();
 

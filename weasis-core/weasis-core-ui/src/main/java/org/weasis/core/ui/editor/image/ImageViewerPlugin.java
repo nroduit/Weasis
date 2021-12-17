@@ -147,8 +147,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   protected final JPanel grid;
   protected GridBagLayoutModel layoutModel;
 
-  private final MouseHandler mouseHandler;
-
   public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String pluginName) {
     this(eventManager, VIEWS_1x1, pluginName, null, null, null);
   }
@@ -176,7 +174,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     add(grid, BorderLayout.CENTER);
 
     setLayoutModel(layoutModel);
-    this.mouseHandler = new MouseHandler();
+    MouseHandler mouseHandler = new MouseHandler();
     grid.addMouseListener(mouseHandler);
     grid.addMouseMotionListener(mouseHandler);
   }
@@ -248,7 +246,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     buf.append("x"); // NON-NLS
     buf.append(cols);
     return new GridBagLayoutModel(
-        buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf.toString()), rows, cols, type);
+        buf.toString(), String.format(ImageViewerPlugin.F_VIEWS, buf), rows, cols, type);
   }
 
   @Override
@@ -273,8 +271,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   @Override
   public void removeSeries(MediaSeries<E> series) {
     if (series != null) {
-      for (int i = 0; i < view2ds.size(); i++) {
-        ViewCanvas<E> v = view2ds.get(i);
+      for (ViewCanvas<E> v : view2ds) {
         if (v.getSeries() == series) {
           v.setSeries(null, null);
         }
@@ -323,7 +320,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
     return component;
   }
-  ;
 
   private boolean hasSeriesViewerConstructor(Class<?> clazz) {
     for (Constructor<?> constructor : clazz.getConstructors()) {
@@ -362,9 +358,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     removeComponents();
     GraphicSelectionListener glistener = null;
     final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
-    Iterator<LayoutConstraints> enumVal = elements.keySet().iterator();
-    while (enumVal.hasNext()) {
-      LayoutConstraints e = enumVal.next();
+    for (LayoutConstraints e : elements.keySet()) {
       boolean typeView2d = isViewType(view2dClass, e.getType());
       if (typeView2d) {
         ViewCanvas<E> oldView;
@@ -429,10 +423,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (oldView2d != null && newView2d != null) {
       grid.removeAll();
       final Map<LayoutConstraints, Component> elements = this.layoutModel.getConstraints();
-      Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-      while (enumVal.hasNext()) {
-        Entry<LayoutConstraints, Component> element = enumVal.next();
-
+      for (Entry<LayoutConstraints, Component> element : elements.entrySet()) {
         if (element.getValue() == oldView2d.getJComponent()) {
           if (selectedImagePane == oldView2d) {
             selectedImagePane = newView2d;
@@ -555,9 +546,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     grid.removeAll();
     if (detachedWindow || fullscreenDialog == null) {
       remove(grid);
-      Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-      while (enumVal.hasNext()) {
-        Entry<LayoutConstraints, Component> entry = enumVal.next();
+      for (Entry<LayoutConstraints, Component> entry : elements.entrySet()) {
         if (entry.getValue().equals(defaultView2d.getJComponent())) {
           GridBagConstraints c = entry.getKey().copy();
           c.weightx = 1.0;
@@ -599,9 +588,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       }
 
     } else {
-      Iterator<Entry<LayoutConstraints, Component>> enumVal = elements.entrySet().iterator();
-      while (enumVal.hasNext()) {
-        Entry<LayoutConstraints, Component> entry = enumVal.next();
+      for (Entry<LayoutConstraints, Component> entry : elements.entrySet()) {
         grid.add(entry.getValue(), entry.getKey());
       }
       for (ViewCanvas<E> v : view2ds) {
@@ -984,10 +971,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
     private int getCursor(MouseEvent me) {
       Point p = me.getPoint();
-      Iterator<Entry<LayoutConstraints, Component>> enumVal =
-          ImageViewerPlugin.this.layoutModel.getConstraints().entrySet().iterator();
-      while (enumVal.hasNext()) {
-        Entry<LayoutConstraints, Component> entry = enumVal.next();
+      for (Entry<LayoutConstraints, Component> entry :
+          ImageViewerPlugin.this.layoutModel.getConstraints().entrySet()) {
         Component c = entry.getValue();
         if (c != null) {
           Rectangle rect = c.getBounds();

@@ -88,7 +88,6 @@ import org.weasis.dicom.explorer.wado.LoadRemoteDicomURL;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 @org.osgi.service.component.annotations.Component(
-    immediate = false,
     property = {
       CommandProcessor.COMMAND_SCOPE + "=dicom",
       CommandProcessor.COMMAND_FUNCTION + "=get",
@@ -386,7 +385,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         // Force to sort the new merged media list
         List sortedMedias = base.getSortedMedias(null);
-        Collections.sort(sortedMedias, SortSeriesStack.instanceNumber);
+        sortedMedias.sort(SortSeriesStack.instanceNumber);
         // update observer
         this.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REPLACE, DicomModel.this, base, base));
@@ -565,7 +564,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   public static boolean isSpecialModality(MediaSeries<?> series) {
     String modality =
         (series == null) ? null : TagD.getTagValue(series, Tag.Modality, String.class);
-    return modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+    return ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
   }
 
   public static Collection<KOSpecialElement> getEditableKoSpecialElements(MediaSeriesGroup group) {
@@ -713,7 +712,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         if (!seriesList.isEmpty()) {
           String uid = UUID.randomUUID().toString();
-          Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+          Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
           props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
           props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
           props.put(
@@ -1066,7 +1065,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     if (opt.isSet("remote")) { // NON-NLS
       LOADING_EXECUTOR.execute(
-          new LoadRemoteDicomURL(rargs.toArray(new String[rargs.size()]), DicomModel.this));
+          new LoadRemoteDicomURL(rargs.toArray(new String[0]), DicomModel.this));
     }
 
     // build WADO series list to download
@@ -1082,12 +1081,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
     if (opt.isSet("iwado")) { // NON-NLS
       List<String> xmlFiles = new ArrayList<>(iargs.size());
-      for (int i = 0; i < iargs.size(); i++) {
+      for (String iarg : iargs) {
         try {
           File tempFile =
               File.createTempFile("wado_", ".xml", AppProperties.APP_TEMP_DIR); // NON-NLS
-          if (GzipManager.gzipUncompressToFile(
-              Base64.getDecoder().decode(iargs.get(i)), tempFile)) {
+          if (GzipManager.gzipUncompressToFile(Base64.getDecoder().decode(iarg), tempFile)) {
             xmlFiles.add(tempFile.getPath());
           }
 
@@ -1117,7 +1115,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         }
         String last = null;
         for (int i = 0; i < files.length; i++) {
-          if (notCaseSensitive && last != null && dirs[i].equalsIgnoreCase(last)) {
+          if (notCaseSensitive && dirs[i].equalsIgnoreCase(last)) {
             last = null;
           } else {
             last = dirs[i];

@@ -65,7 +65,7 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
   }
 
   public JToggleButton[] getJToggleButtonList() {
-    return itemList.toArray(new JToggleButton[itemList.size()]);
+    return itemList.toArray(new JToggleButton[0]);
   }
 
   @Override
@@ -95,8 +95,7 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
 
   public void setSelected(Object selected) {
     if (selected != null) {
-      for (int i = 0; i < itemList.size(); i++) {
-        JToggleButton item = itemList.get(i);
+      for (JToggleButton item : itemList) {
         Object itemObj = map.get(item);
         if (itemObj == selected) {
           item.setSelected(true); // Do not trigger actionPerformed
@@ -127,8 +126,8 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
 
   @Override
   public void setEnabled(boolean enabled) {
-    for (int i = 0; i < itemList.size(); i++) {
-      itemList.get(i).setEnabled(enabled);
+    for (JToggleButton jToggleButton : itemList) {
+      jToggleButton.setEnabled(enabled);
     }
   }
 }

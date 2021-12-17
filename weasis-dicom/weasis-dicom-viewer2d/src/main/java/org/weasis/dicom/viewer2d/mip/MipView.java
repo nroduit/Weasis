@@ -58,8 +58,8 @@ public class MipView extends View2d {
   public enum Type {
     MIN,
     MEAN,
-    MAX;
-  };
+    MAX
+  }
 
   private Thread process;
 

@@ -14,7 +14,6 @@ import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -125,7 +124,7 @@ public class RsQueryResult extends AbstractQueryResult {
             parseJSON(
                 buf.toString(), authMethod, new URLParameters(rsQueryParams.getQueryHeaders()));
         if (!studies.isEmpty()) {
-          Collections.sort(studies, getStudyComparator());
+          studies.sort(getStudyComparator());
           applyAllFilters(studies);
         }
       } catch (Exception e) {
@@ -203,8 +202,8 @@ public class RsQueryResult extends AbstractQueryResult {
     if (StringUtil.hasText(rsQueryParams.getMostRecentResults())) {
       int recent = StringUtil.getInteger(rsQueryParams.getMostRecentResults());
       if (recent > 0) {
-        for (int i = studies.size() - 1; i >= recent; i--) {
-          studies.remove(i);
+        if (studies.size() > recent) {
+          studies.subList(recent, studies.size()).clear();
         }
       }
     }
@@ -240,8 +239,8 @@ public class RsQueryResult extends AbstractQueryResult {
         Attributes s = studies.get(i);
         String desc = StringUtil.deAccent(s.getString(Tag.StudyDescription, "").toUpperCase());
 
-        for (int j = 0; j < keys.length; j++) {
-          if (desc.contains(keys[j])) {
+        for (String key : keys) {
+          if (desc.contains(key)) {
             continue studyLabel;
           }
         }

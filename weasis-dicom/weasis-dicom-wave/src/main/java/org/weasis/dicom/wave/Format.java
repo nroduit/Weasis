@@ -55,7 +55,7 @@ public enum Format {
   private final int ylayoutSize;
   private final Lead[] leads;
 
-  private Format(String value, int xlayoutSize, int ylayoutSize, Lead[] layoutNames) {
+  Format(String value, int xlayoutSize, int ylayoutSize, Lead[] layoutNames) {
     this.value = value;
     this.xlayoutSize = xlayoutSize;
     this.ylayoutSize = ylayoutSize;

@@ -371,21 +371,21 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     MouseMotionListener[] motionListeners = this.getMouseMotionListeners();
     KeyListener[] keyListeners = this.getKeyListeners();
     MouseWheelListener[] wheelListeners = this.getMouseWheelListeners();
-    for (int i = 0; i < listener.length; i++) {
-      this.removeMouseListener(listener[i]);
+    for (MouseListener mouseListener : listener) {
+      this.removeMouseListener(mouseListener);
     }
-    for (int i = 0; i < motionListeners.length; i++) {
-      this.removeMouseMotionListener(motionListeners[i]);
+    for (MouseMotionListener motionListener : motionListeners) {
+      this.removeMouseMotionListener(motionListener);
     }
-    for (int i = 0; i < keyListeners.length; i++) {
-      this.removeKeyListener(keyListeners[i]);
+    for (KeyListener keyListener : keyListeners) {
+      this.removeKeyListener(keyListener);
     }
-    for (int i = 0; i < wheelListeners.length; i++) {
-      this.removeMouseWheelListener(wheelListeners[i]);
+    for (MouseWheelListener wheelListener : wheelListeners) {
+      this.removeMouseWheelListener(wheelListener);
     }
   }
 
-  class Load implements Callable<PlanarImage> {
+  static class Load implements Callable<PlanarImage> {
 
     private final File path;
 

@@ -82,7 +82,7 @@ public class FileUtil {
     }
   }
 
-  public static final void deleteDirectoryContents(final File dir, int deleteDirLevel, int level) {
+  public static void deleteDirectoryContents(final File dir, int deleteDirLevel, int level) {
     if ((dir == null) || !dir.isDirectory()) {
       return;
     }
@@ -289,7 +289,7 @@ public class FileUtil {
   public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {
     if (isGzip(bytes)) {
       try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes); ) {
+          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
         gzipUncompress(inputStream, outputStream);
         return outputStream.toByteArray();
       }
@@ -301,9 +301,7 @@ public class FileUtil {
   public static boolean isGzip(byte[] bytes) {
     if (bytes != null && bytes.length >= 4) {
       int head = (bytes[0] & 0xff) | ((bytes[1] << 8) & 0xff00);
-      if (GZIPInputStream.GZIP_MAGIC == head) {
-        return true;
-      }
+      return GZIPInputStream.GZIP_MAGIC == head;
     }
     return false;
   }

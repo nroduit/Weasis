@@ -57,10 +57,7 @@ public class DefaultUUID implements UUIDable {
       return false;
     }
     DefaultUUID other = (DefaultUUID) obj;
-    if (!uuid.equals(other.uuid)) {
-      return false;
-    }
-    return true;
+    return uuid.equals(other.uuid);
   }
 
   @Override

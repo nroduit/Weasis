@@ -106,7 +106,7 @@ public final class LookAndFeels {
         tmp.add(new ReadableLookAndFeelInfo(NAMES[i], CLASSES[i]));
       }
     }
-    UIManager.setInstalledLookAndFeels(tmp.toArray(new LookAndFeelInfo[tmp.size()]));
+    UIManager.setInstalledLookAndFeels(tmp.toArray(new LookAndFeelInfo[0]));
     return true;
   }
 

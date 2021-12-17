@@ -180,7 +180,7 @@ public class RetrieveTreeModel {
             StringBuilder buf = new StringBuilder();
             buf.append("<html>");
             buf.append("<img src=\""); // NON-NLS
-            buf.append(url.toString());
+            buf.append(url);
             buf.append("\"><br>"); // NON-NLS
             LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
             if (date != null) {

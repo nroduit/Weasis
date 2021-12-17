@@ -60,7 +60,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     initGUI();
   }
 
-  private final void initGUI() {
+  private void initGUI() {
     setBorder(new EmptyBorder(15, 10, 10, 10));
     labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low")));
     labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid")));

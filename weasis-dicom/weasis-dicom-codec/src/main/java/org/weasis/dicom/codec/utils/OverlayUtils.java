@@ -114,13 +114,13 @@ public class OverlayUtils {
               ovlyAttrs, Tag.ShutterOverlayGroup, Integer.MIN_VALUE);
 
       // grayscaleValue = Overlays.getRecommendedDisplayGrayscaleValue(psAttrs, gg0000);
-      for (int i = 0; i < overlayGroupOffsets.length; i++) {
-        if (shuttOverlayGroup != overlayGroupOffsets[i]) {
+      for (int overlayGroupOffset : overlayGroupOffsets) {
+        if (shuttOverlayGroup != overlayGroupOffset) {
           Overlays.applyOverlay(
               frameIndex,
               raster,
               ovlyAttrs,
-              overlayGroupOffsets[i],
+              overlayGroupOffset,
               grayscaleValue >>> (16 - outBits),
               null);
         }

@@ -32,13 +32,13 @@ import org.weasis.core.util.StringUtil;
 class InfoPanel extends JPanel {
   private static final long serialVersionUID = -470038831713011257L;
 
-  private JLabel lead = new JLabel(" ");
-  private JLabel maximum = new JLabel();
-  private JLabel minimum = new JLabel();
+  private final JLabel lead = new JLabel(" ");
+  private final JLabel maximum = new JLabel();
+  private final JLabel minimum = new JLabel();
 
-  private JLabel currentLabel = new JLabel();
-  private JLabel miliVolt = new JLabel();
-  private JLabel seconds = new JLabel();
+  private final JLabel currentLabel = new JLabel();
+  private final JLabel miliVolt = new JLabel();
+  private final JLabel seconds = new JLabel();
 
   public InfoPanel(double zoomRatio) {
     GridBagLayout gridBagLayout = new GridBagLayout();

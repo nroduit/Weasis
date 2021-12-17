@@ -12,7 +12,6 @@ package org.weasis.base.viewer2d;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -45,9 +44,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.DefaultAction;
 
-@org.osgi.service.component.annotations.Component(
-    service = SeriesViewerFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class ViewerFactory implements SeriesViewerFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ViewerFactory.class);
@@ -148,18 +145,13 @@ public class ViewerFactory implements SeriesViewerFactory {
 
   @Override
   public boolean canReadMimeType(String mimeType) {
-    if (mimeType != null && mimeType.startsWith("image/")) { // NON-NLS
-      return true;
-    }
-    return false;
+    // NON-NLS
+    return mimeType != null && mimeType.startsWith("image/");
   }
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    if (viewer instanceof View2dContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof View2dContainer;
   }
 
   @Override
@@ -172,7 +164,7 @@ public class ViewerFactory implements SeriesViewerFactory {
     if (!BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.images", true)) {
       return Collections.emptyList();
     }
-    return Arrays.asList(preferencesAction);
+    return Collections.singletonList(preferencesAction);
   }
 
   @Override

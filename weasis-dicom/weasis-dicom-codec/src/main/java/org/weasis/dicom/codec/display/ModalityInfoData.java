@@ -40,9 +40,9 @@ public class ModalityInfoData {
   }
 
   public CornerInfoData getCornerInfo(CornerDisplay corner) {
-    for (int i = 0; i < cornerInfo.length; i++) {
-      if (cornerInfo[i].getCorner().equals(corner)) {
-        return cornerInfo[i];
+    for (CornerInfoData cornerInfoData : cornerInfo) {
+      if (cornerInfoData.getCorner().equals(corner)) {
+        return cornerInfoData;
       }
     }
     return null;
@@ -52,6 +52,6 @@ public class ModalityInfoData {
   public String toString() {
     String desc =
         StringUtil.hasText(modality.getDescription()) ? " (" + modality.getDescription() + ")" : "";
-    return modality.toString() + desc;
+    return modality + desc;
   }
 }

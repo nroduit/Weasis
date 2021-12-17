@@ -14,7 +14,7 @@ import org.weasis.core.api.util.Copyable;
 
 public interface ImageOpNode extends Copyable<ImageOpNode> {
 
-  public final class Param {
+  final class Param {
 
     public static final String NAME = "op.display.name";
     public static final String ENABLE = "op.enable";

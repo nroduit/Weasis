@@ -24,9 +24,7 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.FilesExtractor;
 
-@org.osgi.service.component.annotations.Component(
-    service = SeriesViewerFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MimeSystemAppViewer.app");

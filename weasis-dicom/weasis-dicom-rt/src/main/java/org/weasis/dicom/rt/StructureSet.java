@@ -60,8 +60,7 @@ public class StructureSet extends HashMap<Integer, StructureLayer> {
       if (other.date != null) return false;
     } else if (!date.equals(other.date)) return false;
     if (label == null) {
-      if (other.label != null) return false;
-    } else if (!label.equals(other.label)) return false;
-    return true;
+      return other.label == null;
+    } else return label.equals(other.label);
   }
 }

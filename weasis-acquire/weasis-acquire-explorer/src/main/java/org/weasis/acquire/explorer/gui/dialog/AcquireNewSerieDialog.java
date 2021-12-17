@@ -27,10 +27,10 @@ import org.weasis.core.api.media.data.ImageElement;
 @SuppressWarnings("serial")
 public class AcquireNewSerieDialog extends JDialog implements PropertyChangeListener {
   private final JTextField serieName = new JTextField();
-  private JOptionPane optionPane;
+  private final JOptionPane optionPane;
 
-  private AcquireTabPanel acquireTabPanel;
-  private List<ImageElement> medias;
+  private final AcquireTabPanel acquireTabPanel;
+  private final List<ImageElement> medias;
 
   public AcquireNewSerieDialog(AcquireTabPanel acquireTabPanel, final List<ImageElement> medias) {
     this.acquireTabPanel = acquireTabPanel;

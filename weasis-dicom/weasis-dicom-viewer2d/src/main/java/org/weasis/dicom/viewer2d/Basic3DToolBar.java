@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -55,48 +54,40 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
   }
 
   public static ActionListener getMprAction() {
-    return new ActionListener() {
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EventManager eventManager = EventManager.getInstance();
-        MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
-        // Requires at least 5 images to build the MPR views
-        if (s != null && s.size(null) >= 5) {
-          DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
-          if (model instanceof DicomModel) {
-            ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
-          }
+    return e -> {
+      EventManager eventManager = EventManager.getInstance();
+      MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = eventManager.getSelectedSeries();
+      // Requires at least 5 images to build the MPR views
+      if (s != null && s.size(null) >= 5) {
+        DataExplorerModel model = (DataExplorerModel) s.getTagValue(TagW.ExplorerModel);
+        if (model instanceof DicomModel) {
+          ViewerPluginBuilder.openSequenceInPlugin(new MPRFactory(), s, model, false, false);
         }
       }
     };
   }
 
   public static ActionListener getMipAction() {
-    return new ActionListener() {
-
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        EventManager eventManager = EventManager.getInstance();
-        ImageViewerPlugin<org.weasis.dicom.codec.DicomImageElement> container =
-            eventManager.getSelectedView2dContainer();
-        if (container instanceof View2dContainer) {
-          ViewCanvas<org.weasis.dicom.codec.DicomImageElement> selView =
-              container.getSelectedImagePane();
-          if (selView != null) {
-            MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = selView.getSeries();
-            if (s != null && s.size(null) > 2) {
-              container.setSelectedAndGetFocus();
-              MipView newView2d = new MipView(eventManager);
-              newView2d.registerDefaultListeners();
-              newView2d.initMIPSeries(selView);
-              container.replaceView(selView, newView2d);
-              MipDialog dialog = MipPopup.buildDialog(newView2d);
-              dialog.pack();
-              MipView.buildMip(newView2d, false);
-              dialog.updateThickness();
-              JMVUtils.showCenterScreen(dialog, container);
-            }
+    return e -> {
+      EventManager eventManager = EventManager.getInstance();
+      ImageViewerPlugin<org.weasis.dicom.codec.DicomImageElement> container =
+          eventManager.getSelectedView2dContainer();
+      if (container instanceof View2dContainer) {
+        ViewCanvas<org.weasis.dicom.codec.DicomImageElement> selView =
+            container.getSelectedImagePane();
+        if (selView != null) {
+          MediaSeries<org.weasis.dicom.codec.DicomImageElement> s = selView.getSeries();
+          if (s != null && s.size(null) > 2) {
+            container.setSelectedAndGetFocus();
+            MipView newView2d = new MipView(eventManager);
+            newView2d.registerDefaultListeners();
+            newView2d.initMIPSeries(selView);
+            container.replaceView(selView, newView2d);
+            MipDialog dialog = MipPopup.buildDialog(newView2d);
+            dialog.pack();
+            MipView.buildMip(newView2d, false);
+            dialog.updateThickness();
+            JMVUtils.showCenterScreen(dialog, container);
           }
         }
       }

@@ -19,6 +19,6 @@ public class JIThumbnailListPane<E extends MediaElement> extends AThumbnailListP
     implements IThumbnailListPane<E> {
 
   public JIThumbnailListPane(JIThumbnailCache thumbCache) {
-    super(new DefaultThumbnailList<E>(thumbCache));
+    super(new DefaultThumbnailList<>(thumbCache));
   }
 }

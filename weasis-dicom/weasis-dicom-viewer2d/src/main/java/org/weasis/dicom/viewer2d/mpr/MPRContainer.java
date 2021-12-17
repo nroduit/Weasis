@@ -92,8 +92,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
 
-  public static final List<SynchView> SYNCH_LIST =
-      Collections.synchronizedList(new ArrayList<SynchView>());
+  public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
 
   static SynchView DEFAULT_MPR;
 
@@ -170,7 +169,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+      Collections.synchronizedList(new ArrayList<>());
 
   static {
     LAYOUT_LIST.add(VIEWS_2x1_mpr);
@@ -184,8 +183,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  public static final List<Toolbar> TOOLBARS =
-      Collections.synchronizedList(new ArrayList<Toolbar>());
+  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
   public static final List<DockableTool> TOOLS = View2dContainer.TOOLS;
   private static volatile boolean initComponents = false;
 
@@ -539,36 +537,31 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                 // Following actions need to be executed in EDT thread
                 GuiExecutor.instance()
                     .execute(
-                        new Runnable() {
-
-                          @Override
-                          public void run() {
-                            ActionState synch = eventManager.getAction(ActionW.SYNCH);
-                            if (synch instanceof ComboItemListener) {
-                              ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
-                            }
-                            // Set the middle image ( the best choice to propagate the default preset of
-                            // non CT
-                            // modalities)
-                            ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                            if (seqAction instanceof SliderChangeListener) {
-                              SliderCineListener sliceAction = (SliderCineListener) seqAction;
-                              sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
-                            }
-                            ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
-                            if (cross instanceof CrosshairListener) {
-                              ((CrosshairListener) cross)
-                                  .setPoint(
-                                      view.getImageCoordinatesFromMouse(
-                                          view.getWidth() / 2, view.getHeight() / 2));
-                            }
-                            // Force to propagate the default preset
-                            ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                            if (presetAction instanceof ComboItemListener) {
-                              ComboItemListener p = (ComboItemListener) presetAction;
-                              p.setSelectedItemWithoutTriggerAction(null);
-                              p.setSelectedItem(p.getFirstItem());
-                            }
+                        () -> {
+                          ActionState synch = eventManager.getAction(ActionW.SYNCH);
+                          if (synch instanceof ComboItemListener) {
+                            ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
+                          }
+                          // Set the middle image ( the best choice to propagate the default preset
+                          // of non CT modalities)
+                          ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
+                          if (seqAction instanceof SliderChangeListener) {
+                            SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                            sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
+                          }
+                          ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
+                          if (cross instanceof CrosshairListener) {
+                            ((CrosshairListener) cross)
+                                .setPoint(
+                                    view.getImageCoordinatesFromMouse(
+                                        view.getWidth() / 2, view.getHeight() / 2));
+                          }
+                          // Force to propagate the default preset
+                          ActionState presetAction = eventManager.getAction(ActionW.PRESET);
+                          if (presetAction instanceof ComboItemListener) {
+                            ComboItemListener p = (ComboItemListener) presetAction;
+                            p.setSelectedItemWithoutTriggerAction(null);
+                            p.setSelectedItem(p.getFirstItem());
                           }
                         });
 

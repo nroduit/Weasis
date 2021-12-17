@@ -38,7 +38,7 @@ public class WtoolBar extends JPanel implements Toolbar {
 
   private Insertable attachedInsertable;
 
-  private transient MouseListener buttonMouseHandler =
+  private final transient MouseListener buttonMouseHandler =
       new MouseAdapter() {
 
         @Override

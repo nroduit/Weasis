@@ -194,6 +194,6 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
 
     // Sort tasks from the download priority order (low number has a higher priority), TASKS
     // is sorted from low to high priority.
-    Collections.sort(DownloadManager.TASKS, Collections.reverseOrder(new PriorityTaskComparator()));
+    DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
   }
 }

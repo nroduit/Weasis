@@ -47,10 +47,8 @@ public class Ultrasound {
               DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaX, null);
           Double calib1Y =
               DicomMediaUtils.getDoubleFromDicomElement(spatialCalib, Tag.PhysicalDeltaY, null);
-          Double calib2X =
-              DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaX, null);
-          Double calib2Y =
-              DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaY, null);
+          Double calib2X = DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaX, null);
+          Double calib2Y = DicomMediaUtils.getDoubleFromDicomElement(r, Tag.PhysicalDeltaY, null);
           if (!Objects.equals(calib1X, calib2X) || !Objects.equals(calib1Y, calib2Y)) {
             return null; // currently, cannot handle multiple spatial calibration
           }

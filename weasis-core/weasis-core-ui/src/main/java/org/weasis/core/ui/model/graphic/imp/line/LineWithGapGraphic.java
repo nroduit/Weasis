@@ -77,7 +77,7 @@ public class LineWithGapGraphic extends AbstractDragGraphic {
     return super.isShapeValid();
   }
 
-  @XmlElement(name = "centerGap", required = false)
+  @XmlElement(name = "centerGap")
   @XmlJavaTypeAdapter(PointAdapter.Point2DAdapter.class)
   public Point2D getCenterGap() {
     return centerGap;

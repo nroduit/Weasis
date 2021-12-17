@@ -16,9 +16,7 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.DataExplorerViewFactory;
 
-@org.osgi.service.component.annotations.Component(
-    service = DataExplorerViewFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class)
 public class DefaultExplorerFactory implements DataExplorerViewFactory {
 
   private DefaultExplorer explorer = null;

@@ -179,8 +179,8 @@ public abstract class AbstractWizardDialog extends JDialog {
         }
 
         if (subpages != null) {
-          for (int j = 0; j < subpages.length; j++) {
-            node.add(new DefaultMutableTreeNode(subpages[j]));
+          for (PageProps subpage : subpages) {
+            node.add(new DefaultMutableTreeNode(subpage));
           }
         }
       }
@@ -263,8 +263,8 @@ public abstract class AbstractWizardDialog extends JDialog {
         if (object instanceof AbstractItemDialogPage) {
           AbstractItemDialogPage page = (AbstractItemDialogPage) object;
           PageProps[] subpages = page.getSubPages();
-          for (int j = 0; j < subpages.length; j++) {
-            subpages[j].resetoDefaultValues();
+          for (PageProps subpage : subpages) {
+            subpage.resetoDefaultValues();
           }
           page.resetoDefaultValues();
         }

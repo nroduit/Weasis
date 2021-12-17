@@ -322,7 +322,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
     public static String[] getBodyPartValues(String property) {
       String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, null);
-      if (values == null || !StringUtil.hasText(values)) {
+      if (!StringUtil.hasText(values)) {
         return new String[] {
           "ABDOMEN",
           "ABDOMENPELVIS",
@@ -451,7 +451,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
           list.add(v);
         }
       }
-      return list.toArray(new String[list.size()]);
+      return list.toArray(new String[0]);
     }
 
     public static String[] getValues(String property, String defaultValues) {
@@ -466,7 +466,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
           list.add(s.trim());
         }
       }
-      return list.toArray(new String[list.size()]);
+      return list.toArray(new String[0]);
     }
   }
 }

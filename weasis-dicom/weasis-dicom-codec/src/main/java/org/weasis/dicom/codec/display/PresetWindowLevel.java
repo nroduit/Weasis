@@ -312,16 +312,12 @@ public class PresetWindowLevel {
       int eventType;
       while (xmler.hasNext()) {
         eventType = xmler.next();
-        switch (eventType) {
-          case XMLStreamConstants.START_ELEMENT:
-            if ("presets".equals(xmler.getName().getLocalPart())) { // NON-NLS
-              while (xmler.hasNext()) {
-                readPresetListByModality(xmler, presets);
-              }
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+          if ("presets".equals(xmler.getName().getLocalPart())) { // NON-NLS
+            while (xmler.hasNext()) {
+              readPresetListByModality(xmler, presets);
             }
-            break;
-          default:
-            break;
+          }
         }
       }
     } catch (Exception e) {
@@ -355,11 +351,8 @@ public class PresetWindowLevel {
           if (keyCode != null) {
             preset.setKeyCode(keyCode);
           }
-          List<PresetWindowLevel> presetList = presets.get(modality);
-          if (presetList == null) {
-            presetList = new ArrayList<>();
-            presets.put(modality, presetList);
-          }
+          List<PresetWindowLevel> presetList =
+              presets.computeIfAbsent(modality, k -> new ArrayList<>());
           presetList.add(preset);
         } catch (Exception e) {
           LOGGER.error("Preset {} cannot be read from xml file", name, e);

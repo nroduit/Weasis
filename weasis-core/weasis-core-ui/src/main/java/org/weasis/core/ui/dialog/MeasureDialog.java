@@ -29,9 +29,9 @@ import org.weasis.core.ui.model.graphic.imp.PixelInfoGraphic;
 import org.weasis.core.util.EscapeChars;
 
 public class MeasureDialog extends PropertiesDialog {
-  private List<DragGraphic> graphics;
-  private JTextPane textPane = new JTextPane();
-  private ViewCanvas<?> view2D;
+  private final List<DragGraphic> graphics;
+  private final JTextPane textPane = new JTextPane();
+  private final ViewCanvas<?> view2D;
 
   public MeasureDialog(ViewCanvas<?> view2d, List<DragGraphic> selectedGraphic) {
     super(

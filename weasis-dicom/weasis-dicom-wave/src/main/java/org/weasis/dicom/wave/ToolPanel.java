@@ -27,7 +27,7 @@ class ToolPanel extends JPanel {
 
     private final double value;
 
-    private Speed(double value) {
+    Speed(double value) {
       this.value = value;
     }
 
@@ -64,7 +64,7 @@ class ToolPanel extends JPanel {
 
     private final int value;
 
-    private Amplitude(int value) {
+    Amplitude(int value) {
       this.value = value;
     }
 
@@ -90,8 +90,7 @@ class ToolPanel extends JPanel {
     }
   }
 
-  private WaveView view;
-  private JLabel formatLabel;
+  private final WaveView view;
   private JComboBox<Format> formatCombo;
 
   public ToolPanel(WaveView view) {
@@ -122,7 +121,7 @@ class ToolPanel extends JPanel {
   }
 
   private void addDisplayFormatComponent() {
-    formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON);
+    JLabel formatLabel = new JLabel(Messages.getString("ToolPanel.disp_format") + StringUtil.COLON);
     this.add(formatLabel);
 
     formatCombo = new JComboBox<>(Format.values());

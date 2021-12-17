@@ -12,7 +12,6 @@ package org.weasis.base.ui.gui;
 import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -127,7 +126,7 @@ public class WeasisWinListener implements MainWindowListener {
                 MediaSeries<MediaElement> s = series.get(0);
                 MediaSeriesGroup group =
                     treeModel.getParent(s, model.getTreeModelNodeForNewPlugin());
-                if (inSelView && s.getMimeType().indexOf("dicom") == -1) { // NON-NLS
+                if (inSelView && !s.getMimeType().contains("dicom")) { // NON-NLS
                   // Change the group attribution. DO NOT use it with DICOM.
                   group = selectedPlugin.getGroupID();
                 }
@@ -136,17 +135,14 @@ public class WeasisWinListener implements MainWindowListener {
                 HashMap<MediaSeriesGroup, List<MediaSeries<?>>> map =
                     mainWindow.getSeriesByEntry(
                         treeModel, series, model.getTreeModelNodeForNewPlugin());
-                for (Iterator<Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>>> iterator =
-                        map.entrySet().iterator();
-                    iterator.hasNext(); ) {
-                  Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>> entry = iterator.next();
+                for (Map.Entry<MediaSeriesGroup, List<MediaSeries<?>>> entry : map.entrySet()) {
                   MediaSeriesGroup group = entry.getKey();
 
                   if (inSelView) {
                     List<MediaSeries<?>> seriesList = entry.getValue();
                     if (!seriesList.isEmpty()) {
                       // Change the group attribution. DO NOT use it with DICOM.
-                      if (seriesList.get(0).getMimeType().indexOf("dicom") == -1) { // NON-NLS
+                      if (!seriesList.get(0).getMimeType().contains("dicom")) { // NON-NLS
                         group = selectedPlugin.getGroupID();
                       }
                     }
@@ -219,7 +215,7 @@ public class WeasisWinListener implements MainWindowListener {
   void addDataExplorer(DataExplorerViewFactory factory) {
 
     String className1 = BundleTools.SYSTEM_PREFERENCES.getProperty(factory.getClass().getName());
-    if (!StringUtil.hasText(className1) || Boolean.valueOf(className1)) {
+    if (!StringUtil.hasText(className1) || Boolean.parseBoolean(className1)) {
       GuiExecutor.instance()
           .execute(() -> registerDataExplorer(factory.createDataExplorerView(null)));
     }

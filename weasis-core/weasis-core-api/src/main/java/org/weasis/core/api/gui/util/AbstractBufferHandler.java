@@ -183,9 +183,7 @@ public abstract class AbstractBufferHandler {
       if (i == 0) {
         return saveDocument();
       }
-      if (i == 2) {
-        return false;
-      }
+      return i != 2;
     }
     return true;
   }

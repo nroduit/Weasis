@@ -36,7 +36,7 @@ public final class LutShape {
 
     final String explanation;
 
-    private eFunction(String explanation) {
+    eFunction(String explanation) {
       this.explanation = explanation;
     }
 
@@ -126,7 +126,7 @@ public final class LutShape {
     return (function != null) ? function.hashCode() : lookup.hashCode();
   }
 
-  public static final LutShape getLutShape(String shape) {
+  public static LutShape getLutShape(String shape) {
     if (shape != null) {
       String val = shape.toUpperCase();
       if ("LINEAR".equals(val)) {

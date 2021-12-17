@@ -62,8 +62,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
   @Override
   public JPopupMenu createJPopupMenu() {
     JPopupMenu popupMouseButtons = new JPopupMenu();
-    for (int i = 0; i < itemList.size(); i++) {
-      popupMouseButtons.add(itemList.get(i));
+    for (RadioMenuItem radioMenuItem : itemList) {
+      popupMouseButtons.add(radioMenuItem);
     }
     return popupMouseButtons;
   }
@@ -71,8 +71,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
   @Override
   public JMenu createMenu(String title) {
     JMenu menu = new JMenu(title);
-    for (int i = 0; i < itemList.size(); i++) {
-      menu.add(itemList.get(i));
+    for (RadioMenuItem radioMenuItem : itemList) {
+      menu.add(radioMenuItem);
     }
     return menu;
   }
@@ -108,8 +108,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     if (selected == null) {
       group.clearSelection();
     } else {
-      for (int i = 0; i < itemList.size(); i++) {
-        RadioMenuItem item = itemList.get(i);
+      for (RadioMenuItem item : itemList) {
         if (item.getUserObject() == selected) {
           item.setSelected(true); // Do not trigger actionPerformed
           dataModel.setSelectedItem(item.getUserObject());
@@ -153,8 +152,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
   @Override
   public void setEnabled(boolean enabled) {
-    for (int i = 0; i < itemList.size(); i++) {
-      itemList.get(i).setEnabled(enabled);
+    for (RadioMenuItem radioMenuItem : itemList) {
+      radioMenuItem.setEnabled(enabled);
     }
   }
 }

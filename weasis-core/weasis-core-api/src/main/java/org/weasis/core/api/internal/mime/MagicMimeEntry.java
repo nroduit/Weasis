@@ -109,12 +109,12 @@ public class MagicMimeEntry {
 
     // Now strip the empty entries
     List<String> entries = new ArrayList<>();
-    for (int i = 0; i < tokens.length; i++) {
-      if (StringUtil.hasText(tokens[i])) {
-        entries.add(tokens[i]);
+    for (String token : tokens) {
+      if (StringUtil.hasText(token)) {
+        entries.add(token);
       }
     }
-    tokens = entries.toArray(new String[entries.size()]);
+    tokens = entries.toArray(new String[0]);
 
     if (tokens.length > 0) {
       String tok = tokens[0].trim();
@@ -204,8 +204,7 @@ public class MagicMimeEntry {
       String myMimeType = getMimeType();
       if (subLen > 0) {
         String mtype;
-        for (int k = 0; k < subLen; k++) {
-          MagicMimeEntry me = subEntries.get(k);
+        for (MagicMimeEntry me : subEntries) {
           mtype = me.getMatch(content);
           if (mtype != null) {
             return mtype;
@@ -231,8 +230,7 @@ public class MagicMimeEntry {
       String myMimeType = getMimeType();
       if (!subEntries.isEmpty()) {
         String mtype;
-        for (int i = 0; i < subEntries.size(); i++) {
-          MagicMimeEntry me = subEntries.get(i);
+        for (MagicMimeEntry me : subEntries) {
           mtype = me.getMatch(raf);
           if (mtype != null) {
             return mtype;
@@ -367,10 +365,7 @@ public class MagicMimeEntry {
   private boolean matchString(ByteBuffer bbuf) throws IOException {
     if (isBetween) {
       String buffer = new String(bbuf.array());
-      if (buffer.contains(getContent())) {
-        return true;
-      }
-      return false;
+      return buffer.contains(getContent());
     }
     int read = getContent().length();
     for (int j = 0; j < read; j++) {
@@ -405,11 +400,7 @@ public class MagicMimeEntry {
       found = (short) (found & sMask);
     }
 
-    if (got != found) {
-      return false;
-    }
-
-    return true;
+    return got == found;
   }
 
   private boolean matchLong(ByteBuffer bbuf, ByteOrder bo, boolean needMask, long lMask)
@@ -431,11 +422,7 @@ public class MagicMimeEntry {
       found = found & lMask;
     }
 
-    if (got != found) {
-      return false;
-    }
-
-    return true;
+    return got == found;
   }
 
   /*

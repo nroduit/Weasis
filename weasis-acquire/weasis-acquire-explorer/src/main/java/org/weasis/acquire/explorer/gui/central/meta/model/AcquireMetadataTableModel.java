@@ -45,7 +45,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     this.tagsToPublish = tagsToPublish == null ? new TagW[0] : tagsToPublish;
 
     List<TagW> addTags = new ArrayList<>();
-    for (TagW tag : tagsToPublish) {
+    for (TagW tag : this.tagsToPublish) {
       if (tagable == null || tagable.getTagValue(tag) == null) {
         if (tagsToDisplay == null || Arrays.stream(tagsToDisplay).noneMatch(t -> t.equals(tag))) {
           addTags.add(tag);
@@ -60,10 +60,8 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     if (addTags.isEmpty()) {
       return tags == null ? new TagW[0] : tags;
     }
-    for (TagW tag : tags) {
-      addTags.add(tag);
-    }
-    return addTags.toArray(new TagW[addTags.size()]);
+    addTags.addAll(Arrays.asList(tags));
+    return addTags.toArray(new TagW[0]);
   }
 
   public static boolean hasNonNullValues(TagW[] tags, TagReadable tagMaps) {
@@ -115,11 +113,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
       case 0:
         return tag;
       case 1:
-        if (tagable.isPresent()) {
-          return tagable.get().getTagValue(tag);
-        } else {
-          return null;
-        }
+        return tagable.map(value -> value.getTagValue(tag)).orElse(null);
     }
 
     return null;
@@ -127,7 +121,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
 
   public boolean isValueRequired(int rowIndex) {
     TagW tag = tagsToDisplay()[rowIndex];
-    return Arrays.stream(tagsToPublish()).anyMatch(t -> t.equals(tag));
+    return Arrays.asList(tagsToPublish()).contains(tag);
   }
 
   @Override
@@ -166,6 +160,6 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
         LOGGER.warn("Cannot find the tag named {}", s.trim());
       }
     }
-    return list.toArray(new TagW[list.size()]);
+    return list.toArray(new TagW[0]);
   }
 }

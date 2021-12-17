@@ -21,7 +21,7 @@ public class ItemListModel<T> extends AbstractListModel<T> {
   protected ItemList<T> itemList = null;
 
   public ItemListModel() {
-    this(new ItemList<T>());
+    this(new ItemList<>());
   }
 
   public ItemListModel(ItemList<T> newItemList) {

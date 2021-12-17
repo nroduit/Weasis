@@ -34,7 +34,7 @@ import org.weasis.dicom.param.DicomState;
 public class PublishDicomTask extends SwingWorker<DicomState, File> {
   private static final Logger LOGGER = LoggerFactory.getLogger(PublishDicomTask.class);
 
-  private Supplier<DicomState> publish;
+  private final Supplier<DicomState> publish;
   private final DicomProgress dicomProgress;
 
   public PublishDicomTask(Supplier<DicomState> publish, DicomProgress dicomProgress) {

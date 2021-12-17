@@ -52,10 +52,9 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
-  private static final List<SynchView> SYNCH_LIST =
-      Collections.synchronizedList(new ArrayList<SynchView>());
+  private static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
   private static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+      Collections.synchronizedList(new ArrayList<>());
 
   static final GridBagLayoutModel DEFAULT_VIEW =
       new GridBagLayoutModel(
@@ -75,8 +74,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  private static final List<Toolbar> TOOLBARS =
-      Collections.synchronizedList(new ArrayList<Toolbar>(1));
+  private static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
   private static volatile boolean initComponents = false;
 
   static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =

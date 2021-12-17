@@ -54,12 +54,12 @@ public class GlobalHelper extends MockHelper {
         Tag.StudyInstanceUID, studyInstanceUIDW, TagType.STRING, studyInstanceUIDValue),
     modality(Tag.Modality, modalityW, TagType.STRING, modalityValue);
 
-    public int tagId;
+    public final int tagId;
     public TagW tagW;
-    public TagType type;
-    public String value;
+    public final TagType type;
+    public final String value;
 
-    private GlobalTag(int tagId, TagW tagW, TagType type, String value) {
+    GlobalTag(int tagId, TagW tagW, TagType type, String value) {
       this.tagId = tagId;
       this.tagW = tagW;
       this.type = type;

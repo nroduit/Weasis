@@ -18,9 +18,9 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaReader;
 
 public class ModelListHelper extends XmlSerialisationHelper {
-  public static final String UUID_1 = "uuid.1." + UUID.randomUUID().toString(); // NON-NLS
-  public static final String UUID_2 = "uuid.2." + UUID.randomUUID().toString(); // NON-NLS
-  public static final String UUID_3 = "uuid.3." + UUID.randomUUID().toString(); // NON-NLS
+  public static final String UUID_1 = "uuid.1." + UUID.randomUUID(); // NON-NLS
+  public static final String UUID_2 = "uuid.2." + UUID.randomUUID(); // NON-NLS
+  public static final String UUID_3 = "uuid.3." + UUID.randomUUID(); // NON-NLS
 
   @Mock protected MediaReader mediaIO;
   @Mock protected Object key;

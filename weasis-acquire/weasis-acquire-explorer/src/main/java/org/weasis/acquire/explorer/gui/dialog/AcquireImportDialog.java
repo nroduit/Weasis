@@ -69,9 +69,9 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
       new JRadioButton(Messages.getString("AcquireImportDialog.name_grp"));
   private final JSpinner spinner;
 
-  private JOptionPane optionPane;
+  private final JOptionPane optionPane;
 
-  private List<ImageElement> mediaList;
+  private final List<ImageElement> mediaList;
 
   public AcquireImportDialog(ImportPanel importPanel, List<ImageElement> mediaList) {
     super();

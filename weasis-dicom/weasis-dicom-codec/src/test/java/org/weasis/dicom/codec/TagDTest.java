@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -91,7 +92,7 @@ public class TagDTest {
     assertEquals(LocalTime.of(10, 10), time);
 
     time = TagD.getDicomTime("021 ");
-    assertEquals(null, time);
+    assertNull(time);
 
     // Does not support leap second:
     // http://stackoverflow.com/questions/30984599/how-does-the-oracle-java-jvm-know-a-leap-second-is-occurring
@@ -197,24 +198,24 @@ public class TagDTest {
     assertEquals("", period);
 
     period = TagD.getDicomPeriod("031Y"); // NON-NLS
-    assertEquals("31 " + ChronoUnit.YEARS.toString(), period);
+    assertEquals("31 " + ChronoUnit.YEARS, period);
 
     period = TagD.getDicomPeriod("001Y"); // NON-NLS
-    assertEquals("1 " + ChronoUnit.YEARS.toString(), period);
+    assertEquals("1 " + ChronoUnit.YEARS, period);
 
     period = TagD.getDicomPeriod("1Y"); // NON-NLS
-    assertEquals("1 " + ChronoUnit.YEARS.toString(), period);
+    assertEquals("1 " + ChronoUnit.YEARS, period);
 
     period = TagD.getDicomPeriod("000Y"); // NON-NLS
-    assertEquals("0 " + ChronoUnit.YEARS.toString(), period);
+    assertEquals("0 " + ChronoUnit.YEARS, period);
 
     period = TagD.getDicomPeriod("001M"); // NON-NLS
-    assertEquals("1 " + ChronoUnit.MONTHS.toString(), period); // NON-NLS
+    assertEquals("1 " + ChronoUnit.MONTHS, period); // NON-NLS
 
     period = TagD.getDicomPeriod("011W"); // NON-NLS
-    assertEquals("11 " + ChronoUnit.WEEKS.toString(), period);
+    assertEquals("11 " + ChronoUnit.WEEKS, period);
 
     period = TagD.getDicomPeriod("111D"); // NON-NLS
-    assertEquals("111 " + ChronoUnit.DAYS.toString(), period);
+    assertEquals("111 " + ChronoUnit.DAYS, period);
   }
 }

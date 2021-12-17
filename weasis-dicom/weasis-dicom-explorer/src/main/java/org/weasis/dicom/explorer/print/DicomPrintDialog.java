@@ -73,7 +73,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     private final double width;
     private final double height;
 
-    private FilmSize(String name, double width, double height) {
+    FilmSize(String name, double width, double height) {
       this.name = name;
       this.width = width;
       this.height = height;
@@ -115,16 +115,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   }
 
   private DicomPrintOptionPane optionPane;
-  private JButton addPrinterButton;
-  private JButton cancelButton;
-  private JButton deleteButton;
-  private JButton editButton;
-  private JButton printButton;
-  private JLabel printerLabel;
   private JComboBox<AbstractDicomNode> printersComboBox;
-  private ImageViewerEventManager<I> eventManager;
-  private Component horizontalStrut;
-  private JPanel footPanel;
+  private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form DicomPrintDialog */
   public DicomPrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
@@ -158,29 +150,29 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     rootPane.setLayout(new BorderLayout(0, 0));
     this.getContentPane().add(printersCfg, BorderLayout.NORTH);
 
-    printerLabel = new JLabel();
+    JLabel printerLabel = new JLabel();
     printersCfg.add(printerLabel);
 
     printerLabel.setText(Messages.getString("DicomPrintDialog.printer") + StringUtil.COLON);
     printersComboBox = new JComboBox<>();
     printersCfg.add(printersComboBox);
 
-    printersComboBox.setModel(new DefaultComboBoxModel<AbstractDicomNode>());
+    printersComboBox.setModel(new DefaultComboBoxModel<>());
 
     AbstractDicomNode.loadDicomNodes(printersComboBox, AbstractDicomNode.Type.PRINTER);
     JMVUtils.setPreferredWidth(printersComboBox, 185, 185);
     AbstractDicomNode.addTooltipToComboList(printersComboBox);
 
-    horizontalStrut = Box.createHorizontalStrut(20);
+    Component horizontalStrut = Box.createHorizontalStrut(20);
     printersCfg.add(horizontalStrut);
-    addPrinterButton = new JButton(Messages.getString("DicomPrintDialog.add"));
+    JButton addPrinterButton = new JButton(Messages.getString("DicomPrintDialog.add"));
     printersCfg.add(addPrinterButton);
 
-    editButton = new JButton();
+    JButton editButton = new JButton();
     printersCfg.add(editButton);
 
     editButton.setText(Messages.getString("DicomPrintDialog.edit"));
-    deleteButton = new JButton();
+    JButton deleteButton = new JButton();
     printersCfg.add(deleteButton);
 
     deleteButton.setText(Messages.getString("DicomPrintDialog.delete"));
@@ -205,20 +197,20 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     optionPane = new DicomPrintOptionPane();
     this.getContentPane().add(optionPane, BorderLayout.CENTER);
 
-    footPanel = new JPanel();
+    JPanel footPanel = new JPanel();
     FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
     flowLayout.setVgap(15);
     flowLayout.setAlignment(FlowLayout.RIGHT);
     flowLayout.setHgap(20);
     getContentPane().add(footPanel, BorderLayout.SOUTH);
-    printButton = new JButton();
+    JButton printButton = new JButton();
     footPanel.add(printButton);
 
     printButton.setText(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);
 
     getRootPane().setDefaultButton(printButton);
-    cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
+    JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
     footPanel.add(cancelButton);
     cancelButton.addActionListener(evt -> doClose());
   }

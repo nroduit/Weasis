@@ -82,8 +82,8 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
   }
 
   private void fireProgress() {
-    for (int i = 0; i < cancelListeners.size(); i++) {
-      cancelListeners.get(i).cancel();
+    for (CancelListener cancelListener : cancelListeners) {
+      cancelListener.cancel();
     }
   }
 }

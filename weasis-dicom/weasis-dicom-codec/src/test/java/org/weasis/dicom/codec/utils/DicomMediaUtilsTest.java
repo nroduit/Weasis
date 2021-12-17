@@ -12,6 +12,7 @@ package org.weasis.dicom.codec.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -23,7 +24,7 @@ import org.weasis.dicom.codec.TagD;
 public class DicomMediaUtilsTest {
   public static final String[] STRING_ARRAY = {"RECTANGULAR", "CIRCULAR", "POLYGONAL"}; // NON-NLS
 
-  private Attributes attributes = new Attributes();
+  private final Attributes attributes = new Attributes();
 
   @Before
   public void setup() {
@@ -89,8 +90,7 @@ public class DicomMediaUtilsTest {
     assertEquals(
         "RECTANGULAR\\CIRCULAR\\POLYGONAL",
         DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterShape));
-    assertEquals(
-        null, DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterPresentationValue));
+    assertNull(DicomMediaUtils.getStringFromDicomElement(attributes, Tag.ShutterPresentationValue));
   }
 
   @Test

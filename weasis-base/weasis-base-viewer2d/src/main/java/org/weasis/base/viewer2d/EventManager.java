@@ -29,6 +29,7 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -104,23 +105,12 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(newLutAction());
     setAction(newFilterAction());
     setAction(
-        newLayoutAction(
-            View2dContainer.DEFAULT_LAYOUT_LIST.toArray(
-                new GridBagLayoutModel[View2dContainer.DEFAULT_LAYOUT_LIST.size()])));
-    setAction(
-        newSynchAction(
-            View2dContainer.DEFAULT_SYNCH_LIST.toArray(
-                new SynchView[View2dContainer.DEFAULT_SYNCH_LIST.size()])));
+        newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[0])));
+    setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
     getAction(ActionW.SYNCH, ComboItemListener.class)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
-    setAction(
-        newMeasurementAction(
-            MeasureToolBar.measureGraphicList.toArray(
-                new Graphic[MeasureToolBar.measureGraphicList.size()])));
-    setAction(
-        newDrawAction(
-            MeasureToolBar.drawGraphicList.toArray(
-                new Graphic[MeasureToolBar.drawGraphicList.size()])));
+    setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
+    setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
     setAction(newSpatialUnit(Unit.values()));
     setAction(newPanAction());
     setAction(new BasicActionState(ActionW.RESET));
@@ -182,7 +172,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // Set default first as the list has been sorted
     luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
-    return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[luts.size()])) {
+    return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
       @Override
       public void itemStateChanged(Object object) {
         if (object instanceof ByteLut) {
@@ -205,7 +195,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // Only return the action if it is enabled
     if (action.isPresent()
         && Optional.ofNullable(getAction(action.get()))
-            .filter(a -> a.isActionEnabled())
+            .filter(ActionState::isActionEnabled)
             .isPresent()) {
       return action;
     }
@@ -314,9 +304,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   private void cinePlay(String command) {
     if (command != null) {
       if (command.equals(ActionW.CINESTART.cmd())) {
-        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.start());
+        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class)
+            .ifPresent(SliderCineListener::start);
       } else if (command.equals(ActionW.CINESTOP.cmd())) {
-        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class).ifPresent(a -> a.stop());
+        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class)
+            .ifPresent(SliderCineListener::stop);
       }
     }
   }

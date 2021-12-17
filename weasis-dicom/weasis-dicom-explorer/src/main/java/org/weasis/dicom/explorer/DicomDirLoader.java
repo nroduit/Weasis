@@ -108,7 +108,7 @@ public class DicomDirLoader {
     }
     for (LoadSeries loadSeries : seriesList) {
       String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = modality != null && ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+      boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
       if (!ps) {
         loadSeries.startDownloadImageReference(wadoParameters);
       }

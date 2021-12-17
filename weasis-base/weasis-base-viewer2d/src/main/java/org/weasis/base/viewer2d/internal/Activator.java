@@ -9,7 +9,7 @@
  */
 package org.weasis.base.viewer2d.internal;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.BundleActivator;
@@ -84,7 +84,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     final ServiceReference<?> mref = event.getServiceReference();
     // The View2dContainer name should be referenced as a property in the provided service
-    if (Boolean.valueOf((String) mref.getProperty(View2dContainer.class.getName()))) {
+    if (Boolean.parseBoolean((String) mref.getProperty(View2dContainer.class.getName()))) {
       final BundleContext context =
           FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
       Object service = context.getService(mref);
@@ -108,7 +108,7 @@ public class Activator implements BundleActivator, ServiceListener {
       for (ServiceReference<InsertableFactory> serviceReference :
           bundleContext.getServiceReferences(InsertableFactory.class, null)) {
         // The View2dContainer name should be referenced as a property in the provided service
-        if (Boolean.valueOf(
+        if (Boolean.parseBoolean(
             (String) serviceReference.getProperty(View2dContainer.class.getName()))) {
           // Instantiate UI components in EDT (necessary with Substance Theme)
           GuiExecutor.instance()
@@ -162,7 +162,7 @@ public class Activator implements BundleActivator, ServiceListener {
         if (factory.isComponentCreatedByThisFactory(b)) {
           Preferences prefs = BundlePreferences.getDefaultPreferences(context);
           if (prefs != null) {
-            List<Insertable> list = Arrays.asList(b);
+            List<Insertable> list = Collections.singletonList(b);
             InsertableUtil.savePreferences(
                 list,
                 prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
@@ -189,7 +189,7 @@ public class Activator implements BundleActivator, ServiceListener {
           if (prefs != null) {
             Preferences containerNode =
                 prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-            InsertableUtil.savePreferences(Arrays.asList(t), containerNode, Type.TOOL);
+            InsertableUtil.savePreferences(Collections.singletonList(t), containerNode, Type.TOOL);
           }
 
           View2dContainer.TOOLS.remove(i);

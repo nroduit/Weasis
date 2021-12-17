@@ -48,8 +48,6 @@ import org.weasis.core.util.StringUtil;
 
 public class ScreenPrefView extends AbstractItemDialogPage {
 
-  private final JPanel panelList = new JPanel();
-
   public ScreenPrefView() {
     super(Messages.getString("ScreenPrefView.monitors"));
     setComponentPosition(100);
@@ -80,6 +78,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     add(panel1, BorderLayout.NORTH);
     panel1.setLayout(new BorderLayout(0, 0));
 
+    JPanel panelList = new JPanel();
     panel1.add(panelList, BorderLayout.NORTH);
     panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
 

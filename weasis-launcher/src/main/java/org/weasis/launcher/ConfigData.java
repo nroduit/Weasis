@@ -108,7 +108,7 @@ public class ConfigData {
               otherArgs.add(args[i]);
             }
           }
-          splitArgToCmd(otherArgs.toArray(new String[otherArgs.size()]));
+          splitArgToCmd(otherArgs.toArray(new String[0]));
         }
       }
     }
@@ -521,12 +521,12 @@ public class ConfigData {
     }
 
     if (files) {
-      for (int i = 0; i < args.length; i++) {
-        String val = args[i];
+      for (String arg : args) {
+        String val = arg;
         // DICOM files
         if (val.startsWith("file:")) { // NON-NLS
           try {
-            val = new File(new URI(args[i])).getPath();
+            val = new File(new URI(arg)).getPath();
           } catch (URISyntaxException e) {
             LOGGER.log(Level.SEVERE, "Convert URI to file", e);
           }
@@ -638,19 +638,18 @@ public class ConfigData {
     Map<String, List<String>> configParams = new HashMap<>();
 
     while (xmler.hasNext()) {
-      switch (xmler.next()) {
-        case XMLStreamConstants.START_ELEMENT:
-          switch (xmler.getLocalName()) {
-            case "property": // NON-NLS
-              String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-              String value = xmler.getAttributeValue(null, "value"); // NON-NLS
-              addConfigParam(
-                  configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); // NON-NLS
-              break;
-            case "argument": // NON-NLS
-              addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
-              break;
-          }
+      if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
+        switch (xmler.getLocalName()) {
+          case "property": // NON-NLS
+            String name = xmler.getAttributeValue(null, "name"); // NON-NLS
+            String value = xmler.getAttributeValue(null, "value"); // NON-NLS
+            addConfigParam(
+                configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); // NON-NLS
+            break;
+          case "argument": // NON-NLS
+            addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
+            break;
+        }
       }
     }
     return configParams;

@@ -23,9 +23,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.DicomImportFactory;
 import org.weasis.dicom.explorer.ImportDicom;
 
-@org.osgi.service.component.annotations.Component(
-    service = DicomImportFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = DicomImportFactory.class)
 public class DicomQrFactory implements DicomImportFactory {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomQrFactory.class);

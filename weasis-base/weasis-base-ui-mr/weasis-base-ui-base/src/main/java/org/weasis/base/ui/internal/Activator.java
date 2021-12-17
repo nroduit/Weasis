@@ -62,8 +62,7 @@ public class Activator implements BundleActivator {
               Dictionary<String, Object> dict = new Hashtable<>();
               dict.put(CommandProcessor.COMMAND_SCOPE, "weasis"); // NON-NLS
               dict.put(
-                  CommandProcessor.COMMAND_FUNCTION,
-                  WeasisWin.functions.toArray(new String[WeasisWin.functions.size()]));
+                  CommandProcessor.COMMAND_FUNCTION, WeasisWin.functions.toArray(new String[0]));
               bundleContext.registerService(WeasisWin.class.getName(), mainWindow, dict);
               try {
                 mainWindow.createMainPanel();

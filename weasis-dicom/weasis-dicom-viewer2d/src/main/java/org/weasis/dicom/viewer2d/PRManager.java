@@ -526,7 +526,7 @@ public class PRManager {
         }
         if (!ActionState.NoneLabel.NONE_SERIES.equals(oldPR)) {
           // Set the previous selected value, otherwise set the more recent PR by default
-          view.setPresentationState(prList.indexOf(oldPR) == -1 ? prList.get(0) : oldPR, true);
+          view.setPresentationState(!prList.contains(oldPR) ? prList.get(0) : oldPR, true);
         }
 
         int offset = series.size(null) > 1 ? 2 : 1;

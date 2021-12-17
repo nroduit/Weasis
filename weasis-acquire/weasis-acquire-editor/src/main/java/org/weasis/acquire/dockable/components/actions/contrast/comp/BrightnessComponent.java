@@ -28,11 +28,18 @@ public class BrightnessComponent extends AbstractSliderComponent {
 
   static {
     labels.put(
-        BRIGHTNESS_MIN, new JLabel(Messages.getString("BrightnessComponent.low") + StringUtil.COLON_AND_SPACE + BRIGHTNESS_MIN));
+        BRIGHTNESS_MIN,
+        new JLabel(
+            Messages.getString("BrightnessComponent.low")
+                + StringUtil.COLON_AND_SPACE
+                + BRIGHTNESS_MIN));
     labels.put(BRIGHTNESS_VALUE, new JLabel(String.valueOf(BRIGHTNESS_VALUE)));
     labels.put(
         BRIGHTNESS_MAX,
-        new JLabel(Messages.getString("BrightnessComponent.high") + StringUtil.COLON_AND_SPACE + BRIGHTNESS_MAX));
+        new JLabel(
+            Messages.getString("BrightnessComponent.high")
+                + StringUtil.COLON_AND_SPACE
+                + BRIGHTNESS_MAX));
   }
 
   public BrightnessComponent(ContrastPanel panel) {

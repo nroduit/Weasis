@@ -44,10 +44,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
   private static final String lastDICOMDIR = "lastDicomDir";
 
-  private JLabel lblImportAFolder;
   private JTextField textField;
-  private JButton btnSearch;
-  private JButton btncdrom;
   private JCheckBox chckbxWriteInCache;
 
   public DicomDirImport() {
@@ -69,7 +66,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             null,
             null));
 
-    lblImportAFolder = new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);
+    JLabel lblImportAFolder =
+        new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);
     GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
     gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
     gbc_lblImportAFolder.insets = new Insets(5, 5, 5, 5);
@@ -88,7 +86,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));
     add(textField, gbc_textField);
 
-    btnSearch = new JButton(" ... ");
+    JButton btnSearch = new JButton(" ... ");
     btnSearch.addActionListener(e -> browseImgFile());
     GridBagConstraints gbc_button = new GridBagConstraints();
     gbc_button.anchor = GridBagConstraints.WEST;
@@ -97,7 +95,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     gbc_button.gridy = 0;
     add(btnSearch, gbc_button);
 
-    btncdrom =
+    JButton btncdrom =
         new JButton(
             Messages.getString("DicomDirImport.detect"),
             new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png")));
@@ -161,11 +159,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             if (f.isDirectory()) {
               return true;
             }
-            if (f.getName().equalsIgnoreCase("dicomdir") // NON-NLS
-                || f.getName().equalsIgnoreCase("dicomdir.")) { // NON-NLS
-              return true;
-            }
-            return false;
+            // NON-NLS
+            return f.getName().equalsIgnoreCase("dicomdir") // NON-NLS
+                || f.getName().equalsIgnoreCase("dicomdir.");
           }
         });
     File selectedFile = null;
@@ -291,8 +287,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     for (File drive : dvs) {
       // Detect read-only media
       if (drive.canRead() && !drive.isHidden()) {
-        for (int j = 0; j < dicomdir.length; j++) {
-          File f = new File(drive, dicomdir[j]);
+        for (String s : dicomdir) {
+          File f = new File(drive, s);
           if (f.canRead() && !f.canWrite()) {
             return f;
           }

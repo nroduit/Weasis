@@ -38,14 +38,13 @@ public interface ViewCanvas<E extends ImageElement>
         ImageLayerChangeListener<E>,
         KeyListener {
 
-  public static final String ZOOM_TYPE_CMD = "zoom.type";
-  public static final ImageIcon SYNCH_ICON =
-      new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
-  public static final int CENTER_POINTER = 1 << 1;
-  public static final int HIGHLIGHTED_POINTER = 1 << 2;
+  String ZOOM_TYPE_CMD = "zoom.type";
+  ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
+  int CENTER_POINTER = 1 << 1;
+  int HIGHLIGHTED_POINTER = 1 << 2;
 
-  public static final Color focusColor = Color.orange;
-  public static final Color lostFocusColor = new Color(255, 224, 178);
+  Color focusColor = Color.orange;
+  Color lostFocusColor = new Color(255, 224, 178);
 
   void registerDefaultListeners();
 

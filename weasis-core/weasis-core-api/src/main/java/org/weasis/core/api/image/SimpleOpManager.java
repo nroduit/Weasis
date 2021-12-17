@@ -49,18 +49,15 @@ public class SimpleOpManager implements OpManager {
     this.nodes = new HashMap<>();
     setName(som.name);
 
-    som.nodes
-        .entrySet()
-        .forEach(
-            el -> {
-              Optional.ofNullable(el.getValue())
-                  .ifPresent(
-                      n -> {
-                        ImageOpNode node = n.copy();
-                        operations.add(node);
-                        nodes.put(el.getKey(), node);
-                      });
-            });
+    som.nodes.forEach(
+        (key, value) ->
+            Optional.ofNullable(value)
+                .ifPresent(
+                    n -> {
+                      ImageOpNode node = n.copy();
+                      operations.add(node);
+                      nodes.put(key, node);
+                    }));
   }
 
   public synchronized String getName() {
@@ -201,10 +198,7 @@ public class SimpleOpManager implements OpManager {
     return null;
   }
 
-  /**
-   * Allow to remove the preprocessing cache
-   *
-   */
+  /** Allow to remove the preprocessing cache */
   public void resetLastNodeOutputImage() {
     ImageOpNode node = getLastNode();
     if (node != null) {

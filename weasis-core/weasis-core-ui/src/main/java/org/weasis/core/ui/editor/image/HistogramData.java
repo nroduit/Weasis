@@ -68,7 +68,7 @@ public class HistogramData {
     private final ByteLut[] byteLut;
     private final String title;
 
-    private Model(String name, ByteLut... luts) {
+    Model(String name, ByteLut... luts) {
       this.title =
           name
               + " ("
@@ -299,14 +299,13 @@ public class HistogramData {
     if (channels.size() == 1) {
       Mat hist = new Mat();
       Imgproc.calcHist(channels, new MatOfInt(0), msk, hist, histSize, histRange, false);
-      return Arrays.asList(hist);
+      return Collections.singletonList(hist);
     }
 
     List<Mat> histograms = new ArrayList<>();
-    for (int i = 0; i < selChannels.length; i++) {
+    for (int selChannel : selChannels) {
       Mat hist = new Mat();
-      Imgproc.calcHist(
-          channels, new MatOfInt(selChannels[i]), msk, hist, histSize, histRange, false);
+      Imgproc.calcHist(channels, new MatOfInt(selChannel), msk, hist, histSize, histRange, false);
       histograms.add(hist);
     }
     return histograms;

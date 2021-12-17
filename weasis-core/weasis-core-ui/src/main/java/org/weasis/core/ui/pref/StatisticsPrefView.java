@@ -84,6 +84,6 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
   @Override
   public void resetoDefaultValues() {
     Arrays.stream(ImageStatistics.ALL_MEASUREMENTS).forEach(Measurement::resetToGraphicLabelValue);
-    map.entrySet().forEach(entry -> entry.getKey().setSelected(entry.getValue().getGraphicLabel()));
+    map.forEach((key, value) -> key.setSelected(value.getGraphicLabel()));
   }
 }

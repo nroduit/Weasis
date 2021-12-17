@@ -37,18 +37,12 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.print.DicomPrintOptionPane;
 
 public class DicomNodeDialog extends JDialog {
-  private JLabel aeTitleLabel;
+
   private JTextField aeTitleTf;
-  private JButton cancelButton;
   private DicomPrintOptionPane printOptionsPane;
-  private JLabel descriptionLabel;
   private JTextField descriptionTf;
-  private JLabel hostnameLabel;
   private JTextField hostnameTf;
-  private JButton okButton;
-  private JLabel portLabel;
   private JFormattedTextField portTf;
-  private JPanel footPanel;
 
   private DefaultDicomNode dicomNode;
   private final JComboBox<DefaultDicomNode> nodesComboBox;
@@ -94,7 +88,7 @@ public class DicomNodeDialog extends JDialog {
     rootPane.setLayout(new BorderLayout(0, 0));
     GridBagLayout gridBagLayout = new GridBagLayout();
     content.setLayout(gridBagLayout);
-    descriptionLabel = new JLabel();
+    JLabel descriptionLabel = new JLabel();
     GridBagConstraints gbcDescriptionLabel = new GridBagConstraints();
     gbcDescriptionLabel.anchor = GridBagConstraints.EAST;
     gbcDescriptionLabel.insets = new Insets(0, 0, 5, 5);
@@ -112,7 +106,7 @@ public class DicomNodeDialog extends JDialog {
     content.add(descriptionTf, gbcDescriptionTf);
     descriptionTf.setColumns(15);
 
-    aeTitleLabel = new JLabel();
+    JLabel aeTitleLabel = new JLabel();
     aeTitleLabel.setText(Messages.getString("PrinterDialog.aet") + StringUtil.COLON);
     GridBagConstraints gbcAeTitleLabel = new GridBagConstraints();
     gbcAeTitleLabel.anchor = GridBagConstraints.EAST;
@@ -128,7 +122,7 @@ public class DicomNodeDialog extends JDialog {
     gbcAeTitleTf.gridx = 1;
     gbcAeTitleTf.gridy = 1;
     content.add(aeTitleTf, gbcAeTitleTf);
-    hostnameLabel = new JLabel();
+    JLabel hostnameLabel = new JLabel();
 
     hostnameLabel.setText(Messages.getString("PrinterDialog.host") + StringUtil.COLON);
     GridBagConstraints gbcHostnameLabel = new GridBagConstraints();
@@ -146,7 +140,7 @@ public class DicomNodeDialog extends JDialog {
     gbcHostnameTf.gridx = 1;
     gbcHostnameTf.gridy = 2;
     content.add(hostnameTf, gbcHostnameTf);
-    portLabel = new JLabel();
+    JLabel portLabel = new JLabel();
 
     portLabel.setText(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
     GridBagConstraints gbcPortLabel = new GridBagConstraints();
@@ -199,19 +193,19 @@ public class DicomNodeDialog extends JDialog {
       }
     }
 
-    footPanel = new JPanel();
+    JPanel footPanel = new JPanel();
     FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
     flowLayout.setVgap(15);
     flowLayout.setAlignment(FlowLayout.RIGHT);
     flowLayout.setHgap(20);
     getContentPane().add(footPanel, BorderLayout.SOUTH);
 
-    okButton = new JButton();
+    JButton okButton = new JButton();
     footPanel.add(okButton);
 
     okButton.setText(Messages.getString("PrinterDialog.ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
-    cancelButton = new JButton();
+    JButton cancelButton = new JButton();
     footPanel.add(cancelButton);
 
     cancelButton.setText(Messages.getString("PrinterDialog.cancel"));

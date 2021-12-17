@@ -83,11 +83,11 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
   private Boolean changeFireingSuspended = Boolean.FALSE;
 
-  private Function<Graphic, GraphicLayer> getLayer = g -> g.getLayer();
-  private Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
+  private final Function<Graphic, GraphicLayer> getLayer = Graphic::getLayer;
+  private final Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
 
-  private Predicate<Graphic> isLayerVisible = g -> g.getLayer().getVisible();
-  private Predicate<Graphic> isGraphicSelected = g -> g.getSelected();
+  private final Predicate<Graphic> isLayerVisible = g -> g.getLayer().getVisible();
+  private final Predicate<Graphic> isGraphicSelected = Graphic::getSelected;
 
   public AbstractGraphicModel() {
     this(null);

@@ -22,7 +22,7 @@ public enum CornerDisplay {
 
   private final String name;
 
-  private CornerDisplay(String name) {
+  CornerDisplay(String name) {
     this.name = name;
   }
 

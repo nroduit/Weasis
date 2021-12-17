@@ -23,7 +23,7 @@ public class ArrayListComboBoxModel<E> extends AbstractListModel<E>
 
   private Object selectedItem;
   private final List<E> items;
-  private Comparator<E> comparator;
+  private final Comparator<E> comparator;
 
   public ArrayListComboBoxModel() {
     this(null, null);

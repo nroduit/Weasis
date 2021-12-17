@@ -71,19 +71,19 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
   }
 
   @XmlElementWrapper(name = "labels")
-  @XmlElement(name = "label", required = false)
+  @XmlElement(name = "label")
   @Override
   public String[] getLabels() {
     return labels;
   }
 
-  @XmlElement(name = "offsetX", required = false)
+  @XmlElement(name = "offsetX")
   @Override
   public Double getOffsetX() {
     return offsetX;
   }
 
-  @XmlElement(name = "offsetY", required = false)
+  @XmlElement(name = "offsetY")
   @Override
   public Double getOffsetY() {
     return offsetY;

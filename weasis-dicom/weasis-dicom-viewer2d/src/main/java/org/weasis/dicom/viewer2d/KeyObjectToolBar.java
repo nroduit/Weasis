@@ -318,7 +318,7 @@ public class KeyObjectToolBar extends WtoolBar {
         });
   }
 
-  class ToggleSelectionModel extends DefaultListSelectionModel {
+  static class ToggleSelectionModel extends DefaultListSelectionModel {
     private boolean gestureStarted = false;
 
     @Override

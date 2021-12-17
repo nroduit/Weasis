@@ -34,20 +34,20 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 public class HttpHeadersEditor extends JDialog {
-  private DefaultListSelectionModel selctedModel = new DefaultListSelectionModel();
-  private JPanel panel1 = new JPanel();
-  private BorderLayout borderLayout1 = new BorderLayout();
-  private JButton jButtonClose = new JButton();
-  private GridBagLayout gridBagLayout3 = new GridBagLayout();
-  private JPanel jPanelComponentBar = new JPanel();
-  private JList<String> jList1 = new JList<>();
-  private JPanel jPanelComponentAction = new JPanel();
-  private JButton jButtonDelete = new JButton();
-  private JButton jButtonEdit = new JButton();
-  private GridBagLayout gridBagLayout2 = new GridBagLayout();
-  private JButton jButtonAdd = new JButton();
-  private JScrollPane jScrollPane1 = new JScrollPane();
-  private DicomWebNode node;
+  private final DefaultListSelectionModel selctedModel = new DefaultListSelectionModel();
+  private final JPanel panel1 = new JPanel();
+  private final BorderLayout borderLayout1 = new BorderLayout();
+  private final JButton jButtonClose = new JButton();
+  private final GridBagLayout gridBagLayout3 = new GridBagLayout();
+  private final JPanel jPanelComponentBar = new JPanel();
+  private final JList<String> jList1 = new JList<>();
+  private final JPanel jPanelComponentAction = new JPanel();
+  private final JButton jButtonDelete = new JButton();
+  private final JButton jButtonEdit = new JButton();
+  private final GridBagLayout gridBagLayout2 = new GridBagLayout();
+  private final JButton jButtonAdd = new JButton();
+  private final JScrollPane jScrollPane1 = new JScrollPane();
+  private final DicomWebNode node;
 
   public HttpHeadersEditor(Window parent, DicomWebNode node) {
     super(

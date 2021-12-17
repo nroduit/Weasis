@@ -100,7 +100,7 @@ public enum Modality {
 
   private final String description;
 
-  private Modality(String description) {
+  Modality(String description) {
     this.description = description;
   }
 

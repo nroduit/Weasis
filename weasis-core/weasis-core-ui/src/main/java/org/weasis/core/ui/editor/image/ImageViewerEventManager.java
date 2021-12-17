@@ -772,26 +772,24 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         final List<ViewCanvas<E>> panes = viewerPlugin.getImagePanels();
         panes.remove(viewPane);
         if (SynchView.NONE.equals(synchView)) {
-          for (int i = 0; i < panes.size(); i++) {
-            panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
+          for (ViewCanvas<E> pane : panes) {
+            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch);
           }
         } else if (Mode.STACK.equals(synch.getMode())) {
           // TODO if Pan is activated than rotation is required
           boolean hasLink = false;
-          for (int i = 0; i < panes.size(); i++) {
-            boolean synchByDefault = isCompatible(viewPane.getSeries(), panes.get(i).getSeries());
-            panes
-                .get(i)
-                .setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.copy() : null);
+          for (ViewCanvas<E> pane : panes) {
+            boolean synchByDefault = isCompatible(viewPane.getSeries(), pane.getSeries());
+            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synchByDefault ? synch.copy() : null);
             if (synchByDefault) {
               hasLink = true;
-              addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
+              addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
             }
           }
         } else if (Mode.TILE.equals(synch.getMode())) {
-          for (int i = 0; i < panes.size(); i++) {
-            panes.get(i).setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
-            addPropertyChangeListener(ActionW.SYNCH.cmd(), panes.get(i));
+          for (ViewCanvas<E> pane : panes) {
+            pane.setActionsInView(ActionW.SYNCH_LINK.cmd(), synch.copy());
+            addPropertyChangeListener(ActionW.SYNCH.cmd(), pane);
           }
         }
       }

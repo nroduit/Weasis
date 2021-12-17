@@ -91,10 +91,7 @@ public class LutParameters {
     if (signed != other.signed) {
       return false;
     }
-    if (Double.doubleToLongBits(slope) != Double.doubleToLongBits(other.slope)) {
-      return false;
-    }
-    return true;
+    return Double.doubleToLongBits(slope) == Double.doubleToLongBits(other.slope);
   }
 
   @Override
