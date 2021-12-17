@@ -41,10 +41,7 @@ public class TreeNode extends DefaultMutableTreeNode {
     if (!this.explored) {
       return false;
     }
-    if ((this.children != null) && !this.children.isEmpty()) {
-      return false;
-    }
-    return true;
+    return (this.children == null) || this.children.isEmpty();
   }
 
   public Path getNodePath() {

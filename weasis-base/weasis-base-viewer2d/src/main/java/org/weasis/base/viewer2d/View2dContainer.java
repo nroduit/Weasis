@@ -18,6 +18,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -108,10 +109,8 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  public static final List<Toolbar> TOOLBARS =
-      Collections.synchronizedList(new ArrayList<Toolbar>());
-  public static final List<DockableTool> TOOLS =
-      Collections.synchronizedList(new ArrayList<DockableTool>());
+  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>());
+  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>());
   private static volatile boolean initComponents = false;
 
   public View2dContainer() {
@@ -237,7 +236,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
                 if (rotateAction instanceof SliderChangeListener) {
                   listeners.add((SliderChangeListener) rotateAction);
                 }
-                return listeners.toArray(new SliderChangeListener[listeners.size()]);
+                return listeners.toArray(new SliderChangeListener[0]);
               }
             };
 
@@ -543,8 +542,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
       addLayout(list, factorLimit, rx, ry);
     }
-    Collections.sort(
-        list, (o1, o2) -> Integer.compare(o1.getConstraints().size(), o2.getConstraints().size()));
+    list.sort(Comparator.comparingInt(o -> o.getConstraints().size()));
     return list;
   }
 

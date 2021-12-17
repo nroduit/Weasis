@@ -128,9 +128,7 @@ public class Activator implements BundleActivator, ServiceListener {
   private static void registerCommands(BundleContext context) {
     Dictionary<String, Object> dict = new Hashtable<>();
     dict.put(CommandProcessor.COMMAND_SCOPE, "image");
-    dict.put(
-        CommandProcessor.COMMAND_FUNCTION,
-        AbstractFileModel.functions.toArray(new String[AbstractFileModel.functions.size()]));
+    dict.put(CommandProcessor.COMMAND_FUNCTION, AbstractFileModel.functions.toArray(new String[0]));
     context.registerService(FileModel.class.getName(), ViewerPluginBuilder.DefaultDataModel, dict);
   }
 }

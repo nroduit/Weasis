@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.slf4j.Logger;
@@ -107,8 +106,7 @@ public class NetworkUtil {
       OAuthRequest request, URLParameters urlParameters, AuthMethod authMethod) throws IOException {
     Map<String, String> headers = urlParameters.getUnmodifiableHeaders();
     if (!headers.isEmpty()) {
-      for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
-        Entry<String, String> element = iter.next();
+      for (Entry<String, String> element : headers.entrySet()) {
         request.addHeader(element.getKey(), element.getValue());
       }
     }
@@ -135,8 +133,7 @@ public class NetworkUtil {
     Map<String, String> headers = urlParameters.getUnmodifiableHeaders();
 
     if (!headers.isEmpty()) {
-      for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator(); iter.hasNext(); ) {
-        Entry<String, String> element = iter.next();
+      for (Entry<String, String> element : headers.entrySet()) {
         urlConnection.setRequestProperty(element.getKey(), element.getValue());
       }
     }
@@ -217,9 +214,7 @@ public class NetworkUtil {
         c = new URL(redirect).openConnection();
         c.setRequestProperty("Cookie", cookies);
         if (headers != null && headers.size() > 0) {
-          for (Iterator<Entry<String, String>> iter = headers.entrySet().iterator();
-              iter.hasNext(); ) {
-            Entry<String, String> element = iter.next();
+          for (Entry<String, String> element : headers.entrySet()) {
             c.addRequestProperty(element.getKey(), element.getValue());
           }
         }

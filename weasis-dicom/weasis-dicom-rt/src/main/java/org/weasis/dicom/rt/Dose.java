@@ -61,9 +61,8 @@ public class Dose extends HashMap<Integer, Dvh> {
   private Pair<double[], double[]> dosePixLUT;
 
   public Dose() {
-    // Default threshold in mm to determine the max difference from slicePosition to the closest dose
-    // frame without
-    // interpolation
+    // Default threshold in mm to determine the max difference from slicePosition to the closest
+    // dose frame without interpolation
     this.doseSlicePositionThreshold = 0.5;
     this.doseMax = 0.0;
   }

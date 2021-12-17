@@ -75,7 +75,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     jbInit();
   }
 
-  private final void jbInit() {
+  private void jbInit() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     add(getMarkerPanel());
     add(getAnnotationsPanel());
@@ -245,8 +245,8 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   public static int getNumberOfMeasures(boolean[] select) {
     int k = 0;
-    for (int i = 0; i < select.length; i++) {
-      if (select[i]) {
+    for (boolean b : select) {
+      if (b) {
         k++;
       }
     }
@@ -257,9 +257,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
     Sequence ctxSeq = attributes.getSequence(Tag.AcquisitionContextSequence);
     if (ctxSeq != null) {
-      for (int i = 0; i < ctxSeq.size(); i++) {
-        Attributes item = ctxSeq.get(i);
-
+      for (Attributes item : ctxSeq) {
         try {
           String value = "";
           if ("NUMERIC".equalsIgnoreCase(item.getString(Tag.ValueType))) {
@@ -341,9 +339,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   private void readWaveformAnnotations(Attributes attributes, List<Object[]> list) {
     Sequence anSeq = attributes.getSequence(Tag.WaveformAnnotationSequence);
     if (anSeq != null) {
-      for (int i = 0; i < anSeq.size(); i++) {
-        Attributes item = anSeq.get(i);
-
+      for (Attributes item : anSeq) {
         try {
           String text = item.getString(Tag.UnformattedTextValue);
           if (StringUtil.hasText(text)) {

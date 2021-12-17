@@ -45,7 +45,7 @@ public class DicomWebNodeDialog extends JDialog {
   private final DicomWebNode dicomNode;
   private final JComboBox<DicomWebNode> nodesComboBox;
   private JComboBox<DicomWebNode.WebType> comboBox;
-  private JComboBox<AuthMethod> comboBoxAuth = new JComboBox<>();
+  private final JComboBox<AuthMethod> comboBoxAuth = new JComboBox<>();
 
   public DicomWebNodeDialog(
       Window parent, String title, DicomWebNode dicomNode, JComboBox<DicomWebNode> nodeComboBox) {

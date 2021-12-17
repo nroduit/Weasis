@@ -17,7 +17,7 @@ import org.weasis.core.api.media.data.MediaElement;
 public class AcquireThumbnailListPane<E extends MediaElement> extends AThumbnailListPane<E> {
 
   public AcquireThumbnailListPane(JIThumbnailCache thumbCache) {
-    super(new AcquireThumbnailList<E>(thumbCache));
+    super(new AcquireThumbnailList<>(thumbCache));
     ((AcquireThumbnailList<E>) getThumbnailList()).setMainPanel(this);
   }
 }

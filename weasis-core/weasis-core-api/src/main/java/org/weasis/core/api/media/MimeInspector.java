@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Map.Entry;
 import java.util.Optional;
@@ -73,7 +74,7 @@ public class MimeInspector {
     // Parse and initialize the magic.mime rules
     InputStream is = MimeInspector.class.getResourceAsStream("/magic.mime"); // NON-NLS
     if (is != null) {
-      try (InputStreamReader streamReader = new InputStreamReader(is, "UTF8")) {
+      try (InputStreamReader streamReader = new InputStreamReader(is, StandardCharsets.UTF_8)) {
         MimeInspector.parse(streamReader);
       } catch (Exception e) {
         LOGGER.error("Parse magic mime-types", e);
@@ -167,10 +168,7 @@ public class MimeInspector {
     ArrayList<String> sequence = new ArrayList<>();
 
     String line = br.readLine();
-    while (true) {
-      if (line == null) {
-        break;
-      }
+    while (line != null) {
       line = line.trim();
       if (line.length() == 0 || line.charAt(0) == '#') {
         line = br.readLine();
@@ -213,8 +211,7 @@ public class MimeInspector {
   }
 
   private static String getMagicMimeType(RandomAccessFile raf) throws IOException {
-    for (int i = 0; i < mMagicMimeEntries.size(); i++) {
-      MagicMimeEntry me = mMagicMimeEntries.get(i);
+    for (MagicMimeEntry me : mMagicMimeEntries) {
       String mtype = me.getMatch(raf);
       if (mtype != null) {
         return mtype;

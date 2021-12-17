@@ -19,17 +19,17 @@ import javax.swing.border.Border;
 
 public class ToolBarButtonBorder implements Border {
 
-  private static Image borderImage =
+  private static final Image borderImage =
       new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder.png"))
           .getImage();
-  private static Image pressedBorderImage =
+  private static final Image pressedBorderImage =
       new ImageIcon(ToolBarButtonBorder.class.getResource("/icon/toolbar/buttonborder_pressed.png"))
           .getImage();
 
-  private static int borderWidth = borderImage.getWidth(null);
-  private static int borderHeight = borderImage.getHeight(null);
+  private static final int borderWidth = borderImage.getWidth(null);
+  private static final int borderHeight = borderImage.getHeight(null);
   private boolean pressed;
-  private Insets insets = new Insets(2, 2, 2, 2);
+  private final Insets insets = new Insets(2, 2, 2, 2);
 
   public ToolBarButtonBorder() {
     super();

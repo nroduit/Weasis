@@ -29,7 +29,7 @@ public class ThreadUtil {
    * @return the newly created single-threaded Executor
    * @throws NullPointerException if threadFactory is null
    */
-  public static final ExecutorService buildNewSingleThreadExecutor(final String name) {
+  public static ExecutorService buildNewSingleThreadExecutor(final String name) {
     return Executors.newSingleThreadExecutor(getThreadFactory(name));
   }
 
@@ -48,7 +48,7 @@ public class ThreadUtil {
    * @throws NullPointerException if threadFactory is null
    * @throws IllegalArgumentException if {@code nThreads <= 0}
    */
-  public static final ExecutorService buildNewFixedThreadExecutor(int nThreads, final String name) {
+  public static ExecutorService buildNewFixedThreadExecutor(int nThreads, final String name) {
     return Executors.newFixedThreadPool(nThreads, getThreadFactory(name));
   }
 
@@ -58,7 +58,7 @@ public class ThreadUtil {
    * @param name the name prefix of the new thread
    * @return the factory to use when creating new threads
    */
-  public static final ThreadFactory getThreadFactory(String name) {
+  public static ThreadFactory getThreadFactory(String name) {
     return r -> {
       Thread t = Executors.defaultThreadFactory().newThread(r);
       t.setName(name + "-" + t.getName());

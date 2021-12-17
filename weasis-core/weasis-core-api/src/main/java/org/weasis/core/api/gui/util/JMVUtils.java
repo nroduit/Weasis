@@ -86,7 +86,7 @@ public class JMVUtils {
   @Deprecated
   public static boolean getNULLtoTrue(Object val) {
     if (val instanceof Boolean) {
-      return ((Boolean) val).booleanValue();
+      return (Boolean) val;
     }
     return true;
   }
@@ -175,8 +175,8 @@ public class JMVUtils {
 
   public static void addChangeListener(JSlider slider, ChangeListener listener) {
     ChangeListener[] listeners = slider.getChangeListeners();
-    for (int i = 0; i < listeners.length; i++) {
-      if (listener == listeners[i]) {
+    for (ChangeListener changeListener : listeners) {
+      if (listener == changeListener) {
         return;
       }
     }

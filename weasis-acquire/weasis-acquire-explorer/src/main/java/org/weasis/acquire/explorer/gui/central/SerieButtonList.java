@@ -25,7 +25,7 @@ public class SerieButtonList extends JScrollPane {
 
   private static final JPanel serieButtonPane = new JPanel();
 
-  private SortedSet<SerieButton> serieButtonSet = new TreeSet<>();
+  private final SortedSet<SerieButton> serieButtonSet = new TreeSet<>();
 
   public SerieButtonList() {
     super(

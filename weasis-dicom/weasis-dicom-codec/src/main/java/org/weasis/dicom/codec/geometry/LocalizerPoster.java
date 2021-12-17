@@ -271,8 +271,8 @@ public abstract class LocalizerPoster {
 
   protected List<Point2D> drawOutlineOnLocalizer(Point3d[] corners) {
     ArrayList<Point2D> shapes = new ArrayList<>();
-    for (int i = 0; i < corners.length; ++i) {
-      shapes.add(transformPointInLocalizerPlaneIntoImageSpace(corners[i]));
+    for (Point3d corner : corners) {
+      shapes.add(transformPointInLocalizerPlaneIntoImageSpace(corner));
     }
     return shapes;
   }

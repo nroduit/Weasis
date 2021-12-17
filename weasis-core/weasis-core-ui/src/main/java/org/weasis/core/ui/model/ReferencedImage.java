@@ -35,7 +35,7 @@ public class ReferencedImage extends DefaultUUID {
   }
 
   @XmlList
-  @XmlAttribute(name = "frames", required = false)
+  @XmlAttribute(name = "frames")
   public List<Integer> getFrames() {
     return frames;
   }

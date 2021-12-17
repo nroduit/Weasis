@@ -13,7 +13,7 @@ import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -52,9 +52,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@org.osgi.service.component.annotations.Component(
-    service = SeriesViewerFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class View2dFactory implements SeriesViewerFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dFactory.class);
 
@@ -161,10 +159,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    if (viewer instanceof View2dContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof View2dContainer;
   }
 
   @Override
@@ -176,7 +171,7 @@ public class View2dFactory implements SeriesViewerFactory {
   public List<Action> getOpenActions() {
     DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
     if (dicomView == null) {
-      return Arrays.asList(preferencesAction);
+      return Collections.singletonList(preferencesAction);
     }
     // In case DICOM explorer has been loaded get the first import action
     return dicomView.getOpenImportDialogAction().subList(0, 1);

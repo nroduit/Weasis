@@ -60,11 +60,9 @@ public class WPropertiesTest {
   public void testPutBooleanProperty() {
     WProperties prop = new WProperties();
     prop.putBooleanProperty("boolean", true); // NON-NLS
-    Assert.assertEquals(
-        "different boolean", true, prop.getBooleanProperty("boolean", false)); // NON-NLS
+    Assert.assertTrue("different boolean", prop.getBooleanProperty("boolean", false)); // NON-NLS
     prop.putBooleanProperty("boolean", false); // NON-NLS
-    Assert.assertEquals(
-        "different boolean", false, prop.getBooleanProperty("boolean", true)); // NON-NLS
+    Assert.assertFalse("different boolean", prop.getBooleanProperty("boolean", true)); // NON-NLS
   }
 
   @Test

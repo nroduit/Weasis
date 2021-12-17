@@ -204,8 +204,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       JMenu menu = ((ComboItemListener) layout).createUnregisteredRadioMenu("layout"); // NON-NLS
       popupMouseButtons.setInvoker(dropDownButton);
       Component[] cps = menu.getMenuComponents();
-      for (int i = 0; i < cps.length; i++) {
-        popupMouseButtons.add(cps[i]);
+      for (Component cp : cps) {
+        popupMouseButtons.add(cp);
       }
     }
     return popupMouseButtons;
@@ -231,8 +231,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     popupMouseButtons.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
     synchronized (actionsButtons) {
-      for (int i = 0; i < actionsButtons.size(); i++) {
-        ActionW b = actionsButtons.get(i);
+      for (ActionW b : actionsButtons) {
         if (eventManager.isActionRegistered(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
@@ -255,14 +254,12 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     JPopupMenu popupMouseScroll = new JPopupMenu(type);
     popupMouseScroll.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
-    for (int i = 0; i < actionsScroll.length; i++) {
-      if (eventManager.isActionRegistered(actionsScroll[i])) {
+    for (ActionW actionW : actionsScroll) {
+      if (eventManager.isActionRegistered(actionW)) {
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
-                actionsScroll[i].getTitle(),
-                actionsScroll[i].getIcon(),
-                actionsScroll[i].cmd().equals(action));
-        radio.setActionCommand(actionsScroll[i].cmd());
+                actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
+        radio.setActionCommand(actionW.cmd());
         radio.addActionListener(this);
         popupMouseScroll.add(radio);
         groupButtons.add(radio);
@@ -301,7 +298,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private static boolean checkButtonCommand(String cmd, JButton button) {
-    return (button == null) ? false : cmd.equals(button.getActionCommand());
+    return button != null && cmd.equals(button.getActionCommand());
   }
 
   public void changeButtonState(String type, String action) {
@@ -474,7 +471,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     return MouseLeftIcon;
   }
 
-  public static final ActionW getNextCommand(List<ActionW> buttons, String command) {
+  public static ActionW getNextCommand(List<ActionW> buttons, String command) {
     if (buttons != null && !buttons.isEmpty()) {
       int index = 0;
       synchronized (buttons) { // NOSONAR lock object is the list for iterating its elements safely

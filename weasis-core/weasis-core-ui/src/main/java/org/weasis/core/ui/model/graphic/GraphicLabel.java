@@ -24,10 +24,10 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
    * Minimum value is 3 because paintBoundOutline grows of 2 pixels the outer rectangle painting,
    * and paintFontOutline grows of 1 pixel all string painting
    */
-  static final int GROWING_BOUND = 3;
+  int GROWING_BOUND = 3;
 
-  static final Double DEFAULT_OFFSET_X = 0d;
-  static final Double DEFAULT_OFFSET_Y = 0d;
+  Double DEFAULT_OFFSET_X = 0d;
+  Double DEFAULT_OFFSET_Y = 0d;
 
   void reset();
 
@@ -57,7 +57,7 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
    * Sets label strings and compute bounding rectangle size and position in pixel world according to
    * the DefaultView which defines current "Font"<br>
    */
-  public void setLabel(ViewCanvas<?> view2d, Double xPos, Double yPos, String... labels);
+  void setLabel(ViewCanvas<?> view2d, Double xPos, Double yPos, String... labels);
 
   void paint(Graphics2D g2d, AffineTransform transform, boolean selected);
 

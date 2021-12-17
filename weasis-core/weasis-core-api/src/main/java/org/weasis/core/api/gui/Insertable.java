@@ -11,7 +11,7 @@ package org.weasis.core.api.gui;
 
 public interface Insertable {
 
-  public enum Type {
+  enum Type {
     EXPLORER,
     TOOL,
     TOOLBAR,

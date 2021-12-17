@@ -60,7 +60,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   }
 
   public Series(TagW tagID, Object identifier, TagView displayTag, int initialCapacity) {
-    this(tagID, identifier, displayTag, new ArrayList<E>(initialCapacity));
+    this(tagID, identifier, displayTag, new ArrayList<>(initialCapacity));
   }
 
   public Series(TagW tagID, Object identifier, TagView displayTag, List<E> list) {
@@ -76,7 +76,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
       ls = new ArrayList<>();
       fileSize = 0L;
     } else if (mediaOrder != null) {
-      Collections.sort(ls, mediaOrder);
+      ls.sort(mediaOrder);
     }
     medias = Collections.synchronizedList(ls);
   }
@@ -104,7 +104,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
           comparator,
           k -> {
             List<E> sorted = new ArrayList<>(medias);
-            Collections.sort(sorted, comparator);
+            sorted.sort(comparator);
             return sorted;
           });
     }
@@ -256,7 +256,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     medias.clear();
     resetSortedMediasMap();
 
-    Optional.ofNullable((Thumbnail) getTagValue(TagW.Thumbnail)).ifPresent(t -> t.dispose());
+    Optional.ofNullable((Thumbnail) getTagValue(TagW.Thumbnail)).ifPresent(Thumbnail::dispose);
     if (propertyChange != null) {
       Arrays.asList(propertyChange.getPropertyChangeListeners())
           .forEach(propertyChange::removePropertyChangeListener);
@@ -422,8 +422,8 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   public boolean hasMediaContains(TagW tag, Object val) {
     if (val != null) {
       synchronized (this) {
-        for (int i = 0; i < medias.size(); i++) {
-          Object val2 = medias.get(i).getTagValue(tag);
+        for (E media : medias) {
+          Object val2 = media.getTagValue(tag);
           if (val.equals(val2)) {
             return true;
           }

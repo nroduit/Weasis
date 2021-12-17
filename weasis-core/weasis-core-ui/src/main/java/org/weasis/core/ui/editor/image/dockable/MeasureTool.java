@@ -106,7 +106,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     jbInit();
   }
 
-  private final void jbInit() {
+  private void jbInit() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     add(getIconsPanel());
     add(getSelectedMeasurePanel());
@@ -373,8 +373,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   public static int getNumberOfMeasures(boolean[] select) {
     int k = 0;
-    for (int i = 0; i < select.length; i++) {
-      if (select[i]) {
+    for (boolean b : select) {
+      if (b) {
         k++;
       }
     }

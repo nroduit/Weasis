@@ -89,7 +89,7 @@ public class WeasisLauncher {
     STOPPING(0x00000010),
     ACTIVE(0x00000020);
 
-    private int index;
+    private final int index;
 
     State(int state) {
       this.index = state;
@@ -576,26 +576,21 @@ public class WeasisLauncher {
           Proxy.newProxyInstance(
               loader,
               new Class[] {c},
-              new InvocationHandler() {
+              (proxy, method, args) -> {
+                String listenerMethod = method.getName();
 
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                  String listenerMethod = method.getName();
-
-                  if (listenerMethod.equals("beforeExecute")) {
-                    String arg = args[1].toString();
-                    if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { // NON-NLS
-                      // Force gogo to not use Expander to concatenate parameter with the current
-                      // directory
-                      // (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
-                      commandSessionExecute(args[0], "gogo.option.noglob=on"); // NON-NLS
-                    }
-                  } else if (listenerMethod.equals("equals")) { // NON-NLS
-                    // Only add once in the set of listeners
-                    return proxy.getClass().isAssignableFrom((args[0].getClass()));
+                if (listenerMethod.equals("beforeExecute")) {
+                  String arg = args[1].toString();
+                  if (arg.startsWith("gosh") || arg.startsWith("gogo:gosh")) { // NON-NLS
+                    // Force gogo to not use Expander to concatenate parameter with the current
+                    // directory (Otherwise "*(|<[?" are interpreted, issue with URI parameters)
+                    commandSessionExecute(args[0], "gogo.option.noglob=on"); // NON-NLS
                   }
-                  return null;
+                } else if (listenerMethod.equals("equals")) { // NON-NLS
+                  // Only add once in the set of listeners
+                  return proxy.getClass().isAssignableFrom((args[0].getClass()));
                 }
+                return null;
               });
       nameMethod.invoke(commandProcessor, listener);
     } catch (Exception e) {

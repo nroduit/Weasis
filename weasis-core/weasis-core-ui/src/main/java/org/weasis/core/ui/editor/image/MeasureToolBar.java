@@ -326,7 +326,7 @@ public class MeasureToolBar extends WtoolBar {
   }
 
   static class MeasureGroupMenu extends GroupRadioMenu<Graphic> {
-    private ActionW action;
+    private final ActionW action;
     private JButton button;
 
     public MeasureGroupMenu(ActionW action) {

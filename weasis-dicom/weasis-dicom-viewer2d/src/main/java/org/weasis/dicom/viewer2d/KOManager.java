@@ -425,7 +425,7 @@ public final class KOManager {
               view2D.getSeries() != null
                   ? DicomModel.getKoSpecialElements(view2D.getSeries())
                   : null;
-          if (koElements != null && koElements.contains(selectedKO) == false) {
+          if (koElements != null && !koElements.contains(selectedKO)) {
             selectedKO = null;
             newSelectedKO = ActionState.NoneLabel.NONE;
             view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);

@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.imageio.IIOException;
@@ -539,10 +538,10 @@ public class SeriesBuilder {
 
       // Clone array, because values are adapted according to the min and max pixel values.
       TagW[] tagList3 = TagD.getTagFromIDs(Tag.WindowWidth, Tag.WindowCenter);
-      for (int j = 0; j < tagList3.length; j++) {
-        double[] val = (double[]) img.getTagValue(tagList3[j]);
+      for (TagW tagW : tagList3) {
+        double[] val = (double[]) img.getTagValue(tagW);
         if (val != null) {
-          img.setTag(tagList3[j], Arrays.copyOf(val, val.length));
+          img.setTag(tagW, Arrays.copyOf(val, val.length));
         }
       }
 
@@ -603,12 +602,11 @@ public class SeriesBuilder {
       double lastPos = 0.0;
       double lastSpace = 0.0;
       int index = 0;
-      Iterator<DicomImageElement> iter = medias.iterator();
-      while (iter.hasNext()) {
+      for (DicomImageElement media : medias) {
         if (thread.isInterrupted()) {
           return lastSpace;
         }
-        DicomImageElement dcm = iter.next();
+        DicomImageElement dcm = media;
         double[] sp = (double[]) dcm.getTagValue(TagW.SlicePosition);
         boolean validSp = sp != null && sp.length == 3;
         if (!validSp && !abort[1]) {

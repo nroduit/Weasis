@@ -21,7 +21,7 @@ public abstract class MouseActionAdapter
 
   // Define in java.awt.event.InputEvent, could change if extra modifier bits are added
   static final int JDK_1_3_MODIFIERS = (1 << 6) - 1;
-  static final int HIGH_MODIFIERS = ~((1 << 14) - 1);
+  static final int HIGH_MODIFIERS = -(1 << 14);
 
   protected int buttonMaskEx = 0;
   protected int lastPosition = 0;

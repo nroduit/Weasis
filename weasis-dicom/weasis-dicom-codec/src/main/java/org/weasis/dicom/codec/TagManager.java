@@ -22,11 +22,11 @@ public class TagManager {
 
   public TagManager() {
     this.levelMap = new EnumMap<>(Level.class);
-    this.levelMap.put(Level.PATIENT, new ArrayList<TagW>());
-    this.levelMap.put(Level.STUDY, new ArrayList<TagW>());
-    this.levelMap.put(Level.SERIES, new ArrayList<TagW>());
-    this.levelMap.put(Level.INSTANCE, new ArrayList<TagW>());
-    this.levelMap.put(Level.FRAME, new ArrayList<TagW>());
+    this.levelMap.put(Level.PATIENT, new ArrayList<>());
+    this.levelMap.put(Level.STUDY, new ArrayList<>());
+    this.levelMap.put(Level.SERIES, new ArrayList<>());
+    this.levelMap.put(Level.INSTANCE, new ArrayList<>());
+    this.levelMap.put(Level.FRAME, new ArrayList<>());
   }
 
   public void addTag(int tagID, Level level) {

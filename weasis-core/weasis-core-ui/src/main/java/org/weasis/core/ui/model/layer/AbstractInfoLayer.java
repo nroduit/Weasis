@@ -18,7 +18,6 @@ import java.awt.RenderingHints;
 import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -108,9 +107,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       Preferences pref = p.node("infolayer"); // NON-NLS
       applyToAllView.set(pref.getBoolean("allViews", true));
 
-      Iterator<Entry<String, Boolean>> d = defaultDisplayPreferences.entrySet().iterator();
-      while (d.hasNext()) {
-        Entry<String, Boolean> v = d.next();
+      for (Entry<String, Boolean> v : defaultDisplayPreferences.entrySet()) {
         v.setValue(pref.getBoolean(conversionMapForStorage.get(v.getKey()), v.getValue()));
       }
     }
@@ -122,9 +119,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       Preferences pref = p.node("infolayer"); // NON-NLS
       BundlePreferences.putBooleanPreferences(pref, "allViews", applyToAllView.get());
 
-      Iterator<Entry<String, String>> d = conversionMapForStorage.entrySet().iterator();
-      while (d.hasNext()) {
-        Entry<String, String> v = d.next();
+      for (Entry<String, String> v : conversionMapForStorage.entrySet()) {
         BundlePreferences.putBooleanPreferences(
             pref, v.getValue(), defaultDisplayPreferences.get(v.getKey()));
       }
@@ -393,7 +388,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       g2d.draw(getOutLine(line));
       line.setLine(posx + scaleSizex, posy - thickLength, posx + scaleSizex, posy);
       g2d.draw(getOutLine(line));
-      int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5;
+      int divisor = !str.contains("5") ? !str.contains("2") ? 10 : 2 : 5;
       double midThick = thickLength * 2.0 / 3.0;
       double smallThick = thickLength / 3.0;
       double divSquare = scaleSizex / divisor;
@@ -468,7 +463,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       g2d.draw(getOutLine(line));
       line.setLine(posx, posy + scaleSizeY, posx + thickLength, posy + scaleSizeY);
       g2d.draw(getOutLine(line));
-      int divisor = str.indexOf("5") == -1 ? str.indexOf("2") == -1 ? 10 : 2 : 5;
+      int divisor = !str.contains("5") ? !str.contains("2") ? 10 : 2 : 5;
       double divSquare = scaleSizeY / divisor;
       double midThick = thickLength * 2.0 / 3.0;
       double smallThick = thickLength / 3.0;

@@ -16,7 +16,6 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -427,8 +426,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   }
 
   public void fireLayerChanged() {
-    for (int i = 0; i < listenerList.size(); i++) {
-      listenerList.get(i).handleLayerChanged(this);
+    for (ImageLayerChangeListener<E> eImageLayerChangeListener : listenerList) {
+      eImageLayerChangeListener.handleLayerChanged(this);
     }
   }
 
@@ -445,9 +444,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   }
 
   public synchronized void fireOpEvent(final ImageOpEvent event) {
-    Iterator<OpEventListener> i = opListeners.iterator();
-    while (i.hasNext()) {
-      i.next().handleImageOpEvent(event);
+    for (OpEventListener opListener : opListeners) {
+      opListener.handleImageOpEvent(event);
     }
   }
 

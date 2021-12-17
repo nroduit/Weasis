@@ -36,24 +36,22 @@ import org.weasis.core.api.util.FontTools;
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 
-  private final AcquireExplorer mainView;
   private final ItemList<MediaSource> mediaSourceList = new ItemList<>();
-  private final ItemListComboBoxModel<MediaSource> mediaSourceListComboModel;
   private final JComboBox<MediaSource> mediaSourceSelectionCombo = new JComboBox<>();
-  private final USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(2000);
 
   public BrowsePanel(AcquireExplorer acquisitionView) {
-    this.mainView = acquisitionView;
     try {
-      mainView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
-      mediaSourceList.addItem(mainView.getSystemDrive());
+      acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
+      mediaSourceList.addItem(acquisitionView.getSystemDrive());
     } catch (Exception e) {
       LOGGER.warn(e.getMessage(), e);
     }
 
+    USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(2000);
     driveDetector.addDriveListener(this);
 
-    mediaSourceListComboModel = new ItemListComboBoxModel<>(mediaSourceList);
+    ItemListComboBoxModel<MediaSource> mediaSourceListComboModel =
+        new ItemListComboBoxModel<>(mediaSourceList);
     GridBagLayout gridBagLayout = new GridBagLayout();
     setLayout(gridBagLayout);
     mediaSourceSelectionCombo.setModel(mediaSourceListComboModel);
@@ -81,7 +79,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     gbcMediaSourceSelectionCombo.gridy = 0;
     add(mediaSourceSelectionCombo, gbcMediaSourceSelectionCombo);
 
-    final JButton pathSelectionBtn = new JButton(new ChangePathSelectionAction(mainView));
+    final JButton pathSelectionBtn = new JButton(new ChangePathSelectionAction(acquisitionView));
     pathSelectionBtn.setFont(FontTools.getFont11());
     GridBagConstraints gbcPathSelectionBtn = new GridBagConstraints();
     gbcPathSelectionBtn.insets = new Insets(5, 5, 5, 5);

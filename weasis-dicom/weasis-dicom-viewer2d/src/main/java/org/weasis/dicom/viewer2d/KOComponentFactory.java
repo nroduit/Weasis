@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
 import java.awt.Toolkit;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
@@ -62,38 +61,32 @@ public final class KOComponentFactory {
   public static ViewButton buildKoSelectionButton(final View2d view2d) {
 
     return new ViewButton(
-        new ShowPopup() {
+        (invoker, x, y) -> {
+          final EventManager evtMgr = EventManager.getInstance();
+          ComboItemListener<?> koSelectionAction =
+              ((ComboItemListener<?>) evtMgr.getAction(ActionW.KO_SELECTION));
+          JPopupMenu popupMenu = new JPopupMenu();
 
-          @Override
-          public void showPopup(Component invoker, int x, int y) {
+          popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+          popupMenu.addSeparator();
 
-            final EventManager evtMgr = EventManager.getInstance();
-            ComboItemListener<?> koSelectionAction =
-                ((ComboItemListener<?>) evtMgr.getAction(ActionW.KO_SELECTION));
-            JPopupMenu popupMenu = new JPopupMenu();
-
-            popupMenu.add(
-                new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
-            popupMenu.addSeparator();
-
-            GroupPopup groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
-            if (groupRadioMenu instanceof GroupRadioMenu) {
-              for (RadioMenuItem item :
-                  ((GroupRadioMenu<?>) groupRadioMenu).getRadioMenuItemListCopy()) {
-                popupMenu.add(item);
-              }
+          GroupPopup groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+          if (groupRadioMenu instanceof GroupRadioMenu) {
+            for (RadioMenuItem item :
+                ((GroupRadioMenu<?>) groupRadioMenu).getRadioMenuItemListCopy()) {
+              popupMenu.add(item);
             }
-            popupMenu.addSeparator();
-
-            ToggleButtonListener koFilterAction =
-                (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
-            final JCheckBoxMenuItem menuItem =
-                koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
-
-            popupMenu.add(menuItem);
-            popupMenu.setEnabled(koSelectionAction.isActionEnabled());
-            popupMenu.show(invoker, x, y);
           }
+          popupMenu.addSeparator();
+
+          ToggleButtonListener koFilterAction =
+              (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
+          final JCheckBoxMenuItem menuItem =
+              koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
+
+          popupMenu.add(menuItem);
+          popupMenu.setEnabled(koSelectionAction.isActionEnabled());
+          popupMenu.show(invoker, x, y);
         },
         View2d.KO_ICON);
   }
@@ -103,26 +96,21 @@ public final class KOComponentFactory {
   public static KOViewButton buildKoStarButton(final View2d view2d) {
 
     return new KOViewButton(
-        new ShowPopup() {
-          @Override
-          public void showPopup(Component invoker, int x, int y) {
+        (invoker, x, y) -> {
+          EventManager evtMgr = EventManager.getInstance();
+          boolean currentSelectedState = view2d.koStarButton.state.equals(eState.SELECTED);
 
-            EventManager evtMgr = EventManager.getInstance();
-            boolean currentSelectedState =
-                view2d.koStarButton.state.equals(eState.SELECTED) ? true : false;
-
-            if (evtMgr.getSelectedViewPane() == view2d) {
-              ActionState koToggleAction =
-                  view2d.getEventManager().getAction(ActionW.KO_TOOGLE_STATE);
-              if (koToggleAction instanceof ToggleButtonListener) {
-                // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState)
-                // {
-                // // When action and view are not synchronized, adapt the state of the action.
-                // ((ToggleButtonListener) koToggleAction)
-                // .setSelectedWithoutTriggerAction(currentSelectedState);
-                // }
-                ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
-              }
+          if (evtMgr.getSelectedViewPane() == view2d) {
+            ActionState koToggleAction =
+                view2d.getEventManager().getAction(ActionW.KO_TOOGLE_STATE);
+            if (koToggleAction instanceof ToggleButtonListener) {
+              // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState)
+              // {
+              // // When action and view are not synchronized, adapt the state of the action.
+              // ((ToggleButtonListener) koToggleAction)
+              // .setSelectedWithoutTriggerAction(currentSelectedState);
+              // }
+              ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
             }
           }
         });

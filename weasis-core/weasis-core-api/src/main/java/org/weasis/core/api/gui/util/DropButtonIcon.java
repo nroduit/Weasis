@@ -18,7 +18,7 @@ import javax.swing.UIManager;
 
 public class DropButtonIcon implements Icon {
 
-  private Icon leftIcon;
+  private final Icon leftIcon;
 
   public DropButtonIcon(Icon leftIcon) {
     this.leftIcon = leftIcon;

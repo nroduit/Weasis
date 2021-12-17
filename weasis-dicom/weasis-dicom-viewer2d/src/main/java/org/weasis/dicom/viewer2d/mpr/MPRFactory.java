@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d.mpr;
 
 import java.awt.Component;
-import java.util.Iterator;
 import java.util.Map;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -75,9 +74,7 @@ public class MPRFactory implements SeriesViewerFactory {
       }
     }
     int index = 0;
-    Iterator<Component> enumVal = model.getConstraints().values().iterator();
-    while (enumVal.hasNext()) {
-      Component val = enumVal.next();
+    for (Component val : model.getConstraints().values()) {
       if (val instanceof MprView) {
         SliceOrientation sliceOrientation;
         switch (index) {
@@ -113,10 +110,7 @@ public class MPRFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    if (viewer instanceof MPRContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof MPRContainer;
   }
 
   @Override

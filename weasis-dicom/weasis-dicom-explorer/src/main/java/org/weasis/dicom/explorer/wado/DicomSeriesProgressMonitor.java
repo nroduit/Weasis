@@ -131,7 +131,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
     return (((((v4 << 8) | v3) << 8) | v2) << 8) | v1;
   }
 
-  static final boolean isShortValueLengthVR(byte[] vr) {
+  static boolean isShortValueLengthVR(byte[] vr) {
     return vr[0] == 'A' && (vr[1] == 'E' || vr[1] == 'S' || vr[1] == 'T')
         || vr[0] == 'C' && vr[1] == 'S'
         || vr[0] == 'D' && (vr[1] == 'A' || vr[1] == 'S' || vr[1] == 'T')

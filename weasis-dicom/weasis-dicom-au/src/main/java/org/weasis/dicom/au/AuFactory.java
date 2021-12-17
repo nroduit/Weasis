@@ -24,9 +24,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@org.osgi.service.component.annotations.Component(
-    service = SeriesViewerFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class AuFactory implements SeriesViewerFactory {
 
   public static final String NAME = "DICOM AU"; // NON-NLS
@@ -93,10 +91,7 @@ public class AuFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer viewer) {
-    if (viewer instanceof AuContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof AuContainer;
   }
 
   @Override

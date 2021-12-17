@@ -105,15 +105,11 @@ public class SplittingRules {
       int eventType;
       while (xmler.hasNext()) {
         eventType = xmler.next();
-        switch (eventType) {
-          case XMLStreamConstants.START_ELEMENT:
-            String key = xmler.getName().getLocalPart();
-            if ("modalities".equals(key)) { // NON-NLS
-              readModalities(xmler);
-            }
-            break;
-          default:
-            break;
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+          String key = xmler.getName().getLocalPart();
+          if ("modalities".equals(key)) { // NON-NLS
+            readModalities(xmler);
+          }
         }
       }
     } catch (Exception e) {
@@ -127,27 +123,23 @@ public class SplittingRules {
   private void readModalities(XMLStreamReader xmler) throws XMLStreamException {
     while (xmler.hasNext()) {
       int eventType = xmler.next();
-      switch (eventType) {
-        case XMLStreamConstants.START_ELEMENT:
-          String key = xmler.getName().getLocalPart();
-          if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
-            String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-            Modality m = getModdality(name);
-            if (m != null) {
-              try {
-                String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
-                SplittingModalityRules splitRules =
-                    new SplittingModalityRules(m, getSplittingModalityRules(extend));
-                readModality(splitRules, xmler);
-                rules.put(m, splitRules);
-              } catch (Exception e) {
-                LOGGER.error("Modality {} cannot be read from series-splitting-rules.xml", name, e);
-              }
+      if (eventType == XMLStreamConstants.START_ELEMENT) {
+        String key = xmler.getName().getLocalPart();
+        if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
+          String name = xmler.getAttributeValue(null, "name"); // NON-NLS
+          Modality m = getModdality(name);
+          if (m != null) {
+            try {
+              String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
+              SplittingModalityRules splitRules =
+                  new SplittingModalityRules(m, getSplittingModalityRules(extend));
+              readModality(splitRules, xmler);
+              rules.put(m, splitRules);
+            } catch (Exception e) {
+              LOGGER.error("Modality {} cannot be read from series-splitting-rules.xml", name, e);
             }
           }
-          break;
-        default:
-          break;
+        }
       }
     }
   }

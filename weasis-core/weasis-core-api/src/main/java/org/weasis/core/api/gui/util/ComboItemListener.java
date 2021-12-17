@@ -79,7 +79,7 @@ public abstract class ComboItemListener<T> extends BasicActionState
   public void unregisterActionState(Object c) {
     super.unregisterActionState(c);
     if (c instanceof ComboBoxModelAdapter) {
-      ((ComboBoxModelAdapter<T>) c).setModel(new DefaultComboBoxModel<T>());
+      ((ComboBoxModelAdapter<T>) c).setModel(new DefaultComboBoxModel<>());
     }
   }
 

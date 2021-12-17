@@ -11,7 +11,6 @@ package org.weasis.dicom.codec;
 
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
@@ -125,7 +124,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     Integer splitNb = (Integer) getTagValue(TagW.SplitSeriesNumber);
     Integer val = TagD.getTagValue(this, Tag.SeriesNumber, Integer.class);
     String result = val == null ? "" : val.toString();
-    return splitNb == null ? result : result + "-" + splitNb.toString();
+    return splitNb == null ? result : result + "-" + splitNb;
   }
 
   @Override
@@ -157,8 +156,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     int bestIndex = -1;
     synchronized (this) {
       double bestDiff = Double.MAX_VALUE;
-      for (Iterator<DicomImageElement> iter = mediaList.iterator(); iter.hasNext(); ) {
-        DicomImageElement dcm = iter.next();
+      for (DicomImageElement dcm : mediaList) {
         double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
         if (val != null) {
           double diff = Math.abs(location - (val[0] + val[1] + val[2]));
@@ -191,8 +189,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     int bestIndex = -1;
     synchronized (this) {
       double bestDiff = Double.MAX_VALUE;
-      for (Iterator<DicomImageElement> iter = mediaList.iterator(); iter.hasNext(); ) {
-        DicomImageElement dcm = iter.next();
+      for (DicomImageElement dcm : mediaList) {
         double[] val = (double[]) dcm.getTagValue(TagW.SlicePosition);
         if (val != null) {
           double diff = Math.abs(location - (val[0] + val[1] + val[2]));
@@ -270,7 +267,7 @@ public class DicomSeries extends Series<DicomImageElement> {
       Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
       Integer columns = TagD.getTagValue(image, Tag.Columns, Integer.class);
       if (allocated != null && sample != null && rows != null && columns != null) {
-        return (rows * columns * sample * allocated) / 8L;
+        return ((long) rows * columns * sample * allocated) / 8L;
       }
       return 0L;
     }

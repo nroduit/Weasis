@@ -11,7 +11,7 @@ package org.weasis.core.ui.model.imp;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
@@ -50,7 +50,8 @@ public class XmlGraphicModel extends AbstractGraphicModel {
       frameList.add((Integer) img.getKey());
     }
 
-    return Arrays.asList(
-        new ReferencedSeries(seriesUUID, Arrays.asList(new ReferencedImage(uid, frameList))));
+    return Collections.singletonList(
+        new ReferencedSeries(
+            seriesUUID, Collections.singletonList(new ReferencedImage(uid, frameList))));
   }
 }

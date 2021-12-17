@@ -23,12 +23,10 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
   private final JPanel buttonsPanel = new AnnotationIconsPanel();
   private final JPanel optionsPanel = new AnnotationOptionsPanel();
 
-  private JPanel content;
-
   public AnnotatePanel() {
     setLayout(new BorderLayout());
 
-    content = createContent();
+    JPanel content = createContent();
     add(content, BorderLayout.NORTH);
   }
 

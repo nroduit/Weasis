@@ -84,7 +84,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private MediaElement currentMedia;
   private MediaSeries<?> currentSeries;
   private boolean anonymize = false;
-  private SeriesViewer<?> viewer;
+  private final SeriesViewer<?> viewer;
 
   private static final Highlighter.HighlightPainter searchHighlightPainter =
       new SearchHighlightPainter(new Color(255, 125, 0));

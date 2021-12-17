@@ -45,7 +45,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
   private final JPanel jPanelClose = new JPanel();
   private final JButton jButtonclose = new JButton();
   private final BorderLayout borderLayout1 = new BorderLayout();
-  private JTable sysTable;
+  private final JTable sysTable;
   private final JScrollPane jScrollPane1 = new JScrollPane();
   private final JTabbedPane jTabbedPane1 = new JTabbedPane();
   private final JPanel jPanelAbout = new JPanel();

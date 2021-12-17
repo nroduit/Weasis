@@ -260,7 +260,7 @@ public class DownloadManager {
   }
 
   @FunctionalInterface
-  private static interface LoadSeriesHandler {
+  private interface LoadSeriesHandler {
     void handle(LoadSeries loadSeries);
   }
 

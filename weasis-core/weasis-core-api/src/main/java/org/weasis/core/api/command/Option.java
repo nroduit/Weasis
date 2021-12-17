@@ -35,7 +35,7 @@ public interface Option {
    * @param skipArg0
    * @return
    */
-  Option parse(List<? extends Object> argv, boolean skipArg0);
+  Option parse(List<?> argv, boolean skipArg0);
 
   /**
    * parse arguments.
@@ -43,7 +43,7 @@ public interface Option {
    * @see {@link #parse(List, boolean)
    *
    */
-  Option parse(List<? extends Object> argv);
+  Option parse(List<?> argv);
 
   /**
    * parse arguments.

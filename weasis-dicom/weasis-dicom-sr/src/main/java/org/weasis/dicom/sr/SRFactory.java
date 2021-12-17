@@ -25,9 +25,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 
-@org.osgi.service.component.annotations.Component(
-    service = SeriesViewerFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = SeriesViewerFactory.class)
 public class SRFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("SRFactory.viewer");
@@ -94,10 +92,7 @@ public class SRFactory implements SeriesViewerFactory {
 
   @Override
   public boolean isViewerCreatedByThisFactory(SeriesViewer<? extends MediaElement> viewer) {
-    if (viewer instanceof SRContainer) {
-      return true;
-    }
-    return false;
+    return viewer instanceof SRContainer;
   }
 
   @Override

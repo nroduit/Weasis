@@ -22,7 +22,8 @@ import org.weasis.core.util.StringUtil;
 public class ResourceUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceUtil.class);
 
-  private static AtomicReference<String> path = new AtomicReference<>(StringUtil.EMPTY_STRING);
+  private static final AtomicReference<String> path =
+      new AtomicReference<>(StringUtil.EMPTY_STRING);
 
   private ResourceUtil() {}
 

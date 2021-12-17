@@ -75,7 +75,7 @@ public class RtSet {
   private int structureFillTransparency = 115;
   private int isoFillTransparency = 70;
   boolean forceRecalculateDvh = false;
-  private Random rand = new SecureRandom();
+  private final Random rand = new SecureRandom();
 
   public RtSet(String frameOfReferenceUID, List<MediaElement> rtElements) {
     this.frameOfReferenceUID = Objects.requireNonNull(frameOfReferenceUID);
@@ -769,14 +769,14 @@ public class RtSet {
                 isoDoseLayer.getIsoDose().setPlanes(new HashMap<>());
               }
 
-              for (int j = 0; j < isoContours.size(); j++) {
+              for (MatOfPoint matOfPoint : isoContours) {
 
                 // Create a new IsoDose contour plane for Z or select existing one
                 // it will hold list of contours for that plane
                 isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(z, k -> new ArrayList<>());
 
                 // For each iso contour create a new contour
-                MatOfPoint contour = isoContours.get(j);
+                MatOfPoint contour = matOfPoint;
                 Contour isoContour = new Contour(isoDoseLayer);
 
                 // Populate point coordinates
@@ -918,8 +918,7 @@ public class RtSet {
    */
   private static double calculatePlaneThickness(Map<KeyDouble, List<Contour>> planesMap) {
     // Sort the list of z coordinates
-    List<KeyDouble> planes = new ArrayList<>();
-    planes.addAll(planesMap.keySet());
+    List<KeyDouble> planes = new ArrayList<>(planesMap.keySet());
     Collections.sort(planes);
 
     // Set maximum thickness as initial value

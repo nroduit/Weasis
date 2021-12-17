@@ -18,8 +18,8 @@ public class LayoutConstraints extends GridBagConstraints
     implements Comparable<LayoutConstraints>, Copyable<LayoutConstraints> {
 
   public static final int SPACE = 3;
-  private String type;
-  private int layoutID;
+  private final String type;
+  private final int layoutID;
   private Color color;
 
   public LayoutConstraints(
@@ -76,7 +76,7 @@ public class LayoutConstraints extends GridBagConstraints
 
   @Override
   public int compareTo(LayoutConstraints o) {
-    return layoutID < o.layoutID ? -1 : (layoutID == o.layoutID ? 0 : 1);
+    return Integer.compare(layoutID, o.layoutID);
   }
 
   @Override

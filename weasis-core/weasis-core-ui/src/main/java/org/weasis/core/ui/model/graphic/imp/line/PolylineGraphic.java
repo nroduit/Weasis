@@ -134,9 +134,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
     if (lastPointIndex > 0) {
       Point2D checkPoint = pts.get(lastPointIndex);
-      if (Objects.equals(checkPoint, pts.get(--lastPointIndex))) {
-        return false;
-      }
+      return !Objects.equals(checkPoint, pts.get(--lastPointIndex));
     }
     return true;
   }

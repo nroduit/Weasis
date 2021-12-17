@@ -25,9 +25,7 @@ import org.weasis.core.api.explorer.DataExplorerViewFactory;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.util.FileUtil;
 
-@org.osgi.service.component.annotations.Component(
-    service = DataExplorerViewFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = DataExplorerViewFactory.class)
 public class MediaImporterFactory implements DataExplorerViewFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(MediaImporterFactory.class);
 
@@ -85,8 +83,7 @@ public class MediaImporterFactory implements DataExplorerViewFactory {
         Dictionary<String, Object> dict = new Hashtable<>();
         dict.put(CommandProcessor.COMMAND_SCOPE, "acquire"); // NON-NLS
         dict.put(
-            CommandProcessor.COMMAND_FUNCTION,
-            AcquireManager.functions.toArray(new String[AcquireManager.functions.size()]));
+            CommandProcessor.COMMAND_FUNCTION, AcquireManager.functions.toArray(new String[0]));
         context
             .getBundleContext()
             .registerService(serviceClassName, AcquireManager.getInstance(), dict);

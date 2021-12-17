@@ -223,10 +223,8 @@ public class DicomImageElement extends ImageElement {
   public boolean isPhotometricInterpretationMonochrome() {
     String photometricInterpretation = getPhotometricInterpretation();
 
-    return photometricInterpretation != null
-        && //
-        ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
-            || "MONOCHROME2".equalsIgnoreCase(photometricInterpretation));
+    return ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
+        || "MONOCHROME2".equalsIgnoreCase(photometricInterpretation));
   }
 
   /**

@@ -34,14 +34,10 @@ import org.weasis.core.util.StringUtil;
 public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
   private javax.swing.JCheckBox annotationsCheckBox;
-  private javax.swing.JButton cancelButton;
   private javax.swing.JComboBox<String> positionComboBox;
-  private javax.swing.JLabel positionLabel;
-  private javax.swing.JButton printButton;
-  private JLabel label;
   private JCheckBox chckbxSelectedView;
   private JComboBox<PrintOptions.DotPerInches> comboBoxDPI;
-  private ImageViewerEventManager<I> eventManager;
+  private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form PrintDialog */
   public PrintDialog(Window parent, String title, ImageViewerEventManager<I> eventManager) {
@@ -57,7 +53,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
     GridBagLayout gridBagLayout = new GridBagLayout();
     getContentPane().setLayout(gridBagLayout);
-    positionLabel = new javax.swing.JLabel();
+    JLabel positionLabel = new JLabel();
 
     positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON);
     GridBagConstraints gbcPositionLabel = new GridBagConstraints();
@@ -80,7 +76,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     gbcPositionComboBox.gridy = 0;
     getContentPane().add(positionComboBox, gbcPositionComboBox);
 
-    label = new JLabel();
+    JLabel label = new JLabel();
     label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON);
     GridBagConstraints gbcLabel = new GridBagConstraints();
     gbcLabel.anchor = GridBagConstraints.EAST;
@@ -110,12 +106,12 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     gbcAnnotationsCheckBox.gridy = 2;
     getContentPane().add(annotationsCheckBox, gbcAnnotationsCheckBox);
 
-    cancelButton = new javax.swing.JButton();
+    javax.swing.JButton cancelButton = new javax.swing.JButton();
 
     cancelButton.setText(Messages.getString("PrintDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
 
-    printButton = new javax.swing.JButton();
+    javax.swing.JButton printButton = new javax.swing.JButton();
 
     printButton.setText(Messages.getString("PrintDialog.print"));
     printButton.addActionListener(e -> printAction());
@@ -152,11 +148,8 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     PrintOptions printOptions = new PrintOptions();
     printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
     printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
-    if (positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center"))) {
-      printOptions.setCenter(true);
-    } else {
-      printOptions.setCenter(false);
-    }
+    printOptions.setCenter(
+        positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center")));
 
     ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
 

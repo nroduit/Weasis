@@ -388,19 +388,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
         int dx = p.x - pickPoint.x;
         int dy = p.y - pickPoint.y;
 
-        switch (cursor) {
-          case Cursor.SE_RESIZE_CURSOR:
-            int nw = pickWidth + dx;
-            int nh = pickHeight + dy;
-            nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
-            nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
-            setSize(nw, nh);
-            updateAffineTransform();
-            break;
-
-          default:
-            setLocation(getX() + dx, getY() + dy);
-            updateAffineTransform();
+        if (cursor == Cursor.SE_RESIZE_CURSOR) {
+          int nw = pickWidth + dx;
+          int nh = pickHeight + dy;
+          nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
+          nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
+          setSize(nw, nh);
+          updateAffineTransform();
+        } else {
+          setLocation(getX() + dx, getY() + dy);
+          updateAffineTransform();
         }
         setCursor(Cursor.getPredefinedCursor(cursor));
       }

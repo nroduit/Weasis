@@ -29,10 +29,8 @@ import java.net.URI;
 import java.text.NumberFormat;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -83,9 +81,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   protected final JIThumbnailCache thumbCache;
 
-  private final int editingIndex = -1;
-  private final DefaultListSelectionModel selectionModel;
-
   private boolean changed;
   private Point dragPressed = null;
   private DragSource dragSource = null;
@@ -100,10 +95,10 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     this.setModel(newModel());
     this.changed = false;
 
-    this.selectionModel = new DefaultListSelectionModel();
+    DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
     this.setBackground(new Color(242, 242, 242));
 
-    setSelectionModel(this.selectionModel);
+    setSelectionModel(selectionModel);
     // setTransferHandler(new ListTransferHandler());
     ThumbnailRenderer<E> panel = new ThumbnailRenderer<>();
     Dimension dim = panel.getPreferredSize();
@@ -192,13 +187,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public Frame getFrame() {
     return null;
-  }
-
-  public boolean isEditing() {
-    if (this.editingIndex > -1) {
-      return true;
-    }
-    return false;
   }
 
   // Subclass JList to workaround bug 4832765, which can cause the
@@ -309,7 +297,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public void openSelection() {
     E object = getSelectedValue();
-    openSelection(Arrays.asList(object), true, true, false);
+    openSelection(Collections.singletonList(object), true, true, false);
   }
 
   public void openSelection(
@@ -358,7 +346,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
       if (!list.isEmpty()) {
-        Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+        Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
         props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
         props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
         props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
@@ -410,11 +398,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         if (mime != null) {
           SeriesViewerFactory plugin = UIManager.getViewerFactory(mime);
           if (plugin != null) {
-            List<MediaSeries<MediaElement>> list = plugins.get(plugin);
-            if (list == null) {
-              list = new ArrayList<>(modeLayout ? 10 : 1);
-              plugins.put(plugin, list);
-            }
+            List<MediaSeries<MediaElement>> list =
+                plugins.computeIfAbsent(plugin, k -> new ArrayList<>(modeLayout ? 10 : 1));
 
             // Get only application readers from files
             MediaReader mreader = m.getMediaReader();
@@ -454,7 +439,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         }
       }
 
-      Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+      Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
       props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, compareEntryToBuildNewViewer);
       props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, bestDefaultLayout);
       props.put(ViewerPluginBuilder.SCREEN_BOUND, null);
@@ -462,10 +447,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
         props.put(ViewerPluginBuilder.ADD_IN_SELECTED_VIEW, true);
       }
 
-      for (Iterator<Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>>> iterator =
-              plugins.entrySet().iterator();
-          iterator.hasNext(); ) {
-        Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>> item = iterator.next();
+      for (Entry<SeriesViewerFactory, List<MediaSeries<MediaElement>>> item : plugins.entrySet()) {
         ViewerPluginBuilder builder =
             new ViewerPluginBuilder(
                 item.getKey(), item.getValue(), ViewerPluginBuilder.DefaultDataModel, props);
@@ -478,7 +460,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     if (mediaElement != null) {
       String mime = mediaElement.getMimeType();
       if (mime != null) {
-        return mime.indexOf("dicom") != -1; // NON-NLS
+        return mime.contains("dicom"); // NON-NLS
       }
     }
     return false;
@@ -714,7 +696,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       if (index >= 0) {
         E selectedMedia = getModel().getElementAt(index);
         if (selectedMedia != null && !selected.contains(selectedMedia)) {
-          selected = Arrays.asList(selectedMedia);
+          selected = Collections.singletonList(selectedMedia);
           setSelectedValue(selectedMedia, false);
         }
       }

@@ -96,7 +96,7 @@ public class GzipManager {
   public static byte[] gzipUncompressToByte(byte[] bytes) throws IOException {
     if (isGzip(bytes)) {
       try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes); ) {
+          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
         gzipUncompress(inputStream, outputStream);
         return outputStream.toByteArray();
       }
@@ -118,7 +118,7 @@ public class GzipManager {
   public static byte[] gzipCompressToByte(byte[] bytes, int requiredByteNumber) throws IOException {
     if (bytes.length >= requiredByteNumber) {
       try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes); ) {
+          ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
         gzipCompress(inputStream, outputStream);
         return outputStream.toByteArray();
       }
@@ -131,9 +131,7 @@ public class GzipManager {
     // GZIP Magic Two-Byte Number: 0x8b1f (35615)
     if (bytes != null && bytes.length >= 4) {
       int head = (bytes[0] & 0xff) | ((bytes[1] << 8) & 0xff00);
-      if (GZIPInputStream.GZIP_MAGIC == head) {
-        return true;
-      }
+      return GZIPInputStream.GZIP_MAGIC == head;
     }
     return false;
   }

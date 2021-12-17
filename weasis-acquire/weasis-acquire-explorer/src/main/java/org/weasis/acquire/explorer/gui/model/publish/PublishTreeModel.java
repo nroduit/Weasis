@@ -38,7 +38,7 @@ public class PublishTreeModel {
     this.model = buildModel();
     this.rootNode = (DefaultMutableTreeNode) model.getRoot();
     this.checkingModel = new DefaultTreeCheckingModel(model);
-    this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<TreePath>());
+    this.defaultSelectedPaths = Collections.synchronizedList(new ArrayList<>());
   }
 
   private DefaultTreeModel buildModel() {

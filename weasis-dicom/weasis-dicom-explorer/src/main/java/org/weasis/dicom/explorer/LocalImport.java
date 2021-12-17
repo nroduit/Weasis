@@ -34,9 +34,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   private static final String lastDirKey = "lastOpenDir";
 
   private JCheckBox chckbxSearch;
-  private JLabel lblImportAFolder;
   private JTextField textField;
-  private JButton button;
   private File[] files;
 
   public LocalImport() {
@@ -58,7 +56,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
             null,
             null));
 
-    lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
+    JLabel lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
     GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
     gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
     gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
@@ -77,7 +75,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, ""));
     add(textField, gbc_textField);
 
-    button = new JButton(" ... ");
+    JButton button = new JButton(" ... ");
     button.addActionListener(e -> browseImgFile());
     GridBagConstraints gbc_button = new GridBagConstraints();
     gbc_button.anchor = GridBagConstraints.WEST;

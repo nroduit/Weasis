@@ -193,7 +193,7 @@ public class DicomMediaUtils {
     }
     StringBuilder sb = new StringBuilder(s[0]);
     for (int i = 1; i < s.length; i++) {
-      sb.append("\\" + s[i]);
+      sb.append("\\").append(s[i]);
     }
     return sb.toString();
   }
@@ -832,8 +832,7 @@ public class DicomMediaUtils {
 
   /**
    * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping its patient and
-   * study information. For instance, it can be can an IMAGE or a previous build dicomKOS
-   * Document.
+   * study information. For instance, it can be can an IMAGE or a previous build dicomKOS Document.
    *
    * @param dicomSourceAttribute : Must be valid
    * @param keyObjectDescription : Optional, can be null
@@ -866,11 +865,8 @@ public class DicomMediaUtils {
     Map<String, Set<KeyObjectSelectionCode>> resourcesByContextID = new HashMap<>();
 
     for (KeyObjectSelectionCode code : codeByValue.values()) {
-      Set<KeyObjectSelectionCode> resourceSet = resourcesByContextID.get(code.contextGroupID);
-      if (resourceSet == null) {
-        resourceSet = new TreeSet<>();
-        resourcesByContextID.put(code.contextGroupID, resourceSet);
-      }
+      Set<KeyObjectSelectionCode> resourceSet =
+          resourcesByContextID.computeIfAbsent(code.contextGroupID, k -> new TreeSet<>());
       resourceSet.add(code);
     }
 
@@ -926,9 +922,9 @@ public class DicomMediaUtils {
     Arrays.sort(patientStudyAttributes);
 
     /**
-     * @note  Add selected attributes from another Attributes object to this. The specified array
-     *     of tag values must be sorted (as by the {@link java.util.Arrays#sort(int[])} method)
-     *     prior to making this call.
+     * @note Add selected attributes from another Attributes object to this. The specified array of
+     *     tag values must be sorted (as by the {@link java.util.Arrays#sort(int[])} method) prior
+     *     to making this call.
      */
     Attributes dKOS = new Attributes(dicomSourceAttribute, patientStudyAttributes);
 
@@ -1014,23 +1010,15 @@ public class DicomMediaUtils {
       xmler = factory.createXMLStreamReader(stream);
 
       while (xmler.hasNext()) {
-        switch (xmler.next()) {
-          case XMLStreamConstants.START_ELEMENT:
-            String key = xmler.getName().getLocalPart();
-            if ("resources".equals(key)) { // NON-NLS
-              while (xmler.hasNext()) {
-                switch (xmler.next()) {
-                  case XMLStreamConstants.START_ELEMENT:
-                    readCodeResource(xmler, codeByValue);
-                    break;
-                  default:
-                    break;
-                }
+        if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
+          String key = xmler.getName().getLocalPart();
+          if ("resources".equals(key)) { // NON-NLS
+            while (xmler.hasNext()) {
+              if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
+                readCodeResource(xmler, codeByValue);
               }
             }
-            break;
-          default:
-            break;
+          }
         }
       }
     } catch (XMLStreamException e) {
@@ -1053,32 +1041,28 @@ public class DicomMediaUtils {
 
       while (xmler.hasNext()) {
         int eventType = xmler.next();
-        switch (eventType) {
-          case XMLStreamConstants.START_ELEMENT:
-            key = xmler.getName().getLocalPart();
-            if ("code".equals(key)) { // NON-NLS
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+          key = xmler.getName().getLocalPart();
+          if ("code".equals(key)) { // NON-NLS
 
-              String codingSchemeDesignator = xmler.getAttributeValue(null, "scheme"); // NON-NLS
-              String codeValue = xmler.getAttributeValue(null, "value"); // NON-NLS
-              String codeMeaning = xmler.getAttributeValue(null, "meaning"); // NON-NLS
+            String codingSchemeDesignator = xmler.getAttributeValue(null, "scheme"); // NON-NLS
+            String codeValue = xmler.getAttributeValue(null, "value"); // NON-NLS
+            String codeMeaning = xmler.getAttributeValue(null, "meaning"); // NON-NLS
 
-              String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod");
-              String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId");
+            String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod");
+            String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId");
 
-              codeByValue.put(
-                  codeValue,
-                  new DicomMediaUtils.KeyObjectSelectionCode(
-                      resourceName,
-                      contextGroupID,
-                      codingSchemeDesignator,
-                      codeValue,
-                      codeMeaning,
-                      conceptNameCodeModifier,
-                      contexGroupIdModifier));
-            }
-            break;
-          default:
-            break;
+            codeByValue.put(
+                codeValue,
+                new KeyObjectSelectionCode(
+                    resourceName,
+                    contextGroupID,
+                    codingSchemeDesignator,
+                    codeValue,
+                    codeMeaning,
+                    conceptNameCodeModifier,
+                    contexGroupIdModifier));
+          }
         }
       }
     }

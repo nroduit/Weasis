@@ -24,6 +24,7 @@ import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.ArrayList;
@@ -303,7 +304,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
             ClosableURLConnection http = NetworkUtil.getUrlConnection(url, urlParams);
             try (OutputStream out = http.getOutputStream()) {
-              OutputStreamWriter writer = new OutputStreamWriter(out, "UTF-8"); // NON-NLS
+              OutputStreamWriter writer =
+                  new OutputStreamWriter(out, StandardCharsets.UTF_8); // NON-NLS
               writer.write(new ObjectMapper().writeValueAsString(model));
             }
             if (http.getUrlConnection() instanceof HttpURLConnection) {
@@ -617,7 +619,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         thumURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
         if (thumURL != null) {
           thumURL +=
-              "/thumbnail?viewport=" + Thumbnail.MAX_SIZE + "%2C" + +Thumbnail.MAX_SIZE; // NON-NLS
+              "/thumbnail?viewport=" + Thumbnail.MAX_SIZE + "%2C" + Thumbnail.MAX_SIZE; // NON-NLS
           HashMap<String, String> headers = new HashMap<>(urlParams.getUnmodifiableHeaders());
           headers.put("Accept", "image/jpeg"); // NON-NLS
           params = new URLParameters(headers);
@@ -674,24 +676,24 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     MouseMotionListener[] motionListeners = tumbnail.getMouseMotionListeners();
     KeyListener[] keyListeners = tumbnail.getKeyListeners();
     MouseWheelListener[] wheelListeners = tumbnail.getMouseWheelListeners();
-    for (int i = 0; i < listener.length; i++) {
-      if (listener[i] instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseListener(listener[i]);
+    for (MouseListener mouseListener : listener) {
+      if (mouseListener instanceof ThumbnailMouseAndKeyAdapter) {
+        tumbnail.removeMouseListener(mouseListener);
       }
     }
-    for (int i = 0; i < motionListeners.length; i++) {
-      if (motionListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseMotionListener(motionListeners[i]);
+    for (MouseMotionListener motionListener : motionListeners) {
+      if (motionListener instanceof ThumbnailMouseAndKeyAdapter) {
+        tumbnail.removeMouseMotionListener(motionListener);
       }
     }
-    for (int i = 0; i < wheelListeners.length; i++) {
-      if (wheelListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseWheelListener(wheelListeners[i]);
+    for (MouseWheelListener wheelListener : wheelListeners) {
+      if (wheelListener instanceof ThumbnailMouseAndKeyAdapter) {
+        tumbnail.removeMouseWheelListener(wheelListener);
       }
     }
-    for (int i = 0; i < keyListeners.length; i++) {
-      if (keyListeners[i] instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeKeyListener(keyListeners[i]);
+    for (KeyListener keyListener : keyListeners) {
+      if (keyListener instanceof ThumbnailMouseAndKeyAdapter) {
+        tumbnail.removeKeyListener(keyListener);
       }
     }
   }

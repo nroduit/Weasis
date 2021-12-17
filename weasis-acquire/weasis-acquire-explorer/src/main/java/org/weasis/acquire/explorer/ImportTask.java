@@ -34,9 +34,9 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ImportTask.class);
 
-  private SeriesGroup searchedSeries;
+  private final SeriesGroup searchedSeries;
   private final Collection<ImageElement> imagesToImport;
-  private int maxRangeInMinutes;
+  private final int maxRangeInMinutes;
 
   public ImportTask(
       Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {

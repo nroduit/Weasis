@@ -17,7 +17,6 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -66,15 +65,14 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
-  public static final List<SynchView> SYNCH_LIST =
-      Collections.synchronizedList(new ArrayList<SynchView>());
+  public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
 
   static {
     SYNCH_LIST.add(SynchView.NONE);
   }
 
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<GridBagLayoutModel>());
+      Collections.synchronizedList(new ArrayList<>());
 
   public static final GridBagLayoutModel VIEWS_1x1 =
       new GridBagLayoutModel(
@@ -93,10 +91,8 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
   // Do not initialize tools in a static block (order initialization issue with eventManager), use
   // instead a lazy
   // initialization with a method.
-  public static final List<Toolbar> TOOLBARS =
-      Collections.synchronizedList(new ArrayList<Toolbar>(1));
-  public static final List<DockableTool> TOOLS =
-      Collections.synchronizedList(new ArrayList<DockableTool>(1));
+  public static final List<Toolbar> TOOLBARS = Collections.synchronizedList(new ArrayList<>(1));
+  public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>(1));
   private static volatile boolean initComponents = false;
   static final ImageViewerEventManager<DicomImageElement> SR_EVENT_MANAGER =
       new ImageViewerEventManager<DicomImageElement>() {
@@ -338,7 +334,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public List<Action> getPrintActions() {
     final String title = Messages.getString("SRContainer.print_layout");
-    return Arrays.asList(
+    return Collections.singletonList(
         new DefaultAction(
             title,
             new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
@@ -369,7 +365,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
           pj.print();
         } catch (PrinterException e) {
           // check for the annoying 'Printer is not accepting job' error.
-          if (e.getMessage().indexOf("accepting job") != -1) { // NON-NLS
+          if (e.getMessage().contains("accepting job")) { // NON-NLS
             // recommend prompting the user at this point if they want to force it,
             // so they'll know there may be a problem.
             int response =

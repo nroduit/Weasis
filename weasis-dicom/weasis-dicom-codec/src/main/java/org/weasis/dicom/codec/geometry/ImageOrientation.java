@@ -79,7 +79,7 @@ public abstract class ImageOrientation {
    * @param z
    * @return the string describing the orientation of the vector, or null if oblique
    */
-  public static final String getMajorAxisFromPatientRelativeDirectionCosine(
+  public static String getMajorAxisFromPatientRelativeDirectionCosine(
       double x, double y, double z) {
     String axis = null;
 
@@ -121,7 +121,7 @@ public abstract class ImageOrientation {
    * @param colZ
    * @return the string describing the plane of orientation, AXIAL, CORONAL, SAGITTAL or OBLIQUE
    */
-  public static final Label makeImageOrientationLabelFromImageOrientationPatient(
+  public static Label makeImageOrientationLabelFromImageOrientationPatient(
       double rowX, double rowY, double rowZ, double colX, double colY, double colZ) {
     String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(rowX, rowY, rowZ);
     String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(colX, colY, colZ);
@@ -149,7 +149,7 @@ public abstract class ImageOrientation {
     return Label.OBLIQUE;
   }
 
-  public static final Label makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
+  public static Label makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
     if (v == null || v.length < 6) {
       return null;
     }
@@ -173,7 +173,7 @@ public abstract class ImageOrientation {
    * @param z
    * @return the string describing the orientation of the vector
    */
-  public static final String makePatientOrientationFromPatientRelativeDirectionCosine(
+  public static String makePatientOrientationFromPatientRelativeDirectionCosine(
       double x, double y, double z) {
     StringBuilder buffer = new StringBuilder();
 
@@ -224,14 +224,14 @@ public abstract class ImageOrientation {
    * @param colZ
    * @return the string describing the row and then the column
    */
-  public static final String makePatientOrientationFromImageOrientationPatient(
+  public static String makePatientOrientationFromImageOrientationPatient(
       double rowX, double rowY, double rowZ, double colX, double colY, double colZ) {
     return makePatientOrientationFromPatientRelativeDirectionCosine(rowX, rowY, rowZ)
         + "\\"
         + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
   }
 
-  public static final char getImageOrientationOposite(char c) {
+  public static char getImageOrientationOposite(char c) {
     switch (c) {
       case 'L':
         return 'R';
@@ -294,9 +294,7 @@ public abstract class ImageOrientation {
           double prod =
               postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
           // A little tolerance
-          if (prod > 0.95) {
-            return true;
-          }
+          return prod > 0.95;
         }
       }
     }

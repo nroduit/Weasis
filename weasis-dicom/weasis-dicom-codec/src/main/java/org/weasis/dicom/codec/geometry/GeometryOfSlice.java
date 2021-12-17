@@ -273,7 +273,7 @@ public class GeometryOfSlice {
    * @return a string rendering of the orientation, more than one letter if oblique to the
    *     orthogonal axes, or empty string (not null) if fails
    */
-  public static final String getOrientation(double[] orientation, boolean quadruped) {
+  public static String getOrientation(double[] orientation, boolean quadruped) {
     StringBuilder strbuf = new StringBuilder();
     if (orientation != null && orientation.length == 3) {
       String orientationX =
@@ -311,7 +311,7 @@ public class GeometryOfSlice {
    * @return a string rendering of the orientation, more than one letter if oblique to the
    *     orthogonal axes, or empty string (not null) if fails
    */
-  public static final String getOrientation(double[] orientation) {
+  public static String getOrientation(double[] orientation) {
     return getOrientation(orientation, false);
   }
 

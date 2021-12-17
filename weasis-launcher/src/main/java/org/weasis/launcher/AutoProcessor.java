@@ -15,7 +15,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -123,8 +122,8 @@ public class AutoProcessor {
       // Get list of already installed bundles as a map.
       Map<String, Bundle> installedBundleMap = new HashMap<>();
       Bundle[] bundles = context.getBundles();
-      for (int i = 0; i < bundles.length; i++) {
-        installedBundleMap.put(bundles[i].getLocation(), bundles[i]);
+      for (Bundle bundle : bundles) {
+        installedBundleMap.put(bundle.getLocation(), bundle);
       }
 
       // Get the auto deploy directory.
@@ -136,9 +135,9 @@ public class AutoProcessor {
       List<File> jarList = new ArrayList<>();
       if (files != null) {
         Arrays.sort(files);
-        for (int i = 0; i < files.length; i++) {
-          if (files[i].getName().endsWith(".jar")) {
-            jarList.add(files[i]);
+        for (File file : files) {
+          if (file.getName().endsWith(".jar")) {
+            jarList.add(file);
           }
         }
       }
@@ -197,9 +196,7 @@ public class AutoProcessor {
       // Uninstall all bundles not in the auto-deploy directory if
       // the 'uninstall' action is present.
       if (actionList.contains(AUTO_DEPLOY_UNINSTALL_VALUE)) {
-        for (Iterator<Entry<String, Bundle>> it = installedBundleMap.entrySet().iterator();
-            it.hasNext(); ) {
-          Entry<String, Bundle> entry = it.next();
+        for (Entry<String, Bundle> entry : installedBundleMap.entrySet()) {
           Bundle b = entry.getValue();
           if (b.getBundleId() != 0) {
             try {
@@ -219,8 +216,7 @@ public class AutoProcessor {
       // Start all installed and/or updated bundles if the 'start'
       // action is present.
       if (actionList.contains(AUTO_DEPLOY_START_VALUE)) {
-        for (int i = 0; i < startBundleList.size(); i++) {
-          Bundle b = startBundleList.get(i);
+        for (Bundle b : startBundleList) {
           try {
             b.start();
           } catch (BundleException ex) {
@@ -264,8 +260,8 @@ public class AutoProcessor {
     Map<String, BundleElement> bundleList = new HashMap<>();
 
     Set set = configMap.keySet();
-    for (Iterator item = set.iterator(); item.hasNext(); ) {
-      String key = ((String) item.next()).toLowerCase();
+    for (Object o : set) {
+      String key = ((String) o).toLowerCase();
 
       // Ignore all keys that are not an auto property.
       if (!key.startsWith(AUTO_INSTALL_PROP) && !key.startsWith(AUTO_START_PROP)) {
@@ -294,8 +290,8 @@ public class AutoProcessor {
 
     final Map<String, Bundle> installedBundleMap = new HashMap<>();
     Bundle[] bundles = context.getBundles();
-    for (int i = 0; i < bundles.length; i++) {
-      String bundleName = getBundleNameFromLocation(bundles[i].getLocation());
+    for (Bundle value : bundles) {
+      String bundleName = getBundleNameFromLocation(value.getLocation());
       if (bundleName == null) {
         // Should never happen
         continue;
@@ -305,18 +301,18 @@ public class AutoProcessor {
         // Remove the bundles in cache when they are not in the config.properties list
         if (b == null) {
           if (!"System Bundle".equals(bundleName)) { // NON-NLS
-            bundles[i].uninstall();
+            value.uninstall();
             LOGGER.log(Level.INFO, "Uninstall unused bundle: {0}", bundleName);
           }
           continue;
         }
         // Remove snapshot version to install it every time
-        if (bundles[i].getVersion().getQualifier().endsWith("SNAPSHOT")) {
-          bundles[i].uninstall();
+        if (value.getVersion().getQualifier().endsWith("SNAPSHOT")) {
+          value.uninstall();
           LOGGER.log(Level.INFO, "Uninstall SNAPSHOT bundle: {0}", bundleName);
           continue;
         }
-        installedBundleMap.put(bundleName, bundles[i]);
+        installedBundleMap.put(bundleName, value);
 
       } catch (Exception e) {
         LOGGER.log(
@@ -335,9 +331,7 @@ public class AutoProcessor {
     int bundleIter = 0;
 
     // Parse and install the bundles associated with the key.
-    for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator();
-        iter.hasNext(); ) {
-      Entry<String, BundleElement> element = iter.next();
+    for (Entry<String, BundleElement> element : bundleList.entrySet()) {
       String bundleName = element.getKey();
       BundleElement bundle = element.getValue();
       if (bundle == null) {
@@ -381,9 +375,7 @@ public class AutoProcessor {
 
     weasisLoader.writeLabel(Messages.getString("AutoProcessor.start"));
     // Now loop through the auto-start bundles and start them.
-    for (Iterator<Entry<String, BundleElement>> iter = bundleList.entrySet().iterator();
-        iter.hasNext(); ) {
-      Entry<String, BundleElement> element = iter.next();
+    for (Entry<String, BundleElement> element : bundleList.entrySet()) {
       String bundleName = element.getKey();
       BundleElement bundle = element.getValue();
       if (bundle == null) {

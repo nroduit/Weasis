@@ -43,7 +43,7 @@ public class AdvancedShape implements Shape {
   public final List<BasicShape> shapeList;
 
   protected AffineTransform transform;
-  private Graphic graphic;
+  private final Graphic graphic;
 
   public AdvancedShape(Graphic graphic, int initialShapeNumber) {
     this.graphic = Objects.requireNonNull(graphic, "Graphic cannot be null!");

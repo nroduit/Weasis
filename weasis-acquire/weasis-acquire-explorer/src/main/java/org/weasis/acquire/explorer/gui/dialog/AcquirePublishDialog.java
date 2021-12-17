@@ -78,8 +78,8 @@ public class AcquirePublishDialog extends JDialog {
     FULL_HD(Messages.getString("AcquirePublishDialog.med_res"), 1920),
     HD_DVD(Messages.getString("AcquirePublishDialog.low_res"), 1280);
 
-    private String title;
-    private int maxSize;
+    private final String title;
+    private final int maxSize;
 
     Resolution(String title, int size) {
       this.title = title;

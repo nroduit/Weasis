@@ -160,7 +160,7 @@ public class Singleton {
   }
 
   private static void printProperty(PrintStream out, String key, Properties p) {
-    out.println(String.format("%s=%s", key, p.getProperty(key, ""))); // NON-NLS
+    out.printf("%s=%s%n", key, p.getProperty(key, "")); // NON-NLS
   }
 
   /** Returns true if we connect successfully to the server for the stringId */
@@ -367,7 +367,7 @@ public class Singleton {
         try (Socket s = ss.accept();
             InputStream is = s.getInputStream();
             InputStreamReader isr = new InputStreamReader(is, getStreamEncoding(is));
-            BufferedReader in = new BufferedReader(isr); ) {
+            BufferedReader in = new BufferedReader(isr)) {
           LOGGER.log(Level.FINE, "Singleton server is waiting a connection");
 
           // First read the random number

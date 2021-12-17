@@ -36,8 +36,8 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
     Arrays.sort(locales, (l1, l2) -> collator.compare(l1.getDisplayName(), l2.getDisplayName()));
 
     JLocale dloc = null;
-    for (int i = 0; i < locales.length; i++) {
-      JLocale val = new JLocale(locales[i]);
+    for (Locale locale : locales) {
+      JLocale val = new JLocale(locale);
       if (val.getLocale().equals(defaultLocale)) {
         dloc = val;
       }

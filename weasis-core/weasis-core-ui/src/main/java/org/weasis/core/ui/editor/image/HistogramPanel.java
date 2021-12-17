@@ -88,8 +88,8 @@ public class HistogramPanel extends JPanel {
     float maxHistogramCounts = 1.0f;
     float[] histValues = data.getHistValues();
     int nbBins = histValues.length;
-    for (int i = 0; i < nbBins; i++) {
-      float val = logarithmic ? (float) Math.log1p(histValues[i]) : histValues[i];
+    for (float histValue : histValues) {
+      float val = logarithmic ? (float) Math.log1p(histValue) : histValue;
       if (accumulate) {
         sum += val;
       } else {
@@ -219,8 +219,7 @@ public class HistogramPanel extends JPanel {
         line.setLine(plow, SLIDER_Y, plow, tLut);
         g2d.draw(line);
         String label =
-            String.valueOf(
-                DecFormater.allNumber(data.getLayer().pixelToRealValue(piLow * binFactor + min)));
+            DecFormater.allNumber(data.getLayer().pixelToRealValue(piLow * binFactor + min));
         AbstractGraphicLabel.paintFontOutline(
             g2d,
             label,
@@ -233,8 +232,7 @@ public class HistogramPanel extends JPanel {
         line.setLine(phigh, SLIDER_Y, phigh, tLut);
         g2d.draw(line);
         String label =
-            String.valueOf(
-                DecFormater.allNumber(data.getLayer().pixelToRealValue(piHigh * binFactor + min)));
+            DecFormater.allNumber(data.getLayer().pixelToRealValue(piHigh * binFactor + min));
         AbstractGraphicLabel.paintFontOutline(
             g2d,
             label,
@@ -346,7 +344,7 @@ public class HistogramPanel extends JPanel {
         }
         buf.append(",");
         buf.append(histValues[i]);
-        pw.println(buf.toString());
+        pw.println(buf);
       }
     } catch (IOException e) {
       LOGGER.error("Cannot save histogram values", e);

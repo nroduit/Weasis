@@ -73,7 +73,7 @@ public class CalibrationView extends JPanel {
     this.line = line;
     this.view2d = view2d;
     List<Unit> units = Unit.getUnitExceptPixel();
-    this.jComboBoxUnit = new JComboBox<>(units.toArray(new Unit[units.size()]));
+    this.jComboBoxUnit = new JComboBox<>(units.toArray(new Unit[0]));
     try {
       jbInit();
       radioButtonSeries.setSelected(selectSeries);

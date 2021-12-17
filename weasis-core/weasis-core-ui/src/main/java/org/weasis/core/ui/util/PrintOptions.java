@@ -30,7 +30,7 @@ public class PrintOptions {
 
     private final int dpi;
 
-    private DotPerInches(int dpi) {
+    DotPerInches(int dpi) {
       this.dpi = dpi;
     }
 

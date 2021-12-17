@@ -13,9 +13,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.DicomSpecialElementFactory;
 
-@org.osgi.service.component.annotations.Component(
-    service = DicomSpecialElementFactory.class,
-    immediate = false)
+@org.osgi.service.component.annotations.Component(service = DicomSpecialElementFactory.class)
 public class SRElementFactory implements DicomSpecialElementFactory {
 
   public static final String SERIES_SR_MIMETYPE = "sr/dicom"; // NON-NLS

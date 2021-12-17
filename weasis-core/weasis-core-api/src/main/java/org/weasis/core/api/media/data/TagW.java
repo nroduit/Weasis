@@ -44,8 +44,7 @@ public class TagW implements Serializable {
   private static final long serialVersionUID = -7914330824854199622L;
   private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
 
-  protected static final Map<String, TagW> tags =
-      Collections.synchronizedMap(new HashMap<String, TagW>());
+  protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<>());
 
   public static final String NO_VALUE = "UNKNOWN";
 
@@ -78,7 +77,7 @@ public class TagW implements Serializable {
 
     private final Class<?> clazz;
 
-    private TagType(Class<?> clazz) {
+    TagType(Class<?> clazz) {
       this.clazz = clazz;
     }
 
@@ -376,13 +375,8 @@ public class TagW implements Serializable {
       return false;
     }
     if (keyword == null) {
-      if (other.keyword != null) {
-        return false;
-      }
-    } else if (!keyword.equals(other.keyword)) {
-      return false;
-    }
-    return true;
+      return other.keyword == null;
+    } else return keyword.equals(other.keyword);
   }
 
   @Override

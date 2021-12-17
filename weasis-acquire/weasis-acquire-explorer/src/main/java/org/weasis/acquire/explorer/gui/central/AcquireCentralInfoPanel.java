@@ -25,13 +25,11 @@ import org.weasis.core.api.media.data.ImageElement;
 @SuppressWarnings("serial")
 public class AcquireCentralInfoPanel extends JPanel {
 
-  private AcquireMetadataPanel globalInfoPanel =
+  private final AcquireMetadataPanel globalInfoPanel =
       new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global"));
-  private AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
-  private AcquireMetadataPanel imageInfoPanel =
+  private final AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
+  private final AcquireMetadataPanel imageInfoPanel =
       new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image"));
-
-  private AcquireImageInfo imageInfo;
 
   public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
     setLayout(new GridLayout(1, 3));
@@ -50,7 +48,7 @@ public class AcquireCentralInfoPanel extends JPanel {
 
   public void setImage(ImageElement newImage) {
     if (newImage != null) {
-      imageInfo = AcquireManager.findByImage(newImage);
+      AcquireImageInfo imageInfo = AcquireManager.findByImage(newImage);
       imageInfoPanel.setImageInfo(imageInfo);
     } else {
       imageInfoPanel.setImageInfo(null);

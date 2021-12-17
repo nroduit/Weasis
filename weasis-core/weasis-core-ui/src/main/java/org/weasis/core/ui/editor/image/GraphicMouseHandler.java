@@ -14,7 +14,7 @@ import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.ActionW;
@@ -33,9 +33,9 @@ import org.weasis.core.ui.model.utils.imp.DefaultDragSequence;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdapter {
-  private ViewCanvas<E> vImg;
+  private final ViewCanvas<E> vImg;
   private Draggable ds;
-  private CursorSet cursorSet;
+  private final CursorSet cursorSet;
 
   public GraphicMouseHandler(ViewCanvas<E> vImg, CursorSet cursors) {
     if (vImg == null) {
@@ -137,7 +137,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             ds = dragGraph.createMoveDrag();
             newCursor = cursorSet.getMoveCursor();
           }
-          vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(dragGraph));
+          vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(dragGraph));
         }
       }
     }
@@ -157,7 +157,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
           if (graph instanceof DragGraphic) {
             ds = ((DragGraphic) graph).createResizeDrag();
             if (!(graph instanceof SelectGraphic)) {
-              vImg.getGraphicManager().setSelectedGraphic(Arrays.asList(graph));
+              vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(graph));
             }
           }
         }

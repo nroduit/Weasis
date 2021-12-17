@@ -29,7 +29,6 @@ import java.awt.font.FontRenderContext;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -112,7 +111,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public static final Icon KO_ICON =
       new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png"));
 
-  private JPanel panel = null;
   private PatientPane selectedPatient = null;
 
   private final List<PatientPane> patientPaneList = new ArrayList<>();
@@ -156,7 +154,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private JPanel panelMain = null;
   private final JToggleButton btnMoreOptions =
       new JToggleButton(Messages.getString("DicomExplorer.more_opt"));
-  private boolean verticalLayout = true;
+  private final boolean verticalLayout = true;
 
   private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON);
 
@@ -282,8 +280,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private StudyPane getStudyPane(MediaSeriesGroup study) {
     List<StudyPane> studies = patient2study.get(model.getParent(study, DicomModel.patient));
     if (studies != null) {
-      for (int i = 0; i < studies.size(); i++) {
-        StudyPane st = studies.get(i);
+      for (StudyPane st : studies) {
         if (st.isStudy(study)) {
           return st;
         }
@@ -330,8 +327,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   private SeriesPane getSeriesPane(MediaSeriesGroup series) {
     List<SeriesPane> seriesList = study2series.get(model.getParent(series, DicomModel.study));
     if (seriesList != null) {
-      for (int j = 0; j < seriesList.size(); j++) {
-        SeriesPane se = seriesList.get(j);
+      for (SeriesPane se : seriesList) {
         if (se.isSeries(series)) {
           return se;
         }
@@ -363,10 +359,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   private boolean isSelectedPatient(MediaSeriesGroup patient) {
-    if (selectedPatient != null && selectedPatient.patient == patient) {
-      return true;
-    }
-    return false;
+    return selectedPatient != null && selectedPatient.patient == patient;
   }
 
   class TitleBorder extends TitledBorder {
@@ -782,7 +775,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   protected JPanel getMainPanel() {
     if (panelMain == null) {
       panelMain = new JPanel();
-      panel = new JPanel();
+      JPanel panel = new JPanel();
       final GridBagLayout gridBagLayout = new GridBagLayout();
       gridBagLayout.rowHeights = new int[] {0, 0, 7};
       panel.setLayout(gridBagLayout);
@@ -848,7 +841,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 if (list.size() == 1) {
                   model.openrelatedSeries(list.get(0), patient);
                 } else {
-                  Collections.sort(list, DicomSpecialElement.ORDER_BY_DATE);
+                  list.sort(DicomSpecialElement.ORDER_BY_DATE);
 
                   JPopupMenu popupMenu = new JPopupMenu();
                   popupMenu.add(
@@ -970,7 +963,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         for (MediaSeriesGroup seq : model.getChildren(study)) {
           if (seq instanceof Series) {
             Boolean open = (Boolean) ((Series) seq).getTagValue(TagW.SeriesOpen);
-            return open == null ? false : open;
+            return open != null && open;
           }
         }
       }
@@ -1041,11 +1034,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     StudyPane studyPane = createStudyPaneInstance(study, null);
     List<Series> list = getSplitSeries(dcmSeries);
 
-    List<SeriesPane> seriesList = study2series.get(study);
-    if (seriesList == null) {
-      seriesList = new ArrayList<>();
-      study2series.put(study, seriesList);
-    }
+    List<SeriesPane> seriesList = study2series.computeIfAbsent(study, k -> new ArrayList<>());
     boolean addSeries = patientContainer.isStudyVisible(study);
     boolean repaintStudy = false;
     for (Series dicomSeries : list) {
@@ -1427,7 +1416,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   @Override
   public List<Action> getOpenExportDialogAction() {
-    return Arrays.asList(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
+    return Collections.singletonList(ExportToolBar.buildExportAction(this, model, BUTTON_NAME));
   }
 
   @Override

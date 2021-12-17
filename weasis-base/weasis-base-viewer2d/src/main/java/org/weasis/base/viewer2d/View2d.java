@@ -455,8 +455,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             };
         List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;
         synchronized (actionsButtons) {
-          for (int i = 0; i < actionsButtons.size(); i++) {
-            ActionW b = actionsButtons.get(i);
+          for (ActionW b : actionsButtons) {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
@@ -566,12 +565,9 @@ public class View2d extends DefaultView2d<ImageElement> {
       if (!support.isDrop()) {
         return false;
       }
-      if (support.isDataFlavorSupported(Series.sequenceDataFlavor)
+      return support.isDataFlavorSupported(Series.sequenceDataFlavor)
           || support.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
-          || support.isDataFlavorSupported(UriListFlavor.flavor)) {
-        return true;
-      }
-      return false;
+          || support.isDataFlavorSupported(UriListFlavor.flavor);
     }
 
     @Override

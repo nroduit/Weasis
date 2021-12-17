@@ -67,9 +67,9 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
   @Override
   protected Boolean doInBackground() throws Exception {
     String seriesUID = null;
-    for (int i = 0; i < urls.length; i++) {
-      if (urls[i] != null) {
-        seriesUID = urls[i].toString();
+    for (URL item : urls) {
+      if (item != null) {
+        seriesUID = item.toString();
         break;
       }
     }
@@ -95,9 +95,9 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
       SeriesInstanceList seriesInstanceList = new SeriesInstanceList();
       dicomSeries.setTag(TagW.WadoInstanceReferenceList, seriesInstanceList);
       dicomModel.addHierarchyNode(study, dicomSeries);
-      for (int i = 0; i < urls.length; i++) {
-        if (urls[i] != null) {
-          String url = urls[i].toString();
+      for (URL value : urls) {
+        if (value != null) {
+          String url = value.toString();
           SopInstance sop = seriesInstanceList.getSopInstance(url, null);
           if (sop == null) {
             sop = new SopInstance(url, null);

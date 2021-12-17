@@ -12,7 +12,7 @@ package org.weasis.acquire.explorer.gui.central.tumbnail;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JDialog;
 import javax.swing.JMenu;
@@ -70,7 +70,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
   @Override
   public void openSelection() {
     for (E s : getSelectedValuesList()) {
-      openSelection(Arrays.asList(s), true, true, false);
+      openSelection(Collections.singletonList(s), true, true, false);
     }
   }
 

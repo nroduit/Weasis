@@ -20,7 +20,7 @@ public class ImageOpEvent {
     SeriesChange,
     ImageChange,
     ApplyPR
-  };
+  }
 
   private final OpEvent eventType;
   private final MediaSeries series;

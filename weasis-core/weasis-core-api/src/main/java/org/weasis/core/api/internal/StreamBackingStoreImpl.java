@@ -19,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -231,7 +230,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     if (file != null && file.exists()) {
       XMLStreamReader xmler = null;
 
-      try (FileInputStream fileReader = new FileInputStream(file); ) {
+      try (FileInputStream fileReader = new FileInputStream(file)) {
         final PreferencesImpl rootPref = new PreferencesImpl(desc, manager);
 
         XMLInputFactory factory = XMLInputFactory.newInstance();
@@ -274,7 +273,7 @@ public class StreamBackingStoreImpl implements BackingStore {
       }
 
       try (ClosableURLConnection conn =
-          NetworkUtil.getUrlConnection(serviceURL, getURLParameters(false)); ) {
+          NetworkUtil.getUrlConnection(serviceURL, getURLParameters(false))) {
 
         return readRemotePref(new PreferencesImpl(desc, manager), conn);
 
@@ -291,7 +290,7 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     XMLStreamReader xmler = null;
 
-    try (InputStream fileReader = conn.getInputStream(); ) {
+    try (InputStream fileReader = conn.getInputStream()) {
       XMLInputFactory factory = XMLInputFactory.newInstance();
       // disable external entities for security
       factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
@@ -424,9 +423,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     if (prefs.getChangeSet().hasChanges()) {
       return true;
     }
-    final Iterator<?> i = prefs.getChildren().iterator();
-    while (i.hasNext()) {
-      final PreferencesImpl current = (PreferencesImpl) i.next();
+    for (PreferencesImpl current : prefs.getChildren()) {
       if (this.hasChanges(current)) {
         return true;
       }
@@ -454,9 +451,8 @@ public class StreamBackingStoreImpl implements BackingStore {
       this.writePreferences(prefs, writer);
     }
     final Collection<?> children = prefs.getChildren();
-    final Iterator<?> i = children.iterator();
-    while (i.hasNext()) {
-      final PreferencesImpl child = (PreferencesImpl) i.next();
+    for (Object o : children) {
+      final PreferencesImpl child = (PreferencesImpl) o;
       writer.writeStartElement(child.name());
       this.write(child, writer);
       writer.writeEndElement();
@@ -497,9 +493,8 @@ public class StreamBackingStoreImpl implements BackingStore {
 
   protected void writePreferences(PreferencesImpl prefs, XMLStreamWriter writer)
       throws XMLStreamException {
-    final Iterator<?> i = prefs.getProperties().entrySet().iterator();
-    while (i.hasNext()) {
-      final Map.Entry<?, ?> entry = (Map.Entry<?, ?>) i.next();
+    for (Entry<String, String> stringStringEntry : prefs.getProperties().entrySet()) {
+      final Entry<?, ?> entry = (Entry<?, ?>) stringStringEntry;
       writer.writeStartElement(entry.getKey().toString());
       writer.writeCharacters(EscapeChars.forXML(entry.getValue().toString()));
       writer.writeEndElement();

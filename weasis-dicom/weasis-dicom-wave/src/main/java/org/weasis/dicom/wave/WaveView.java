@@ -65,10 +65,8 @@ import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 public class WaveView extends JPanel implements SeriesViewerListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WaveView.class);
 
-  private JScrollPane scrollPane;
   private Series<?> series;
 
-  private ToolPanel tools;
   private InfoPanel infoPanel;
   private JPanel cpane;
 
@@ -286,7 +284,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       readWaveformData(dcm);
       getMinMax(channels);
 
-      this.scrollPane = new JScrollPane();
+      JScrollPane scrollPane = new JScrollPane();
       scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
       scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
 
@@ -301,7 +299,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       this.cpane = new JPanel(waveLayoutManager);
       JPanel channelwrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
       channelwrap.add(cpane);
-      this.scrollPane.setViewportView(channelwrap);
+      scrollPane.setViewportView(channelwrap);
 
       addChannelPanels();
       if (getChannelNumber() < 12) {
@@ -310,9 +308,9 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       setFormat(currentFormat);
 
       // Panel which includes the Buttons for zooming
-      this.tools = new ToolPanel(this);
-      this.tools.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-      this.tools.setPreferredSize(new Dimension(getWidth(), 30));
+      ToolPanel tools = new ToolPanel(this);
+      tools.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
+      tools.setPreferredSize(new Dimension(getWidth(), 30));
       // Panel with information about the channel the mouse cursor is over
       this.infoPanel = new InfoPanel(zoomRatio);
 
@@ -376,8 +374,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   private void addChannelPanels() {
-    for (int i = 0; i < channels.size(); i++) {
-      ChannelDefinition channel = channels.get(i);
+    for (ChannelDefinition channel : channels) {
       LeadPanel panel = new LeadPanel(this, waveData, channel);
       cpane.add(channel.getTitle(), panel);
 

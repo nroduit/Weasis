@@ -98,7 +98,7 @@ public abstract class AbstractDicomNode {
     CGET("C-GET"), // NON-NLS
     WADO("WADO-URI"); // NON-NLS
 
-    String title;
+    final String title;
 
     RetrieveType(String title) {
       this.title = title;
@@ -275,12 +275,8 @@ public abstract class AbstractDicomNode {
         int eventType;
         while (xmler.hasNext()) {
           eventType = xmler.next();
-          switch (eventType) {
-            case XMLStreamConstants.START_ELEMENT:
-              readDicomNodes(xmler, list, type, local, usage, webType);
-              break;
-            default:
-              break;
+          if (eventType == XMLStreamConstants.START_ELEMENT) {
+            readDicomNodes(xmler, list, type, local, usage, webType);
           }
         }
       } catch (Exception e) {
@@ -303,12 +299,8 @@ public abstract class AbstractDicomNode {
     if (T_NODES.equals(key)) {
       while (xmler.hasNext()) {
         int eventType = xmler.next();
-        switch (eventType) {
-          case XMLStreamConstants.START_ELEMENT:
-            readDicomNode(xmler, list, type, local, usage, webType);
-            break;
-          default:
-            break;
+        if (eventType == XMLStreamConstants.START_ELEMENT) {
+          readDicomNode(xmler, list, type, local, usage, webType);
         }
       }
     }

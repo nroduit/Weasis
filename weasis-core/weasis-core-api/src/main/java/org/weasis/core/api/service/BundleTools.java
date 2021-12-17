@@ -56,8 +56,7 @@ public class BundleTools {
   }
 
   public static final String CONFIRM_CLOSE = "weasis.confirm.closing";
-  public static final List<Codec> CODEC_PLUGINS =
-      Collections.synchronizedList(new ArrayList<Codec>());
+  public static final List<Codec> CODEC_PLUGINS = Collections.synchronizedList(new ArrayList<>());
   /**
    * This the persistence used at launch which can be stored remotely. These are the preferences
    * necessary for launching unlike the preferences associated with the plugins.

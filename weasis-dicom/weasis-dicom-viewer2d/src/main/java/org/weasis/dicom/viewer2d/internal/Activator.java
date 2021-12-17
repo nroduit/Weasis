@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.internal;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.List;
@@ -56,9 +56,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     Dictionary<String, Object> dict = new Hashtable<>();
     dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); // NON-NLS
-    dict.put(
-        CommandProcessor.COMMAND_FUNCTION,
-        EventManager.functions.toArray(new String[EventManager.functions.size()]));
+    dict.put(CommandProcessor.COMMAND_FUNCTION, EventManager.functions.toArray(new String[0]));
     bundleContext.registerService(EventManager.class.getName(), EventManager.getInstance(), dict);
 
     registerExistingComponents(bundleContext);
@@ -98,7 +96,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
     final ServiceReference<?> mref = event.getServiceReference();
     // The View2dContainer name should be referenced as a property in the provided service
-    if (Boolean.valueOf((String) mref.getProperty(View2dContainer.class.getName()))) {
+    if (Boolean.parseBoolean((String) mref.getProperty(View2dContainer.class.getName()))) {
       final BundleContext context =
           FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
       Object service = context.getService(mref);
@@ -122,7 +120,7 @@ public class Activator implements BundleActivator, ServiceListener {
       for (ServiceReference<InsertableFactory> serviceReference :
           bundleContext.getServiceReferences(InsertableFactory.class, null)) {
         // The View2dContainer name should be referenced as a property in the provided service
-        if (Boolean.valueOf(
+        if (Boolean.parseBoolean(
             (String) serviceReference.getProperty(View2dContainer.class.getName()))) {
           // Instantiate UI components in EDT (necessary with Substance Theme)
           GuiExecutor.instance()
@@ -176,7 +174,7 @@ public class Activator implements BundleActivator, ServiceListener {
         if (factory.isComponentCreatedByThisFactory(b)) {
           Preferences prefs = BundlePreferences.getDefaultPreferences(context);
           if (prefs != null) {
-            List<Insertable> list = Arrays.asList(b);
+            List<Insertable> list = Collections.singletonList(b);
             InsertableUtil.savePreferences(
                 list,
                 prefs.node(View2dContainer.class.getSimpleName().toLowerCase()),
@@ -203,7 +201,7 @@ public class Activator implements BundleActivator, ServiceListener {
           if (prefs != null) {
             Preferences containerNode =
                 prefs.node(View2dContainer.class.getSimpleName().toLowerCase());
-            InsertableUtil.savePreferences(Arrays.asList(t), containerNode, Type.TOOL);
+            InsertableUtil.savePreferences(Collections.singletonList(t), containerNode, Type.TOOL);
           }
 
           View2dContainer.TOOLS.remove(i);

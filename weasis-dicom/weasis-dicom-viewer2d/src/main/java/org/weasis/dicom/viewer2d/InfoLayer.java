@@ -329,14 +329,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       boolean anonymize = getDisplayPreferences(ANONYM_ANNOTATIONS);
       drawY = fontHeight;
       TagView[] infos = corner.getInfos();
-      for (int j = 0; j < infos.length; j++) {
-        if (infos[j] != null) {
-          if (hideMin || infos[j].containsTag(TagD.get(Tag.PatientName))) {
-            for (TagW tag : infos[j].getTag()) {
+      for (TagView tagView : infos) {
+        if (tagView != null) {
+          if (hideMin || tagView.containsTag(TagD.get(Tag.PatientName))) {
+            for (TagW tag : tagView.getTag()) {
               if (!anonymize || tag.getAnonymizationType() != 1) {
                 Object value = getTagValue(tag, patient, study, series, image);
                 if (value != null) {
-                  String str = tag.getFormattedTagValue(value, infos[j].getFormat());
+                  String str = tag.getFormattedTagValue(value, tagView.getFormat());
                   if (StringUtil.hasText(str)) {
                     AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY);
                     drawY += fontHeight;
@@ -353,15 +353,15 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
       drawY = fontHeight;
       infos = corner.getInfos();
-      for (int j = 0; j < infos.length; j++) {
-        if (infos[j] != null) {
-          if (hideMin || infos[j].containsTag(TagD.get(Tag.SeriesDate))) {
+      for (TagView info : infos) {
+        if (info != null) {
+          if (hideMin || info.containsTag(TagD.get(Tag.SeriesDate))) {
             Object value;
-            for (TagW tag : infos[j].getTag()) {
+            for (TagW tag : info.getTag()) {
               if (!anonymize || tag.getAnonymizationType() != 1) {
                 value = getTagValue(tag, patient, study, series, image);
                 if (value != null) {
-                  String str = tag.getFormattedTagValue(value, infos[j].getFormat());
+                  String str = tag.getFormattedTagValue(value, info.getFormat());
                   if (StringUtil.hasText(str)) {
                     AbstractGraphicLabel.paintFontOutline(
                         g2,
@@ -630,7 +630,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
 
       for (ViewButton b : view2DPane.getViewButtons()) {
-        if (b.isVisible() && (tile && b.getIcon() == View2d.KO_ICON) == false) {
+        if (b.isVisible() && !(tile && b.getIcon() == View2d.KO_ICON)) {
           Icon icon = b.getIcon();
           int p = b.getPosition();
 

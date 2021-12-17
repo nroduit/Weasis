@@ -74,15 +74,13 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       new JCheckBox(Messages.getString("DisplayTool.btn_apply_all"), true);
   private final CheckboxTree tree;
   private boolean initPathSelection;
-  private DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
+  private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private DefaultMutableTreeNode imageNode;
   private DefaultMutableTreeNode dicomInfo;
   private DefaultMutableTreeNode drawings;
   private DefaultMutableTreeNode crosslines;
   private DefaultMutableTreeNode minAnnotations;
-  private TreePath rootPath;
-  private JPanel panelFoot;
 
   public DisplayTool(String pluginName) {
     super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
@@ -123,7 +121,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     DefaultTreeModel model = new DefaultTreeModel(rootNode, false);
     tree.setModel(model);
-    rootPath = new TreePath(rootNode.getPath());
+    TreePath rootPath = new TreePath(rootNode.getPath());
     tree.addCheckingPath(rootPath);
 
     tree.setShowsRootHandles(true);
@@ -174,7 +172,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     expandTree(tree, rootNode);
     add(new JScrollPane(tree), BorderLayout.CENTER);
 
-    panelFoot = new JPanel();
+    JPanel panelFoot = new JPanel();
     // To handle selection color with all L&Fs
     panelFoot.setUI(new javax.swing.plaf.PanelUI() {});
     panelFoot.setOpaque(true);
@@ -286,7 +284,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     TreeNode treeNode = imageNode.getChildAt(index);
     if (treeNode != null) {
       Boolean val = (Boolean) disOp.getParamValue(op, param);
-      initPathSelection(getTreePath(treeNode), val == null ? false : val);
+      initPathSelection(getTreePath(treeNode), val != null && val);
     }
   }
 
@@ -377,7 +375,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       list.add(parent);
     }
     Collections.reverse(list);
-    return new TreePath(list.toArray(new TreeNode[list.size()]));
+    return new TreePath(list.toArray(new TreeNode[0]));
   }
 
   @Override

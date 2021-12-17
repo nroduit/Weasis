@@ -42,7 +42,7 @@ public class DefaultDicomNode extends AbstractDicomNode {
   public String getToolTips() {
     StringBuilder toolTips = new StringBuilder();
     toolTips.append("<html>");
-    toolTips.append(toString());
+    toolTips.append(this);
     toolTips.append("<br>");
     toolTips.append(getType().toString());
     toolTips.append(StringUtil.COLON_AND_SPACE);

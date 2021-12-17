@@ -136,9 +136,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
       };
   private final JPanel panelFoot = new JPanel();
   private final JSliderW slider;
-  private JPanel panelHead;
-  private JPanel panelDvh;
-  private JButton btnShowDvh;
 
   public RtDisplayTool() {
     super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
@@ -281,7 +278,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     panelFoot.add(slider.getParent());
 
-    panelHead = new JPanel();
+    JPanel panelHead = new JPanel();
     add(panelHead, BorderLayout.NORTH);
     panelHead.setLayout(new BoxLayout(panelHead, BoxLayout.Y_AXIS));
     this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
@@ -325,7 +322,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     panelDose.add(this.lblRtPlanDoseUnit);
 
     // DVH panel
-    panelDvh = new JPanel();
+    JPanel panelDvh = new JPanel();
     FlowLayout flDvh = (FlowLayout) panelDvh.getLayout();
     flDvh.setAlignment(FlowLayout.LEFT);
     panelHead.add(panelDvh);
@@ -334,7 +331,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     this.cbDvhRecalculate.setSelected(false);
     this.cbDvhRecalculate.setToolTipText(Messages.getString("when.enabled.recalculate"));
 
-    btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
+    JButton btnShowDvh = new JButton(Messages.getString("display.dvh.chart"));
     btnShowDvh.addActionListener(e -> showDvhChart());
     panelDvh.add(btnShowDvh);
 

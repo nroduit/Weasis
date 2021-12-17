@@ -250,12 +250,10 @@ public class ImageElement extends MediaElement {
     if (image != null) {
       PlanarImage img = getImage();
       PlanarImage img2 = image.getImage();
-      if (img != null
+      return img != null
           && img2 != null
           && getRescaleWidth(img.width()) == image.getRescaleWidth(img2.width())
-          && getRescaleHeight(img.height()) == image.getRescaleHeight(img2.height())) {
-        return true;
-      }
+          && getRescaleHeight(img.height()) == image.getRescaleHeight(img2.height());
     }
     return false;
   }

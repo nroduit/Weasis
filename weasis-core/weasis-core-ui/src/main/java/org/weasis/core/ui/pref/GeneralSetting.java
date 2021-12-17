@@ -388,8 +388,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
     jComboBox.removeAllItems();
-    for (int i = 0; i < look.length; i++) {
-      jComboBox.addItem(new LookInfo(look[i].getName(), look[i].getClassName()));
+    for (LookAndFeelInfo lookAndFeelInfo : look) {
+      jComboBox.addItem(new LookInfo(lookAndFeelInfo.getName(), lookAndFeelInfo.getClassName()));
     }
   }
 
@@ -530,8 +530,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
     UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
     String laf = null;
     if (look != null) {
-      for (int i = 0, n = lafs.length; i < n; i++) {
-        if (lafs[i].getClassName().equals(look)) {
+      for (LookAndFeelInfo lookAndFeelInfo : lafs) {
+        if (lookAndFeelInfo.getClassName().equals(look)) {
           laf = look;
           break;
         }
@@ -543,9 +543,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
       } else {
         // Try to set Nimbus, concurrent thread issue
         // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-        for (int i = 0, n = lafs.length; i < n; i++) {
-          if ("Nimbus".equals(lafs[i].getName())) { // NON-NLS
-            laf = lafs[i].getClassName();
+        for (LookAndFeelInfo lookAndFeelInfo : lafs) {
+          if ("Nimbus".equals(lookAndFeelInfo.getName())) { // NON-NLS
+            laf = lookAndFeelInfo.getClassName();
             break;
           }
         }

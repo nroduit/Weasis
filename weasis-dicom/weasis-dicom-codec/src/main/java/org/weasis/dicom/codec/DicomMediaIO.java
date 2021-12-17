@@ -575,8 +575,8 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   public boolean containTag(int id) {
-    for (Iterator<TagW> it = tags.keySet().iterator(); it.hasNext(); ) {
-      if (it.next().getId() == id) {
+    for (TagW tagW : tags.keySet()) {
+      if (tagW.getId() == id) {
         return true;
       }
     }

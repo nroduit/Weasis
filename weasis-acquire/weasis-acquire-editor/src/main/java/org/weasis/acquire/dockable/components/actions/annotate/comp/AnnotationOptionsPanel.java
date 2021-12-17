@@ -42,11 +42,8 @@ import org.weasis.core.util.StringUtil;
 public class AnnotationOptionsPanel extends JPanel {
 
   private final JPanel lineStylePanel;
-  private final JPanel drawOncePanel;
-  private final JPanel unitPanel;
 
   private final Border border = BorderFactory.createEmptyBorder(5, 10, 5, 10);
-  private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
   private final ActionListener pickColorAction =
       e -> {
@@ -74,6 +71,7 @@ public class AnnotationOptionsPanel extends JPanel {
 
   public AnnotationOptionsPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
     setBorder(
         BorderFactory.createCompoundBorder(
             spaceY,
@@ -86,8 +84,8 @@ public class AnnotationOptionsPanel extends JPanel {
                 Color.GRAY)));
 
     lineStylePanel = createLineStylePanel();
-    drawOncePanel = createDrawOnePanel();
-    unitPanel = createUnitPanel();
+    JPanel drawOncePanel = createDrawOnePanel();
+    JPanel unitPanel = createUnitPanel();
 
     add(lineStylePanel);
     add(unitPanel);

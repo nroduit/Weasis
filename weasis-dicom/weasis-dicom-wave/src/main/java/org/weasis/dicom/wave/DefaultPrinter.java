@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 
 public class DefaultPrinter extends JPanel implements Printable {
   private static final long serialVersionUID = -3293492590256713311L;
-  private WaveView ecgview;
+  private final WaveView ecgview;
 
   public DefaultPrinter(WaveView ecgview, PageFormat pageFormat) {
     this.ecgview = ecgview;

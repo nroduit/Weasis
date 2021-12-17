@@ -66,7 +66,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
     if (e.getClickCount() == 2) {
       final SeriesSelectionModel selList = getSeriesSelectionModel();
       selList.setOpenningSeries(true);
-      Map<String, Object> props = Collections.synchronizedMap(new HashMap<String, Object>());
+      Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
       props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, true);
       props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
       props.put(ViewerPluginBuilder.OPEN_IN_SELECTION, true);
@@ -154,8 +154,8 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
           final GraphicsDevice[] gd = ge.getScreenDevices();
           if (gd.length > 0) {
             JMenu subMenu = new JMenu(Messages.getString("DicomExplorer.open_screen"));
-            for (int i = 0; i < gd.length; i++) {
-              GraphicsConfiguration config = gd[i].getDefaultConfiguration();
+            for (GraphicsDevice graphicsDevice : gd) {
+              GraphicsConfiguration config = graphicsDevice.getDefaultConfiguration();
               final Rectangle b = config.getBounds();
               item4 = new JMenuItem(config.getDevice().toString());
               item4.addActionListener(

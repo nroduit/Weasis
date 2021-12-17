@@ -68,8 +68,8 @@ public class ViewSetting {
       String labels = stats.get("label", null); // NON-NLS
       if (labels != null) {
         String[] items = labels.split(",");
-        for (int i = 0; i < items.length; i++) {
-          String[] val = items[i].split(":");
+        for (String item : items) {
+          String[] val = item.split(":");
           if (val.length == 2) {
             for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
               if (val[0].equals(String.valueOf(m.getId()))) {
@@ -90,8 +90,8 @@ public class ViewSetting {
           labels = gpref.get("label", null); // NON-NLS
           if (labels != null) {
             String[] items = labels.split(",");
-            for (int k = 0; k < items.length; k++) {
-              String[] val = items[k].split(":");
+            for (String item : items) {
+              String[] val = item.split(":");
               if (val.length == 2) {
                 for (Measurement m : list) {
                   if (val[0].equals(String.valueOf(m.getId()))) {
@@ -125,13 +125,13 @@ public class ViewSetting {
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     GraphicsDevice[] gd = ge.getScreenDevices();
 
-    for (int i = 0; i < gd.length; i++) {
-      final GraphicsConfiguration config = gd[i].getDefaultConfiguration();
-      if (config == null || gd[i].getType() != GraphicsDevice.TYPE_RASTER_SCREEN) {
+    for (GraphicsDevice graphicsDevice : gd) {
+      final GraphicsConfiguration config = graphicsDevice.getDefaultConfiguration();
+      if (config == null || graphicsDevice.getType() != GraphicsDevice.TYPE_RASTER_SCREEN) {
         continue;
       }
 
-      Monitor monitor = new Monitor(gd[i]);
+      Monitor monitor = new Monitor(graphicsDevice);
       StringBuilder buf = new StringBuilder("screen."); // NON-NLS
       buf.append(monitor.getMonitorID());
       Rectangle b = monitor.getBounds();

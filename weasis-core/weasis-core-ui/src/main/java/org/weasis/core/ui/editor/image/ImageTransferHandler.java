@@ -31,7 +31,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
   }
 
   @Override
-  public boolean canImport(JComponent comp, DataFlavor flavor[]) {
+  public boolean canImport(JComponent comp, DataFlavor[] flavor) {
     return false;
   }
 

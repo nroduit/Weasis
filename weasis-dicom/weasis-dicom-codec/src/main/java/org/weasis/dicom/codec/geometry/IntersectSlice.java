@@ -29,8 +29,8 @@ public class IntersectSlice extends LocalizerPoster {
 
   private static boolean allTrue(boolean[] array) {
     boolean all = true;
-    for (int i = 0; i < array.length; ++i) {
-      if (!array[i]) {
+    for (boolean b : array) {
+      if (!b) {
         all = false;
         break;
       }
@@ -51,7 +51,7 @@ public class IntersectSlice extends LocalizerPoster {
 
   private static boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Point3d[] corners) {
     int size = corners.length;
-    boolean classification[] = new boolean[size];
+    boolean[] classification = new boolean[size];
     for (int i = 0; i < size; ++i) {
       int next = (i == size - 1) ? 0 : i + 1;
       classification[i] = classifyCornersIntoEdgeCrossingZPlane(corners[i], corners[next]);
