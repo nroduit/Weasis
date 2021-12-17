@@ -23,7 +23,7 @@ import org.weasis.core.api.gui.util.MathUtil;
  * volumes on (usually orthogonal) localizer images.
  *
  * <p>This base class provides the interface, common storage and various utility methods, and
- * specific methods of performing the localization operation are performed by concrete sub-classes,
+ * specific methods of performing the localization operation are performed by concrete subclasses,
  * instantiated through a factory class.
  *
  * <p>Typically this would b used as follows, to get outlines in the form of a vector of shapes
@@ -108,7 +108,7 @@ public abstract class LocalizerPoster {
    *     LPH+
    * @param column the direction of the column as X, Y and Z components (direction cosines, unit
    *     vector) LPH+
-   * @param originalTLHC the position of the top left hand corner of the slice as a point (X, Y and
+   * @param originalTLHC the position of the top left-hand corner of the slice as a point (X, Y and
    *     Z) LPH+
    * @param voxelSpacing the row and column spacing and the slice interval
    * @param dimensions the row and column dimensions and 1 for the third dimension
@@ -135,7 +135,7 @@ public abstract class LocalizerPoster {
 
     // Build a square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhc = new Point3d(originalTLHC); // otherwise original TLHC gets changed later on
+    Point3d tlhc = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
     Point3d trhc = new Point3d(tlhc);
     trhc.add(distanceAlongRow);
     Point3d blhc = new Point3d(tlhc);
@@ -154,7 +154,7 @@ public abstract class LocalizerPoster {
    *     LPH+
    * @param column the direction of the column as X, Y and Z components (direction cosines, unit
    *     vector) LPH+
-   * @param originalTLHC the position of the top left hand corner of the slice as a point (X, Y and
+   * @param originalTLHC the position of the top left-hand corner of the slice as a point (X, Y and
    *     Z) LPH+
    * @param voxelSpacing the row and column spacing and the slice interval
    * @param sliceThickness the slice thickness
@@ -190,7 +190,7 @@ public abstract class LocalizerPoster {
 
     // Build the "top" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhcT = new Point3d(originalTLHC); // otherwise original TLHC gets changed later on
+    Point3d tlhcT = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
     tlhcT.add(distanceAlongNormal);
 
     Point3d trhcT = new Point3d(tlhcT);
@@ -203,7 +203,7 @@ public abstract class LocalizerPoster {
 
     // Build the "bottom" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhcB = new Point3d(originalTLHC); // otherwise original TLHC gets changed later on
+    Point3d tlhcB = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
     tlhcB.sub(distanceAlongNormal);
 
     Point3d trhcB = new Point3d(tlhcB);
@@ -397,7 +397,7 @@ public abstract class LocalizerPoster {
    *     system
    * @param column the unit vector (direction cosine) of the row direction in the DICOM coordinate
    *     system
-   * @param tlhc the position in the DICOM coordinate system of the center of the top left hand
+   * @param tlhc the position in the DICOM coordinate system of the center of the top left-hand
    *     corner pixel of the slice
    * @param voxelSpacing the row and column and slice interval in mm
    * @param sliceThickness the slice thickness in mm

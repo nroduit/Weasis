@@ -245,7 +245,7 @@ public class DicomImageUtils {
   /**
    * Apply the pixel padding to the modality LUT
    *
-   * @see DICOM standard PS 3.3
+   * see DICOM standard PS 3.3
    *     <p>§C.7.5.1.1.2 Pixel Padding Value and Pixel Padding Range Limit If Photometric
    *     Interpretation
    *     <p>* If a Pixel Padding Value (0028,0120) only is present in the image then image contrast
@@ -253,7 +253,7 @@ public class DicomImageUtils {
    *     Padding Value (0028,0120). If both Pixel Padding Value (0028,0120) and Pixel Padding Range
    *     Limit (0028,0121) are present in the image then image contrast manipulations shall not be
    *     applied to those pixels with values in the range between the values of Pixel Padding Value
-   *     (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive."
+   *     (0028,0120) and Pixel Padding Range Limit (0028,0121), inclusive.
    *     <p>(0028,0004) is MONOCHROME2, Pixel Padding Value (0028,0120) shall be less than (closer
    *     to or equal to the minimum possible pixel value) or equal to Pixel Padding Range Limit
    *     (0028,0121). If Photometric Interpretation (0028,0004) is MONOCHROME1, Pixel Padding Value

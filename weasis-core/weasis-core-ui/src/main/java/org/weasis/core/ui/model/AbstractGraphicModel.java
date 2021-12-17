@@ -323,7 +323,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     synchronized (models) {
       for (Graphic g : models) {
         /*
-         * Exclude non serializable layer and graphics without points like NonEditableGraphic (not strictly the
+         * Exclude non-serializable layer and graphics without points like NonEditableGraphic (not strictly the
          * jaxb serialization process that use the annotations from getModels())
          */
         if (g.getLayer().getSerializable() && !g.getPts().isEmpty()) {
@@ -433,7 +433,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   /**
    * @param mouseEvent
-   * @return first selected graphic intersecting if exist, otherwise simply first graphic
+   * @return first selected graphic intersecting if existed, otherwise simply first graphic
    *     intersecting, or null
    */
   @Override
@@ -625,7 +625,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
             }
           }
         }
-      } else { // convention is when bounds equals null graphic is repaint
+      } else { // convention is when bounds equals null graphic is repainted
         graphic.paint(g2d, transform);
         graphic.paintLabel(g2d, transform);
       }

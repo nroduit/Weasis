@@ -127,7 +127,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
   @Override
   protected void prepareShape() throws InvalidShapeException {
-    // Do not draw points any more
+    // Do not draw points anymore
     setPointNumber(pts.size());
     buildShape(null);
 
@@ -137,7 +137,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
         Point2D checkPoint = pts.get(lastPointIndex);
         /*
          * Must not have two or several points with the same position at the end of the list (two points is the
-         * convention to have a uncompleted shape when drawing)
+         * convention to have an uncompleted shape when drawing)
          */
         for (int i = lastPointIndex - 1; i >= 0; i--) {
           if (Objects.equals(checkPoint, pts.get(i))) {
@@ -351,7 +351,7 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
 
   /**
    * Construct a list of line segments which defines the outside path of a given polygon Area with
-   * each vertices ordered in the same direction<br>
+   * each vertex ordered in the same direction<br>
    *
    * @return list of line segments around the closed polygon, or null if shape is invalid
    */

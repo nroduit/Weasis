@@ -350,7 +350,7 @@ public class WeasisWin {
     // control.setDefaultLocation(UIManager.BASE_AREA.
     // this.add(UIManager.EAST_AREA, BorderLayout.EAST);
     rootPaneContainer.getContentPane().add(UIManager.BASE_AREA, BorderLayout.CENTER);
-    // Allow to drop series into the empty main area
+    // Allow dropping series into the empty main area
     UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
     UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
     UIManager.MAIN_AREA.setVisible(true);
@@ -1275,7 +1275,7 @@ public class WeasisWin {
                 app.setVisible(true);
                 /*
                  * Sets the window to be "always on top" instead using toFront() method that does not always bring the
-                 * window to the front. It depends the platform, Windows XP or Ubuntu has the facility to prevent
+                 * window to the front. It depends on the platform, Windows XP or Ubuntu has the facility to prevent
                  * windows from stealing focus; instead it flashes the taskbar icon.
                  */
                 if (app.isAlwaysOnTopSupported()) {

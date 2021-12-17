@@ -92,7 +92,7 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
         map.put(constraint, export);
         v = export;
       } else {
-        // Non printable component. Create a new empty panel to not steel the component from the
+        // Non-printable component. Create a new empty panel to not steel the component from the
         // original UI
         v = new JPanel();
         map.put(constraint, v);

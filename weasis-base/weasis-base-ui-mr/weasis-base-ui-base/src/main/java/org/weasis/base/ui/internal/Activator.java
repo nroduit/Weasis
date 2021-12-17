@@ -53,7 +53,7 @@ public class Activator implements BundleActivator {
       }
     }
 
-    // WeasisWin must be instantiate in the EDT but required to end before the bundle startup
+    // WeasisWin must be instantiated in the EDT but required to end before the bundle startup
     GuiExecutor.instance()
         .invokeAndWait(
             () -> {

@@ -116,7 +116,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
   @Override
   public List<File> getExtractFiles() {
-    // Should have only one file as all the DicomEncapDocElement items are split in sub-series
+    // Should have only one file as all the DicomEncapDocElement items are split in subseries
     List<File> files = new ArrayList<>();
     getMedias(null, null)
         .forEach(dcm -> files.add(dcm.getExtractFile())); // Synchronized iteration with forEach

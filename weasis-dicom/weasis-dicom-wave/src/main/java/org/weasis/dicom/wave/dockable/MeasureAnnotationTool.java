@@ -383,7 +383,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   public void setSeries(Series<?> series) {
     if (series != null) {
-      // Should have only one object by series (if more, they are split in several sub-series in
+      // Should have only one object by series (if more, they are split in several subseries in
       // dicomModel)
       DicomSpecialElement s = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
       if (s != null) {

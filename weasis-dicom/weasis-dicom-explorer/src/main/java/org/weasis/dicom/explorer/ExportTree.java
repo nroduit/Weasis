@@ -58,8 +58,8 @@ public class ExportTree extends JScrollPane {
 
     /**
      * At this point checking Paths are supposed to be binded at Series Level but depending on the
-     * CheckingMode it may also contains parents treeNode paths.<br>
-     * For medical use recommendation is to default select the whole series related to studies to be
+     * CheckingMode it may also contain parents treeNode paths.<br>
+     * For medical use recommendation is to default select the whole series related to th studies to be
      * analyzed
      */
     TreeCheckingModel checkingModel = checkTreeModel.getCheckingModel();

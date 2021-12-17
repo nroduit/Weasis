@@ -351,7 +351,7 @@ public class DicomImageElement extends ImageElement {
           Integer.SIZE - Integer.numberOfLeadingZeros((int) Math.round(maxValue - minValue));
       outputSigned = minValue < 0 ? true : isSigned;
       if (outputSigned && bitsOutputLut <= 8) {
-        // Allows to handle negative values with 8-bit image
+        // Allows handling negative values with 8-bit image
         bitsOutputLut = 9;
       }
     } else {
@@ -379,7 +379,7 @@ public class DicomImageElement extends ImageElement {
    *
    * <p>The LUT Data contains the LUT entry values.
    *
-   * <p>The output range of the Modality LUT Module depends on whether or not Rescale Slope
+   * <p>The output range of the Modality LUT Module depends on whether Rescale Slope
    * (0028,1053) and Rescale Intercept (0028,1052) or the Modality LUT Sequence (0028,3000) are
    * used. In the case where Rescale Slope and Rescale Intercept are used, the output ranges from
    * (minimum pixel value*Rescale Slope+Rescale Intercept) to (maximum pixel value*Rescale -
@@ -703,7 +703,7 @@ public class DicomImageElement extends ImageElement {
       /*
        * C.11.2.1.2 Window center and window width
        *
-       * Theses Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
+       * These Attributes shall be used only for Images with Photometric Interpretation (0028,0004) values of
        * MONOCHROME1 and MONOCHROME2. They have no meaning for other Images.
        */
       if ((!p.isAllowWinLevelOnColorImage()

@@ -441,7 +441,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
 
       // Get page format from the printer
       if (pj.printDialog(aset)) {
-        // Force to print in black and white
+        // Force printing in black and white
         PageFormat pageFormat = pj.getPageFormat(aset);
         Paper paper = pageFormat.getPaper();
         double margin = 12;
@@ -455,7 +455,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
         } catch (PrinterException e) {
           // check for the annoying 'Printer is not accepting job' error.
           if (e.getMessage().indexOf("accepting job") != -1) { // NON-NLS
-            // recommend prompting the user at this point if they want to force it
+            // recommend prompting the user at this point if they want to force it,
             // so they'll know there may be a problem.
             int response =
                 JOptionPane.showConfirmDialog(

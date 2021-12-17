@@ -64,7 +64,7 @@ echo "Found java version $INSTALLED_VERSION"
 echo "Java command path: $JAVACMD"
 
 # Remove double quotes, remove leading "1." if it exists and remove everything apart from the major version number.
-INSTALLED_MAJOR_VERSION=$(echo $INSTALLED_VERSION | sed -e 's/"//g' -e 's/^1\.//' -e 's/\..*//')
+INSTALLED_MAJOR_VERSION=$(echo "$INSTALLED_VERSION" | sed -e 's/"//g' -e 's/^1\.//' -e 's/\..*//')
 
 if (( INSTALLED_MAJOR_VERSION < REQUIRED_MAJOR_VERSION ))
 then
@@ -87,9 +87,9 @@ then
 fi
 done
 
-echo "Additional user arguments: ${userParameters[@]}"
+echo "Additional user arguments:" "${userParameters[@]}"
 echo "Weasis launcher directory: $curPath"
 
 cps="$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar"
 # Launch
-$JAVACMD $DEFAULT_JVM_OPTIONS"$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable ${userParameters[@]}
+$JAVACMD "$DEFAULT_JVM_OPTIONS""$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable "${userParameters[@]}"

@@ -21,7 +21,7 @@ fi
 # Dereference symbolic links.
 if [ -h "$FOO" ] && [ -x "/bin/ls" ]
 then IFS=$OIFS
-set $(/bin/ls -l "$FOO")
+set "$(/bin/ls -l "$FOO")"
 while shift ;
 do
 if [ "$1" = "->" ]
@@ -40,7 +40,7 @@ echo "$FOO"
 fullpath=$(real_path "$0")
 macospath=$(dirname "$fullpath")
 echo "Launcher Path: $fullpath"
-echo "Arguments: $@"
+echo "Arguments:" "$@"
 
 # Get additional weasis arguments
 binaryCmd="Weasis"
@@ -51,5 +51,5 @@ binaryCmd="Dicomizer"
 fi
 done
 
-"$macospath/$binaryCmd" $@
+"$macospath/$binaryCmd" "$@"
 

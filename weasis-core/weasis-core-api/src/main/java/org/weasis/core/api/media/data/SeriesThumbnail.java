@@ -79,7 +79,7 @@ public class SeriesThumbnail extends Thumbnail
       AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
 
   private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
-  // Get the closest cursor size regarding to the platform
+  // Get the closest cursor size regarding the platform
   private final Border onMouseOverBorderFocused =
       new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(Color.orange, 2));
   private final Border onMouseOverBorder =

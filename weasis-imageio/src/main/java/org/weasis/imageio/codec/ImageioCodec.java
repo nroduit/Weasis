@@ -75,7 +75,7 @@ public class ImageioCodec implements Codec {
 
   @Activate
   protected void activate(ComponentContext context) {
-    // Do not use cache. Images must be download locally before reading them.
+    // Do not use cache. Images must be downloaded locally before reading them.
     ImageIO.setUseCache(false);
   }
 

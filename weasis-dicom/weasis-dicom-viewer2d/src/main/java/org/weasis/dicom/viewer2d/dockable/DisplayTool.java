@@ -263,7 +263,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                 v.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
                 v.getJComponent().repaint();
               } else {
-                // Force to redraw crosslines
+                // Force redrawing crosslines
                 Optional.ofNullable(
                         (SliderChangeListener) v.getEventManager().getAction(ActionW.SCROLL_SERIES))
                     .ifPresent(a -> a.stateChanged(a.getSliderModel()));

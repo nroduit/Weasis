@@ -101,7 +101,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     if (!isShapeValid()) {
       throw new InvalidShapeException("This shape cannot be drawn");
     }
-    // Do not build shape as labelBounds can be initialize only by the method setLabel()
+    // Do not build shape as labelBounds can be initialized only by the method setLabel()
   }
 
   protected void setHandlePointList(Point2D ptAnchor, Point2D ptBox) {
@@ -278,7 +278,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       List<BasicShape> list = s.getShapeList();
       if (!list.isEmpty()) {
         BasicShape b = list.get(list.size() - 1);
-        // Allow to move inside the box, not only around stroke.
+        // Allow moving inside the box, not only around stroke.
         area.add(new Area(b.getRealShape()));
       }
 

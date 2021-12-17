@@ -766,7 +766,7 @@ public class DownloadManager {
       MediaSeriesGroup s = model.getSeriesNode(referencedSeries.get(0).getSeriesInstanceUID());
       MediaSeriesGroup study = model.getParent(s, DicomModel.study);
       if (study == null) {
-        return; // When the related series has not be loaded
+        return; // When the related series has not been loaded
       }
       Attributes srcAttribute = new Attributes(15);
       DicomMediaUtils.fillAttributes(study.getTagEntrySetIterator(), srcAttribute);

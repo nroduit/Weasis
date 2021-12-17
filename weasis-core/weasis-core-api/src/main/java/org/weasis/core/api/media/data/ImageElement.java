@@ -82,7 +82,7 @@ public class ImageElement extends MediaElement {
   protected void findMinMaxValues(PlanarImage img, boolean exclude8bitImage)
       throws OutOfMemoryError {
     // This function can be called several times from the inner class Load.
-    // Do not compute min and max it has already be done
+    // Do not compute min and max it has already been done
 
     if (img != null && !isImageAvailable()) {
 
@@ -189,7 +189,7 @@ public class ImageElement extends MediaElement {
   }
 
   public ZoomOp getRectifyAspectRatioZoomOp() {
-    // Rectify non square pixel image in the first operation
+    // Rectify non-square pixel image in the first operation
     if (MathUtil.isDifferent(pixelSizeX, pixelSizeY)) {
       ZoomOp node = new ZoomOp();
       node.setName("rectifyAspectRatio");

@@ -72,7 +72,7 @@ import org.weasis.core.util.LangUtil;
 /**
  * The event processing center for this application. This class responses for loading data sets,
  * processing the events from the utility menu that includes changing the operation scope, the
- * layout, window/level, rotation angle, zoom factor, starting/stoping the cining-loop and etc.
+ * layout, window/level, rotation angle, zoom factor, starting/stoping the cining-loop etc.
  */
 public class EventManager extends ImageViewerEventManager<ImageElement> implements ActionListener {
 

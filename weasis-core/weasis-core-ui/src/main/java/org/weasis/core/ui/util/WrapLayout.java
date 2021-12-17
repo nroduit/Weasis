@@ -68,7 +68,7 @@ public class WrapLayout extends FlowLayout {
   }
 
   /**
-   * Returns the minimum dimensions needed to layout the <i>visible</i> components contained in the
+   * Returns the minimum dimensions needed to draw the <i>visible</i> components contained in the
    * specified target container.
    *
    * @param target the component which needs to be laid out
@@ -80,11 +80,11 @@ public class WrapLayout extends FlowLayout {
   }
 
   /**
-   * Returns the minimum or preferred dimension needed to layout the target container.
+   * Returns the minimum or preferred dimension needed to draw the target container.
    *
    * @param target target to get layout size for
-   * @param preferred should preferred size be calculated
-   * @return the dimension to layout the target container
+   * @param preferred should prefer size be calculated
+   * @return the dimension to draw the target container
    */
   private Dimension layoutSize(Container target, boolean preferred) {
     synchronized (target.getTreeLock()) {
@@ -163,8 +163,8 @@ public class WrapLayout extends FlowLayout {
     Dimension size = preferredLayoutSize(target);
 
     // When a frame is minimized or maximized the preferred size of the
-    // Container is assumed not to change. Therefore we need to force a
-    // validate() to make sure that space, if available, is allocated to
+    // Container is assumed not to change. Therefore, we need to force a
+    // 'validate()' to make sure that space, if available, is allocated to
     // the panel using a WrapLayout.
 
     if (size.equals(preferredLayoutSize)) {

@@ -644,7 +644,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return getRepaintBounds(shape, transform);
   }
 
-  /** @return selected handle point index if exist, otherwise -1 */
+  /** @return selected handle point index if existed, otherwise -1 */
   @Override
   public int getHandlePointIndex(MouseEventDouble mouseEvent) {
     int nearestHandlePtIndex = -1;
@@ -806,7 +806,7 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     String[] labels = null;
 
     // If isMultiSelection is false, it should return all enable computed measurements when
-    // quickComputing is enable or when releasedEvent is true
+    // quickComputing is enabled or when releasedEvent is true
     if ((labelVisible || !isMultiSelection) && getLayerType() == LayerType.MEASURE) {
       Unit displayUnit =
           view2d == null ? null : (Unit) view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd());

@@ -834,7 +834,7 @@ public class DicomMediaUtils {
       }
 
       /** @see - Dicom Standard 2011 - PS 3.3 §C.8 Frame Type Macro */
-      // Type of Frame. A multi-valued attribute analogous to the Image Type (0008,0008).
+      // Type of Frame. A multivalued attribute analogous to the Image Type (0008,0008).
       // Enumerated Values and Defined Terms are the same as those for the four values of the Image
       // Type
       // (0008,0008) attribute, except that the value MIXED is not allowed. See C.8.16.1 and
@@ -937,7 +937,7 @@ public class DicomMediaUtils {
 
       if (LOGGER.isTraceEnabled()) {
 
-        // The output range of the Modality LUT Module depends on whether or not Rescale Slope and
+        // The output range of the Modality LUT Module depends on whether Rescale Slope and
         // Rescale
         // Intercept or the Modality LUT Sequence are used.
 
@@ -1207,7 +1207,7 @@ public class DicomMediaUtils {
                 // Exclude negative value (case over midnight)
                 if (time > 0) {
                   double correctedDose = totalDose * Math.pow(2, -time / (1000.0 * halfLife));
-                  // Weight convert in kg to g
+                  // Weight converts in kg to g
                   suvFactor = weight * 1000.0 / correctedDose;
                 }
               }
@@ -1273,8 +1273,8 @@ public class DicomMediaUtils {
   // ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping it's patient and
-   * study informations. For instance it can be can an IMAGE or a previously build dicomKOS
+   * Creates a dicomKeyObjectSelection Attributes from another SOP Instance keeping its patient and
+   * study information. For instance, it can be can an IMAGE or a previous build dicomKOS
    * Document.
    *
    * @param dicomSourceAttribute : Must be valid
@@ -1297,7 +1297,7 @@ public class DicomMediaUtils {
     /**
      * @note Loads properties that reference all "Key Object Codes" defined in the following
      *     resource : KeyObjectSelectionCodes.xml
-     * @see These Codes are up to date regarding Dicom Conformance : <br>
+     * @see These Codes are up-to-date regarding Dicom Conformance : <br>
      *     PS 3.16 - § Context ID 7010 Key Object Selection Document Title <br>
      *     PS 3.16 - § Context ID 7011 Rejected for Quality Reasons - <br>
      *     PS 3.16 - § Context ID 7012 Best In Set<br>
@@ -1368,7 +1368,7 @@ public class DicomMediaUtils {
     Arrays.sort(patientStudyAttributes);
 
     /**
-     * @note : Add selected attributes from another Attributes object to this. The specified array
+     * @note  Add selected attributes from another Attributes object to this. The specified array
      *     of tag values must be sorted (as by the {@link java.util.Arrays#sort(int[])} method)
      *     prior to making this call.
      */
@@ -1430,7 +1430,7 @@ public class DicomMediaUtils {
      * @see DICOM standard PS 3.3 - § C.17.6 Key Object Selection Modules && § C.17.6.2.1 Identical
      *     Documents
      * @note The Unique identifier for the Study (studyInstanceUID) is supposed to be the same as to
-     *     one of the referenced image but it's not necessary. Standard says that if the Current
+     *     one of the referenced image, but it's not necessary. Standard says that if the Current
      *     Requested Procedure Evidence Sequence (0040,A375) references SOP Instances both in the
      *     current study and in one or more other studies, this document shall be duplicated into
      *     each of those other studies, and the duplicates shall be referenced in the Identical

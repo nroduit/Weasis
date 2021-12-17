@@ -74,7 +74,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     tableScroll = new JScrollPane();
     tableScroll.setBorder(BorderFactory.createEmptyBorder(7, 3, 0, 3));
     table = new JTable();
-    // Force to commit value when losing the focus
+    // Force committing value when losing the focus
     table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
     table.setFont(FontTools.getFont11()); // Default size
     table.getTableHeader().setReorderingAllowed(false);

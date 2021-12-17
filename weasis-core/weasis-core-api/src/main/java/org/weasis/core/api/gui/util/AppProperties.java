@@ -61,7 +61,7 @@ public class AppProperties {
       tdir = new File(tempDir);
     }
     /*
-     * Set the user name and the id (weasis source instance on web) to avoid mixing files by several users (Linux)
+     * Set the username and the id (weasis source instance on web) to avoid mixing files by several users (Linux)
      * or by running multiple instances of Weasis from different sources.
      */
     APP_TEMP_DIR =

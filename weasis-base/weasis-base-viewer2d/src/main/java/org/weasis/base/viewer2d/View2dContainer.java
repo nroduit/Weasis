@@ -421,7 +421,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           for (ViewCanvas<ImageElement> v : view2ds) {
             MediaSeries<ImageElement> s = v.getSeries();
             if (series.equals(s)) {
-              // Set to null to be sure that all parameters from the view are apply again to the
+              // Set to null to be sure that all parameters from the view are applied again to the
               // Series
               // (in case for instance it is the same series with more images)
               v.setSeries(null);

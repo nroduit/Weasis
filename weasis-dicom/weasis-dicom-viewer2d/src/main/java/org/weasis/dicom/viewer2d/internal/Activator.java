@@ -90,7 +90,7 @@ public class Activator implements BundleActivator, ServiceListener {
 
   @Override
   public synchronized void serviceChanged(final ServiceEvent event) {
-    // Tools and Toolbars (with non immediate instance) must be instantiate in the EDT
+    // Tools and Toolbars (with non-immediate instance) must be instantiated in the EDT
     GuiExecutor.instance().execute(() -> dataExplorerChanged(event));
   }
 

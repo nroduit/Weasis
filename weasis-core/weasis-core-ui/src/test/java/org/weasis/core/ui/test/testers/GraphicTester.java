@@ -124,7 +124,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   }
 
   /**
-   * Check an empty object can be reconstruct from an XML correctly.
+   * Check an empty object can be reconstructed from an XML correctly.
    *
    * @since v2.5.0 - ylar - Creation
    */
@@ -157,7 +157,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   }
 
   /**
-   * Check an object with points can be reconstruct from an XML correctly.
+   * Check an object with points can be reconstructed from an XML correctly.
    *
    * @since v2.5.0 - ylar - Creation
    */

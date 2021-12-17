@@ -361,7 +361,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
       // Get page format from the printer
       if (pj.printDialog(aset)) {
         PageFormat pageFormat = pj.defaultPage();
-        // Force to print in black and white
+        // Force printing in black and white
         EditorPanePrinter pnlPreview =
             new EditorPanePrinter(srview.getHtmlPanel(), pageFormat, new Insets(18, 18, 18, 18));
         pj.setPageable(pnlPreview);
@@ -370,7 +370,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
         } catch (PrinterException e) {
           // check for the annoying 'Printer is not accepting job' error.
           if (e.getMessage().indexOf("accepting job") != -1) { // NON-NLS
-            // recommend prompting the user at this point if they want to force it
+            // recommend prompting the user at this point if they want to force it,
             // so they'll know there may be a problem.
             int response =
                 JOptionPane.showConfirmDialog(

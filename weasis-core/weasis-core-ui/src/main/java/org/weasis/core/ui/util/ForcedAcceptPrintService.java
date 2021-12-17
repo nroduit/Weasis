@@ -34,7 +34,7 @@ import org.weasis.core.api.service.AuditLog;
  * <p>This hack gets around annoying 'Printer is not accepting job' errors in Java 5/6 that don't
  * occur in Java 1.4. This was enough of a problem for our 1000+ users that it was the sole reason
  * we could not move the product up from Java 1.4. Hence, the hack was invented as we had the
- * problem with users whose printers were clearly online and they could print from any non-Java
+ * problem with users whose printers were clearly online, and they could print from any non-Java
  * application.
  *
  * <p>Turns out this hack is also useful for printing to the latest inkjet printers that have chips

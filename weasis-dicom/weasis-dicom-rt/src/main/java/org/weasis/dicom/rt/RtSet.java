@@ -100,7 +100,7 @@ public class RtSet {
       }
     }
 
-    // Than initialise all RTPLAN
+    // Then initialise all RTPLAN
     for (MediaElement rt : this.rtElements) {
       String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
       // Photon and Proton Plans
@@ -110,7 +110,7 @@ public class RtSet {
       }
     }
 
-    // Than initialise all RTDOSE
+    // Then initialise all RTDOSE
     for (MediaElement rt : this.rtElements) {
       String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
       if (UID.RTDoseStorage.equals(sopUID)) {
@@ -150,16 +150,15 @@ public class RtSet {
               // If DVH exists for the structure and setting always recalculate is false
               Dvh structureDvh = dose.get(structure.getRoiNumber());
 
-              // Re-calculate DVH if it does not exists or if it is provided and force recalculation
-              // is
-              // setup
+              // Re-calculate DVH if it does not exist or if it is provided and force recalculation
+              // is set up
               if (structureDvh == null
                   || (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
                       && this.forceRecalculateDvh)) {
                 structureDvh = this.initCalculatedDvh(structure, dose);
                 dose.put(structure.getRoiNumber(), structureDvh);
               }
-              // Otherwise read provided DVH
+              // Otherwise, read provided DVH
               else {
                 // Absolute volume is provided and defined in DVH (in cm^3) so use it
                 if (structureDvh.getDvhSource().equals(DataSource.PROVIDED)
@@ -325,7 +324,7 @@ public class RtSet {
               }
             }
 
-            // Each plane which coincides with a image slice will have a unique ID
+            // Each plane which coincides with an image slice will have a unique ID
             // take the first one
             for (Attributes images : contour.getSequence(Tag.ContourImageSequence)) {
               String sopUID = images.getString(Tag.ReferencedSOPInstanceUID);
@@ -335,7 +334,7 @@ public class RtSet {
               }
             }
 
-            // Add each plane to the planes dictionary of the current ROI
+            // Add each plane to the planes' dictionary of the current ROI
             KeyDouble z = new KeyDouble(plane.getCoordinateZ());
 
             // If there are no contour on specific z position
@@ -350,7 +349,7 @@ public class RtSet {
         // Calculate the plane thickness for the current ROI
         layer.getStructure().setThickness(calculatePlaneThickness(planes));
 
-        // Add the planes dictionary to the current ROI
+        // Add the planes' dictionary to the current ROI
         layer.getStructure().setPlanes(planes);
       }
     }
@@ -370,7 +369,7 @@ public class RtSet {
       String planSopInstanceUid = dcmItems.getString(Tag.SOPInstanceUID);
       plan.setSopInstanceUid(planSopInstanceUid);
 
-      // Some plans exists (probably dummy plans)
+      // Some plans exist (probably dummy plans)
       if (!plans.isEmpty()) {
 
         // Plan with such SOP already exists
@@ -934,7 +933,7 @@ public class RtSet {
       }
     }
 
-    // When no other then initial thickness was detected, set 0
+    // When no other than initial thickness was detected, set 0
     if (thickness > 9999) {
       thickness = 0.0;
     }
@@ -1033,7 +1032,7 @@ public class RtSet {
                   * (doseImageSpacing[0] * doseImageSpacing[1] * structure.getThickness());
         }
 
-        // If this is a largest contour
+        // If this is the largest contour
         if (c == maxContourIndex) {
           volume += vol;
           add(histogram, hist, histogram);

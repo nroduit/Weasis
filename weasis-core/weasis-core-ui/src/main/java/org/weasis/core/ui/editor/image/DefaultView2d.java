@@ -345,7 +345,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
       if (area.contains(p)) {
         try {
-          // Handle special case of non square pixel image
+          // Handle special case of non-square pixel image
           pixelInfo.setPosition(new Point(p.x, p.y));
           pixelInfo.setPixelSpacingUnit(imageElement.getPixelSpacingUnit());
           pixelInfo.setPixelSize(imageElement.getPixelSize());
@@ -1084,7 +1084,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         }
 
         Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        // Avoid to reset zoom when the mode is not best fit
+        // Avoid resetting zoom when the mode is not best fit
         if (zoomFactor != null && zoomFactor >= 0.0) {
           Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
           actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
@@ -1327,7 +1327,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     }
     if ((pointerType & HIGHLIGHTED_POINTER) == HIGHLIGHTED_POINTER
         && highlightedPosition.isHighlightedPosition()) {
-      // Display the position on the center of the pixel (constant position even with a high zoom
+      // Display the position in the center of the pixel (constant position even with a high zoom
       // factor)
       double offsetX =
           modelToViewLength(highlightedPosition.getX() + 0.5 - viewModel.getModelOffsetX());

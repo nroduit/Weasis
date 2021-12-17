@@ -190,7 +190,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
             || (image == null && sourceImage != null);
     this.sourceImage = image;
     this.preprocessing = preprocessing;
-    // Rectify non square pixel image in the first operation
+    // Rectify non-square pixel image in the first operation
     if (sourceImage != null) {
       ZoomOp node = sourceImage.getRectifyAspectRatioZoomOp();
       if (node != null) {
@@ -227,7 +227,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
       if (rect.isEmpty()) {
         return;
       }
-      // Avoid to display one pixel outside the border line of a view.
+      // Avoid to display one pixel outside the border of a view.
       // rect.setRect(Math.ceil(rect.getX()), Math.ceil(rect.getY()), rect.getWidth() - 1,
       // rect.getHeight() - 1);
       g2d.setClip(rect);

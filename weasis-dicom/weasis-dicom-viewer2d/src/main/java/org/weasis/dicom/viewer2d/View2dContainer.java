@@ -587,7 +587,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {
               /*
-               * Set to null to be sure that all parameters from the view are apply again to the Series
+               * Set to null to be sure that all parameters from the view are applied again to the Series
                * (for instance it is the same series with more images)
                */
               v.setSeries(null);

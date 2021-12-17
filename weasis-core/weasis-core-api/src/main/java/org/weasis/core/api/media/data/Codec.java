@@ -23,7 +23,7 @@ public interface Codec {
   /** @return the list of file extensions supported the reader */
   String[] getReaderExtensions();
 
-  /** @return the MIME types that can be write by the codec */
+  /** @return the MIME types that can be written by the codec */
   String[] getWriterMIMETypes();
 
   /** @return the list of file extensions supported the writer */

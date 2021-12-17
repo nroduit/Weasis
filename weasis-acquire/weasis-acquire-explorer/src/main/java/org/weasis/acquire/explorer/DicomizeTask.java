@@ -23,7 +23,7 @@ import org.weasis.core.util.FileUtil;
 
 /**
  * Do the process of convert to JPEG and dicomize given image collection to a temporary folder. All
- * the job is done outside of the EDT instead of setting AcquireImageStatus change. But, full
+ * the job is done outside the EDT instead of setting AcquireImageStatus change. But, full
  * process progression can still be listened with propertyChange notification of this workerTask.
  *
  * @version $Rev$ $Date$

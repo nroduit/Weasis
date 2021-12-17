@@ -49,7 +49,7 @@ import org.weasis.core.util.StringUtil;
 
 /**
  * This is an abstract implementation of a backing store which uses streams to read/write the
- * preferences and stores a complete preferences tree in a single stream.
+ * preferences and stores a complete preferences' tree in a single stream.
  */
 public class StreamBackingStoreImpl implements BackingStore {
   private static final String PREFS_TAG = "preferences"; // NON-NLS
@@ -444,7 +444,7 @@ public class StreamBackingStoreImpl implements BackingStore {
    * Write the preferences recursively to the output stream.
    *
    * @param prefs
-   * @param os
+   * @param writer
    * @throws IOException
    * @throws XMLStreamException
    */

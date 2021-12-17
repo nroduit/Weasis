@@ -76,7 +76,7 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
   Point2D ptK;
   Point2D ptL;
 
-  // Let P be the intersection point, if exist, of the two line segments IJ & KL
+  // Let P be the intersection point, if existed, of the two line segments IJ & KL
   Point2D ptP;
 
   Point2D[]
@@ -86,9 +86,9 @@ public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
 
   boolean lineParallel; // estimate if IJ & KL line segments are parallel not not
   boolean
-      intersectIJsegment; // estimate if intersection point, if exist, is inside IJ segment or not
+      intersectIJsegment; // estimate if intersection point, if existed, is inside IJ segment or not
   boolean
-      intersectKLsegment; // estimate if intersection point, if exist, is inside KL segment or not
+      intersectKLsegment; // estimate if intersection point, if existed, is inside KL segment or not
 
   // estimate if line segments are valid or not
   boolean lineABvalid;

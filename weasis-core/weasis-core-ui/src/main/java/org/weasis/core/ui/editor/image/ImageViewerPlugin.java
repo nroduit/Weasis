@@ -716,7 +716,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (mouseActions == null) {
       for (ViewCanvas<E> v : view2ds) {
         v.disableMouseAndKeyListener();
-        // Let the possibility to get the focus
+        // Let the possibility get the focus
         v.iniDefaultMouseListener();
       }
     } else {

@@ -547,7 +547,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                             if (synch instanceof ComboItemListener) {
                               ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
                             }
-                            // Set the middle image (best choice to propagate the default preset of
+                            // Set the middle image ( the best choice to propagate the default preset of
                             // non CT
                             // modalities)
                             ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);

@@ -51,7 +51,7 @@ public class GeometryOfSlice {
    *     LPH+
    * @param column the direction of the column as X, Y and Z components (direction cosines, unit
    *     vector) LPH+
-   * @param tlhc the position of the top left hand corner of the slice as a point (X, Y and Z) LPH+
+   * @param tlhc the position of the top left-hand corner of the slice as a point (X, Y and Z) LPH+
    * @param voxelSpacing the row and column spacing and, if a volume, the slice interval (spacing
    *     between the centers of parallel slices) in mm
    * @param sliceThickness the slice thickness in mm
@@ -88,7 +88,7 @@ public class GeometryOfSlice {
    *     vector) LPH+
    * @param columnArray the direction of the column as X, Y and Z components (direction cosines,
    *     unit vector) LPH+
-   * @param tlhcArray the position of the top left hand corner of the slice as a point (X, Y and Z)
+   * @param tlhcArray the position of the top left-hand corner of the slice as a point (X, Y and Z)
    *     LPH+
    * @param voxelSpacingArray the row and column spacing and, if a volume, the slice interval
    *     (spacing between the centers of parallel slices) in mm
@@ -121,7 +121,7 @@ public class GeometryOfSlice {
     normal.normalize();
     normalArray = new double[3];
     normal.get(normalArray);
-    // depends of vector system (right/left-handed system): normalArray[2] = normalArray[2] * -1
+    // depends on vector system (right/left-handed system): normalArray[2] = normalArray[2] * -1
     normal = new Vector3d(normalArray);
   }
 
@@ -184,9 +184,9 @@ public class GeometryOfSlice {
   }
 
   /**
-   * Get the position of the top left hand corner.
+   * Get the position of the top left-hand corner.
    *
-   * @return the position of the top left hand corner of the slice as a point (X, Y and Z) LPH+
+   * @return the position of the top left-hand corner of the slice as a point (X, Y and Z) LPH+
    */
   public final Point3d getTLHC() {
     return tlhc;
@@ -214,9 +214,9 @@ public class GeometryOfSlice {
   }
 
   /**
-   * Get the position of the top left hand corner.
+   * Get the position of the top left-hand corner.
    *
-   * @return the position of the top left hand corner of the slice as a point (X, Y and Z) LPH+
+   * @return the position of the top left-hand corner of the slice as a point (X, Y and Z) LPH+
    */
   public final double[] getTLHCArray() {
     return tlhcArray;

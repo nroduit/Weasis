@@ -179,7 +179,7 @@ public class Structure {
           if (largestPolygon.containsContour(polygon)) {
             area -= polygon.getArea();
           }
-          // Otherwise it is outside, so add it to the total area
+          // Otherwise, it is outside, so add it to the total area
           else {
             area += polygon.getArea();
           }
@@ -190,7 +190,7 @@ public class Structure {
       if ((n == 0) || (n == this.planes.size() - 1)) {
         structureVolume += area * this.thickness * 0.5;
       }
-      // For rest use full slice thickness
+      // For rest use the full slice thickness
       else {
         structureVolume += area * this.thickness;
       }

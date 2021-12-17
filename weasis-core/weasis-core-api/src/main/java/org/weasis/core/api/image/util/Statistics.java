@@ -359,7 +359,7 @@ public class Statistics {
   }
 
   /**
-   * Apply least squares to raw data to determine the coefficients an n-order equation: y =
+   * Apply the least squares to raw data to determine the coefficients an n-order equation: y =
    * an*X^n+... + a1*X^1 + a0*X^0.
    *
    * @param y the x coordinates of data points

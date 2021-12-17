@@ -299,7 +299,7 @@ public class DicomMediaIO implements DcmMediaReader {
   private int highBit;
   /** Store the transfer syntax locally in case it gets modified to re-write the image */
   private String tsuid;
-  /** Used to indicate whether or not to skip large private dicom elements. */
+  /** Used to indicate whether to skip large private dicom elements. */
   private boolean skipLargePrivate = true;
 
   private volatile boolean readingHeader = false;
@@ -1192,7 +1192,7 @@ public class DicomMediaIO implements DcmMediaReader {
      * cache at the same time.
      *
      * readingImage: prevent closing stream when reading an image or for the RenderedImage which delays the image
-     * reading).
+     * reading.
      */
     if (!readingHeader && !readingImage) {
       resetInternalState();

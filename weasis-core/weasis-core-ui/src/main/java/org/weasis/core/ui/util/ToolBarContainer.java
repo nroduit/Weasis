@@ -40,7 +40,7 @@ public class ToolBarContainer extends JPanel {
       add(ToolBarContainer.EMPTY.getComponent());
       bars.add(ToolBarContainer.EMPTY);
     } else {
-      // Sort toolbars according the the position
+      // Sort toolbars according the position
       InsertableUtil.sortInsertable(toolBars);
 
       synchronized (toolBars) { // NOSONAR lock object is the list for iterating its elements safely

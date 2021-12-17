@@ -15,7 +15,6 @@ package org.weasis.core.api.gui.model;
  * component using the component's <code>addViewModelChangeListener<code> method. When the viewModelChange event occurs,
  * that object's appropriate method is invoked.
  *
- * @see ViewModelChangeEvent
  */
 @FunctionalInterface
 public interface ViewModelChangeListener {

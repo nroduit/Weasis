@@ -91,7 +91,7 @@ public class MimeInspector {
     }
     MagicMimeEntry me = getMagicMimeEntry(mimeType);
     if (me != null) {
-      // Otherwise find Mime Type from the magic number in file
+      // Otherwise, find Mime Type from the magic number in file
       try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
         if (mimeType.equals(me.getMatch(raf))) {
           return true;
@@ -128,7 +128,7 @@ public class MimeInspector {
     }
     String mimeType = null;
 
-    // Otherwise find Mime Type from the magic number in file
+    // Otherwise, find Mime Type from the magic number in file
     try (RandomAccessFile raf = new RandomAccessFile(file, "r")) {
       mimeType = MimeInspector.getMagicMimeType(raf);
     } catch (IOException e) {

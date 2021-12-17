@@ -80,7 +80,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
   @Override
   protected void done() {
     super.done();
-    // Change to a new exman after publishing (avoid to reuse the same exam)
+    // Change to a new exam after publishing (avoid reusing the same exam)
     AcquireManager.GLOBAL.setTag(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
   }
 }

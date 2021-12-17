@@ -20,7 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.weasis.core.util.StringUtil;
 
-/** Yet another GNU long options parser. This one is configured by parsing its Usage string. */
+/** Yet another GNU long options' parser. This one is configured by parsing its Usage string. */
 public class Options implements Option {
 
   public static final String NL = System.getProperty("line.separator", "\n"); // NON-NLS

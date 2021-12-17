@@ -73,9 +73,9 @@ public class RetrieveTree extends JPanel {
     checkboxTree.setToolTipText("");
 
     /**
-     * At this point checking Paths are supposed to be binded at Series Level but depending on the
-     * CheckingMode it may also contains parents treeNode paths.<br>
-     * For medical use recommendation is to default select the whole series related to studies to be
+     * At this point checking Paths are supposed to be bound at Series Level but depending on the
+     * CheckingMode it may also contain parents treeNode paths.<br>
+     * For medical use recommendation is to default select the whole series related to the studies to be
      * analyzed
      */
     TreeCheckingModel checkingModel = retrieveTreeModel.getCheckingModel();

@@ -14,7 +14,7 @@ public interface PageProps {
   void resetoDefaultValues();
 
   /**
-   * Returns the human readable tile of the page which is displayed in the config dialog's tree view
+   * Returns the human-readable tile of the page which is displayed in the config dialog's tree view
    * and title bar.
    *
    * @return the title, must not be <code>null</code>
