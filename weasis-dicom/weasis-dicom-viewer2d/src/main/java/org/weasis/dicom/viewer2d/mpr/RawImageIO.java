@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer2d.mpr;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -33,6 +34,7 @@ import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -46,6 +48,19 @@ public class RawImageIO implements DcmMediaReader {
   private static final Logger LOGGER = LoggerFactory.getLogger(RawImageIO.class);
 
   private static final String MIME_TYPE = "image/raw"; // NON-NLS
+
+  private static final SoftHashMap<RawImageIO, DicomMetaData> HEADER_CACHE =
+      new SoftHashMap<RawImageIO, DicomMetaData>() {
+
+        @Override
+        public void removeElement(Reference<? extends DicomMetaData> soft) {
+          RawImageIO key = reverseLookup.remove(soft);
+          if (key != null) {
+            hash.remove(key);
+            key.reset();
+          }
+        }
+      };
 
   protected FileRawImage imageCV;
   private final FileCache fileCache;
@@ -162,6 +177,7 @@ public class RawImageIO implements DcmMediaReader {
 
   @Override
   public void close() {
+    HEADER_CACHE.remove(this);
     reset();
   }
 
@@ -220,12 +236,8 @@ public class RawImageIO implements DcmMediaReader {
 
   @Override
   public Attributes getDicomObject() {
-    Attributes dcm = new Attributes(tags.size() + attributes.size());
-    SpecificCharacterSet cs = attributes.getSpecificCharacterSet();
-    dcm.setSpecificCharacterSet(cs.toCodes());
-    DicomMediaUtils.fillAttributes(tags, dcm);
-    dcm.addAll(attributes);
-    return dcm;
+    DicomMetaData md = readMetaData();
+    return md.getDicomObject();
   }
 
   @Override
@@ -240,7 +252,21 @@ public class RawImageIO implements DcmMediaReader {
 
   @Override
   public DicomMetaData getDicomMetaData() {
-    // TODO Auto-generated method stub
-    return null;
+    return readMetaData();
+  }
+
+  private synchronized DicomMetaData readMetaData() {
+    DicomMetaData header = HEADER_CACHE.get(this);
+    if (header != null) {
+      return header;
+    }
+    Attributes dcm = new Attributes(tags.size() + attributes.size());
+    SpecificCharacterSet cs = attributes.getSpecificCharacterSet();
+    dcm.setSpecificCharacterSet(cs.toCodes());
+    DicomMediaUtils.fillAttributes(tags, dcm);
+    dcm.addAll(attributes);
+    header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
+    HEADER_CACHE.put(this, header);
+    return header;
   }
 }

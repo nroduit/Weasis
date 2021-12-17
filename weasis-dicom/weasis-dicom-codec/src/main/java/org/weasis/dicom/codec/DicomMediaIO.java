@@ -783,7 +783,8 @@ public class DicomMediaIO implements DcmMediaReader {
 
   @Override
   public void close() {
-    dispose();
+    HEADER_CACHE.remove(this);
+    reset();
   }
 
   @Override
@@ -850,11 +851,6 @@ public class DicomMediaIO implements DcmMediaReader {
       }
     }
     return null;
-  }
-
-  public void dispose() {
-    HEADER_CACHE.remove(this);
-    reset();
   }
 
   @Override
