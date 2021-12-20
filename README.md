@@ -11,6 +11,8 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
 * [Google group](https://groups.google.com/forum/#!forum/dcm4che)
 
+:warning: **Security**: Weasis not affected by CVE-2021-44228 as it do not use log4j but a simple OSGI logger.
+
 # Build Weasis
 
 The master branch contains Weasis 3.x.x (requires Java 8+) and the old branches are 2.5.x, 2.0.x (Java 6+) and 1.2.x (Java 6+).
