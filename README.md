@@ -11,7 +11,7 @@ Weasis is a free medical DICOM viewer used in healthcare by hospitals, health ne
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
 * [Google group](https://groups.google.com/forum/#!forum/dcm4che) and [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
 
-:warning: **Security**: Weasis not affected by CVE-2021-44228 as it does not use log4j but a simple OSGI logger.
+:warning: **Security**: Weasis is not affected by CVE-2021-44228 as it does not use log4j but a simple OSGI logger.
 
 # Build Weasis
 
