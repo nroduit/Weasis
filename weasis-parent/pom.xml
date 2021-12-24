@@ -42,7 +42,6 @@
     <osgi.promise.version>1.2.0</osgi.promise.version>
     <osgi.function.version>1.2.0</osgi.function.version>
     <felix.metatype.version>1.2.4</felix.metatype.version>
-    <felix.scr.annotations.version>1.12.0</felix.scr.annotations.version>
 
     <slf4j.version>1.7.32</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
@@ -103,19 +102,6 @@
             <source>${java-version}</source>
             <target>${java-version}</target>
           </configuration>
-        </plugin>
-        <plugin>
-          <groupId>org.apache.felix</groupId>
-          <artifactId>maven-scr-plugin</artifactId>
-          <version>1.26.4</version>
-          <executions>
-            <execution>
-              <id>generate-scr-scrdescriptor</id>
-              <goals>
-                <goal>scr</goal>
-              </goals>
-            </execution>
-          </executions>
         </plugin>
         <plugin>
           <groupId>biz.aQute.bnd</groupId>
@@ -575,12 +561,6 @@
       <groupId>org.osgi</groupId>
       <artifactId>osgi.annotation</artifactId>
       <version>${osgi.cmpn.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.scr.annotations</artifactId>
-      <version>${felix.scr.annotations.version}</version>
       <scope>provided</scope>
     </dependency>
   </dependencies>
