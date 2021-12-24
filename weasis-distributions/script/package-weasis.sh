@@ -10,8 +10,6 @@ REQUIRED_TEXT_VERSION=14
 # Build Parameters
 REVISON_INC="1"
 PACKAGE=YES
-# Package for Java 11 (remove in weasis 4)
-SUBSTANCE_PKG="4.0.1"
 
 # Options
 # jdk.unsupported => sun.misc.Signal
@@ -184,9 +182,6 @@ find "$INPUT_DIR"/bundle/weasis-opencv-core-* -type f ! -name '*-'"${ARC_OS}"'-*
 if [ "$arc" = "x86" ] ; then
   find "$INPUT_DIR"/bundle/*-x86* -type f -name "*-${machine}-x86-64-*"  -exec rm -f {} \;
 fi
-
-# Replace substance available for Java 11
-curl -L -o "${INPUT_DIR}/substance.jar" "https://raw.github.com/nroduit/mvn-repo/master/org/pushing-pixels/radiance-substance-all/$SUBSTANCE_PKG/radiance-substance-all-$SUBSTANCE_PKG.jar"
 
 # Remove previous package
 if [ -d "${OUTPUT_PATH}" ] ; then

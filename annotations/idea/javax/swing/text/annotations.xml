@@ -1,0 +1,5 @@
+<root>
+  <item name='javax.swing.text.StyledDocument javax.swing.text.Style getStyle(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

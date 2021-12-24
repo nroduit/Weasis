@@ -97,10 +97,14 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.pushing-pixels</groupId>
-      <artifactId>radiance-substance-all</artifactId>
-      <version>${substance.version}</version>
-      <scope>provided</scope>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>${flatlaf.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf-intellij-themes</artifactId>
+      <version>${flatlaf.version}</version>
     </dependency>
     <dependency>
       <groupId>org.tukaani</groupId>

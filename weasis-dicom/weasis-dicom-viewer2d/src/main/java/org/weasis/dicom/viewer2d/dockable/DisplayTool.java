@@ -34,7 +34,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -173,10 +172,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     add(new JScrollPane(tree), BorderLayout.CENTER);
 
     JPanel panelFoot = new JPanel();
-    // To handle selection color with all L&Fs
-    panelFoot.setUI(new javax.swing.plaf.PanelUI() {});
-    panelFoot.setOpaque(true);
-    panelFoot.setBackground(JMVUtils.TREE_BACKROUND);
     add(panelFoot, BorderLayout.SOUTH);
   }
 

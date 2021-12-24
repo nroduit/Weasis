@@ -11,7 +11,6 @@ package org.weasis.launcher;
 
 import java.awt.Desktop;
 import java.awt.EventQueue;
-import java.awt.Font;
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
@@ -20,7 +19,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.management.ManagementFactory;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.URI;
@@ -40,7 +38,6 @@ import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import javax.management.ObjectName;
 import javax.swing.JComponent;
-import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
@@ -851,13 +848,8 @@ public class WeasisLauncher {
     }
 
     String localLook = currentProps.getProperty(P_WEASIS_LOOK, null);
-    // installSubstanceLookAndFeels must be the first condition to install substance if necessary
-    if (LookAndFeels.installSubstanceLookAndFeels() && look == null) {
-      if (MAC_OS_X.equals(System.getProperty(P_OS_NAME))) {
-        look = "com.apple.laf.AquaLookAndFeel";
-      } else {
-        look = "org.pushingpixels.substance.api.skin.SubstanceTwilightLookAndFeel";
-      }
+    if (LookAndFeels.installFlatLaf() && look == null) {
+      look = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
     }
     // Set the default value for L&F
     if (look == null) {
@@ -882,12 +874,6 @@ public class WeasisLauncher {
       SwingUtilities.invokeAndWait(
           () -> {
             // Set look and feels
-            boolean substance = look.startsWith("org.pushingpixels");
-            if (substance) {
-              // Keep system window for the main frame
-              // JFrame.setDefaultLookAndFeelDecorated(true);
-              JDialog.setDefaultLookAndFeelDecorated(true);
-            }
             look = setLookAndFeel(look);
 
             try {
@@ -1142,11 +1128,6 @@ public class WeasisLauncher {
 
   /** Changes the look and feel for the whole GUI */
   public static String setLookAndFeel(String look) {
-    // Do not display metal LAF in bold, it is ugly
-    UIManager.put("swing.boldMetal", Boolean.FALSE);
-    // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
-    UIManager.put("Slider.paintValue", Boolean.FALSE);
-
     String laf = getAvailableLookAndFeel(look);
     try {
       UIManager.setLookAndFeel(laf);
@@ -1154,8 +1135,6 @@ public class WeasisLauncher {
       LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
       laf = UIManager.getSystemLookAndFeelClassName();
     }
-    // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-    LookAndFeels.setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12));
     return laf;
   }
 
@@ -1171,22 +1150,7 @@ public class WeasisLauncher {
       }
     }
     if (laf == null) {
-      if (MAC_OS_X.equals(System.getProperty(P_OS_NAME))) {
-        laf = "com.apple.laf.AquaLookAndFeel";
-      } else {
-        // Try to set Nimbus, concurrent thread issue
-        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-        for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
-          if (lookAndFeelInfo.getName().equals("Nimbus")) { // NON-NLS
-            laf = lookAndFeelInfo.getClassName();
-            break;
-          }
-        }
-      }
-      // Should never happen
-      if (laf == null) {
-        laf = UIManager.getSystemLookAndFeelClassName();
-      }
+      laf = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
     }
     return laf;
   }

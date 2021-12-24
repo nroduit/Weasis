@@ -25,7 +25,6 @@ import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.JViewport;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.Messages;
@@ -190,11 +189,6 @@ public abstract class AbstractWizardDialog extends JDialog {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
-    renderer.setOpenIcon(null);
-    renderer.setClosedIcon(null);
-    renderer.setLeafIcon(null);
-    tree.setCellRenderer(renderer);
     tree.addTreeSelectionListener(
         e -> {
           if (e.getNewLeadSelectionPath() != null) {

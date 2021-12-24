@@ -10,9 +10,7 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.Component;
-import java.awt.Dialog;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -20,7 +18,8 @@ import java.awt.Window;
 import java.io.File;
 import java.time.ZonedDateTime;
 import java.time.format.FormatStyle;
-import java.util.Enumeration;
+import java.util.Arrays;
+import java.util.Comparator;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,7 +40,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
@@ -64,7 +62,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   private final JLabel labelLocale2 =
       new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON);
 
-  @SuppressWarnings("serial")
   private final JLocaleFormat comboBoxFormat =
       new JLocaleFormat() {
         @Override
@@ -76,7 +73,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   private final JLabel labelLocale =
       new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON);
 
-  @SuppressWarnings("serial")
   private final JLocaleLanguage comboBoxLang =
       new JLocaleLanguage() {
         @Override
@@ -141,9 +137,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
           Runnable runnable =
               () -> {
                 try {
-                  Dialog dialog = WinUtil.getParentDialog(GeneralSetting.this);
                   UIManager.setLookAndFeel(finalLafClassName);
-                  SwingUtilities.updateComponentTreeUI(dialog);
+                  for (final Window w : Window.getWindows()) {
+                    SwingUtilities.updateComponentTreeUI(w);
+                  }
                 } catch (Exception e1) {
                   LOGGER.error("Can't change look and feel", e1);
                 }
@@ -189,7 +186,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
     gbcTxtpnNote.fill = GridBagConstraints.HORIZONTAL;
     gbcTxtpnNote.gridx = 0;
     gbcTxtpnNote.gridy = 3;
-    txtpnNote.setEditorKit(JMVUtils.buildHTMLEditorKit(txtpnNote));
     txtpnNote.setContentType("text/html");
     txtpnNote.setEditable(false);
     txtpnNote.setText(getText());
@@ -388,7 +384,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
     jComboBox.removeAllItems();
-    for (LookAndFeelInfo lookAndFeelInfo : look) {
+    for (LookAndFeelInfo lookAndFeelInfo :
+        Arrays.stream(look).sorted(Comparator.comparing(LookAndFeelInfo::getName)).toList()) {
       jComboBox.addItem(new LookInfo(lookAndFeelInfo.getName(), lookAndFeelInfo.getClassName()));
     }
   }
@@ -448,13 +445,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
       Runnable runnable =
           () -> {
             try {
-              WinUtil.getParentDialog(GeneralSetting.this).setVisible(false);
-
               UIManager.setLookAndFeel(finalLafClassName);
               for (Window window : Window.getWindows()) {
                 SwingUtilities.updateComponentTreeUI(window);
               }
-
             } catch (Exception e) {
               LOGGER.error("Can't change look and feel", e);
             }
@@ -509,11 +503,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   public static String setLookAndFeel(String look) {
-    // Do not display metal LAF in bold, it is ugly
-    UIManager.put("swing.boldMetal", Boolean.FALSE);
-    // Display slider value is set to false (already in all LAF by the panel title), used by GTK LAF
-    UIManager.put("Slider.paintValue", Boolean.FALSE);
-
     String laf = getAvailableLookAndFeel(look);
     try {
       UIManager.setLookAndFeel(laf);
@@ -521,8 +510,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
       laf = UIManager.getSystemLookAndFeelClassName();
       LOGGER.error("Unable to set the Look&Feel", e);
     }
-    // Fix font issue for displaying some Asiatic characters. Some L&F have special fonts.
-    setUIFont(new javax.swing.plaf.FontUIResource(Font.SANS_SERIF, Font.PLAIN, 12));
     return laf;
   }
 
@@ -538,33 +525,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
       }
     }
     if (laf == null) {
-      if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { // NON-NLS
-        laf = "com.apple.laf.AquaLookAndFeel";
-      } else {
-        // Try to set Nimbus, concurrent thread issue
-        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6785663
-        for (LookAndFeelInfo lookAndFeelInfo : lafs) {
-          if ("Nimbus".equals(lookAndFeelInfo.getName())) { // NON-NLS
-            laf = lookAndFeelInfo.getClassName();
-            break;
-          }
-        }
-      }
-      // Should never happen
-      if (laf == null) {
-        laf = UIManager.getSystemLookAndFeelClassName();
-      }
+      laf = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
     }
     return laf;
-  }
-
-  public static void setUIFont(javax.swing.plaf.FontUIResource font) {
-    Enumeration<Object> keys = UIManager.getDefaults().keys();
-    while (keys.hasMoreElements()) {
-      Object key = keys.nextElement();
-      if (UIManager.get(key) instanceof javax.swing.plaf.FontUIResource) {
-        UIManager.put(key, font);
-      }
-    }
   }
 }

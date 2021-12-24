@@ -4,24 +4,17 @@
 
 <!-- Configuration file for UrlRewriteFilter http://www.tuckey.org/urlrewrite/ -->
 <urlrewrite>
-
   <rule>
     <name>Get Application Information</name>
     <note>
-      Request will go no further if the rule is matched (not calling chain.doFilter). These
-      informations can be
-      queried by a jnlpBuilder (like pacs-connector) in order to set the jar href version value in
-      the newly created jnlp
-      file. Empty value means version is not a release (ie: -SNAPSHOT)
+      Request will go no further if the rule is matched (not calling chain.doFilter). This
+      information can be queried by a service (like pacs-connector)
     </note>
 
     <from>^/AppInfo$</from>
-    <set type="response-header" name="Cache-Control">no-cache</set>
+    <set type="response-header" name="Cache-Control">no-cache, no-store, must-revalidate</set>
     <set type="response-header" name="Pragma">no-cache</set>
-
-    <set type="response-header" name="AppVersion">${jnlp.app.version}</set>
-    <set type="response-header" name="FelixVersion">${jnlp.felix.framework.version}</set>
-    <set type="response-header" name="SubstanceVersion">${jnlp.substance.version}</set>
+    <set type="response-header" name="Expires">0</set>
 
     <set type="response-header" name="WeasisVersion">${app.version}</set>
     <set type="response-header" name="JavaVersion">${java-version}</set>
@@ -30,105 +23,5 @@
     <set type="status">200</set>
     <to last="true">null</to>
   </rule>
-
-  <rule>
-    <name>Don't process non JAR files and bundles</name>
-    <note>
-      Pass through rule for everything but JAR file download request. Only JAR files at root context
-      would be
-      subsequently processed (ie: not those in "/bundle/*.jar.*). Set the "Cache-Control" HTTP
-      response header to no-cache
-      for any download request, then returned response can’t be used for subsequent requests to the
-      same URL before
-      checking if server response have changed.
-    </note>
-
-    <from>^\/(.+[\/]+.+\.jar.*|(?:(?!\.jar).)*)$</from>
-    <set type="response-header" name="Cache-Control">no-cache</set>
-    <set type="response-header" name="Pragma">no-cache</set>
-    <to last="true">-</to>
-  </rule>
-
-  <rule enabled="${jnlp.app.version.download.enable}">
-    <name>Forward to weasis-launcher.jar without profile and version suffix</name>
-    <note>
-      Any "/weasis-launcher[profile]__V[version].jar.*" download request will be forwarded to
-      "weasis-launcher.jar.*"
-      Version value must be matching to the one given at build time. Any gzip (.gz) or pack200
-      suffix extension (.pack.gz)
-      will be kept.
-    </note>
-
-    <from>^\/(weasis-launcher).*__V${regex.app.version}(\.jar.*)$</from>
-    <to last="true">$1$2</to>
-  </rule>
-
-  <rule>
-    <name>Forward to weasis-launcher.jar without profile suffix</name>
-    <note>
-      Any "/weasis-launcher[profile].jar.*" download request will be forwarded to
-      "weasis-launcher.jar.*" Any gzip
-      (.gz) or pack200 suffix extension (.pack.gz) will be kept.
-    </note>
-
-    <from>^\/(weasis-launcher)(?:(?!__V).)+(\.jar.*)$</from>
-    <to last="true">$1$2</to>
-  </rule>
-
-  <rule enabled="${jnlp.felix.framework.version.download.enable}">
-    <name>Forward to felix.jar without version suffix</name>
-
-    <from>^\/(felix)__V${regex.felix.framework.version}(\.jar.*)$</from>
-    <to last="true">$1$2</to>
-  </rule>
-
-  <rule enabled="${jnlp.substance.version.download.enable}">
-    <name>Forward to substance.jar without version suffix</name>
-
-    <from>^\/(substance)__V${regex.substance.version}(\.jar.*)$</from>
-    <to last="true">$1$2</to>
-  </rule>
-
-
-  <rule>
-    <name>No-cache for JAR download response</name>
-
-    <set type="response-header" name="Cache-Control">no-cache</set>
-    <set type="response-header" name="Pragma">no-cache</set>
-  </rule>
-
-  <rule enabled="${jnlp.app.version.download.enable}">
-    <name>Forward to weasis-launcher.jar with x-java-jnlp-version-id header set</name>
-    <note>
-      Set x-java-jnlp-version-id Header according to JNLP Version-based Download Protocol. Version
-      value must be
-      matching to the one given at build time. Any gzip (.gz) or pack200 suffix extension (.pack.gz)
-      will be kept.
-    </note>
-
-    <condition type="parameter" name="version-id">^(${regex.app.version})$</condition>
-    <from>^\/weasis-launcher\.jar.*$</from>
-    <set type="response-header" name="x-java-jnlp-version-id">%1</set>
-    <to last="true">-</to>
-  </rule>
-
-  <rule enabled="${jnlp.felix.framework.version.download.enable}">
-    <name>Forward to felix.jar with x-java-jnlp-version-id header set</name>
-
-    <condition type="parameter" name="version-id">^(${regex.felix.framework.version})$</condition>
-    <from>^\/felix\.jar.*$</from>
-    <set type="response-header" name="x-java-jnlp-version-id">%1</set>
-    <to last="true">-</to>
-  </rule>
-
-  <rule enabled="${jnlp.substance.version.download.enable}">
-    <name>Forward to substance.jar with x-java-jnlp-version-id header set</name>
-
-    <condition type="parameter" name="version-id">^(${regex.substance.version})$</condition>
-    <from>^\/substance\.jar.*$</from>
-    <set type="response-header" name="x-java-jnlp-version-id">%1</set>
-    <to last="true">-</to>
-  </rule>
-
 </urlrewrite>
 

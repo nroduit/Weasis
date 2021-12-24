@@ -35,7 +35,6 @@ import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnailable;
 import org.weasis.core.ui.docking.PluginTool;
@@ -117,10 +116,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     add(new JScrollPane(tree), BorderLayout.CENTER);
 
     panelFoot = new JPanel();
-    // To handle selection color with all L&Fs
-    panelFoot.setUI(new javax.swing.plaf.PanelUI() {});
-    panelFoot.setOpaque(true);
-    panelFoot.setBackground(JMVUtils.TREE_BACKROUND);
     add(panelFoot, BorderLayout.SOUTH);
   }
 

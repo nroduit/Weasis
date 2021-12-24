@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
@@ -139,8 +140,13 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
       if (thumb != null) {
         Container parent = thumb.getParent();
         if (parent instanceof JPanel) {
-          parent.setBackground(
-              selected ? JMVUtils.TREE_SELECTION_BACKROUND : JMVUtils.TREE_BACKROUND);
+          Color background;
+          if (selected) {
+            background = JMVUtils.getUIColor("Tree.selectionBackground", Color.DARK_GRAY);
+          } else {
+            background = JMVUtils.getUIColor("Tree.background", Color.LIGHT_GRAY);
+          }
+          parent.setBackground(background);
         }
       }
     }

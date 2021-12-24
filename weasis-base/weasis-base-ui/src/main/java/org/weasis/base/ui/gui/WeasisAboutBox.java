@@ -29,7 +29,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextPane;
-import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import org.weasis.base.ui.Messages;
@@ -77,7 +76,8 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
                 },
                 createSysInfo()));
     sysTable.getColumnModel().setColumnMargin(5);
-    JMVUtils.formatTableHeaders(sysTable, SwingConstants.CENTER);
+    sysTable.setAutoCreateRowSorter(true);
+    sysTable.setShowHorizontalLines(true);
     init();
     pack();
   }
@@ -98,7 +98,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     jPanelInfoSys.setLayout(borderLayout2);
 
     jPanelAbout.setLayout(gridBagLayout1);
-    jTextPane1.setEditorKit(JMVUtils.buildHTMLEditorKit(jTextPane1));
+    jTextPane1.setFocusable(false);
     jTextPane1.setContentType("text/html");
     jTextPane1.setEditable(false);
 

@@ -69,7 +69,6 @@ jobs:
       WEASIS_INPUT: "weasis-distributions/target/portable-dist/weasis-portable"
       WEASIS_OUTPUT: "weasis-distributions/target/native-dist"
       WEASIS_INPUT_BIN: "weasis-distributions/target/portable-dist/weasis-portable/weasis"
-      SUBSTANCE_PKG: "4.0.1"  # Package for Java 11 (remove in weasis 4)
     runs-on: ${{ matrix.os }}
     needs: build
     strategy:
@@ -121,13 +120,6 @@ jobs:
             rm -f ${{ env.WEASIS_INPUT_BIN }}/bundle/weasis-opencv-core-${{ matrix.wsystem }}-x86-64-*
           fi
           echo "$(ls ${{ env.WEASIS_INPUT_BIN }}/bundle/)"
-
-      - name: Replace substance by a more recent version for Java 11
-        # Should be removed in Weasis 4
-        shell: bash
-        run: |
-          curl -L -o "${{ env.WEASIS_INPUT }}/substance.jar" "https://raw.github.com/nroduit/mvn-repo/master/org/pushing-pixels/radiance-substance-all/${{ env.SUBSTANCE_PKG }}/radiance-substance-all-${{ env.SUBSTANCE_PKG }}.jar"
-          echo "$(ls -la ${{ env.WEASIS_INPUT }})"
 
       - name: Import Developer Certificate
         uses: apple-actions/import-codesign-certs@v1

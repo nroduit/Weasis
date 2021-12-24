@@ -206,53 +206,6 @@
                   <replacement>\\.</replacement>
                   <failIfNoMatch>false</failIfNoMatch>
                 </regexPropertySetting>
-                <regexPropertySetting>
-                  <name>regex.felix.framework.version</name>
-                  <value>${felix.framework.version}</value>
-                  <regex>[\.]</regex>
-                  <replacement>\\.</replacement>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
-                <regexPropertySetting>
-                  <name>regex.substance.version</name>
-                  <value>${substance.version}</value>
-                  <regex>[\.]</regex>
-                  <replacement>\\.</replacement>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
-              </regexPropertySettings>
-            </configuration>
-          </execution>
-          <execution>
-            <id>urlrewrite-jnlp-version-properties</id>
-            <phase>validate</phase>
-            <goals>
-              <goal>regex-properties</goal>
-            </goals>
-
-            <configuration>
-              <regexPropertySettings>
-                <regexPropertySetting>
-                  <name>jnlp.app.version</name>
-                  <value>${app.version}</value>
-                  <regex>^.+-SNAPSHOT$</regex>
-                  <replacement/>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
-                <regexPropertySetting>
-                  <name>jnlp.felix.framework.version</name>
-                  <value>${felix.framework.version}</value>
-                  <regex>^.+-SNAPSHOT$</regex>
-                  <replacement/>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
-                <regexPropertySetting>
-                  <name>jnlp.substance.version</name>
-                  <value>${substance.version}</value>
-                  <regex>^.+-SNAPSHOT$</regex>
-                  <replacement/>
-                  <failIfNoMatch>false</failIfNoMatch>
-                </regexPropertySetting>
               </regexPropertySettings>
             </configuration>
           </execution>
@@ -271,32 +224,6 @@
             </goals>
             <configuration>
               <artifactItems>
-                <!-- ===================================== -->
-                <!-- OSGI Framework and Launcher -->
-                <!-- (only one version, referenced in JNLP) -->
-                <!-- ===================================== -->
-                <artifactItem>
-                  <groupId>org.apache.felix</groupId>
-                  <artifactId>org.apache.felix.framework</artifactId>
-                  <version>${felix.framework.version}</version>
-                  <outputDirectory>${tmp.dir}</outputDirectory>
-                  <destFileName>felix.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.launcher</groupId>
-                  <artifactId>weasis-launcher</artifactId>
-                  <version>${app.version}</version>
-                  <outputDirectory>${tmp.dir}</outputDirectory>
-                  <destFileName>weasis-launcher.jar</destFileName>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.pushing-pixels</groupId>
-                  <artifactId>radiance-substance-all</artifactId>
-                  <version>${substance.version}</version>
-                  <outputDirectory>${tmp.dir}</outputDirectory>
-                  <destFileName>substance.jar</destFileName>
-                </artifactItem>
-
                 <!-- ===================================== -->
                 <!-- Felix bundles -->
                 <!-- ===================================== -->
@@ -638,86 +565,6 @@
             </configuration>
           </execution>
         </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.8</version>
-        <executions>
-          <execution>
-            <id>enable-JNLP-version-based-download-protocol</id>
-            <phase>validate</phase>
-
-            <configuration>
-              <exportAntProperties>true</exportAntProperties>
-
-              <!-- @note :properties in ant are immutable, then following assignments will only take place if prop is not yet set. -->
-              <target>
-                <condition property="is.app.version.snapshot">
-                  <contains string="${app.version}" substring="SNAPSHOT"/>
-                </condition>
-                <condition property="jnlp.app.version.download.enable" value="false">
-                  <isset property="is.app.version.snapshot"/>
-                </condition>
-                <property name="jnlp.app.version.download.enable" value="true"/>
-
-                <condition property="is.felix.framework.version.snapshot">
-                  <contains string="${felix.framework.version}" substring="SNAPSHOT"/>
-                </condition>
-                <condition property="jnlp.felix.framework.version.download.enable" value="false">
-                  <isset property="is.felix.framework.version.snapshot"/>
-                </condition>
-                <property name="jnlp.felix.framework.version.download.enable" value="true"/>
-
-                <condition property="is.substance.version.snapshot">
-                  <contains string="${substance.version}" substring="SNAPSHOT"/>
-                </condition>
-                <condition property="jnlp.substance.version.download.enable" value="false">
-                  <isset property="is.substance.version.snapshot"/>
-                </condition>
-                <property name="jnlp.substance.version.download.enable" value="true"/>
-              </target>
-
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-
-          <execution>
-            <id>add-trusted-library-attribute</id>
-            <phase>process-resources</phase>
-            <configuration>
-              <target>
-                <ant antfile="${basedir}/etc/build-trusted.xml">
-                  <target name="addTrustedLibraries"/>
-                </ant>
-              </target>
-            </configuration>
-            <goals>
-              <goal>run</goal>
-            </goals>
-          </execution>
-        </executions>
-        <dependencies>
-          <dependency>
-            <groupId>ant-contrib</groupId>
-            <artifactId>ant-contrib</artifactId>
-            <version>1.0b3</version>
-            <exclusions>
-              <exclusion>
-                <groupId>ant</groupId>
-                <artifactId>ant</artifactId>
-              </exclusion>
-            </exclusions>
-          </dependency>
-          <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant-nodeps</artifactId>
-            <version>1.8.1</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>

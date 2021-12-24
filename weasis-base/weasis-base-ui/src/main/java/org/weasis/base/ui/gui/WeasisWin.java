@@ -12,8 +12,6 @@ package org.weasis.base.ui.gui;
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabDockActionLocation;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabStateInfo;
-import bibliothek.extension.gui.dock.theme.eclipse.rex.RexSystemColor;
-import bibliothek.gui.DockUI;
 import bibliothek.gui.dock.ScreenDockStation;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
@@ -29,13 +27,8 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
-import bibliothek.gui.dock.util.Priority;
-import bibliothek.gui.dock.util.color.ColorManager;
-import bibliothek.gui.dock.util.laf.LookAndFeelColors;
-import bibliothek.util.Colors;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog;
 import java.awt.Frame;
@@ -88,7 +81,6 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
-import javax.swing.LookAndFeel;
 import javax.swing.RootPaneContainer;
 import javax.swing.TransferHandler;
 import javax.swing.TransferHandler.DropLocation;
@@ -297,42 +289,6 @@ public class WeasisWin {
 
     // control.setGroupBehavior(CGroupBehavior.TOPMOST);
     // control.setDefaultLocation(centerArea.getStationLocation());
-
-    // Fix substance
-    LookAndFeel laf = javax.swing.UIManager.getLookAndFeel();
-    if (laf.getClass().getName().startsWith("org.pushingpixels")) {
-      ColorManager colors = control.getController().getColors();
-
-      Color selection = javax.swing.UIManager.getColor("TextArea.selectionBackground");
-      Color inactiveColor = DockUI.getColor(LookAndFeelColors.TITLE_BACKGROUND).darker();
-      Color inactiveColorGradient = DockUI.getColor(LookAndFeelColors.PANEL_BACKGROUND);
-      Color activeColor = selection.darker();
-      Color activeTextColor = javax.swing.UIManager.getColor("TextArea.selectionForeground");
-
-      colors.put(Priority.CLIENT, "stack.tab.border.selected", inactiveColorGradient);
-      colors.put(Priority.CLIENT, "stack.tab.border.selected.focused", selection);
-      colors.put(Priority.CLIENT, "stack.tab.border.selected.focuslost", inactiveColor);
-
-      colors.put(Priority.CLIENT, "stack.tab.top.selected", inactiveColor);
-      colors.put(Priority.CLIENT, "stack.tab.top.selected.focused", activeColor);
-      colors.put(Priority.CLIENT, "stack.tab.top.selected.focuslost", inactiveColor);
-
-      colors.put(Priority.CLIENT, "stack.tab.bottom.selected", inactiveColorGradient);
-      colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focused", selection);
-      colors.put(Priority.CLIENT, "stack.tab.bottom.selected.focuslost", inactiveColor);
-
-      colors.put(Priority.CLIENT, "stack.tab.text.selected", RexSystemColor.getInactiveTextColor());
-      colors.put(Priority.CLIENT, "stack.tab.text.selected.focused", activeTextColor);
-      colors.put(
-          Priority.CLIENT,
-          "stack.tab.text.selected.focuslost",
-          RexSystemColor.getInactiveTextColor());
-
-      colors.put(Priority.CLIENT, "title.flap.active", selection);
-      colors.put(Priority.CLIENT, "title.flap.active.text", activeTextColor);
-      colors.put(Priority.CLIENT, "title.flap.active.knob.highlight", Colors.brighter(selection));
-      colors.put(Priority.CLIENT, "title.flap.active.knob.shadow", Colors.darker(selection));
-    }
 
     control.addFocusListener(selectionListener);
 

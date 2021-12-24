@@ -50,7 +50,7 @@ public class Activator implements BundleActivator, ServiceListener {
   public void start(final BundleContext bundleContext) throws Exception {
     registerExistingComponents(bundleContext);
 
-    // Instantiate UI components in EDT (necessary with Substance Theme)
+    // Instantiate UI components in EDT
     GuiExecutor.instance()
         .execute(() -> UIManager.EXPLORER_PLUGIN_TOOLBARS.add(new ImportToolBar(3)));
 
@@ -110,7 +110,7 @@ public class Activator implements BundleActivator, ServiceListener {
         // The View2dContainer name should be referenced as a property in the provided service
         if (Boolean.parseBoolean(
             (String) serviceReference.getProperty(View2dContainer.class.getName()))) {
-          // Instantiate UI components in EDT (necessary with Substance Theme)
+          // Instantiate UI components in EDT
           GuiExecutor.instance()
               .execute(() -> registerComponent(bundleContext.getService(serviceReference)));
         }

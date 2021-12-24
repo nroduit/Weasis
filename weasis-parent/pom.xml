@@ -26,7 +26,7 @@
 
     <app.version>${revision}${changelist}</app.version>
     <felix.framework.version>7.0.3</felix.framework.version>
-    <substance.version>4.0.1</substance.version>
+    <flatlaf.version>2.0-rc1</flatlaf.version>
     <xz.version>1.9</xz.version>
 
     <osgi.cmpn.version>8.0.0</osgi.cmpn.version>

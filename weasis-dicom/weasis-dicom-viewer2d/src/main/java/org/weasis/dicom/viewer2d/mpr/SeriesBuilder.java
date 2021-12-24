@@ -391,7 +391,7 @@ public class SeriesBuilder {
                 () -> {
                   bar.setMaximum(newSeries.length);
                   bar.setValue(0);
-                  // Force to reset the progress bar (substance)
+                  // Force to reset the progress bar
                   bar.updateUI();
                   view.repaint();
                 });

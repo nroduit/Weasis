@@ -31,7 +31,6 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -83,7 +82,6 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     panel.setLayout(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-    htmlPanel.setEditorKit(JMVUtils.buildHTMLEditorKit(htmlPanel));
     htmlPanel.setContentType("text/html");
     htmlPanel.setEditable(false);
     htmlPanel.addHyperlinkListener(

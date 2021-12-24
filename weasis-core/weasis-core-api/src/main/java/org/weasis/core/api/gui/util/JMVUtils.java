@@ -25,7 +25,6 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
-import java.util.Objects;
 import javax.swing.AbstractAction;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -53,11 +52,6 @@ import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import javax.swing.text.DefaultFormatterFactory;
-import javax.swing.text.Style;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyledDocument;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -68,27 +62,8 @@ import org.weasis.core.util.StringUtil;
 public class JMVUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(JMVUtils.class);
 
-  public static final Color TREE_BACKROUND = (Color) javax.swing.UIManager.get("Tree.background");
-  public static final Color TREE_SELECTION_BACKROUND =
-      (Color) javax.swing.UIManager.get("Tree.selectionBackground");
-
   private JMVUtils() {
     super();
-  }
-
-  /** @deprecated use LangUtil instead */
-  @Deprecated
-  public static boolean getNULLtoFalse(Object val) {
-    return Boolean.TRUE.equals(val);
-  }
-
-  /** @deprecated use LangUtil instead */
-  @Deprecated
-  public static boolean getNULLtoTrue(Object val) {
-    if (val instanceof Boolean) {
-      return (Boolean) val;
-    }
-    return true;
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {
@@ -260,34 +235,15 @@ public class JMVUtils {
   }
 
   public static Dimension getSmallIconButtonSize() {
-    String look = UIManager.getLookAndFeel().getName();
-    if ("CDE/Motif".equalsIgnoreCase(look)) { // NON-NLS
-      return new Dimension(38, 34);
-    } else if (look.startsWith("GTK")) {
-      return new Dimension(28, 28);
-    } else {
-      return new Dimension(22, 22);
-    }
+    return new Dimension(22, 22);
   }
 
   public static Dimension getBigIconButtonSize() {
-    String look = UIManager.getLookAndFeel().getName();
-    if ("CDE/Motif".equalsIgnoreCase(look)) { // NON-NLS
-      return new Dimension(46, 42);
-    } else if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { // NON-NLS
-      return new Dimension(36, 36);
-    } else {
-      return new Dimension(34, 34);
-    }
+    return new Dimension(34, 34);
   }
 
   public static Dimension getBigIconToogleButtonSize() {
-    String look = UIManager.getLookAndFeel().getName();
-    if ("Mac OS X Aqua".equalsIgnoreCase(look) || look.startsWith("GTK")) { // NON-NLS
-      return new Dimension(36, 36);
-    } else {
-      return new Dimension(30, 30);
-    }
+    return new Dimension(30, 30);
   }
 
   public static JButton createHelpButton(final String topic, boolean small) {
@@ -311,39 +267,6 @@ public class JMVUtils {
         });
 
     return jButtonHelp;
-  }
-
-  public static HTMLEditorKit buildHTMLEditorKit(JComponent component) {
-    Objects.requireNonNull(component);
-    HTMLEditorKit kit = new HTMLEditorKit();
-    StyleSheet ss = kit.getStyleSheet();
-    ss.addRule(
-        "body {font-family:sans-serif;font-size:12pt;background-color:#"
-            + Integer.toHexString((component.getBackground().getRGB() & 0xffffff) | 0x1000000)
-                .substring(1)
-            + ";color:#"
-            + Integer.toHexString((component.getForeground().getRGB() & 0xffffff) | 0x1000000)
-                .substring(1)
-            + ";margin:3;font-weight:normal;}");
-    return kit;
-  }
-
-  public static void addStylesToHTML(StyledDocument doc) {
-    // Initialize some styles.
-    Style regular = doc.getStyle("default"); // NON-NLS
-    Style s = doc.addStyle("title", regular); // NON-NLS
-    StyleConstants.setFontSize(s, 16);
-    StyleConstants.setBold(s, true);
-    s = doc.addStyle("bold", regular); // NON-NLS
-    StyleConstants.setBold(s, true);
-    StyleConstants.setFontSize(s, 12);
-    s = doc.addStyle("small", regular); // NON-NLS
-    StyleConstants.setFontSize(s, 10);
-    s = doc.addStyle("large", regular); // NON-NLS
-    StyleConstants.setFontSize(s, 14);
-    s = doc.addStyle("italic", regular); // NON-NLS
-    StyleConstants.setFontSize(s, 12);
-    StyleConstants.setItalic(s, true);
   }
 
   public static int getMaxLength(Rectangle bounds) {
@@ -426,6 +349,11 @@ public class JMVUtils {
     if (menu != null && item != null) {
       menu.add(item);
     }
+  }
+
+  public static Color getUIColor(String key, Color defaultColor) {
+    Color color = UIManager.getColor(key);
+    return color != null ? color : defaultColor;
   }
 
   public static Color getComplementaryColor(Color color) {
