@@ -145,8 +145,7 @@ public class ViewerFactory implements SeriesViewerFactory {
 
   @Override
   public boolean canReadMimeType(String mimeType) {
-    // NON-NLS
-    return mimeType != null && mimeType.startsWith("image/");
+    return mimeType != null && mimeType.startsWith("image/"); // NON-NLS
   }
 
   @Override
