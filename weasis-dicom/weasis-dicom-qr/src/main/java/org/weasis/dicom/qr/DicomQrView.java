@@ -67,7 +67,7 @@ import org.weasis.core.api.gui.util.DropDownLabel;
 import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
@@ -278,8 +278,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
-    JMVUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
-    JMVUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
+    GuiUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
+    GuiUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
     initGUI();
     tree.setBorder(
         BorderFactory.createCompoundBorder(
@@ -321,7 +321,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON);
     sPanel.add(lblDest);
-    JMVUtils.setPreferredWidth(comboDestinationNode, 185, 185);
+    GuiUtils.setPreferredWidth(comboDestinationNode, 185, 185);
     AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
     sPanel.add(comboDestinationNode);
 
@@ -342,7 +342,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
     sPanel.add(lblDest);
 
-    JMVUtils.setPreferredWidth(comboCallingNode, 185, 185);
+    GuiUtils.setPreferredWidth(comboCallingNode, 185, 185);
     AbstractDicomNode.addTooltipToComboList(comboCallingNode);
     sPanel.add(comboCallingNode);
 
@@ -355,7 +355,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
           dialog.showPage(
               org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list"));
-          JMVUtils.showCenterScreen(dialog);
+          GuiUtils.showCenterScreen(dialog);
           initNodeList();
         });
     return sPanel;
@@ -450,10 +450,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     panel4.add(comboTags);
     comboTags.setMaximumRowCount(15);
     // comboTags.setFont(FontTools.getFont11());
-    JMVUtils.setPreferredWidth(comboTags, 180, 180);
+    GuiUtils.setPreferredWidth(comboTags, 180, 180);
     // Update UI before adding the Tooltip feature in the combobox list
     comboTags.updateUI();
-    JMVUtils.addTooltipToComboList(comboTags);
+    GuiUtils.addTooltipToComboList(comboTags);
 
     StringBuilder buf = new StringBuilder("<html>");
     buf.append(Messages.getString("DicomQrView.tips_wildcard"));
@@ -463,7 +463,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     buf.append(Messages.getString("DicomQrView.tips_question"));
     buf.append("</html>");
     tfSearch.setToolTipText(buf.toString());
-    JMVUtils.setPreferredWidth(tfSearch, 370, 100);
+    GuiUtils.setPreferredWidth(tfSearch, 370, 100);
     panel4.add(tfSearch);
     sPanel.add(panel4);
 
@@ -513,7 +513,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     d.getSettings().setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
     d.getSettings().setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
     // JMVUtils.setPreferredWidth(d.getComponentDateTextField(), 95);
-    JMVUtils.setPreferredWidth(d.getComponentToggleCalendarButton(), 35);
+    GuiUtils.setPreferredWidth(d.getComponentToggleCalendarButton(), 35);
     d.addDateChangeListener(dateChangeListener);
     return d;
   }

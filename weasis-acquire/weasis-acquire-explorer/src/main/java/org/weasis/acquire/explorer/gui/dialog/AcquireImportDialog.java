@@ -36,7 +36,7 @@ import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.control.ImportPanel;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ThreadUtil;
@@ -132,7 +132,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     c.anchor = GridBagConstraints.WEST;
     panel.add(btn2, c);
 
-    JMVUtils.setPreferredWidth(spinner, 75);
+    GuiUtils.setPreferredWidth(spinner, 75);
     c = new GridBagConstraints();
     c.gridx = 1;
     c.gridy = 2;
@@ -156,7 +156,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     c.anchor = GridBagConstraints.WEST;
     panel.add(btn3, c);
 
-    JMVUtils.setPreferredWidth(serieName, 150);
+    GuiUtils.setPreferredWidth(serieName, 150);
     serieName.addFocusListener(
         new FocusListener() {
 

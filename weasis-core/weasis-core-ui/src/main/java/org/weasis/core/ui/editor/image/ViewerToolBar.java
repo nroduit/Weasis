@@ -137,7 +137,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     }
 
     if (activeMouse > 1) {
-      addSeparator(WtoolBar.SEPARATOR_2x24);
+      addSeparator();
     }
 
     if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {

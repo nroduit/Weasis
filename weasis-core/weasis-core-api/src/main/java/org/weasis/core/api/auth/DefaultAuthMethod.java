@@ -21,7 +21,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
 
 public class DefaultAuthMethod implements AuthMethod {
@@ -105,7 +105,7 @@ public class DefaultAuthMethod implements AuthMethod {
       OAuth20Service service = server.getResponseHandler().getService();
       final String authorizationUrl =
           service.createAuthorizationUrlBuilder().additionalParams(additionalParams).build();
-      JMVUtils.openInDefaultBrowser(null, new URL(authorizationUrl));
+      GuiUtils.openInDefaultBrowser(null, new URL(authorizationUrl));
       for (int i = 0; i < 60; i++) {
         if (server.getResponseHandler().getCode() != null) {
           break;

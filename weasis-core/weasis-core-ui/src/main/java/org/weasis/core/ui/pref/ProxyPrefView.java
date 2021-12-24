@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.CryptoHandler;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
@@ -122,7 +122,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     add(bottomPanel, BorderLayout.SOUTH);
 
     JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
-    bottomPanel.add(JMVUtils.createHelpButton("proxy", true)); // NON-NLS
+    bottomPanel.add(GuiUtils.createHelpButton("proxy", true)); // NON-NLS
     bottomPanel.add(btnNewButton);
     btnNewButton.addActionListener(e -> resetoDefaultValues());
 
@@ -184,8 +184,8 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     portFormat.setMaximumFractionDigits(0);
     port.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(portFormat)));
     port.setColumns(5);
-    JMVUtils.setPreferredWidth(port, 60);
-    JMVUtils.addCheckAction(port);
+    GuiUtils.setPreferredWidth(port, 60);
+    GuiUtils.addCheckAction(port);
   }
 
   private JPanel buildProxyPanel() {
@@ -336,7 +336,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     String val = proxyHostHttp.getText();
     p.setProperty(PROXY_HTTP_HOST, val);
     applyProxyProperty("http.proxyHost", val, mproxy);
-    Number port = JMVUtils.getFormattedValue(proxyPortHttp);
+    Number port = GuiUtils.getFormattedValue(proxyPortHttp);
     if (port != null) {
       p.putIntProperty(PROXY_HTTP_PORT, port.intValue());
       applyProxyPortProperty("http.proxyPort", port.intValue(), val, mproxy);
@@ -347,7 +347,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
     val = proxyHostSecure.getText();
     p.setProperty(PROXY_HTTPS_HOST, val);
-    port = JMVUtils.getFormattedValue(proxyPortSecure);
+    port = GuiUtils.getFormattedValue(proxyPortSecure);
     applyProxyProperty("https.proxyHost", val, mproxy);
     if (port != null) {
       p.putIntProperty(PROXY_HTTPS_PORT, port.intValue());
@@ -360,7 +360,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     val = proxyHostFtp.getText();
     p.setProperty(PROXY_FTP_HOST, val);
     applyProxyProperty("ftp.proxyHost", val, mproxy);
-    port = JMVUtils.getFormattedValue(proxyPortFtp);
+    port = GuiUtils.getFormattedValue(proxyPortFtp);
     if (port != null) {
       p.putIntProperty(PROXY_FTP_PORT, port.intValue());
       applyProxyPortProperty("ftp.proxyPort", port.intValue(), val, mproxy);
@@ -372,7 +372,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     val = proxyHostSocks.getText();
     p.setProperty(PROXY_SOCKS_HOST, val);
     applyProxyProperty("socksProxyHost", val, mproxy);
-    port = JMVUtils.getFormattedValue(proxyPortSocks);
+    port = GuiUtils.getFormattedValue(proxyPortSocks);
     if (port != null) {
       p.putIntProperty(PROXY_SOCKS_PORT, port.intValue());
       applyProxyPortProperty("socksProxyPort", port.intValue(), val, mproxy);

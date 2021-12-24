@@ -17,7 +17,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.image.dockable.MiniTool;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
@@ -132,9 +132,9 @@ public abstract class PluginTool extends JPanel implements DockableTool {
       UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
       Component component = getToolComponent();
       if (component instanceof MiniTool) {
-        JMVUtils.setPreferredWidth(component, getDockableWidth(), getDockableWidth());
+        GuiUtils.setPreferredWidth(component, getDockableWidth(), getDockableWidth());
       } else {
-        JMVUtils.setPreferredWidth(component, getDockableWidth());
+        GuiUtils.setPreferredWidth(component, getDockableWidth());
       }
       if (dockable.getFocusComponent() == component) {
         UIManager.DOCKING_CONTROL.addDockable(dockable);

@@ -19,7 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontTools;
@@ -78,7 +78,7 @@ class InfoPanel extends JPanel {
         };
     sliderListener.enableAction(true);
     JSliderW zoomSlider = sliderListener.createSlider(0, true);
-    JMVUtils.setPreferredWidth(zoomSlider, 250, 250);
+    GuiUtils.setPreferredWidth(zoomSlider, 250, 250);
     GridBagConstraints gbcPanel = new GridBagConstraints();
     gbcPanel.fill = GridBagConstraints.NONE;
     gbcPanel.gridx = 0;

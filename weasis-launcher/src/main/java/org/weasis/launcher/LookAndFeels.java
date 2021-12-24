@@ -34,7 +34,7 @@ public final class LookAndFeels {
     "com.formdev.flatlaf.FlatLightLaf"
   };
 
-  public static boolean installFlatLaf() {
+  public static void installFlatLaf() {
     List<LookAndFeelInfo> tmp = new ArrayList<>();
     Arrays.asList(FlatAllIJThemes.INFOS)
         .forEach(
@@ -50,7 +50,6 @@ public final class LookAndFeels {
       }
     }
     UIManager.setInstalledLookAndFeels(tmp.toArray(new LookAndFeelInfo[0]));
-    return true;
   }
 
   private static boolean isClassExist(String clazz) {

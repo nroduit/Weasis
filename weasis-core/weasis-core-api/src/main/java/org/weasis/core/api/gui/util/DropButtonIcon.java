@@ -9,12 +9,13 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
-import javax.swing.UIManager;
 
 public class DropButtonIcon implements Icon {
 
@@ -28,13 +29,19 @@ public class DropButtonIcon implements Icon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = (Graphics2D) g;
     leftIcon.paintIcon(c, g2d, x, y);
-    if (c instanceof DropDownButton) {
-      ButtonModel model = ((DropDownButton) c).getModel();
-      if (model.isRollover() && !model.isPressed()) {
-        g2d.setPaint(UIManager.getColor("controlShadow"));
+    if (c instanceof DropDownButton button) {
+      ButtonModel model = button.getModel();
+      Color color;
+      if (model.isRollover()) {
+        color = FlatUIUtils.getUIColor("ComboBox.buttonHoverArrowColor", Color.GRAY);
+      } else if (model.isPressed()) {
+        color = FlatUIUtils.getUIColor("ComboBox.buttonPressedArrowColor", Color.LIGHT_GRAY);
+      } else if (!model.isEnabled()) {
+        color = FlatUIUtils.getUIColor("ComboBox.buttonDisabledArrowColor", Color.DARK_GRAY);
       } else {
-        g2d.setPaint(UIManager.getColor("controlHighlight"));
+        color = FlatUIUtils.getUIColor("ComboBox.buttonArrowColor", Color.DARK_GRAY);
       }
+      g2d.setPaint(color);
     }
     int shiftx = x + leftIcon.getIconWidth() + 1;
     int shifty = y + leftIcon.getIconHeight() - 5;

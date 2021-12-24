@@ -41,7 +41,7 @@ import javax.swing.border.TitledBorder;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -193,7 +193,7 @@ public class HistogramView extends JComponent
 
       JPanel row2 = new JPanel();
       row2.add(new JLabel(Messages.getString("HistogramView.bins") + StringUtil.COLON));
-      JMVUtils.formatCheckAction(spinnerBins);
+      GuiUtils.formatCheckAction(spinnerBins);
       MeasurableLayer layer = view2DPane.getMeasurableLayer();
       int datatype = ImageConversion.convertToDataType(imageSource.type());
       boolean intVal = datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT;

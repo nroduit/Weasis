@@ -24,7 +24,7 @@ import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.acquire.explorer.gui.list.AcquireThumbnailListPane;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -58,7 +58,7 @@ public class ImportPanel extends JPanel {
               AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
           if (!selected.isEmpty()) {
             AcquireImportDialog dialog = new AcquireImportDialog(this, selected);
-            JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+            GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
           }
         });
     add(importBtn);

@@ -25,7 +25,6 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.util.WtoolBar;
 
 public abstract class MiniTool extends PluginTool implements ActionListener {
 
@@ -59,8 +58,6 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
           }
         };
     button.setToolTipText(Messages.getString("MiniToolDockable.change"));
-    WtoolBar.installButtonUI(button);
-    WtoolBar.configureButton(button);
 
     button.setAlignmentY(CENTER_ALIGNMENT);
     button.setAlignmentX(CENTER_ALIGNMENT);

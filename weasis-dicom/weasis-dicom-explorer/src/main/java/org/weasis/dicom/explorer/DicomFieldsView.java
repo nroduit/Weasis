@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -49,7 +50,7 @@ import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.util.TagUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -160,7 +161,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   }
 
   private static void applyFormatting(StyledDocument doc) {
-    Color color = JMVUtils.getUIColor("TextArea.foreground", Color.DARK_GRAY);
+    Color color = FlatUIUtils.getUIColor("TextArea.foreground", Color.DARK_GRAY);
     Style bold = doc.addStyle("bold", doc.getStyle(StyleContext.DEFAULT_STYLE));
     StyleConstants.setBold(bold, true);
     StyleConstants.setForeground(bold, color);
@@ -407,7 +408,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
           container instanceof Component
               ? (Component) container
               : UIManager.MAIN_AREA.getComponent();
-      JMVUtils.showCenterScreen(frame, c);
+      GuiUtils.showCenterScreen(frame, c);
     }
   }
 
@@ -434,7 +435,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       this.add(
           new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE));
       final JTextField tf = new JTextField();
-      JMVUtils.setPreferredWidth(tf, 300, 100);
+      GuiUtils.setPreferredWidth(tf, 300, 100);
       tf.addActionListener(
           evt -> {
             currentSearchPattern = tf.getText().trim();

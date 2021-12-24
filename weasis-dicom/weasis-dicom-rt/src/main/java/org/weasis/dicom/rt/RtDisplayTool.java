@@ -56,7 +56,7 @@ import org.knowm.xchart.XYSeries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -367,7 +367,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         XChartPanel<XYChart> chartPanel = new XChartPanel<>(dvhChart);
         d.getContentPane().add(chartPanel, BorderLayout.CENTER);
         d.pack();
-        JMVUtils.showCenterScreen(d);
+        GuiUtils.showCenterScreen(d);
       }
     }
   }

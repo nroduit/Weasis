@@ -182,10 +182,10 @@ public abstract class ComboItemListener<T> extends BasicActionState
   public JComboBox<T> createCombo(int width) {
     final ComboItems combo = new ComboItems();
     registerActionState(combo);
-    JMVUtils.setPreferredWidth(combo, width, width);
+    GuiUtils.setPreferredWidth(combo, width, width);
     // Update UI before adding the Tooltip feature in the combobox list
     combo.updateUI();
-    JMVUtils.addTooltipToComboList(combo);
+    GuiUtils.addTooltipToComboList(combo);
     return combo;
   }
 

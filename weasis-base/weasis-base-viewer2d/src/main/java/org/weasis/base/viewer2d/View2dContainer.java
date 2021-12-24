@@ -43,7 +43,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -295,12 +295,12 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
       if (eventManager instanceof EventManager) {
         EventManager manager = (EventManager) eventManager;
 
-        JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
-        JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
-        JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
         menuRoot.add(new JSeparator());
-        JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
-        JMVUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
+        GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
         // JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
         menuRoot.add(new JSeparator());
         menuRoot.add(manager.getResetMenu(null));

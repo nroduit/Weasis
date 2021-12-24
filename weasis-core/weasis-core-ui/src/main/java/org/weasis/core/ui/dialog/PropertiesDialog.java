@@ -25,7 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.border.EmptyBorder;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
@@ -67,7 +67,7 @@ public abstract class PropertiesDialog extends JDialog {
     jPanelFooter.setLayout(gridBagLayout2);
 
     jPanel1.setLayout(gridBagLayout1);
-    JMVUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
+    GuiUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
     jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width") + StringUtil.COLON);
     jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color") + StringUtil.COLON);
     jButtonColor.setText(Messages.getString("MeasureTool.pick"));

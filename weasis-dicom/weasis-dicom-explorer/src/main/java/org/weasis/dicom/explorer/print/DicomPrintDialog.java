@@ -27,7 +27,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -160,7 +160,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     printersComboBox.setModel(new DefaultComboBoxModel<>());
 
     AbstractDicomNode.loadDicomNodes(printersComboBox, AbstractDicomNode.Type.PRINTER);
-    JMVUtils.setPreferredWidth(printersComboBox, 185, 185);
+    GuiUtils.setPreferredWidth(printersComboBox, 185, 185);
     AbstractDicomNode.addTooltipToComboList(printersComboBox);
 
     Component horizontalStrut = Box.createHorizontalStrut(20);

@@ -35,7 +35,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -90,12 +90,12 @@ public class CalibrationView extends JPanel {
     gridBagLayout2.rowWeights = new double[] {1.0, 0.0};
     gridBagLayout2.columnWeights = new double[] {0.0, 1.0, 0.0, 0.0};
     jPanelMode.setLayout(gridBagLayout2);
-    JMVUtils.setPreferredWidth(jTextFieldLineWidth, 170);
+    GuiUtils.setPreferredWidth(jTextFieldLineWidth, 170);
     jTextFieldLineWidth.setLocale(LocalUtil.getLocaleFormat());
     jTextFieldLineWidth.setFormatterFactory(
         DecFormater.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
     jTextFieldLineWidth.setValue(1.0);
-    JMVUtils.addCheckAction(jTextFieldLineWidth);
+    GuiUtils.addCheckAction(jTextFieldLineWidth);
 
     jLabelKnownDist.setText(Messages.getString("CalibrationView.known") + StringUtil.COLON);
     this.setLayout(borderLayout1);
@@ -239,7 +239,7 @@ public class CalibrationView extends JPanel {
   public void applyNewCalibration() {
     ImageElement image = view2d.getImage();
     if (image != null) {
-      Number inputCalibVal = JMVUtils.getFormattedValue(jTextFieldLineWidth);
+      Number inputCalibVal = GuiUtils.getFormattedValue(jTextFieldLineWidth);
       if (inputCalibVal != null) {
         double imgRatio = image.getPixelSize();
         Unit unit = (Unit) jComboBoxUnit.getSelectedItem();

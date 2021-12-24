@@ -15,7 +15,7 @@ import javax.swing.JButton;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -87,7 +87,7 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
             dialog.pack();
             MipView.buildMip(newView2d, false);
             dialog.updateThickness();
-            JMVUtils.showCenterScreen(dialog, container);
+            GuiUtils.showCenterScreen(dialog, container);
           }
         }
       }

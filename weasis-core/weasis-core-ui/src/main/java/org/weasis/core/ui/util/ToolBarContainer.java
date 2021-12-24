@@ -9,24 +9,27 @@
  */
 package org.weasis.core.ui.util;
 
+import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.Icon;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
 
-@SuppressWarnings("serial")
 public class ToolBarContainer extends JPanel {
-  public static final Toolbar EMPTY = ToolBarContentBuilder.buildEmptyToolBar("empty");
+  public static final Toolbar EMPTY = buildEmptyToolBar("empty");
   private final List<Toolbar> bars = new ArrayList<>();
 
   public ToolBarContainer() {
-    setOpaque(false);
     setLayout(new WrapLayout(FlowLayout.LEADING, 2, 2));
     addMouseListener(new PopClickListener());
   }
@@ -129,5 +132,38 @@ public class ToolBarContainer extends JPanel {
         }
       }
     }
+  }
+
+  public static WtoolBar buildEmptyToolBar(String name) {
+    WtoolBar toolBar =
+        new WtoolBar(name, 0) {
+          @Override
+          public Type getType() {
+            return Type.EMPTY;
+          }
+        };
+    toolBar.add(buildToolBarSizerComponent());
+    return toolBar;
+  }
+
+  private static JComponent buildToolBarSizerComponent() {
+    return new JButton(
+        new Icon() {
+
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            // Do noting
+          }
+
+          @Override
+          public int getIconWidth() {
+            return 2;
+          }
+
+          @Override
+          public int getIconHeight() {
+            return 32;
+          }
+        });
   }
 }

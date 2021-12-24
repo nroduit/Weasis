@@ -25,6 +25,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTree;
 import javax.swing.JViewport;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.Messages;
@@ -162,9 +163,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
   /** iniTree */
   protected void iniTree() {
-
     // fill up tree
-
     Enumeration<?> children = pagesRoot.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
@@ -184,6 +183,10 @@ public abstract class AbstractWizardDialog extends JDialog {
         }
       }
     }
+    DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getCellRenderer();
+    renderer.setLeafIcon(null);
+    renderer.setClosedIcon(null);
+    renderer.setOpenIcon(null);
     DefaultTreeModel model = new DefaultTreeModel(pagesRoot, false);
     tree.setModel(model);
     tree.setShowsRootHandles(true);

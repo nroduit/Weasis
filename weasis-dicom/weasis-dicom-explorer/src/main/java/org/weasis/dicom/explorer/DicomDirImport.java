@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -82,7 +82,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     gbc_textField.fill = GridBagConstraints.HORIZONTAL;
     gbc_textField.gridx = 1;
     gbc_textField.gridy = 0;
-    JMVUtils.setPreferredWidth(textField, 375, 325);
+    GuiUtils.setPreferredWidth(textField, 375, 325);
     textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));
     add(textField, gbc_textField);
 

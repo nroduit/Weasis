@@ -9,21 +9,15 @@
  */
 package org.weasis.core.ui.util;
 
-import java.awt.Component;
+import com.formdev.flatlaf.ui.FlatUIUtils;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Insets;
-import javax.swing.AbstractButton;
-import javax.swing.JButton;
-import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
+import javax.swing.JToolBar;
 import org.weasis.core.api.gui.Insertable;
 
 @SuppressWarnings("serial")
-public class WtoolBar extends JPanel implements Toolbar {
-
-  public static final Dimension SEPARATOR_2x24 = new Dimension(2, 24);
+public class WtoolBar extends JToolBar implements Toolbar {
 
   private final String barName;
 
@@ -31,16 +25,23 @@ public class WtoolBar extends JPanel implements Toolbar {
   private Insertable attachedInsertable;
 
   public WtoolBar(String barName, int position) {
-    FlowLayout flowLayout = (FlowLayout) getLayout();
+    FlowLayout flowLayout = new FlowLayout();
     flowLayout.setVgap(0);
     flowLayout.setHgap(0);
     flowLayout.setAlignment(FlowLayout.LEADING);
+    setLayout(flowLayout);
     this.barName = barName;
     this.barPosition = position;
     this.setAlignmentX(LEFT_ALIGNMENT);
     this.setAlignmentY(TOP_ALIGNMENT);
-    setOpaque(false);
-    addSeparator(SEPARATOR_2x24);
+    // Force toolbar to have the same color of the container
+    this.setBackground(FlatUIUtils.getUIColor("Panel.background", Color.DARK_GRAY));
+    addSeparator();
+  }
+
+  @Override
+  public void addSeparator() {
+    add(new JToolBar.Separator(new Dimension(3, 32)));
   }
 
   @Override
@@ -64,73 +65,6 @@ public class WtoolBar extends JPanel implements Toolbar {
 
   public void setAttachedInsertable(Insertable attachedInsertable) {
     this.attachedInsertable = attachedInsertable;
-  }
-
-  public void addSeparator(Dimension dim) {
-    JSeparator s = new JSeparator(SwingConstants.VERTICAL);
-    s.setPreferredSize(dim);
-    add(s);
-  }
-
-  /** Overridden to track AbstractButton added */
-  @Override
-  public Component add(Component comp) {
-    if (comp instanceof AbstractButton) {
-      return add((AbstractButton) comp);
-    } else {
-      return super.add(comp);
-    }
-  }
-
-  /** Adds a new button to this toolbar */
-  public Component add(AbstractButton button) {
-    super.add(button);
-    configureButton(button);
-    return button;
-  }
-
-  /** Adds a new button to this toolbar */
-  public Component add(JButton button) {
-    // this method is here to maintain backward compatibility
-    return add((AbstractButton) button);
-  }
-
-  /**
-   * Install custom UI for this button : a light rollover effet and a custom rounded/shaded border.
-   *
-   * <p>This method can be overridden to replace the provided "look and feel" which uses the
-   * follwing configuration :
-   *
-   * <ul>
-   *   <li>install a VLButtonUI
-   *   <li>set 2 pixels margins
-   *   <li>set a ToolBarButtonBorder.
-   * </ul>
-   */
-  public static void installButtonUI(AbstractButton button) {
-    button.setMargin(new Insets(2, 2, 2, 2));
-    button.setUI(new RolloverButtonUI());
-    button.setBorder(new ToolBarButtonBorder());
-  }
-
-  /**
-   * This method is invoked upon adding a button to the toolbar. It can be overridden to provide
-   * another look or feel.
-   *
-   * <p>Default settings are :
-   *
-   * <ul>
-   *   <li>setRolloverEnabled(true)
-   *   <li>setContentAreaFilled(false);
-   *   <li>setOpaque(false)
-   *   <li>setBorderPainted(false)
-   * </ul>
-   */
-  public static void configureButton(AbstractButton button) {
-    button.setRolloverEnabled(true);
-    button.setContentAreaFilled(false);
-    button.setOpaque(false);
-    button.setBorderPainted(false);
   }
 
   @Override

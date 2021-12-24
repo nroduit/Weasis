@@ -9,6 +9,8 @@
  */
 package org.weasis.launcher;
 
+import com.formdev.flatlaf.util.ColorFunctions;
+import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
@@ -43,6 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -847,17 +850,9 @@ public class WeasisLauncher {
       }
     }
 
+    LookAndFeels.installFlatLaf();
     String localLook = currentProps.getProperty(P_WEASIS_LOOK, null);
-    if (LookAndFeels.installFlatLaf() && look == null) {
-      look = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
-    }
-    // Set the default value for L&F
-    if (look == null) {
-      look = getAvailableLookAndFeel(look);
-    }
-    serverProp.put(P_WEASIS_LOOK, look);
-
-    // If look is in local prefs, use it
+    // If look is in local preferences, use it
     if (localLook != null) {
       look = localLook;
     }
@@ -865,8 +860,8 @@ public class WeasisLauncher {
     /*
      * Build a Frame
      *
-     * This will ensure the popup message or other dialogs to have frame parent. When the parent is null the dialog
-     * can be hidden under the main frame
+     * This will ensure the popup message or other dialogs to have frame parent. When the parent is
+     *  null the dialog can be hidden under the main frame
      */
     final WeasisMainFrame mainFrame = new WeasisMainFrame();
 
@@ -874,7 +869,7 @@ public class WeasisLauncher {
       SwingUtilities.invokeAndWait(
           () -> {
             // Set look and feels
-            look = setLookAndFeel(look);
+            look = setLookAndFeel(look, profileName);
 
             try {
               // Build a JFrame which will be used later in base.ui module
@@ -1127,18 +1122,30 @@ public class WeasisLauncher {
   }
 
   /** Changes the look and feel for the whole GUI */
-  public static String setLookAndFeel(String look) {
-    String laf = getAvailableLookAndFeel(look);
+  public static String setLookAndFeel(String look, String profileName) {
+    String laf = getAvailableLookAndFeel(look, profileName);
     try {
       UIManager.setLookAndFeel(laf);
+      for (LookAndFeelInfo lf : UIManager.getInstalledLookAndFeels()) {
+        if (laf.equals(lf.getClassName())) {
+          Color c = UIManager.getColor("ToolBar.separatorColor");
+          if (lf.getName().contains("Dark")) {
+            c = ColorFunctions.lighten(c, 0.2f);
+          } else {
+            c = ColorFunctions.darken(c, 0.2f);
+          }
+          UIManager.put("ToolBar.separatorColor", c);
+          break;
+        }
+      }
+
     } catch (Exception e) {
       LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
-      laf = UIManager.getSystemLookAndFeelClassName();
     }
     return laf;
   }
 
-  public static String getAvailableLookAndFeel(String look) {
+  public static String getAvailableLookAndFeel(String look, String profileName) {
     UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
     String laf = null;
     if (look != null) {
@@ -1150,7 +1157,12 @@ public class WeasisLauncher {
       }
     }
     if (laf == null) {
-      laf = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
+      if ("dicomizer".equalsIgnoreCase(profileName)) { // NON-NLS
+        laf = "com.formdev.flatlaf.FlatIntelliJLaf";
+      } else {
+        laf =
+            "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
+      }
     }
     return laf;
   }

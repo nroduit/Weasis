@@ -37,7 +37,7 @@ import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
@@ -72,7 +72,7 @@ public class AcquirePublishPanel extends JPanel {
     publishBtn.addActionListener(
         e -> {
           final AcquirePublishDialog dialog = new AcquirePublishDialog(AcquirePublishPanel.this);
-          JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
+          GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
         });
 
     publishBtn.setPreferredSize(new Dimension(150, 40));

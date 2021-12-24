@@ -42,7 +42,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -244,19 +244,19 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
 
         int count = menuRoot.getItemCount();
 
-        JMVUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets"));
-        JMVUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape"));
-        JMVUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut"));
-        JMVUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut"));
-        JMVUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter"));
+        GuiUtils.addItemToMenu(menuRoot, manager.getPresetMenu("weasis.pluginMenu.presets"));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutShapeMenu("weasis.pluginMenu.lutShape"));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu("weasis.pluginMenu.lut"));
+        GuiUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu("weasis.pluginMenu.invertLut"));
+        GuiUtils.addItemToMenu(menuRoot, manager.getFilterMenu("weasis.pluginMenu.filter"));
 
         if (count < menuRoot.getItemCount()) {
           menuRoot.add(new JSeparator());
           count = menuRoot.getItemCount();
         }
 
-        JMVUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom"));
-        JMVUtils.addItemToMenu(
+        GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu("weasis.pluginMenu.zoom"));
+        GuiUtils.addItemToMenu(
             menuRoot, manager.getOrientationMenu("weasis.pluginMenu.orientation"));
 
         if (count < menuRoot.getItemCount()) {

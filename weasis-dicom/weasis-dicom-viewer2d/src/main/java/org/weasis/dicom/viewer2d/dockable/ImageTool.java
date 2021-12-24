@@ -30,7 +30,7 @@ import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -147,11 +147,11 @@ public class ImageTool extends PluginTool {
       panel3.add(speedLabel);
 
       final JSpinner speedSpinner = new JSpinner(cineAction.getSpeedModel());
-      JMVUtils.formatCheckAction(speedSpinner);
+      GuiUtils.formatCheckAction(speedSpinner);
       panel3.add(speedSpinner);
       final JButton startButton = new JButton();
       startButton.setActionCommand(ActionW.CINESTART.cmd());
-      startButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
+      startButton.setPreferredSize(GuiUtils.getBigIconButtonSize());
       startButton.setToolTipText(Messages.getString("ImageTool.cine_start"));
       startButton.setIcon(
           new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png")));
@@ -161,7 +161,7 @@ public class ImageTool extends PluginTool {
 
       final JButton stopButton = new JButton();
       stopButton.setActionCommand(ActionW.CINESTOP.cmd());
-      stopButton.setPreferredSize(JMVUtils.getBigIconButtonSize());
+      stopButton.setPreferredSize(GuiUtils.getBigIconButtonSize());
       stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop"));
       stopButton.setIcon(
           new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png")));
@@ -192,13 +192,13 @@ public class ImageTool extends PluginTool {
     ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
     if (winAction instanceof SliderChangeListener) {
       final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(2, true);
-      JMVUtils.setPreferredWidth(windowSlider, 100);
+      GuiUtils.setPreferredWidth(windowSlider, 100);
       winLevelPanel.add(windowSlider.getParent());
     }
     ActionState levelAction = EventManager.getInstance().getAction(ActionW.LEVEL);
     if (levelAction instanceof SliderChangeListener) {
       final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(2, true);
-      JMVUtils.setPreferredWidth(levelSlider, 100);
+      GuiUtils.setPreferredWidth(levelSlider, 100);
       winLevelPanel.add(levelSlider.getParent());
     }
 
@@ -274,13 +274,13 @@ public class ImageTool extends PluginTool {
     ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
     if (zoomAction instanceof SliderChangeListener) {
       final JSliderW zoomSlider = ((SliderChangeListener) zoomAction).createSlider(0, true);
-      JMVUtils.setPreferredWidth(zoomSlider, 100);
+      GuiUtils.setPreferredWidth(zoomSlider, 100);
       transform.add(zoomSlider.getParent());
     }
     ActionState rotateAction = EventManager.getInstance().getAction(ActionW.ROTATION);
     if (rotateAction instanceof SliderChangeListener) {
       final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(5, true);
-      JMVUtils.setPreferredWidth(rotationSlider, 100);
+      GuiUtils.setPreferredWidth(rotationSlider, 100);
       transform.add(rotationSlider.getParent());
     }
     ActionState flipAction = EventManager.getInstance().getAction(ActionW.FLIP);

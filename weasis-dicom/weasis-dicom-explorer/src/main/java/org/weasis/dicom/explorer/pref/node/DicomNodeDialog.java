@@ -29,7 +29,7 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.NumberFormatter;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
@@ -155,8 +155,8 @@ public class DicomNodeDialog extends JDialog {
     myFormat.setMaximumFractionDigits(0);
     portTf = new JFormattedTextField(new NumberFormatter(myFormat));
     portTf.setColumns(5);
-    JMVUtils.setPreferredWidth(portTf, 60);
-    JMVUtils.addCheckAction(portTf);
+    GuiUtils.setPreferredWidth(portTf, 60);
+    GuiUtils.addCheckAction(portTf);
     GridBagConstraints gbcPortTf = new GridBagConstraints();
     gbcPortTf.anchor = GridBagConstraints.WEST;
     gbcPortTf.insets = new Insets(0, 0, 5, 0);
@@ -216,7 +216,7 @@ public class DicomNodeDialog extends JDialog {
     String desc = descriptionTf.getText();
     String aeTitle = aeTitleTf.getText();
     String hostname = hostnameTf.getText();
-    Number port = JMVUtils.getFormattedValue(portTf);
+    Number port = GuiUtils.getFormattedValue(portTf);
 
     if (!StringUtil.hasText(desc)
         || !StringUtil.hasText(aeTitle)

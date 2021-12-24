@@ -19,7 +19,7 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 
 @SuppressWarnings("serial")
@@ -33,7 +33,7 @@ public class AcquireCentralInfoPanel extends JPanel {
 
   public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
     setLayout(new GridLayout(1, 3));
-    JMVUtils.setPreferredHeight(this, 230);
+    GuiUtils.setPreferredHeight(this, 230);
 
     setSerie(seriesGroup);
 

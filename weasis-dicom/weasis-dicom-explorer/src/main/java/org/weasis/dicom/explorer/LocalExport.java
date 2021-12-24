@@ -50,7 +50,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
@@ -177,7 +177,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       slider.setPaintTicks(true);
       slider.setSnapToTicks(false);
       slider.setMajorTickSpacing(10);
-      JMVUtils.setPreferredWidth(slider, 145, 145);
+      GuiUtils.setPreferredWidth(slider, 145, 145);
       palenSlider1.add(slider);
       slider.addChangeListener(
           e -> {

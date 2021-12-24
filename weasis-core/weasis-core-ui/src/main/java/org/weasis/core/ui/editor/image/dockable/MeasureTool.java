@@ -42,7 +42,7 @@ import javax.swing.table.TableModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
 import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -148,7 +148,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     panel.add(button);
 
     JSpinner spinner = new JSpinner();
-    JMVUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
+    GuiUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
     spinner.addChangeListener(
         e -> {
           Object val = ((JSpinner) e.getSource()).getValue();

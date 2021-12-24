@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Toolkit;
@@ -18,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import javax.swing.JPanel;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
@@ -141,12 +141,18 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
         Container parent = thumb.getParent();
         if (parent instanceof JPanel) {
           Color background;
+          Color foreground;
           if (selected) {
-            background = JMVUtils.getUIColor("Tree.selectionBackground", Color.DARK_GRAY);
+            background = FlatUIUtils.getUIColor("Tree.selectionBackground", Color.DARK_GRAY);
+            foreground = FlatUIUtils.getUIColor("Tree.selectionForeground", Color.LIGHT_GRAY);
           } else {
-            background = JMVUtils.getUIColor("Tree.background", Color.LIGHT_GRAY);
+            background = FlatUIUtils.getUIColor("Tree.background", Color.LIGHT_GRAY);
+            foreground = FlatUIUtils.getUIColor("Tree.textForeground", Color.DARK_GRAY);
           }
           parent.setBackground(background);
+          if (parent instanceof SeriesPane pane) {
+            pane.getLabel().setForeground(foreground);
+          }
         }
       }
     }

@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
@@ -111,9 +111,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
     setComponentPosition(0);
     setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
     try {
-      JMVUtils.setNumberModel(
+      GuiUtils.setNumberModel(
           spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
-      JMVUtils.setNumberModel(
+      GuiUtils.setNumberModel(
           spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1);
       jbInit();
       initialize(true);
@@ -279,7 +279,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     gbcPanel2.gridy = 7;
     add(panel2, gbcPanel2);
     JButton btnNewButton = new JButton(Messages.getString("restore.values"));
-    panel2.add(JMVUtils.createHelpButton("locale", true)); // NON-NLS
+    panel2.add(GuiUtils.createHelpButton("locale", true)); // NON-NLS
     panel2.add(btnNewButton);
     btnNewButton.addActionListener(
         e -> {

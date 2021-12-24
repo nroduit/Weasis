@@ -33,7 +33,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import org.weasis.base.ui.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -102,7 +102,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     jTextPane1.setContentType("text/html");
     jTextPane1.setEditable(false);
 
-    jTextPane1.addHyperlinkListener(JMVUtils.buildHyperlinkListener());
+    jTextPane1.addHyperlinkListener(GuiUtils.buildHyperlinkListener());
     final StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); // NON-NLS
     message.append(AppProperties.WEASIS_NAME);
     message.append(" ");

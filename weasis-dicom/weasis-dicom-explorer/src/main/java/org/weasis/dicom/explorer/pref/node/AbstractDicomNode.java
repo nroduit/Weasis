@@ -31,7 +31,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
@@ -373,7 +373,7 @@ public abstract class AbstractDicomNode {
               (JComboBox<DefaultDicomNode>) comboBox,
               type);
     }
-    JMVUtils.showCenterScreen(dialog, comboBox);
+    GuiUtils.showCenterScreen(dialog, comboBox);
   }
 
   public static void editNodeActionPerformed(JComboBox<? extends AbstractDicomNode> comboBox) {
@@ -398,7 +398,7 @@ public abstract class AbstractDicomNode {
                   (JComboBox<DefaultDicomNode>) comboBox,
                   type);
         }
-        JMVUtils.showCenterScreen(dialog, comboBox);
+        GuiUtils.showCenterScreen(dialog, comboBox);
       } else {
         JOptionPane.showMessageDialog(
             comboBox,

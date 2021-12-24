@@ -37,7 +37,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.service.BundleTools;
@@ -287,7 +287,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
       final JPanel inputPanel = new JPanel();
       jTextFieldLineWidth.setValue(0L);
-      JMVUtils.setPreferredWidth(jTextFieldLineWidth, 100);
+      GuiUtils.setPreferredWidth(jTextFieldLineWidth, 100);
       inputPanel.add(
           new JLabel(Messages.getString("ScreenPrefView.enter_dist") + StringUtil.COLON));
       inputPanel.add(jComboBoxType);

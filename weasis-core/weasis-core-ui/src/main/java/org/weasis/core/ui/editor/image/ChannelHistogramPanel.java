@@ -20,7 +20,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
@@ -83,10 +83,10 @@ public class ChannelHistogramPanel extends JPanel {
     panel.add(jButtonHistoMinus);
 
     jButtonHistoMinus.setToolTipText(Messages.getString("ChannelHistogramPanel.shrink"));
-    jButtonHistoMinus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
+    jButtonHistoMinus.setPreferredSize(GuiUtils.getSmallIconButtonSize());
     panel.add(jButtonHistoPlus);
     jButtonHistoPlus.setToolTipText(Messages.getString("ChannelHistogramPanel.strech"));
-    jButtonHistoPlus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
+    jButtonHistoPlus.setPreferredSize(GuiUtils.getSmallIconButtonSize());
 
     panel.add(Box.createHorizontalStrut(15));
     panel.add(jCheckAccumulate);

@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.gui.util;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
@@ -26,7 +25,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import javax.swing.AbstractAction;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -44,7 +42,6 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -58,11 +55,10 @@ import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 
-/** The Class JMVUtils. */
-public class JMVUtils {
-  private static final Logger LOGGER = LoggerFactory.getLogger(JMVUtils.class);
+public class GuiUtils {
+  private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
-  private JMVUtils() {
+  private GuiUtils() {
     super();
   }
 
@@ -247,18 +243,12 @@ public class JMVUtils {
   }
 
   public static JButton createHelpButton(final String topic, boolean small) {
-    JButton jButtonHelp;
-    if (small) {
-      jButtonHelp = new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/16x16/help.png")));
-      jButtonHelp.setPreferredSize(getSmallIconButtonSize());
-    } else {
-      jButtonHelp = new JButton(new ImageIcon(JMVUtils.class.getResource("/icon/22x22/help.png")));
-      jButtonHelp.setPreferredSize(getBigIconButtonSize());
-    }
+    JButton jButtonHelp = new JButton();
+    jButtonHelp.putClientProperty("JButton.buttonType", "help");
     jButtonHelp.addActionListener(
         e -> {
           try {
-            JMVUtils.openInDefaultBrowser(
+            GuiUtils.openInDefaultBrowser(
                 jButtonHelp,
                 new URL(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online") + topic));
           } catch (MalformedURLException e1) {
@@ -349,40 +339,5 @@ public class JMVUtils {
     if (menu != null && item != null) {
       menu.add(item);
     }
-  }
-
-  public static Color getUIColor(String key, Color defaultColor) {
-    Color color = UIManager.getColor(key);
-    return color != null ? color : defaultColor;
-  }
-
-  public static Color getComplementaryColor(Color color) {
-    float[] c = new float[3];
-    Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), c);
-    return Color.getHSBColor(c[0] + 0.5F, c[1], c[2]);
-  }
-
-  public static String getValueRGBasText(Color color) {
-    if (color == null) {
-      return "";
-    }
-    return Messages.getString("ByteLutCollection.red")
-        + " = "
-        + color.getRed()
-        + ", "
-        + Messages.getString("ByteLutCollection.green")
-        + " = "
-        + color.getGreen()
-        + ", "
-        + Messages.getString("ByteLutCollection.blue")
-        + " = "
-        + color.getBlue();
-  }
-
-  public static String getValueRGBasText2(Color color) {
-    if (color == null) {
-      return "";
-    }
-    return color.getRed() + ":" + color.getGreen() + ":" + color.getBlue();
   }
 }

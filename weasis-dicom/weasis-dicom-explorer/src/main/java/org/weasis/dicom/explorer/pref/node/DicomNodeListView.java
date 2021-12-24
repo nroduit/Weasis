@@ -22,7 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
@@ -70,7 +70,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     gbcComboBox.gridx = 1;
     gbcComboBox.gridy = 0;
     panel.add(nodeComboBox, gbcComboBox);
-    JMVUtils.setPreferredWidth(nodeComboBox, 185, 185);
+    GuiUtils.setPreferredWidth(nodeComboBox, 185, 185);
     AbstractDicomNode.addTooltipToComboList(nodeComboBox);
 
     Component horizontalStrut = Box.createHorizontalStrut(20);

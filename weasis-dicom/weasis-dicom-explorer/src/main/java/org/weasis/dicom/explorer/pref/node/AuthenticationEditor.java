@@ -35,7 +35,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.dicom.explorer.Messages;
 
 public class AuthenticationEditor extends JDialog {
@@ -234,7 +234,7 @@ public class AuthenticationEditor extends JDialog {
   private void modifiy(AuthMethod input) {
     AuthMethodDialog dialog =
         new AuthMethodDialog(this, Messages.getString("auth.method"), input, comboBox);
-    JMVUtils.showCenterScreen(dialog);
+    GuiUtils.showCenterScreen(dialog);
     if (input == null) {
       initializeList();
     }

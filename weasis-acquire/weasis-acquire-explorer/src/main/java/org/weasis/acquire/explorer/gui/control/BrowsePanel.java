@@ -29,7 +29,7 @@ import org.weasis.acquire.explorer.gui.model.renderer.MediaSourceListCellRendere
 import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontTools;
 
 @SuppressWarnings("serial")
@@ -68,7 +68,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
 
     // Update UI before adding the Tooltip feature in the combobox list
     mediaSourceSelectionCombo.updateUI();
-    JMVUtils.addTooltipToComboList(mediaSourceSelectionCombo);
+    GuiUtils.addTooltipToComboList(mediaSourceSelectionCombo);
 
     GridBagConstraints gbcMediaSourceSelectionCombo = new GridBagConstraints();
     gbcMediaSourceSelectionCombo.fill = GridBagConstraints.HORIZONTAL;
@@ -89,7 +89,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     add(pathSelectionBtn, gbcPathSelectionBtn);
 
     // Allow combo to limit the size with long path
-    JMVUtils.setPreferredWidth(
+    GuiUtils.setPreferredWidth(
         mediaSourceSelectionCombo,
         mediaSourceSelectionCombo.getPreferredSize().width
             - pathSelectionBtn.getPreferredSize().width

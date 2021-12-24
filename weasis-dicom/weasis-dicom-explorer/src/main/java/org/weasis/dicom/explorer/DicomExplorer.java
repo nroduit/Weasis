@@ -67,7 +67,7 @@ import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -765,6 +765,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public MediaSeriesGroup getSequence() {
       return sequence;
     }
+
+    public JLabel getLabel() {
+      return label;
+    }
   }
 
   /** @return */
@@ -793,11 +797,11 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       panel.add(patientCombobox, gridBagConstraints1);
       patientCombobox.setMaximumRowCount(15);
       patientCombobox.setFont(FontTools.getFont11());
-      JMVUtils.setPreferredWidth(patientCombobox, 145, 145);
+      GuiUtils.setPreferredWidth(patientCombobox, 145, 145);
       // Update UI before adding the Tooltip feature in the combobox list
       patientCombobox.updateUI();
       patientCombobox.addItemListener(patientChangeListener);
-      JMVUtils.addTooltipToComboList(patientCombobox);
+      GuiUtils.addTooltipToComboList(patientCombobox);
 
       final GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
       gridBagConstraints3.anchor = GridBagConstraints.WEST;
@@ -810,12 +814,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       studyCombobox.setFont(FontTools.getFont11());
       // Update UI before adding the Tooltip feature in the combobox list
       studyCombobox.updateUI();
-      JMVUtils.setPreferredWidth(studyCombobox, 145, 145);
+      GuiUtils.setPreferredWidth(studyCombobox, 145, 145);
       // do not use addElement
       modelStudy.insertElementAt(ALL_STUDIES, 0);
       modelStudy.setSelectedItem(ALL_STUDIES);
       studyCombobox.addItemListener(studyItemListener);
-      JMVUtils.addTooltipToComboList(studyCombobox);
+      GuiUtils.addTooltipToComboList(studyCombobox);
 
       final GridBagConstraints gridBagConstraints4 = new GridBagConstraints();
       gridBagConstraints4.anchor = GridBagConstraints.WEST;
@@ -919,7 +923,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
               updateThumbnailSize();
             }
           });
-      JMVUtils.setPreferredWidth(slider, 145, 145);
+      GuiUtils.setPreferredWidth(slider, 145, 145);
       palenSlider1.add(slider);
       GridBagConstraints gbcpalenSlider1 = new GridBagConstraints();
       gbcpalenSlider1.insets = new Insets(0, 5, 5, 5);

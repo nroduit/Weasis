@@ -19,7 +19,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-@SuppressWarnings("serial")
 public abstract class DropDownButton extends JButton implements PopupMenuListener, ActionListener {
 
   private final String type;
@@ -52,16 +51,20 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
   }
 
   @Override
-  public void setLabel(String label) {
+  public void setText(String text) {
     Icon icon = this.getIcon();
-    if (icon instanceof DropDownLabel) {
-      DropDownLabel iconLabel = (DropDownLabel) icon;
-      iconLabel.setLabel(label, this);
+    if (icon instanceof DropDownLabel iconLabel) {
+      iconLabel.setLabel(text, this);
       Insets insets = getInsets();
       iconLabel.paintIcon(this, getGraphics(), insets.left, insets.top);
       revalidate();
       repaint();
     }
+  }
+
+  @Override
+  public void setLabel(String label) {
+    setText(label);
   }
 
   @Override

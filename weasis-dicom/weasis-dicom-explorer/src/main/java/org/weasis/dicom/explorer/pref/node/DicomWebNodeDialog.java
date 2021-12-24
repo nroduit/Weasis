@@ -31,7 +31,7 @@ import javax.swing.border.EmptyBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
@@ -201,12 +201,12 @@ public class DicomWebNodeDialog extends JDialog {
 
   private void manageAuth() {
     AuthenticationEditor dialog = new AuthenticationEditor(this, comboBoxAuth);
-    JMVUtils.showCenterScreen(dialog);
+    GuiUtils.showCenterScreen(dialog);
   }
 
   private void manageHeader() {
     HttpHeadersEditor dialog = new HttpHeadersEditor(this, dicomNode);
-    JMVUtils.showCenterScreen(dialog);
+    GuiUtils.showCenterScreen(dialog);
   }
 
   private void okButtonActionPerformed() {

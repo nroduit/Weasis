@@ -98,7 +98,7 @@ import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DynamicMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.MediaElement;
@@ -715,7 +715,7 @@ public class WeasisWin {
   private void openBrowser(Component c, String ref) {
     try {
       URL url = new URL(ref);
-      JMVUtils.openInDefaultBrowser(c, url);
+      GuiUtils.openInDefaultBrowser(c, url);
     } catch (MalformedURLException e) {
       LOGGER.error("Open URL in default browser", e);
     }

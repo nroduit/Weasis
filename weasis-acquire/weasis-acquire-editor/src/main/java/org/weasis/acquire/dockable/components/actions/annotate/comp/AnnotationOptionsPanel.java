@@ -31,7 +31,7 @@ import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.FontTools;
@@ -107,7 +107,7 @@ public class AnnotationOptionsPanel extends JPanel {
     panel.add(button);
 
     JSpinner spinner = new JSpinner();
-    JMVUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
+    GuiUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
     spinner.addChangeListener(changeLineWidth);
     panel.add(spinner);
 

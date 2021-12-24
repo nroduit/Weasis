@@ -38,7 +38,7 @@ import javax.swing.table.TableCellEditor;
 import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.service.BundleTools;
@@ -251,7 +251,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         cellEditor = getCellEditor(seriesDescCombo);
       } else if (date) {
         DateTableEditor teditor = buildDatePicker();
-        JMVUtils.setPreferredHeight(
+        GuiUtils.setPreferredHeight(
             teditor.getDatePicker().getComponentToggleCalendarButton(), table.getRowHeight(row));
         cellEditor = teditor;
       } else if (time) {
@@ -259,7 +259,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         teditor.getTimePickerSettings().fontInvalidTime = FontTools.getFont11(); // Default size
         teditor.getTimePickerSettings().fontValidTime = FontTools.getFont11(); // Default size
         teditor.getTimePickerSettings().fontVetoedTime = FontTools.getFont11(); // Default size
-        JMVUtils.setPreferredHeight(
+        GuiUtils.setPreferredHeight(
             teditor.getTimePicker().getComponentToggleTimeMenuButton(), table.getRowHeight(row));
         cellEditor = teditor;
       } else {
@@ -283,10 +283,10 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       // Set before tooltip, otherwise update UI => remove selection listener
       combo.setFont(FontTools.getFont11());
       combo.setMaximumRowCount(15);
-      JMVUtils.setPreferredWidth(combo, 80);
+      GuiUtils.setPreferredWidth(combo, 80);
       // Update UI before adding the Tooltip feature in the combobox list
       combo.updateUI();
-      JMVUtils.addTooltipToComboList(combo);
+      GuiUtils.addTooltipToComboList(combo);
     }
 
     private DateTableEditor buildDatePicker() {
