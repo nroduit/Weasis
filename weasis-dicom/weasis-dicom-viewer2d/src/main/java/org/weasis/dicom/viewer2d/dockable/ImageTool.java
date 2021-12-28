@@ -72,6 +72,7 @@ public class ImageTool extends PluginTool {
     panel1.setAlignmentX(Component.LEFT_ALIGNMENT);
     panel1.setLayout(new GridBagLayout());
     add(panel1);
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
   }
 
   @Override

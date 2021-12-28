@@ -46,8 +46,8 @@ public abstract class PropertiesDialog extends JDialog {
   protected final JLabel jLabelLineColor = new JLabel();
   protected final JButton jButtonColor = new JButton();
   protected final JCheckBox jCheckBoxFilled = new JCheckBox();
-  protected final JLabel lbloverridesmultipleValues =
-      new JLabel(Messages.getString("PropertiesDialog.header_override"));
+  protected final JButton lbloverridesmultipleValues =
+      new JButton(Messages.getString("PropertiesDialog.header_override"));
   protected final JCheckBox checkBoxColor = new JCheckBox();
   protected final JCheckBox checkBoxWidth = new JCheckBox();
   protected final JCheckBox checkBoxFill = new JCheckBox();
@@ -111,10 +111,7 @@ public abstract class PropertiesDialog extends JDialog {
     gbcLbloverridesmultipleValues.insets = new Insets(15, 10, 0, 25);
     gbcLbloverridesmultipleValues.gridx = 2;
     gbcLbloverridesmultipleValues.gridy = 0;
-    lbloverridesmultipleValues.setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
-    lbloverridesmultipleValues.setOpaque(true);
+    lbloverridesmultipleValues.setEnabled(false);
     jPanel1.add(lbloverridesmultipleValues, gbcLbloverridesmultipleValues);
     jPanel1.add(
         jLabelLineColor,

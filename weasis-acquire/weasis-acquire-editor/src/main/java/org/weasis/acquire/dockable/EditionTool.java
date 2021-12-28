@@ -14,6 +14,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Optional;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
@@ -59,6 +60,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     topPanel = new AcquireActionButtonsPanel(this);
 
     add(topPanel, BorderLayout.NORTH);
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
   }
 
   @Override

@@ -44,7 +44,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
-import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -94,15 +93,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     this.eventManager = eventManager;
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
-    setDockableWidth(
-        javax.swing.UIManager.getLookAndFeel() != null
-            ? javax.swing.UIManager.getLookAndFeel()
-                    .getClass()
-                    .getName()
-                    .startsWith("org.pushingpixels")
-                ? 190
-                : 205
-            : 205);
+    setDockableWidth(205);
     jbInit();
   }
 
@@ -110,6 +101,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     add(getIconsPanel());
     add(getSelectedMeasurePanel());
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
   }
 
   public final JPanel getIconsPanel() {
@@ -268,7 +260,6 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     jtable.getTableHeader().setReorderingAllowed(false);
 
     tableContainer = new JPanel();
-    tableContainer.setBorder(BorderFactory.createEtchedBorder());
     tableContainer.setPreferredSize(new Dimension(50, 80));
     tableContainer.setLayout(new BorderLayout());
     transform.add(tableContainer);
@@ -296,13 +287,11 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   public static JTable createMultipleRenderingTable(TableModel model) {
     JTable table = new JTable(model);
+    table.getTableHeader().setReorderingAllowed(false);
+    table.setShowHorizontalLines(true);
+    table.setShowVerticalLines(true);
     table.getColumnModel().setColumnMargin(3);
     return table;
-  }
-
-  public static void createTableHeaders(JTable table) {
-    table.getColumnModel().getColumn(0).setHeaderRenderer(new TableHeaderRenderer());
-    table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
   }
 
   public void setSelectedGraphic(Graphic graph, MeasurableLayer layer) {
@@ -330,7 +319,6 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       };
       jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
       jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-      createTableHeaders(jtable);
       int height =
           (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
               + jtable.getTableHeader().getHeight()

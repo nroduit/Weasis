@@ -214,19 +214,17 @@ public class CheckTreeModel {
           File path = thumb.getThumbnailPath();
           if (path != null) {
             URL url = path.toURI().toURL();
-            if (url != null) {
-              StringBuilder buf = new StringBuilder();
-              buf.append("<html>");
-              buf.append("<img src=\""); // NON-NLS
-              buf.append(url);
-              buf.append("\"><br>"); // NON-NLS
-              LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
-              if (date != null) {
-                buf.append(TagUtil.formatDateTime(date));
-              }
-              buf.append("</html>");
-              return buf.toString();
+            StringBuilder buf = new StringBuilder();
+            buf.append("<html>");
+            buf.append("<img src=\""); // NON-NLS
+            buf.append(url);
+            buf.append("\"><br>"); // NON-NLS
+            LocalDateTime date = TagD.dateTime(Tag.SeriesDate, Tag.SeriesTime, s);
+            if (date != null) {
+              buf.append(TagUtil.formatDateTime(date));
             }
+            buf.append("</html>");
+            return buf.toString();
           }
         } catch (Exception e) {
           LOGGER.error("Display tooltip", e);

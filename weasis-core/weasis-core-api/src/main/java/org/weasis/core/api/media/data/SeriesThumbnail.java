@@ -33,19 +33,17 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -79,13 +77,9 @@ public class SeriesThumbnail extends Thumbnail
       AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.2f);
 
   private MediaSeries.MEDIA_POSITION mediaPosition = MediaSeries.MEDIA_POSITION.MIDDLE;
-  // Get the closest cursor size regarding the platform
-  private final Border onMouseOverBorderFocused =
-      new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(Color.orange, 2));
-  private final Border onMouseOverBorder =
-      new CompoundBorder(new EmptyBorder(2, 2, 0, 2), new LineBorder(new Color(255, 224, 178), 2));
-  private final Border outMouseOverBorder =
-      new CompoundBorder(new EmptyBorder(2, 2, 0, 2), BorderFactory.createEtchedBorder());
+
+  private final Border thumbnailBorder = new EmptyBorder(5, 5, 0, 5);
+
   private JProgressBar progressBar;
   private final MediaSeries<? extends MediaElement> series;
   private Point dragPressed = null;
@@ -109,8 +103,9 @@ public class SeriesThumbnail extends Thumbnail
       }
     }
     /*
-     * Do not remove the image from the cache after building the thumbnail when the series is associated to a
-     * explorerModel (stream should be closed at least when closing the application or when free the cache).
+     * Do not remove the image from the cache after building the thumbnail when the series is
+     * associated to a explorerModel (stream should be closed at least when closing the application
+     * or when free the cache).
      */
     init(media, series.getTagValue(TagW.ExplorerModel) != null, null);
   }
@@ -118,7 +113,7 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
     super.init(media, keepMediaCache, opManager);
-    setBorder(outMouseOverBorder);
+    setBorder(thumbnailBorder);
   }
 
   public JProgressBar getProgressBar() {
@@ -317,10 +312,6 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
     if (dragPressed == null) {
-      setBorder(
-          series.isSelected()
-              ? series.isFocused() ? onMouseOverBorderFocused : onMouseOverBorder
-              : outMouseOverBorder);
       if (series.isOpen()) {
         g2d.setPaint(Color.BLACK);
         g2d.fillRect(x, y, 11, 11);
@@ -352,6 +343,11 @@ public class SeriesThumbnail extends Thumbnail
       g2d.setPaint(Color.ORANGE);
       g2d.drawString(nbImg, x + 2, hbleft);
 
+      if (series.isSelected() && series.isFocused()) {
+        g2d.setPaint(Color.ORANGE);
+        g2d.draw(new Rectangle2D.Double(x - 0.5, y - 0.5, width , height));
+      }
+
       // To avoid concurrency issue
       final JProgressBar bar = progressBar;
       if (bar != null) {
@@ -381,7 +377,6 @@ public class SeriesThumbnail extends Thumbnail
 
             g2d.translate(-shiftx, -shifty);
             shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
-            shifty = 5;
             g2d.translate(shiftx, shifty);
             g2d.setColor(Color.GREEN);
             g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);

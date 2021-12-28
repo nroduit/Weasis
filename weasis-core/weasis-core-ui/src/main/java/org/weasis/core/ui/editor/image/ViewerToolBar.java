@@ -140,7 +140,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       addSeparator();
     }
 
-    if (props.getBooleanProperty("weasis.toolbar.layoutbouton", true)) {
+    if (props.getBooleanProperty("weasis.toolbar.layout.button", true)) {
       final DropDownButton layout =
           new DropDownButton(
               "layout", // NON-NLS
@@ -156,7 +156,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       add(layout);
     }
 
-    if (props.getBooleanProperty("weasis.toolbar.synchbouton", true)) {
+    if (props.getBooleanProperty("weasis.toolbar.synch.button", true)) {
       add(Box.createRigidArea(new Dimension(5, 0)));
 
       synchButton = buildSynchButton();

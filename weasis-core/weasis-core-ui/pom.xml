@@ -14,6 +14,14 @@
   <packaging>jar</packaging>
   <name>Core - Core UI API (Swing) [${project.artifactId}]</name>
 
+  <properties>
+    <jxlayer.version>3.0.4</jxlayer.version>
+    <xchart.version>3.8.1</xchart.version>
+    <LGoodDatePicker.version>11.3.0-r1</LGoodDatePicker.version>
+    <lablib-checkboxtree.version>3.3</lablib-checkboxtree.version>
+    <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
+  </properties>
+
   <build>
     <plugins>
       <plugin>
@@ -38,7 +46,8 @@
         <artifactId>bnd-maven-plugin</artifactId>
         <configuration>
           <bnd>
-            -includeresource.all: lib/=target/dependency/;lib:=true
+            -includeresource: @target/dependency/lablib-checkboxtree-${lablib-checkboxtree.version}.jar!/!(it/cnr/imaa/essi/lablib/gui/checkboxtree/examples/*)
+            -includeresource.all: lib/=target/dependency/;filter:=!lablib*.jar;lib:=true
             Import-Package: \
             com.madgag.gif.fmsware;resolution:=optional,de.rototor.pdfbox.graphics2d;\
             resolution:=optional,org.apache.pdfbox.pdmodel.*;resolution:=optional,\
@@ -79,22 +88,22 @@
     <dependency>
       <groupId>it.cnr.imaa.essi</groupId>
       <artifactId>lablib-checkboxtree</artifactId>
-      <version>3.3</version>
+      <version>${lablib-checkboxtree.version}</version>
     </dependency>
     <dependency>
       <groupId>org.swinglabs</groupId>
       <artifactId>jxlayer</artifactId>
-      <version>3.0.4</version>
+      <version>${jxlayer.version}</version>
     </dependency>
     <dependency>
       <groupId>com.github.lgooddatepicker</groupId>
       <artifactId>LGoodDatePicker</artifactId>
-      <version>11.2.1</version>
+      <version>${LGoodDatePicker.version}</version>
     </dependency>
     <dependency>
       <groupId>org.knowm.xchart</groupId>
       <artifactId>xchart</artifactId>
-      <version>3.8.1</version>
+      <version>${xchart.version}</version>
       <exclusions>
         <exclusion>
           <groupId>com.madgag</groupId>
@@ -109,7 +118,7 @@
     <dependency>
       <groupId>de.erichseifert.vectorgraphics2d</groupId>
       <artifactId>VectorGraphics2D</artifactId>
-      <version>0.13</version>
+      <version>${VectorGraphics2D.version}</version>
     </dependency>
 
     <!-- FOR TESTS -->

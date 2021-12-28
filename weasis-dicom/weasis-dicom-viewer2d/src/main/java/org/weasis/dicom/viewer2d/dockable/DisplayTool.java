@@ -51,6 +51,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.display.OverlayOp;
@@ -126,11 +127,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
-    renderer.setOpenIcon(null);
-    renderer.setClosedIcon(null);
-    renderer.setLeafIcon(null);
-    tree.setCellRenderer(renderer);
+    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     JPanel panel = new JPanel();
@@ -170,9 +167,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
     expandTree(tree, rootNode);
     add(new JScrollPane(tree), BorderLayout.CENTER);
-
-    JPanel panelFoot = new JPanel();
-    add(panelFoot, BorderLayout.SOUTH);
   }
 
   private void treeValueChanged(TreeCheckingEvent e) {
@@ -322,32 +316,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       }
 
       initLayers(view);
-
-      ImageElement img = view.getImage();
-      if (img != null) {
-        Panner<?> panner = view.getPanner();
-        if (panner != null) {
-
-          // int cps = panelFoot.getComponentCount();
-          // if (cps > 0) {
-          // Component cp = panelFoot.getComponent(0);
-          // if (cp != panner) {
-          // if (cp instanceof Thumbnail) {
-          // ((Thumbnail) cp).removeMouseAndKeyListener();
-          // }
-          // panner.registerListeners();
-          // panelFoot.removeAll();
-          // panelFoot.add(panner);
-          // panner.revalidate();
-          // panner.repaint();
-          // }
-          // } else {
-          // panner.registerListeners();
-          // panelFoot.add(panner);
-          // }
-        }
-      }
-
       initPathSelection = false;
     }
   }

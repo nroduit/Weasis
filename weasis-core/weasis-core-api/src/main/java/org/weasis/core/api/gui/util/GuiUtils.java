@@ -113,36 +113,6 @@ public class GuiUtils {
     }
   }
 
-  public static void formatTableHeaders(JTable table, int alignment) {
-    TableHeaderRenderer renderer = new TableHeaderRenderer();
-    renderer.setHorizontalAlignment(alignment);
-    for (int i = 0; i < table.getColumnCount(); i++) {
-      TableColumn col = table.getColumnModel().getColumn(i);
-      col.setHeaderRenderer(renderer);
-    }
-  }
-
-  public static void formatTableHeaders(JTable table, int alignment, int columnSize) {
-    TableHeaderRenderer renderer = new TableHeaderRenderer();
-
-    renderer.setHorizontalAlignment(alignment);
-    for (int i = 0; i < table.getColumnCount(); i++) {
-      TableColumn col = table.getColumnModel().getColumn(i);
-      col.setHeaderRenderer(renderer);
-      col.setPreferredWidth(columnSize);
-    }
-  }
-
-  public static String[] getColumnNames(TableModel model) {
-    if (model == null) {
-      return new String[0];
-    }
-    String[] names = new String[model.getColumnCount()];
-    for (int i = 0; i < names.length; i++) {
-      names[i] = model.getColumnName(i);
-    }
-    return names;
-  }
 
   public static void addChangeListener(JSlider slider, ChangeListener listener) {
     ChangeListener[] listeners = slider.getChangeListeners();
@@ -182,7 +152,7 @@ public class GuiUtils {
   }
 
   public static void setNumberModel(JSpinner spin, int val, int min, int max, int delta) {
-    spin.setModel(new SpinnerNumberModel(val < min ? min : val > max ? max : val, min, max, delta));
+    spin.setModel(new SpinnerNumberModel(val < min ? min : Math.min(val, max), min, max, delta));
     final JFormattedTextField ftf = ((JSpinner.DefaultEditor) spin.getEditor()).getTextField();
     addCheckActionToJFormattedTextField(ftf);
   }

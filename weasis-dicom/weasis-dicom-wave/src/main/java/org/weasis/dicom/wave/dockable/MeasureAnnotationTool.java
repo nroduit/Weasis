@@ -35,7 +35,6 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
@@ -72,6 +71,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
     setDockableWidth(300);
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     jbInit();
   }
 
@@ -105,7 +105,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     jtableTag.setFont(FontTools.getFont10());
 
     jtableTag.getTableHeader().setReorderingAllowed(false);
-    tableTagContainer.setBorder(BorderFactory.createEtchedBorder());
     tableTagContainer.setPreferredSize(new Dimension(50, 80));
     tableTagContainer.setLayout(new BorderLayout());
     transform.add(tableTagContainer);
@@ -137,7 +136,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     jtableMarker.setFont(FontTools.getFont10());
 
     jtableMarker.getTableHeader().setReorderingAllowed(false);
-    tableMarkerContainer.setBorder(BorderFactory.createEtchedBorder());
     tableMarkerContainer.setPreferredSize(new Dimension(50, 80));
     tableMarkerContainer.setLayout(new BorderLayout());
     transform.add(tableMarkerContainer);
@@ -165,13 +163,11 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   public static JTable createMultipleRenderingTable(TableModel model) {
     JTable table = new JTable(model);
+    table.getTableHeader().setReorderingAllowed(false);
+    table.setShowHorizontalLines(true);
+    table.setShowVerticalLines(true);
     table.getColumnModel().setColumnMargin(3);
     return table;
-  }
-
-  public static void createTableHeaders(JTable table) {
-    table.getColumnModel().getColumn(0).setHeaderRenderer(new TableHeaderRenderer());
-    table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
   }
 
   public void readAnnotations(Attributes attributes) {
@@ -194,7 +190,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       jtableTag.setModel(new SimpleTableModel(headers, labels));
       jtableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      createTableHeaders(jtableTag);
       int height =
           (jtableTag.getRowHeight() + jtableTag.getRowMargin()) * jtableTag.getRowCount()
               + jtableTag.getTableHeader().getHeight()
@@ -226,7 +221,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       jtableMarker.setModel(new SimpleTableModel(headers, labels));
       jtableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      createTableHeaders(jtableMarker);
       int height =
           (jtableMarker.getRowHeight() + jtableMarker.getRowMargin()) * jtableMarker.getRowCount()
               + jtableMarker.getTableHeader().getHeight()

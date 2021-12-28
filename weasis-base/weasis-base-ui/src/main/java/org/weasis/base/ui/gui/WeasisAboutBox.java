@@ -78,6 +78,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     sysTable.getColumnModel().setColumnMargin(5);
     sysTable.setAutoCreateRowSorter(true);
     sysTable.setShowHorizontalLines(true);
+    sysTable.setShowVerticalLines(true);
     init();
     pack();
   }

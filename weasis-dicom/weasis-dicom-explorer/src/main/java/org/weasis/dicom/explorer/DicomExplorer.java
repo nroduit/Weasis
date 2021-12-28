@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -169,6 +170,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(patientContainer);
+    thumnailView.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     thumnailView.getVerticalScrollBar().setUnitIncrement(16);
     thumnailView.setViewportView(patientContainer);
     changeToolWindowAnchor(getDockable().getBaseLocation());
@@ -498,7 +500,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
   }
 
-  @SuppressWarnings("serial")
   class PatientPane extends JPanel {
 
     private final MediaSeriesGroup patient;
@@ -539,7 +540,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(0, 5, 25, 5), title));
       } else {
-        this.setBorder(null);
+        this.setBorder(BorderFactory.createEmptyBorder());
       }
     }
 
@@ -639,6 +640,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentX(LEFT_ALIGNMENT);
       this.setAlignmentY(TOP_ALIGNMENT);
       this.dicomStudy = dicomStudy;
+      this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       title = new TitleBorder(dicomStudy.toString());
       title.setTitleFont(FontTools.getFont12());
       title.setTitleJustification(TitledBorder.LEFT);
@@ -703,7 +705,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
   }
 
-  @SuppressWarnings("serial")
   class SeriesPane extends JPanel {
 
     final MediaSeriesGroup sequence;

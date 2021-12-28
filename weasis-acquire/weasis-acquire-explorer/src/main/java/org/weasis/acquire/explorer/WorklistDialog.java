@@ -80,10 +80,11 @@ public class WorklistDialog extends JDialog {
     jtable.setFont(FontTools.getFont10());
     jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jtable.setRowSelectionAllowed(true);
+    jtable.setShowHorizontalLines(true);
+    jtable.setShowVerticalLines(true);
     jtable.getTableHeader().setReorderingAllowed(false);
 
     tableContainer = new JScrollPane();
-    tableContainer.setBorder(BorderFactory.createEtchedBorder());
     tableContainer.setPreferredSize(new Dimension(920, 400));
 
     this.getContentPane().add(tableContainer, BorderLayout.CENTER);

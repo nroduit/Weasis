@@ -399,9 +399,7 @@ public class HistogramPanel extends JPanel {
         if (popup != null) {
           popup.hide();
         }
-        text.setBorder(
-            new CompoundBorder(
-                BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(3, 5, 3, 5)));
+        text.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
         popup =
             PopupFactory.getSharedInstance()
                 .getPopup(e.getComponent(), text, e.getXOnScreen() + 15, e.getYOnScreen() - 40);

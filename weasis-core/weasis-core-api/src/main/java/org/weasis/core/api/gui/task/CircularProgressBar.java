@@ -23,7 +23,6 @@ import org.weasis.core.api.util.LocalUtil;
 
 @SuppressWarnings("serial")
 public class CircularProgressBar extends JProgressBar {
-  private static final Color BACK_COLOR = new Color(82, 152, 219);
   public static final ImageIcon ICON =
       new ImageIcon(CircularProgressBar.class.getResource("/icon/22x22/process-working.png"));
 
@@ -84,7 +83,7 @@ public class CircularProgressBar extends JProgressBar {
       g2.setPaint(Color.WHITE);
       g2.fillArc(0, 0, w, h, 0, 360);
 
-      g2.setPaint(BACK_COLOR);
+      g2.setPaint(this.getBackground());
       g2.fillArc(0, 0, w, h, a, 360 - a);
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);

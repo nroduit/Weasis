@@ -9,11 +9,11 @@
  */
 package org.weasis.base.explorer;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
@@ -24,7 +24,6 @@ import javax.swing.ListCellRenderer;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.ThumbnailList;
 import org.weasis.core.api.media.data.ImageElement;
@@ -44,7 +43,6 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
   private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
   private final JLabel iconCheckedLabel = new JLabel((Icon) null);
   private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
-  private static final Color back = new Color(242, 242, 242);
 
   public ThumbnailRenderer() {
     // Cannot pass a boxLayout directly to super because it has a reference
@@ -61,7 +59,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
 
     iconLabel.setPreferredSize(ICON_DIM);
     iconLabel.setMaximumSize(ICON_DIM);
-    iconLabel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
+    iconLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
     panel.add(iconLabel);
     this.add(panel);
 
@@ -94,9 +92,12 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     }
     if (value != null) {
       this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
+      Color foreground = FlatUIUtils.getUIColor("List.foreground", Color.DARK_GRAY);
+      this.descriptionLabel.setForeground(isSelected ? list.getSelectionForeground() : foreground);
       this.descriptionLabel.setText(value.getName());
     }
-    setBackground(isSelected ? list.getSelectionBackground() : back);
+    Color background = FlatUIUtils.getUIColor("List.background", Color.DARK_GRAY);
+    setBackground(isSelected ? list.getSelectionBackground() : background);
     return this;
   }
 

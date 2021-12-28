@@ -45,6 +45,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.Panner;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -99,11 +100,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     tree.setShowsRootHandles(true);
     tree.setRootVisible(false);
     tree.setExpandsSelectedPaths(true);
-    DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
-    renderer.setOpenIcon(null);
-    renderer.setClosedIcon(null);
-    renderer.setLeafIcon(null);
-    tree.setCellRenderer(renderer);
+    tree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     tree.addTreeCheckingListener(this::treeValueChanged);
 
     JPanel panel = new JPanel();

@@ -245,13 +245,11 @@ public class HistogramView extends JComponent
     }
 
     JPanel tableContainer = new JPanel();
-    tableContainer.setBorder(BorderFactory.createEtchedBorder());
     tableContainer.setLayout(new BorderLayout());
 
     JTable jtable =
         MeasureTool.createMultipleRenderingTable(
             new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.setFont(FontTools.getFont10());
     jtable.getTableHeader().setReorderingAllowed(false);
 
     String[] headers = {
@@ -259,9 +257,9 @@ public class HistogramView extends JComponent
     };
     jtable.setModel(new SimpleTableModel(headers, MeasureTool.getLabels(measList)));
     jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-    MeasureTool.createTableHeaders(jtable);
     tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
     tableContainer.add(jtable, BorderLayout.CENTER);
+    jtable.setShowVerticalLines(true);
     jtable.getColumnModel().getColumn(0).setPreferredWidth(120);
     jtable.getColumnModel().getColumn(1).setPreferredWidth(80);
     JOptionPane.showMessageDialog(

@@ -123,6 +123,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
     // dump.add(new SearchPanel(jTextPaneAll), BorderLayout.NORTH);
     jtable.getTableHeader().setReorderingAllowed(false);
+    jtable.setShowHorizontalLines(true);
     jtable.setShowVerticalLines(true);
     dump.add(allPane, BorderLayout.CENTER);
 

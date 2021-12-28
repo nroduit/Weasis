@@ -10,6 +10,7 @@
 package org.weasis.dicom.explorer;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
+import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;
@@ -21,6 +22,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
 public class ExportTree extends JScrollPane {
@@ -53,6 +55,7 @@ public class ExportTree extends JScrollPane {
           }
         };
 
+    checkboxTree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     // Register tooltips
     checkboxTree.setToolTipText("");
 

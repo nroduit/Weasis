@@ -9,6 +9,7 @@
  */
 package org.weasis.base.explorer.list;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -96,8 +97,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     this.changed = false;
 
     DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
-    this.setBackground(new Color(242, 242, 242));
-
+    this.setBackground(FlatUIUtils.getUIColor("List.background", Color.DARK_GRAY));
     setSelectionModel(selectionModel);
     // setTransferHandler(new ListTransferHandler());
     ThumbnailRenderer<E> panel = new ThumbnailRenderer<>();

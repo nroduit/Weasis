@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -96,8 +97,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof RadioMenuItem) {
-      RadioMenuItem item = (RadioMenuItem) e.getSource();
+    if (e.getSource() instanceof RadioMenuItem item) {
       if (item.isSelected()) {
         dataModel.setSelectedItem(item.getUserObject());
       }

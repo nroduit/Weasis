@@ -74,16 +74,13 @@ public class HttpHeadersEditor extends JDialog {
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     selctedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    Border border1 = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-    Border border2 =
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    Border border = BorderFactory.createEmptyBorder(15, 15, 5, 5);
     panel1.setLayout(borderLayout1);
 
     jButtonClose.setText(Messages.getString("HttpHeadersEditor.close"));
     jButtonClose.addActionListener(e -> cancel());
     jPanelComponentBar.setLayout(gridBagLayout3);
-    jList1.setBorder(border2);
+    jList1.setBorder(border);
     jList1.setSelectionModel(selctedModel);
     jPanelComponentAction.setLayout(gridBagLayout2);
     jButtonDelete.addActionListener(e -> deleteSelectedComponents());
@@ -95,7 +92,6 @@ public class HttpHeadersEditor extends JDialog {
     jButtonAdd.addActionListener(e -> add());
     jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add"));
 
-    jScrollPane1.setBorder(border1);
     jScrollPane1.setPreferredSize(new Dimension(300, 150));
     panel1.add(jPanelComponentBar, BorderLayout.SOUTH);
 

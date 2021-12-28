@@ -201,7 +201,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
       initComponents = true;
       // Add standard toolbars
       // WProperties props = (WProperties) BundleTools.SYSTEM_PREFERENCES.clone();
-      // props.putBooleanProperty("weasis.toolbar.synchbouton", false);
+      // props.putBooleanProperty("weasis.toolbar.synch.button", false);
 
       EventManager evtMg = EventManager.getInstance();
       Optional<Toolbar> importBar =

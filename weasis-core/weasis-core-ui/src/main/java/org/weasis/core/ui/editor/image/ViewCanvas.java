@@ -43,9 +43,6 @@ public interface ViewCanvas<E extends ImageElement>
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
 
-  Color focusColor = Color.orange;
-  Color lostFocusColor = new Color(255, 224, 178);
-
   void registerDefaultListeners();
 
   void copyActionWState(HashMap<String, Object> actionsInView);

@@ -10,16 +10,24 @@
 package org.weasis.dicom.qr;
 
 import com.github.lgooddatepicker.components.DatePicker;
-import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
+import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.EventQueue;
 import java.awt.FlowLayout;
+import java.awt.KeyboardFocusManager;
+import java.awt.Robot;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
@@ -75,6 +83,7 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
@@ -379,7 +388,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     panel5.add(panel6);
     progressBar.setEnabled(false);
     panel5.add(progressBar);
-    panel5.add(Box.createHorizontalStrut(100));
+    panel5.add(Box.createHorizontalStrut(70));
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
@@ -472,47 +481,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private DatePicker buildDatePicker() {
     DatePicker d = new DatePicker();
-    d.getSettings().setFontInvalidDate(FontTools.getFont11());
-    d.getSettings().setFontValidDate(FontTools.getFont11());
-    d.getSettings().setFontVetoedDate(FontTools.getFont11());
-    d.getSettings().setColor(DateArea.TextFieldBackgroundValidDate, tfSearch.getBackground());
-    d.getSettings().setColor(DateArea.DatePickerTextValidDate, tfSearch.getForeground());
-    d.getSettings()
-        .setColor(DateArea.TextFieldBackgroundDisallowedEmptyDate, tfSearch.getBackground());
+    DatePickerSettings settings = d.getSettings();
+    CalendarUtil.adaptCalendarColors(settings);
 
-    d.getSettings().setColor(DateArea.TextFieldBackgroundInvalidDate, tfSearch.getBackground());
-    // d.getSettings().setColor(DateArea.DatePickerTextInvalidDate, tfSearch.getForeground());
-
-    d.getSettings().setColor(DateArea.TextFieldBackgroundVetoedDate, tfSearch.getBackground());
-    // d.getSettings().setColor(DateArea.DatePickerTextVetoedDate, tfSearch.getForeground());
-
-    Color btnBack = d.getComponentToggleCalendarButton().getBackground();
-    d.getSettings().setColor(DateArea.BackgroundOverallCalendarPanel, tfSearch.getBackground());
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
-    d.getSettings().setColor(DateArea.CalendarBackgroundNormalDates, btnBack);
-
-    // d.getSettings().setColor(DateArea.CalendarDefaultBackgroundHighlightedDates,
-    // tfSearch.getForeground());
-    // d.getSettings().setColor(DateArea.CalendarDefaultTextHighlightedDates, Color.ORANGE);
-    // d.getSettings().setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
-    d.getSettings().setColor(DateArea.BackgroundClearLabel, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundTodayLabel, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearMenuLabels, btnBack);
-
-    d.getSettings().setColor(DateArea.CalendarTextNormalDates, tfSearch.getForeground());
-    d.getSettings().setColor(DateArea.CalendarTextWeekdays, tfSearch.getForeground());
-    d.getSettings().setColor(DateArea.CalendarTextWeekNumbers, tfSearch.getForeground());
-
-    // d.getSettings().setColorBackgroundWeekdayLabels(Color.ORANGE, true);
-    // d.getSettings().setColorBackgroundWeekNumberLabels(Color.ORANGE, true);
-
-    // d.getSettings().setVisibleNextMonthButton(false);
-    // d.getSettings().setVisibleNextYearButton(false);
-    d.getSettings().setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
-    d.getSettings().setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
-    // JMVUtils.setPreferredWidth(d.getComponentDateTextField(), 95);
+    settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    GuiUtils.setPreferredWidth(d.getComponentDateTextField(), 95);
     GuiUtils.setPreferredWidth(d.getComponentToggleCalendarButton(), 35);
     d.addDateChangeListener(dateChangeListener);
     return d;

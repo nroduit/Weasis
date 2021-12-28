@@ -30,6 +30,11 @@ import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 public class SeriesSelectionModel extends ArrayList<Series<?>> {
   private static final long serialVersionUID = -7481872614518038371L;
 
+  public static final String FOREGROUND = "List.foreground";
+  public static final String BACKGROUND = "List.background";
+  public static final String SELECTION_FOREGROUND = "List.selectionForeground";
+  public static final String SELECTION_BACKGROUND = "List.selectionBackground";
+
   private final PatientContainerPane patientContainer;
 
   private Series<?> anchorSelection;
@@ -112,8 +117,8 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
   protected void removeRange(int fromIndex, int toIndex) {
     if (fromIndex < toIndex) {
       int seriesSize = this.size();
-      int end = toIndex > seriesSize ? seriesSize : toIndex;
-      int start = fromIndex < 0 ? 0 : fromIndex;
+      int end = Math.min(toIndex, seriesSize);
+      int start = Math.max(fromIndex, 0);
       for (int i = start; i < end; i++) {
         Series<?> val = this.get(i);
         setBackgroundColor(val, false);
@@ -143,11 +148,11 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
           Color background;
           Color foreground;
           if (selected) {
-            background = FlatUIUtils.getUIColor("Tree.selectionBackground", Color.DARK_GRAY);
-            foreground = FlatUIUtils.getUIColor("Tree.selectionForeground", Color.LIGHT_GRAY);
+            background =  FlatUIUtils.getUIColor(SELECTION_BACKGROUND, Color.DARK_GRAY);
+            foreground = FlatUIUtils.getUIColor(SELECTION_FOREGROUND, Color.LIGHT_GRAY);
           } else {
-            background = FlatUIUtils.getUIColor("Tree.background", Color.LIGHT_GRAY);
-            foreground = FlatUIUtils.getUIColor("Tree.textForeground", Color.DARK_GRAY);
+            background = FlatUIUtils.getUIColor(BACKGROUND, Color.LIGHT_GRAY);
+            foreground = FlatUIUtils.getUIColor(FOREGROUND, Color.DARK_GRAY);
           }
           parent.setBackground(background);
           if (parent instanceof SeriesPane pane) {

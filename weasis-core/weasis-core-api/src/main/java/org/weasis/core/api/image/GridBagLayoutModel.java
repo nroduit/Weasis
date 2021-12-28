@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.image;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -26,6 +27,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.Copyable;
 import org.weasis.core.util.StringUtil;
@@ -37,8 +39,6 @@ import org.xml.sax.helpers.DefaultHandler;
 public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
-
-  private static final Color background = new Color(67, 72, 70);
 
   private String title;
   private final Icon icon;
@@ -117,9 +117,17 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
-        g2d.setColor(background);
+        Color oldColor = g.getColor();
+        String background = "TextArea.background";
+        String foreground = "TextArea.foreground";
+        if(c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {
+            background = "TextArea.selectionBackground";
+            foreground = "TextArea.selectionForeground";
+        }
+        g2d.setColor(FlatUIUtils.getUIColor(background, Color.DARK_GRAY));
         g2d.fillRect(x, y, getIconWidth(), getIconHeight());
-        g2d.setColor(Color.WHITE);
+        Color line = FlatUIUtils.getUIColor(foreground, Color.WHITE);
+        g2d.setColor(line);
         Dimension dim = getGridSize();
         double stepX = getIconWidth() / dim.getWidth();
         double stepY = getIconHeight() / dim.getHeight();
@@ -135,10 +143,11 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
           if (color != null) {
             g2d.setColor(color);
             g2d.fill(rect);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(line);
           }
           g2d.draw(rect);
         }
+        g2d.setColor(oldColor);
       }
 
       @Override

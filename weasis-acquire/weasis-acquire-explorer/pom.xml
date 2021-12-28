@@ -130,6 +130,12 @@
       <artifactId>usbdrivedetector</artifactId>
       <version>2.1.1</version>
     </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>${flatlaf.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- FOR TESTS -->
     <dependency>

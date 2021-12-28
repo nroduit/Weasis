@@ -17,6 +17,7 @@ import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
 import java.util.Enumeration;
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -51,6 +52,7 @@ public abstract class AbstractWizardDialog extends JDialog {
     super(window, title, modal);
     this.settingTitle = title;
     jScrollPanePage.setPreferredSize(pageSize);
+    jScrollPanePage.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     jbInit();
   }
 

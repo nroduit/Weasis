@@ -50,6 +50,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
@@ -58,9 +59,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,12 +175,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final Color pointerColor1 = Color.black;
   protected final Color pointerColor2 = Color.white;
-  protected final Border normalBorder =
-      new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
-  protected final Border focusBorder =
-      new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
-  protected final Border lostFocusBorder =
-      new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
+  protected final Border focusBorder = BorderFactory.createMatteBorder(1,1,1,1, Color.ORANGE);
+  protected final Border viewBorder = BorderFactory.createMatteBorder(1,1,1,1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;
@@ -210,7 +205,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     initActionWState();
     graphicMouseHandler = new GraphicMouseHandler<>(this);
 
-    setBorder(normalBorder);
+    setBorder(viewBorder);
     setFocusable(true);
     // Must be larger to the screens to be resize correctly by the container
     setPreferredSize(new Dimension(4096, 4096));
@@ -517,10 +512,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (series != null) {
       series.setFocused(focused);
     }
-    if (focused && getBorder() == lostFocusBorder) {
+    if (focused && getBorder() == viewBorder) {
       setBorder(focusBorder);
     } else if (!focused && getBorder() == focusBorder) {
-      setBorder(lostFocusBorder);
+      setBorder(viewBorder);
     }
   }
 
@@ -853,7 +848,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void setSelected(Boolean selected) {
-    setBorder(selected ? focusBorder : normalBorder);
+    setBorder(selected ? focusBorder : viewBorder);
     // Remove the selection of graphics
     graphicManager.setSelectedGraphic(null);
     // Throws to the tool listener the current graphic selection.

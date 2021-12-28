@@ -33,6 +33,7 @@ public class SampleTool extends PluginTool {
         super(BUTTON_NAME, "Sample Tool", type, 120);
         dockable.setTitleIcon(new ImageIcon(SampleTool.class.getResource("/icon/22x22/text-html.png")));
         setDockableWidth(290);
+        rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     }
 
     @Override
