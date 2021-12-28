@@ -45,7 +45,7 @@ public class Activator implements BundleActivator {
     if (bundle != null) {
       bundle.start();
     }
-    String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.look");
+    String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.theme");
     if (StringUtil.hasText(className)) {
       LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
       if (lf == null || !className.equals(lf.getClass().getName())) {

@@ -145,7 +145,7 @@ public class WeasisLauncher {
   public static final String P_WEASIS_VERSION_RELEASE = "weasis.version.release";
   public static final String P_WEASIS_I18N = "weasis.i18n";
   public static final String P_OS_NAME = "os.name";
-  public static final String P_WEASIS_LOOK = "weasis.look";
+  public static final String P_WEASIS_LOOK = "weasis.theme";
   public static final String P_GOSH_ARGS = "gosh.args";
   public static final String P_WEASIS_CLEAN_CACHE = "weasis.clean.cache";
   public static final String P_HTTP_AUTHORIZATION = "http.authorization";
@@ -837,7 +837,7 @@ public class WeasisLauncher {
     String sysSpec = System.getProperty(P_NATIVE_LIB_SPEC, "unknown"); // NON-NLS
     int index = sysSpec.indexOf('-');
     if (index > 0) {
-      nativeLook = "weasis.look." + sysSpec.substring(0, index); // NON-NLS
+      nativeLook = "weasis.theme." + sysSpec.substring(0, index); // NON-NLS
       look = System.getProperty(nativeLook, null);
       if (look == null) {
         look = serverProp.get(nativeLook);

@@ -354,7 +354,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code"));
     comboBoxFormat.selectLocale();
 
-    String className = prfs.getProperty("weasis.look");
+    String className = prfs.getProperty("weasis.theme");
     if (className == null) {
       LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
       if (currentLAF != null) {
@@ -433,7 +433,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
     if (look != null) {
-      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.look", look.getClassName());
+      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.theme", look.getClassName());
     }
     // save preferences
     BundleTools.saveSystemPreferences();
@@ -475,7 +475,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     // Reset format to the config.properties value or null (default system value)
     BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
 
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.look", null);
+    BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
   }
 
   static class LookInfo {

@@ -24,6 +24,10 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
   private final String type;
   private final GroupPopup menuModel;
 
+  public DropDownButton(String type, Icon icon) {
+    this(type, icon, (GroupPopup) null);
+  }
+
   public DropDownButton(String type, Icon icon, GroupPopup model) {
     super(icon);
     this.menuModel = model;
@@ -31,14 +35,10 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
     init();
   }
 
-  public DropDownButton(String type, Icon icon) {
-    this(type, icon, (GroupPopup) null);
-  }
-
-  public DropDownButton(String type, String text, JComponent parent) {
-    super(new DropDownLabel(text, parent));
+  public DropDownButton(String type, String text, Icon icon, GroupPopup model) {
+    super(text, icon);
     this.type = type;
-    this.menuModel = null;
+    this.menuModel = model;
     init();
   }
 
@@ -48,23 +48,6 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
 
   public GroupPopup getMenuModel() {
     return menuModel;
-  }
-
-  @Override
-  public void setText(String text) {
-    Icon icon = this.getIcon();
-    if (icon instanceof DropDownLabel iconLabel) {
-      iconLabel.setLabel(text, this);
-      Insets insets = getInsets();
-      iconLabel.paintIcon(this, getGraphics(), insets.left, insets.top);
-      revalidate();
-      repaint();
-    }
-  }
-
-  @Override
-  public void setLabel(String label) {
-    setText(label);
   }
 
   @Override

@@ -9,21 +9,16 @@
  */
 package org.weasis.dicom.qr;
 
+import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
-import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.EventQueue;
 import java.awt.FlowLayout;
-import java.awt.KeyboardFocusManager;
-import java.awt.Robot;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -31,6 +26,7 @@ import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -53,6 +49,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
@@ -71,7 +68,6 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DropDownButton;
-import org.weasis.core.api.gui.util.DropDownLabel;
 import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -229,7 +225,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton modButton =
       new DropDownButton(
           "search_mod", // NON-NLS
-          new DropDownLabel(Messages.getString("DicomQrView.modalities"), panelGroup),
+         Messages.getString("DicomQrView.modalities"), UIManager.getIcon("Tree.expandedIcon"),
           groupMod) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -258,7 +254,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton dateButton =
       new DropDownButton(
           "search_date", // NON-NLS
-          new DropDownLabel(Messages.getString("DicomQrView.dates"), panelGroup),
+          Messages.getString("DicomQrView.dates"), UIManager.getIcon("Tree.expandedIcon"),
           groupDate) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -386,9 +382,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     pageSpinner.addChangeListener(queryListener);
     panel6.add(pageSpinner);
     panel5.add(panel6);
+    panel5.add(Box.createHorizontalStrut(40));
     progressBar.setEnabled(false);
     panel5.add(progressBar);
-    panel5.add(Box.createHorizontalStrut(70));
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
@@ -449,9 +445,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     panelGroup.add(dateButton);
     panelGroup.add(new JLabel(Messages.getString("DicomQrView.from")));
-    panelGroup.add(startDatePicker);
+    panelGroup.add(startDatePicker.getComponentDateTextField());
     panelGroup.add(new JLabel(Messages.getString("DicomQrView.to")));
-    panelGroup.add(endDatePicker);
+    panelGroup.add(endDatePicker.getComponentDateTextField());
     sPanel.add(panelGroup);
 
     final JPanel panel4 = new JPanel();
@@ -486,9 +482,20 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
     settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
-    GuiUtils.setPreferredWidth(d.getComponentDateTextField(), 95);
-    GuiUtils.setPreferredWidth(d.getComponentToggleCalendarButton(), 35);
+    GuiUtils.setPreferredWidth(d.getComponentDateTextField(), 145);
     d.addDateChangeListener(dateChangeListener);
+
+    d.getComponentDateTextField().putClientProperty( FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true );
+    JButton calendarButton = d.getComponentToggleCalendarButton();
+    calendarButton.setMargin(null);
+    calendarButton.setText(null);
+    calendarButton.setIcon(new FlatHelpButtonIcon());
+    calendarButton.setFocusPainted(true);
+    calendarButton.setFocusable(true);
+    calendarButton.revalidate();
+    Arrays.stream(calendarButton.getMouseListeners()).forEach(calendarButton::removeMouseListener);
+    calendarButton.addActionListener(e -> d.openPopup());
+    d.getComponentDateTextField().putClientProperty( FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, calendarButton );
     return d;
   }
 
