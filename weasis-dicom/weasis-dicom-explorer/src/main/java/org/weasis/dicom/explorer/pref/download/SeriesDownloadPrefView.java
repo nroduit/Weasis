@@ -19,8 +19,8 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.Messages;
 
@@ -38,13 +38,8 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
 
     JPanel panel = new JPanel();
     panel.setBorder(
-        new TitledBorder(
-            null,
-            org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+        GuiUtils.getTitledBorder(
+            org.weasis.core.ui.Messages.getString("SeriesDownloadPrefView.download")));
     add(panel);
     GridBagLayout gblPanel = new GridBagLayout();
     panel.setLayout(gblPanel);

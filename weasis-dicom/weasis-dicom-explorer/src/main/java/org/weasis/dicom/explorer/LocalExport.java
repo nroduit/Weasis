@@ -169,7 +169,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       final JPanel palenSlider1 = new JPanel();
       palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
       palenSlider1.setBorder(
-          new TitledBorder(
+          GuiUtils.getTitledBorder(
               Messages.getString("LocalExport.jpeg_quality")
                   + StringUtil.COLON_AND_SPACE
                   + slider.getValue()));
@@ -177,7 +177,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       slider.setPaintTicks(true);
       slider.setSnapToTicks(false);
       slider.setMajorTickSpacing(10);
-      GuiUtils.setPreferredWidth(slider, 145, 145);
       palenSlider1.add(slider);
       slider.addChangeListener(
           e -> {

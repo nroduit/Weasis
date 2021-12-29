@@ -12,7 +12,6 @@ package org.weasis.dicom.wave.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -27,7 +26,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
@@ -35,6 +33,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
@@ -89,13 +88,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.setBorder(
         BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                Messages.getString("annotations"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getTitledBorder(Messages.getString("annotations"))));
 
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);
@@ -120,13 +113,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.setBorder(
         BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                Messages.getString("markers"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getTitledBorder(Messages.getString("markers"))));
 
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);

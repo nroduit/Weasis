@@ -13,8 +13,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
+import javax.swing.Icon;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JToggleButton;
 import javax.swing.JToggleButton.ToggleButtonModel;
 import org.weasis.core.api.service.AuditLog;
 
@@ -98,5 +100,11 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
     final JCheckBoxMenuItem menu = new JCheckBoxMenuItem(title);
     registerActionState(menu);
     return menu;
+  }
+
+  public JToggleButton createJToggleButton(Icon icon) {
+    final JToggleButton check = new JToggleButton(icon);
+    registerActionState(check);
+    return check;
   }
 }

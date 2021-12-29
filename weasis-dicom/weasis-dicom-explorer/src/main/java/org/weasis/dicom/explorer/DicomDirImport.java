@@ -27,7 +27,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,14 +56,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   public void initGUI() {
     GridBagLayout gridBagLayout = new GridBagLayout();
     setLayout(gridBagLayout);
-    setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomDirImport.dicomdir"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomDirImport.dicomdir")));
 
     JLabel lblImportAFolder =
         new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);

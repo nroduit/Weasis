@@ -69,6 +69,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -175,7 +176,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final Color pointerColor1 = Color.black;
   protected final Color pointerColor2 = Color.white;
-  protected final Border focusBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.ORANGE);
+  protected final Border focusBorder =
+      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
   protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;

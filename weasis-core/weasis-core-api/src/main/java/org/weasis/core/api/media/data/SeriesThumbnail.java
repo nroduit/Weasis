@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.media.data;
 
-import com.formdev.flatlaf.util.UIScale;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
@@ -193,7 +192,7 @@ public class SeriesThumbnail extends Thumbnail
   public synchronized void setThumbnailSize(int thumbnailSize) {
     boolean update = this.thumbnailSize != thumbnailSize;
     if (update) {
-      this.thumbnailSize = (int) (thumbnailSize * UIScale.getUserScaleFactor());
+      this.thumbnailSize = GuiUtils.getScaleLength(thumbnailSize);
       Object media = series.getMedia(mediaPosition, null, null);
       if (media == null) {
         media = series.getFirstSpecialElement();
@@ -317,7 +316,7 @@ public class SeriesThumbnail extends Thumbnail
       if (series.isOpen()) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (series.isSelected() && series.isFocused()) {
-          g2d.setPaint(Color.ORANGE);
+          g2d.setPaint(IconColor.ACTIONS_YELLOW.getColor());
         } else {
           g2d.setPaint(IconColor.ACTIONS_GREEN.getColor());
         }

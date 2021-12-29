@@ -20,7 +20,6 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
@@ -46,9 +45,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
   private void buildPanel(AbstractDicomNode.Type nodeType) {
     JPanel panel = new JPanel();
-    panel.setBorder(
-        new TitledBorder(
-            null, nodeType.toString(), TitledBorder.LEADING, TitledBorder.TOP, null, null));
+    panel.setBorder(GuiUtils.getTitledBorder(nodeType.toString()));
     add(panel);
     GridBagLayout gblPanel1 = new GridBagLayout();
     panel.setLayout(gblPanel1);

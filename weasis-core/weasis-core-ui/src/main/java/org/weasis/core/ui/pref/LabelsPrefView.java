@@ -23,8 +23,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
@@ -63,14 +63,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     btnNewButton.addActionListener(e -> resetoDefaultValues());
 
     JPanel panel1 = new JPanel();
-    panel1.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("LabelsPrefView.geometric1"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelsPrefView.geometric1")));
     add(panel1, BorderLayout.CENTER);
     panel1.setLayout(new BorderLayout(0, 0));
 

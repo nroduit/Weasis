@@ -10,26 +10,25 @@
 package org.weasis.base.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import java.awt.Color;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagLayout;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
+import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.ResetTools;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -38,25 +37,23 @@ import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.util.StringUtil;
 
 public class ImageTool extends PluginTool {
 
   public static final String BUTTON_NAME = Messages.getString("ImageTool.imgtool");
 
-  public static final Font TITLE_FONT = FontTools.getFont12Bold();
-  public static final Color TITLE_COLOR = Color.GRAY;
-
   private final JScrollPane rootPane = new JScrollPane();
   private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
   public ImageTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 20);
-    dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png")));
-    setDockableWidth(290);
+    super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 20);
+    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
+    setDockableWidth(GuiUtils.getScaleLength(300));
     jbInit();
   }
 
@@ -67,7 +64,7 @@ public class ImageTool extends PluginTool {
     add(getSlicePanel());
     add(getResetPanel());
 
-    final JPanel panel1 = new JPanel();
+    JPanel panel1 = new JPanel();
     panel1.setAlignmentY(Component.TOP_ALIGNMENT);
     panel1.setAlignmentX(Component.LEFT_ALIGNMENT);
     panel1.setLayout(new GridBagLayout());
@@ -89,24 +86,17 @@ public class ImageTool extends PluginTool {
   }
 
   public JPanel getResetPanel() {
-    final JPanel panel2 = new JPanel();
+    JPanel panel2 = new JPanel();
     panel2.setAlignmentY(Component.TOP_ALIGNMENT);
     panel2.setAlignmentX(Component.LEFT_ALIGNMENT);
-    panel2.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
+    panel2.setLayout(new FlowLayout(FlowLayout.LEFT));
     panel2.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("ImageTool.reset"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
-    final JComboBox resetComboBox = new JComboBox(ResetTools.values());
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("ImageTool.reset"))));
+    JComboBox resetComboBox = new JComboBox(ResetTools.values());
     panel2.add(resetComboBox);
 
-    final JButton resetButton = new JButton();
+    JButton resetButton = new JButton();
     resetButton.setText(Messages.getString("ImageTool.reset"));
     resetButton.addActionListener(
         e -> EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem()));
@@ -120,55 +110,44 @@ public class ImageTool extends PluginTool {
 
   public JPanel getSlicePanel() {
 
-    final JPanel framePanel = new JPanel();
+    JPanel framePanel = new JPanel();
     framePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
     framePanel.setAlignmentY(Component.TOP_ALIGNMENT);
     framePanel.setLayout(new BoxLayout(framePanel, BoxLayout.Y_AXIS));
     framePanel.setBorder(
-        BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("ImageTool.frame"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
+        BorderFactory.createCompoundBorder(spaceY, GuiUtils.getTitledBorder("Cine")));
 
     ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-    if (sequence instanceof SliderCineListener) {
-      SliderCineListener cineAction = (SliderCineListener) sequence;
-      final JSliderW frameSlider = cineAction.createSlider(2, true);
+    if (sequence instanceof SliderCineListener sliderItem) {
+      JSliderW frameSlider = sliderItem.createSlider(2, true);
       framePanel.add(frameSlider.getParent());
 
-      final JPanel panel3 = new JPanel();
+      JPanel panel3 = new JPanel();
       panel3.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-      final JLabel speedLabel = new JLabel();
-      speedLabel.setText(Messages.getString("ImageTool.cine_speed") + StringUtil.COLON);
+      JLabel speedLabel = new JLabel();
+      speedLabel.setText("Speed (fps)" + StringUtil.COLON);
       panel3.add(speedLabel);
 
-      final JSpinner speedSpinner = new JSpinner(cineAction.getSpeedModel());
+      JSpinner speedSpinner = new JSpinner(sliderItem.getSpeedModel());
       GuiUtils.formatCheckAction(speedSpinner);
       panel3.add(speedSpinner);
-      final JButton startButton = new JButton();
+      JButton startButton = new JButton();
       startButton.setActionCommand(ActionW.CINESTART.cmd());
-      startButton.setPreferredSize(GuiUtils.getBigIconButtonSize());
+      startButton.setPreferredSize(GuiUtils.getBigIconButtonSize(startButton));
       startButton.setToolTipText(Messages.getString("ImageTool.cine_start"));
-      startButton.setIcon(
-          new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-start.png")));
+      startButton.setIcon(ResourceUtil.getIcon(ActionIcon.EXECUTE));
       startButton.addActionListener(EventManager.getInstance());
       panel3.add(startButton);
-      cineAction.registerActionState(startButton);
+      sliderItem.registerActionState(startButton);
 
-      final JButton stopButton = new JButton();
+      JButton stopButton = new JButton();
       stopButton.setActionCommand(ActionW.CINESTOP.cmd());
-      stopButton.setPreferredSize(GuiUtils.getBigIconButtonSize());
+      stopButton.setPreferredSize(GuiUtils.getBigIconButtonSize(stopButton));
       stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop"));
-      stopButton.setIcon(
-          new ImageIcon(MouseActions.class.getResource("/icon/22x22/media-playback-stop.png")));
+      stopButton.setIcon(ResourceUtil.getIcon(ActionIcon.SUSPEND));
       stopButton.addActionListener(EventManager.getInstance());
       panel3.add(stopButton);
-      cineAction.registerActionState(stopButton);
+      sliderItem.registerActionState(stopButton);
       framePanel.add(panel3);
     }
     return framePanel;
@@ -176,105 +155,90 @@ public class ImageTool extends PluginTool {
 
   public JPanel getWindowLevelPanel() {
 
-    final JPanel winLevelPanel = new JPanel();
+    JPanel winLevelPanel = new JPanel();
     winLevelPanel.setAlignmentY(Component.TOP_ALIGNMENT);
     winLevelPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
     winLevelPanel.setLayout(new BoxLayout(winLevelPanel, BoxLayout.Y_AXIS));
     winLevelPanel.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("ImageTool.wl"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("ImageTool.wl"))));
     ActionState winAction = EventManager.getInstance().getAction(ActionW.WINDOW);
-    if (winAction instanceof SliderChangeListener) {
-      final JSliderW windowSlider = ((SliderChangeListener) winAction).createSlider(2, true);
-      GuiUtils.setPreferredWidth(windowSlider, 100);
+    if (winAction instanceof SliderChangeListener sliderItem) {
+      JSliderW windowSlider = sliderItem.createSlider(2, true);
       winLevelPanel.add(windowSlider.getParent());
     }
     ActionState levelAction = EventManager.getInstance().getAction(ActionW.LEVEL);
-    if (levelAction instanceof SliderChangeListener) {
-      final JSliderW levelSlider = ((SliderChangeListener) levelAction).createSlider(2, true);
-      GuiUtils.setPreferredWidth(levelSlider, 100);
+    if (levelAction instanceof SliderChangeListener sliderItem) {
+      JSliderW levelSlider = sliderItem.createSlider(2, true);
       winLevelPanel.add(levelSlider.getParent());
     }
+
     ActionState presetAction = EventManager.getInstance().getAction(ActionW.PRESET);
-    if (presetAction instanceof ComboItemListener) {
-      final JPanel panel3 = new JPanel();
-      panel3.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 3));
-      final JLabel presetsLabel = new JLabel();
+    if (presetAction instanceof ComboItemListener<?> comboItem) {
+      JPanel panel3 = new JPanel();
+      panel3.setLayout(new FlowLayout(FlowLayout.LEFT));
+      JLabel presetsLabel = new JLabel();
       panel3.add(presetsLabel);
       presetsLabel.setText(Messages.getString("ImageTool.preset") + StringUtil.COLON);
-      final JComboBox presetComboBox = ((ComboItemListener) presetAction).createCombo(160);
+      JComboBox<?> presetComboBox = comboItem.createCombo();
       presetComboBox.setMaximumRowCount(10);
       panel3.add(presetComboBox);
       winLevelPanel.add(panel3);
     }
     ActionState lutAction = EventManager.getInstance().getAction(ActionW.LUT);
-    if (lutAction instanceof ComboItemListener) {
-      final JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
-      final JLabel lutLabel = new JLabel();
+    if (lutAction instanceof ComboItemListener<?> comboItem) {
+      JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      JLabel lutLabel = new JLabel();
       lutLabel.setText(Messages.getString("ImageTool.lut") + StringUtil.COLON);
       panel4.add(lutLabel);
-      final JComboBox lutcomboBox = ((ComboItemListener) lutAction).createCombo(140);
-      panel4.add(lutcomboBox);
-      ActionState invlutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
-      if (invlutAction instanceof ToggleButtonListener) {
-        panel4.add(
-            ((ToggleButtonListener) invlutAction)
-                .createCheckBox(Messages.getString("ImageTool.inverse")));
+      JComboBox<?> lutComboBox = comboItem.createCombo();
+      panel4.add(lutComboBox);
+      ActionState inverseLutAction = EventManager.getInstance().getAction(ActionW.INVERT_LUT);
+      if (inverseLutAction instanceof ToggleButtonListener toggleButton) {
+        FlatSVGIcon icon = ResourceUtil.getIcon(ActionIcon.INVERSE_LUT);
+        JToggleButton checkBox = toggleButton.createJToggleButton(icon);
+        checkBox.setPreferredSize(GuiUtils.getBigIconButtonSize(checkBox));
+        checkBox.setToolTipText(Messages.getString("ImageTool.inverse"));
+        panel4.add(checkBox);
       }
       winLevelPanel.add(panel4);
     }
+
     ActionState filterAction = EventManager.getInstance().getAction(ActionW.FILTER);
-    if (filterAction instanceof ComboItemListener) {
-      final JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 3));
-      final JLabel lutLabel = new JLabel();
-      lutLabel.setText(Messages.getString("ImageTool.filter"));
+    if (filterAction instanceof ComboItemListener<?> comboItem) {
+      JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      JLabel lutLabel = new JLabel();
+      lutLabel.setText(Messages.getString("ImageTool.filter") + StringUtil.COLON);
       panel4.add(lutLabel);
-      final JComboBox filtercomboBox = ((ComboItemListener) filterAction).createCombo(160);
-      panel4.add(filtercomboBox);
+      JComboBox<?> combo = comboItem.createCombo();
+      panel4.add(combo);
       winLevelPanel.add(panel4);
     }
     return winLevelPanel;
   }
 
   public JPanel getTransformPanel() {
-    final JPanel transform = new JPanel();
+    JPanel transform = new JPanel();
     transform.setAlignmentY(Component.TOP_ALIGNMENT);
     transform.setAlignmentX(Component.LEFT_ALIGNMENT);
     transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
     transform.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("ImageTool.transform"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("ImageTool.transform"))));
     ActionState zoomAction = EventManager.getInstance().getAction(ActionW.ZOOM);
-    if (zoomAction instanceof SliderChangeListener) {
-      final JSliderW zoomSlider = ((SliderChangeListener) zoomAction).createSlider(0, true);
-      GuiUtils.setPreferredWidth(zoomSlider, 100);
+    if (zoomAction instanceof SliderChangeListener sliderItem) {
+      JSliderW zoomSlider = sliderItem.createSlider(0, true);
       transform.add(zoomSlider.getParent());
     }
     ActionState rotateAction = EventManager.getInstance().getAction(ActionW.ROTATION);
-    if (rotateAction instanceof SliderChangeListener) {
-      final JSliderW rotationSlider = ((SliderChangeListener) rotateAction).createSlider(5, true);
-      GuiUtils.setPreferredWidth(rotationSlider, 100);
+    if (rotateAction instanceof SliderChangeListener sliderItem) {
+      JSliderW rotationSlider = sliderItem.createSlider(5, true);
       transform.add(rotationSlider.getParent());
     }
     ActionState flipAction = EventManager.getInstance().getAction(ActionW.FLIP);
-    if (flipAction instanceof ToggleButtonListener) {
-      JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 3));
-      pane.add(
-          ((ToggleButtonListener) flipAction).createCheckBox(Messages.getString("ImageTool.flip")));
+    if (flipAction instanceof ToggleButtonListener sliderItem) {
+      JPanel pane = new JPanel(new FlowLayout(FlowLayout.LEFT));
+      pane.add(sliderItem.createCheckBox(Messages.getString("ImageTool.flip")));
       transform.add(pane);
     }
     return transform;

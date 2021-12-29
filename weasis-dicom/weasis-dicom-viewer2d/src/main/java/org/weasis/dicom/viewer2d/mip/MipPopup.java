@@ -31,6 +31,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -56,7 +57,7 @@ public class MipPopup {
       DefaultBoundedRangeModel model) {
     final JPanel palenSlider1 = new JPanel();
     palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
-    palenSlider1.setBorder(new TitledBorder(title));
+    palenSlider1.setBorder(GuiUtils.getTitledBorder(title));
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum() / 2 + 1, 1);
     slider.setLabelDivision(labelDivision);
     slider.setdisplayValueInTitle(displayValueInTitle);
@@ -73,8 +74,8 @@ public class MipPopup {
     JPanel panel = (JPanel) slider.getParent();
     if (slider.isdisplayValueInTitle()
         && panel != null
-        && panel.getBorder() instanceof TitledBorder) {
-      ((TitledBorder) panel.getBorder()).setTitle(title);
+        && panel.getBorder() instanceof TitledBorder titledBorder) {
+      titledBorder.setTitle(title);
       panel.repaint();
     } else {
       slider.setToolTipText(title);
@@ -104,14 +105,7 @@ public class MipPopup {
       panel_1.setLayout(new BoxLayout(panel_1, BoxLayout.Y_AXIS));
 
       final JPanel framePanel = new JPanel();
-      framePanel.setBorder(
-          new TitledBorder(
-              null,
-              Messages.getString("MipPopup.projection"),
-              TitledBorder.LEADING,
-              TitledBorder.TOP,
-              null,
-              null));
+      framePanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MipPopup.projection")));
       final ButtonGroup ratioGroup = new ButtonGroup();
 
       JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min"));

@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
@@ -202,7 +203,8 @@ public class HistogramPanel extends JPanel {
     rect.setRect(x - 1f - offsetThick, tLut + 6f, lutLength + 1f, 18f);
     g2d.draw(rect);
 
-    g2d.setPaint(Color.ORANGE);
+    Color yellow = IconColor.ACTIONS_YELLOW.getColor();
+    g2d.setPaint(yellow);
 
     g2d.setStroke(
         new BasicStroke(
@@ -227,7 +229,7 @@ public class HistogramPanel extends JPanel {
         drawWl = true;
       }
       if (high < windLevel.getLevelMax()) {
-        g2d.setPaint(Color.ORANGE);
+        g2d.setPaint(yellow);
         line.setLine(phigh, SLIDER_Y, phigh, tLut);
         g2d.draw(line);
         String label =
@@ -241,7 +243,7 @@ public class HistogramPanel extends JPanel {
       }
 
       if (drawWl) {
-        g2d.setPaint(Color.ORANGE);
+        g2d.setPaint(yellow);
         line.setLine(plow, SLIDER_Y, phigh, SLIDER_Y);
         g2d.draw(line);
       }

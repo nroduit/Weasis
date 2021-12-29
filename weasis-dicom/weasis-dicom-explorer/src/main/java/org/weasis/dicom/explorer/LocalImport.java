@@ -20,7 +20,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -48,13 +47,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     GridBagLayout gridBagLayout = new GridBagLayout();
     setLayout(gridBagLayout);
     setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("LocalImport.imp_files") + StringUtil.COLON,
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+        GuiUtils.getTitledBorder(Messages.getString("LocalImport.imp_files") + StringUtil.COLON));
 
     JLabel lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
     GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();

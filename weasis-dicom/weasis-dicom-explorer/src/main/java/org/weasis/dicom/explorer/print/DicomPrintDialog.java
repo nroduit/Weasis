@@ -24,7 +24,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.WindowConstants;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -136,13 +135,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     final JPanel printersCfg = new JPanel();
     printersCfg.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomPrintDialog.print_title"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+        GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.print_title")));
     FlowLayout flPrintersCfg = new FlowLayout();
     flPrintersCfg.setAlignment(FlowLayout.LEFT);
     printersCfg.setLayout(flPrintersCfg);

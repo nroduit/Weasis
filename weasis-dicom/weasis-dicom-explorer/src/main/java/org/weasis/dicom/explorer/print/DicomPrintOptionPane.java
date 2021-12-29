@@ -20,7 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JSpinner;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.TitledBorder;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.util.PrintOptions;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
@@ -73,14 +73,7 @@ public class DicomPrintOptionPane extends JPanel {
 
   private void initComponents() {
 
-    this.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomPrintDialog.option_title"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    this.setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
     GridBagLayout gblContent = new GridBagLayout();
     this.setLayout(gblContent);
 

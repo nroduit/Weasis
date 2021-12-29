@@ -14,7 +14,6 @@ import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
@@ -49,7 +48,6 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -73,7 +71,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -290,14 +287,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     initGUI();
     tree.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("DicomQrView.result"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("DicomQrView.result"))));
     add(tree, BorderLayout.CENTER);
     initialize(true);
 
@@ -405,14 +395,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
     sPanel.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("DicomQrView.search"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("DicomQrView.search"))));
 
     panelGroup.setLayout(new FlowLayout(FlowLayout.LEFT, 7, 3));
 

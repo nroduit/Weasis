@@ -25,8 +25,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -79,7 +79,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
     jPanel2.setLayout(gridBagLayout1);
     jLabelFont.setText(Messages.getString("LabelPrefView.name") + StringUtil.COLON);
     jLabelSize.setText(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
-    jPanel2.setBorder(new TitledBorder(Messages.getString("LabelPrefView.font")));
+    jPanel2.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
     jCheckBoxBold.setText(Messages.getString("LabelPrefView.bold"));
     jCheckBoxItalic.setText(Messages.getString("LabelPrefView.italic"));
     jPanel2.add(

@@ -21,7 +21,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -33,9 +32,13 @@ import javax.swing.tree.TreePath;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.base.viewer2d.Messages;
 import org.weasis.base.viewer2d.View2dContainer;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnailable;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -62,9 +65,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private JPanel panelFoot;
 
   public DisplayTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
-    dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/display.png")));
-    setDockableWidth(210);
+    super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 10);
+    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
+    setDockableWidth(GuiUtils.getScaleLength(235));
 
     tree = new CheckboxTree();
     initPathSelection = false;
@@ -245,10 +248,6 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   @Override
   public Component getToolComponent() {
     return this;
-  }
-
-  public void expandAllTree() {
-    tree.expandRow(4);
   }
 
   @Override

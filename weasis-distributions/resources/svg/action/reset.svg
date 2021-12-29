@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(2,1)" fill="#afb1b3" fill-rule="evenodd">
+  <polygon transform="matrix(-1,0,0,1,6.6,0)" points="0 8.1 0 0.1 4 4.1"/>
+  <path d="m-0.16521 11h8.1652c1.6569 0 3-1.3431 3-3s-1.3431-3-3-3h-1.5825l-0.038989-2h1.6215c2.7614 0 5 2.2386 5 5 0 2.7614-2.2386 5-5 5h-8.1262z" fill="#afb1b3"/>
+  <circle cx=".43689" cy="4.15" r="1.75" fill="#db5860" stroke-width=".35"/>
+ </g>
+</svg>

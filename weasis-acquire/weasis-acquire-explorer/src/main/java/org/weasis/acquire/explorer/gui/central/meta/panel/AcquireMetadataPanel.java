@@ -60,13 +60,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   public AcquireMetadataPanel(String title) {
     setLayout(new BorderLayout());
     this.title = title;
-    this.titleBorder =
-        new TitledBorder(
-            null,
-            getDisplayText(),
-            TitledBorder.DEFAULT_JUSTIFICATION,
-            TitledBorder.DEFAULT_POSITION);
-
+    this.titleBorder = GuiUtils.getTitledBorder(getDisplayText());
     setBorder(
         BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(7, 3, 0, 3), titleBorder));

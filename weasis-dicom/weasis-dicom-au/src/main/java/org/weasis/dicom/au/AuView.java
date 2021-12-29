@@ -34,7 +34,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.Timer;
-import javax.swing.border.TitledBorder;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Tag;
@@ -42,6 +41,7 @@ import org.dcm4che3.data.VR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -372,7 +372,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
     s.setLabelTable(labels);
     s.setPaintLabels(true);
 
-    s.setBorder(new TitledBorder(c.getType().toString() + " " + c.getUnits()));
+    s.setBorder(GuiUtils.getTitledBorder(c.getType().toString() + " " + c.getUnits()));
 
     s.addChangeListener(
         e -> {

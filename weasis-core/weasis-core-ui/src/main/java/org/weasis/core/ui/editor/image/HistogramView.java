@@ -10,7 +10,6 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
@@ -37,7 +36,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.JTable;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.TitledBorder;
 import org.opencv.core.Mat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +46,6 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.WindLevelParameters;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -165,13 +162,7 @@ public class HistogramView extends JComponent
       headerPanel.setBorder(
           BorderFactory.createCompoundBorder(
               BorderFactory.createEmptyBorder(10, 7, 7, 7),
-              new TitledBorder(
-                  null,
-                  Messages.getString("HistogramView.histoParams"),
-                  TitledBorder.DEFAULT_JUSTIFICATION,
-                  TitledBorder.DEFAULT_POSITION,
-                  FontTools.getFont12Bold(),
-                  Color.GRAY)));
+              GuiUtils.getTitledBorder(Messages.getString("HistogramView.histoParams"))));
 
       JPanel row1 = new JPanel();
       row1.add(new JLabel(Messages.getString("HistogramView.channel") + StringUtil.COLON));

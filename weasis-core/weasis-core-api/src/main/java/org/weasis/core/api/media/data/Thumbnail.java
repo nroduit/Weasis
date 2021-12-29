@@ -10,7 +10,6 @@
 package org.weasis.core.api.media.data;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.util.UIScale;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -40,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
@@ -84,7 +84,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
 
   public Thumbnail(int thumbnailSize) {
     super(null, null, SwingConstants.CENTER);
-    this.thumbnailSize = (int) (thumbnailSize * UIScale.getUserScaleFactor());
+    this.thumbnailSize = GuiUtils.getScaleLength(thumbnailSize);
   }
 
   public Thumbnail(
@@ -93,7 +93,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
     if (media == null) {
       throw new IllegalArgumentException("image cannot be null");
     }
-    this.thumbnailSize = (int) (thumbnailSize * UIScale.getUserScaleFactor());
+    this.thumbnailSize = GuiUtils.getScaleLength(thumbnailSize);
     init(media, keepMediaCache, opManager);
   }
 

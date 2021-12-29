@@ -30,12 +30,12 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.AuthProvider;
 import org.weasis.core.api.auth.AuthRegistration;
 import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.util.StringUtil;
@@ -192,14 +192,7 @@ public class AuthMethodDialog extends JDialog {
     content.setLayout(new GridBagLayout());
     content.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                "Provider", // NON-NLS
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
+            spaceY, GuiUtils.getTitledBorder("Provider"))); // NON-NLS
 
     buildGridConstraint(content, "Name", name, 0); // NON-NLS
     buildGridConstraint(content, "Authorization URI", authorizationURI, 1); // NON-NLS
@@ -234,14 +227,8 @@ public class AuthMethodDialog extends JDialog {
     content.setLayout(new GridBagLayout());
     content.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                "Registration", // NON-NLS
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                TITLE_FONT,
-                TITLE_COLOR)));
+            spaceY, GuiUtils.getTitledBorder("Registration"))); // NON-NLS
+
     buildGridConstraint(content, "Client ID", clientID, 0); // NON-NLS
     buildGridConstraint(content, "Client Secret", clientSecret, 1); // NON-NLS
     buildGridConstraint(content, "Scope", scope, 2); // NON-NLS

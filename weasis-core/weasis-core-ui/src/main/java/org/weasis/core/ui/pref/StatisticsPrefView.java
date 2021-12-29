@@ -19,8 +19,8 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -43,8 +43,7 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
     setLayout(new BorderLayout(0, 0));
 
     JPanel panel = new JPanel();
-    panel.setBorder(
-        new TitledBorder(null, getTitle(), TitledBorder.LEADING, TitledBorder.TOP, null, null));
+    panel.setBorder(GuiUtils.getTitledBorder(getTitle()));
     add(panel, BorderLayout.CENTER);
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 

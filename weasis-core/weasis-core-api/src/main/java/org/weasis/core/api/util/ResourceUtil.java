@@ -65,9 +65,42 @@ public class ResourceUtil {
     }
   }
 
+  public enum ActionIcon implements ResourceIconPath {
+    EXECUTE("svg/action/execute.svg"),
+    SUSPEND("svg/action/suspend.svg"),
+    PIPETTE("svg/action/pipette.svg"),
+    FLIP("svg/action/flip.svg"),
+    CROSSHAIR("svg/action/crosshair.svg"),
+    LAYOUT("svg/action/layout.svg"),
+    LUT("svg/action/lut.svg"),
+    MEASURE("svg/action/measure.svg"),
+    METADATA("svg/action/metadata.svg"),
+    NONE("svg/action/none.svg"),
+    PRINT("svg/action/print.svg"),
+    RESET("svg/action/reset.svg"),
+    SELECTION("svg/action/selection.svg"),
+    SEQUENCE("svg/action/sequence.svg"),
+    SYNCH("svg/action/synch.svg"),
+    TILE("svg/action/tile.svg"),
+    WINDOW_LEVEL("svg/action/winLevel.svg"),
+    INVERSE_LUT("svg/action/inverseLut.svg");
+
+    private String path;
+
+    ActionIcon(String path) {
+      this.path = path;
+    }
+
+    public String getPath() {
+      return path;
+    }
+  }
+
   public enum OtherIcon implements ResourceIconPath {
     XRAY("svg/other/xray.svg"),
     PATIENT("svg/other/patient.svg"),
+    IMAGE_EDIT("svg/other/imageEdit.svg"),
+    VIEW_SETTING("svg/action/viewSettings.svg"),
     CALENDAR("svg/other/calendar.svg");
 
     private String path;

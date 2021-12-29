@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,11 +31,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -56,7 +59,6 @@ import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 
-@SuppressWarnings("serial")
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
   public static final String IMAGE = Messages.getString("DisplayTool.image");
@@ -80,9 +82,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   private DefaultMutableTreeNode minAnnotations;
 
   public DisplayTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, PluginTool.Type.TOOL, 10);
-    dockable.setTitleIcon(new ImageIcon(DisplayTool.class.getResource("/icon/16x16/display.png")));
-    setDockableWidth(210);
+    super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 10);
+    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
+    setDockableWidth(GuiUtils.getScaleLength(235));
 
     tree = new CheckboxTree();
     initPathSelection = false;
@@ -182,7 +184,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       if (rootNode.equals(parent)) {
         if (imageNode.equals(selObject)) {
           for (ViewCanvas<?> v : views) {
-            if (selected != v.getImageLayer().getVisible()) {
+            if (selected != Boolean.TRUE.equals(v.getImageLayer().getVisible())) {
               v.getImageLayer().setVisible(selected);
               v.getJComponent().repaint();
             }
@@ -190,11 +192,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         } else if (dicomInfo.equals(selObject)) {
           for (ViewCanvas<?> v : views) {
             LayerAnnotation layer = v.getInfoLayer();
-            if (layer != null) {
-              if (selected != v.getInfoLayer().getVisible()) {
-                v.getInfoLayer().setVisible(selected);
-                v.getJComponent().repaint();
-              }
+            if (layer != null && selected != Boolean.TRUE.equals(v.getInfoLayer().getVisible())) {
+              v.getInfoLayer().setVisible(selected);
+              v.getJComponent().repaint();
             }
           }
         } else if (drawings.equals(selObject)) {
@@ -215,17 +215,18 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
       } else if (dicomInfo.equals(parent)) {
         if (selObject != null) {
           if (applyAllViews.isSelected()) {
-            if (AbstractInfoLayer.setDefaultDisplayPreferencesValue(
-                selObject.toString(), selected)) {
+            if (Boolean.TRUE.equals(
+                AbstractInfoLayer.setDefaultDisplayPreferencesValue(
+                    selObject.toString(), selected))) {
               views.forEach(v -> v.getJComponent().repaint());
             }
           } else {
             for (ViewCanvas<?> v : views) {
               LayerAnnotation layer = v.getInfoLayer();
-              if (layer != null) {
-                if (layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
-                  v.getJComponent().repaint();
-                }
+              if (layer != null
+                  && Boolean.TRUE.equals(
+                      layer.setDisplayPreferencesValue(selObject.toString(), selected))) {
+                v.getJComponent().repaint();
               }
             }
           }
@@ -238,20 +239,18 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
                     new SeriesViewerEvent(container, series, v.getImage(), EVENT.ANONYM));
           }
         }
-      } else if (drawings.equals(parent)) {
-        if (selObject == crosslines) {
-          for (ViewCanvas<?> v : views) {
-            if ((Boolean) v.getActionValue(LayerType.CROSSLINES.name()) != selected) {
-              v.setActionsInView(LayerType.CROSSLINES.name(), selected);
-              if (!selected) {
-                v.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
-                v.getJComponent().repaint();
-              } else {
-                // Force redrawing crosslines
-                Optional.ofNullable(
-                        (SliderChangeListener) v.getEventManager().getAction(ActionW.SCROLL_SERIES))
-                    .ifPresent(a -> a.stateChanged(a.getSliderModel()));
-              }
+      } else if (drawings.equals(parent) && selObject == crosslines) {
+        for (ViewCanvas<?> v : views) {
+          if (Boolean.TRUE.equals(v.getActionValue(LayerType.CROSSLINES.name())) != selected) {
+            v.setActionsInView(LayerType.CROSSLINES.name(), selected);
+            if (!selected) {
+              v.getGraphicManager().deleteByLayerType(LayerType.CROSSLINES);
+              v.getJComponent().repaint();
+            } else {
+              // Force redrawing crosslines
+              Optional.ofNullable(
+                      (SliderChangeListener) v.getEventManager().getAction(ActionW.SCROLL_SERIES))
+                  .ifPresent(a -> a.stateChanged(a.getSliderModel()));
             }
           }
         }
@@ -300,8 +299,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         Enumeration<?> en = dicomInfo.children();
         while (en.hasMoreElements()) {
           Object node = en.nextElement();
-          if (node instanceof TreeNode) {
-            TreeNode checkNode = (TreeNode) node;
+          if (node instanceof TreeNode checkNode) {
             Boolean sel =
                 applyAllViews.isSelected()
                     ? AbstractInfoLayer.defaultDisplayPreferences.getOrDefault(
@@ -371,7 +369,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           LayerAnnotation layer = v.getInfoLayer();
           if (layer != null) {
             layer.setVisible(true);
-            if (layer.setDisplayPreferencesValue(LayerAnnotation.MIN_ANNOTATIONS, true)) {
+            if (Boolean.TRUE.equals(
+                layer.setDisplayPreferencesValue(LayerAnnotation.MIN_ANNOTATIONS, true))) {
               v.getJComponent().repaint();
             }
           }
@@ -412,13 +411,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     Enumeration<?> children = start.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
-        if (!dtm.isLeaf()) {
-          TreePath tp = new TreePath(dtm.getPath());
-          tree.expandPath(tp);
-          expandTree(tree, dtm);
-        }
+      if (child instanceof DefaultMutableTreeNode dtm && !dtm.isLeaf()) {
+        TreePath tp = new TreePath(dtm.getPath());
+        tree.expandPath(tp);
+        expandTree(tree, dtm);
       }
     }
   }

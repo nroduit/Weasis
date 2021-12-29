@@ -1130,7 +1130,8 @@ public class WeasisLauncher {
       for (LookAndFeelInfo lf : UIManager.getInstalledLookAndFeels()) {
         if (laf.equals(lf.getClassName())) {
           Color c = UIManager.getColor("ToolBar.separatorColor");
-          if (lf.getName().contains("Dark")) {
+          boolean dark = lf.getName().contains("Dark");
+          if (dark) {
             c = ColorFunctions.lighten(c, 0.2f);
           } else {
             c = ColorFunctions.darken(c, 0.2f);
@@ -1138,18 +1139,12 @@ public class WeasisLauncher {
           UIManager.put("ToolBar.separatorColor", c);
 
           // TODO set as preference: preserve the default color action
-          UIManager.put(FlatIconColors.ACTIONS_RED.key, new Color(FlatIconColors.ACTIONS_RED.rgb));
-          UIManager.put(
-              FlatIconColors.ACTIONS_YELLOW.key, new Color(FlatIconColors.ACTIONS_YELLOW.rgb));
-          UIManager.put(
-              FlatIconColors.ACTIONS_GREEN.key, new Color(FlatIconColors.ACTIONS_GREEN.rgb));
-          UIManager.put(
-              FlatIconColors.ACTIONS_BLUE.key, new Color(FlatIconColors.ACTIONS_BLUE.rgb));
-          UIManager.put(
-              FlatIconColors.ACTIONS_GREY.key, new Color(FlatIconColors.ACTIONS_GREY.rgb));
-          UIManager.put(
-              FlatIconColors.ACTIONS_GREYINLINE.key,
-              new Color(FlatIconColors.ACTIONS_GREYINLINE.rgb));
+          applyDefaultColor(FlatIconColors.ACTIONS_RED, dark);
+          applyDefaultColor(FlatIconColors.ACTIONS_YELLOW, dark);
+          applyDefaultColor(FlatIconColors.ACTIONS_GREEN, dark);
+          applyDefaultColor(FlatIconColors.ACTIONS_BLUE, dark);
+          applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
+          applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
           break;
         }
       }
@@ -1158,6 +1153,24 @@ public class WeasisLauncher {
       LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
     }
     return laf;
+  }
+
+  private static void applyDefaultColor(FlatIconColors flatIconColor, boolean dark) {
+    if (dark) {
+      FlatIconColors darkColor =
+          switch (flatIconColor) {
+            case ACTIONS_RED -> FlatIconColors.ACTIONS_RED_DARK;
+            case ACTIONS_YELLOW -> FlatIconColors.ACTIONS_YELLOW_DARK;
+            case ACTIONS_GREEN -> FlatIconColors.ACTIONS_GREEN_DARK;
+            case ACTIONS_BLUE -> FlatIconColors.ACTIONS_BLUE_DARK;
+            case ACTIONS_GREY -> FlatIconColors.ACTIONS_GREY_DARK;
+            case ACTIONS_GREYINLINE -> FlatIconColors.ACTIONS_GREYINLINE_DARK;
+            default -> flatIconColor;
+          };
+      UIManager.put(darkColor.key, new Color(darkColor.rgb));
+    } else {
+      UIManager.put(flatIconColor.key, new Color(flatIconColor.rgb));
+    }
   }
 
   public static String getAvailableLookAndFeel(String look, String profileName) {

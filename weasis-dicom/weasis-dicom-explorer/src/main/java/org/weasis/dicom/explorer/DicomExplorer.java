@@ -12,7 +12,6 @@ package org.weasis.dicom.explorer;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import com.formdev.flatlaf.ui.FlatUIUtils;
-import com.formdev.flatlaf.util.UIScale;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -164,7 +163,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public DicomExplorer(DicomModel model) {
     super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
     setLayout(new BorderLayout());
-    setDockableWidth((int) (180 * UIScale.getUserScaleFactor()));
+    setDockableWidth(GuiUtils.getScaleLength(180));
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(patientContainer);
@@ -505,8 +504,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public void showTitle(boolean show) {
       if (show) {
-        TitledBorder title = new TitledBorder(patient.toString());
-        title.setTitleFont(GuiUtils.getSemiBoldFont());
+        TitledBorder title = GuiUtils.getTitledBorder(patient.toString());
         this.setBorder(
             BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(0, 5, 25, 5), title));
@@ -611,9 +609,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentX(LEFT_ALIGNMENT);
       this.setAlignmentY(TOP_ALIGNMENT);
       this.dicomStudy = dicomStudy;
-      title = new TitledBorder(dicomStudy.toString());
-      title.setTitleFont(GuiUtils.getSemiBoldFont());
-      title.setTitleJustification(TitledBorder.LEFT);
+      title = GuiUtils.getTitledBorder(dicomStudy.toString());
       this.setBorder(
           BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5), title));
       this.setFocusable(false);
@@ -718,7 +714,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         FontRenderContext frc = new FontRenderContext(null, false, false);
         Dimension dim =
             new Dimension(
-                (int) (thumbnailSize * UIScale.getUserScaleFactor()),
+                GuiUtils.getScaleLength(thumbnailSize),
                 (int) (label.getFont().getStringBounds("0", frc).getHeight() + 1.0f));
         label.setPreferredSize(dim);
         label.setMaximumSize(dim);
@@ -877,7 +873,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       final JPanel palenSlider1 = new JPanel();
       palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
       palenSlider1.setBorder(
-          new TitledBorder(
+          GuiUtils.getTitledBorder(
               Messages.getString("DicomExplorer.thmb_size") + " " + slider.getValue()));
 
       slider.setPaintTicks(true);

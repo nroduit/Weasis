@@ -19,7 +19,7 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -88,17 +88,10 @@ public class MeasureDialog extends PropertiesDialog {
       }
       if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
         JScrollPane panel = new JScrollPane();
-
         panel.setBorder(
             new CompoundBorder(
                 new EmptyBorder(10, 15, 5, 15),
-                new TitledBorder(
-                    null,
-                    Messages.getString("MeasureDialog.text"),
-                    TitledBorder.LEADING,
-                    TitledBorder.TOP,
-                    null,
-                    null)));
+                GuiUtils.getTitledBorder(Messages.getString("MeasureDialog.text"))));
         panel.setPreferredSize(new Dimension(400, 140));
         StringBuilder buf = new StringBuilder();
         String[] labels = ((AnnotationGraphic) graphic).getLabels();

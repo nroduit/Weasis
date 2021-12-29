@@ -10,6 +10,7 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.FlatIconColors;
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -17,8 +18,8 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
@@ -52,8 +53,8 @@ import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
@@ -179,12 +180,26 @@ public class GuiUtils {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
-  public static GraphicsConfiguration getGraphicsConfiguration(Component component) {
-    Window win = SwingUtilities.getWindowAncestor(component);
-    if (win != null) {
-      return win.getGraphicsConfiguration();
-    }
-    return null;
+  public static int getScaleLength(int length) {
+    return (int) (length * UIScale.getUserScaleFactor());
+  }
+
+  public static float getScaleLength(float length) {
+    return length * UIScale.getUserScaleFactor();
+  }
+
+  public static double getScaleLength(double length) {
+    return length * UIScale.getUserScaleFactor();
+  }
+
+  public static TitledBorder getTitledBorder(String title) {
+    return new TitledBorder(
+        null,
+        title,
+        TitledBorder.DEFAULT_JUSTIFICATION,
+        TitledBorder.DEFAULT_POSITION,
+        getSemiBoldFont(),
+        null);
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {
@@ -324,16 +339,14 @@ public class GuiUtils {
     return item;
   }
 
-  public static Dimension getSmallIconButtonSize() {
-    return new Dimension(22, 22);
-  }
-
-  public static Dimension getBigIconButtonSize() {
-    return new Dimension(34, 34);
-  }
-
-  public static Dimension getBigIconToogleButtonSize() {
-    return new Dimension(30, 30);
+  public static Dimension getBigIconButtonSize(JComponent c) {
+    Insets insets = c.getInsets();
+    Font font = c.getFont();
+    if (font == null) {
+      font = getDefaultont();
+    }
+    int size = (font.getSize() * 96 / 72) + insets.top + insets.bottom;
+    return new Dimension(size, size);
   }
 
   public static JButton createHelpButton(final String topic, boolean small) {

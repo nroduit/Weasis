@@ -18,12 +18,12 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
-import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
@@ -50,15 +50,8 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public void initGUI() {
-    setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomZipImport.title"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
-    setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
+    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomZipImport.title")));
+    setLayout(new FlowLayout(FlowLayout.LEFT));
     JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
     btnOpen.addActionListener(e -> browseImgFile());
     add(btnOpen);

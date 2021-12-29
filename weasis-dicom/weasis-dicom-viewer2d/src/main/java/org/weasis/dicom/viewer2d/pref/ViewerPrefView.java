@@ -22,10 +22,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -68,14 +68,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
     JPanel panel = new JPanel();
-    panel.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("ViewerPrefView.mouse_sens"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.mouse_sens")));
     add(panel);
     GridBagLayout gblpanel = new GridBagLayout();
     gblpanel.columnWidths = new int[] {0, 0};
@@ -86,14 +79,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     JPanel panel1 = new JPanel();
     ((FlowLayout) panel1.getLayout()).setAlignment(FlowLayout.LEADING);
-    panel1.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("ViewerPrefView.zoom"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
     add(panel1);
 
     JLabel lblInterpolation =
@@ -106,14 +92,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     panel1.add(comboBoxInterpolation);
 
     final JPanel winLevelPanel = new JPanel();
-    winLevelPanel.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("ViewerPrefView.other"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    winLevelPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
     add(winLevelPanel);
     GridBagLayout gblwinLevelPanel = new GridBagLayout();
     gblwinLevelPanel.columnWeights = new double[] {0.0};

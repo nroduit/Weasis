@@ -15,6 +15,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultBoundedRangeModel;
@@ -25,7 +26,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.util.StringUtil;
 
 public abstract class SliderChangeListener extends MouseActionAdapter
@@ -279,7 +279,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       return;
     }
     int space = (max - min) / (div - 1);
-    final int spacing = space < 1 ? 1 : space;
+    final int spacing = Math.max(space, 1);
     if (!slider.getPaintLabels()) {
       return;
     }
@@ -297,7 +297,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
             });
 
     slider.setLabelTable(table);
-    SliderChangeListener.setFont(slider, FontTools.getFont10());
+    SliderChangeListener.setFont(slider, GuiUtils.getMiniFont());
     slider.setMajorTickSpacing(spacing);
   }
 
@@ -317,8 +317,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter
         basicState.getActionW().getTitle() + StringUtil.COLON_AND_SPACE + getValueToDisplay();
     if (slider.isdisplayValueInTitle()
         && panel != null
-        && panel.getBorder() instanceof TitledBorder) {
-      ((TitledBorder) panel.getBorder()).setTitle(result);
+        && panel.getBorder() instanceof TitledBorder titledBorder) {
+      titledBorder.setTitle(result);
       panel.repaint();
     } else {
       slider.setToolTipText(result);
@@ -390,7 +390,15 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   public JSliderW createSlider(int labelDivision, boolean displayValueInTitle) {
     final JPanel palenSlider1 = new JPanel();
     palenSlider1.setLayout(new BoxLayout(palenSlider1, BoxLayout.Y_AXIS));
-    palenSlider1.setBorder(new TitledBorder(basicState.getActionW().getTitle()));
+    TitledBorder titledBorder =
+        new TitledBorder(
+            BorderFactory.createEmptyBorder(),
+            basicState.getActionW().getTitle(),
+            TitledBorder.LEADING,
+            TitledBorder.DEFAULT_POSITION,
+            GuiUtils.getMediumFont(),
+            null);
+    palenSlider1.setBorder(titledBorder);
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
     slider.setLabelDivision(labelDivision);
     slider.setdisplayValueInTitle(displayValueInTitle);

@@ -179,10 +179,9 @@ public abstract class ComboItemListener<T> extends BasicActionState
     return group;
   }
 
-  public JComboBox<T> createCombo(int width) {
+  public JComboBox<T> createCombo() {
     final ComboItems combo = new ComboItems();
     registerActionState(combo);
-    GuiUtils.setPreferredWidth(combo, width, width);
     GuiUtils.addTooltipToComboList(combo);
     return combo;
   }

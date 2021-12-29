@@ -34,7 +34,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -67,14 +66,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     btnNewButton.addActionListener(e -> resetoDefaultValues());
 
     JPanel panel1 = new JPanel();
-    panel1.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("ScreenPrefView.settings"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
+    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ScreenPrefView.settings")));
     add(panel1, BorderLayout.NORTH);
     panel1.setLayout(new BorderLayout(0, 0));
 
