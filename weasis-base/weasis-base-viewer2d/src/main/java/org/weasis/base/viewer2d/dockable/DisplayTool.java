@@ -11,7 +11,6 @@ package org.weasis.base.viewer2d.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
 import java.awt.BorderLayout;

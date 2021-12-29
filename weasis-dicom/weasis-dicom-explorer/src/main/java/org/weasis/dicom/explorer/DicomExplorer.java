@@ -12,13 +12,12 @@ package org.weasis.dicom.explorer;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -77,7 +76,8 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
@@ -107,8 +107,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc");
   public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat");
   public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st");
-  public static final Icon PATIENT_ICON =
-      new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/patient.png"));
   public static final Icon KO_ICON =
       new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png"));
 
@@ -166,7 +164,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public DicomExplorer(DicomModel model) {
     super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
     setLayout(new BorderLayout());
-    setDockableWidth(180);
+    setDockableWidth((int) (180 * UIScale.getUserScaleFactor()));
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(patientContainer);
@@ -364,29 +362,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     return selectedPatient != null && selectedPatient.patient == patient;
   }
 
-  class TitleBorder extends TitledBorder {
-
-    public TitleBorder(String title) {
-      super(title);
-      setFont(FontTools.getFont10());
-    }
-
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      // Measure the title length
-      FontRenderContext frc = ((Graphics2D) g).getFontRenderContext();
-      Rectangle bound = getTitleFont().getStringBounds(title, frc).getBounds();
-      int panelLength = width - 15;
-      if (bound.width > panelLength) {
-        int length = (title.length() * panelLength) / bound.width;
-        if (length > 2) {
-          title = title.substring(0, length - 2) + "...";
-        }
-      }
-      super.paintBorder(c, g, x, y, width, height);
-    }
-  }
-
   @SuppressWarnings("serial")
   class PatientContainerPane extends JPanel {
 
@@ -530,12 +505,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     public void showTitle(boolean show) {
       if (show) {
-        TitleBorder title = new TitleBorder(patient.toString());
-        title.setTitleFont(FontTools.getFont12Bold());
-        title.setTitleJustification(TitledBorder.LEFT);
-        Color color = javax.swing.UIManager.getColor("ComboBox.buttonHighlight");
-        title.setTitleColor(color);
-        title.setBorder(BorderFactory.createLineBorder(color, 2));
+        TitledBorder title = new TitledBorder(patient.toString());
+        title.setTitleFont(GuiUtils.getSemiBoldFont());
         this.setBorder(
             BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(0, 5, 25, 5), title));
@@ -631,7 +602,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   class StudyPane extends JPanel {
 
     final MediaSeriesGroup dicomStudy;
-    private final TitleBorder title;
+    private final TitledBorder title;
 
     public StudyPane(MediaSeriesGroup dicomStudy) {
       if (dicomStudy == null) {
@@ -640,9 +611,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentX(LEFT_ALIGNMENT);
       this.setAlignmentY(TOP_ALIGNMENT);
       this.dicomStudy = dicomStudy;
-      this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
-      title = new TitleBorder(dicomStudy.toString());
-      title.setTitleFont(FontTools.getFont12());
+      title = new TitledBorder(dicomStudy.toString());
+      title.setTitleFont(GuiUtils.getSemiBoldFont());
       title.setTitleJustification(TitledBorder.LEFT);
       this.setBorder(
           BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5), title));
@@ -713,6 +683,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     public SeriesPane(MediaSeriesGroup sequence) {
       this.sequence = Objects.requireNonNull(sequence);
       this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+      this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
       int thumbnailSize = slider.getValue();
       if (sequence instanceof Series) {
         Series series = (Series) sequence;
@@ -727,7 +698,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentY(TOP_ALIGNMENT);
       String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
       label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);
-      label.setFont(FontTools.getFont10());
+      label.setFont(GuiUtils.getMiniFont());
       label.setFocusable(false);
       this.setFocusable(false);
       updateSize(thumbnailSize);
@@ -747,7 +718,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         FontRenderContext frc = new FontRenderContext(null, false, false);
         Dimension dim =
             new Dimension(
-                thumbnailSize,
+                (int) (thumbnailSize * UIScale.getUserScaleFactor()),
                 (int) (label.getFont().getStringBounds("0", frc).getHeight() + 1.0f));
         label.setPreferredSize(dim);
         label.setMaximumSize(dim);
@@ -777,14 +748,13 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     if (panelMain == null) {
       panelMain = new JPanel();
       JPanel panel = new JPanel();
-      final GridBagLayout gridBagLayout = new GridBagLayout();
-      gridBagLayout.rowHeights = new int[] {0, 0, 7};
-      panel.setLayout(gridBagLayout);
+      panel.setLayout(new GridBagLayout());
       panel.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-      final JLabel label = new JLabel(PATIENT_ICON);
+      final JLabel label = new JLabel(ResourceUtil.getIcon(OtherIcon.PATIENT, 24, 24));
+      label.setLabelFor(patientCombobox);
       final GridBagConstraints gridBagConstraints = new GridBagConstraints();
-      gridBagConstraints.insets = new Insets(0, 0, 5, 5);
+      gridBagConstraints.insets = new Insets(0, 0, 5, 2);
       gridBagConstraints.gridx = 0;
       gridBagConstraints.gridy = 0;
       panel.add(label, gridBagConstraints);
@@ -793,16 +763,20 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       gridBagConstraints1.insets = new Insets(0, 2, 5, 0);
       gridBagConstraints1.anchor = GridBagConstraints.WEST;
       gridBagConstraints1.weightx = 1.0;
-      gridBagConstraints1.gridy = 0;
       gridBagConstraints1.gridx = 1;
+      gridBagConstraints1.gridy = 0;
       panel.add(patientCombobox, gridBagConstraints1);
       patientCombobox.setMaximumRowCount(15);
-      patientCombobox.setFont(FontTools.getFont11());
-      GuiUtils.setPreferredWidth(patientCombobox, 145, 145);
-      // Update UI before adding the Tooltip feature in the combobox list
-      patientCombobox.updateUI();
       patientCombobox.addItemListener(patientChangeListener);
       GuiUtils.addTooltipToComboList(patientCombobox);
+
+      final JLabel labelStudy = new JLabel(ResourceUtil.getIcon(OtherIcon.CALENDAR, 24, 24));
+      labelStudy.setLabelFor(studyCombobox);
+      final GridBagConstraints gbc = new GridBagConstraints();
+      gbc.insets = new Insets(0, 0, 5, 2);
+      gbc.gridx = 0;
+      gbc.gridy = 1;
+      panel.add(labelStudy, gbc);
 
       final GridBagConstraints gridBagConstraints3 = new GridBagConstraints();
       gridBagConstraints3.anchor = GridBagConstraints.WEST;
@@ -812,10 +786,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
       panel.add(studyCombobox, gridBagConstraints3);
       studyCombobox.setMaximumRowCount(15);
-      studyCombobox.setFont(FontTools.getFont11());
       // Update UI before adding the Tooltip feature in the combobox list
       studyCombobox.updateUI();
-      GuiUtils.setPreferredWidth(studyCombobox, 145, 145);
       // do not use addElement
       modelStudy.insertElementAt(ALL_STUDIES, 0);
       modelStudy.setSelectedItem(ALL_STUDIES);
@@ -874,7 +846,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         gbcbtnMoreOptions.anchor = GridBagConstraints.EAST;
         gbcbtnMoreOptions.gridx = 1;
         gbcbtnMoreOptions.gridy = 3;
-        btnMoreOptions.setFont(FontTools.getFont10());
+        btnMoreOptions.setFont(GuiUtils.getMiniFont());
         btnMoreOptions.addActionListener(
             e -> {
               if (btnMoreOptions.isSelected()) {

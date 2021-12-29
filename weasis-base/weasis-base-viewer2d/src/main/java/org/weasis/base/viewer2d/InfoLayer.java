@@ -16,12 +16,12 @@ import java.util.HashMap;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.StringUtil;
@@ -82,14 +82,14 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     if (!image.isReadable()) {
       String message = Messages.getString("InfoLayer.error_msg");
       float y = midy;
-      AbstractGraphicLabel.paintColorFontOutline(
+      GuiUtils.paintColorFontOutline(
           g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
       String[] desc = image.getMediaReader().getReaderDescription();
       if (desc != null) {
         for (String str : desc) {
           if (StringUtil.hasText(str)) {
             y += fontHeight;
-            AbstractGraphicLabel.paintColorFontOutline(
+            GuiUtils.paintColorFontOutline(
                 g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2.0F, y, Color.RED);
           }
         }
@@ -111,7 +111,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         sb.append(pixelInfo.getPixelPositionText());
       }
       String str = sb.toString();
-      AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
+      GuiUtils.paintFontOutline(g2, str, border, drawY - 1);
       drawY -= fontHeight + 2;
       pixelInfoBound.setBounds(
           border - 2,
@@ -131,11 +131,11 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         sb.append("/");
         sb.append(DecFormater.allNumber(level));
       }
-      AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+      GuiUtils.paintFontOutline(g2, sb.toString(), border, drawY);
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ZOOM)) {
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
@@ -145,7 +145,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ROTATION)) {
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
@@ -158,7 +158,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     }
 
     if (getDisplayPreferences(FRAME)) {
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.frame")
               + StringUtil.COLON_AND_SPACE

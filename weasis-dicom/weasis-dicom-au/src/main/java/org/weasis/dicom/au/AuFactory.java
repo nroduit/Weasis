@@ -16,7 +16,8 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -31,7 +32,7 @@ public class AuFactory implements SeriesViewerFactory {
 
   @Override
   public Icon getIcon() {
-    return MimeInspector.audioIcon;
+    return ResourceUtil.getIcon(FileIcon.AUDIO);
   }
 
   @Override

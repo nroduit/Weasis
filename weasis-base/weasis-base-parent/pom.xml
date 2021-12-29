@@ -32,11 +32,5 @@
       <groupId>org.weasis.thirdparty</groupId>
       <artifactId>docking-frames</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.formdev</groupId>
-      <artifactId>flatlaf</artifactId>
-      <version>${flatlaf.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 </project>

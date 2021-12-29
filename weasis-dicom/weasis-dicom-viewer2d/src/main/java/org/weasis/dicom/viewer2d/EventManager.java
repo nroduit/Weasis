@@ -106,6 +106,7 @@ import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.viewer2d.mip.MipView;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 import org.weasis.dicom.viewer2d.mpr.MprView;
@@ -746,7 +747,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     List<ByteLut> luts = new ArrayList<>();
     luts.add(ByteLutCollection.Lut.GRAY.getByteLut());
     ByteLutCollection.readLutFilesFromResourcesDir(
-        luts, ResourceUtil.getResource("luts")); // NON-NLS
+        luts, ResourceUtil.getResource(DicomResource.LUTS));
     // Set default first as the list has been sorted
     luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 

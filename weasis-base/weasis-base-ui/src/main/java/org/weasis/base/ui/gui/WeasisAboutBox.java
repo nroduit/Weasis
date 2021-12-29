@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.ui.util.SimpleTableModel;
 
 public class WeasisAboutBox extends JDialog implements ActionListener {
@@ -124,7 +125,7 @@ public class WeasisAboutBox extends JDialog implements ActionListener {
     jTextPane1.setText(message.toString());
     jLabel1.setBorder(BorderFactory.createLineBorder(Color.black, 2));
 
-    jLabel1.setIcon(ResourceUtil.getLargeLogo());
+    jLabel1.setIcon(ResourceUtil.getIcon(LogoIcon.LARGE));
     jPanel3.setLayout(borderLayout3);
 
     jTabbedPane1.add(jPanel3, this.getTitle());

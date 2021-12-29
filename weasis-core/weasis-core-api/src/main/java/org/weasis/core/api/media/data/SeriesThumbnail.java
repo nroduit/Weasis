@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.media.data;
 
+import com.formdev.flatlaf.util.UIScale;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
@@ -33,7 +34,6 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -48,6 +48,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GhostGlassPane;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
 import org.weasis.core.api.util.FontTools;
@@ -163,11 +165,7 @@ public class SeriesThumbnail extends Thumbnail
     MediaElement media = series.getMedia(position, null, null);
     // Handle special case for DICOM SR
     if (media == null) {
-      List<MediaElement> specialElements =
-          (List<MediaElement>) series.getTagValue(TagW.DicomSpecialElementList);
-      if (specialElements != null && !specialElements.isEmpty()) {
-        media = specialElements.get(0);
-      }
+      media = series.getFirstSpecialElement();
     }
     if (file != null || media != null) {
       mediaPosition = position;
@@ -195,8 +193,11 @@ public class SeriesThumbnail extends Thumbnail
   public synchronized void setThumbnailSize(int thumbnailSize) {
     boolean update = this.thumbnailSize != thumbnailSize;
     if (update) {
+      this.thumbnailSize = (int) (thumbnailSize * UIScale.getUserScaleFactor());
       Object media = series.getMedia(mediaPosition, null, null);
-      this.thumbnailSize = thumbnailSize;
+      if (media == null) {
+        media = series.getFirstSpecialElement();
+      }
       removeImageFromCache();
       buildThumbnail((MediaElement) media, series.getTagValue(TagW.ExplorerModel) != null, null);
     }
@@ -312,40 +313,42 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
     if (dragPressed == null) {
+      int inset = 2 * width / DEFAULT_SIZE;
       if (series.isOpen()) {
-        g2d.setPaint(Color.BLACK);
-        g2d.fillRect(x, y, 11, 11);
-        g2d.setPaint(Color.GREEN);
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.fillArc(x + 2, y + 2, 7, 7, 0, 360);
+        if (series.isSelected() && series.isFocused()) {
+          g2d.setPaint(Color.ORANGE);
+        } else {
+          g2d.setPaint(IconColor.ACTIONS_GREEN.getColor());
+        }
+        int size = inset * 5;
+        g2d.fillArc(x + inset, y + inset, size, size, 0, 360);
+        g2d.setPaint(Color.BLACK);
+        g2d.drawArc(x + inset, y + inset, size, size, 0, 360);
         g2d.setRenderingHint(
             RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
       }
 
-      g2d.setFont(FontTools.getFont10());
-      int fontHeight = (int) (FontTools.getAccurateFontHeight(g2d) + 1.5f);
+      g2d.setFont(width > DEFAULT_SIZE ? GuiUtils.getSmallFont() : GuiUtils.getMiniFont());
+      float fontHeight = FontTools.getAccurateFontHeight(g2d);
+      int descent = g2d.getFontMetrics().getDescent();
       Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
       if (splitNb != null) {
         String nb = "#" + splitNb;
         int w = g2d.getFontMetrics().stringWidth(nb);
-        g2d.setPaint(Color.BLACK);
-        int sx = x + width - 2 - w;
-        g2d.fillRect(sx - 2, y, w + 4, fontHeight);
-        g2d.setPaint(Color.ORANGE);
-        g2d.drawString(nb, sx, y + fontHeight - 3);
+        int sx = x + width - inset - w;
+        GuiUtils.paintColorFontOutline(
+            g2d, nb, sx, y + inset + fontHeight - descent, IconColor.ACTIONS_BLUE.getColor());
       }
 
-      String nbImg = "[" + series.size(null) + "]";
-      int hbleft = y + height - 3;
-      int w = g2d.getFontMetrics().stringWidth(nbImg);
-      g2d.setPaint(Color.BLACK);
-      g2d.fillRect(x, y + height - fontHeight, w + 4, fontHeight);
-      g2d.setPaint(Color.ORANGE);
-      g2d.drawString(nbImg, x + 2, hbleft);
-
-      if (series.isSelected() && series.isFocused()) {
-        g2d.setPaint(Color.ORANGE);
-        g2d.draw(new Rectangle2D.Double(x - 0.5, y - 0.5, width , height));
+      int number = series.size(null);
+      if (number > 0) {
+        GuiUtils.paintColorFontOutline(
+            g2d,
+            String.valueOf(number),
+            x + inset,
+            y + height - (inset + descent),
+            IconColor.ACTIONS_BLUE.getColor());
       }
 
       // To avoid concurrency issue
@@ -353,12 +356,14 @@ public class SeriesThumbnail extends Thumbnail
       if (bar != null) {
         if (series.getFileSize() > 0.0) {
           g2d.drawString(
-              FileUtil.humanReadableByte(series.getFileSize(), false), x + 2, hbleft - 12);
+              FileUtil.humanReadableByte(series.getFileSize(), false),
+              x + inset,
+              y + height - fontHeight - inset * 2);
         }
         if (bar.isVisible()) {
           // Draw in the bottom right corner of thumbnail
-          int shiftx = thumbnailSize - bar.getWidth();
-          int shifty = thumbnailSize - bar.getHeight();
+          double shiftx = thumbnailSize - bar.getWidth();
+          double shifty = thumbnailSize - bar.getHeight();
           g2d.translate(shiftx, shifty);
           bar.paint(g2d);
 
@@ -369,7 +374,7 @@ public class SeriesThumbnail extends Thumbnail
 
             g2d.translate(-shiftx, -shifty);
             shiftx = thumbnailSize - stopButton.width;
-            shifty = 5;
+            shifty = fontHeight * 2;
             g2d.translate(shiftx, shifty);
             g2d.setColor(Color.RED);
             g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);

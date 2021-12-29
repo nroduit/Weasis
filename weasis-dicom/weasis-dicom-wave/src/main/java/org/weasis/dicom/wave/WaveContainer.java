@@ -39,11 +39,12 @@ import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -143,7 +144,13 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public WaveContainer(GridBagLayoutModel layoutModel, String uid) {
-    super(ECG_EVENT_MANAGER, layoutModel, uid, WaveFactory.NAME, MimeInspector.ecgIcon, null);
+    super(
+        ECG_EVENT_MANAGER,
+        layoutModel,
+        uid,
+        WaveFactory.NAME,
+        ResourceUtil.getIcon(FileIcon.ECG),
+        null);
     setSynchView(SynchView.NONE);
     if (!INI_COMPONENTS) {
       INI_COMPONENTS = true;

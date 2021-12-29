@@ -120,9 +120,9 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         Color oldColor = g.getColor();
         String background = "TextArea.background";
         String foreground = "TextArea.foreground";
-        if(c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {
-            background = "TextArea.selectionBackground";
-            foreground = "TextArea.selectionForeground";
+        if (c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {
+          background = "TextArea.selectionBackground";
+          foreground = "TextArea.selectionForeground";
         }
         g2d.setColor(FlatUIUtils.getUIColor(background, Color.DARK_GRAY));
         g2d.fillRect(x, y, getIconWidth(), getIconHeight());

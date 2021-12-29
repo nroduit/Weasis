@@ -36,10 +36,10 @@ import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
@@ -260,7 +260,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
           py += labelHeight;
-          AbstractGraphicLabel.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
+          GuiUtils.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }
       g2d.setPaint(oldPaint);

@@ -9,22 +9,33 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.FlatIconColors;
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import javax.swing.AbstractAction;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -36,18 +47,17 @@ import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
-import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.basic.BasicComboPopup;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 import javax.swing.text.DefaultFormatterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,8 +68,123 @@ import org.weasis.core.util.StringUtil;
 public class GuiUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
-  private GuiUtils() {
-    super();
+  private GuiUtils() {}
+
+  public enum IconColor {
+    // see https://jetbrains.design/intellij/principles/icons/#action-icons
+    ACTIONS_RED(UIManager.getColor(FlatIconColors.ACTIONS_RED.key)),
+    ACTIONS_YELLOW(UIManager.getColor(FlatIconColors.ACTIONS_YELLOW.key)),
+    ACTIONS_GREEN(UIManager.getColor(FlatIconColors.ACTIONS_GREEN.key)),
+    ACTIONS_BLUE(UIManager.getColor(FlatIconColors.ACTIONS_BLUE.key)),
+    ACTIONS_GREY(UIManager.getColor(FlatIconColors.ACTIONS_GREY.key)),
+    ACTIONS_GREY_INLINE(UIManager.getColor(FlatIconColors.ACTIONS_GREYINLINE.key));
+
+    public final Color color;
+
+    IconColor(Color color) {
+      this.color = color;
+    }
+
+    public Color getColor() {
+      return color;
+    }
+  }
+
+  public static void paintColorFontOutline(
+      Graphics2D g2, String str, float x, float y, Color color) {
+    g2.setPaint(Color.BLACK);
+
+    if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(
+        g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
+      TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
+      AffineTransform textAt = new AffineTransform();
+      textAt.translate(x, y);
+      Shape outline = layout.getOutline(textAt);
+      g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+      g2.draw(outline);
+      g2.setPaint(color);
+      g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
+      g2.fill(outline);
+    } else {
+      g2.drawString(str, x - 1f, y - 1f);
+      g2.drawString(str, x - 1f, y);
+      g2.drawString(str, x - 1f, y + 1f);
+      g2.drawString(str, x, y - 1f);
+      g2.drawString(str, x, y + 1f);
+      g2.drawString(str, x + 1f, y - 1f);
+      g2.drawString(str, x + 1f, y);
+      g2.drawString(str, x + 1f, y + 1f);
+      g2.setPaint(color);
+      g2.drawString(str, x, y);
+    }
+  }
+
+  public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
+    paintColorFontOutline(g2, str, x, y, Color.WHITE);
+  }
+
+  public static Font geLargeFont() {
+    return UIManager.getFont("large.font");
+  }
+
+  public static Font getMediumFont() {
+    return UIManager.getFont("medium.font");
+  }
+
+  public static Font getDefaultont() {
+    return UIManager.getFont("defaultFont");
+  }
+
+  public static Font getSmallFont() {
+    return UIManager.getFont("small.font");
+  }
+
+  public static Font getMiniFont() {
+    return UIManager.getFont("mini.font");
+  }
+
+  public static Font getSemiBoldFont() {
+    return UIManager.getFont("semibold.font");
+  }
+
+  public static Font getBoldFont() {
+    return UIManager.getFont("h4.font");
+  }
+
+  public static Font getH3Font() {
+    return UIManager.getFont("h3.regular.font");
+  }
+
+  public static Font getH3BoldFont() {
+    return UIManager.getFont("h3.font");
+  }
+
+  public static Font getH2Font() {
+    return UIManager.getFont("h2.regular.font");
+  }
+
+  public static Font getH2BoldFont() {
+    return UIManager.getFont("h2.font");
+  }
+
+  public static Font getH1Font() {
+    return UIManager.getFont("h1.regular.font");
+  }
+
+  public static Font getH1BoldFont() {
+    return UIManager.getFont("h1.font");
+  }
+
+  public static Icon getExpandIcon() {
+    return UIManager.getIcon("Tree.expandedIcon");
+  }
+
+  public static GraphicsConfiguration getGraphicsConfiguration(Component component) {
+    Window win = SwingUtilities.getWindowAncestor(component);
+    if (win != null) {
+      return win.getGraphicsConfiguration();
+    }
+    return null;
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {
@@ -112,7 +237,6 @@ public class GuiUtils {
       window.setVisible(true);
     }
   }
-
 
   public static void addChangeListener(JSlider slider, ChangeListener listener) {
     ChangeListener[] listeners = slider.getChangeListeners();

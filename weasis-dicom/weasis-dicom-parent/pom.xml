@@ -39,11 +39,5 @@
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.gogo.runtime</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.formdev</groupId>
-      <artifactId>flatlaf</artifactId>
-      <version>${flatlaf.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 </project>

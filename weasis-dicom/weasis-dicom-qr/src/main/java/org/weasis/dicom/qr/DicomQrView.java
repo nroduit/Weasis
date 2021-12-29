@@ -10,7 +10,6 @@
 package org.weasis.dicom.qr;
 
 import com.formdev.flatlaf.FlatClientProperties;
-import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
@@ -49,7 +48,6 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
@@ -77,6 +75,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.ui.util.CalendarUtil;
@@ -225,7 +225,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton modButton =
       new DropDownButton(
           "search_mod", // NON-NLS
-         Messages.getString("DicomQrView.modalities"), UIManager.getIcon("Tree.expandedIcon"),
+          Messages.getString("DicomQrView.modalities"),
+          GuiUtils.getExpandIcon(),
           groupMod) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -254,7 +255,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton dateButton =
       new DropDownButton(
           "search_date", // NON-NLS
-          Messages.getString("DicomQrView.dates"), UIManager.getIcon("Tree.expandedIcon"),
+          Messages.getString("DicomQrView.dates"),
+          GuiUtils.getExpandIcon(),
           groupDate) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -454,10 +456,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     panel4.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     panel4.add(comboTags);
     comboTags.setMaximumRowCount(15);
-    // comboTags.setFont(FontTools.getFont11());
     GuiUtils.setPreferredWidth(comboTags, 180, 180);
-    // Update UI before adding the Tooltip feature in the combobox list
-    comboTags.updateUI();
     GuiUtils.addTooltipToComboList(comboTags);
 
     StringBuilder buf = new StringBuilder("<html>");
@@ -476,27 +475,28 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   private DatePicker buildDatePicker() {
-    DatePicker d = new DatePicker();
-    DatePickerSettings settings = d.getSettings();
+    DatePicker picker = new DatePicker();
+    DatePickerSettings settings = picker.getSettings();
     CalendarUtil.adaptCalendarColors(settings);
 
+    JTextField textField = picker.getComponentDateTextField();
     settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
     settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
-    GuiUtils.setPreferredWidth(d.getComponentDateTextField(), 145);
-    d.addDateChangeListener(dateChangeListener);
+    GuiUtils.setPreferredWidth(textField, 145);
+    picker.addDateChangeListener(dateChangeListener);
 
-    d.getComponentDateTextField().putClientProperty( FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true );
-    JButton calendarButton = d.getComponentToggleCalendarButton();
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    JButton calendarButton = picker.getComponentToggleCalendarButton();
     calendarButton.setMargin(null);
     calendarButton.setText(null);
-    calendarButton.setIcon(new FlatHelpButtonIcon());
+    calendarButton.setIcon(ResourceUtil.getIcon(OtherIcon.CALENDAR));
     calendarButton.setFocusPainted(true);
     calendarButton.setFocusable(true);
     calendarButton.revalidate();
     Arrays.stream(calendarButton.getMouseListeners()).forEach(calendarButton::removeMouseListener);
-    calendarButton.addActionListener(e -> d.openPopup());
-    d.getComponentDateTextField().putClientProperty( FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, calendarButton );
-    return d;
+    calendarButton.addActionListener(e -> picker.openPopup());
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, calendarButton);
+    return picker;
   }
 
   private void clearItems() {

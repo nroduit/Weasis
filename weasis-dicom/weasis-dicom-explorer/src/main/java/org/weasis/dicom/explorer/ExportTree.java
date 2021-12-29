@@ -10,7 +10,6 @@
 package org.weasis.dicom.explorer;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;

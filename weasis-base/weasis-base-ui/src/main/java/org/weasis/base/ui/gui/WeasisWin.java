@@ -69,7 +69,6 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
@@ -109,6 +108,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
@@ -212,13 +212,11 @@ public class WeasisWin {
     rootPaneContainer.setGlassPane(AppProperties.glassPane);
 
     frame.setTitle(AppProperties.WEASIS_NAME + " v" + AppProperties.WEASIS_VERSION); // NON-NLS
-    ImageIcon icon =
-        AppProperties.WEASIS_NAME.endsWith("Dicomizer") // NON-NLS
-            ? ResourceUtil.getLogo("images" + File.separator + "dicomizer.png") // NON-NLS
-            : ResourceUtil.getIconLogo64();
-    if (icon != null) {
-      frame.setIconImage(icon.getImage());
-    }
+
+    LogoIcon logoIcon =
+        AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? LogoIcon.SMALL_DICOMIZER : LogoIcon.SMALL;
+    // Get larger icon (displayed in system toolbar)
+    frame.setIconImage(ResourceUtil.getIcon(logoIcon, 128, 128).getImage());
 
     DesktopAdapter.buildDesktopMenu(this);
   }

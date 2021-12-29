@@ -9,6 +9,7 @@
  */
 package org.weasis.launcher;
 
+import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.util.ColorFunctions;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -952,7 +953,7 @@ public class WeasisLauncher {
     serverProp.put("weasis.resources.path", cacheDir.getPath());
 
     // Splash screen that shows bundles loading
-    final WeasisLoader loader = new WeasisLoader(cacheDir, mainFrame);
+    final WeasisLoader loader = new WeasisLoader(cacheDir.toPath(), mainFrame);
     // Display splash screen
     loader.open();
 
@@ -1135,6 +1136,20 @@ public class WeasisLauncher {
             c = ColorFunctions.darken(c, 0.2f);
           }
           UIManager.put("ToolBar.separatorColor", c);
+
+          // TODO set as preference: preserve the default color action
+          UIManager.put(FlatIconColors.ACTIONS_RED.key, new Color(FlatIconColors.ACTIONS_RED.rgb));
+          UIManager.put(
+              FlatIconColors.ACTIONS_YELLOW.key, new Color(FlatIconColors.ACTIONS_YELLOW.rgb));
+          UIManager.put(
+              FlatIconColors.ACTIONS_GREEN.key, new Color(FlatIconColors.ACTIONS_GREEN.rgb));
+          UIManager.put(
+              FlatIconColors.ACTIONS_BLUE.key, new Color(FlatIconColors.ACTIONS_BLUE.rgb));
+          UIManager.put(
+              FlatIconColors.ACTIONS_GREY.key, new Color(FlatIconColors.ACTIONS_GREY.rgb));
+          UIManager.put(
+              FlatIconColors.ACTIONS_GREYINLINE.key,
+              new Color(FlatIconColors.ACTIONS_GREYINLINE.rgb));
           break;
         }
       }

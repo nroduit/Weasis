@@ -43,6 +43,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.LoadLocalDicom;
@@ -135,7 +136,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
         params.setConnectOptions(connectOptions);
 
         if (RetrieveType.CGET == type) {
-          File sopClass = ResourceUtil.getResource("store-tcs.properties"); // NON-NLS
+          File sopClass = ResourceUtil.getResource(DicomResource.CGET_SOP_UID);
           URL url = null;
           if (sopClass.canRead()) {
             try {

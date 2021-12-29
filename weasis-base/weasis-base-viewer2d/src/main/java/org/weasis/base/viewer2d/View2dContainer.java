@@ -47,7 +47,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -56,6 +55,8 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -123,7 +124,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         layoutModel,
         uid,
         ViewerFactory.NAME,
-        MimeInspector.imageIcon,
+        ResourceUtil.getIcon(FileIcon.IMAGE),
         null);
     setSynchView(SynchView.DEFAULT_STACK);
     addComponentListener(

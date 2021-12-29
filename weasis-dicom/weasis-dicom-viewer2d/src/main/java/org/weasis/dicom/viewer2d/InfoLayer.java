@@ -26,6 +26,7 @@ import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
@@ -38,7 +39,6 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.SynchData;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.LangUtil;
@@ -132,13 +132,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (!image.isReadable()) {
       String message = Messages.getString("InfoLayer.msg_not_read");
       float y = midy;
-      AbstractGraphicLabel.paintColorFontOutline(
+      GuiUtils.paintColorFontOutline(
           g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
       String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
       if (StringUtil.hasText(tsuid)) {
         tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
         y += fontHeight;
-        AbstractGraphicLabel.paintColorFontOutline(
+        GuiUtils.paintColorFontOutline(
             g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F, y, Color.RED);
       }
 
@@ -147,7 +147,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         for (String str : desc) {
           if (StringUtil.hasText(str)) {
             y += fontHeight;
-            AbstractGraphicLabel.paintColorFontOutline(
+            GuiUtils.paintColorFontOutline(
                 g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2F, y, Color.RED);
           }
         }
@@ -192,7 +192,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           }
         }
 
-        AbstractGraphicLabel.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
+        GuiUtils.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
         drawY -= fontHeight;
       }
 
@@ -204,10 +204,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
               frame);
 
       if (koElement != null) {
-        float y = midy;
         String message = "Not a valid image: " + koElement.getDocumentTitle(); // NON-NLS
-        AbstractGraphicLabel.paintColorFontOutline(
-            g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2F, y, Color.RED);
+        GuiUtils.paintColorFontOutline(
+            g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2F, midy, Color.RED);
       }
     }
 
@@ -220,7 +219,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         sb.append(pixelInfo.getPixelPositionText());
       }
       String str = sb.toString();
-      AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
+      GuiUtils.paintFontOutline(g2, str, border, drawY - 1);
       drawY -= fontHeight + 2;
       pixelInfoBound.setBounds(
           border - 2,
@@ -258,14 +257,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
       }
       if (outside) {
-        AbstractGraphicLabel.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
+        GuiUtils.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
       } else {
-        AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+        GuiUtils.paintFontOutline(g2, sb.toString(), border, drawY);
       }
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ZOOM) && hideMin) {
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
@@ -275,7 +274,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ROTATION) && hideMin) {
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
@@ -306,7 +305,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
               .size(
                   (Filter<DicomImageElement>)
                       view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())));
-      AbstractGraphicLabel.paintFontOutline(g2, buf.toString(), border, drawY);
+      GuiUtils.paintFontOutline(g2, buf.toString(), border, drawY);
       drawY -= fontHeight;
 
       Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -338,7 +337,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, tagView.getFormat());
                   if (StringUtil.hasText(str)) {
-                    AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY);
+                    GuiUtils.paintFontOutline(g2, str, border, drawY);
                     drawY += fontHeight;
                   }
                   break;
@@ -363,7 +362,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, info.getFormat());
                   if (StringUtil.hasText(str)) {
-                    AbstractGraphicLabel.paintFontOutline(
+                    GuiUtils.paintFontOutline(
                         g2,
                         str,
                         bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
@@ -392,7 +391,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                   if (StringUtil.hasText(str)) {
-                    AbstractGraphicLabel.paintFontOutline(
+                    GuiUtils.paintFontOutline(
                         g2,
                         str,
                         bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
@@ -503,18 +502,17 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         Map<TextAttribute, Object> map = new HashMap<>(1);
         map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
         String fistLetter = rowTop.substring(0, 1);
-        AbstractGraphicLabel.paintColorFontOutline(
-            g2, fistLetter, midx, fontHeight + 5f, highlight);
+        GuiUtils.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
         int shiftx = g2.getFontMetrics().stringWidth(fistLetter);
         Font subscriptFont = bigFont.deriveFont(map);
         if (rowTop.length() > 1) {
           g2.setFont(subscriptFont);
-          AbstractGraphicLabel.paintColorFontOutline(
+          GuiUtils.paintColorFontOutline(
               g2, rowTop.substring(1, rowTop.length()), midx + shiftx, fontHeight + 5f, highlight);
           g2.setFont(bigFont);
         }
 
-        AbstractGraphicLabel.paintColorFontOutline(
+        GuiUtils.paintColorFontOutline(
             g2,
             colLeft.substring(0, 1),
             (float) (border + thickLength),
@@ -523,7 +521,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
         if (colLeft.length() > 1) {
           g2.setFont(subscriptFont);
-          AbstractGraphicLabel.paintColorFontOutline(
+          GuiUtils.paintColorFontOutline(
               g2,
               colLeft.substring(1, colLeft.length()),
               (float) (border + thickLength + shiftx),
@@ -533,7 +531,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         g2.setFont(oldFont);
       }
 
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
       // for
       // outline

@@ -12,14 +12,11 @@ package org.weasis.core.ui.model.graphic;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -29,6 +26,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -221,7 +219,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
           py += labelHeight;
-          paintColorFontOutline(g2d, label, px, py, Color.WHITE);
+          GuiUtils.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }
 
@@ -266,39 +264,6 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     g2d.draw(boundingRect);
 
     g2d.setPaint(oldPaint);
-  }
-
-  public static void paintColorFontOutline(
-      Graphics2D g2, String str, float x, float y, Color color) {
-    g2.setPaint(Color.BLACK);
-
-    if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(
-        g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
-      TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
-      AffineTransform textAt = new AffineTransform();
-      textAt.translate(x, y);
-      Shape outline = layout.getOutline(textAt);
-      g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.draw(outline);
-      g2.setPaint(color);
-      g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.fill(outline);
-    } else {
-      g2.drawString(str, x - 1f, y - 1f);
-      g2.drawString(str, x - 1f, y);
-      g2.drawString(str, x - 1f, y + 1f);
-      g2.drawString(str, x, y - 1f);
-      g2.drawString(str, x, y + 1f);
-      g2.drawString(str, x + 1f, y - 1f);
-      g2.drawString(str, x + 1f, y);
-      g2.drawString(str, x + 1f, y + 1f);
-      g2.setPaint(color);
-      g2.drawString(str, x, y);
-    }
-  }
-
-  public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
-    paintColorFontOutline(g2, str, x, y, Color.WHITE);
   }
 
   @Override

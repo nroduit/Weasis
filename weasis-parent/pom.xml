@@ -535,6 +535,24 @@
       <version>${slf4j.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf</artifactId>
+      <version>${flatlaf.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf-intellij-themes</artifactId>
+      <version>${flatlaf.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.formdev</groupId>
+      <artifactId>flatlaf-extras</artifactId>
+      <version>${flatlaf.version}</version>
+      <scope>provided</scope>
+    </dependency>
 
     <!-- The following dependencies are only required for compilation -->
     <dependency>

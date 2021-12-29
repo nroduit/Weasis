@@ -175,8 +175,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final Color pointerColor1 = Color.black;
   protected final Color pointerColor2 = Color.white;
-  protected final Border focusBorder = BorderFactory.createMatteBorder(1,1,1,1, Color.ORANGE);
-  protected final Border viewBorder = BorderFactory.createMatteBorder(1,1,1,1, Color.GRAY);
+  protected final Border focusBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.ORANGE);
+  protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;

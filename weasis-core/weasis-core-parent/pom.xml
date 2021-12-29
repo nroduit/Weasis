@@ -34,11 +34,5 @@
       <version>${weasis.core.img.version}</version>
       <scope>provided</scope>
     </dependency>
-    <dependency>
-      <groupId>com.formdev</groupId>
-      <artifactId>flatlaf</artifactId>
-      <version>${flatlaf.version}</version>
-      <scope>provided</scope>
-    </dependency>
   </dependencies>
 </project>

@@ -44,6 +44,8 @@ public interface MediaSeries<E> extends MediaSeriesGroup, Transferable {
 
   E getMedia(int index, Filter<E> filter, Comparator<E> sort);
 
+  MediaElement getFirstSpecialElement();
+
   @Override
   void dispose();
 

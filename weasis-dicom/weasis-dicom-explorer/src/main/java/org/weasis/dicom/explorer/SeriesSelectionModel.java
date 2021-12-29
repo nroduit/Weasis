@@ -148,7 +148,7 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
           Color background;
           Color foreground;
           if (selected) {
-            background =  FlatUIUtils.getUIColor(SELECTION_BACKGROUND, Color.DARK_GRAY);
+            background = FlatUIUtils.getUIColor(SELECTION_BACKGROUND, Color.DARK_GRAY);
             foreground = FlatUIUtils.getUIColor(SELECTION_FOREGROUND, Color.LIGHT_GRAY);
           } else {
             background = FlatUIUtils.getUIColor(BACKGROUND, Color.LIGHT_GRAY);

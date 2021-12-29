@@ -48,13 +48,14 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -136,7 +137,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   private static volatile boolean initComponents = false;
 
   public View2dContainer() {
-    this(VIEWS_1x1, null, View2dFactory.NAME, MimeInspector.dicomIcon, null);
+    this(VIEWS_1x1, null, View2dFactory.NAME, ResourceUtil.getIcon(OtherIcon.XRAY), null);
   }
 
   public View2dContainer(

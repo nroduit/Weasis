@@ -25,6 +25,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -38,7 +39,6 @@ import org.weasis.core.ui.editor.image.HistogramData;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.util.StringUtil;
@@ -301,7 +301,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         g2.draw(line);
         double level = data.getLayer().pixelToRealValue((separation - i) * stepWindow + pixMin);
         String str = DecFormater.allNumber(level);
-        AbstractGraphicLabel.paintFontOutline(
+        GuiUtils.paintFontOutline(
             g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY + midfontHeight);
       }
       rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
@@ -432,12 +432,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
       String pixSizeDesc = image.getPixelSizeCalibrationDescription();
       if (StringUtil.hasText(pixSizeDesc)) {
-        AbstractGraphicLabel.paintFontOutline(
+        GuiUtils.paintFontOutline(
             g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy - fontHeight);
       }
       str += " " + unit[0].getAbbreviation();
-      AbstractGraphicLabel.paintFontOutline(
-          g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
+      GuiUtils.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
     }
 
     double scaleSizeY =
@@ -506,7 +505,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-      AbstractGraphicLabel.paintFontOutline(
+      GuiUtils.paintFontOutline(
           g2d, str + " " + unit[0].getAbbreviation(), (int) posx, (int) (posy - 5 * strokeWidth));
     }
   }

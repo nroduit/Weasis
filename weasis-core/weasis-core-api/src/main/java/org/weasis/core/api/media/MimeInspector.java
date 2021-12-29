@@ -22,8 +22,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.internal.mime.InvalidMagicMimeEntryException;
@@ -36,24 +34,6 @@ public class MimeInspector {
   private static final Logger LOGGER = LoggerFactory.getLogger(MimeInspector.class);
 
   public static final String UNKNOWN_MIME_TYPE = "application/x-unknown-mime-type"; // NON-NLS
-  public static final Icon unknownIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/unknown.png"));
-  public static final Icon textIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-x-generic.png"));
-  public static final Icon htmlIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/text-html.png"));
-  public static final Icon imageIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/image-x-generic.png"));
-  public static final Icon audioIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/audio-x-generic.png"));
-  public static final Icon videoIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/video-x-generic.png"));
-  public static final Icon dicomIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/dicom.png"));
-  public static final Icon pdfIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/pdf.png"));
-  public static final Icon ecgIcon =
-      new ImageIcon(MimeInspector.class.getResource("/icon/22x22/ecg.png"));
 
   private static final Properties mimeTypes = new Properties();
   private static final ArrayList<MagicMimeEntry> mMagicMimeEntries = new ArrayList<>();
