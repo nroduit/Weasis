@@ -16,7 +16,6 @@ import java.awt.Window;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;

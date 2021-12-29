@@ -65,9 +65,6 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
               (FileSystemDrive) mediaSourceSelectionCombo.getSelectedItem());
           acquisitionView.loadSystemDrive();
         });
-
-    // Update UI before adding the Tooltip feature in the combobox list
-    mediaSourceSelectionCombo.updateUI();
     GuiUtils.addTooltipToComboList(mediaSourceSelectionCombo);
 
     GridBagConstraints gbcMediaSourceSelectionCombo = new GridBagConstraints();

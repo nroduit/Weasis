@@ -9,9 +9,7 @@
  */
 package org.weasis.acquire.explorer.gui.central.meta.panel;
 
-import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.github.lgooddatepicker.components.DatePickerSettings;
-import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
 import com.github.lgooddatepicker.tableeditors.DateTableEditor;
 import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 import java.awt.BorderLayout;
@@ -288,8 +286,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       combo.setFont(FontTools.getFont11());
       combo.setMaximumRowCount(15);
       GuiUtils.setPreferredWidth(combo, 80);
-      // Update UI before adding the Tooltip feature in the combobox list
-      combo.updateUI();
       GuiUtils.addTooltipToComboList(combo);
     }
 
