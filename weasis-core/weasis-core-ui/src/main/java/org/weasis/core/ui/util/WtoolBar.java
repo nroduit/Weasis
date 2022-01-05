@@ -9,39 +9,30 @@
  */
 package org.weasis.core.ui.util;
 
-import com.formdev.flatlaf.ui.FlatUIUtils;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
+import javax.swing.Box;
 import javax.swing.JToolBar;
 import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.util.ResourceUtil;
 
-@SuppressWarnings("serial")
 public class WtoolBar extends JToolBar implements Toolbar {
 
   private final String barName;
-
-  private int barPosition = 100;
+  private int barPosition;
   private Insertable attachedInsertable;
 
   public WtoolBar(String barName, int position) {
-    FlowLayout flowLayout = new FlowLayout();
-    flowLayout.setVgap(0);
-    flowLayout.setHgap(0);
-    flowLayout.setAlignment(FlowLayout.LEADING);
-    setLayout(flowLayout);
+    setFloatable(false);
+    setBorder(null);
     this.barName = barName;
     this.barPosition = position;
-    this.setAlignmentX(LEFT_ALIGNMENT);
-    this.setAlignmentY(TOP_ALIGNMENT);
-    // Force toolbar to have the same color of the container
-    this.setBackground(FlatUIUtils.getUIColor("Panel.background", Color.DARK_GRAY));
     addSeparator();
   }
 
   @Override
   public void addSeparator() {
-    add(new JToolBar.Separator(new Dimension(3, 32)));
+    add(Box.createRigidArea(new Dimension(5, 0)));
+    add(new JToolBar.Separator(new Dimension(3, ResourceUtil.TOOLBAR_ICON_SIZE)));
   }
 
   @Override

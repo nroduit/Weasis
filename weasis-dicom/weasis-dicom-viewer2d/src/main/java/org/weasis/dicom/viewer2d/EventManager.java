@@ -28,7 +28,6 @@ import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -78,9 +77,9 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -1471,7 +1470,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(Messages.getString("ResetTools.reset"));
-      menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+      menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
       menu.setEnabled(getSelectedSeries() != null);
 
       if (menu.isEnabled()) {
@@ -1498,7 +1497,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             presetAction
                 .get()
                 .createUnregisteredRadioMenu(Messages.getString("View2dContainer.presets"));
-        menu.setIcon(ActionW.WINLEVEL.getSmallIcon());
+        menu.setIcon(ActionW.WINLEVEL.getIcon());
         for (Component mitem : menu.getMenuComponents()) {
           RadioMenuItem ritem = (RadioMenuItem) mitem;
           PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
@@ -1530,7 +1529,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           getAction(ActionW.ZOOM, SliderChangeListener.class);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
-        menu.setIcon(ActionW.ZOOM.getSmallIcon());
+        menu.setIcon(ActionW.ZOOM.getIcon());
         menu.setEnabled(zoomAction.get().isActionEnabled());
 
         if (zoomAction.get().isActionEnabled()) {
@@ -1550,7 +1549,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           getAction(ActionW.ROTATION, SliderChangeListener.class);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
-        menu.setIcon(ActionW.ROTATION.getSmallIcon());
+        menu.setIcon(ActionW.ROTATION.getIcon());
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
@@ -1558,6 +1557,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
@@ -1566,6 +1566,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                       .setSliderValue((rotateAction.get().getSliderValue() + 270) % 360));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->

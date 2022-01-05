@@ -312,7 +312,7 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
     if (dragPressed == null) {
-      int inset = 2 * width / DEFAULT_SIZE;
+      int inset = 2 * Math.max(width, height) / DEFAULT_SIZE;
       if (series.isOpen()) {
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (series.isSelected() && series.isFocused()) {

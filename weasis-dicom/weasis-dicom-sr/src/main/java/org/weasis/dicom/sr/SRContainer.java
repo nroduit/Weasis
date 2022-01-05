@@ -23,7 +23,6 @@ import java.util.Optional;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -42,6 +41,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -343,9 +343,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
     final String title = Messages.getString("SRContainer.print_layout");
     return Collections.singletonList(
         new DefaultAction(
-            title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
-            event -> printCurrentView()));
+            title, ResourceUtil.getIcon(ActionIcon.PRINT), event -> printCurrentView()));
   }
 
   void displayHeader() {

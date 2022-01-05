@@ -48,7 +48,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 
-@SuppressWarnings("serial")
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
   protected final String title;
   protected final JLabel label = new JLabel();
@@ -146,7 +145,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     // DO NOTHING
   }
 
-  @SuppressWarnings("serial")
   public static class TagRenderer extends DefaultTableCellRenderer {
 
     public TagRenderer() {
@@ -183,7 +181,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
   }
 
-  @SuppressWarnings("serial")
   public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
     // TODO more anatomy:
     // http://dicom.nema.org/medical/dicom/2016c/output/chtml/part03/sect_10.5.html

@@ -17,7 +17,6 @@ import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.MutableComboBoxModel;
 
-@SuppressWarnings("serial")
 public class ArrayListComboBoxModel<E> extends AbstractListModel<E>
     implements MutableComboBoxModel<E>, ComboBoxModel<E> {
 

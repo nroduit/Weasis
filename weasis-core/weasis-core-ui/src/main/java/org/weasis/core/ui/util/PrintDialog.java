@@ -30,7 +30,6 @@ import org.weasis.core.util.StringUtil;
  * @author Marcelo Porto (marcelo@animati.com.br)
  * @author Nicolas Roduit
  */
-@SuppressWarnings("serial")
 public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
   private javax.swing.JCheckBox annotationsCheckBox;

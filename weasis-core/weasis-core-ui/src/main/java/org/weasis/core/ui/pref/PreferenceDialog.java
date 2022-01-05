@@ -30,7 +30,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.ui.Messages;
 
-@SuppressWarnings("serial")
 public class PreferenceDialog extends AbstractWizardDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(PreferenceDialog.class);
 

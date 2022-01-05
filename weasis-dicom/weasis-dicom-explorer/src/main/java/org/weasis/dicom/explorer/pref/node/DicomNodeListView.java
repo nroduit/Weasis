@@ -25,7 +25,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
-@SuppressWarnings("serial")
 public class DicomNodeListView extends AbstractItemDialogPage {
 
   public DicomNodeListView() {

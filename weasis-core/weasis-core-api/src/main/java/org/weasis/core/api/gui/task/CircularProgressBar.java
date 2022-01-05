@@ -21,7 +21,6 @@ import org.weasis.core.api.gui.util.ImageSectionIcon;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
 
-@SuppressWarnings("serial")
 public class CircularProgressBar extends JProgressBar {
   public static final ImageIcon ICON =
       new ImageIcon(CircularProgressBar.class.getResource("/icon/22x22/process-working.png"));

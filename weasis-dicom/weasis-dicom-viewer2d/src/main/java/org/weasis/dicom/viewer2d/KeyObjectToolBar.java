@@ -50,7 +50,6 @@ import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 
-@SuppressWarnings("serial")
 public class KeyObjectToolBar extends WtoolBar {
   private static final Logger LOGGER = LoggerFactory.getLogger(KeyObjectToolBar.class);
 

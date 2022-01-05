@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -18,7 +19,6 @@ import java.util.Optional;
 import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -32,6 +32,8 @@ import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
@@ -56,16 +58,11 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
-@SuppressWarnings("serial")
 public class MeasureToolBar extends WtoolBar {
   private static final long serialVersionUID = -6672565963157176685L;
 
   public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
-  public static final Icon MeasureIcon =
-      new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png"));
-  public static final Icon drawIcon =
-      new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw.png"));
   public static final List<Graphic> measureGraphicList = new ArrayList<>();
   public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
@@ -193,8 +190,7 @@ public class MeasureToolBar extends WtoolBar {
 
     if (measure.isPresent() || draw.isPresent()) {
       jButtondelete.setToolTipText(Messages.getString("MeasureToolBar.del"));
-      jButtondelete.setIcon(
-          new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png")));
+      jButtondelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
       jButtondelete.addActionListener(
           e -> {
             GraphicModel gm = eventManager.getSelectedViewPane().getGraphicManager();
@@ -239,7 +235,11 @@ public class MeasureToolBar extends WtoolBar {
     DropDownButton dropDownButton =
         new DropDownButton(
             action.getActionW().cmd(),
-            buildIcon(selectionGraphic, draw ? drawIcon : MeasureIcon),
+            buildIcon(
+                selectionGraphic,
+                draw
+                    ? ResourceUtil.getToolBarIcon(ActionIcon.DRAW)
+                    : ResourceUtil.getToolBarIcon(ActionIcon.MEASURE)),
             menu) {
           @Override
           protected JPopupMenu getPopupMenu() {
@@ -342,9 +342,12 @@ public class MeasureToolBar extends WtoolBar {
 
     public void changeButtonState() {
       Object sel = dataModel.getSelectedItem();
-      if (sel instanceof Graphic && button != null) {
-        Icon icon =
-            buildIcon((Graphic) sel, action == ActionW.DRAW_GRAPHICS ? drawIcon : MeasureIcon);
+      if (button != null && sel instanceof Graphic graphic) {
+        FlatSVGIcon drawIcon =
+            action == ActionW.DRAW_GRAPHICS
+                ? ResourceUtil.getIcon(ActionIcon.DRAW)
+                : ResourceUtil.getIcon(ActionIcon.MEASURE);
+        Icon icon = buildIcon(graphic, drawIcon);
         button.setIcon(icon);
         button.setActionCommand(sel.toString());
       }

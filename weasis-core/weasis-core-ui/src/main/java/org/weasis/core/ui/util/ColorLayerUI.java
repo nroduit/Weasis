@@ -24,7 +24,6 @@ import org.jdesktop.jxlayer.plaf.AbstractLayerUI;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 
-@SuppressWarnings("serial")
 public class ColorLayerUI extends AbstractLayerUI<JComponent> {
 
   protected static final float MAX_ALPHA = 0.75f;

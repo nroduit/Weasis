@@ -33,7 +33,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-@SuppressWarnings("serial")
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
 

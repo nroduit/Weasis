@@ -53,7 +53,6 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 
-@SuppressWarnings("serial")
 public class AuView extends JPanel implements SeriesViewerListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuView.class);
 

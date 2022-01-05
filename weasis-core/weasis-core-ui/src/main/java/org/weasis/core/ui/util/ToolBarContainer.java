@@ -24,13 +24,14 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.InsertableUtil;
+import org.weasis.core.api.util.ResourceUtil;
 
 public class ToolBarContainer extends JPanel {
   public static final Toolbar EMPTY = buildEmptyToolBar("empty");
   private final List<Toolbar> bars = new ArrayList<>();
 
   public ToolBarContainer() {
-    setLayout(new WrapLayout(FlowLayout.LEADING, 2, 2));
+    setLayout(new WrapLayout(FlowLayout.LEADING, 0, 0));
     addMouseListener(new PopClickListener());
   }
 
@@ -123,9 +124,8 @@ public class ToolBarContainer extends JPanel {
               new JCheckBoxMenuItem(bar.getComponentName(), bar.isComponentEnabled());
           item.addActionListener(
               e -> {
-                if (e.getSource() instanceof JCheckBoxMenuItem) {
-                  displayToolbar(
-                      bar.getComponent(), ((JCheckBoxMenuItem) e.getSource()).isSelected());
+                if (e.getSource() instanceof JCheckBoxMenuItem menuItem) {
+                  displayToolbar(bar.getComponent(), menuItem.isSelected());
                 }
               });
           add(item);
@@ -162,7 +162,7 @@ public class ToolBarContainer extends JPanel {
 
           @Override
           public int getIconHeight() {
-            return 32;
+            return ResourceUtil.TOOLBAR_ICON_SIZE;
           }
         });
   }

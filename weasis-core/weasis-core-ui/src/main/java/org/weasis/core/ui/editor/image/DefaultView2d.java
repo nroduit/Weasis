@@ -69,6 +69,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -880,7 +881,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                             * 7.0)
                         / getWidth()));
     fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-    return new Font(Font.SANS_SERIF, 0, fontSize);
+    return fontSize < 9
+        ? GuiUtils.getMiniFont()
+        : fontSize < 13 ? GuiUtils.getSmallFont() : GuiUtils.getDefaultont();
   }
 
   /** paint routine */

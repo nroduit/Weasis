@@ -21,7 +21,6 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -37,11 +36,12 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
@@ -68,7 +68,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     super(
         BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
-    dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
+    dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     setDockableWidth(300);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     jbInit();

@@ -18,7 +18,6 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.util.WtoolBar;
 
-@SuppressWarnings("serial")
 public class CineToolBar<DicomImageElement> extends WtoolBar {
 
   public CineToolBar(int index) {

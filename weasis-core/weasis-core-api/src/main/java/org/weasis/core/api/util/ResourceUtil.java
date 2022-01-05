@@ -21,6 +21,8 @@ import org.weasis.core.util.StringUtil;
 public class ResourceUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(ResourceUtil.class);
 
+  public static final int TOOLBAR_ICON_SIZE = 30;
+
   public interface ResourcePath {
     String getPath();
   }
@@ -28,8 +30,8 @@ public class ResourceUtil {
   public interface ResourceIconPath extends ResourcePath {}
 
   public enum LogoIcon implements ResourceIconPath {
-    SMALL("svg/logo/Weasis.svg"),
     LARGE("svg/logo/WeasisAbout.svg"),
+    SMALL("svg/logo/Weasis.svg"),
     SMALL_DICOMIZER("svg/logo/Dicomizer.svg");
 
     private String path;
@@ -44,15 +46,15 @@ public class ResourceUtil {
   }
 
   public enum FileIcon implements ResourceIconPath {
-    UNKNOWN("svg/file/unknown.svg"),
-    TEXT("svg/file/text.svg"),
-    PDF("svg/file/pdf.svg"),
     AUDIO("svg/file/audio.svg"),
-    VIDEO("svg/file/video.svg"),
-    XML("svg/file/xml.svg"),
-    IMAGE("svg/file/image.svg"),
+    DICOM("svg/file/dicom.svg"),
     ECG("svg/file/ecg.svg"),
-    DICOM("svg/file/dicom.svg");
+    IMAGE("svg/file/image.svg"),
+    PDF("svg/file/pdf.svg"),
+    TEXT("svg/file/text.svg"),
+    UNKNOWN("svg/file/unknown.svg"),
+    VIDEO("svg/file/video.svg"),
+    XML("svg/file/xml.svg");
 
     private String path;
 
@@ -66,24 +68,41 @@ public class ResourceUtil {
   }
 
   public enum ActionIcon implements ResourceIconPath {
-    EXECUTE("svg/action/execute.svg"),
-    SUSPEND("svg/action/suspend.svg"),
-    PIPETTE("svg/action/pipette.svg"),
-    FLIP("svg/action/flip.svg"),
+    CONTEXT_MENU("svg/action/contextMenu.svg"),
     CROSSHAIR("svg/action/crosshair.svg"),
+    DRAW("svg/action/draw.svg"),
+    EXECUTE("svg/action/execute.svg"),
+    FLIP("svg/action/flip.svg"),
+    INVERSE_LUT("svg/action/inverseLut.svg"),
     LAYOUT("svg/action/layout.svg"),
     LUT("svg/action/lut.svg"),
     MEASURE("svg/action/measure.svg"),
     METADATA("svg/action/metadata.svg"),
+    MOUSE_LEFT("svg/action/mouseLeft.svg"),
+    MOUSE_MIDDLE("svg/action/mouseMiddle.svg"),
+    MOUSE_RIGHT("svg/action/mouseRight.svg"),
+    MOUSE_WHEEL("svg/action/mouseWheel.svg"),
     NONE("svg/action/none.svg"),
+    PAN("svg/action/pan.svg"),
+    PIPETTE("svg/action/pipette.svg"),
     PRINT("svg/action/print.svg"),
     RESET("svg/action/reset.svg"),
+    ROTATE_CLOCKWISE("svg/action/rotateClockwise.svg"),
+    ROTATE_COUNTERCLOCKWISE("svg/action/rotateCounterclockwise.svg"),
+    ROTATION("svg/action/rotation.svg"),
     SELECTION("svg/action/selection.svg"),
+    SELECTION_DELETE("svg/action/selectionDelete.svg"),
     SEQUENCE("svg/action/sequence.svg"),
+    SUSPEND("svg/action/suspend.svg"),
     SYNCH("svg/action/synch.svg"),
     TILE("svg/action/tile.svg"),
     WINDOW_LEVEL("svg/action/winLevel.svg"),
-    INVERSE_LUT("svg/action/inverseLut.svg");
+    ZOOM("svg/action/zoom.svg"),
+    ZOOM_AREA("svg/action/zoomArea.svg"),
+    ZOOM_BEST_FIT("svg/action/zoomBestFit.svg"),
+    ZOOM_ORIGINAL("svg/action/zoomOriginal.svg"),
+    ZOOM_PAN("svg/action/zoomPan.svg"),
+    ZOOM_REAL_WORLD("svg/action/zoomRealWorld.svg");
 
     private String path;
 
@@ -97,11 +116,14 @@ public class ResourceUtil {
   }
 
   public enum OtherIcon implements ResourceIconPath {
-    XRAY("svg/other/xray.svg"),
-    PATIENT("svg/other/patient.svg"),
+    AUDIO("svg/other/audio.svg"),
+    CALENDAR("svg/other/calendar.svg"),
+    ECG("svg/other/ecg.svg"),
     IMAGE_EDIT("svg/other/imageEdit.svg"),
-    VIEW_SETTING("svg/action/viewSettings.svg"),
-    CALENDAR("svg/other/calendar.svg");
+    PATIENT("svg/other/patient.svg"),
+    RASTER_IMAGE("svg/other/rasterImage.svg"),
+    VIEW_SETTING("svg/other/viewSettings.svg"),
+    XRAY("svg/other/xray.svg");
 
     private String path;
 
@@ -155,6 +177,11 @@ public class ResourceUtil {
 
   public static FlatSVGIcon getIcon(ResourceIconPath path) {
     return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri());
+  }
+
+  public static FlatSVGIcon getToolBarIcon(ResourceIconPath path) {
+    int size = TOOLBAR_ICON_SIZE;
+    return getIcon(path, size, size);
   }
 
   public static FlatSVGIcon getIcon(ResourceIconPath path, int width, int height) {

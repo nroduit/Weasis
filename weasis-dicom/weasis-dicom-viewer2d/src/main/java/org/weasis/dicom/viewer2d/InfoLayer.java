@@ -27,6 +27,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
@@ -119,27 +120,35 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     final Rectangle bound = view2DPane.getJComponent().getBounds();
     float midx = bound.width / 2f;
     float midy = bound.height / 2f;
-    thickLength = g2.getFont().getSize() * 1.5f; // font 10 => 15 pixels
-    thickLength = thickLength < 5.0 ? 5.0 : thickLength;
+    thickLength = GuiUtils.getFontSizeInPixels(g2.getFont());
+    thickLength = Math.max(thickLength, GuiUtils.getScaleLength(5.0));
 
     g2.setPaint(Color.BLACK);
 
     boolean hideMin = !getDisplayPreferences(MIN_ANNOTATIONS);
     final float fontHeight = FontTools.getAccurateFontHeight(g2);
     final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-    float drawY = bound.height - border - 1.5f; // -1.5 for outline
+    float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
 
     if (!image.isReadable()) {
       String message = Messages.getString("InfoLayer.msg_not_read");
       float y = midy;
       GuiUtils.paintColorFontOutline(
-          g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
+          g2,
+          message,
+          midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
+          y,
+          IconColor.ACTIONS_RED.getColor());
       String tsuid = TagD.getTagValue(image, Tag.TransferSyntaxUID, String.class);
       if (StringUtil.hasText(tsuid)) {
         tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
         y += fontHeight;
         GuiUtils.paintColorFontOutline(
-            g2, tsuid, midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F, y, Color.RED);
+            g2,
+            tsuid,
+            midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
+            y,
+            IconColor.ACTIONS_RED.getColor());
       }
 
       String[] desc = image.getMediaReader().getReaderDescription();
@@ -148,7 +157,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           if (StringUtil.hasText(str)) {
             y += fontHeight;
             GuiUtils.paintColorFontOutline(
-                g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2F, y, Color.RED);
+                g2,
+                str,
+                midx - g2.getFontMetrics().stringWidth(str) / 2F,
+                y,
+                IconColor.ACTIONS_RED.getColor());
           }
         }
       }
@@ -192,7 +205,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           }
         }
 
-        GuiUtils.paintColorFontOutline(g2, buf.toString(), border, drawY, Color.RED);
+        GuiUtils.paintColorFontOutline(
+            g2, buf.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
         drawY -= fontHeight;
       }
 
@@ -206,7 +220,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       if (koElement != null) {
         String message = "Not a valid image: " + koElement.getDocumentTitle(); // NON-NLS
         GuiUtils.paintColorFontOutline(
-            g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2F, midy, Color.RED);
+            g2,
+            message,
+            midx - g2.getFontMetrics().stringWidth(message) / 2F,
+            midy,
+            IconColor.ACTIONS_RED.getColor());
       }
     }
 
@@ -220,12 +238,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
       String str = sb.toString();
       GuiUtils.paintFontOutline(g2, str, border, drawY - 1);
-      drawY -= fontHeight + 2;
+      drawY -= fontHeight + GuiUtils.getScaleLength(2);
       pixelInfoBound.setBounds(
-          border - 2,
-          (int) drawY + 3,
-          g2.getFontMetrics(view2DPane.getLayerFont()).stringWidth(str) + 4,
-          (int) fontHeight + 2);
+          border - GuiUtils.getScaleLength(2),
+          (int) drawY + GuiUtils.getScaleLength(3),
+          g2.getFontMetrics(view2DPane.getLayerFont()).stringWidth(str)
+              + GuiUtils.getScaleLength(4),
+          (int) fontHeight + GuiUtils.getScaleLength(2));
     }
     if (getDisplayPreferences(WINDOW_LEVEL) && hideMin) {
       StringBuilder sb = new StringBuilder();
@@ -257,7 +276,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
       }
       if (outside) {
-        GuiUtils.paintColorFontOutline(g2, sb.toString(), border, drawY, Color.RED);
+        GuiUtils.paintColorFontOutline(
+            g2, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
       } else {
         GuiUtils.paintFontOutline(g2, sb.toString(), border, drawY);
       }
@@ -310,11 +330,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
       Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
       if (imgProgression != null) {
-        drawY -= 13;
+        int inset = GuiUtils.getScaleLength(13);
+        drawY -= inset;
         int pColor = (int) (510 * imgProgression);
-        g2.setPaint(
-            new Color(510 - pColor > 255 ? 255 : 510 - pColor, pColor > 255 ? 255 : pColor, 0));
-        g2.fillOval(border, (int) drawY, 13, 13);
+        g2.setPaint(new Color(Math.min(510 - pColor, 255), Math.min(pColor, 255), 0));
+        g2.fillOval(border, (int) drawY, inset, inset);
       }
     }
     Point2D.Float[] positions = new Point2D.Float[4];
@@ -347,7 +367,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           }
         }
       }
-      positions[0] = new Point2D.Float(border, drawY - fontHeight + 5);
+      positions[0] = new Point2D.Float(border, drawY - fontHeight + GuiUtils.getScaleLength(5));
 
       corner = modality.getCornerInfo(CornerDisplay.TOP_RIGHT);
       drawY = fontHeight;
@@ -376,9 +396,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           }
         }
       }
-      positions[1] = new Point2D.Float((float) bound.width - border, drawY - fontHeight + 5f);
+      positions[1] =
+          new Point2D.Float(
+              (float) bound.width - border, drawY - fontHeight + GuiUtils.getScaleLength(5f));
 
-      drawY = bound.height - border - 1.5f; // -1.5 for outline
+      drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
       if (hideMin) {
         corner = modality.getCornerInfo(CornerDisplay.BOTTOM_RIGHT);
         infos = corner.getInfos();

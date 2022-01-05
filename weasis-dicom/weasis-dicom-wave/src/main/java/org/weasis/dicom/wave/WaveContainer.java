@@ -25,7 +25,6 @@ import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -44,6 +43,7 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
@@ -370,10 +370,8 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
     ArrayList<Action> actions = new ArrayList<>(1);
     final String title = Messages.getString("ECGontainer.print_layout");
 
-    @SuppressWarnings("serial")
     AbstractAction printStd =
-        new AbstractAction(
-            title, new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png"))) {
+        new AbstractAction(title, ResourceUtil.getIcon(ActionIcon.PRINT)) {
 
           @Override
           public void actionPerformed(ActionEvent e) {

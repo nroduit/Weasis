@@ -361,7 +361,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     return selectedPatient != null && selectedPatient.patient == patient;
   }
 
-  @SuppressWarnings("serial")
   class PatientContainerPane extends JPanel {
 
     private final GridBagConstraints constraint =
@@ -596,7 +595,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
   }
 
-  @SuppressWarnings("serial")
   class StudyPane extends JPanel {
 
     final MediaSeriesGroup dicomStudy;

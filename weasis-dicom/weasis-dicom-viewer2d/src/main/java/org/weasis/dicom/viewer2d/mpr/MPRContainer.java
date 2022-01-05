@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JProgressBar;
@@ -51,6 +50,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.CrosshairListener;
@@ -115,7 +116,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
             "MPR synch", // NON-NLS
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
-            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")),
+            ResourceUtil.getIcon(ActionIcon.TILE),
             actions);
 
     SYNCH_LIST.add(DEFAULT_MPR);
@@ -456,7 +457,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     DefaultAction printStd =
         new DefaultAction(
             title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
+            ResourceUtil.getIcon(ActionIcon.PRINT),
             event -> {
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MPRContainer.this);
               PrintDialog<DicomImageElement> dialog =

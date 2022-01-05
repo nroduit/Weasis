@@ -57,7 +57,6 @@ import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.send.StowRS;
 import org.weasis.dicom.web.ContentType;
 
-@SuppressWarnings("serial")
 public class AcquirePublishPanel extends JPanel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 

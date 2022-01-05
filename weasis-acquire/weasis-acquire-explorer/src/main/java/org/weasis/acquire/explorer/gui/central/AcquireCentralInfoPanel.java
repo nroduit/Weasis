@@ -22,7 +22,6 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPa
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 
-@SuppressWarnings("serial")
 public class AcquireCentralInfoPanel extends JPanel {
 
   private final AcquireMetadataPanel globalInfoPanel =

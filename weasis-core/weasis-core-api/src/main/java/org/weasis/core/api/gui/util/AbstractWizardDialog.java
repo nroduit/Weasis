@@ -31,7 +31,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.Messages;
 
-@SuppressWarnings("serial")
 public abstract class AbstractWizardDialog extends JDialog {
 
   protected String settingTitle;

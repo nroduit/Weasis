@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -18,6 +19,7 @@ import java.net.URL;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.util.ResourceUtil;
 
 public class ActionW implements KeyActionValue {
   public static final String DRAW_CMD_PREFIX = "draw.sub."; // NON-NLS
@@ -176,8 +178,7 @@ public class ActionW implements KeyActionValue {
 
   private final String title;
   private final String command;
-  private final Icon icon;
-  private final Icon smallIcon;
+  private final FlatSVGIcon icon;
   private final int keyCode;
   private final int modifier;
   private final Cursor cursor;
@@ -188,10 +189,7 @@ public class ActionW implements KeyActionValue {
     this.keyCode = keyEvent;
     this.modifier = modifier;
     this.cursor = cursor;
-    URL url = getClass().getResource("/icon/22x22/" + command + ".png"); // NON-NLS
-    icon = url == null ? null : new ImageIcon(url);
-    url = getClass().getResource("/icon/16x16/" + command + ".png"); // NON-NLS
-    smallIcon = url == null ? null : new ImageIcon(url);
+    this.icon = ResourceUtil.getIcon("svg/action/" + command + ".svg"); // NON-NLS
   }
 
   public String getTitle() {
@@ -207,7 +205,7 @@ public class ActionW implements KeyActionValue {
     return title;
   }
 
-  public Icon getIcon() {
+  public FlatSVGIcon getIcon() {
     return icon;
   }
 
@@ -233,22 +231,8 @@ public class ActionW implements KeyActionValue {
     return command.startsWith(DRAW_CMD_PREFIX);
   }
 
-  public Icon getSmallIcon() {
-    return smallIcon;
-  }
-
   public Icon getDropButtonIcon() {
-    if (icon == null) {
-      return null;
-    }
     return new DropButtonIcon(icon);
-  }
-
-  public Icon getSmallDropButtonIcon() {
-    if (smallIcon == null) {
-      return null;
-    }
-    return new DropButtonIcon(smallIcon);
   }
 
   public static Cursor getCustomCursor(

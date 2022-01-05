@@ -34,7 +34,6 @@ import org.weasis.core.ui.util.ToolBarContainer;
 import org.weasis.core.ui.util.Toolbar;
 import org.weasis.core.ui.util.WtoolBar;
 
-@SuppressWarnings("serial")
 public class ImageGroupPane extends ViewerPlugin<ImageElement> {
 
   public final List<Toolbar> toolBar = Collections.synchronizedList(new ArrayList<>(1));

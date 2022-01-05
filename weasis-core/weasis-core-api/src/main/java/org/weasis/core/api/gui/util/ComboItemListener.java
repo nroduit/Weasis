@@ -210,6 +210,5 @@ public abstract class ComboItemListener<T> extends BasicActionState
   }
 
   // Trick to wrap JComboBox in the same interface as the GroupRadioMenu
-  @SuppressWarnings("serial")
   class ComboItems extends JComboBox<T> implements ComboBoxModelAdapter<T> {}
 }

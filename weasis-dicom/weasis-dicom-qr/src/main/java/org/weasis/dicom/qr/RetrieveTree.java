@@ -26,7 +26,6 @@ import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipSeriesNode;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipStudyNode;
 
-@SuppressWarnings("serial")
 public class RetrieveTree extends JPanel {
 
   private RetrieveTreeModel retrieveTreeModel;

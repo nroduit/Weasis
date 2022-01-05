@@ -25,7 +25,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-@SuppressWarnings("serial")
 public final class DefaultThumbnailList<E extends MediaElement> extends AbstractThumbnailList<E>
     implements ThumbnailList<E> {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultThumbnailList.class);

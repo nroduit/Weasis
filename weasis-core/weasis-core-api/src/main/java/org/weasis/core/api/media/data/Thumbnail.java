@@ -49,7 +49,6 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
-@SuppressWarnings("serial")
 public class Thumbnail extends JLabel implements Thumbnailable {
   private static final Logger LOGGER = LoggerFactory.getLogger(Thumbnail.class);
 

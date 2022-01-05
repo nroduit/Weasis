@@ -24,7 +24,6 @@ import javax.swing.border.EmptyBorder;
  *
  * <p>The area of title allows to release the click without hiding the popup.
  */
-@SuppressWarnings("serial")
 public class TitleMenuItem extends JLabel implements MenuElement {
 
   public TitleMenuItem(String title, Insets insets) {

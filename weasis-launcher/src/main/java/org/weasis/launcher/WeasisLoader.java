@@ -80,7 +80,6 @@ public class WeasisLoader {
         });
     container = win;
 
-    loadingLabel.setFont(font);
     loadingLabel.setText(LBL_LOADING);
     loadingLabel.setFocusable(false);
     loadingLabel.setBorder(BorderFactory.createEmptyBorder(5, 3, 5, 3));

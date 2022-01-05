@@ -25,7 +25,6 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 
-@SuppressWarnings("serial")
 public class StatisticsPrefView extends AbstractItemDialogPage {
 
   private final Map<JCheckBox, Measurement> map =

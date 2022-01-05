@@ -24,7 +24,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.Messages;
 
-@SuppressWarnings("serial")
 public class SeriesDownloadPrefView extends AbstractItemDialogPage {
   public static final String DOWNLOAD_IMMEDIATELY = "weasis.download.immediately";
 

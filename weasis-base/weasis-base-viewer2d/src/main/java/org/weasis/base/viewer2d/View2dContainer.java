@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JSeparator;
@@ -56,6 +55,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
@@ -496,10 +496,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           ColorLayerUI.showCenterScreen(dialog, layer);
         };
     DefaultAction printStd =
-        new DefaultAction(
-            title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
-            event);
+        new DefaultAction(title, ResourceUtil.getIcon(ActionIcon.PRINT), event);
     printStd.putValue(Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_P, 0));
     actions.add(printStd);
     return actions;

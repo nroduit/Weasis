@@ -23,7 +23,7 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
   private final GroupPopup menuModel;
 
   public DropDownButton(String type, Icon icon) {
-    this(type, icon, (GroupPopup) null);
+    this(type, icon, null);
   }
 
   public DropDownButton(String type, Icon icon, GroupPopup model) {

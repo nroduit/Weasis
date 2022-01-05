@@ -14,7 +14,6 @@ import java.util.List;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
-@SuppressWarnings("serial")
 public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
   private final String title;
   private List<PageProps> subPageList;

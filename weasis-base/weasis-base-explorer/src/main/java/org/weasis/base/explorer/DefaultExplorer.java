@@ -56,7 +56,6 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-@SuppressWarnings("serial")
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExplorer.class);
 

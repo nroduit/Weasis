@@ -14,6 +14,8 @@ import com.formdev.flatlaf.util.UIScale;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
+import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -192,6 +194,13 @@ public class GuiUtils {
     return length * UIScale.getUserScaleFactor();
   }
 
+  public static void rightToLeftChanged(Container c, boolean rightToLeft) {
+    c.applyComponentOrientation(
+        rightToLeft ? ComponentOrientation.RIGHT_TO_LEFT : ComponentOrientation.LEFT_TO_RIGHT);
+    c.revalidate();
+    c.repaint();
+  }
+
   public static TitledBorder getTitledBorder(String title) {
     return new TitledBorder(
         null,
@@ -341,12 +350,15 @@ public class GuiUtils {
 
   public static Dimension getBigIconButtonSize(JComponent c) {
     Insets insets = c.getInsets();
-    Font font = c.getFont();
+    int size = getFontSizeInPixels(c.getFont()) + insets.top + insets.bottom;
+    return new Dimension(size, size);
+  }
+
+  public static int getFontSizeInPixels(Font font) {
     if (font == null) {
       font = getDefaultont();
     }
-    int size = (font.getSize() * 96 / 72) + insets.top + insets.bottom;
-    return new Dimension(size, size);
+    return font.getSize() * 96 / 72;
   }
 
   public static JButton createHelpButton(final String topic, boolean small) {

@@ -18,7 +18,6 @@ import javax.swing.JComboBox;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.LocalUtil;
 
-@SuppressWarnings("serial")
 public class JLocaleLanguage extends JComboBox<JLocale> implements ItemListener, Refreshable {
 
   private final ArrayList<Locale> languages = new ArrayList<>();

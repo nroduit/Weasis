@@ -65,7 +65,6 @@ import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.opencv.data.PlanarImage;
 
-@SuppressWarnings("serial")
 public class AcquirePublishDialog extends JDialog {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishDialog.class);
   private static final String LAST_SEL_NODE = "lastSelectedNode";

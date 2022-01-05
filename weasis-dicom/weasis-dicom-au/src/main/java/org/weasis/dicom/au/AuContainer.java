@@ -48,7 +48,6 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 
-@SuppressWarnings("serial")
 public class AuContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);

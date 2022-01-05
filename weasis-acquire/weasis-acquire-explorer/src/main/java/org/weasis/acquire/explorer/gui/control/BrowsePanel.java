@@ -32,7 +32,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.util.FontTools;
 
-@SuppressWarnings("serial")
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
 

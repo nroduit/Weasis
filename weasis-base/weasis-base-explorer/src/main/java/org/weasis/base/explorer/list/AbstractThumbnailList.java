@@ -65,7 +65,6 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 
-@SuppressWarnings("serial")
 public abstract class AbstractThumbnailList<E extends MediaElement> extends JList<E>
     implements ThumbnailList<E> {
 

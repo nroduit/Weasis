@@ -228,8 +228,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
     if (layout instanceof ComboItemListener) {
       for (Object element : ((ComboItemListener) layout).getAllItem()) {
-        if (element instanceof GridBagLayoutModel) {
-          GridBagLayoutModel gbm = (GridBagLayoutModel) element;
+        if (element instanceof GridBagLayoutModel gbm) {
           if ((layoutModel.getIcon() != null && gbm.getIcon() == layoutModel.getIcon())
               || layoutModel.toString().equals(gbm.toString())) {
             return gbm;

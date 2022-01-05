@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -55,6 +54,7 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
@@ -92,7 +92,6 @@ import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
-@SuppressWarnings("serial")
 public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
@@ -770,7 +769,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
     DefaultAction printStd =
         new DefaultAction(
             title,
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/16x16/printer.png")),
+            ResourceUtil.getIcon(ActionIcon.PRINT),
             event -> {
               ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2dContainer.this);
               PrintDialog<DicomImageElement> dialog =

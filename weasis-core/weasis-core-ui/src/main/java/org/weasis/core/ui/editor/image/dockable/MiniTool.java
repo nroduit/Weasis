@@ -50,7 +50,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     Dimension dim = new Dimension(5, 5);
     add(Box.createRigidArea(dim));
     final DropDownButton button =
-        new DropDownButton("Mini", currentAction.getActionW().getSmallDropButtonIcon()) { // NON-NLS
+        new DropDownButton("Mini", currentAction.getActionW().getDropButtonIcon()) { // NON-NLS
 
           @Override
           protected JPopupMenu getPopupMenu() {
@@ -114,7 +114,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
       JRadioButtonMenuItem radio =
           new JRadioButtonMenuItem(
               actions[i].toString(),
-              actions[i].getActionW().getSmallIcon(),
+              actions[i].getActionW().getIcon(),
               actions[i].equals(currentAction));
       radio.setActionCommand(Integer.toString(i));
       radio.addActionListener(this);
@@ -147,7 +147,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         JPopupMenu pop = (JPopupMenu) item.getParent();
         if (pop.getInvoker() instanceof DropDownButton) {
           ((DropDownButton) pop.getInvoker())
-              .setIcon(currentAction.getActionW().getSmallDropButtonIcon());
+              .setIcon(currentAction.getActionW().getDropButtonIcon());
         }
       }
     }
