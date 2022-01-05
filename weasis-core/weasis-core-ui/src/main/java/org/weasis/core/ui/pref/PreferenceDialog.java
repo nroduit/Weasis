@@ -59,9 +59,10 @@ public class PreferenceDialog extends AbstractWizardDialog {
 
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
     list.add(new GeneralSetting());
-    list.add(new ProxyPrefView());
-    list.add(new LabelsPrefView());
-    list.add(new ScreenPrefView());
+    ViewerPrefView viewerSetting = new ViewerPrefView();
+    list.add(viewerSetting);
+    DicomPrefView dicomPrefView = new DicomPrefView();
+    list.add(dicomPrefView);
 
     BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
     try {
@@ -71,7 +72,16 @@ public class PreferenceDialog extends AbstractWizardDialog {
         if (factory != null) {
           AbstractItemDialogPage page = factory.createInstance(properties);
           if (page != null) {
-            list.add(page);
+            int position = page.getComponentPosition();
+            if (position > 500) {
+              if (position < 550) {
+                viewerSetting.addSubPage(page);
+              } else {
+                dicomPrefView.addSubPage(page);
+              }
+            } else {
+              list.add(page);
+            }
           }
         }
       }

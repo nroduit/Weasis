@@ -53,8 +53,8 @@ public class StatisticsPrefView extends AbstractItemDialogPage {
       box.addActionListener(
           e -> {
             Object source = e.getSource();
-            if (source instanceof JCheckBox) {
-              Measurement measure = map.get(e.getSource());
+            if (source instanceof JCheckBox checkBox) {
+              Measurement measure = map.get(checkBox);
               if (measure != null) {
                 measure.setGraphicLabel(((JCheckBox) source).isSelected());
               }

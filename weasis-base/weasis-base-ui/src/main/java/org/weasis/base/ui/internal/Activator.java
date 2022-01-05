@@ -11,7 +11,6 @@ package org.weasis.base.ui.internal;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
-import javax.swing.LookAndFeel;
 import org.apache.felix.service.command.CommandProcessor;
 import org.osgi.annotation.bundle.Header;
 import org.osgi.framework.Bundle;
@@ -27,8 +26,6 @@ import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.pref.GeneralSetting;
-import org.weasis.core.util.StringUtil;
 
 @Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
 public class Activator implements BundleActivator {
@@ -44,13 +41,6 @@ public class Activator implements BundleActivator {
     bundle = FrameworkUtil.getBundle(UIManager.class);
     if (bundle != null) {
       bundle.start();
-    }
-    String className = BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.theme");
-    if (StringUtil.hasText(className)) {
-      LookAndFeel lf = javax.swing.UIManager.getLookAndFeel();
-      if (lf == null || !className.equals(lf.getClass().getName())) {
-        GeneralSetting.setLookAndFeel(className);
-      }
     }
 
     // WeasisWin must be instantiated in the EDT but required to end before the bundle startup

@@ -18,6 +18,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.Arrays;
+import java.util.Objects;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -59,10 +60,7 @@ public class LabelPrefView extends AbstractItemDialogPage {
 
   public LabelPrefView(ViewSetting viewSetting) {
     super(Messages.getString("LabelPrefView.font"));
-    if (viewSetting == null) {
-      throw new IllegalArgumentException("ViewSetting cannot be null");
-    }
-    this.viewSetting = viewSetting;
+    this.viewSetting = Objects.requireNonNull(viewSetting);
     setComponentPosition(5);
     setBorder(new EmptyBorder(15, 10, 10, 10));
 

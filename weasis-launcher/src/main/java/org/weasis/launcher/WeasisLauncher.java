@@ -9,9 +9,7 @@
  */
 package org.weasis.launcher;
 
-import com.formdev.flatlaf.FlatIconColors;
-import com.formdev.flatlaf.util.ColorFunctions;
-import java.awt.Color;
+import com.formdev.flatlaf.FlatSystemProperties;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
@@ -46,7 +44,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -858,6 +855,13 @@ public class WeasisLauncher {
       look = localLook;
     }
 
+    final String scaleFactor =
+        getGeneralProperty(
+            FlatSystemProperties.UI_SCALE, null, serverProp, currentProps, true, false);
+    if (scaleFactor != null) {
+      System.setProperty(FlatSystemProperties.UI_SCALE, scaleFactor);
+    }
+
     /*
      * Build a Frame
      *
@@ -870,7 +874,7 @@ public class WeasisLauncher {
       SwingUtilities.invokeAndWait(
           () -> {
             // Set look and feels
-            look = setLookAndFeel(look, profileName);
+            look = LookAndFeels.setLookAndFeel(look, profileName);
 
             try {
               // Build a JFrame which will be used later in base.ui module
@@ -1120,79 +1124,6 @@ public class WeasisLauncher {
     } catch (Exception e) {
       LOGGER.log(Level.SEVERE, "Cannot load translation modules", e);
     }
-  }
-
-  /** Changes the look and feel for the whole GUI */
-  public static String setLookAndFeel(String look, String profileName) {
-    String laf = getAvailableLookAndFeel(look, profileName);
-    try {
-      UIManager.setLookAndFeel(laf);
-      for (LookAndFeelInfo lf : UIManager.getInstalledLookAndFeels()) {
-        if (laf.equals(lf.getClassName())) {
-          Color c = UIManager.getColor("ToolBar.separatorColor");
-          boolean dark = lf.getName().contains("Dark");
-          if (dark) {
-            c = ColorFunctions.lighten(c, 0.2f);
-          } else {
-            c = ColorFunctions.darken(c, 0.2f);
-          }
-          UIManager.put("ToolBar.separatorColor", c);
-
-          // TODO set as preference: preserve the default color action
-          applyDefaultColor(FlatIconColors.ACTIONS_RED, dark);
-          applyDefaultColor(FlatIconColors.ACTIONS_YELLOW, dark);
-          applyDefaultColor(FlatIconColors.ACTIONS_GREEN, dark);
-          applyDefaultColor(FlatIconColors.ACTIONS_BLUE, dark);
-          applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
-          applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
-          break;
-        }
-      }
-
-    } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
-    }
-    return laf;
-  }
-
-  private static void applyDefaultColor(FlatIconColors flatIconColor, boolean dark) {
-    if (dark) {
-      FlatIconColors darkColor =
-          switch (flatIconColor) {
-            case ACTIONS_RED -> FlatIconColors.ACTIONS_RED_DARK;
-            case ACTIONS_YELLOW -> FlatIconColors.ACTIONS_YELLOW_DARK;
-            case ACTIONS_GREEN -> FlatIconColors.ACTIONS_GREEN_DARK;
-            case ACTIONS_BLUE -> FlatIconColors.ACTIONS_BLUE_DARK;
-            case ACTIONS_GREY -> FlatIconColors.ACTIONS_GREY_DARK;
-            case ACTIONS_GREYINLINE -> FlatIconColors.ACTIONS_GREYINLINE_DARK;
-            default -> flatIconColor;
-          };
-      UIManager.put(darkColor.key, new Color(darkColor.rgb));
-    } else {
-      UIManager.put(flatIconColor.key, new Color(flatIconColor.rgb));
-    }
-  }
-
-  public static String getAvailableLookAndFeel(String look, String profileName) {
-    UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
-    String laf = null;
-    if (look != null) {
-      for (UIManager.LookAndFeelInfo lookAndFeelInfo : lafs) {
-        if (lookAndFeelInfo.getClassName().equals(look)) {
-          laf = look;
-          break;
-        }
-      }
-    }
-    if (laf == null) {
-      if ("dicomizer".equalsIgnoreCase(profileName)) { // NON-NLS
-        laf = "com.formdev.flatlaf.FlatIntelliJLaf";
-      } else {
-        laf =
-            "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
-      }
-    }
-    return laf;
   }
 
   static class HaltTask extends TimerTask {

@@ -32,6 +32,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
 
   public SeriesDownloadPrefView() {
     super(Messages.getString("SeriesDownloadPrefView.title"));
+    setComponentPosition(507);
     setBorder(new EmptyBorder(15, 10, 10, 10));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 

@@ -13,6 +13,7 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
+import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -54,7 +55,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
   private static final String PROXY_AUTH_REQUIRED = "proxy.auth";
   private static final String PROXY_AUTH_USER = "proxy.auth.user";
-  private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR
+  private static final String PROXY_AUTH_PWD = "proxy.auth.pwd"; // NOSONAR key for proxy
 
   private final JRadioButton directConnectionRadio =
       new JRadioButton(Messages.getString("ProxyPrefView.direct"));
@@ -162,7 +163,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
       if (pwd != null) {
         pwd = CryptoHandler.decrypt(pwd, PROXY_AUTH_REQUIRED);
         if (pwd != null && pwd.length > 0) {
-          pass = new String(pwd);
+          pass = new String(pwd, StandardCharsets.UTF_8);
         }
       }
     } catch (Exception e) {

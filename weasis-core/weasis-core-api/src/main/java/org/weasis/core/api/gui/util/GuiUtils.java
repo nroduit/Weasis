@@ -18,6 +18,7 @@ import java.awt.ComponentOrientation;
 import java.awt.Container;
 import java.awt.Desktop;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
@@ -38,6 +39,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import javax.swing.AbstractAction;
+import javax.swing.Box;
+import javax.swing.Box.Filler;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -47,6 +50,7 @@ import javax.swing.JFormattedTextField.AbstractFormatterFactory;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
@@ -209,6 +213,29 @@ public class GuiUtils {
         TitledBorder.DEFAULT_POSITION,
         getSemiBoldFont(),
         null);
+  }
+
+  public static JPanel getComponentsInJPanel(int hgap, int vgap, JComponent... items) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new FlowLayout(FlowLayout.LEADING, hgap, vgap));
+    for (JComponent item : items) {
+      panel.add(item);
+    }
+    return panel;
+  }
+
+  public static Filler getBoxXLastElement(int minimumWidth) {
+    return new Box.Filler(
+        new Dimension(minimumWidth, 0),
+        new Dimension(minimumWidth, 0),
+        new Dimension(Integer.MAX_VALUE, 0));
+  }
+
+  public static Filler getBoxYLastElement(int minimumHeight) {
+    return new Box.Filler(
+        new Dimension(0, minimumHeight),
+        new Dimension(0, minimumHeight),
+        new Dimension(0, Integer.MAX_VALUE));
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {

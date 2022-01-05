@@ -16,7 +16,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -30,6 +32,8 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.Insertable;
+import org.weasis.core.api.gui.InsertableUtil;
 
 public abstract class AbstractWizardDialog extends JDialog {
 
@@ -47,7 +51,8 @@ public abstract class AbstractWizardDialog extends JDialog {
   private final GridBagLayout gridBagLayout1 = new GridBagLayout();
   private final JScrollPane jScrollPane1 = new JScrollPane();
 
-  public AbstractWizardDialog(Window window, String title, ModalityType modal, Dimension pageSize) {
+  protected AbstractWizardDialog(
+      Window window, String title, ModalityType modal, Dimension pageSize) {
     super(window, title, modal);
     this.settingTitle = title;
     jScrollPanePage.setPreferredSize(pageSize);
@@ -115,11 +120,9 @@ public abstract class AbstractWizardDialog extends JDialog {
       Enumeration<?> children = root.children();
       while (children.hasMoreElements()) {
         Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+        if (child instanceof DefaultMutableTreeNode dtm) {
           Object object = dtm.getUserObject();
-          if (object instanceof PageProps) {
-            PageProps page = (PageProps) object;
+          if (object instanceof PageProps page) {
             if (page.getTitle().equals(title)) {
               TreePath tp = new TreePath(dtm.getPath());
               if (!dtm.isLeaf()) {
@@ -145,8 +148,8 @@ public abstract class AbstractWizardDialog extends JDialog {
       object = viewPort.getComponent(0);
     }
 
-    if (object instanceof AbstractItemDialogPage) {
-      return (AbstractItemDialogPage) object;
+    if (object instanceof AbstractItemDialogPage page) {
+      return page;
     }
     return null;
   }
@@ -168,20 +171,8 @@ public abstract class AbstractWizardDialog extends JDialog {
     Enumeration<?> children = pagesRoot.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
-        PageProps[] subpages = null;
-
-        Object object = node.getUserObject();
-        if (object instanceof AbstractItemDialogPage) {
-          subpages = ((AbstractItemDialogPage) object).getSubPages();
-        }
-
-        if (subpages != null) {
-          for (PageProps subpage : subpages) {
-            node.add(new DefaultMutableTreeNode(subpage));
-          }
-        }
+      if (child instanceof DefaultMutableTreeNode node) {
+        iniSubpages(node);
       }
     }
     DefaultTreeCellRenderer renderer = (DefaultTreeCellRenderer) tree.getCellRenderer();
@@ -198,12 +189,36 @@ public abstract class AbstractWizardDialog extends JDialog {
           if (e.getNewLeadSelectionPath() != null) {
             DefaultMutableTreeNode object =
                 (DefaultMutableTreeNode) e.getNewLeadSelectionPath().getLastPathComponent();
-            if (object.getUserObject() instanceof AbstractItemDialogPage) {
-              rowslection((AbstractItemDialogPage) object.getUserObject());
+            if (object.getUserObject() instanceof AbstractItemDialogPage page) {
+              rowslection(page);
             }
           }
         });
     expandTree(tree, pagesRoot, 2);
+  }
+
+  protected void iniSubpages(DefaultMutableTreeNode node) {
+    PageProps[] subpages = null;
+
+    Object object = node.getUserObject();
+    if (object instanceof Insertable) {
+      subpages = ((AbstractItemDialogPage) object).getSubPages();
+    }
+
+    if (subpages != null) {
+      List<Insertable> list = new ArrayList<>();
+      for (PageProps pageProps : subpages) {
+        if (pageProps instanceof Insertable) {
+          list.add((Insertable) pageProps);
+        }
+      }
+      InsertableUtil.sortInsertable(list);
+      for (PageProps subpage : subpages) {
+        DefaultMutableTreeNode subNode = new DefaultMutableTreeNode(subpage);
+        node.add(subNode);
+        iniSubpages(subNode);
+      }
+    }
   }
 
   public PageProps getSelectedPage() {
@@ -223,8 +238,7 @@ public abstract class AbstractWizardDialog extends JDialog {
       Enumeration<?> children = start.children();
       while (children.hasMoreElements()) {
         Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+        if (child instanceof DefaultMutableTreeNode dtm) {
           if (!dtm.isLeaf()) {
             TreePath tp = new TreePath(dtm.getPath());
             tree.expandPath(tp);
@@ -240,12 +254,10 @@ public abstract class AbstractWizardDialog extends JDialog {
     Enumeration<?> children = pagesRoot.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode page = (DefaultMutableTreeNode) child;
-
-        Object object = page.getUserObject();
-        if (object instanceof AbstractItemDialogPage) {
-          ((AbstractItemDialogPage) object).closeAdditionalWindow();
+      if (child instanceof DefaultMutableTreeNode treeNode) {
+        Object object = treeNode.getUserObject();
+        if (object instanceof AbstractItemDialogPage page) {
+          page.closeAdditionalWindow();
         }
       }
     }
@@ -255,11 +267,9 @@ public abstract class AbstractWizardDialog extends JDialog {
     Enumeration<?> children = pagesRoot.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) child;
+      if (child instanceof DefaultMutableTreeNode node) {
         Object object = node.getUserObject();
-        if (object instanceof AbstractItemDialogPage) {
-          AbstractItemDialogPage page = (AbstractItemDialogPage) object;
+        if (object instanceof AbstractItemDialogPage page) {
           PageProps[] subpages = page.getSubPages();
           for (PageProps subpage : subpages) {
             subpage.resetoDefaultValues();

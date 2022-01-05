@@ -14,12 +14,7 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Window;
 import java.io.File;
-import java.time.ZonedDateTime;
-import java.time.format.FormatStyle;
-import java.util.Arrays;
-import java.util.Comparator;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -27,24 +22,18 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.JTextPane;
-import javax.swing.LookAndFeel;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.PageProps;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
@@ -53,38 +42,11 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen");
 
-  private LookInfo oldUILook;
   private final GridBagLayout gridBagLayout1 = new GridBagLayout();
-  private final JLabel jLabelMLook = new JLabel();
-  private final JComboBox<LookInfo> jComboBoxlnf = new JComboBox<>();
-
-  private final JTextPane txtpnNote = new JTextPane();
-  private final JLabel labelLocale2 =
-      new JLabel(Messages.getString("GeneralSetting.language.data") + StringUtil.COLON);
-
-  private final JLocaleFormat comboBoxFormat =
-      new JLocaleFormat() {
-        @Override
-        public void valueHasChanged() {
-          txtpnNote.setText(getText());
-        }
-      };
-
-  private final JLabel labelLocale =
-      new JLabel(Messages.getString("GeneralSetting.language") + StringUtil.COLON);
-
-  private final JLocaleLanguage comboBoxLang =
-      new JLocaleLanguage() {
-        @Override
-        public void valueHasChanged() {
-          comboBoxFormat.refresh();
-        }
-      };
 
   private final JCheckBox chckbxConfirmClosing =
       new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));
 
-  private final JButton button = new JButton(Messages.getString("GeneralSetting.show"));
   private final JCheckBox chckbxFileLog =
       new JCheckBox(Messages.getString("GeneralSetting.rol_log"));
   private final JPanel panel = new JPanel();
@@ -109,7 +71,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
   public GeneralSetting() {
     super(PAGE_NAME);
     setComponentPosition(0);
-    setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
     try {
       GuiUtils.setNumberModel(
           spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
@@ -120,76 +81,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
     } catch (Exception e) {
       LOGGER.error("Cannot initialize GeneralSetting", e);
     }
+
+    addSubPage(new LanguagelSetting());
+    addSubPage(new LooklSetting());
+    addSubPage(new ScreenPrefView());
+    addSubPage(new ProxyPrefView());
   }
 
   private void jbInit() {
     this.setLayout(gridBagLayout1);
-    jLabelMLook.setText(Messages.getString("GeneralSetting.lf") + StringUtil.COLON);
-
-    GridBagConstraints gbcButton = new GridBagConstraints();
-    gbcButton.insets = new Insets(7, 5, 5, 15);
-    gbcButton.gridx = 2;
-    gbcButton.gridy = 0;
-    button.addActionListener(
-        e -> {
-          LookInfo item = (LookInfo) jComboBoxlnf.getSelectedItem();
-          final String finalLafClassName = item.getClassName();
-          Runnable runnable =
-              () -> {
-                try {
-                  UIManager.setLookAndFeel(finalLafClassName);
-                  for (final Window w : Window.getWindows()) {
-                    SwingUtilities.updateComponentTreeUI(w);
-                  }
-                } catch (Exception e1) {
-                  LOGGER.error("Can't change look and feel", e1);
-                }
-              };
-          GuiExecutor.instance().execute(runnable);
-        });
-    add(button, gbcButton);
-
-    GridBagConstraints gbcLabel = new GridBagConstraints();
-    gbcLabel.insets = new Insets(15, 10, 5, 5);
-    gbcLabel.anchor = GridBagConstraints.LINE_END;
-    gbcLabel.gridx = 0;
-    gbcLabel.gridy = 1;
-    add(labelLocale, gbcLabel);
-
-    GridBagConstraints gbcComboBox = new GridBagConstraints();
-    gbcComboBox.gridwidth = 3;
-    gbcComboBox.anchor = GridBagConstraints.WEST;
-    gbcComboBox.insets = new Insets(15, 0, 5, 0);
-    gbcComboBox.gridx = 1;
-    gbcComboBox.gridy = 1;
-    add(comboBoxLang, gbcComboBox);
-
-    GridBagConstraints gbcLabel2 = new GridBagConstraints();
-    gbcLabel2.insets = new Insets(5, 10, 5, 5);
-    gbcLabel2.anchor = GridBagConstraints.LINE_END;
-    gbcLabel2.gridx = 0;
-    gbcLabel2.gridy = 2;
-    add(labelLocale2, gbcLabel2);
-
-    GridBagConstraints gbcComboBox2 = new GridBagConstraints();
-    gbcComboBox2.gridwidth = 3;
-    gbcComboBox2.anchor = GridBagConstraints.WEST;
-    gbcComboBox2.insets = new Insets(5, 0, 5, 0);
-    gbcComboBox2.gridx = 1;
-    gbcComboBox2.gridy = 2;
-    add(comboBoxFormat, gbcComboBox2);
-
-    GridBagConstraints gbcTxtpnNote = new GridBagConstraints();
-    gbcTxtpnNote.anchor = GridBagConstraints.WEST;
-    gbcTxtpnNote.gridwidth = 4;
-    gbcTxtpnNote.insets = new Insets(5, 10, 5, 10);
-    gbcTxtpnNote.fill = GridBagConstraints.HORIZONTAL;
-    gbcTxtpnNote.gridx = 0;
-    gbcTxtpnNote.gridy = 3;
-    txtpnNote.setContentType("text/html");
-    txtpnNote.setEditable(false);
-    txtpnNote.setText(getText());
-    add(txtpnNote, gbcTxtpnNote);
 
     GridBagConstraints gbcChckbxConfirmationMessageWhen = new GridBagConstraints();
     gbcChckbxConfirmationMessageWhen.gridwidth = 4;
@@ -223,34 +123,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
     panel.add(labelSize);
 
     panel.add(spinner1);
-    this.add(
-        jLabelMLook,
-        new GridBagConstraints(
-            0,
-            0,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.LINE_END,
-            GridBagConstraints.NONE,
-            new Insets(7, 10, 5, 5),
-            0,
-            0));
-    this.add(
-        jComboBoxlnf,
-        new GridBagConstraints(
-            1,
-            0,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.WEST,
-            GridBagConstraints.NONE,
-            new Insets(7, 2, 5, 15),
-            5,
-            -2));
 
     GridBagConstraints gbcPanel1 = new GridBagConstraints();
     gbcPanel1.gridwidth = 4;
@@ -286,17 +158,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
           resetoDefaultValues();
           initialize(false);
         });
-  }
-
-  private static String getText() {
-    ZonedDateTime now = ZonedDateTime.now();
-    return String.format(
-        Messages.getString("GeneralSetting.txtNote"),
-        LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
-        LocalUtil.getNumberInstance().format(2543456.3465));
   }
 
   private void checkRolingLog() {
@@ -350,48 +211,14 @@ public class GeneralSetting extends AbstractItemDialogPage {
     spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRolingLog();
-
-    comboBoxLang.selectLocale(prfs.getProperty("locale.lang.code"));
-    comboBoxFormat.selectLocale();
-
-    String className = prfs.getProperty("weasis.theme");
-    if (className == null) {
-      LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
-      if (currentLAF != null) {
-        className = currentLAF.getClass().getName();
-      }
-    }
-    LookInfo oldLaf = null;
-    if (className != null) {
-      for (int i = 0; i < jComboBoxlnf.getItemCount(); i++) {
-        LookInfo look = jComboBoxlnf.getItemAt(i);
-        if (className.equals(look.getClassName())) {
-          oldLaf = look;
-          break;
-        }
-      }
-    }
-    if (oldLaf == null) {
-      jComboBoxlnf.setSelectedIndex(0);
-      oldLaf = (LookInfo) jComboBoxlnf.getSelectedItem();
-    } else {
-      jComboBoxlnf.setSelectedItem(oldLaf);
-    }
-    if (afirst) {
-      oldUILook = oldLaf;
-    }
-  }
-
-  public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
-    jComboBox.removeAllItems();
-    for (LookAndFeelInfo lookAndFeelInfo :
-        Arrays.stream(look).sorted(Comparator.comparing(LookAndFeelInfo::getName)).toList()) {
-      jComboBox.addItem(new LookInfo(lookAndFeelInfo.getName(), lookAndFeelInfo.getClassName()));
-    }
   }
 
   @Override
   public void closeAdditionalWindow() {
+    for (PageProps subpage : getSubPages()) {
+      subpage.closeAdditionalWindow();
+    }
+
     BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
         "weasis.confirm.closing", chckbxConfirmClosing.isSelected());
 
@@ -430,31 +257,6 @@ public class GeneralSetting extends AbstractItemDialogPage {
         fileNb,
         fileSize,
         limit);
-
-    LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
-    if (look != null) {
-      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.theme", look.getClassName());
-    }
-    // save preferences
-    BundleTools.saveSystemPreferences();
-
-    // Restore old laf to avoid display issues.
-    final String finalLafClassName = oldUILook.getClassName();
-    LookAndFeel currentLAF = javax.swing.UIManager.getLookAndFeel();
-    if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
-      Runnable runnable =
-          () -> {
-            try {
-              UIManager.setLookAndFeel(finalLafClassName);
-              for (Window window : Window.getWindows()) {
-                SwingUtilities.updateComponentTreeUI(window);
-              }
-            } catch (Exception e) {
-              LOGGER.error("Can't change look and feel", e);
-            }
-          };
-      GuiExecutor.instance().execute(runnable);
-    }
   }
 
   @Override
@@ -468,65 +270,5 @@ public class GeneralSetting extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, "");
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5");
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); // NON-NLS
-
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
-    // Reset cache of locale format
-    LocalUtil.setLocaleFormat(null);
-    // Reset format to the config.properties value or null (default system value)
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
-
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
-  }
-
-  static class LookInfo {
-
-    private final String name;
-    private final String className;
-
-    public LookInfo(String name, String className) {
-      this.name = name;
-      this.className = className;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getClassName() {
-      return className;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
-  }
-
-  public static String setLookAndFeel(String look) {
-    String laf = getAvailableLookAndFeel(look);
-    try {
-      UIManager.setLookAndFeel(laf);
-    } catch (Exception e) {
-      laf = UIManager.getSystemLookAndFeelClassName();
-      LOGGER.error("Unable to set the Look&Feel", e);
-    }
-    return laf;
-  }
-
-  public static String getAvailableLookAndFeel(String look) {
-    UIManager.LookAndFeelInfo[] lafs = UIManager.getInstalledLookAndFeels();
-    String laf = null;
-    if (look != null) {
-      for (LookAndFeelInfo lookAndFeelInfo : lafs) {
-        if (lookAndFeelInfo.getClassName().equals(look)) {
-          laf = look;
-          break;
-        }
-      }
-    }
-    if (laf == null) {
-      laf = "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
-    }
-    return laf;
   }
 }

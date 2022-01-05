@@ -29,6 +29,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
 
   public DicomNodeListView() {
     super(Messages.getString("DicomNodeListView.node_list"));
+    setComponentPosition(555);
     initGUI();
   }
 

@@ -46,7 +46,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
   public LabelsPrefView() {
     super(MeasureTool.LABEL_PREF_NAME);
-    setComponentPosition(20);
+    setComponentPosition(510);
     setBorder(new EmptyBorder(15, 10, 10, 10));
     BorderLayout borderLayout = new BorderLayout();
     setLayout(borderLayout);

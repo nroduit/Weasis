@@ -56,7 +56,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
   public ViewerPrefView() {
     super(View2dFactory.NAME);
-    setComponentPosition(150);
+    setComponentPosition(505);
     initGUI();
   }
 
