@@ -20,10 +20,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -38,8 +39,7 @@ public class PolylineGraphic extends AbstractDragGraphic {
 
   public static final Integer POINTS_NUMBER = UNDEFINED;
 
-  public static final Icon ICON =
-      new ImageIcon(PolylineGraphic.class.getResource("/icon/22x22/draw-polyline.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_POLYLINE);
 
   public static final Measurement LINE_LENGTH =
       new Measurement(Messages.getString("measure.length"), 5, true, true, true);

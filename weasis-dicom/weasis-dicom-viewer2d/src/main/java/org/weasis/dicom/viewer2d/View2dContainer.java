@@ -271,7 +271,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           InsertableUtil.getCName(CineToolBar.class),
           key,
           true)) {
-        TOOLBARS.add(new CineToolBar<DicomImageElement>(80));
+        TOOLBARS.add(new CineToolBar(80));
       }
       if (InsertableUtil.getBooleanProperty(
           BundleTools.SYSTEM_PREFERENCES,

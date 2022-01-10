@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d;
 
 import java.awt.event.ActionListener;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionState;
@@ -18,6 +17,8 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -33,14 +34,12 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
   public Basic3DToolBar(int index) {
     super(Messages.getString("Basic3DToolBar.title"), index);
 
-    final JButton mprButton =
-        new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mpr.png")));
+    final JButton mprButton = new JButton(ResourceUtil.getToolBarIcon(OtherIcon.VIEW_3D));
     mprButton.setToolTipText(Messages.getString("Basic3DToolBar.mpr"));
     mprButton.addActionListener(getMprAction());
     add(mprButton);
 
-    final JButton mipButton =
-        new JButton(new ImageIcon(Basic3DToolBar.class.getResource("/icon/32x32/mip.png")));
+    final JButton mipButton = new JButton(ResourceUtil.getToolBarIcon(OtherIcon.VIEW_MIP));
     mipButton.setToolTipText(Messages.getString("Basic3DToolBar.mip"));
     mipButton.addActionListener(getMipAction());
     add(mipButton);

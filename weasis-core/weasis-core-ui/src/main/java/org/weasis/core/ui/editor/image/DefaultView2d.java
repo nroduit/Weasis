@@ -51,7 +51,6 @@ import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -69,7 +68,6 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -95,6 +93,8 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -160,9 +160,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
 
   public static final Cursor EDIT_CURSOR =
-      DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); // NON-NLS
+      ActionW.getImageCursor("editPoint.png", "Edit Point", 0.5f, 0.5f); // NON-NLS
   public static final Cursor HAND_CURSOR =
-      DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); // NON-NLS
+      ActionW.getSvgCursor("hand.svg", "hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
   public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
   public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
@@ -876,14 +876,14 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
             Math.ceil(
                 10
                     / ((this.getGraphics()
-                                .getFontMetrics(FontTools.getFont12())
+                                .getFontMetrics(FontTools.getDefaultFont())
                                 .stringWidth("0123456789")
                             * 7.0)
                         / getWidth()));
     fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
     return fontSize < 9
-        ? GuiUtils.getMiniFont()
-        : fontSize < 13 ? GuiUtils.getSmallFont() : GuiUtils.getDefaultont();
+        ? FontTools.getMiniFont()
+        : fontSize < 13 ? FontTools.getSmallFont() : FontTools.getDefaultFont();
   }
 
   /** paint routine */
@@ -1472,7 +1472,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     AbstractAction exportToClipboardAction =
         new DefaultAction(
             Messages.getString("DefaultView2d.clipboard"),
-            new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")),
+            ResourceUtil.getIcon(ActionIcon.EXPORT_CLIPBOARD),
             event -> {
               final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
               imageTransferHandler.exportToClipboard(
@@ -1569,18 +1569,5 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   public static Cursor getNewCursor(int type) {
     return new Cursor(type);
-  }
-
-  public static Cursor getCustomCursor(
-      String filename, String cursorName, int hotSpotX, int hotSpotY) {
-    Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-    ImageIcon icon = new ImageIcon(DefaultView2d.class.getResource("/icon/cursor/" + filename));
-    Dimension bestCursorSize =
-        defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
-    Point hotSpot =
-        new Point(
-            (hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
-            (hotSpotY * bestCursorSize.height) / icon.getIconHeight());
-    return defaultToolkit.createCustomCursor(icon.getImage(), hotSpot, cursorName);
   }
 }

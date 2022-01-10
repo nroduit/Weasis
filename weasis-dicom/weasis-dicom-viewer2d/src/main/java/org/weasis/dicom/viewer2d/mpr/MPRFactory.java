@@ -12,11 +12,12 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.util.Map;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -30,12 +31,10 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 public class MPRFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MPRFactory.title");
-  public static final Icon ICON =
-      new ImageIcon(MPRFactory.class.getResource("/icon/16x16/mpr.png"));
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return ResourceUtil.getIcon(OtherIcon.VIEW_3D);
   }
 
   @Override

@@ -30,7 +30,6 @@ import java.util.Set;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -66,6 +65,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -142,8 +143,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
     this.rootPane = new JScrollPane();
-    this.dockable.setTitleIcon(
-        new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png")));
+    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
     this.setDockableWidth(350);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));

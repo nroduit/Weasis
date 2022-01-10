@@ -77,6 +77,8 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -147,10 +149,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 
-  public static final ImageIcon KO_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png"));
-  public static final ImageIcon PR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png"));
+  public static final ImageIcon KO_ICON = ResourceUtil.getIcon(OtherIcon.KEY_IMAGE);
+  public static final ImageIcon PR_ICON = ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION);
+  ;
 
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();

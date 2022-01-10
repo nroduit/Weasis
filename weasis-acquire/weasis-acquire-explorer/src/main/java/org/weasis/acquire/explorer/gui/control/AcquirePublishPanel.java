@@ -41,7 +41,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -75,7 +74,6 @@ public class AcquirePublishPanel extends JPanel {
         });
 
     publishBtn.setPreferredSize(new Dimension(150, 40));
-    publishBtn.setFont(FontTools.getFont12Bold());
 
     add(publishBtn);
     add(progressBar);

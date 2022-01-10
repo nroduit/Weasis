@@ -15,7 +15,6 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.net.URL;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import org.weasis.core.api.Messages;
@@ -37,21 +36,21 @@ public class ActionW implements KeyActionValue {
           "zoom", // NON-NLS
           KeyEvent.VK_Z,
           0,
-          getCustomCursor("zoom.png", Messages.getString("ActionW.zoom"), 16, 16));
+          getSvgCursor("zoom.svg", Messages.getString("ActionW.zoom"), 0.5f, 0.5f));
   public static final ActionW SCROLL_SERIES =
       new ActionW(
           Messages.getString("ActionW.scroll"),
           "sequence", // NON-NLS
           KeyEvent.VK_S,
           0,
-          getCustomCursor("sequence.png", Messages.getString("ActionW.scroll"), 16, 16));
+          getSvgCursor("sequence.svg", Messages.getString("ActionW.scroll"), 0.5f, 0.5f));
   public static final ActionW ROTATION =
       new ActionW(
           Messages.getString("ActionW.rotate"),
           "rotation", // NON-NLS
           KeyEvent.VK_R,
           0,
-          getCustomCursor("rotation.png", Messages.getString("ActionW.rotate"), 16, 16));
+          getSvgCursor("rotation.svg", Messages.getString("ActionW.rotate"), 0.5f, 0.5f));
 
   public static final ActionW CINESPEED =
       new ActionW(Messages.getString("ActionW.speed"), "cinespeed", 0, 0, null); // NON-NLS
@@ -70,7 +69,7 @@ public class ActionW implements KeyActionValue {
           "winLevel",
           KeyEvent.VK_W,
           0,
-          getCustomCursor("winLevel.png", Messages.getString("ActionW.wl"), 16, 16));
+          getSvgCursor("winLevel.svg", Messages.getString("ActionW.wl"), 0.5f, 0.5f));
   public static final ActionW LEVEL_MIN = new ActionW("", "level_min", 0, 0, null); // NON-NLS
   public static final ActionW LEVEL_MAX = new ActionW("", "level_max", 0, 0, null); // NON-NLS
 
@@ -96,7 +95,7 @@ public class ActionW implements KeyActionValue {
           "pan", // NON-NLS
           KeyEvent.VK_T,
           0,
-          getCustomCursor("pan.png", Messages.getString("ActionW.pan"), 16, 16));
+          getSvgCursor("pan.svg", Messages.getString("ActionW.pan"), 0.5f, 0.5f));
   public static final ActionW DRAWINGS =
       new ActionW(Messages.getString("ActionW.draw"), "drawings", 0, 0, null); // NON-NLS
   public static final ActionW MEASURE =
@@ -235,20 +234,32 @@ public class ActionW implements KeyActionValue {
     return new DropButtonIcon(icon);
   }
 
-  public static Cursor getCustomCursor(
-      String filename, String cursorName, int hotSpotX, int hotSpotY) {
+  public static Cursor getSvgCursor(
+      String filename, String cursorName, float hotSpotX, float hotSpotY) {
+    return getCursor("svg/cursor/" + filename, cursorName, hotSpotX, hotSpotY);
+  }
+
+  public static Cursor getImageCursor(
+      String filename, String cursorName, float hotSpotX, float hotSpotY) {
+    return getCursor("images/cursor/" + filename, cursorName, hotSpotX, hotSpotY);
+  }
+
+  private static Cursor getCursor(String path, String cursorName, float hotSpotX, float hotSpotY) {
     Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-    URL path = ActionW.class.getResource("/icon/cursor/" + filename);
-    if (path == null) {
-      return null;
+    ImageIcon icon;
+    Dimension bestCursorSize;
+    if (path.startsWith("svg/")) { // NON-NLS
+      FlatSVGIcon svgIcon = ResourceUtil.getIcon(path);
+      bestCursorSize = defaultToolkit.getBestCursorSize(22, 22);
+      icon = svgIcon.derive(bestCursorSize.width, bestCursorSize.height);
+    } else {
+      icon = new ImageIcon(ResourceUtil.getResource(path).getAbsolutePath());
+      bestCursorSize = defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
     }
-    ImageIcon icon = new ImageIcon(path);
-    Dimension bestCursorSize =
-        defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
     Point hotSpot =
         new Point(
-            (hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
-            (hotSpotY * bestCursorSize.height) / icon.getIconHeight());
+            Math.round(hotSpotX * bestCursorSize.width),
+            Math.round(hotSpotY * bestCursorSize.height));
     return defaultToolkit.createCustomCursor(icon.getImage(), hotSpot, cursorName);
   }
 }

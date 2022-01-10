@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -37,6 +36,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -229,9 +230,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-                props.put(
-                    ViewerPluginBuilder.ICON,
-                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png")));
+                props.put(ViewerPluginBuilder.ICON, ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
                 props.put(ViewerPluginBuilder.UID, uid);
                 List<DicomSeries> seriesList = new ArrayList<>();
                 seriesList.add((DicomSeries) s);

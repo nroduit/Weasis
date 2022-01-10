@@ -44,7 +44,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -75,6 +74,7 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -106,8 +106,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public static final String DESCRIPTION = Messages.getString("DicomExplorer.desc");
   public static final String ALL_PATIENTS = Messages.getString("DicomExplorer.sel_all_pat");
   public static final String ALL_STUDIES = Messages.getString("DicomExplorer.sel_all_st");
-  public static final Icon KO_ICON =
-      new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/key-images.png"));
 
   private PatientPane selectedPatient = null;
 
@@ -154,7 +152,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       new JToggleButton(Messages.getString("DicomExplorer.more_opt"));
   private final boolean verticalLayout = true;
 
-  private final JButton koOpen = new JButton(Messages.getString("DicomExplorer.open_ko"), KO_ICON);
+  private final JButton koOpen =
+      new JButton(
+          Messages.getString("DicomExplorer.open_ko"), ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
 
   public DicomExplorer() {
     this(null);
@@ -692,7 +692,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentY(TOP_ALIGNMENT);
       String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
       label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);
-      label.setFont(GuiUtils.getMiniFont());
+      label.setFont(FontTools.getMiniFont());
       label.setFocusable(false);
       this.setFocusable(false);
       updateSize(thumbnailSize);
@@ -840,7 +840,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         gbcbtnMoreOptions.anchor = GridBagConstraints.EAST;
         gbcbtnMoreOptions.gridx = 1;
         gbcbtnMoreOptions.gridy = 3;
-        btnMoreOptions.setFont(GuiUtils.getMiniFont());
+        btnMoreOptions.setFont(FontTools.getMiniFont());
         btnMoreOptions.addActionListener(
             e -> {
               if (btnMoreOptions.isSelected()) {
@@ -1393,7 +1393,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     DefaultAction importCDAction =
         new DefaultAction(
             Messages.getString("DicomExplorer.dcmCD"),
-            new ImageIcon(DicomExplorer.class.getResource("/icon/16x16/cd.png")),
+            ResourceUtil.getIcon(OtherIcon.CDROM),
             event ->
                 ImportToolBar.openImportDicomCdAction(
                     this, model, Messages.getString("DicomExplorer.dcmCD")));

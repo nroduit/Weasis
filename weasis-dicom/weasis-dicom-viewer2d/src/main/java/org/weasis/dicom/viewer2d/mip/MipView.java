@@ -31,6 +31,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -48,8 +50,7 @@ import org.weasis.dicom.viewer2d.View2dFactory;
 public class MipView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
-  public static final ImageIcon MIP_ICON_SETTING =
-      new ImageIcon(MipView.class.getResource("/icon/22x22/mip-setting.png"));
+  public static final ImageIcon MIP_ICON_SETTING = ResourceUtil.getIcon(OtherIcon.VIEW_MIP);
   public static final ActionW MIP =
       new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); // NON-NLS
   public static final ActionW MIP_THICKNESS =

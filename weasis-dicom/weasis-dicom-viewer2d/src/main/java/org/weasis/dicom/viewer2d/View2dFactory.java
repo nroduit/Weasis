@@ -70,7 +70,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public Icon getIcon() {
-    return ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE);
+    return ResourceUtil.getIcon(OtherIcon.XRAY);
   }
 
   @Override

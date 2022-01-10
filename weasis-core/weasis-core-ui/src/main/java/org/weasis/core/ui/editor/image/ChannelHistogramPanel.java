@@ -13,13 +13,14 @@ import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 
 /**
@@ -55,10 +56,8 @@ public class ChannelHistogramPanel extends JPanel {
     this.jCheckShowIntensity =
         new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity);
     this.jPanelHistogram = new HistogramPanel();
-    this.jButtonHistoMinus =
-        new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png")));
-    this.jButtonHistoPlus =
-        new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png")));
+    this.jButtonHistoMinus = new JButton(ResourceUtil.getIcon(ActionIcon.MINUS));
+    this.jButtonHistoPlus = new JButton(ResourceUtil.getIcon(ActionIcon.PLUS));
     init(name);
   }
 

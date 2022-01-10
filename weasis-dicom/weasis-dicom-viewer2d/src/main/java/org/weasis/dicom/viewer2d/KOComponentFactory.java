@@ -9,13 +9,8 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Toolkit;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.ImageProducer;
 import java.awt.image.RGBImageFilter;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
 import org.weasis.core.api.gui.util.ActionState;
@@ -36,27 +31,7 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
  */
 public final class KOComponentFactory {
 
-  public static final ImageIcon KO_STAR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/16x16/star_bw.png"));
-  public static final ImageIcon KO_STAR_ICON_SELECTED;
-  public static final ImageIcon KO_STAR_ICON_EXIST;
-
-  static {
-    ImageFilter imageFilter = new SelectedImageFilter(new float[] {1.0f, 0.78f, 0.0f}); // ORANGE
-    ImageProducer imageProducer =
-        new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
-    KO_STAR_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
-
-    imageFilter = new SelectedImageFilter(new float[] {0.0f, 0.39f, 1.0f}); // BLUE
-    imageProducer = new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
-    KO_STAR_ICON_EXIST = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
-  }
-
-  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   private KOComponentFactory() {}
-
-  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   public static ViewButton buildKoSelectionButton(final View2d view2d) {
 
@@ -91,8 +66,6 @@ public final class KOComponentFactory {
         View2d.KO_ICON);
   }
 
-  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   public static KOViewButton buildKoStarButton(final View2d view2d) {
 
     return new KOViewButton(
@@ -116,8 +89,6 @@ public final class KOComponentFactory {
         });
   }
 
-  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   public static class SelectedImageFilter extends RGBImageFilter {
     private final float[] filter;
 
@@ -137,8 +108,6 @@ public final class KOComponentFactory {
     }
   }
 
-  // /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
   public static class KOViewButton extends ViewButton {
 
     protected eState state = eState.UNSELECTED;
@@ -150,7 +119,7 @@ public final class KOComponentFactory {
     }
 
     public KOViewButton(ShowPopup popup) {
-      super(popup, KO_STAR_ICON);
+      super(popup, KeyObjectToolBar.KO_STAR_ICON);
     }
 
     public eState getState() {
@@ -165,11 +134,11 @@ public final class KOComponentFactory {
     public Icon getIcon() {
       switch (state) {
         case UNSELECTED:
-          return KO_STAR_ICON;
+          return KeyObjectToolBar.KO_STAR_ICON;
         case EXIST:
-          return KO_STAR_ICON_EXIST;
+          return KeyObjectToolBar.KO_STAR_ICON_EXIST;
         case SELECTED:
-          return KO_STAR_ICON_SELECTED;
+          return KeyObjectToolBar.KO_STAR_ICON_SELECTED;
       }
       return null;
     }

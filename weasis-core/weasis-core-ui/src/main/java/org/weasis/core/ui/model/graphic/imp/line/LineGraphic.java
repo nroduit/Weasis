@@ -21,11 +21,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -41,8 +42,7 @@ public class LineGraphic extends AbstractDragGraphic {
 
   public static final Integer POINTS_NUMBER = 2;
 
-  public static final Icon ICON =
-      new ImageIcon(LineGraphic.class.getResource("/icon/22x22/draw-line.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_LINE);
 
   public static final Measurement FIRST_POINT_X =
       new Measurement(Messages.getString("measure.firstx"), 1, true, true, false);

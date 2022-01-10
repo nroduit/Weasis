@@ -49,11 +49,10 @@ public class GroupCheckBoxMenu implements GroupPopup {
       CheckBoxModel item = itemList.get(0);
       item.setSelected(all);
       JCheckBox box = new JCheckBox(item.getObject().toString(), null, item.isSelected());
-      box.setFont(FontTools.getFont12Bold());
+      box.setFont(FontTools.getBoldFont());
       box.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBox) {
-              JCheckBox btn = (JCheckBox) e.getSource();
+            if (e.getSource() instanceof JCheckBox btn) {
               selectAll(popupMouseButtons, btn.isSelected());
             }
           });
@@ -69,8 +68,7 @@ public class GroupCheckBoxMenu implements GroupPopup {
       JCheckBox box = new JCheckBox(item.getObject().toString(), icon, item.isSelected());
       box.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBox) {
-              JCheckBox btn = (JCheckBox) e.getSource();
+            if (e.getSource() instanceof JCheckBox btn) {
               item.setSelected(btn.isSelected());
             }
           });

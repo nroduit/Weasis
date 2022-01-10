@@ -32,7 +32,6 @@ import javax.swing.PopupFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
@@ -197,7 +196,7 @@ public class HistogramPanel extends JPanel {
               ? g2d.getFontMetrics().stringWidth(str) - SLIDER_X / 2f
               : g2d.getFontMetrics().stringWidth(str) / 2f;
       float xlabel = i == 0 ? posX / 2f : posX - offsetLabel;
-      GuiUtils.paintFontOutline(g2d, str, xlabel, y + midfontHeight);
+      FontTools.paintFontOutline(g2d, str, xlabel, y + midfontHeight);
     }
 
     rect.setRect(x - 1f - offsetThick, tLut + 6f, lutLength + 1f, 18f);
@@ -221,7 +220,7 @@ public class HistogramPanel extends JPanel {
         g2d.draw(line);
         String label =
             DecFormater.allNumber(data.getLayer().pixelToRealValue(piLow * binFactor + min));
-        GuiUtils.paintFontOutline(
+        FontTools.paintFontOutline(
             g2d,
             label,
             plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
@@ -234,7 +233,7 @@ public class HistogramPanel extends JPanel {
         g2d.draw(line);
         String label =
             DecFormater.allNumber(data.getLayer().pixelToRealValue(piHigh * binFactor + min));
-        GuiUtils.paintFontOutline(
+        FontTools.paintFontOutline(
             g2d,
             label,
             phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,

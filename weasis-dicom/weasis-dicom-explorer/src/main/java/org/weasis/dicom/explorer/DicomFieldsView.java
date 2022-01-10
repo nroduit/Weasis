@@ -21,7 +21,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -71,7 +70,6 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
-import org.weasis.core.ui.util.RotatedIcon;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
@@ -451,16 +449,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
             }
           });
       this.add(tf);
-      JButton up =
-          new JButton(new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")));
+      JButton up = new JButton(GuiUtils.getDownArrowIcon());
       up.setToolTipText(Messages.getString("DicomFieldsView.previous"));
       up.addActionListener(evt -> previous());
       this.add(up);
-      JButton down =
-          new JButton(
-              new RotatedIcon(
-                  new ImageIcon(SeriesViewerListener.class.getResource("/icon/up.png")),
-                  RotatedIcon.Rotate.UPSIDE_DOWN));
+      JButton down = new JButton(GuiUtils.getUpArrowIcon());
       down.setToolTipText(Messages.getString("DicomFieldsView.next"));
       down.addActionListener(evt -> next());
       this.add(down);

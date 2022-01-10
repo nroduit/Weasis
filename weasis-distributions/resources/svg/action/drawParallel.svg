@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(-6.1971)" fill="none" stroke-width="1.467">
+  <path d="m17.812 4.8102-7.4686 8.937" stroke="#6e6e6e" stroke-linejoin="bevel"/>
+  <rect x="7.9306" y="13.834" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="17.322" y="1.7335" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+ </g>
+ <g transform="translate(-.0093372 3.579)" fill="none" stroke-width="1.467">
+  <path d="m17.835 4.6006-7.6592 9.271" stroke="#6e6e6e" stroke-linejoin="bevel"/>
+  <rect x="7.9306" y="13.834" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+  <rect x="17.322" y="1.7335" width="2.944" height="2.944" stroke="#389fd6" style="paint-order:stroke fill markers"/>
+ </g>
+</svg>

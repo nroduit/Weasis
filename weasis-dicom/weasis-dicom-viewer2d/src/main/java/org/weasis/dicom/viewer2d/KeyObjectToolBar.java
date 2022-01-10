@@ -42,6 +42,9 @@ import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
@@ -53,28 +56,29 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 public class KeyObjectToolBar extends WtoolBar {
   private static final Logger LOGGER = LoggerFactory.getLogger(KeyObjectToolBar.class);
 
-  public static final ImageIcon KO_STAR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw.png"));
+  public static final ImageIcon KO_STAR_ICON = ResourceUtil.getToolBarIcon(ActionIcon.STAR);
   public static final ImageIcon KO_STAR_ICON_SELECTED;
-  public static final ImageIcon KO_FILTER_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png"));
+  public static final ImageIcon KO_FILTER_ICON = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_STAR);
   public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
-  public static final ImageIcon KO_ALL_STAR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw_all.png"));
+  public static final ImageIcon KO_ALL_STAR_ICON = ResourceUtil.getToolBarIcon(ActionIcon.STAR_ALL);
 
   public static final ImageIcon KO_EDIT_SELECTION_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/edit-KO.png"));
+      ResourceUtil.getToolBarIcon(ActionIcon.EDIT_KEY_IMAGE);
+  public static final ImageIcon KO_STAR_ICON_EXIST;
 
   static {
     ImageFilter imageFilter = new SelectedImageFilter(new float[] {1.0f, 0.78f, 0.0f}); // ORANGE
-
     ImageProducer imageProducer =
         new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
     KO_STAR_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
 
     imageProducer = new FilteredImageSource(KO_FILTER_ICON.getImage().getSource(), imageFilter);
     KO_FILTER_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
+
+    imageFilter = new SelectedImageFilter(new float[] {0.0f, 0.39f, 1.0f}); // BLUE
+    imageProducer = new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
+    KO_STAR_ICON_EXIST = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
   }
 
   public KeyObjectToolBar(int index) {
@@ -179,7 +183,7 @@ public class KeyObjectToolBar extends WtoolBar {
     list.setSelectionModel(new ToggleSelectionModel());
 
     if (koElementCollection != null) {
-      list.setListData(koElementCollection.stream().toArray(KOSpecialElement[]::new));
+      list.setListData(koElementCollection.toArray(KOSpecialElement[]::new));
     }
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -249,9 +253,8 @@ public class KeyObjectToolBar extends WtoolBar {
         DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
           dicomModel.removeSpecialElement(list.getSelectedValue());
-          if (selectedView2d instanceof View2d) {
-            boolean needToRepaint =
-                ((View2d) selectedView2d).updateKOselectedState(selectedView2d.getImage());
+          if (selectedView2d instanceof View2d view2d) {
+            boolean needToRepaint = view2d.updateKOselectedState(selectedView2d.getImage());
             if (needToRepaint) {
               evtMgr.updateKeyObjectComponentsListener(selectedView2d);
               repaint();
@@ -285,15 +288,14 @@ public class KeyObjectToolBar extends WtoolBar {
   }
 
   private Icon buildKoSelectionIcon() {
-    final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/32x32/dcm-KO.png"));
+    final Icon mouseIcon = ResourceUtil.getToolBarIcon(OtherIcon.KEY_IMAGE);
 
     return new DropButtonIcon(
         new Icon() {
 
           @Override
           public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton) {
-              AbstractButton model = (AbstractButton) c;
+            if (c instanceof AbstractButton model) {
               Icon icon = null;
               if (!model.isEnabled()) {
                 icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);

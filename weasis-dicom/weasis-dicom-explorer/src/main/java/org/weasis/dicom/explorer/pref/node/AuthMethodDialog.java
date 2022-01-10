@@ -9,10 +9,8 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -36,15 +34,11 @@ import org.weasis.core.api.auth.AuthRegistration;
 import org.weasis.core.api.auth.DefaultAuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 public class AuthMethodDialog extends JDialog {
-
-  public static final Font TITLE_FONT = FontTools.getFont12Bold();
-  public static final Color TITLE_COLOR = Color.GRAY;
 
   private final AuthMethod authMethod;
   private final JComboBox<AuthMethod> parentCombobox;

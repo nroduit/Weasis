@@ -328,7 +328,7 @@ public class SeriesThumbnail extends Thumbnail
             RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
       }
 
-      g2d.setFont(width > DEFAULT_SIZE ? GuiUtils.getSmallFont() : GuiUtils.getMiniFont());
+      g2d.setFont(width > DEFAULT_SIZE ? FontTools.getSmallFont() : FontTools.getMiniFont());
       float fontHeight = FontTools.getAccurateFontHeight(g2d);
       int descent = g2d.getFontMetrics().getDescent();
       Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
@@ -336,13 +336,13 @@ public class SeriesThumbnail extends Thumbnail
         String nb = "#" + splitNb;
         int w = g2d.getFontMetrics().stringWidth(nb);
         int sx = x + width - inset - w;
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2d, nb, sx, y + inset + fontHeight - descent, IconColor.ACTIONS_BLUE.getColor());
       }
 
       int number = series.size(null);
       if (number > 0) {
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2d,
             String.valueOf(number),
             x + inset,

@@ -232,7 +232,7 @@ public class LooklSetting extends AbstractItemDialogPage {
       GuiExecutor.instance().execute(runnable);
     }
 
-    String scale = null;
+    String scale = "-1";
     if (userScaleRadio.isSelected()) {
       if (spinner1.getValue() instanceof Integer val) scale = String.valueOf(val / 100.f);
     }

@@ -28,7 +28,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 
 public class ImportPanel extends JPanel {
@@ -50,7 +49,6 @@ public class ImportPanel extends JPanel {
     this.centralPane = centralPane;
 
     importBtn.setPreferredSize(new Dimension(150, 40));
-    importBtn.setFont(FontTools.getFont12Bold());
 
     importBtn.addActionListener(
         e -> {

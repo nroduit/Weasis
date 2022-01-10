@@ -39,7 +39,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     this.view2d = view2d;
     // Remove OpEventListener to avoid reseting some parameters when setting the series
     this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
-    setFont(FontTools.getFont8());
+    setFont(FontTools.getMiniFont());
     this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
     infoLayer.setVisible(view2d.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);

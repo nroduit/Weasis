@@ -120,7 +120,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     final Rectangle bound = view2DPane.getJComponent().getBounds();
     float midx = bound.width / 2f;
     float midy = bound.height / 2f;
-    thickLength = GuiUtils.getFontSizeInPixels(g2.getFont());
+    thickLength = FontTools.getFontSizeInPixels(g2.getFont());
     thickLength = Math.max(thickLength, GuiUtils.getScaleLength(5.0));
 
     g2.setPaint(Color.BLACK);
@@ -133,7 +133,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (!image.isReadable()) {
       String message = Messages.getString("InfoLayer.msg_not_read");
       float y = midy;
-      GuiUtils.paintColorFontOutline(
+      FontTools.paintColorFontOutline(
           g2,
           message,
           midx - g2.getFontMetrics().stringWidth(message) / 2.0F,
@@ -143,7 +143,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       if (StringUtil.hasText(tsuid)) {
         tsuid = Messages.getString("InfoLayer.tsuid") + StringUtil.COLON_AND_SPACE + tsuid;
         y += fontHeight;
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2,
             tsuid,
             midx - g2.getFontMetrics().stringWidth(tsuid) / 2.0F,
@@ -156,7 +156,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         for (String str : desc) {
           if (StringUtil.hasText(str)) {
             y += fontHeight;
-            GuiUtils.paintColorFontOutline(
+            FontTools.paintColorFontOutline(
                 g2,
                 str,
                 midx - g2.getFontMetrics().stringWidth(str) / 2F,
@@ -205,7 +205,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           }
         }
 
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2, buf.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
         drawY -= fontHeight;
       }
@@ -219,7 +219,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
       if (koElement != null) {
         String message = "Not a valid image: " + koElement.getDocumentTitle(); // NON-NLS
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2,
             message,
             midx - g2.getFontMetrics().stringWidth(message) / 2F,
@@ -237,7 +237,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         sb.append(pixelInfo.getPixelPositionText());
       }
       String str = sb.toString();
-      GuiUtils.paintFontOutline(g2, str, border, drawY - 1);
+      FontTools.paintFontOutline(g2, str, border, drawY - 1);
       drawY -= fontHeight + GuiUtils.getScaleLength(2);
       pixelInfoBound.setBounds(
           border - GuiUtils.getScaleLength(2),
@@ -276,15 +276,15 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         }
       }
       if (outside) {
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2, sb.toString(), border, drawY, IconColor.ACTIONS_RED.getColor());
       } else {
-        GuiUtils.paintFontOutline(g2, sb.toString(), border, drawY);
+        FontTools.paintFontOutline(g2, sb.toString(), border, drawY);
       }
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ZOOM) && hideMin) {
-      GuiUtils.paintFontOutline(
+      FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
@@ -294,7 +294,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ROTATION) && hideMin) {
-      GuiUtils.paintFontOutline(
+      FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
@@ -325,7 +325,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
               .size(
                   (Filter<DicomImageElement>)
                       view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd())));
-      GuiUtils.paintFontOutline(g2, buf.toString(), border, drawY);
+      FontTools.paintFontOutline(g2, buf.toString(), border, drawY);
       drawY -= fontHeight;
 
       Double imgProgression = (Double) view2DPane.getActionValue(ActionW.PROGRESSION.cmd());
@@ -357,7 +357,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, tagView.getFormat());
                   if (StringUtil.hasText(str)) {
-                    GuiUtils.paintFontOutline(g2, str, border, drawY);
+                    FontTools.paintFontOutline(g2, str, border, drawY);
                     drawY += fontHeight;
                   }
                   break;
@@ -382,7 +382,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, info.getFormat());
                   if (StringUtil.hasText(str)) {
-                    GuiUtils.paintFontOutline(
+                    FontTools.paintFontOutline(
                         g2,
                         str,
                         bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
@@ -413,7 +413,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
                 if (value != null) {
                   String str = tag.getFormattedTagValue(value, infos[j].getFormat());
                   if (StringUtil.hasText(str)) {
-                    GuiUtils.paintFontOutline(
+                    FontTools.paintFontOutline(
                         g2,
                         str,
                         bound.width - g2.getFontMetrics().stringWidth(str) - (float) border,
@@ -524,17 +524,17 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         Map<TextAttribute, Object> map = new HashMap<>(1);
         map.put(TextAttribute.SUPERSCRIPT, TextAttribute.SUPERSCRIPT_SUB);
         String fistLetter = rowTop.substring(0, 1);
-        GuiUtils.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
+        FontTools.paintColorFontOutline(g2, fistLetter, midx, fontHeight + 5f, highlight);
         int shiftx = g2.getFontMetrics().stringWidth(fistLetter);
         Font subscriptFont = bigFont.deriveFont(map);
         if (rowTop.length() > 1) {
           g2.setFont(subscriptFont);
-          GuiUtils.paintColorFontOutline(
+          FontTools.paintColorFontOutline(
               g2, rowTop.substring(1, rowTop.length()), midx + shiftx, fontHeight + 5f, highlight);
           g2.setFont(bigFont);
         }
 
-        GuiUtils.paintColorFontOutline(
+        FontTools.paintColorFontOutline(
             g2,
             colLeft.substring(0, 1),
             (float) (border + thickLength),
@@ -543,7 +543,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
         if (colLeft.length() > 1) {
           g2.setFont(subscriptFont);
-          GuiUtils.paintColorFontOutline(
+          FontTools.paintColorFontOutline(
               g2,
               colLeft.substring(1, colLeft.length()),
               (float) (border + thickLength + shiftx),
@@ -553,7 +553,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         g2.setFont(oldFont);
       }
 
-      GuiUtils.paintFontOutline(
+      FontTools.paintFontOutline(
           g2, orientation.toString(), border, bound.height - border - 1.5f); // -1.5
       // for
       // outline

@@ -25,7 +25,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.gui.util.DecFormater;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -34,6 +33,7 @@ import org.weasis.core.api.image.op.ByteLutCollection;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.DisplayByteLut;
 import org.weasis.core.ui.editor.image.HistogramData;
 import org.weasis.core.ui.editor.image.PixelInfo;
@@ -301,7 +301,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         g2.draw(line);
         double level = data.getLayer().pixelToRealValue((separation - i) * stepWindow + pixMin);
         String str = DecFormater.allNumber(level);
-        GuiUtils.paintFontOutline(
+        FontTools.paintFontOutline(
             g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY + midfontHeight);
       }
       rect.setRect(x - 1f, y - 1f, 21f, length + 2f);
@@ -432,11 +432,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
       String pixSizeDesc = image.getPixelSizeCalibrationDescription();
       if (StringUtil.hasText(pixSizeDesc)) {
-        GuiUtils.paintFontOutline(
+        FontTools.paintFontOutline(
             g2d, pixSizeDesc, (float) (posx + scaleSizex + 5), (float) posy - fontHeight);
       }
       str += " " + unit[0].getAbbreviation();
-      GuiUtils.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
+      FontTools.paintFontOutline(g2d, str, (float) (posx + scaleSizex + 5), (float) posy);
     }
 
     double scaleSizeY =
@@ -505,7 +505,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
 
-      GuiUtils.paintFontOutline(
+      FontTools.paintFontOutline(
           g2d, str + " " + unit[0].getAbbreviation(), (int) posx, (int) (posy - 5 * strokeWidth));
     }
   }

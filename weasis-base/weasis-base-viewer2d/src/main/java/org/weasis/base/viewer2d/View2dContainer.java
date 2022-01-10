@@ -56,7 +56,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.api.util.ResourceUtil.FileIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -124,7 +124,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         layoutModel,
         uid,
         ViewerFactory.NAME,
-        ResourceUtil.getIcon(FileIcon.IMAGE),
+        ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE),
         null);
     setSynchView(SynchView.DEFAULT_STACK);
     addComponentListener(

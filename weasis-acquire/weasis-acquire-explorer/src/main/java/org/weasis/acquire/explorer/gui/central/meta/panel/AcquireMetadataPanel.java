@@ -95,7 +95,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
   @Override
   public Font getFont() {
-    return FontTools.getFont12Bold();
+    return FontTools.getBoldFont();
   }
 
   public void setImageInfo(AcquireImageInfo imageInfo) {

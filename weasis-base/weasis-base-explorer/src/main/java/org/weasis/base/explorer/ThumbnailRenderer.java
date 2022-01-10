@@ -16,7 +16,6 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -30,14 +29,14 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.LangUtil;
 
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     implements ListCellRenderer<E> {
 
   public static final Dimension ICON_DIM = new Dimension(150, 150);
-  public static final Icon ICON_CHECKED =
-      new ImageIcon(ThumbnailRenderer.class.getResource("/icon/24x24/tick.png"));
 
   private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
   private final JLabel iconCheckedLabel = new JLabel((Icon) null);
@@ -84,7 +83,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
                 .getThumbnailFor((ImageElement) value, (ThumbnailList<E>) list, index);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
-        iconCheckedLabel.setIcon(ICON_CHECKED);
+        iconCheckedLabel.setIcon(ResourceUtil.getIcon(OtherIcon.TICK_ON));
       } else {
         iconCheckedLabel.setIcon(null);
       }

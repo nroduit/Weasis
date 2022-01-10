@@ -40,6 +40,8 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.DefaultMimeAppFactory;
 import org.weasis.core.ui.editor.SeriesViewer;
@@ -140,7 +142,10 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
         // Exclude system factory
         if (viewerFactory.canExternalizeSeries()) {
-          item4 = new JMenuItem(Messages.getString("DicomExplorer.open_win"));
+          item4 =
+              new JMenuItem(
+                  Messages.getString("DicomExplorer.open_win"),
+                  ResourceUtil.getIcon(ActionIcon.OPEN_NEW_TAB));
           item4.addActionListener(
               e -> {
                 selList.setOpenningSeries(true);
@@ -187,7 +192,9 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
 
         if (viewerFactory instanceof MimeSystemAppFactory) {
           final JMenuItem item5 =
-              new JMenuItem(Messages.getString("DicomExplorer.open_info"), null);
+              new JMenuItem(
+                  Messages.getString("DicomExplorer.open_info"),
+                  ResourceUtil.getIcon(ActionIcon.METADATA));
           item5.addActionListener(
               e -> {
                 SeriesViewer<?> viewer = viewerFactory.createSeriesViewer(null);

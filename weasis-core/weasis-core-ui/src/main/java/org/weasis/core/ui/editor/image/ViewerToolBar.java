@@ -309,6 +309,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     ActionW actionW = getAction(actionsButtons, action);
     final Icon smallIcon = actionW == null ? ActionW.NO_ACTION.getIcon() : actionW.getIcon();
 
+    return getDopButtonIcon(mouseIcon, smallIcon);
+  }
+
+  static Icon getDopButtonIcon(Icon bckIcon, Icon smallIcon) {
     return new DropButtonIcon(
         new Icon() {
 
@@ -317,10 +321,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
             if (c instanceof AbstractButton model) {
               Icon icon = null;
               if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
+                icon = UIManager.getLookAndFeel().getDisabledIcon(model, bckIcon);
               }
               if (icon == null) {
-                icon = mouseIcon;
+                icon = bckIcon;
               }
               icon.paintIcon(c, g, x, y);
               if (smallIcon != null) {
@@ -331,8 +335,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                 if (sIcon == null) {
                   sIcon = smallIcon;
                 }
-                int sx = x + mouseIcon.getIconWidth() - sIcon.getIconWidth();
-                int sy = y + mouseIcon.getIconHeight() - sIcon.getIconHeight();
+                int sx = x + bckIcon.getIconWidth() - sIcon.getIconWidth();
+                int sy = y + bckIcon.getIconHeight() - sIcon.getIconHeight();
                 sIcon.paintIcon(c, g, sx, sy);
               }
             }
@@ -340,12 +344,12 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
           @Override
           public int getIconWidth() {
-            return mouseIcon.getIconWidth();
+            return bckIcon.getIconWidth();
           }
 
           @Override
           public int getIconHeight() {
-            return mouseIcon.getIconHeight();
+            return bckIcon.getIconHeight();
           }
         });
   }

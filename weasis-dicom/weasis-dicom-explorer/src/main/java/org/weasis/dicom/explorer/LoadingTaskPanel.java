@@ -14,12 +14,12 @@ import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 
 public class LoadingTaskPanel extends JPanel {
@@ -100,8 +100,7 @@ public class LoadingTaskPanel extends JPanel {
       globalStopButton.addActionListener(e -> DownloadManager.stop());
       this.add(globalStopButton);
     } else {
-      JButton cancelButton =
-          new JButton(new ImageIcon(UIManager.class.getResource("/icon/22x22/process-stop.png")));
+      JButton cancelButton = new JButton(ResourceUtil.getIcon(ActionIcon.SUSPEND));
       cancelButton.addActionListener(
           e -> {
             message.setText(Messages.getString("LoadingTaskPanel.abording"));

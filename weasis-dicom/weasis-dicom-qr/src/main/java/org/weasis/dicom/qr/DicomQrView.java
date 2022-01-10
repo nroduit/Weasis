@@ -223,7 +223,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       new DropDownButton(
           "search_mod", // NON-NLS
           Messages.getString("DicomQrView.modalities"),
-          GuiUtils.getExpandIcon(),
+          GuiUtils.getDownArrowIcon(),
           groupMod) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -253,7 +253,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
       new DropDownButton(
           "search_date", // NON-NLS
           Messages.getString("DicomQrView.dates"),
-          GuiUtils.getExpandIcon(),
+          GuiUtils.getDownArrowIcon(),
           groupDate) {
         @Override
         protected JPopupMenu getPopupMenu() {

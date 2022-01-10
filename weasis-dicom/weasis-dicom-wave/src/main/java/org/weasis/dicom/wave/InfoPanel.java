@@ -87,8 +87,8 @@ class InfoPanel extends JPanel {
 
     JPanel main = new JPanel();
     main.setLayout(new GridLayout(3, 2, 25, 0));
-    lead.setFont(FontTools.getFont12Bold());
-    currentLabel.setFont(FontTools.getFont12Bold());
+    lead.setFont(FontTools.getSemiBoldFont());
+    currentLabel.setFont(FontTools.getSemiBoldFont());
 
     main.add(lead);
     main.add(currentLabel);

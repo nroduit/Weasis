@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -34,6 +33,8 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
@@ -89,8 +90,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
     JButton btncdrom =
         new JButton(
-            Messages.getString("DicomDirImport.detect"),
-            new ImageIcon(DicomDirImport.class.getResource("/icon/16x16/cd.png")));
+            Messages.getString("DicomDirImport.detect"), ResourceUtil.getIcon(OtherIcon.CDROM));
     btncdrom.addActionListener(
         e -> {
           File dcmdir = getDcmDirFromMedia();

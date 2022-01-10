@@ -10,8 +10,8 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.FlatIconColors;
+import com.formdev.flatlaf.icons.FlatTreeCollapsedIcon;
 import com.formdev.flatlaf.util.UIScale;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -25,14 +25,10 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.font.TextLayout;
-import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -60,6 +56,8 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
@@ -70,6 +68,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.util.StringUtil;
 
 public class GuiUtils {
@@ -97,92 +96,43 @@ public class GuiUtils {
     }
   }
 
-  public static void paintColorFontOutline(
-      Graphics2D g2, String str, float x, float y, Color color) {
-    g2.setPaint(Color.BLACK);
+  public static Dimension getBigIconButtonSize(JComponent c) {
+    Insets insets = c.getInsets();
+    int size = FontTools.getFontSizeInPixels(c.getFont()) + insets.top + insets.bottom;
+    return new Dimension(size, size);
+  }
 
-    if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(
-        g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
-      TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
-      AffineTransform textAt = new AffineTransform();
-      textAt.translate(x, y);
-      Shape outline = layout.getOutline(textAt);
-      g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.draw(outline);
-      g2.setPaint(color);
-      g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.fill(outline);
-    } else {
-      g2.drawString(str, x - 1f, y - 1f);
-      g2.drawString(str, x - 1f, y);
-      g2.drawString(str, x - 1f, y + 1f);
-      g2.drawString(str, x, y - 1f);
-      g2.drawString(str, x, y + 1f);
-      g2.drawString(str, x + 1f, y - 1f);
-      g2.drawString(str, x + 1f, y);
-      g2.drawString(str, x + 1f, y + 1f);
-      g2.setPaint(color);
-      g2.drawString(str, x, y);
+  public static Dimension getComponentSizeFromText(JComponent c, String text) {
+    Font font = c.getFont();
+    if (font == null) {
+      font = FontTools.getDefaultFont();
     }
+    Insets insets = c.getInsets();
+    int width = c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
+    int height = FontTools.getFontSizeInPixels(font) + insets.top + insets.bottom;
+    return new Dimension(width, height);
   }
 
-  public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
-    paintColorFontOutline(g2, str, x, y, Color.WHITE);
+  public static int getComponentWidthFromText(JComponent c, String text) {
+    Font font = c.getFont();
+    if (font == null) {
+      font = FontTools.getDefaultFont();
+    }
+    Insets insets = c.getInsets();
+    return c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
   }
 
-  public static Font geLargeFont() {
-    return UIManager.getFont("large.font");
+  public static Icon getUpArrowIcon() {
+    return new FlatTreeCollapsedIcon() {
+      @Override
+      protected void paintIcon(Component c, Graphics2D g) {
+        g.rotate(Math.toRadians(-90), width / 2., height / 2.);
+        super.paintIcon(c, g);
+      }
+    };
   }
 
-  public static Font getMediumFont() {
-    return UIManager.getFont("medium.font");
-  }
-
-  public static Font getDefaultont() {
-    return UIManager.getFont("defaultFont");
-  }
-
-  public static Font getSmallFont() {
-    return UIManager.getFont("small.font");
-  }
-
-  public static Font getMiniFont() {
-    return UIManager.getFont("mini.font");
-  }
-
-  public static Font getSemiBoldFont() {
-    return UIManager.getFont("semibold.font");
-  }
-
-  public static Font getBoldFont() {
-    return UIManager.getFont("h4.font");
-  }
-
-  public static Font getH3Font() {
-    return UIManager.getFont("h3.regular.font");
-  }
-
-  public static Font getH3BoldFont() {
-    return UIManager.getFont("h3.font");
-  }
-
-  public static Font getH2Font() {
-    return UIManager.getFont("h2.regular.font");
-  }
-
-  public static Font getH2BoldFont() {
-    return UIManager.getFont("h2.font");
-  }
-
-  public static Font getH1Font() {
-    return UIManager.getFont("h1.regular.font");
-  }
-
-  public static Font getH1BoldFont() {
-    return UIManager.getFont("h1.font");
-  }
-
-  public static Icon getExpandIcon() {
+  public static Icon getDownArrowIcon() {
     return UIManager.getIcon("Tree.expandedIcon");
   }
 
@@ -211,8 +161,24 @@ public class GuiUtils {
         title,
         TitledBorder.DEFAULT_JUSTIFICATION,
         TitledBorder.DEFAULT_POSITION,
-        getSemiBoldFont(),
+        FontTools.getSemiBoldFont(),
         null);
+  }
+
+  public static Border getEmptydBorder(int gap) {
+    int g = getScaleLength(gap);
+    return new EmptyBorder(g, g, g, g);
+  }
+
+  public static Border getEmptydBorder(int horizontal, int vertical) {
+    int h = getScaleLength(horizontal);
+    int v = getScaleLength(vertical);
+    return new EmptyBorder(v, h, v, h);
+  }
+
+  public static Border getEmptydBorder(int top, int left, int bottom, int right) {
+    return new EmptyBorder(
+        getScaleLength(top), getScaleLength(left), getScaleLength(bottom), getScaleLength(right));
   }
 
   public static JPanel getComponentsInJPanel(int hgap, int vgap, JComponent... items) {
@@ -373,19 +339,6 @@ public class GuiUtils {
       item.setAccelerator(KeyStroke.getKeyStroke(acceleratorKey, java.awt.Event.CTRL_MASK));
     }
     return item;
-  }
-
-  public static Dimension getBigIconButtonSize(JComponent c) {
-    Insets insets = c.getInsets();
-    int size = getFontSizeInPixels(c.getFont()) + insets.top + insets.bottom;
-    return new Dimension(size, size);
-  }
-
-  public static int getFontSizeInPixels(Font font) {
-    if (font == null) {
-      font = getDefaultont();
-    }
-    return font.getSize() * 96 / 72;
   }
 
   public static JButton createHelpButton(final String topic, boolean small) {

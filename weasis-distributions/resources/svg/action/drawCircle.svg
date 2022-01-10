@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none" stroke-width="1.467" style="paint-order:fill markers stroke">
+  <g stroke-width="1.467" style="paint-order:fill markers stroke">
+   <g fill="#6e6e6e">
+    <path d="m16.342 18.236h-0.9375v-1.1836c-1.2343 0.89832-2.7559 1.4277-4.4043 1.4277-1.5356 0-2.9607-0.46093-4.1465-1.25v1.0547h-1.127c1.4834 1.0769 3.3048 1.7148 5.2734 1.7148 1.9986 0 3.8464-0.65672 5.3418-1.7637z" color="#000000" style="paint-order:fill markers stroke"/>
+    <path d="m18.299 5.7402v0.72656h-1.3418c0.95649 1.2566 1.5234 2.8269 1.5234 4.5332 0 1.6382-0.52385 3.1506-1.4121 4.3809h1.3516v0.70312c0.99552-1.4479 1.5801-3.1984 1.5801-5.084 0-1.9616-0.63118-3.7793-1.7012-5.2598z" color="#000000" style="paint-order:fill markers stroke"/>
+    <path d="m11 2c-4.9616 0-9 4.0384-9 9 0 1.7328 0.49323 3.3516 1.3457 4.7266v-0.49609h1.4805c-0.82372-1.2022-1.3066-2.6585-1.3066-4.2305 0-4.1408 3.3396-7.4805 7.4805-7.4805 1.4947 0 2.8843 0.43469 4.0508 1.1855v-1.1582h0.98828c-1.439-0.97632-3.1735-1.5469-5.0391-1.5469z" color="#000000" style="paint-order:fill markers stroke"/>
+   </g>
+   <g fill="#389fd6" stroke-width="1.467" style="paint-order:fill markers stroke">
+    <path transform="scale(-1,1)" d="m-18.965 2.9297v4.4102h4.4121v-4.4102zm1.4668 1.4668h1.4766v1.4766h-1.4766z" color="#000000" style="paint-order:fill markers stroke"/>
+    <path transform="scale(-1,1)" d="m-7.2793 14.535v4.4121h4.4102v-4.4121zm1.4668 1.4688h1.4766v1.4766h-1.4766z" color="#000000" style="paint-order:fill markers stroke"/>
+    <path transform="scale(-1,1)" d="m-19.033 14.607v4.4121h4.4102v-4.4121zm1.4668 1.4688h1.4766v1.4766h-1.4766z" color="#000000" style="paint-order:fill markers stroke"/>
+   </g>
+  </g>
+ </g>
+</svg>

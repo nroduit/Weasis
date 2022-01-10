@@ -52,6 +52,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.CrosshairListener;
@@ -196,7 +197,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public MPRContainer(GridBagLayoutModel layoutModel, String uid) {
-    super(EventManager.getInstance(), layoutModel, uid, MPRFactory.NAME, MPRFactory.ICON, null);
+    super(EventManager.getInstance(), layoutModel, uid, MPRFactory.NAME, ResourceUtil.getIcon(OtherIcon.VIEW_3D), null);
     setSynchView(SynchView.NONE);
     if (!initComponents) {
       initComponents = true;

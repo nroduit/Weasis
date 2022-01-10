@@ -45,6 +45,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.FileIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
@@ -121,7 +122,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
   protected synchronized void buildThumbnail(
       MediaElement media, boolean keepMediaCache, OpManager opManager) {
     FileIcon fileIcon = null;
-    String type = Messages.getString("Thumbnail.unknown");
+    String type = "";
     if (media != null) {
       String mime = media.getMimeType();
       if (mime != null) {
@@ -184,7 +185,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
               int insetY = 5;
               int textLength = fm.stringWidth(description);
               int fontHeight = 0;
-              boolean displayText = textLength + insetY < width;
+              boolean displayText = StringUtil.hasText(description) && textLength + insetY < width;
               if (displayText) {
                 fontHeight = fm.getHeight();
               }

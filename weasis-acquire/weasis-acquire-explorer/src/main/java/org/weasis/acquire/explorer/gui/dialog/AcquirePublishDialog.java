@@ -154,7 +154,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.setLayout(new BorderLayout());
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
-    questionLabel.setFont(FontTools.getFont12Bold());
+    questionLabel.setFont(FontTools.getSemiBoldFont());
 
     contentPane.add(questionLabel, BorderLayout.NORTH);
 
