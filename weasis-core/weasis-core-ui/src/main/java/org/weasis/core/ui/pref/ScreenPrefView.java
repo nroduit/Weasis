@@ -54,17 +54,6 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     BorderLayout borderLayout = new BorderLayout();
     setLayout(borderLayout);
 
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    add(panel2, BorderLayout.SOUTH);
-
-    JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
-
     JPanel panel1 = new JPanel();
     panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ScreenPrefView.settings")));
     add(panel1, BorderLayout.NORTH);
@@ -156,6 +145,8 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     panel3.add(presetsLabel);
     panel3.add(defMonitorComboBox);
     panelList.add(panel3);
+
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
   public static int getDefaultMonitor() {
@@ -168,7 +159,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   static class Cross extends JLabel {
     private final Monitor monitor;

@@ -145,7 +145,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   private String getImportPath() {
     String path = textField.getText().trim();

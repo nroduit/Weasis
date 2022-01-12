@@ -197,7 +197,13 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public MPRContainer(GridBagLayoutModel layoutModel, String uid) {
-    super(EventManager.getInstance(), layoutModel, uid, MPRFactory.NAME, ResourceUtil.getIcon(OtherIcon.VIEW_3D), null);
+    super(
+        EventManager.getInstance(),
+        layoutModel,
+        uid,
+        MPRFactory.NAME,
+        ResourceUtil.getIcon(OtherIcon.VIEW_3D),
+        null);
     setSynchView(SynchView.NONE);
     if (!initComponents) {
       initComponents = true;

@@ -9,47 +9,47 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.PageProps;
-import org.weasis.core.ui.Messages;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.PageItem;
 
 public class DicomPrefView extends AbstractItemDialogPage {
-  private final JPanel panelList = new JPanel();
 
-  public DicomPrefView() {
+  public DicomPrefView(PreferenceDialog dialog) {
     super("DICOM");
     setComponentPosition(20);
-    setBorder(new EmptyBorder(15, 10, 10, 10));
-    BorderLayout borderLayout = new BorderLayout();
-    setLayout(borderLayout);
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
 
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    add(panel2, BorderLayout.SOUTH);
 
-    JButton btnNewButton = new JButton(Messages.getString("restore.values"));
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
+    JPanel panel = new JPanel();
+    panel.setLayout(new GridLayout(0, 2));
+    add(panel, 0);
+    add(GuiUtils.createVerticalStrut(15), 1);
 
-    panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
+    getSubPages().forEach(
+        p -> {
+          JButton button = new JButton();
+          button.setText(p.getTitle());
+          button.addActionListener(a -> dialog.showPage(p.getTitle()));
+          panel.add(button);
+        });
+    add(panel);
+
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
   @Override
   public void closeAdditionalWindow() {
-    for (PageProps subpage : getSubPages()) {
+    for (PageItem subpage : getSubPages()) {
       subpage.closeAdditionalWindow();
     }
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 }

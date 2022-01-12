@@ -9,9 +9,11 @@
  */
 package org.weasis.core.api.gui.util;
 
-public interface PageProps {
+import java.util.List;
 
-  void resetoDefaultValues();
+public interface PageItem {
+
+  void resetToDefaultValues();
 
   /**
    * Returns the human-readable tile of the page which is displayed in the config dialog's tree view
@@ -27,7 +29,7 @@ public interface PageProps {
    *
    * @return an array of sub-pages or <code>null</code> if no sub-pages are used
    */
-  PageProps[] getSubPages();
+  List<PageItem> getSubPages();
 
   void closeAdditionalWindow();
 }

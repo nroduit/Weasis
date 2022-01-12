@@ -295,7 +295,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     // Do nothing
   }
 

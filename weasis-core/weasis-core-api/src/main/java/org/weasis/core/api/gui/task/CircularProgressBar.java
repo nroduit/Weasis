@@ -24,7 +24,6 @@ import java.awt.geom.Arc2D;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
 
@@ -81,8 +80,8 @@ public class CircularProgressBar extends JProgressBar {
 
   @Override
   public void setIndeterminate(boolean newValue) {
-    super.setIndeterminate(true);
-    if (true) {
+    super.setIndeterminate(newValue);
+    if (newValue) {
       if (timer == null) {
         animateAngle = 360;
         timer =

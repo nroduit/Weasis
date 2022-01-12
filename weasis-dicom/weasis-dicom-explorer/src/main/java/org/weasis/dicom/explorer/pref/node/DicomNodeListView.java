@@ -128,7 +128,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     // Do nothing
   }
 }

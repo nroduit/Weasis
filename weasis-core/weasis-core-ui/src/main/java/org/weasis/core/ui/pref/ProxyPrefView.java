@@ -10,13 +10,11 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
@@ -115,18 +113,6 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
     add(buildProxyPanel(), BorderLayout.CENTER);
 
-    JPanel bottomPanel = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) bottomPanel.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    add(bottomPanel, BorderLayout.SOUTH);
-
-    JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
-    bottomPanel.add(GuiUtils.createHelpButton("proxy", true)); // NON-NLS
-    bottomPanel.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
-
     this.buttonGroup.add(directConnectionRadio);
     this.buttonGroup.add(proxyConnectionRadio);
     directConnectionRadio.addActionListener(e -> proxyConnectionAction(false));
@@ -140,6 +126,9 @@ public class ProxyPrefView extends AbstractItemDialogPage {
           }
         });
     initState();
+
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy");
   }
 
   private void initState() {
@@ -322,7 +311,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     directConnectionRadio.doClick();
   }
 

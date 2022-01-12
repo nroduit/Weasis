@@ -35,7 +35,7 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.codec.DicomSeries;
@@ -70,7 +70,7 @@ public class DicomExport extends AbstractWizardDialog {
     gridBagConstraints0.gridy = 0;
     gridBagConstraints0.gridx = 0;
     gridBagConstraints0.weightx = 1.0;
-    jPanelButtom.add(exportandClose, gridBagConstraints0);
+    jPanelBottom.add(exportandClose, gridBagConstraints0);
 
     final JButton exportButton = new JButton();
     exportButton.addActionListener(e -> exportSelection());
@@ -80,7 +80,7 @@ public class DicomExport extends AbstractWizardDialog {
     gridBagConstraints1.anchor = GridBagConstraints.EAST;
     gridBagConstraints1.gridy = 0;
     gridBagConstraints1.gridx = 1;
-    jPanelButtom.add(exportButton, gridBagConstraints1);
+    jPanelBottom.add(exportButton, gridBagConstraints1);
 
     initializePages();
     pack();
@@ -190,7 +190,7 @@ public class DicomExport extends AbstractWizardDialog {
 
   @Override
   public void dispose() {
-    PageProps page = getSelectedPage();
+    PageItem page = getSelectedPage();
     if (page != null) {
       Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_PAGE, page.getTitle());
     }

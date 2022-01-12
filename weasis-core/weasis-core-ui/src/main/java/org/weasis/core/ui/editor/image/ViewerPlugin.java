@@ -26,7 +26,6 @@ import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.icons.FlatAbstractIcon;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
@@ -65,7 +64,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     this.icon = icon;
     this.tooltips = tooltips;
     this.dockableUID = uid == null ? UUID.randomUUID().toString() : uid;
-    Icon titleIcon = icon instanceof FlatSVGIcon flatSVGIcon ? flatSVGIcon.derive(20,20) : icon;
+    Icon titleIcon = icon instanceof FlatSVGIcon flatSVGIcon ? flatSVGIcon.derive(20, 20) : icon;
     this.dockable = new DefaultSingleCDockable(dockableUID, titleIcon, pluginName);
     this.dockable.setTitleText(pluginName);
     this.dockable.setTitleToolTip(tooltips);

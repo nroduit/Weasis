@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.SwingWorker;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.dicom.param.CancelListener;
 
 public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {

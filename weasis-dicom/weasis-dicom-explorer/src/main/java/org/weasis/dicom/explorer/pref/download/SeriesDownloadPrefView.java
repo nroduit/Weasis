@@ -73,11 +73,11 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
 
     JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
     panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
+    btnNewButton.addActionListener(e -> resetToDefaultValues());
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty(DOWNLOAD_IMMEDIATELY, Boolean.TRUE.toString());
 
     downloadImmediatelyCheckbox.setSelected(

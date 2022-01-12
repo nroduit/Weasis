@@ -11,15 +11,18 @@ package org.weasis.core.api.gui.util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
-public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
+public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
   private final String title;
-  private List<PageProps> subPageList;
+  private final List<PageItem> subPageList = new ArrayList<>();
   private int pagePosition;
 
-  public AbstractItemDialogPage(String title) {
+  private final Properties properties = new Properties();
+
+  protected AbstractItemDialogPage(String title) {
     this.title = title == null ? "item" : title; // NON-NLS
     this.pagePosition = 1000;
   }
@@ -33,37 +36,35 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     return title;
   }
 
-  public void addSubPage(PageProps subPage) {
-    if (subPageList == null) {
-      subPageList = new ArrayList<>();
-    }
+  public void addSubPage(PageItem subPage) {
     subPageList.add(subPage);
   }
 
-  public void removeSubPage(PageProps subPage) {
-    if (subPageList == null) {
-      return;
-    }
+  public void removeSubPage(PageItem subPage) {
     subPageList.remove(subPage);
   }
 
   @Override
-  public PageProps[] getSubPages() {
-    if (subPageList == null) {
-      return new PageProps[0];
-    }
-    final PageProps[] subPages = new PageProps[subPageList.size()];
-    subPageList.toArray(subPages);
-    return subPages;
+  public List<PageItem> getSubPages() {
+    return new ArrayList<>(subPageList);
   }
 
   public void resetAllSubPagesToDefaultValues() {
-    if (subPageList == null) {
-      return;
+    for (PageItem subPage : subPageList) {
+      subPage.resetToDefaultValues();
     }
-    for (PageProps subPage : subPageList) {
-      subPage.resetoDefaultValues();
-    }
+  }
+
+  public Properties getProperties() {
+    return properties;
+  }
+
+  public String getProperty(String key) {
+    return properties.getProperty(key);
+  }
+
+  public String getProperty(String key, String defaultValue) {
+    return properties.getProperty(key, defaultValue);
   }
 
   @Override

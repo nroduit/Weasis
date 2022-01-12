@@ -95,7 +95,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     // Do nothing
   }
 

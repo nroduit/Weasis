@@ -140,7 +140,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
     panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
+    btnNewButton.addActionListener(e -> resetToDefaultValues());
 
     ActionState winAction = eventManager.getAction(ActionW.WINDOW);
     if (winAction instanceof MouseActionAdapter) {
@@ -318,7 +318,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     sliderWindow.setValue(realValueToslider(1.25));
     sliderLevel.setValue(realValueToslider(1.25));
     sliderScroll.setValue(realValueToslider(0.1));

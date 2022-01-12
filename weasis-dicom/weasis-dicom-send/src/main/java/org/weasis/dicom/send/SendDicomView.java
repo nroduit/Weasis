@@ -146,7 +146,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   @Override
   public void exportDICOM(final CheckTreeModel model, JProgressBar info) throws IOException {

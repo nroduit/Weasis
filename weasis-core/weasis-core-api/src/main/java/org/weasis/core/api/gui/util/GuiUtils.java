@@ -181,27 +181,53 @@ public class GuiUtils {
         getScaleLength(top), getScaleLength(left), getScaleLength(bottom), getScaleLength(right));
   }
 
-  public static JPanel getComponentsInJPanel(int hgap, int vgap, JComponent... items) {
+  public static JPanel getComponentsInJPanel(JComponent... items) {
+    return getComponentsInJPanel(FlowLayout.LEADING, 5, 5, items);
+  }
+
+  public static JPanel getComponentsInJPanel(
+      int horizontalGap, int verticalGap, JComponent... items) {
+    return getComponentsInJPanel(FlowLayout.LEADING, horizontalGap, verticalGap, items);
+  }
+
+  public static JPanel getComponentsInJPanel(
+      int align, int horizontalGap, int verticalGap, JComponent... items) {
+    int h = getScaleLength(horizontalGap);
+    int v = getScaleLength(verticalGap);
     JPanel panel = new JPanel();
-    panel.setLayout(new FlowLayout(FlowLayout.LEADING, hgap, vgap));
+    panel.setLayout(new FlowLayout(align, h, v));
     for (JComponent item : items) {
       panel.add(item);
     }
     return panel;
   }
 
+  public static JComponent createVerticalStrut(int height) {
+    int v = getScaleLength(height);
+    return new Filler(new Dimension(0, v), new Dimension(0, v), new Dimension(Short.MAX_VALUE, v));
+  }
+
+  public static JComponent createHorizontalStrut(int width) {
+    int w = getScaleLength(width);
+    return new Filler(new Dimension(w, 0), new Dimension(w, 0), new Dimension(w, Short.MAX_VALUE));
+  }
+
   public static Filler getBoxXLastElement(int minimumWidth) {
+    int w = getScaleLength(minimumWidth);
     return new Box.Filler(
-        new Dimension(minimumWidth, 0),
-        new Dimension(minimumWidth, 0),
-        new Dimension(Integer.MAX_VALUE, 0));
+        new Dimension(w, 0), new Dimension(w, 0), new Dimension(Integer.MAX_VALUE, 0));
   }
 
   public static Filler getBoxYLastElement(int minimumHeight) {
+    int h = getScaleLength(minimumHeight);
     return new Box.Filler(
-        new Dimension(0, minimumHeight),
-        new Dimension(0, minimumHeight),
-        new Dimension(0, Integer.MAX_VALUE));
+        new Dimension(0, h), new Dimension(0, h), new Dimension(0, Integer.MAX_VALUE));
+  }
+
+  public static Dimension getDimension(int width, int height) {
+    int w = getScaleLength(width);
+    int h = getScaleLength(height);
+    return new Dimension(w, h);
   }
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {

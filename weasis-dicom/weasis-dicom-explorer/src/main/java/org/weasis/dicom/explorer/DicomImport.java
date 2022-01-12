@@ -24,7 +24,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
@@ -55,7 +55,7 @@ public class DicomImport extends AbstractWizardDialog {
     gridBagConstraints0.gridy = 0;
     gridBagConstraints0.gridx = 0;
     gridBagConstraints0.weightx = 1.0;
-    jPanelButtom.add(importandClose, gridBagConstraints0);
+    jPanelBottom.add(importandClose, gridBagConstraints0);
 
     final JButton importButton = new JButton();
     importButton.addActionListener(e -> importSelection());
@@ -65,7 +65,7 @@ public class DicomImport extends AbstractWizardDialog {
     gridBagConstraints1.anchor = GridBagConstraints.EAST;
     gridBagConstraints1.gridy = 0;
     gridBagConstraints1.gridx = 1;
-    jPanelButtom.add(importButton, gridBagConstraints1);
+    jPanelBottom.add(importButton, gridBagConstraints1);
 
     initializePages();
     pack();
@@ -129,7 +129,7 @@ public class DicomImport extends AbstractWizardDialog {
 
   @Override
   public void dispose() {
-    PageProps page = getSelectedPage();
+    PageItem page = getSelectedPage();
     if (page != null) {
       Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_PAGE, page.getTitle());
     }

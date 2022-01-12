@@ -801,7 +801,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   private List<String> getCheckedStudies(TreePath[] paths) {
     List<String> studies = new ArrayList<>();

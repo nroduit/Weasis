@@ -9,23 +9,25 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
+import javax.swing.JSpinner;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -35,65 +37,87 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.Measurement;
 import org.weasis.core.util.StringUtil;
 
 public class LabelsPrefView extends AbstractItemDialogPage {
-  private static final long serialVersionUID = -1727609322145775651L;
-
   private final JPanel panelList = new JPanel();
   private final JComboBox<Graphic> comboBoxTool;
+  private final JSpinner spinner1 = new JSpinner();
+  private final ViewSetting viewSetting;
+  private final Map<JCheckBox, Measurement> map =
+      new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
 
   public LabelsPrefView() {
     super(MeasureTool.LABEL_PREF_NAME);
+    this.viewSetting = Objects.requireNonNull(MeasureTool.viewSetting);
     setComponentPosition(510);
-    setBorder(new EmptyBorder(15, 10, 10, 10));
-    BorderLayout borderLayout = new BorderLayout();
-    setLayout(borderLayout);
-
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    add(panel2, BorderLayout.SOUTH);
-
-    JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetoDefaultValues());
-
-    JPanel panel1 = new JPanel();
-    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelsPrefView.geometric1")));
-    add(panel1, BorderLayout.CENTER);
-    panel1.setLayout(new BorderLayout(0, 0));
-
-    JPanel panel = new JPanel();
-    panel1.add(panel, BorderLayout.NORTH);
-    FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-    flowLayout.setHgap(5);
-    flowLayout.setAlignment(FlowLayout.LEFT);
-
-    JLabel lblNewLabel =
-        new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);
-    panel.add(lblNewLabel);
+    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
     ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
     tools.remove(0);
-    comboBoxTool = new JComboBox<>(tools.stream().toArray(Graphic[]::new));
-    comboBoxTool.setMaximumRowCount(12);
-    selectTool((Graphic) comboBoxTool.getSelectedItem());
+    this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
+
+    jbInit();
+    initialize();
+  }
+
+  private void jbInit() {
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+
+    JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
+    JPanel panelFont = GuiUtils.getComponentsInJPanel(3, 10, jLabelSize, spinner1);
+    panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
+    add(panelFont);
+
+    JPanel panelShape = new JPanel();
+    panelShape.setLayout(new BoxLayout(panelShape, BoxLayout.Y_AXIS));
+    panelShape.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelsPrefView.geometric1")));
+    JLabel shapeLabel =
+        new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);
+    JPanel panelCombo = GuiUtils.getComponentsInJPanel(3, 5, shapeLabel, comboBoxTool);
+    panelShape.add(panelCombo);
+    add(GuiUtils.createVerticalStrut(15));
+
+    panelList.setLayout(new GridLayout(0, 2));
+    panelShape.add(panelList);
     ItemListener toolsListener =
         e -> {
           if (e.getStateChange() == ItemEvent.SELECTED) {
             selectTool((Graphic) e.getItem());
           }
         };
+    comboBoxTool.setMaximumRowCount(12);
     comboBoxTool.addItemListener(toolsListener);
-    panel.add(comboBoxTool);
-    panel1.add(panelList);
-    panelList.setLayout(new BoxLayout(panelList, BoxLayout.Y_AXIS));
 
-    addSubPage(new LabelPrefView(MeasureTool.viewSetting));
-    addSubPage(new StatisticsPrefView());
+    add(panelShape);
+    add(GuiUtils.createVerticalStrut(15));
+
+    JPanel panel = new JPanel();
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureTool.pix_stats")));
+    panel.setLayout(new GridLayout(0, 2));
+
+    for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
+      JCheckBox box = new JCheckBox(m.getName(), m.getGraphicLabel());
+      panel.add( box);
+      map.put(box, m);
+      box.addActionListener(
+          e -> {
+            Object source = e.getSource();
+            if (source instanceof JCheckBox checkBox) {
+              Measurement measure = map.get(checkBox);
+              if (measure != null) {
+                measure.setGraphicLabel(((JCheckBox) source).isSelected());
+              }
+            }
+          });
+    }
+    add(panel);
+
+    add(GuiUtils.getBoxYLastElement(15));
+
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
   private void selectTool(Graphic graph) {
@@ -106,8 +130,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
           box.addActionListener(
               e -> {
                 Object source = e.getSource();
-                if (source instanceof JCheckBox) {
-                  m.setGraphicLabel(((JCheckBox) source).isSelected());
+                if (source instanceof JCheckBox checkBox) {
+                  m.setGraphicLabel(checkBox.isSelected());
                 }
               });
           panelList.add(box);
@@ -118,18 +142,24 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     }
   }
 
+  private void initialize() {
+    spinner1.setValue(FontTools.getDefaultFont().getSize() + viewSetting.getFontSizeShift());
+    selectTool((Graphic) comboBoxTool.getSelectedItem());
+  }
+
   @Override
   public void closeAdditionalWindow() {
-    for (PageProps subpage : getSubPages()) {
-      subpage.closeAdditionalWindow();
-    }
+    viewSetting.setFontSizeShift(
+        (Integer) spinner1.getValue() - FontTools.getDefaultFont().getSize());
+    MeasureToolBar.measureGraphicList.forEach(
+        g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
+
     synchronized (UIManager.VIEWER_PLUGINS) {
       for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
         ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
-        if (p instanceof ImageViewerPlugin) {
-          for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
-            if (v instanceof ViewCanvas) {
-              ViewCanvas<?> view = (ViewCanvas<?>) v;
+        if (p instanceof ImageViewerPlugin viewerPlugin) {
+          for (Object v : viewerPlugin.getImagePanels()) {
+            if (v instanceof ViewCanvas<?> view) {
               GraphicModel graphicList = view.getGraphicManager();
               graphicList.updateLabels(true, view);
             }
@@ -140,7 +170,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
+    viewSetting.setFontSizeShift(0);
+    initialize();
     MeasureToolBar.measureGraphicList.forEach(
         g -> {
           List<Measurement> list = g.getMeasurementList();
@@ -149,5 +181,8 @@ public class LabelsPrefView extends AbstractItemDialogPage {
         });
 
     selectTool((Graphic) comboBoxTool.getSelectedItem());
+
+    Arrays.stream(ImageStatistics.ALL_MEASUREMENTS).forEach(Measurement::resetToGraphicLabelValue);
+    map.forEach((key, value) -> key.setSelected(value.getGraphicLabel()));
   }
 }

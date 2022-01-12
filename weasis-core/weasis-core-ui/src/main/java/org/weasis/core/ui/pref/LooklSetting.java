@@ -11,9 +11,6 @@ package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatSystemProperties;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.Insets;
 import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -31,7 +28,6 @@ import javax.swing.LookAndFeel;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
-import javax.swing.border.EmptyBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -72,13 +68,13 @@ public class LooklSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    setBorder(new EmptyBorder(15, 10, 10, 10));
+    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
     jLabelMLook.setText("Theme" + StringUtil.COLON);
 
     add(GuiUtils.getComponentsInJPanel(3, 10, jLabelMLook, jComboBoxlnf, button));
-    add(Box.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(15));
 
     JPanel panel = new JPanel();
     panel.setBorder(GuiUtils.getTitledBorder("Display Scale Factor"));
@@ -88,7 +84,7 @@ public class LooklSetting extends AbstractItemDialogPage {
     panel.add(GuiUtils.getComponentsInJPanel(5, 0, userScaleRadio, spinner1));
     add(panel);
 
-    add(GuiUtils.getBoxYLastElement(20));
+    add(GuiUtils.getBoxYLastElement(15));
 
     this.buttonGroup.add(systemScaleRadio);
     this.buttonGroup.add(userScaleRadio);
@@ -113,29 +109,8 @@ public class LooklSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    GridBagConstraints gbcPanel2 = new GridBagConstraints();
-    gbcPanel2.weighty = 1.0;
-    gbcPanel2.weightx = 1.0;
-    gbcPanel2.anchor = GridBagConstraints.SOUTHWEST;
-    gbcPanel2.gridwidth = 4;
-    gbcPanel2.insets = new Insets(5, 10, 0, 10);
-    gbcPanel2.fill = GridBagConstraints.HORIZONTAL;
-    gbcPanel2.gridx = 0;
-    gbcPanel2.gridy = 7;
-    add(panel2, gbcPanel2);
-    JButton btnNewButton = new JButton(Messages.getString("restore.values"));
-    panel2.add(GuiUtils.createHelpButton("locale", true)); // NON-NLS
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(
-        e -> {
-          resetoDefaultValues();
-          initialize(false);
-        });
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");
   }
 
   protected void initialize(boolean afirst) {
@@ -240,9 +215,11 @@ public class LooklSetting extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
     BundleTools.SYSTEM_PREFERENCES.resetProperty("flatlaf.uiScale", null);
+
+    initialize(false);
   }
 
   static class LookInfo {

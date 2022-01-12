@@ -181,7 +181,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   private String getImportPath() {
     String path = textField.getText().trim();

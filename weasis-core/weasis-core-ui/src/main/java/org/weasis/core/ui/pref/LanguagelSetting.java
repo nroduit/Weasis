@@ -15,14 +15,12 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.time.ZonedDateTime;
 import java.time.format.FormatStyle;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
@@ -125,29 +123,8 @@ public class LanguagelSetting extends AbstractItemDialogPage {
     flowLayout.setAlignment(FlowLayout.LEADING);
     add(panel, gbcPanel);
 
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    GridBagConstraints gbcPanel2 = new GridBagConstraints();
-    gbcPanel2.weighty = 1.0;
-    gbcPanel2.weightx = 1.0;
-    gbcPanel2.anchor = GridBagConstraints.SOUTHWEST;
-    gbcPanel2.gridwidth = 4;
-    gbcPanel2.insets = new Insets(5, 10, 0, 10);
-    gbcPanel2.fill = GridBagConstraints.HORIZONTAL;
-    gbcPanel2.gridx = 0;
-    gbcPanel2.gridy = 7;
-    add(panel2, gbcPanel2);
-    JButton btnNewButton = new JButton(Messages.getString("restore.values"));
-    panel2.add(GuiUtils.createHelpButton("locale", true)); // NON-NLS
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(
-        e -> {
-          resetoDefaultValues();
-          initialize(false);
-        });
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");
   }
 
   private static String getText() {
@@ -174,11 +151,13 @@ public class LanguagelSetting extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.lang.code", "en"); // NON-NLS
     // Reset cache of locale format
     LocalUtil.setLocaleFormat(null);
     // Reset format to the config.properties value or null (default system value)
     BundleTools.SYSTEM_PREFERENCES.resetProperty("locale.format.code", null);
+
+    initialize(false);
   }
 }

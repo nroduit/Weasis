@@ -9,13 +9,10 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.GridLayout;
 import java.io.File;
-import javax.swing.Box;
+import java.util.List;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -29,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
@@ -42,126 +39,104 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   public static final String PAGE_NAME = Messages.getString("GeneralSetting.gen");
 
-  private final GridBagLayout gridBagLayout1 = new GridBagLayout();
-
-  private final JCheckBox chckbxConfirmClosing =
+  private final JCheckBox checkboxConfirmClosing =
       new JCheckBox(Messages.getString("GeneralSetting.closingConfirmation"));
 
-  private final JCheckBox chckbxFileLog =
+  private final JCheckBox checkboxFileLog =
       new JCheckBox(Messages.getString("GeneralSetting.rol_log"));
-  private final JPanel panel = new JPanel();
   private final JLabel lblLogLevel =
       new JLabel(Messages.getString("GeneralSetting.log_level") + StringUtil.COLON);
   private final JComboBox<LEVEL> comboBoxLogLevel = new JComboBox<>(LEVEL.values());
-  private final Component horizontalStrut = Box.createHorizontalStrut(10);
   private final JLabel labelNumber =
       new JLabel(Messages.getString("GeneralSetting.log_nb") + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
   private final JLabel labelSize =
       new JLabel(Messages.getString("GeneralSetting.log_size") + StringUtil.COLON);
   private final JSpinner spinner1 = new JSpinner();
-  private final Component horizontalStrut1 = Box.createHorizontalStrut(10);
-  private final Component horizontalStrut2 = Box.createHorizontalStrut(10);
-  private final JPanel panel1 = new JPanel();
   private final JLabel lblStacktraceLimit =
       new JLabel(Messages.getString("GeneralSetting.stack_limit") + StringUtil.COLON);
   private final JComboBox<String> comboBoxStackLimit =
       new JComboBox<>(new String[] {"", "0", "1", "3", "5", "10", "20", "50", "100"}); // NON-NLS
 
-  public GeneralSetting() {
+  public GeneralSetting(PreferenceDialog dialog) {
     super(PAGE_NAME);
     setComponentPosition(0);
+    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    JPanel panel = new JPanel();
     try {
       GuiUtils.setNumberModel(
           spinner, getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null), 1, 99, 1);
       GuiUtils.setNumberModel(
           spinner1, getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"), 1, 99, 1);
+
+      panel.setLayout(new GridLayout(0, 2));
+      add(panel, 0);
+      add(GuiUtils.createVerticalStrut(15), 1);
+
       jbInit();
       initialize(true);
     } catch (Exception e) {
       LOGGER.error("Cannot initialize GeneralSetting", e);
     }
 
-    addSubPage(new LanguagelSetting());
-    addSubPage(new LooklSetting());
-    addSubPage(new ScreenPrefView());
-    addSubPage(new ProxyPrefView());
+    List<AbstractItemDialogPage> childPages =
+        List.of(
+            new LanguagelSetting(), new LooklSetting(), new ScreenPrefView(), new ProxyPrefView());
+    childPages.forEach(this::addSubPage);
+
+
+
+    childPages.forEach(
+        p -> {
+          JButton button = new JButton();
+          button.setText(p.getTitle());
+          button.addActionListener(a -> dialog.showPage(p.getTitle()));
+          panel.add(button);
+        });
+
   }
 
   private void jbInit() {
-    this.setLayout(gridBagLayout1);
 
-    GridBagConstraints gbcChckbxConfirmationMessageWhen = new GridBagConstraints();
-    gbcChckbxConfirmationMessageWhen.gridwidth = 4;
-    gbcChckbxConfirmationMessageWhen.anchor = GridBagConstraints.WEST;
-    gbcChckbxConfirmationMessageWhen.insets = new Insets(10, 10, 5, 0);
-    gbcChckbxConfirmationMessageWhen.gridx = 0;
-    gbcChckbxConfirmationMessageWhen.gridy = 4;
-    add(chckbxConfirmClosing, gbcChckbxConfirmationMessageWhen);
+    add(GuiUtils.getComponentsInJPanel(0, 10, checkboxConfirmClosing));
+    add(GuiUtils.createVerticalStrut(15));
 
-    GridBagConstraints gbcPanel = new GridBagConstraints();
-    gbcPanel.anchor = GridBagConstraints.WEST;
-    gbcPanel.gridwidth = 4;
-    gbcPanel.insets = new Insets(5, 5, 0, 10);
-    gbcPanel.fill = GridBagConstraints.HORIZONTAL;
-    gbcPanel.gridx = 0;
-    gbcPanel.gridy = 5;
-    FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-    flowLayout.setAlignment(FlowLayout.LEADING);
-    add(panel, gbcPanel);
-    chckbxFileLog.addActionListener(e -> checkRolingLog());
-    panel.add(chckbxFileLog);
+    JPanel panel = new JPanel();
+    panel.setBorder(GuiUtils.getTitledBorder("Logging"));
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+    panel.add(
+        GuiUtils.getComponentsInJPanel(
+            2,
+            10,
+            checkboxFileLog,
+            GuiUtils.createHorizontalStrut(15),
+            labelNumber,
+            spinner,
+            GuiUtils.createHorizontalStrut(15),
+            labelSize,
+            spinner1));
+    panel.add(
+        GuiUtils.getComponentsInJPanel(
+            0,
+            10,
+            lblLogLevel,
+            comboBoxLogLevel,
+            GuiUtils.createHorizontalStrut(15),
+            lblStacktraceLimit,
+            comboBoxStackLimit));
+    add(panel);
 
-    panel.add(horizontalStrut1);
+    add(GuiUtils.getBoxYLastElement(15));
 
-    panel.add(labelNumber);
+    checkboxFileLog.addActionListener(e -> checkRolingLog());
 
-    panel.add(spinner);
-
-    panel.add(horizontalStrut2);
-
-    panel.add(labelSize);
-
-    panel.add(spinner1);
-
-    GridBagConstraints gbcPanel1 = new GridBagConstraints();
-    gbcPanel1.gridwidth = 4;
-    gbcPanel1.insets = new Insets(0, 10, 5, 10);
-    gbcPanel1.fill = GridBagConstraints.BOTH;
-    gbcPanel1.gridx = 0;
-    gbcPanel1.gridy = 6;
-    FlowLayout flowLayout2 = (FlowLayout) panel1.getLayout();
-    flowLayout2.setAlignment(FlowLayout.LEADING);
-    add(panel1, gbcPanel1);
-    panel1.add(lblLogLevel);
-
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    GridBagConstraints gbcPanel2 = new GridBagConstraints();
-    gbcPanel2.weighty = 1.0;
-    gbcPanel2.weightx = 1.0;
-    gbcPanel2.anchor = GridBagConstraints.SOUTHWEST;
-    gbcPanel2.gridwidth = 4;
-    gbcPanel2.insets = new Insets(5, 10, 0, 10);
-    gbcPanel2.fill = GridBagConstraints.HORIZONTAL;
-    gbcPanel2.gridx = 0;
-    gbcPanel2.gridy = 7;
-    add(panel2, gbcPanel2);
-    JButton btnNewButton = new JButton(Messages.getString("restore.values"));
-    panel2.add(GuiUtils.createHelpButton("locale", true)); // NON-NLS
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(
-        e -> {
-          resetoDefaultValues();
-          initialize(false);
-        });
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");
   }
 
   private void checkRolingLog() {
-    boolean rolling = chckbxFileLog.isSelected();
+    boolean rolling = checkboxFileLog.isSelected();
     spinner.setEnabled(rolling);
     spinner1.setEnabled(rolling);
   }
@@ -187,13 +162,9 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   protected void initialize(boolean afirst) {
     WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
-    chckbxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
-    panel1.add(comboBoxLogLevel);
+    checkboxConfirmClosing.setSelected(prfs.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false));
+
     comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));
-    panel1.add(horizontalStrut);
-
-    panel1.add(lblStacktraceLimit);
-
     int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
     if (limit > 0
         && limit != 1
@@ -206,8 +177,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
       comboBoxStackLimit.addItem(Integer.toString(limit));
     }
     comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");
-    panel1.add(comboBoxStackLimit);
-    chckbxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, "")));
+
+    checkboxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, "")));
     spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRolingLog();
@@ -215,12 +186,12 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    for (PageProps subpage : getSubPages()) {
+    for (PageItem subpage : getSubPages()) {
       subpage.closeAdditionalWindow();
     }
 
     BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-        "weasis.confirm.closing", chckbxConfirmClosing.isSelected());
+        "weasis.confirm.closing", checkboxConfirmClosing.isSelected());
 
     String limit = (String) comboBoxStackLimit.getSelectedItem();
     BundleTools.SYSTEM_PREFERENCES.setProperty(
@@ -229,15 +200,15 @@ public class GeneralSetting extends AbstractItemDialogPage {
     LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
     BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
     BundleTools.SYSTEM_PREFERENCES.setProperty(
-        AuditLog.LOG_FILE_ACTIVATION, String.valueOf(chckbxFileLog.isSelected()));
+        AuditLog.LOG_FILE_ACTIVATION, String.valueOf(checkboxFileLog.isSelected()));
     String logFile =
-        chckbxFileLog.isSelected()
+        checkboxFileLog.isSelected()
             ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "default.log"
             : ""; // NON-NLS
     BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE, logFile);
     String fileNb = null;
     String fileSize = null;
-    if (chckbxFileLog.isSelected()) {
+    if (checkboxFileLog.isSelected()) {
       fileNb = spinner.getValue().toString();
       fileSize = spinner1.getValue().toString() + "MB";
       BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_FILE_NUMBER, fileNb);
@@ -260,7 +231,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty(
         BundleTools.CONFIRM_CLOSE, Boolean.FALSE.toString());
 
@@ -270,5 +241,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE, "");
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_NUMBER, "5");
     BundleTools.SYSTEM_PREFERENCES.resetServiceProperty(AuditLog.LOG_FILE_SIZE, "10MB"); // NON-NLS
+
+    initialize(false);
   }
 }

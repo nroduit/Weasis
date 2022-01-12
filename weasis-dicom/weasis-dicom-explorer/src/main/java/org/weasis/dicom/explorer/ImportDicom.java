@@ -10,9 +10,9 @@
 package org.weasis.dicom.explorer;
 
 import javax.swing.JProgressBar;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.gui.util.PageItem;
 
-public interface ImportDicom extends PageProps {
+public interface ImportDicom extends PageItem {
 
   void importDICOM(DicomModel dicomModel, JProgressBar info);
 }
