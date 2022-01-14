@@ -18,6 +18,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import org.osgi.framework.BundleContext;
@@ -54,7 +55,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
         parentWin,
         Messages.getString("OpenPreferencesAction.title"),
         ModalityType.APPLICATION_MODAL,
-        new Dimension(700, 520));
+        new Dimension(600, 450));
 
     jPanelBottom.add(bottomPrefPanel, 0);
 
@@ -81,8 +82,9 @@ public class PreferenceDialog extends AbstractWizardDialog {
     properties.put("weasis.user.prefs", System.getProperty("weasis.user.prefs", "user")); // NON-NLS
 
     ArrayList<AbstractItemDialogPage> list = new ArrayList<>();
-    list.add(new GeneralSetting(this));
-    ViewerPrefView viewerSetting = new ViewerPrefView();
+    GeneralSetting generalSetting = new GeneralSetting(this);
+    list.add(generalSetting);
+    ViewerPrefView viewerSetting = new ViewerPrefView(this);
     list.add(viewerSetting);
     DicomPrefView dicomPrefView = new DicomPrefView(this);
     list.add(dicomPrefView);
@@ -96,11 +98,20 @@ public class PreferenceDialog extends AbstractWizardDialog {
           AbstractItemDialogPage page = factory.createInstance(properties);
           if (page != null) {
             int position = page.getComponentPosition();
-            if (position > 500) {
-              if (position < 550) {
-                viewerSetting.addSubPage(page);
+            if (position < 1000) {
+              AbstractItemDialogPage mainPage;
+              if (position > 500 && position < 600) {
+                mainPage = viewerSetting;
+              } else if (position > 600 && position < 700) {
+                mainPage = dicomPrefView;
               } else {
-                dicomPrefView.addSubPage(page);
+                mainPage = generalSetting;
+              }
+              JComponent menuPanel = mainPage.getMenuPanel();
+              mainPage.addSubPage(page, a -> showPage(page.getTitle()), menuPanel);
+              if (menuPanel != null) {
+                menuPanel.revalidate();
+                menuPanel.repaint();
               }
             } else {
               list.add(page);

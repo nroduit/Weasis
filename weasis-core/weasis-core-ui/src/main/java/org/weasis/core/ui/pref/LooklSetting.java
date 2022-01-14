@@ -55,8 +55,7 @@ public class LooklSetting extends AbstractItemDialogPage {
   private LookInfo oldUILook;
 
   public LooklSetting() {
-    super(PAGE_NAME);
-    setComponentPosition(0);
+    super(PAGE_NAME, 102);
     setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
     try {
       GuiUtils.setNumberModel(spinner1, 100, 20, 400, 5);
@@ -68,9 +67,6 @@ public class LooklSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
     jLabelMLook.setText("Theme" + StringUtil.COLON);
 
     add(GuiUtils.getComponentsInJPanel(3, 10, jLabelMLook, jComboBoxlnf, button));
@@ -83,8 +79,6 @@ public class LooklSetting extends AbstractItemDialogPage {
     panel.add(Box.createVerticalGlue());
     panel.add(GuiUtils.getComponentsInJPanel(5, 0, userScaleRadio, spinner1));
     add(panel);
-
-    add(GuiUtils.getBoxYLastElement(15));
 
     this.buttonGroup.add(systemScaleRadio);
     this.buttonGroup.add(userScaleRadio);
@@ -109,8 +103,9 @@ public class LooklSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
+    add(GuiUtils.getBoxYLastElement(5));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");
   }
 
   protected void initialize(boolean afirst) {

@@ -51,7 +51,7 @@ public abstract class AbstractWizardDialog extends JDialog {
       Window window, String title, ModalityType modal, Dimension pageSize) {
     super(window, title, modal);
     this.settingTitle = title;
-    jScrollPanePage.setPreferredSize(pageSize);
+    jScrollPanePage.setPreferredSize(GuiUtils.getDimension(pageSize.width, pageSize.height));
     jScrollPanePage.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     jbInit();
   }

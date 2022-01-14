@@ -9,26 +9,33 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.BorderLayout;
-import javax.swing.BoxLayout;
+import java.awt.GridLayout;
+import java.util.List;
 import javax.swing.JPanel;
-import javax.swing.border.EmptyBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
 
-  public ViewerPrefView() {
-    super("Viewer");
-    setComponentPosition(20);
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+  private final JPanel menuPanel = new JPanel();
 
+  public ViewerPrefView(PreferenceDialog dialog) {
+    super("Viewer", 500);
 
-    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+    menuPanel.setLayout(new GridLayout(0, 2));
+    add(menuPanel);
+    add(GuiUtils.createVerticalStrut(15));
 
-    addSubPage(new LabelsPrefView());
+    add(GuiUtils.getBoxYLastElement(5));
+
+    List<AbstractItemDialogPage> childPages = List.of(new LabelsPrefView());
+    childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));
+  }
+
+  @Override
+  public JPanel getMenuPanel() {
+    return menuPanel;
   }
 
   @Override

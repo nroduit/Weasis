@@ -9,9 +9,13 @@
  */
 package org.weasis.core.api.gui.util;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
@@ -23,8 +27,14 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   private final Properties properties = new Properties();
 
   protected AbstractItemDialogPage(String title) {
+    this(title, 1000);
+  }
+
+  protected AbstractItemDialogPage(String title, int pagePosition) {
     this.title = title == null ? "item" : title; // NON-NLS
-    this.pagePosition = 1000;
+    this.pagePosition = pagePosition;
+    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
   }
 
   public void deselectPageAction() {}
@@ -38,6 +48,16 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
 
   public void addSubPage(PageItem subPage) {
     subPageList.add(subPage);
+  }
+
+  public void addSubPage(PageItem subPage, ActionListener actionListener, JComponent menuPanel) {
+    subPageList.add(subPage);
+    if (actionListener != null && menuPanel != null) {
+      JButton button = new JButton();
+      button.setText(subPage.getTitle());
+      button.addActionListener(actionListener);
+      menuPanel.add(button);
+    }
   }
 
   public void removeSubPage(PageItem subPage) {
@@ -102,5 +122,9 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   @Override
   public void setComponentPosition(int position) {
     this.pagePosition = position;
+  }
+
+  public JComponent getMenuPanel() {
+    return null;
   }
 }

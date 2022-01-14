@@ -22,6 +22,7 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -37,12 +38,14 @@ import java.text.ParseException;
 import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.Box.Filler;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -197,6 +200,36 @@ public class GuiUtils {
     JPanel panel = new JPanel();
     panel.setLayout(new FlowLayout(align, h, v));
     for (JComponent item : items) {
+      panel.add(item);
+    }
+    return panel;
+  }
+
+  public static JPanel getHorizontalBoxPanel(JComponent... items) {
+    return getBoxPanel(BoxLayout.LINE_AXIS, items);
+  }
+
+  public static JPanel getVerticalBoxPanel(JComponent... items) {
+    return getBoxPanel(BoxLayout.PAGE_AXIS, items);
+  }
+
+  private static JPanel getBoxPanel(int axis, JComponent... items) {
+    JPanel panel = new JPanel();
+    panel.setLayout(new BoxLayout(panel, axis));
+    for (JComponent item : items) {
+      panel.add(item);
+    }
+    return panel;
+  }
+
+  public static JPanel getVerticalJLabelPane(JLabel... items) {
+    return getVerticalJLabelPane(SwingConstants.TRAILING, items);
+  }
+
+  public static JPanel getVerticalJLabelPane(int align, JLabel... items) {
+    JPanel panel = new JPanel(new GridLayout(0, 1));
+    for (JLabel item : items) {
+      item.setHorizontalAlignment(align);
       panel.add(item);
     }
     return panel;

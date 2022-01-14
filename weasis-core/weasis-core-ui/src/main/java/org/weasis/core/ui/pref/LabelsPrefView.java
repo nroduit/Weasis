@@ -50,10 +50,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
       new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
 
   public LabelsPrefView() {
-    super(MeasureTool.LABEL_PREF_NAME);
+    super(MeasureTool.LABEL_PREF_NAME, 510);
     this.viewSetting = Objects.requireNonNull(MeasureTool.viewSetting);
-    setComponentPosition(510);
-    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+
     ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
     tools.remove(0);
     this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
@@ -63,8 +62,6 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-
     JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
     JPanel panelFont = GuiUtils.getComponentsInJPanel(3, 10, jLabelSize, spinner1);
     panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
@@ -99,7 +96,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
     for (Measurement m : ImageStatistics.ALL_MEASUREMENTS) {
       JCheckBox box = new JCheckBox(m.getName(), m.getGraphicLabel());
-      panel.add( box);
+      panel.add(box);
       map.put(box, m);
       box.addActionListener(
           e -> {
@@ -114,7 +111,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     }
     add(panel);
 
-    add(GuiUtils.getBoxYLastElement(15));
+    add(GuiUtils.getBoxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());

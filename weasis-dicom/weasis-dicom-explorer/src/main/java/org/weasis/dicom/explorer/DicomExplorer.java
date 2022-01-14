@@ -129,8 +129,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           Object item = modelPatient.getSelectedItem();
-          if (item instanceof MediaSeriesGroupNode) {
-            MediaSeriesGroupNode patient = (MediaSeriesGroupNode) item;
+          if (item instanceof MediaSeriesGroupNode patient) {
             selectPatient(patient);
           } else if (item != null) {
             selectPatient(null);

@@ -10,37 +10,27 @@
 package org.weasis.core.ui.pref;
 
 import java.awt.GridLayout;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 
 public class DicomPrefView extends AbstractItemDialogPage {
+  private final JPanel menuPanel = new JPanel();
 
   public DicomPrefView(PreferenceDialog dialog) {
-    super("DICOM");
-    setComponentPosition(20);
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+    super("DICOM", 600);
 
+    menuPanel.setLayout(new GridLayout(0, 2));
+    add(menuPanel);
+    add(GuiUtils.createVerticalStrut(15));
 
-    JPanel panel = new JPanel();
-    panel.setLayout(new GridLayout(0, 2));
-    add(panel, 0);
-    add(GuiUtils.createVerticalStrut(15), 1);
+    add(GuiUtils.getBoxYLastElement(5));
+  }
 
-    getSubPages().forEach(
-        p -> {
-          JButton button = new JButton();
-          button.setText(p.getTitle());
-          button.addActionListener(a -> dialog.showPage(p.getTitle()));
-          panel.add(button);
-        });
-    add(panel);
-
-    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+  @Override
+  public JPanel getMenuPanel() {
+    return menuPanel;
   }
 
   @Override

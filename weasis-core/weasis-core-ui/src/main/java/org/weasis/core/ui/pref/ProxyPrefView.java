@@ -9,21 +9,22 @@
  */
 package org.weasis.core.ui.pref;
 
-import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.SpringLayout;
-import javax.swing.border.EmptyBorder;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 import org.slf4j.Logger;
@@ -61,7 +62,6 @@ public class ProxyPrefView extends AbstractItemDialogPage {
       new JRadioButton(Messages.getString("ProxyPrefView.manual"));
   private final ButtonGroup buttonGroup = new ButtonGroup();
 
-  private final JLabel lblType = new JLabel(Messages.getString("ProxyPrefView.type"));
   private final JLabel lblAddress = new JLabel(Messages.getString("ProxyPrefView.host"));
   private final JLabel lblPort = new JLabel(Messages.getString("ProxyPrefView.port"));
 
@@ -93,25 +93,20 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   private final JTextField proxyUser = new JTextField(15);
   private final JPasswordField proxyPass = new JPasswordField(15);
 
-  private final JPanel dataPanel = new JPanel();
-
   public ProxyPrefView() {
-    super(Messages.getString("ProxyPrefView.proxy"));
+    super(Messages.getString("ProxyPrefView.proxy"), 110);
     initialize();
   }
 
   private void initialize() {
-    setComponentPosition(5);
-    setBorder(new EmptyBorder(15, 10, 10, 10));
-    BorderLayout borderLayout = new BorderLayout();
-    setLayout(borderLayout);
-
     formatPortTextField(proxyPortHttp);
     formatPortTextField(proxyPortSecure);
     formatPortTextField(proxyPortFtp);
     formatPortTextField(proxyPortSocks);
 
-    add(buildProxyPanel(), BorderLayout.CENTER);
+    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, 15, directConnectionRadio));
+    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, 3, proxyConnectionRadio));
+    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, 3, buildProxyPanel()));
 
     this.buttonGroup.add(directConnectionRadio);
     this.buttonGroup.add(proxyConnectionRadio);
@@ -126,6 +121,8 @@ public class ProxyPrefView extends AbstractItemDialogPage {
           }
         });
     initState();
+
+    add(GuiUtils.getBoxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy");
@@ -174,114 +171,52 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     portFormat.setMaximumFractionDigits(0);
     port.setFormatterFactory(new DefaultFormatterFactory(new NumberFormatter(portFormat)));
     port.setColumns(5);
-    GuiUtils.setPreferredWidth(port, 60);
     GuiUtils.addCheckAction(port);
   }
 
   private JPanel buildProxyPanel() {
+    JPanel dataPanel = new JPanel();
+    dataPanel.setBorder(GuiUtils.getEmptydBorder(5, 30, 5, 0));
+    dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
+    JComponent strut =
+        GuiUtils.createHorizontalStrut(
+            5
+                + Math.max(
+                    GuiUtils.getComponentWidthFromText(
+                        proxyLabelSecure, proxyLabelSecure.getText()),
+                    GuiUtils.getComponentWidthFromText(
+                        proxyLabelSocks, proxyLabelSocks.getText())));
+    dataPanel.add(
+        GuiUtils.getHorizontalBoxPanel(
+            strut,
+            lblAddress,
+            (JComponent) Box.createGlue(),
+            lblPort,
+            GuiUtils.createHorizontalStrut(5)));
+    dataPanel.add(
+        GuiUtils.getHorizontalBoxPanel(
+            GuiUtils.getVerticalJLabelPane(
+                proxyLabelHttp, proxyLabelSecure, proxyLabelFtp, proxyLabelSocks),
+            GuiUtils.getVerticalBoxPanel(
+                proxyHostHttp, proxyHostSecure, proxyHostFtp, proxyHostSocks),
+            GuiUtils.getVerticalBoxPanel(
+                proxyPortHttp, proxyPortSecure, proxyPortFtp, proxyPortSocks)));
 
-    dataPanel.add(directConnectionRadio);
-    dataPanel.add(proxyConnectionRadio);
-    dataPanel.add(lblType);
-    dataPanel.add(lblAddress);
-    dataPanel.add(lblPort);
-    dataPanel.add(proxyLabelHttp);
-    dataPanel.add(proxyHostHttp);
-    dataPanel.add(proxyPortHttp);
-    dataPanel.add(proxyLabelSecure);
-    dataPanel.add(proxyHostSecure);
-    dataPanel.add(proxyPortSecure);
-    dataPanel.add(proxyLabelFtp);
-    dataPanel.add(proxyHostFtp);
-    dataPanel.add(proxyPortFtp);
-    dataPanel.add(proxyLabelSocks);
-    dataPanel.add(proxyHostSocks);
-    dataPanel.add(proxyPortSocks);
-    dataPanel.add(proxyLabelExceptions);
-    dataPanel.add(proxyExceptions);
-    dataPanel.add(proxyAuthCheckBox);
-    dataPanel.add(proxyUser);
-    dataPanel.add(userLabel);
-    dataPanel.add(proxyPass);
-    dataPanel.add(passLabel);
+    dataPanel.add(
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.LEADING, 2, 5, proxyLabelExceptions, proxyExceptions));
+    dataPanel.add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, 5, proxyAuthCheckBox));
+    dataPanel.add(
+        GuiUtils.getHorizontalBoxPanel(
+            GuiUtils.createHorizontalStrut(20),
+            GuiUtils.getVerticalJLabelPane(userLabel, passLabel),
+            GuiUtils.getVerticalBoxPanel(proxyUser, proxyPass)));
 
-    SpringLayout layout = new SpringLayout();
-    layout.putConstraint(
-        SpringLayout.WEST, proxyExceptions, 3, SpringLayout.EAST, proxyLabelExceptions);
-
-    layout.putConstraint(
-        SpringLayout.WEST, directConnectionRadio, 20, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(
-        SpringLayout.NORTH, directConnectionRadio, 20, SpringLayout.NORTH, dataPanel);
-
-    layout.putConstraint(SpringLayout.WEST, proxyConnectionRadio, 20, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyConnectionRadio, 20, SpringLayout.SOUTH, directConnectionRadio);
-    layout.putConstraint(SpringLayout.WEST, lblType, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.NORTH, lblType, 10, SpringLayout.SOUTH, proxyConnectionRadio);
-    layout.putConstraint(SpringLayout.NORTH, lblAddress, 0, SpringLayout.NORTH, lblType);
-    layout.putConstraint(SpringLayout.WEST, lblAddress, 0, SpringLayout.WEST, proxyHostHttp);
-    layout.putConstraint(SpringLayout.NORTH, lblPort, 0, SpringLayout.NORTH, lblType);
-    layout.putConstraint(SpringLayout.WEST, lblPort, 100, SpringLayout.EAST, lblAddress);
-
-    layout.putConstraint(SpringLayout.WEST, proxyLabelHttp, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.NORTH, proxyLabelHttp, 7, SpringLayout.SOUTH, lblType);
-    layout.putConstraint(SpringLayout.WEST, proxyHostHttp, 10, SpringLayout.EAST, proxyLabelSecure);
-    layout.putConstraint(SpringLayout.NORTH, proxyHostHttp, 7, SpringLayout.SOUTH, lblType);
-    layout.putConstraint(SpringLayout.NORTH, proxyPortHttp, 0, SpringLayout.NORTH, proxyHostHttp);
-    layout.putConstraint(SpringLayout.WEST, proxyPortHttp, 0, SpringLayout.WEST, lblPort);
-
-    layout.putConstraint(SpringLayout.WEST, proxyLabelSecure, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyLabelSecure, 7, SpringLayout.SOUTH, proxyHostHttp);
-    layout.putConstraint(
-        SpringLayout.WEST, proxyHostSecure, 10, SpringLayout.EAST, proxyLabelSecure);
-    layout.putConstraint(SpringLayout.NORTH, proxyHostSecure, 7, SpringLayout.SOUTH, proxyHostHttp);
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyPortSecure, 0, SpringLayout.NORTH, proxyHostSecure);
-    layout.putConstraint(SpringLayout.WEST, proxyPortSecure, 0, SpringLayout.WEST, lblPort);
-
-    layout.putConstraint(SpringLayout.WEST, proxyLabelFtp, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.NORTH, proxyLabelFtp, 7, SpringLayout.SOUTH, proxyHostSecure);
-    layout.putConstraint(SpringLayout.WEST, proxyHostFtp, 10, SpringLayout.EAST, proxyLabelSecure);
-    layout.putConstraint(SpringLayout.NORTH, proxyHostFtp, 7, SpringLayout.SOUTH, proxyHostSecure);
-    layout.putConstraint(SpringLayout.NORTH, proxyPortFtp, 0, SpringLayout.NORTH, proxyHostFtp);
-    layout.putConstraint(SpringLayout.WEST, proxyPortFtp, 0, SpringLayout.WEST, lblPort);
-
-    layout.putConstraint(SpringLayout.WEST, proxyLabelSocks, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.NORTH, proxyLabelSocks, 7, SpringLayout.SOUTH, proxyHostFtp);
-    layout.putConstraint(
-        SpringLayout.WEST, proxyHostSocks, 10, SpringLayout.EAST, proxyLabelSecure);
-    layout.putConstraint(SpringLayout.NORTH, proxyHostSocks, 7, SpringLayout.SOUTH, proxyHostFtp);
-    layout.putConstraint(SpringLayout.NORTH, proxyPortSocks, 0, SpringLayout.NORTH, proxyHostSocks);
-    layout.putConstraint(SpringLayout.WEST, proxyPortSocks, 0, SpringLayout.WEST, lblPort);
-
-    layout.putConstraint(SpringLayout.WEST, proxyLabelExceptions, 40, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyLabelExceptions, 15, SpringLayout.SOUTH, proxyHostSocks);
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyExceptions, 15, SpringLayout.SOUTH, proxyHostSocks);
-
-    layout.putConstraint(
-        SpringLayout.NORTH, proxyAuthCheckBox, 15, SpringLayout.SOUTH, proxyExceptions);
-    layout.putConstraint(SpringLayout.WEST, proxyAuthCheckBox, 40, SpringLayout.WEST, dataPanel);
-
-    layout.putConstraint(SpringLayout.WEST, userLabel, 60, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.NORTH, userLabel, 5, SpringLayout.SOUTH, proxyAuthCheckBox);
-    layout.putConstraint(SpringLayout.NORTH, proxyUser, 5, SpringLayout.SOUTH, proxyAuthCheckBox);
-    layout.putConstraint(SpringLayout.WEST, proxyUser, 3, SpringLayout.EAST, userLabel);
-    layout.putConstraint(SpringLayout.NORTH, passLabel, 7, SpringLayout.SOUTH, proxyUser);
-    layout.putConstraint(SpringLayout.WEST, passLabel, 60, SpringLayout.WEST, dataPanel);
-    layout.putConstraint(SpringLayout.WEST, proxyPass, 3, SpringLayout.EAST, userLabel);
-    layout.putConstraint(SpringLayout.NORTH, proxyPass, 0, SpringLayout.NORTH, passLabel);
-
-    dataPanel.setLayout(layout);
-
+    dataPanel.add(GuiUtils.getBoxYLastElement(5));
     return dataPanel;
   }
 
   public void proxyConnectionAction(boolean enable) {
-    lblType.setEnabled(enable);
     lblAddress.setEnabled(enable);
     lblPort.setEnabled(enable);
     proxyLabelHttp.setEnabled(enable);

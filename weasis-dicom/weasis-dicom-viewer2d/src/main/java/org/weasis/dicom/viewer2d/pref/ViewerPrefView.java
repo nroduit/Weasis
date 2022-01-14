@@ -10,20 +10,19 @@
 package org.weasis.dicom.viewer2d.pref;
 
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.event.ItemEvent;
+import java.util.HashMap;
 import java.util.Hashtable;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
+import java.util.List;
+import java.util.Map;
+import java.util.Vector;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.border.EmptyBorder;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -34,6 +33,7 @@ import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerPlugin;
+import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.EventManager;
@@ -44,251 +44,109 @@ import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
   private final Hashtable<Integer, JLabel> labels = new Hashtable<>();
-  private JSlider sliderWindow;
-  private JSlider sliderLevel;
-  private JSlider sliderZoom;
-  private JSlider sliderRotation;
-  private JSlider sliderScroll;
+  private final List<ActionW> actions =
+      List.of(ActionW.WINDOW, ActionW.LEVEL, ActionW.ZOOM, ActionW.ROTATION, ActionW.SCROLL_SERIES);
+  private final Map<ActionW, Integer> map = new HashMap<>();
+  private final JComboBox<ActionW> comboBox = new JComboBox<>();
+  private final JSlider slider = new JSlider(-100, 100, 0);
   private JComboBox<String> comboBoxInterpolation;
   private JCheckBox checkBoxWLcolor;
   private JCheckBox checkBoxLevelInverse;
   private JCheckBox checkBoxApplyPR;
 
   public ViewerPrefView() {
-    super(View2dFactory.NAME);
-    setComponentPosition(505);
+    super(View2dFactory.NAME, 501);
     initGUI();
   }
 
   private void initGUI() {
-    setBorder(new EmptyBorder(15, 10, 10, 10));
     labels.put(-100, new JLabel(Messages.getString("ViewerPrefView.low")));
     labels.put(0, new JLabel(Messages.getString("ViewerPrefView.mid")));
     labels.put(100, new JLabel(Messages.getString("ViewerPrefView.high")));
-    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 
-    JPanel panel = new JPanel();
+    EventManager eventManager = EventManager.getInstance();
+    formatSlider(slider);
+
+    for (ActionW a : actions) {
+      if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
+        map.put(a, realValueToSlider(action.getMouseSensivity()));
+      }
+    }
+
+    comboBox.setModel(new DefaultComboBoxModel<>(new Vector<>(actions)));
+    comboBox.addItemListener(
+        e -> {
+          if (e.getStateChange() == ItemEvent.SELECTED) {
+            Object item = e.getItem();
+            if (item instanceof ActionW a) {
+              slider.setValue(map.get(a));
+            }
+          }
+        });
+    slider.setValue(map.get(actions.get(0)));
+    slider.addChangeListener(
+        e -> {
+          Object item = comboBox.getSelectedItem();
+          if (item instanceof ActionW a) {
+            map.put(a, slider.getValue());
+          }
+        });
+
+    JPanel panel = GuiUtils.getVerticalBoxPanel();
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.mouse_sens")));
+    panel.add(GuiUtils.getComponentsInJPanel(comboBox));
+    panel.add(
+        GuiUtils.getHorizontalBoxPanel(
+            GuiUtils.createHorizontalStrut(5), slider, GuiUtils.createHorizontalStrut(5)));
+    panel.add(GuiUtils.createVerticalStrut(5));
     add(panel);
-    GridBagLayout gblpanel = new GridBagLayout();
-    gblpanel.columnWidths = new int[] {0, 0};
-    gblpanel.rowHeights = new int[] {0, 0, 0, 0, 0, 0};
-    gblpanel.columnWeights = new double[] {0.0, 1.0};
-    gblpanel.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 1.0};
-    panel.setLayout(gblpanel);
-
-    JPanel panel1 = new JPanel();
-    ((FlowLayout) panel1.getLayout()).setAlignment(FlowLayout.LEADING);
-    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
-    add(panel1);
+    add(GuiUtils.createVerticalStrut(15));
 
     JLabel lblInterpolation =
         new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
-    panel1.add(lblInterpolation);
-    EventManager eventManager = EventManager.getInstance();
-
     comboBoxInterpolation = new JComboBox<>(ZoomOp.INTERPOLATIONS);
     comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
-    panel1.add(comboBoxInterpolation);
 
-    final JPanel winLevelPanel = new JPanel();
-    winLevelPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
-    add(winLevelPanel);
-    GridBagLayout gblwinLevelPanel = new GridBagLayout();
-    gblwinLevelPanel.columnWeights = new double[] {0.0};
-    gblwinLevelPanel.rowWeights = new double[] {0.0, 0.0};
-    winLevelPanel.setLayout(gblwinLevelPanel);
+    JPanel panel1 =
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.LEADING, 3, 5, lblInterpolation, comboBoxInterpolation);
+    panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
+    add(panel1);
+    add(GuiUtils.createVerticalStrut(15));
 
     checkBoxWLcolor =
         new JCheckBox(
             Messages.getString("ViewerPrefView.wl_color"),
             eventManager.getOptions().getBooleanProperty(WindowOp.P_APPLY_WL_COLOR, true));
-    GridBagConstraints gbccheckBoxWLcolor = new GridBagConstraints();
-    gbccheckBoxWLcolor.anchor = GridBagConstraints.WEST;
-    gbccheckBoxWLcolor.gridx = 0;
-    gbccheckBoxWLcolor.gridy = 0;
-    winLevelPanel.add(checkBoxWLcolor, gbccheckBoxWLcolor);
-
     checkBoxLevelInverse =
         new JCheckBox(
             Messages.getString("ViewerPrefView.inverse_wl"),
             eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
-    GridBagConstraints gbccheckBoxLevelInverse = new GridBagConstraints();
-    gbccheckBoxLevelInverse.anchor = GridBagConstraints.WEST;
-    gbccheckBoxLevelInverse.gridx = 0;
-    gbccheckBoxLevelInverse.gridy = 1;
-    winLevelPanel.add(checkBoxLevelInverse, gbccheckBoxLevelInverse);
-
     checkBoxApplyPR =
         new JCheckBox(
             Messages.getString("ViewerPrefView.apply_pr"),
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
-    GridBagConstraints gbccheckBoxapplyPR = new GridBagConstraints();
-    gbccheckBoxapplyPR.insets = new Insets(0, 0, 5, 0);
-    gbccheckBoxapplyPR.weightx = 1.0;
-    gbccheckBoxapplyPR.anchor = GridBagConstraints.WEST;
-    gbccheckBoxapplyPR.gridx = 0;
-    gbccheckBoxapplyPR.gridy = 2;
-    winLevelPanel.add(checkBoxApplyPR, gbccheckBoxapplyPR);
 
-    JPanel panel2 = new JPanel();
-    FlowLayout flowLayout1 = (FlowLayout) panel2.getLayout();
-    flowLayout1.setHgap(10);
-    flowLayout1.setAlignment(FlowLayout.RIGHT);
-    flowLayout1.setVgap(7);
-    add(panel2);
+    final JPanel winLevelPanel = GuiUtils.getVerticalBoxPanel();
+    winLevelPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
+    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxWLcolor));
+    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxLevelInverse));
+    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxApplyPR));
+    add(winLevelPanel);
 
-    JButton btnNewButton = new JButton(org.weasis.core.ui.Messages.getString("restore.values"));
-    panel2.add(btnNewButton);
-    btnNewButton.addActionListener(e -> resetToDefaultValues());
-
-    ActionState winAction = eventManager.getAction(ActionW.WINDOW);
-    if (winAction instanceof MouseActionAdapter) {
-      JLabel lblWindow = new JLabel(Messages.getString("ViewerPrefView.win"));
-      GridBagConstraints gbclblWindow = new GridBagConstraints();
-      gbclblWindow.anchor = GridBagConstraints.NORTHEAST;
-      gbclblWindow.insets = new Insets(5, 0, 0, 0);
-      gbclblWindow.gridx = 0;
-      gbclblWindow.gridy = 0;
-      panel.add(lblWindow, gbclblWindow);
-
-      sliderWindow =
-          new JSlider(
-              -100, 100, realValueToslider(((MouseActionAdapter) winAction).getMouseSensivity()));
-      GridBagConstraints gbcslider = new GridBagConstraints();
-      gbcslider.fill = GridBagConstraints.HORIZONTAL;
-      gbcslider.anchor = GridBagConstraints.WEST;
-      gbcslider.insets = new Insets(5, 2, 0, 0);
-      gbcslider.gridx = 1;
-      gbcslider.gridy = 0;
-      formatSlider(sliderWindow);
-      panel.add(sliderWindow, gbcslider);
-    }
-
-    ActionState levelAction = eventManager.getAction(ActionW.LEVEL);
-    if (levelAction instanceof MouseActionAdapter) {
-      JLabel lblLevel = new JLabel(Messages.getString("ViewerPrefView.level"));
-      GridBagConstraints gbclblLevel = new GridBagConstraints();
-      gbclblLevel.anchor = GridBagConstraints.NORTHEAST;
-      gbclblLevel.insets = new Insets(5, 15, 0, 0);
-      gbclblLevel.gridx = 0;
-      gbclblLevel.gridy = 1;
-      panel.add(lblLevel, gbclblLevel);
-
-      sliderLevel =
-          new JSlider(
-              -100, 100, realValueToslider(((MouseActionAdapter) levelAction).getMouseSensivity()));
-      GridBagConstraints gbcslider2 = new GridBagConstraints();
-      gbcslider2.fill = GridBagConstraints.HORIZONTAL;
-      gbcslider2.anchor = GridBagConstraints.WEST;
-      gbcslider2.insets = new Insets(5, 2, 0, 0);
-      gbcslider2.gridx = 1;
-      gbcslider2.gridy = 1;
-      formatSlider(sliderLevel);
-      panel.add(sliderLevel, gbcslider2);
-    }
-
-    ActionState zoomlAction = eventManager.getAction(ActionW.ZOOM);
-    if (zoomlAction instanceof MouseActionAdapter) {
-      JLabel lblZoom = new JLabel(Messages.getString("ViewerPrefView.zoom"));
-      GridBagConstraints gbclblZoom = new GridBagConstraints();
-      gbclblZoom.anchor = GridBagConstraints.NORTHEAST;
-      gbclblZoom.insets = new Insets(5, 0, 0, 0);
-      gbclblZoom.gridx = 0;
-      gbclblZoom.gridy = 2;
-      panel.add(lblZoom, gbclblZoom);
-
-      sliderZoom =
-          new JSlider(
-              -100, 100, realValueToslider(((MouseActionAdapter) zoomlAction).getMouseSensivity()));
-      GridBagConstraints gbcslider = new GridBagConstraints();
-      gbcslider.fill = GridBagConstraints.HORIZONTAL;
-      gbcslider.anchor = GridBagConstraints.WEST;
-      gbcslider.insets = new Insets(5, 2, 0, 0);
-      gbcslider.gridx = 1;
-      gbcslider.gridy = 2;
-      formatSlider(sliderZoom);
-      panel.add(sliderZoom, gbcslider);
-    }
-
-    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-    if (rotateAction instanceof MouseActionAdapter) {
-      JLabel lblRotation = new JLabel(Messages.getString("ResetTools.rotation"));
-      GridBagConstraints gbclblRotation = new GridBagConstraints();
-      gbclblRotation.anchor = GridBagConstraints.NORTHEAST;
-      gbclblRotation.insets = new Insets(5, 15, 0, 0);
-      gbclblRotation.gridx = 0;
-      gbclblRotation.gridy = 3;
-      panel.add(lblRotation, gbclblRotation);
-
-      sliderRotation =
-          new JSlider(
-              -100,
-              100,
-              realValueToslider(((MouseActionAdapter) rotateAction).getMouseSensivity()));
-      GridBagConstraints gbcslider3 = new GridBagConstraints();
-      gbcslider3.fill = GridBagConstraints.HORIZONTAL;
-      gbcslider3.anchor = GridBagConstraints.WEST;
-      gbcslider3.insets = new Insets(5, 2, 0, 0);
-      gbcslider3.gridx = 1;
-      gbcslider3.gridy = 3;
-      formatSlider(sliderRotation);
-      panel.add(sliderRotation, gbcslider3);
-    }
-
-    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-    if (seqAction instanceof MouseActionAdapter) {
-      JLabel lblImageScroll = new JLabel(Messages.getString("ViewerPrefView.scrool"));
-      GridBagConstraints gbclblImageScroll = new GridBagConstraints();
-      gbclblImageScroll.anchor = GridBagConstraints.NORTHEAST;
-      gbclblImageScroll.insets = new Insets(5, 0, 5, 5);
-      gbclblImageScroll.gridx = 0;
-      gbclblImageScroll.gridy = 4;
-      panel.add(lblImageScroll, gbclblImageScroll);
-
-      sliderScroll =
-          new JSlider(
-              -100, 100, realValueToslider(((MouseActionAdapter) seqAction).getMouseSensivity()));
-      GridBagConstraints gbcslider1 = new GridBagConstraints();
-      gbcslider1.fill = GridBagConstraints.HORIZONTAL;
-      gbcslider1.anchor = GridBagConstraints.WEST;
-      gbcslider1.insets = new Insets(5, 2, 5, 0);
-      gbcslider1.gridx = 1;
-      gbcslider1.gridy = 4;
-      formatSlider(sliderScroll);
-      panel.add(sliderScroll, gbcslider1);
-    }
+    add(GuiUtils.getBoxYLastElement(5));
+    getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 
   @Override
   public void closeAdditionalWindow() {
     EventManager eventManager = EventManager.getInstance();
+    for (ActionW a : actions) {
+      if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
+        action.setMouseSensivity(sliderToRealValue(map.get(a)));
+      }
+    }
 
-    ActionState winAction = eventManager.getAction(ActionW.WINDOW);
-    if (winAction instanceof MouseActionAdapter) {
-      ((MouseActionAdapter) winAction)
-          .setMouseSensivity(sliderToRealValue(sliderWindow.getValue()));
-    }
-    ActionState levelAction = eventManager.getAction(ActionW.LEVEL);
-    if (levelAction instanceof MouseActionAdapter) {
-      ((MouseActionAdapter) levelAction)
-          .setMouseSensivity(sliderToRealValue(sliderLevel.getValue()));
-    }
-    ActionState zoomlAction = eventManager.getAction(ActionW.ZOOM);
-    if (zoomlAction instanceof MouseActionAdapter) {
-      ((MouseActionAdapter) zoomlAction)
-          .setMouseSensivity(sliderToRealValue(sliderZoom.getValue()));
-    }
-    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-    if (rotateAction instanceof MouseActionAdapter) {
-      ((MouseActionAdapter) rotateAction)
-          .setMouseSensivity(sliderToRealValue(sliderRotation.getValue()));
-    }
-    ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-    if (seqAction instanceof MouseActionAdapter) {
-      ((MouseActionAdapter) seqAction)
-          .setMouseSensivity(sliderToRealValue(sliderScroll.getValue()));
-    }
     int interpolation = comboBoxInterpolation.getSelectedIndex();
     eventManager.getZoomSetting().setInterpolation(interpolation);
     boolean applyWLcolor = checkBoxWLcolor.isSelected();
@@ -305,8 +163,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     synchronized (UIManager.VIEWER_PLUGINS) {
       for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-        if (p instanceof View2dContainer) {
-          View2dContainer viewer = (View2dContainer) p;
+        if (p instanceof View2dContainer viewer) {
           for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
             OpManager disOp = v.getDisplayOpManager();
             disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
@@ -319,11 +176,13 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    sliderWindow.setValue(realValueToslider(1.25));
-    sliderLevel.setValue(realValueToslider(1.25));
-    sliderScroll.setValue(realValueToslider(0.1));
-    sliderRotation.setValue(realValueToslider(0.25));
-    sliderZoom.setValue(realValueToslider(0.1));
+    map.put(ActionW.WINDOW, realValueToSlider(1.25));
+    map.put(ActionW.LEVEL, realValueToSlider(1.25));
+    map.put(ActionW.SCROLL_SERIES, realValueToSlider(0.1));
+    map.put(ActionW.ROTATION, realValueToSlider(0.25));
+    map.put(ActionW.ZOOM, realValueToSlider(0.1));
+    slider.setValue(map.get(comboBox.getSelectedItem()));
+
     comboBoxInterpolation.setSelectedIndex(1);
 
     // Get the default server configuration and if no value take the default value in parameter.
@@ -350,7 +209,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     return Math.pow(10, value * 3.0 / 100.0);
   }
 
-  private static int realValueToslider(double value) {
+  private static int realValueToSlider(double value) {
     return (int) (Math.log10(value) * 100.0 / 3.0);
   }
 }
