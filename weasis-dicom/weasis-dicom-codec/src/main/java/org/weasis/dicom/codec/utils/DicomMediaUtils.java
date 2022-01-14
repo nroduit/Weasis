@@ -567,19 +567,6 @@ public class DicomMediaUtils {
     tagable.setTagNoNull(TagW.ShutterRGBColor, DicomObjectUtil.getShutterColor(dcmObject));
   }
 
-  private static boolean isPolygonValid(Polygon polygon) {
-    int[] xPoints = polygon.xpoints;
-    int[] yPoints = polygon.ypoints;
-    double area = 0;
-    for (int i = 0; i < polygon.npoints; i++) {
-      area += (xPoints[i] * yPoints[i + 1]) - (xPoints[i + 1] * yPoints[i]);
-      if (area > 0) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static void writeFunctionalGroupsSequence(Tagable tagable, Attributes dcm) {
     if (dcm != null && tagable != null) {
       /** @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.1 Pixel Measures Macro */

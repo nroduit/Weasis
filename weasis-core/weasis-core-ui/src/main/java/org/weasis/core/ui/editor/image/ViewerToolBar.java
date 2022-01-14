@@ -10,6 +10,8 @@
 package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
@@ -383,8 +385,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private static Icon buildSynchIcon(SynchView synch) {
-    final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH);
-    final Icon smallIcon = synch.getIcon();
+    final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
+    final FlatSVGIcon smallIcon = synch.getIcon(new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
         new Icon() {
 

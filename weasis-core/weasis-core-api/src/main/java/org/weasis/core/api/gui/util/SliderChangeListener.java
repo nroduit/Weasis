@@ -13,12 +13,14 @@ import java.awt.Font;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.util.Dictionary;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import javax.swing.BorderFactory;
 import javax.swing.BoundedRangeModel;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultBoundedRangeModel;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
@@ -436,11 +438,14 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   }
 
   public static void setFont(JSlider jslider, Font font) {
-    Enumeration<?> enumVal = jslider.getLabelTable().elements();
-    while (enumVal.hasMoreElements()) {
-      Object el = enumVal.nextElement();
-      if (el instanceof JLabel) {
-        ((JLabel) el).setFont(font);
+    Dictionary labelTable = jslider.getLabelTable();
+    if (labelTable == null) {
+      return;
+    }
+    Enumeration<?> labels = labelTable.keys();
+    while ( labels.hasMoreElements() ) {
+      if ( labelTable.get(labels.nextElement()) instanceof JLabel label) {
+        label.setFont(font);
       }
     }
   }

@@ -17,6 +17,7 @@ import javax.swing.JLabel;
 import javax.swing.JSlider;
 import javax.swing.event.ChangeListener;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.util.StringUtil;
 
@@ -29,12 +30,12 @@ public abstract class AbstractSliderComponent extends AbstractComponent {
     this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
     slider = new JSlider(getMin(), getMax(), getDefaultValue());
-    slider.setFont(FontTools.getMiniFont());
     slider.setMajorTickSpacing(getMax());
     slider.setPaintTicks(true);
     slider.setLabelTable(getLabels());
     slider.setPaintLabels(true);
     slider.setBorder(borderTitle);
+    SliderChangeListener.setFont(slider, FontTools.getMiniFont());
     add(slider);
   }
 

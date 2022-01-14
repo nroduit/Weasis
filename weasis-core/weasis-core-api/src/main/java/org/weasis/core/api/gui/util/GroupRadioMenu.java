@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -44,8 +45,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     for (int i = 0; i < dataModel.getSize(); i++) {
       Object object = dataModel.getElementAt(i);
       Icon icon = null;
-      if (object instanceof GUIEntry) {
-        icon = ((GUIEntry) object).getIcon();
+      if (object instanceof GUIEntry entry) {
+        icon = entry.getIcon();
       }
       RadioMenuItem radioMenuItem = new RadioMenuItem(object.toString(), icon, object);
       radioMenuItem.setSelected(object == selectedItem);

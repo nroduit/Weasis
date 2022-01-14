@@ -117,7 +117,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
             "MPR synch", // NON-NLS
             "mpr", // NON-NLS
             SynchData.Mode.STACK,
-            ResourceUtil.getIcon(ActionIcon.TILE),
+            ActionIcon.TILE,
             actions);
 
     SYNCH_LIST.add(DEFAULT_MPR);

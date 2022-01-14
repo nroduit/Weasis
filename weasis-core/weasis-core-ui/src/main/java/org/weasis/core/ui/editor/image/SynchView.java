@@ -10,6 +10,8 @@
 package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 import org.weasis.core.api.gui.util.ActionW;
@@ -25,7 +27,7 @@ public class SynchView implements GUIEntry {
           Messages.getString("SynchView.none"),
           "None", // NON-NLS
           Mode.NONE,
-          ResourceUtil.getIcon(ActionIcon.NONE),
+          ActionIcon.NONE,
           new HashMap<>());
   public static final SynchView DEFAULT_TILE;
   public static final SynchView DEFAULT_STACK;
@@ -52,7 +54,7 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_t"),
             "Tile", // NON-NLS
             Mode.TILE,
-            ResourceUtil.getIcon(ActionIcon.TILE),
+            ActionIcon.TILE,
             actions);
 
     actions = new HashMap<>();
@@ -67,17 +69,18 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_s"),
             "Stack", // NON-NLS
             Mode.STACK,
-            ResourceUtil.getIcon(ActionIcon.SEQUENCE),
+            ActionIcon.SEQUENCE,
             actions);
   }
 
   private final String name;
   private final String command;
-  private final FlatSVGIcon icon;
+  private final FlatSVGIcon svgIcon;
+  private final ActionIcon icon;
   private final SynchData synchData;
 
   public SynchView(
-      String name, String command, Mode mode, FlatSVGIcon icon, Map<String, Boolean> actions) {
+      String name, String command, Mode mode, ActionIcon icon, Map<String, Boolean> actions) {
     if (name == null) {
       throw new IllegalArgumentException("A parameter is null!");
     }
@@ -85,6 +88,7 @@ public class SynchView implements GUIEntry {
     this.name = name;
     this.command = command;
     this.icon = icon;
+    this.svgIcon = ResourceUtil.getIcon(icon);
   }
 
   public String getName() {
@@ -111,7 +115,13 @@ public class SynchView implements GUIEntry {
 
   @Override
   public FlatSVGIcon getIcon() {
-    return icon;
+    return svgIcon;
+  }
+
+  public FlatSVGIcon getIcon(ColorFilter filter) {
+    FlatSVGIcon filteredIcon = ResourceUtil.getIcon(icon);
+    filteredIcon.setColorFilter(filter);
+    return filteredIcon;
   }
 
   @Override
