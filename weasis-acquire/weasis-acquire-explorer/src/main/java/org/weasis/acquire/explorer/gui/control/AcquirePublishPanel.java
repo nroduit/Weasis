@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
-import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public class AcquirePublishPanel extends JPanel {
           GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
         });
 
-    publishBtn.setPreferredSize(new Dimension(150, 40));
+    publishBtn.setPreferredSize(GuiUtils.getDimension(150, 40));
 
     add(publishBtn);
     add(progressBar);
@@ -87,8 +86,7 @@ public class AcquirePublishPanel extends JPanel {
     if (destinationNode instanceof DefaultDicomNode) {
       DicomNode destNdde = ((DefaultDicomNode) destinationNode).getDicomNode();
       publishDicomTask = publishDicomDimse(exportDirDicom, destNdde);
-    } else if (destinationNode instanceof DicomWebNode) {
-      final DicomWebNode node = (DicomWebNode) destinationNode;
+    } else if (destinationNode instanceof final DicomWebNode node) {
       publishDicomTask = publishStow(exportDirDicom, node, toPublish);
     }
 

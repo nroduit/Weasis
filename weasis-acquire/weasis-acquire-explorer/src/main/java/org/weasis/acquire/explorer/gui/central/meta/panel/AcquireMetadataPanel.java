@@ -12,21 +12,24 @@ package org.weasis.acquire.explorer.gui.central.meta.panel;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.tableeditors.DateTableEditor;
 import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
@@ -38,12 +41,15 @@ import org.dcm4che3.data.Tag;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.CalendarUtil;
+import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
@@ -52,32 +58,26 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   protected final String title;
   protected final JLabel label = new JLabel();
   protected final JTable table;
-  protected final JScrollPane tableScroll;
   protected AcquireImageInfo imageInfo;
   protected TitledBorder titleBorder;
+  protected static final Font font = FontTools.getSmallFont();
 
   public AcquireMetadataPanel(String title) {
-    setLayout(new BorderLayout());
     this.title = title;
     this.titleBorder = GuiUtils.getTitledBorder(getDisplayText());
-    setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(7, 3, 0, 3), titleBorder));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setBorder(titleBorder);
 
-    tableScroll = new JScrollPane();
-    tableScroll.setBorder(BorderFactory.createEmptyBorder(7, 3, 0, 3));
-    table = new JTable();
+    this.table = new JTable();
     // Force committing value when losing the focus
     table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-    table.setFont(FontTools.getFont11()); // Default size
+    table.setFont(font);
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowHorizontalLines(true);
     table.setShowVerticalLines(true);
+    table.setIntercellSpacing(new Dimension(2, 2));
     updateTable();
-
     setMetaVisible(false);
-
-    add(tableScroll, BorderLayout.CENTER);
   }
 
   public abstract AcquireMetadataTableModel newTableModel();
@@ -93,11 +93,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
   }
 
-  @Override
-  public Font getFont() {
-    return FontTools.getBoldFont();
-  }
-
   public void setImageInfo(AcquireImageInfo imageInfo) {
     this.imageInfo = imageInfo;
     this.titleBorder.setTitle(getDisplayText());
@@ -106,7 +101,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   }
 
   public void setMetaVisible(boolean visible) {
-    tableScroll.setVisible(visible);
+    setVisible(visible);
   }
 
   public void update() {
@@ -119,25 +114,15 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   }
 
   public void updateTable() {
+    removeAll();
     AcquireMetadataTableModel model = newTableModel();
     model.addTableModelListener(this);
     table.setModel(model);
     table.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
     table.getColumnModel().getColumn(1).setCellEditor(new AcquireImageCellEditor());
-    int height = Optional.ofNullable(table.getFont()).map(f -> f.getSize() + 10).orElse(24);
-    for (int i = 0; i < table.getRowCount(); i++) {
-      table.setRowHeight(i, height);
-    }
-
-    JPanel tableContainer = new JPanel(new BorderLayout());
-    int cheight =
-        (height + table.getRowMargin()) * table.getRowCount()
-            + table.getRowHeight()
-            + table.getRowMargin();
-    tableContainer.setPreferredSize(new Dimension(150, cheight));
-    tableContainer.add(table.getTableHeader(), BorderLayout.PAGE_START);
-    tableContainer.add(table, BorderLayout.CENTER);
-    tableScroll.setViewportView(tableContainer);
+    TableColumnAdjuster.pack(table);
+    add(table.getTableHeader());
+    add(table);
   }
 
   @Override
@@ -147,10 +132,6 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
   public static class TagRenderer extends DefaultTableCellRenderer {
 
-    public TagRenderer() {
-      setFont(FontTools.getFont11()); // Default size
-    }
-
     @Override
     public Component getTableCellRendererComponent(
         JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -159,13 +140,16 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
       AcquireMetadataTableModel model = (AcquireMetadataTableModel) table.getModel();
       if (model.isCellEditable(row, column)) {
-        Color c = model.isValueRequired(row) && isEmptyValue(value) ? Color.RED : getForeground();
+        Color c =
+            model.isValueRequired(row) && isEmptyValue(value)
+                ? IconColor.ACTIONS_RED.getColor()
+                : getForeground();
         setBorder(BorderFactory.createDashedBorder(c, 2, 2));
       }
 
       Object tag = model.getValueAt(row, 0);
-      if (tag instanceof TagW) {
-        setValue(((TagW) tag).getFormattedTagValue(value, null));
+      if (tag instanceof TagW tagW) {
+        setValue(tagW.getFormattedTagValue(value, null));
       }
       return val;
     }
@@ -174,18 +158,15 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       if (value == null) {
         return true;
       }
-      if (value instanceof String) {
-        return !StringUtil.hasText((String) value);
+      if (value instanceof String s) {
+        return !StringUtil.hasText(s);
       }
       return false;
     }
   }
 
   public static class AcquireImageCellEditor extends AbstractCellEditor implements TableCellEditor {
-    // TODO more anatomy:
-    // http://dicom.nema.org/medical/dicom/2016c/output/chtml/part03/sect_10.5.html
-    private static final JComboBox<String> bodyPartsCombo =
-        new JComboBox<>(getBodyPartValues("weasis.acquire.meta.body.part"));
+    private static final JComboBox<String> bodyPartsCombo = new JComboBox<>(getBodyPartValues());
     private static final JComboBox<TagD.Sex> sexCombo = new JComboBox<>(TagD.Sex.values());
     private static final JComboBox<Modality> modalityCombo =
         new JComboBox<>(Modality.getAllModalitiesExceptDefault());
@@ -210,10 +191,10 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
 
     private Object convertValue(Object val) {
-      if (val instanceof TagD.Sex) {
-        return ((TagD.Sex) val).getValue();
-      } else if (val instanceof Modality) {
-        return ((Modality) val).name();
+      if (val instanceof TagD.Sex sex) {
+        return sex.getValue();
+      } else if (val instanceof Modality modality) {
+        return modality.name();
       }
       return val;
     }
@@ -226,9 +207,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       int tagID = 0;
       boolean date = false;
       boolean time = false;
-      if (tag instanceof TagW) {
-        tagID = ((TagW) tag).getId();
-        TagType type = ((TagW) tag).getType();
+      if (tag instanceof TagW tagW) {
+        tagID = tagW.getId();
+        TagType type = tagW.getType();
         date = TagType.DICOM_DATE == type || TagType.DATE == type;
         time = TagType.DICOM_TIME == type || TagType.TIME == type;
       }
@@ -249,9 +230,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         cellEditor = teditor;
       } else if (time) {
         TimeTableEditor teditor = new TimeTableEditor(false, true, true);
-        teditor.getTimePickerSettings().fontInvalidTime = FontTools.getFont11(); // Default size
-        teditor.getTimePickerSettings().fontValidTime = FontTools.getFont11(); // Default size
-        teditor.getTimePickerSettings().fontVetoedTime = FontTools.getFont11(); // Default size
+        teditor.getTimePickerSettings().fontInvalidTime = font;
+        teditor.getTimePickerSettings().fontValidTime = font;
+        teditor.getTimePickerSettings().fontVetoedTime = font;
         GuiUtils.setPreferredHeight(
             teditor.getTimePicker().getComponentToggleTimeMenuButton(), table.getRowHeight(row));
         cellEditor = teditor;
@@ -260,7 +241,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       }
       editor = Optional.of(cellEditor);
       Component c = cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
-      c.setFont(FontTools.getFont11()); // Default size
+      c.setFont(font);
       return c;
     }
 
@@ -274,7 +255,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
 
     private static void initCombo(JComboBox<?> combo) {
       // Set before tooltip, otherwise update UI => remove selection listener
-      combo.setFont(FontTools.getFont11());
+      combo.setFont(AcquireMetadataPanel.font);
       combo.setMaximumRowCount(15);
       GuiUtils.setPreferredWidth(combo, 80);
       GuiUtils.addTooltipToComboList(combo);
@@ -283,9 +264,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     private DateTableEditor buildDatePicker() {
       DateTableEditor d = new DateTableEditor(false, true, true);
       DatePickerSettings settings = d.getDatePickerSettings();
-      settings.setFontInvalidDate(FontTools.getFont11());
-      settings.setFontValidDate(FontTools.getFont11());
-      settings.setFontVetoedDate(FontTools.getFont11());
+      settings.setFontInvalidDate(font);
+      settings.setFontValidDate(font);
+      settings.setFontVetoedDate(font);
 
       CalendarUtil.adaptCalendarColors(settings);
 
@@ -297,136 +278,20 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       return d;
     }
 
-    public static String[] getBodyPartValues(String property) {
-      String values = BundleTools.SYSTEM_PREFERENCES.getProperty(property, null);
-      if (!StringUtil.hasText(values)) {
-        return new String[] {
-          "ABDOMEN",
-          "ABDOMENPELVIS",
-          "ADRENAL",
-          "ANKLE",
-          "AORTA",
-          "ARM",
-          "AXILLA",
-          "BACK", // NON-NLS
-          "BLADDER",
-          "BRAIN",
-          "BREAST",
-          "BRONCHUS",
-          "BUTTOCK",
-          "CALCANEUS",
-          "CALF",
-          "CAROTID",
-          "CEREBELLUM", // NON-NLS
-          "CERVIX",
-          "CHEEK",
-          "CHEST",
-          "CHESTABDOMEN",
-          "CHESTABDPELVIS",
-          "CIRCLEOFWILLIS",
-          "CLAVICLE", // NON-NLS
-          "COCCYX",
-          "COLON",
-          "CORNEA",
-          "CORONARYARTERY",
-          "CSPINE",
-          "CTSPINE",
-          "DUODENUM",
-          "EAR",
-          "ELBOW", // NON-NLS
-          "ESOPHAGUS",
-          "EXTREMITY",
-          "EYE",
-          "EYELID",
-          "FACE",
-          "FEMUR",
-          "FINGER",
-          "FOOT",
-          "GALLBLADDER",
-          "HAND", // NON-NLS
-          "HEAD",
-          "HEADNECK",
-          "HEART",
-          "HIP",
-          "HUMERUS",
-          "IAC",
-          "ILEUM",
-          "ILIUM",
-          "JAW",
-          "JEJUNUM",
-          "KIDNEY", // NON-NLS
-          "KNEE",
-          "LARYNX",
-          "LEG",
-          "LIVER",
-          "LSPINE",
-          "LSSPINE",
-          "LUNG",
-          "MAXILLA",
-          "MEDIASTINUM",
-          "MOUTH", // NON-NLS
-          "NECK",
-          "NECKCHEST",
-          "NECKCHESTABDOMEN",
-          "NECKCHESTABDPELV",
-          "NOSE",
-          "ORBIT",
-          "OVARY",
-          "PANCREAS", // NON-NLS
-          "PAROTID",
-          "PATELLA",
-          "PELVIS",
-          "PENIS",
-          "PHARYNX",
-          "PROSTATE",
-          "RADIUS",
-          "RADIUSULNA",
-          "RECTUM", // NON-NLS
-          "RIB",
-          "SCALP",
-          "SCAPULA",
-          "SCLERA",
-          "SCROTUM",
-          "SHOULDER",
-          "SKULL",
-          "SPINE",
-          "SPLEEN",
-          "SSPINE", // NON-NLS
-          "STERNUM",
-          "STOMACH",
-          "SUBMANDIBULAR",
-          "TESTIS",
-          "THIGH",
-          "THUMB",
-          "THYMUS",
-          "THYROID",
-          "TIBIA", // NON-NLS
-          "TIBIAFIBULA",
-          "TLSPINE",
-          "TMJ",
-          "TOE",
-          "TONGUE",
-          "TRACHEA",
-          "TSPINE",
-          "ULNA",
-          "URETER",
-          "URETHRA", // NON-NLS
-          "UTERUS",
-          "VAGINA",
-          "VULVA",
-          "WHOLEBODY",
-          "WRIST",
-          "ZYGOMA"
-        }; // NON-NLS
-      }
-      String[] val = values.split(",");
-      List<String> list = new ArrayList<>(val.length);
-      for (String s : val) {
-        String v = s.trim();
-        // VR must be CS
-        if (StringUtil.hasText(v) && v.length() <= 16) {
-          list.add(v);
+    public static String[] getBodyPartValues() {
+      // https://dicom.nema.org/medical/dicom/current/output/chtml/part16/chapter_L.html
+      List<String> list = new ArrayList<>();
+      try (BufferedReader br =
+          Files.newBufferedReader(ResourceUtil.getResource(Path.of("bodyPartExamined.csv")))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+          String[] columns = line.split(",");
+          if (columns.length > 2 && StringUtil.hasText(columns[2]) && columns[2].length() <= 16) {
+            list.add(columns[2]);
+          }
         }
+      } catch (IOException ex) {
+        ex.printStackTrace();
       }
       return list.toArray(new String[0]);
     }

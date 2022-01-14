@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -42,19 +41,16 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   private final JLabel fileLabel = new JLabel();
 
   public DicomZipImport() {
-    super(Messages.getString("DicomZipImport.title"));
-    setComponentPosition(3);
+    super(Messages.getString("DicomZipImport.title"), 3);
     initGUI();
-    initialize(true);
   }
 
   public void initGUI() {
-    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomZipImport.title")));
-    setLayout(new FlowLayout(FlowLayout.LEFT));
     JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
     btnOpen.addActionListener(e -> browseImgFile());
-    add(btnOpen);
-    add(fileLabel);
+    add(GuiUtils.getComponentsInJPanel(btnOpen, fileLabel));
+
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {
@@ -73,25 +69,9 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
   }
 
-  protected void initialize(boolean afirst) {
-    // Do nothing
-  }
-
-  public void resetSettingsToDefault() {
-    initialize(false);
-  }
-
-  public void applyChange() {
-    // Do nothing
-  }
-
-  protected void updateChanges() {
-    // Do nothing
-  }
-
   @Override
   public void closeAdditionalWindow() {
-    applyChange();
+    // Do nothing
   }
 
   @Override

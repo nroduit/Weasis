@@ -97,10 +97,12 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     panel.add(GuiUtils.getComponentsInJPanel(comboBox));
     panel.add(
         GuiUtils.getHorizontalBoxPanel(
-            GuiUtils.createHorizontalStrut(5), slider, GuiUtils.createHorizontalStrut(5)));
-    panel.add(GuiUtils.createVerticalStrut(5));
+            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
+            slider,
+            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR)));
+    panel.add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR));
     add(panel);
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
     JLabel lblInterpolation =
         new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
@@ -109,10 +111,14 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     JPanel panel1 =
         GuiUtils.getComponentsInJPanel(
-            FlowLayout.LEADING, 3, 5, lblInterpolation, comboBoxInterpolation);
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            lblInterpolation,
+            comboBoxInterpolation);
     panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
     add(panel1);
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
     checkBoxWLcolor =
         new JCheckBox(
@@ -134,7 +140,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxApplyPR));
     add(winLevelPanel);
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 

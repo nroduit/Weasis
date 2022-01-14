@@ -53,7 +53,7 @@ public class ImageTool extends PluginTool {
   public ImageTool(String pluginName) {
     super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 20);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
-    setDockableWidth(GuiUtils.getScaleLength(300));
+    setDockableWidth(300);
     jbInit();
   }
 

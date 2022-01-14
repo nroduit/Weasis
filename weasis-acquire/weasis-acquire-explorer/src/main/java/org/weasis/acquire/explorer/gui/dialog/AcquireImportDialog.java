@@ -10,9 +10,6 @@
 package org.weasis.acquire.explorer.gui.dialog;
 
 import java.awt.Component;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
@@ -29,7 +26,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
-import javax.swing.border.EmptyBorder;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.acquire.explorer.AcquireExplorer;
@@ -58,7 +54,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   };
   static final String REVALIDATE = "ReValidate";
 
-  private final JTextField serieName = new JTextField();
+  private final JTextField serieName = new JTextField(20);
   private final ButtonGroup btnGrp = new ButtonGroup();
 
   private final JRadioButton btn1 =
@@ -104,57 +100,19 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   }
 
   private JPanel initPanel() {
-    JPanel panel = new JPanel();
-    panel.setBorder(new EmptyBorder(10, 10, 20, 15));
-    panel.setLayout(new GridBagLayout());
+    JPanel panel = GuiUtils.getVerticalBoxPanel();
+    panel.setBorder(GuiUtils.getEmptydBorder(10, 5, 20, 15));
 
     JLabel question =
         new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON);
-    GridBagConstraints c = new GridBagConstraints();
-    c.insets = new Insets(0, 0, 15, 0);
-    c.gridx = 0;
-    c.gridy = 0;
-    c.gridwidth = GridBagConstraints.REMAINDER;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(question, c);
+    JLabel maxRange = new JLabel(Messages.getString("AcquireImportDialog.max_range_min"));
+    panel.add(GuiUtils.getComponentsInJPanel(question));
+    panel.add(GuiUtils.createVerticalStrut(15));
+    panel.add(GuiUtils.getComponentsInJPanel(btn1));
+    panel.add(GuiUtils.getComponentsInJPanel(btn2, spinner, maxRange));
+    panel.add(GuiUtils.getComponentsInJPanel(btn3, serieName));
 
-    c = new GridBagConstraints();
-    c.gridx = 0;
-    c.gridy = 1;
-    c.gridwidth = GridBagConstraints.REMAINDER;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(btn1, c);
-
-    c = new GridBagConstraints();
-    c.gridx = 0;
-    c.gridy = 2;
-    c.gridwidth = GridBagConstraints.RELATIVE;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(btn2, c);
-
-    GuiUtils.setPreferredWidth(spinner, 75);
-    c = new GridBagConstraints();
-    c.gridx = 1;
-    c.gridy = 2;
-    c.gridwidth = GridBagConstraints.RELATIVE;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(spinner, c);
     installFocusListener(spinner);
-
-    c = new GridBagConstraints();
-    c.insets = new Insets(5, 2, 0, 0);
-    c.gridx = 2;
-    c.gridy = 2;
-    c.gridwidth = GridBagConstraints.REMAINDER;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(new JLabel(Messages.getString("AcquireImportDialog.max_range_min")), c);
-
-    c = new GridBagConstraints();
-    c.gridx = 0;
-    c.gridy = 3;
-    c.gridwidth = 1;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(btn3, c);
 
     GuiUtils.setPreferredWidth(serieName, 150);
     serieName.addFocusListener(
@@ -170,13 +128,6 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             btnGrp.setSelected(btn3.getModel(), true);
           }
         });
-    c = new GridBagConstraints();
-    c.insets = new Insets(5, 2, 0, 0);
-    c.gridx = 1;
-    c.gridy = 3;
-    c.gridwidth = 2;
-    c.anchor = GridBagConstraints.WEST;
-    panel.add(serieName, c);
 
     btnGrp.add(btn1);
     btnGrp.add(btn2);

@@ -20,6 +20,12 @@ import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
 public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
+  public static final int LAST_FILLER_HEIGHT = 5;
+  public static final int BLOCK_SEPARATOR = 15;
+  public static final int ITEM_SEPARATOR_SMALL = 2;
+  public static final int ITEM_SEPARATOR = 5;
+  public static final int ITEM_SEPARATOR_LARGE = 10;
+
   private final String title;
   private final List<PageItem> subPageList = new ArrayList<>();
   private int pagePosition;
@@ -33,7 +39,8 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
   protected AbstractItemDialogPage(String title, int pagePosition) {
     this.title = title == null ? "item" : title; // NON-NLS
     this.pagePosition = pagePosition;
-    setBorder(GuiUtils.getEmptydBorder(15, 10, 10, 10));
+    setBorder(
+        GuiUtils.getEmptydBorder(BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, 0, ITEM_SEPARATOR_LARGE));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
   }
 

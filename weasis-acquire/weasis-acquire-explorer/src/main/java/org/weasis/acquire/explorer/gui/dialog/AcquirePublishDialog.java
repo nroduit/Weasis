@@ -11,7 +11,6 @@ package org.weasis.acquire.explorer.gui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -34,7 +33,6 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
 import javax.swing.SwingWorker.StateValue;
 import javax.swing.WindowConstants;
-import javax.swing.border.EmptyBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import org.osgi.framework.FrameworkUtil;
@@ -52,6 +50,7 @@ import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.acquire.explorer.util.ImageInfoHelper;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.ZoomOp;
@@ -143,14 +142,14 @@ public class AcquirePublishDialog extends JDialog {
           }
         });
 
-    setPreferredSize(new Dimension(700, 400));
+    setPreferredSize(GuiUtils.getDimension(700, 400));
     pack();
   }
 
   private JPanel initContent() {
     JPanel contentPane = new JPanel();
 
-    contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
+    contentPane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
     contentPane.setLayout(new BorderLayout());
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
@@ -159,7 +158,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.add(questionLabel, BorderLayout.NORTH);
 
     JPanel imageTreePane = new JPanel(new BorderLayout());
-    imageTreePane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    imageTreePane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
 
     publishTree = new PublishTree();
     publishTree.addTreeCheckingListener(
@@ -173,7 +172,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.add(imageTreePane, BorderLayout.CENTER);
 
     JPanel actionPane = new JPanel(new BorderLayout());
-    actionPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    actionPane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
 
     resolutionPane = new JPanel();
     resolutionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -204,7 +203,7 @@ public class AcquirePublishDialog extends JDialog {
     actionPane.add(progressBar, BorderLayout.CENTER);
 
     JPanel bottomPane = new JPanel(new BorderLayout());
-    JPanel buttonPane = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+    JPanel buttonPane = GuiUtils.getComponentsInJPanel(FlowLayout.CENTER, 20, 10);
 
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(e -> publishAction());
@@ -213,11 +212,9 @@ public class AcquirePublishDialog extends JDialog {
     clearAndHideActionListener = e -> clearAndHide();
     cancelButton.addActionListener(clearAndHideActionListener);
 
-    JPanel destPane = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 10));
     JLabel lblDestination =
         new JLabel(
             Messages.getString("AcquirePublishDialog.lblDestination.text") + StringUtil.COLON);
-    destPane.add(lblDestination);
     AbstractDicomNode.addTooltipToComboList(comboNode);
 
     if (!StringUtil.hasText(
@@ -242,18 +239,15 @@ public class AcquirePublishDialog extends JDialog {
       comboNode.addItem(getDestinationConfiguration());
     }
 
-    destPane.add(comboNode);
+    JPanel destPane = GuiUtils.getComponentsInJPanel(2, 10, lblDestination, comboNode);
     bottomPane.add(destPane, BorderLayout.WEST);
 
     buttonPane.add(publishButton);
     buttonPane.add(cancelButton);
 
     bottomPane.add(buttonPane, BorderLayout.EAST);
-
     actionPane.add(bottomPane, BorderLayout.SOUTH);
-
     contentPane.add(actionPane, BorderLayout.SOUTH);
-
     return contentPane;
   }
 

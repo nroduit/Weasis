@@ -7,17 +7,16 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.acquire.dockable.components.actions.rectify.lib.btn;
+package org.weasis.acquire.dockable.components.actions.rectify;
 
 import javax.swing.Icon;
+import javax.swing.JButton;
 import org.weasis.acquire.Messages;
-import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
-import org.weasis.acquire.dockable.components.actions.rectify.lib.AbstractRectifyButton;
 import org.weasis.acquire.operations.impl.RotationActionListener;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 
-public class Rotate90Button extends AbstractRectifyButton {
+public class Rotate90Button extends JButton {
   private static final long serialVersionUID = -4223232320924420952L;
 
   private static final int ANGLE = 90;
@@ -25,16 +24,8 @@ public class Rotate90Button extends AbstractRectifyButton {
   private static final String TOOL_TIP = Messages.getString("EditionTool.rotate.90");
 
   public Rotate90Button(RectifyAction rectifyAction) {
-    super(new RotationActionListener(ANGLE, rectifyAction));
-  }
-
-  @Override
-  public Icon getIcon() {
-    return ICON;
-  }
-
-  @Override
-  public String getToolTip() {
-    return TOOL_TIP;
+    super(ICON);
+    setToolTipText(TOOL_TIP);
+    addActionListener(new RotationActionListener(ANGLE, rectifyAction));
   }
 }

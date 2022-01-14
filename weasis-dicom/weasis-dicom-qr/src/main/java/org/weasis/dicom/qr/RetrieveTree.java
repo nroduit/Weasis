@@ -11,8 +11,8 @@ package org.weasis.dicom.qr;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.List;
@@ -39,7 +39,7 @@ public class RetrieveTree extends JPanel {
   }
 
   public RetrieveTree(RetrieveTreeModel retrieveTreeModel) {
-    this.setLayout(new FlowLayout(FlowLayout.LEFT));
+    this.setLayout(new BorderLayout());
     setRetrieveTreeModel(retrieveTreeModel);
   }
 
@@ -107,7 +107,7 @@ public class RetrieveTree extends JPanel {
     ExportTree.expandTree(
         checkboxTree, retrieveTreeModel.getRootNode(), 2); // 2 stands for Study Level
     removeAll();
-    add(checkboxTree);
+    add(checkboxTree, BorderLayout.CENTER);
   }
 
   public CheckboxTree getCheckboxTree() {

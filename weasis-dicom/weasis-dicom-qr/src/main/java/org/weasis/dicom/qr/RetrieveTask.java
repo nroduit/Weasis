@@ -272,7 +272,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           .execute(
               () ->
                   JOptionPane.showMessageDialog(
-                      dicomQrView.getBasePanel(), mes, errorTitle, JOptionPane.ERROR_MESSAGE));
+                      dicomQrView, mes, errorTitle, JOptionPane.ERROR_MESSAGE));
     }
 
     return loadingTask;
@@ -316,7 +316,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           .execute(
               () ->
                   JOptionPane.showMessageDialog(
-                      dicomQrView.getBasePanel(), message1, null, JOptionPane.ERROR_MESSAGE));
+                      dicomQrView, message1, null, JOptionPane.ERROR_MESSAGE));
       return null;
     } else if (wadoURLs.size() > 1) {
       GuiExecutor.instance()
@@ -325,7 +325,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 Object[] options = wadoURLs.toArray();
                 Object response =
                     JOptionPane.showInputDialog(
-                        dicomQrView.getBasePanel(),
+                        dicomQrView,
                         Messages.getString("RetrieveTask.several_wado_urls"),
                         wadoURLs.get(0).getWebType().toString(),
                         JOptionPane.QUESTION_MESSAGE,

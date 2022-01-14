@@ -53,7 +53,7 @@ public class ImageTool extends PluginTool {
   public ImageTool(String pluginName) {
     super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 20);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.IMAGE_EDIT));
-    setDockableWidth(GuiUtils.getScaleLength(300));
+    setDockableWidth(300);
     jbInit();
   }
 
@@ -133,7 +133,6 @@ public class ImageTool extends PluginTool {
       panel3.add(speedSpinner);
       JButton startButton = new JButton();
       startButton.setActionCommand(ActionW.CINESTART.cmd());
-      startButton.setPreferredSize(GuiUtils.getBigIconButtonSize(startButton));
       startButton.setToolTipText(Messages.getString("ImageTool.cine_start"));
       startButton.setIcon(ResourceUtil.getIcon(ActionIcon.EXECUTE));
       startButton.addActionListener(EventManager.getInstance());
@@ -142,7 +141,6 @@ public class ImageTool extends PluginTool {
 
       JButton stopButton = new JButton();
       stopButton.setActionCommand(ActionW.CINESTOP.cmd());
-      stopButton.setPreferredSize(GuiUtils.getBigIconButtonSize(stopButton));
       stopButton.setToolTipText(Messages.getString("ImageTool.cine_stop"));
       stopButton.setIcon(ResourceUtil.getIcon(ActionIcon.SUSPEND));
       stopButton.addActionListener(EventManager.getInstance());

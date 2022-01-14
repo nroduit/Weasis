@@ -25,9 +25,9 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     menuPanel.setLayout(new GridLayout(0, 2));
     add(menuPanel);
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
 
     List<AbstractItemDialogPage> childPages = List.of(new LabelsPrefView());
     childPages.forEach(p -> addSubPage(p, a -> dialog.showPage(p.getTitle()), menuPanel));

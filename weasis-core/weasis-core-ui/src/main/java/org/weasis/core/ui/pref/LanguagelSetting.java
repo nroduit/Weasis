@@ -61,8 +61,20 @@ public class LanguagelSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 2, 15, labelLocale, comboBoxLang));
-    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 2, 5, labelLocale2, comboBoxFormat));
+    add(
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR_LARGE,
+            labelLocale,
+            comboBoxLang));
+    add(
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.LEADING,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            labelLocale2,
+            comboBoxFormat));
     textPane.setContentType("text/html");
     textPane.setEditable(false);
     textPane.setText(getText());

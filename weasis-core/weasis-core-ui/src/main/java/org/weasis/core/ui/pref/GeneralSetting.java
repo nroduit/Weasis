@@ -37,8 +37,8 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     try {
       menuPanel.setLayout(new GridLayout(0, 2));
-      add(menuPanel, 0);
-      add(GuiUtils.createVerticalStrut(15), 1);
+      add(menuPanel);
+      add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
       jbInit();
       initialize();
@@ -57,11 +57,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getComponentsInJPanel(0, 10, checkboxConfirmClosing));
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.getComponentsInJPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmClosing));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
-    add(GuiUtils.getBoxYLastElement(5));
-
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 

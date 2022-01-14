@@ -10,7 +10,6 @@
 package org.weasis.acquire.dockable.components;
 
 import java.util.Optional;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
@@ -23,7 +22,6 @@ public class AcquireActionButton extends JButton {
 
   public AcquireActionButton(String title, Cmd cmd) {
     super(title);
-    setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     setActionCommand(cmd.name());
   }
 

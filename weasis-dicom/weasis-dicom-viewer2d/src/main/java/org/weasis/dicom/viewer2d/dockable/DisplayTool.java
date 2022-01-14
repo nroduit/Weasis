@@ -33,7 +33,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -84,7 +83,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public DisplayTool(String pluginName) {
     super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 10);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
-    setDockableWidth(GuiUtils.getScaleLength(235));
+    setDockableWidth(235);
 
     tree = new CheckboxTree();
     initPathSelection = false;

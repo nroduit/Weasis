@@ -102,6 +102,8 @@ public class ResourceUtil {
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"),
     METADATA("svg/action/metadata.svg"),
     MINUS("svg/action/minus.svg"),
+    MORE_H("svg/action/moreHorizontal.svg"),
+    MORE_V("svg/action/moreVertical.svg"),
     MOUSE_LEFT("svg/action/mouseLeft.svg"),
     MOUSE_MIDDLE("svg/action/mouseMiddle.svg"),
     MOUSE_RIGHT("svg/action/mouseRight.svg"),
@@ -238,8 +240,8 @@ public class ResourceUtil {
     return getResourcePath().resolve(filename).toFile();
   }
 
-  public static File getResource(Path endOfPath) {
-    return getResourcePath().resolve(endOfPath).toFile();
+  public static Path getResource(Path endOfPath) {
+    return getResourcePath().resolve(endOfPath);
   }
 
   public static File getResource(ResourcePath path) {

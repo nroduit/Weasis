@@ -63,7 +63,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
   private void jbInit() {
     JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
-    JPanel panelFont = GuiUtils.getComponentsInJPanel(3, 10, jLabelSize, spinner1);
+    JPanel panelFont =
+        GuiUtils.getComponentsInJPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, spinner1);
     panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
     add(panelFont);
 
@@ -72,9 +74,11 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     panelShape.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelsPrefView.geometric1")));
     JLabel shapeLabel =
         new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);
-    JPanel panelCombo = GuiUtils.getComponentsInJPanel(3, 5, shapeLabel, comboBoxTool);
+    JPanel panelCombo =
+        GuiUtils.getComponentsInJPanel(
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, shapeLabel, comboBoxTool);
     panelShape.add(panelCombo);
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
     panelList.setLayout(new GridLayout(0, 2));
     panelShape.add(panelList);
@@ -88,7 +92,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     comboBoxTool.addItemListener(toolsListener);
 
     add(panelShape);
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
     JPanel panel = new JPanel();
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureTool.pix_stats")));
@@ -111,7 +115,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     }
     add(panel);
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());

@@ -15,7 +15,6 @@ import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -69,15 +68,21 @@ public class LooklSetting extends AbstractItemDialogPage {
   private void jbInit() {
     jLabelMLook.setText("Theme" + StringUtil.COLON);
 
-    add(GuiUtils.getComponentsInJPanel(3, 10, jLabelMLook, jComboBoxlnf, button));
-    add(GuiUtils.createVerticalStrut(15));
+    add(
+        GuiUtils.getComponentsInJPanel(
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR_LARGE,
+            jLabelMLook,
+            jComboBoxlnf,
+            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
+            button));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
 
     JPanel panel = new JPanel();
     panel.setBorder(GuiUtils.getTitledBorder("Display Scale Factor"));
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(GuiUtils.getComponentsInJPanel(5, 0, systemScaleRadio));
-    panel.add(Box.createVerticalGlue());
-    panel.add(GuiUtils.getComponentsInJPanel(5, 0, userScaleRadio, spinner1));
+    panel.add(GuiUtils.getComponentsInJPanel(0, 0, systemScaleRadio));
+    panel.add(GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, 0, userScaleRadio, spinner1));
     add(panel);
 
     this.buttonGroup.add(systemScaleRadio);
@@ -103,7 +108,7 @@ public class LooklSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");
   }

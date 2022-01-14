@@ -13,6 +13,7 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.AbstractGraphicModel;
@@ -28,7 +29,7 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public class GraphicHelper {
 
-  public static final int GRID_SPACING = 35; // build grid of 35x35 px
+  public static final int GRID_SPACING = GuiUtils.getScaleLength(35); // build grid of 35x35 px
 
   private GraphicHelper() {}
 

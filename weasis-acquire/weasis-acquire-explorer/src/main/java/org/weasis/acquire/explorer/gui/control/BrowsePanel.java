@@ -9,9 +9,7 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
@@ -39,6 +37,8 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
   private final JComboBox<MediaSource> mediaSourceSelectionCombo = new JComboBox<>();
 
   public BrowsePanel(AcquireExplorer acquisitionView) {
+    setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+    setBorder(GuiUtils.getEmptydBorder(5));
     try {
       acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
       mediaSourceList.addItem(acquisitionView.getSystemDrive());
@@ -46,18 +46,17 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
       LOGGER.warn(e.getMessage(), e);
     }
 
-    USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(2000);
+    USBDeviceDetectorManager driveDetector = new USBDeviceDetectorManager(3000);
     driveDetector.addDriveListener(this);
 
     ItemListComboBoxModel<MediaSource> mediaSourceListComboModel =
         new ItemListComboBoxModel<>(mediaSourceList);
-    GridBagLayout gridBagLayout = new GridBagLayout();
-    setLayout(gridBagLayout);
+
     mediaSourceSelectionCombo.setModel(mediaSourceListComboModel);
     mediaSourceSelectionCombo.setRenderer(
         new MediaSourceListCellRenderer(mediaSourceSelectionCombo));
     mediaSourceSelectionCombo.setMaximumRowCount(15);
-    mediaSourceSelectionCombo.setFont(FontTools.getFont11());
+    mediaSourceSelectionCombo.setFont(FontTools.getSmallFont());
     mediaSourceSelectionCombo.addActionListener(
         e -> {
           acquisitionView.setSystemDrive(
@@ -66,30 +65,18 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         });
     GuiUtils.addTooltipToComboList(mediaSourceSelectionCombo);
 
-    GridBagConstraints gbcMediaSourceSelectionCombo = new GridBagConstraints();
-    gbcMediaSourceSelectionCombo.fill = GridBagConstraints.HORIZONTAL;
-    gbcMediaSourceSelectionCombo.weightx = 1.0;
-    gbcMediaSourceSelectionCombo.anchor = GridBagConstraints.NORTHWEST;
-    gbcMediaSourceSelectionCombo.insets = new Insets(5, 5, 5, 5);
-    gbcMediaSourceSelectionCombo.gridx = 0;
-    gbcMediaSourceSelectionCombo.gridy = 0;
-    add(mediaSourceSelectionCombo, gbcMediaSourceSelectionCombo);
+    add(mediaSourceSelectionCombo);
 
     final JButton pathSelectionBtn = new JButton(new ChangePathSelectionAction(acquisitionView));
-    pathSelectionBtn.setFont(FontTools.getFont11());
-    GridBagConstraints gbcPathSelectionBtn = new GridBagConstraints();
-    gbcPathSelectionBtn.insets = new Insets(5, 5, 5, 5);
-    gbcPathSelectionBtn.anchor = GridBagConstraints.NORTHWEST;
-    gbcPathSelectionBtn.gridx = 1;
-    gbcPathSelectionBtn.gridy = 0;
-    add(pathSelectionBtn, gbcPathSelectionBtn);
+    pathSelectionBtn.setFont(FontTools.getSmallFont());
+    add(pathSelectionBtn);
 
     // Allow combo to limit the size with long path
     GuiUtils.setPreferredWidth(
         mediaSourceSelectionCombo,
         mediaSourceSelectionCombo.getPreferredSize().width
             - pathSelectionBtn.getPreferredSize().width
-            - 5);
+            - GuiUtils.getScaleLength(5));
   }
 
   public JComboBox<MediaSource> getMediaSourceSelectionCombo() {

@@ -109,7 +109,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
   }
 
   public void setDockableWidth(int width) {
-    this.dockableWidth = width;
+    this.dockableWidth = GuiUtils.getScaleLength(width);
   }
 
   @Override

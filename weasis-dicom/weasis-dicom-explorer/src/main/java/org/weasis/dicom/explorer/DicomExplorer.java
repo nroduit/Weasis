@@ -162,7 +162,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   public DicomExplorer(DicomModel model) {
     super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
     setLayout(new BorderLayout());
-    setDockableWidth(GuiUtils.getScaleLength(180));
+    setDockableWidth(180);
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(patientContainer);

@@ -90,8 +90,8 @@ public class ImportToolBar extends WtoolBar {
           AbstractWizardDialog dialog =
               showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
           AbstractItemDialogPage page = dialog.getCurrentPage();
-          if (page instanceof LocalImport) {
-            ((LocalImport) page).setImportPath(file.getParent());
+          if (page instanceof LocalImport localImport) {
+            localImport.setImportPath(file.getParent());
           }
         }
       }

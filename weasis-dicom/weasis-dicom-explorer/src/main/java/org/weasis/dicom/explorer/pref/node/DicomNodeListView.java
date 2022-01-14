@@ -32,7 +32,7 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     buildPanel(AbstractDicomNode.Type.WEB);
     // buildPanel(AbstractDicomNode.Type.WEB_QIDO);
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   private void buildPanel(AbstractDicomNode.Type nodeType) {
@@ -40,10 +40,10 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     final JComboBox<AbstractDicomNode> nodeComboBox = new JComboBox<>();
     AbstractDicomNode.loadDicomNodes(nodeComboBox, nodeType);
     AbstractDicomNode.addTooltipToComboList(nodeComboBox);
+    GuiUtils.setPreferredWidth(nodeComboBox, 270, 150);
     JButton editButton = new JButton(Messages.getString("DicomNodeListView.edit"));
     JButton deleteButton = new JButton(Messages.getString("DicomNodeListView.delete"));
     JButton addNodeButton = new JButton(Messages.getString("DicomNodeListView.add_new"));
-
     deleteButton.addActionListener(e -> AbstractDicomNode.deleteNodeActionPerformed(nodeComboBox));
     editButton.addActionListener(e -> AbstractDicomNode.editNodeActionPerformed(nodeComboBox));
     addNodeButton.addActionListener(
@@ -54,18 +54,18 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.add(
         GuiUtils.getComponentsInJPanel(
-            3,
-            5,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
             label1,
             nodeComboBox,
-            GuiUtils.createHorizontalStrut(15),
+            GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
             editButton,
-            GuiUtils.createHorizontalStrut(10),
+            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_LARGE),
             deleteButton));
-    panel.add(GuiUtils.getComponentsInJPanel(5, 5, addNodeButton));
+    panel.add(GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR, ITEM_SEPARATOR, addNodeButton));
     add(panel);
 
-    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
   }
 
   @Override

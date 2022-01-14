@@ -13,8 +13,6 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
-import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -33,7 +31,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -47,6 +44,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
@@ -199,12 +197,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
-  private final JPanel basePanel = new JPanel();
-  private final JPanel panelGroup = new JPanel();
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
-  private final JTextField tfSearch = new JTextField();
+  private final JTextField tfSearch = new JTextField(25);
   private final RetrieveTree tree = new RetrieveTree();
-  private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private final JComboBox<TagW> comboTags =
       new JComboBox<>(
@@ -285,10 +280,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     GuiUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
     GuiUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
     initGUI();
-    tree.setBorder(
-        BorderFactory.createCompoundBorder(
-            spaceY, GuiUtils.getTitledBorder(Messages.getString("DicomQrView.result"))));
-    add(tree, BorderLayout.CENTER);
     initialize(true);
 
     DicomListener dcmListener = null;
@@ -301,52 +292,39 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public void initGUI() {
-    setLayout(new BorderLayout());
-    basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
-    basePanel.add(getArchivePanel());
-    basePanel.add(getCallingNodePanel());
-    basePanel.add(getSearchPanel());
-    basePanel.add(getCtrlSearchPanel());
-
-    add(basePanel, BorderLayout.NORTH);
+    add(getArchivePanel());
+    add(getCallingNodePanel());
+    add(getSearchPanel());
+    add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR_LARGE));
+    add(getCtrlSearchPanel());
+    tree.setBorder(UIManager.getBorder("ScrollPane.border"));
+    add(tree);
   }
 
   public JPanel getArchivePanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON);
-    sPanel.add(lblDest);
-    GuiUtils.setPreferredWidth(comboDestinationNode, 185, 185);
     AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
-    sPanel.add(comboDestinationNode);
+    GuiUtils.setPreferredWidth(comboDestinationNode, 250, 150);
 
-    sPanel.add(Box.createHorizontalStrut(10));
     JLabel lblTetrieve = new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
-    sPanel.add(lblTetrieve);
     comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
-    sPanel.add(comboDicomRetrieveType);
-    return sPanel;
+    return GuiUtils.getComponentsInJPanel(
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        lblDest,
+        comboDestinationNode,
+        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        lblTetrieve,
+        comboDicomRetrieveType);
   }
 
   public JPanel getCallingNodePanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     final JLabel lblDest =
         new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
-    sPanel.add(lblDest);
-
-    GuiUtils.setPreferredWidth(comboCallingNode, 185, 185);
+    GuiUtils.setPreferredWidth(comboCallingNode, 230, 150);
     AbstractDicomNode.addTooltipToComboList(comboCallingNode);
-    sPanel.add(comboCallingNode);
 
-    sPanel.add(Box.createHorizontalStrut(10));
     final JButton btnGerenralOptions = new JButton(Messages.getString("DicomQrView.more_opt"));
-    btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.add(btnGerenralOptions);
     btnGerenralOptions.addActionListener(
         e -> {
           PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
@@ -355,57 +333,58 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           GuiUtils.showCenterScreen(dialog);
           initNodeList();
         });
-    return sPanel;
+    return GuiUtils.getComponentsInJPanel(
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        lblDest,
+        comboCallingNode,
+        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        btnGerenralOptions);
   }
 
   public JPanel getCtrlSearchPanel() {
-    final JPanel panel5 = new JPanel();
-    panel5.setAlignmentY(Component.TOP_ALIGNMENT);
-    panel5.setAlignmentX(Component.LEFT_ALIGNMENT);
-    panel5.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
-
-    JPanel panel6 = new JPanel();
-    panel6.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
-    panel6.add(new JLabel(Messages.getString("limit") + StringUtil.COLON));
+    JLabel labelLimit = new JLabel(Messages.getString("limit") + StringUtil.COLON);
     limitSpinner.setToolTipText(Messages.getString("no.limit"));
-    panel6.add(limitSpinner);
-    panel6.add(Box.createHorizontalStrut(15));
-    panel6.add(new JLabel(Messages.getString("page") + StringUtil.COLON));
+
+    JLabel labelPage = new JLabel(Messages.getString("page") + StringUtil.COLON);
     pageSpinner.addChangeListener(queryListener);
-    panel6.add(pageSpinner);
-    panel5.add(panel6);
-    panel5.add(Box.createHorizontalStrut(40));
     progressBar.setEnabled(false);
-    panel5.add(progressBar);
+
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
-    panel5.add(clearBtn);
+
     JButton searchBtn = new JButton(Messages.getString("DicomQrView.search"));
     searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
     searchBtn.addActionListener(e -> dicomQuery());
-    panel5.add(searchBtn);
-    return panel5;
+
+    return GuiUtils.getComponentsInJPanel(
+        FlowLayout.TRAILING,
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        labelLimit,
+        limitSpinner,
+        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        labelPage,
+        pageSpinner,
+        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        progressBar,
+        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        clearBtn,
+        GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_LARGE),
+        searchBtn);
   }
 
   public JPanel getSearchPanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    final JPanel sPanel = GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR);
     sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
     sPanel.setBorder(
         BorderFactory.createCompoundBorder(
             spaceY, GuiUtils.getTitledBorder(Messages.getString("DicomQrView.search"))));
-
-    panelGroup.setLayout(new FlowLayout(FlowLayout.LEFT, 7, 3));
-
     List<Object> list = Stream.of(Modality.values()).collect(Collectors.toList());
     list.set(0, Messages.getString("DicomQrView.all_mod"));
     groupMod.setModel(list, true, true);
-
     modButton.setToolTipText(Messages.getString("DicomQrView.select_mod"));
-    panelGroup.add(modButton);
-    panelGroup.add(Box.createHorizontalStrut(10));
 
     Period[] listDate = {
       Period.ALL,
@@ -428,18 +407,25 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     ComboBoxModel<Period> dataModel = new DefaultComboBoxModel<>(listDate);
     groupDate.setModel(dataModel);
 
-    panelGroup.add(dateButton);
-    panelGroup.add(new JLabel(Messages.getString("DicomQrView.from")));
-    panelGroup.add(startDatePicker.getComponentDateTextField());
-    panelGroup.add(new JLabel(Messages.getString("DicomQrView.to")));
-    panelGroup.add(endDatePicker.getComponentDateTextField());
-    sPanel.add(panelGroup);
+    JLabel labelFrom = new JLabel(Messages.getString("DicomQrView.from"));
+    JLabel labetTo = new JLabel(Messages.getString("DicomQrView.to"));
 
-    final JPanel panel4 = new JPanel();
-    panel4.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-    panel4.add(comboTags);
+    sPanel.add(
+        GuiUtils.getComponentsInJPanel(
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            modButton,
+            GuiUtils.getBoxXLastElement(BLOCK_SEPARATOR),
+            dateButton,
+            GuiUtils.getBoxXLastElement(ITEM_SEPARATOR_LARGE),
+            labelFrom,
+            startDatePicker.getComponentDateTextField(),
+            GuiUtils.getBoxXLastElement(ITEM_SEPARATOR),
+            labetTo,
+            endDatePicker.getComponentDateTextField()));
+
     comboTags.setMaximumRowCount(15);
-    GuiUtils.setPreferredWidth(comboTags, 180, 180);
+    GuiUtils.setPreferredWidth(comboTags, 230, 150);
     GuiUtils.addTooltipToComboList(comboTags);
 
     StringBuilder buf = new StringBuilder("<html>");
@@ -450,10 +436,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     buf.append(Messages.getString("DicomQrView.tips_question"));
     buf.append("</html>");
     tfSearch.setToolTipText(buf.toString());
-    GuiUtils.setPreferredWidth(tfSearch, 370, 100);
-    panel4.add(tfSearch);
-    sPanel.add(panel4);
-
+    tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    sPanel.add(
+        GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch));
     return sPanel;
   }
 
@@ -576,7 +561,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         } else {
                           LOGGER.error("Dicom cfind error: {}", state.getMessage());
                           JOptionPane.showMessageDialog(
-                              basePanel, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                              this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
                         }
                       });
             }
@@ -807,8 +792,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     List<String> studies = new ArrayList<>();
     for (TreePath treePath : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-      if (node.getUserObject() instanceof MediaSeriesGroup) {
-        MediaSeriesGroup study = (MediaSeriesGroup) node.getUserObject();
+      if (node.getUserObject() instanceof MediaSeriesGroup study) {
         String uid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
         if (StringUtil.hasText(uid)) {
           studies.add(uid);
@@ -853,10 +837,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   public DicomListener getDicomListener() {
     return dicomListener;
-  }
-
-  public JPanel getBasePanel() {
-    return basePanel;
   }
 
   public DicomModel getDicomModel() {

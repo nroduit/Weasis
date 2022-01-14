@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
-import java.awt.Dimension;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -48,8 +47,7 @@ public class ImportPanel extends JPanel {
   public ImportPanel(AcquireThumbnailListPane<MediaElement> mainPanel, ImageGroupPane centralPane) {
     this.centralPane = centralPane;
 
-    importBtn.setPreferredSize(new Dimension(150, 40));
-
+    importBtn.setPreferredSize(GuiUtils.getDimension(150, 40));
     importBtn.addActionListener(
         e -> {
           List<ImageElement> selected =

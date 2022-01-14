@@ -25,13 +25,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
 import org.weasis.acquire.explorer.core.bean.DefaultTagable;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -69,7 +69,7 @@ public class WorklistDialog extends JDialog {
 
   private void initComponents() {
     final JPanel rootPane = new JPanel();
-    rootPane.setBorder(new EmptyBorder(10, 15, 10, 15));
+    rootPane.setBorder(GuiUtils.getEmptydBorder(10, 15, 10, 15));
     this.setContentPane(rootPane);
 
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);

@@ -9,10 +9,6 @@
  */
 package org.weasis.acquire.dockable.components.actions.contrast;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.GridLayout;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
@@ -31,6 +27,7 @@ import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.operations.OpValueChanged;
 import org.weasis.acquire.operations.impl.AutoLevelListener;
 import org.weasis.base.viewer2d.EventManager;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.BrightnessOp;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.media.data.ImageElement;
@@ -47,23 +44,19 @@ public class ContrastPanel extends AbstractAcquireActionPanel
   private final JCheckBox autoLevelBtn = new JCheckBox(Messages.getString("ContrastPanel.auto"));
 
   public ContrastPanel() {
-    super();
-    setLayout(new BorderLayout());
-    setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
+
     autoLevelListener = new AutoLevelListener();
     autoLevelBtn.addActionListener(autoLevelListener);
     contrastSlider = new ContrastComponent(this);
     brightnessSlider = new BrightnessComponent(this);
 
-    JPanel content = new JPanel(new GridLayout(3, 1, 0, 10));
-    content.setAlignmentX(Component.LEFT_ALIGNMENT);
-    content.setAlignmentY(Component.TOP_ALIGNMENT);
-    content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-    content.add(contrastSlider);
-    content.add(brightnessSlider);
-    content.add(autoLevelBtn);
-
-    add(content, BorderLayout.NORTH);
+    add(contrastSlider);
+    add(GuiUtils.createVerticalStrut(10));
+    add(brightnessSlider);
+    add(GuiUtils.getComponentsInJPanel(autoLevelBtn));
+    add(GuiUtils.getBoxYLastElement(5));
   }
 
   @Override

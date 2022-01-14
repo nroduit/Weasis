@@ -115,9 +115,15 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
     final JLabel presetsLabel =
         new JLabel(Messages.getString("ScreenPrefView.def_monitor") + StringUtil.COLON);
-    add(GuiUtils.getComponentsInJPanel(FlowLayout.LEFT, 2, 5, presetsLabel, defMonitorComboBox));
+    add(
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.LEFT,
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            presetsLabel,
+            defMonitorComboBox));
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public static int getDefaultMonitor() {

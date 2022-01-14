@@ -9,10 +9,9 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.Dialog;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.Dimension;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -34,6 +33,7 @@ import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -48,45 +48,28 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   private JCheckBox chckbxWriteInCache;
 
   public DicomDirImport() {
-    super(Messages.getString("DicomDirImport.dicomdir"));
-    setComponentPosition(5);
+    super(Messages.getString("DicomDirImport.dicomdir"), 5);
     initGUI();
-    initialize(true);
   }
 
   public void initGUI() {
-    GridBagLayout gridBagLayout = new GridBagLayout();
-    setLayout(gridBagLayout);
-    setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomDirImport.dicomdir")));
-
     JLabel lblImportAFolder =
         new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);
-    GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
-    gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
-    gbc_lblImportAFolder.insets = new Insets(5, 5, 5, 5);
-    gbc_lblImportAFolder.gridx = 0;
-    gbc_lblImportAFolder.gridy = 0;
-    add(lblImportAFolder, gbc_lblImportAFolder);
-
     textField = new JTextField();
-    GridBagConstraints gbc_textField = new GridBagConstraints();
-    gbc_textField.anchor = GridBagConstraints.WEST;
-    gbc_textField.insets = new Insets(5, 2, 5, 5);
-    gbc_textField.fill = GridBagConstraints.HORIZONTAL;
-    gbc_textField.gridx = 1;
-    gbc_textField.gridy = 0;
-    GuiUtils.setPreferredWidth(textField, 375, 325);
     textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));
-    add(textField, gbc_textField);
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    Dimension dim = textField.getPreferredSize();
+    dim.width = 200;
+    textField.setPreferredSize(dim);
+    textField.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
 
-    JButton btnSearch = new JButton(" ... ");
+    JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
     btnSearch.addActionListener(e -> browseImgFile());
-    GridBagConstraints gbc_button = new GridBagConstraints();
-    gbc_button.anchor = GridBagConstraints.WEST;
-    gbc_button.insets = new Insets(5, 5, 5, 0);
-    gbc_button.gridx = 2;
-    gbc_button.gridy = 0;
-    add(btnSearch, gbc_button);
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
+
+    add(
+        GuiUtils.getHorizontalBoxPanel(
+            lblImportAFolder, GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
 
     JButton btncdrom =
         new JButton(
@@ -100,34 +83,12 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
           }
         });
-    GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
-    gbc_btnNewButton.gridwidth = 3;
-    gbc_btnNewButton.anchor = GridBagConstraints.WEST;
-    gbc_btnNewButton.insets = new Insets(5, 5, 5, 5);
-    gbc_btnNewButton.gridx = 0;
-    gbc_btnNewButton.gridy = 1;
-    add(btncdrom, gbc_btnNewButton);
-
     chckbxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
-    GridBagConstraints gbc_chckbxWriteInCache = new GridBagConstraints();
-    gbc_chckbxWriteInCache.gridwidth = 3;
-    gbc_chckbxWriteInCache.anchor = GridBagConstraints.WEST;
-    gbc_chckbxWriteInCache.insets = new Insets(0, 0, 5, 0);
-    gbc_chckbxWriteInCache.gridx = 0;
-    gbc_chckbxWriteInCache.gridy = 2;
-    add(chckbxWriteInCache, gbc_chckbxWriteInCache);
 
-    final JLabel label = new JLabel();
-    final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
-    gridBagConstraints_4.weighty = 1.0;
-    gridBagConstraints_4.weightx = 1.0;
-    gridBagConstraints_4.gridy = 5;
-    gridBagConstraints_4.gridx = 2;
-    add(label, gridBagConstraints_4);
-  }
+    add(GuiUtils.getComponentsInJPanel(btncdrom));
+    add(GuiUtils.getComponentsInJPanel(chckbxWriteInCache));
 
-  protected void initialize(boolean afirst) {
-    if (afirst) {}
+    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {
@@ -167,21 +128,15 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
   }
 
-  public void resetSettingsToDefault() {
-    initialize(false);
-  }
-
-  public void applyChange() {}
-
-  protected void updateChanges() {}
-
   @Override
   public void closeAdditionalWindow() {
-    applyChange();
+    // Do nothing
   }
 
   @Override
-  public void resetToDefaultValues() {}
+  public void resetToDefaultValues() {
+    // Do nothing
+  }
 
   private String getImportPath() {
     String path = textField.getText().trim();

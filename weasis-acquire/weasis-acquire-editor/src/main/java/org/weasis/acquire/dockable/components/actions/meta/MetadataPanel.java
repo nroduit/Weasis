@@ -9,15 +9,14 @@
  */
 package org.weasis.acquire.dockable.components.actions.meta;
 
-import java.awt.BorderLayout;
-import java.awt.GridLayout;
-import javax.swing.JPanel;
+import javax.swing.BoxLayout;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public class MetadataPanel extends AbstractAcquireActionPanel {
   private static final long serialVersionUID = -1474114784513035056L;
@@ -32,15 +31,15 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
           Messages.getString("MetadataPanel.image"));
 
   public MetadataPanel() {
-    super();
-    setLayout(new BorderLayout());
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
 
-    JPanel content = new JPanel(new GridLayout(3, 1));
-    add(content, BorderLayout.NORTH);
-
-    content.add(globalInfoPanel);
-    content.add(serieInfoPanel);
-    content.add(imageInfoPanel);
+    add(globalInfoPanel);
+    add(GuiUtils.createVerticalStrut(10));
+    add(serieInfoPanel);
+    add(GuiUtils.createVerticalStrut(10));
+    add(imageInfoPanel);
+    add(GuiUtils.getBoxYLastElement(5));
   }
 
   @Override

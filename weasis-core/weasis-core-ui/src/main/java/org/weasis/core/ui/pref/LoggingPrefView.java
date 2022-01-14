@@ -21,7 +21,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.AuditLog.LEVEL;
 import org.weasis.core.api.service.BundleTools;
@@ -67,10 +66,16 @@ public class LoggingPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getComponentsInJPanel(0, 15, checkboxFileLog));
+    add(GuiUtils.getComponentsInJPanel(0, ITEM_SEPARATOR_LARGE, checkboxFileLog));
     add(
         GuiUtils.getComponentsInJPanel(
-            2, 10, labelNumber, spinner, GuiUtils.createHorizontalStrut(15), labelSize, spinner1));
+            ITEM_SEPARATOR_SMALL,
+            10,
+            labelNumber,
+            spinner,
+            GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+            labelSize,
+            spinner1));
     add(
         GuiUtils.getComponentsInJPanel(
             0,

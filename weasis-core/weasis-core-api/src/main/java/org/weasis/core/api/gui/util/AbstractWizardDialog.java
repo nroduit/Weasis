@@ -36,11 +36,15 @@ import org.weasis.core.api.gui.InsertableUtil;
 
 public abstract class AbstractWizardDialog extends JDialog {
 
+  public static final int HORIZONTAL_GAP = 15;
+  public static final int VERTICAL_GAP = 10;
+
   protected String settingTitle;
   protected AbstractItemDialogPage currentPage = null;
   protected DefaultMutableTreeNode pagesRoot = new DefaultMutableTreeNode("root"); // NON-NLS
   private final JPanel jPanelRootPanel = new JPanel();
-  protected final JButton jButtonClose = new JButton();
+  protected final JButton jButtonClose =
+      new JButton(Messages.getString("AbstractWizardDialog.close"));
   protected final JTree tree = new JTree();
   protected final JPanel jPanelBottom = new JPanel();
   private final JPanel jPanelMain = new JPanel();
@@ -66,9 +70,10 @@ public abstract class AbstractWizardDialog extends JDialog {
     jPanelRootPanel.add(splitPane, BorderLayout.CENTER);
 
     jPanelBottom.setLayout(new BoxLayout(jPanelBottom, BoxLayout.Y_AXIS));
-    jPanelBottom.add(GuiUtils.getComponentsInJPanel(FlowLayout.TRAILING, 15, 10, jButtonClose));
+    jPanelBottom.add(
+        GuiUtils.getComponentsInJPanel(
+            FlowLayout.TRAILING, HORIZONTAL_GAP, VERTICAL_GAP, jButtonClose));
     jButtonClose.addActionListener(e -> cancel());
-    jButtonClose.setText(Messages.getString("AbstractWizardDialog.close"));
     jPanelRootPanel.add(jPanelBottom, BorderLayout.SOUTH);
 
     jScrollPane1.setViewportView(tree);

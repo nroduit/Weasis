@@ -9,15 +9,14 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Properties;
 import javax.swing.BoxLayout;
@@ -31,6 +30,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JSlider;
+import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
@@ -91,31 +91,29 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   private JComboBox<String> comboBoxImgFormat;
 
   public LocalExport(DicomModel dicomModel, CheckTreeModel treeModel) {
-    super(Messages.getString("LocalExport.local_dev"));
+    super(Messages.getString("LocalExport.local_dev"), 0);
     this.dicomModel = dicomModel;
     this.exportTree = new ExportTree(treeModel);
-    setComponentPosition(0);
     initGUI();
   }
 
   public void initGUI() {
-    setLayout(new BorderLayout());
-    JPanel panel = new JPanel();
-    FlowLayout flowLayout = (FlowLayout) panel.getLayout();
-    flowLayout.setAlignment(FlowLayout.LEFT);
-
     JLabel lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
-    panel.add(lblImportAFolder);
-
     comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(EXPORT_FORMAT));
-    panel.add(comboBoxImgFormat);
-
-    add(panel, BorderLayout.NORTH);
-
     JButton btnNewButton = new JButton(Messages.getString("LocalExport.options"));
     btnNewButton.addActionListener(e -> showExportingOptions());
-    panel.add(btnNewButton);
-    add(exportTree, BorderLayout.CENTER);
+
+    add(
+        GuiUtils.getComponentsInJPanel(
+            ITEM_SEPARATOR_SMALL,
+            0,
+            lblImportAFolder,
+            comboBoxImgFormat,
+            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
+            btnNewButton));
+    add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR));
+    exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
+    add(exportTree);
   }
 
   protected void showExportingOptions() {
@@ -341,9 +339,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       String val = instance.toString();
       if (val.length() < 5) {
         char[] chars = new char[5 - val.length()];
-        for (int i = 0; i < chars.length; i++) {
-          chars[i] = '0';
-        }
+        Arrays.fill(chars, '0');
         return new String(chars) + val;
       } else {
         return val;
@@ -383,8 +379,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
           DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
-          if (node.getUserObject() instanceof DicomImageElement) {
-            DicomImageElement img = (DicomImageElement) node.getUserObject();
+          if (node.getUserObject() instanceof DicomImageElement img) {
             // Get instance number instead SOPInstanceUID to handle multiframe
             String instance = getinstanceFileName(img);
             if (!keepNames) {
@@ -421,9 +416,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                   format,
                   img.getFileCache().getOriginalFile().orElse(null));
             }
-          } else if (node.getUserObject() instanceof MediaElement
+          } else if (node.getUserObject() instanceof MediaElement dcm
               && node.getUserObject() instanceof FileExtractor) {
-            MediaElement dcm = (MediaElement) node.getUserObject();
             File fileSrc = ((FileExtractor) dcm).getExtractFile();
             if (fileSrc != null) {
               // Get instance number instead SOPInstanceUID to handle multiframe
@@ -498,8 +492,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
 
           DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
 
-          if (node.getUserObject() instanceof DicomImageElement) {
-            DicomImageElement img = (DicomImageElement) node.getUserObject();
+          if (node.getUserObject() instanceof DicomImageElement img) {
             String iuid = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
             int index = uids.indexOf(iuid);
             if (index == -1) {
@@ -524,8 +517,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
                   "Cannot export DICOM file: {}",
                   img.getFileCache().getOriginalFile().orElse(null));
             }
-          } else if (node.getUserObject() instanceof MediaElement) {
-            MediaElement dcm = (MediaElement) node.getUserObject();
+          } else if (node.getUserObject() instanceof MediaElement dcm) {
             String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
             if (!keepNames) {
               iuid = makeFileIDs(iuid);

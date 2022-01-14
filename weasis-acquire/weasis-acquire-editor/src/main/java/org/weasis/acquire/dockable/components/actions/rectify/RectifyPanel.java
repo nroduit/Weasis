@@ -9,23 +9,17 @@
  */
 package org.weasis.acquire.dockable.components.actions.rectify;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.util.Objects;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JPanel;
+import javax.swing.JButton;
 import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
-import org.weasis.acquire.dockable.components.actions.rectify.lib.AbstractRectifyButton;
-import org.weasis.acquire.dockable.components.actions.rectify.lib.OrientationSliderComponent;
-import org.weasis.acquire.dockable.components.actions.rectify.lib.btn.Rotate270Button;
-import org.weasis.acquire.dockable.components.actions.rectify.lib.btn.Rotate90Button;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.media.data.ImageElement;
@@ -39,35 +33,25 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
   private static final long serialVersionUID = 4041145212218086219L;
 
   private final OrientationSliderComponent orientationPanel;
-  private final AbstractRectifyButton rotate90btn;
-  private final AbstractRectifyButton rotate270btn;
+  private final JButton rotate90btn;
+  private final JButton rotate270btn;
 
   private final RectifyAction rectifyAction;
 
   public RectifyPanel(RectifyAction rectifyAction) {
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
     this.rectifyAction = Objects.requireNonNull(rectifyAction);
-    setLayout(new BorderLayout());
     orientationPanel = new OrientationSliderComponent(this);
     rotate90btn = new Rotate90Button(rectifyAction);
+    rotate90btn.setPreferredSize(GuiUtils.getBigIconButtonSize(rotate90btn));
     rotate270btn = new Rotate270Button(rectifyAction);
-    add(createContent(), BorderLayout.NORTH);
-  }
+    rotate270btn.setPreferredSize(GuiUtils.getBigIconButtonSize(rotate270btn));
 
-  private JPanel createContent() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-    JPanel btnContent = new JPanel();
-    btnContent.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    btnContent.add(rotate90btn);
-    btnContent.add(rotate270btn);
-    btnContent.setBorder(BorderFactory.createEmptyBorder(15, 0, 5, 0));
-
-    panel.add(orientationPanel);
-    panel.add(btnContent);
-
-    return panel;
+    add(orientationPanel);
+    add(GuiUtils.createVerticalStrut(15));
+    add(GuiUtils.getComponentsInJPanel(10, 5, rotate90btn, rotate270btn));
+    add(GuiUtils.getBoxYLastElement(5));
   }
 
   public RectifyAction getRectifyAction() {

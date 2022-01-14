@@ -7,11 +7,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.acquire.dockable.components.actions.annotate.comp;
+package org.weasis.acquire.dockable.components.actions.annotate;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -33,15 +32,13 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
 public class AnnotationOptionsPanel extends JPanel {
-
-  private final JPanel lineStylePanel;
-
-  private final Border border = BorderFactory.createEmptyBorder(5, 10, 5, 10);
 
   private final ActionListener pickColorAction =
       e -> {
@@ -69,71 +66,44 @@ public class AnnotationOptionsPanel extends JPanel {
 
   public AnnotationOptionsPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
+    Border spaceY = GuiUtils.getEmptydBorder(10, 5, 2, 5);
     setBorder(
         BorderFactory.createCompoundBorder(
             spaceY,
             GuiUtils.getTitledBorder(Messages.getString("AnnotationOptionsPanel.options"))));
 
-    lineStylePanel = createLineStylePanel();
-    JPanel drawOncePanel = createDrawOnePanel();
-    JPanel unitPanel = createUnitPanel();
+    add(createLineStylePanel());
 
-    add(lineStylePanel);
-    add(unitPanel);
-    add(drawOncePanel);
-  }
-
-  private JPanel createLineStylePanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 0));
-    panel.setBorder(border);
-
-    JLabel label =
-        new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
-    panel.add(label);
-
-    JButton button = new JButton(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
-    button.setBackground(MeasureTool.viewSetting.getLineColor());
-    button.addActionListener(pickColorAction);
-    panel.add(button);
-
-    JSpinner spinner = new JSpinner();
-    GuiUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
-    spinner.addChangeListener(changeLineWidth);
-    panel.add(spinner);
-
-    return panel;
-  }
-
-  private JPanel createDrawOnePanel() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new FlowLayout(FlowLayout.LEFT));
-    panel.setBorder(border);
+    ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
+    if (spUnitAction instanceof ComboItemListener<?> comboListener) {
+      JLabel label =
+          new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+      JComboBox<?> unitComboBox = comboListener.createCombo();
+      unitComboBox.setSelectedItem(Unit.PIXEL);
+      add(GuiUtils.getComponentsInJPanel(label, unitComboBox));
+    }
 
     ActionState drawOnceAction = EventManager.getInstance().getAction(ActionW.DRAW_ONLY_ONCE);
     if (drawOnceAction instanceof ToggleButtonListener toggleListener) {
       JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
       checkDraw.setSelected(MeasureTool.viewSetting.isDrawOnlyOnce());
       checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
-      panel.add(checkDraw);
+      add(GuiUtils.getComponentsInJPanel(checkDraw));
     }
-    return panel;
   }
 
-  private JPanel createUnitPanel() {
-    final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
+  private JPanel createLineStylePanel() {
+    JLabel label =
+        new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
+    JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
+    button.setToolTipText(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
+    button.addActionListener(pickColorAction);
 
-    ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
-    if (spUnitAction instanceof ComboItemListener<?> comboListener) {
-      JLabel label =
-          new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      panel.add(label);
-      JComboBox<?> unitComboBox = comboListener.createCombo();
-      unitComboBox.setSelectedItem(Unit.PIXEL);
-      panel.add(unitComboBox);
-    }
-    return panel;
+    JSpinner spinner = new JSpinner();
+    GuiUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
+    spinner.addChangeListener(changeLineWidth);
+
+    return GuiUtils.getComponentsInJPanel(label, button, spinner);
   }
 
   private void updateMeasureProperties() {
@@ -141,9 +111,5 @@ public class AnnotationOptionsPanel extends JPanel {
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
     MeasureToolBar.drawGraphicList.forEach(
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
-  }
-
-  public JPanel getLineStylePanel() {
-    return lineStylePanel;
   }
 }

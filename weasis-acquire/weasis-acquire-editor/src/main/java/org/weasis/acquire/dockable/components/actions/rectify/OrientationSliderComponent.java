@@ -7,13 +7,12 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.acquire.dockable.components.actions.rectify.lib;
+package org.weasis.acquire.dockable.components.actions.rectify;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
 import javax.swing.JLabel;
 import org.weasis.acquire.Messages;
-import org.weasis.acquire.dockable.components.actions.rectify.RectifyPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 
