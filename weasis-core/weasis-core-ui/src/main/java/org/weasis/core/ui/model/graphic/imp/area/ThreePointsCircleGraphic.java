@@ -35,7 +35,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "threePointsCircle")
 @XmlRootElement(name = "threePointsCircle")
 public class ThreePointsCircleGraphic extends AbstractDragGraphicArea {
-  private static final long serialVersionUID = -1806336437294860031L;
 
   public static final Integer POINTS_NUMBER = 3;
 

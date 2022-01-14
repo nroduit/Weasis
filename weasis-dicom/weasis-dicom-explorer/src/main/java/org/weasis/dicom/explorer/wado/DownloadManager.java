@@ -13,7 +13,6 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -123,9 +122,7 @@ public class DownloadManager {
           PRIORITY_QUEUE,
           ThreadUtil.getThreadFactory("Series Downloader")); // NON-NLS
 
-  public static class PriorityTaskComparator implements Comparator<Runnable>, Serializable {
-
-    private static final long serialVersionUID = 513213203958362767L;
+  public static class PriorityTaskComparator implements Comparator<Runnable> {
 
     @Override
     public int compare(final Runnable r1, final Runnable r2) {

@@ -15,7 +15,6 @@ import org.weasis.acquire.explorer.core.ItemList;
 import org.weasis.acquire.explorer.core.ItemList.Interval;
 
 public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboBoxModel<T> {
-  private static final long serialVersionUID = -7664267643457177724L;
 
   private T selectedItem = null;
   private T lastSelectedItem = null;

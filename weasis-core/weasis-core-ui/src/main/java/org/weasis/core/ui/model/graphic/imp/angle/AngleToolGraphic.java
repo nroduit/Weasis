@@ -39,7 +39,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "angle")
 @XmlRootElement(name = "angle")
 public class AngleToolGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = 1228359066740628659L;
 
   public static final Integer POINTS_NUMBER = 3;
 

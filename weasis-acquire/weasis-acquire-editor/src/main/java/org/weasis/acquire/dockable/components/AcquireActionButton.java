@@ -16,7 +16,6 @@ import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
 import org.weasis.acquire.dockable.components.actions.AcquireActionPanel;
 
 public class AcquireActionButton extends JButton {
-  private static final long serialVersionUID = -4757730607905567863L;
 
   private AcquireAction action;
 

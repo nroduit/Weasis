@@ -33,7 +33,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "ellipse")
 @XmlRootElement(name = "ellipse")
 public class EllipseGraphic extends ObliqueRectangleGraphic {
-  private static final long serialVersionUID = 3296060775738751236L;
 
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_ELLIPSE);
 

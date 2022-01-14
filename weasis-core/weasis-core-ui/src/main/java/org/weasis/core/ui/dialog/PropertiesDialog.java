@@ -29,7 +29,6 @@ import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
 public abstract class PropertiesDialog extends JDialog {
-  private static final long serialVersionUID = 8140414207263317080L;
 
   private final JPanel panel1 = new JPanel();
   private final BorderLayout borderLayout1 = new BorderLayout();

@@ -60,7 +60,6 @@ public class SeriesThumbnail extends Thumbnail
         DragSourceListener,
         DragSourceMotionListener,
         FocusListener {
-  private static final long serialVersionUID = 2359304176364341395L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesThumbnail.class);
 

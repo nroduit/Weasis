@@ -35,7 +35,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "polyline")
 @XmlRootElement(name = "polyline")
 public class PolylineGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -4516499480176907755L;
 
   public static final Integer POINTS_NUMBER = UNDEFINED;
 

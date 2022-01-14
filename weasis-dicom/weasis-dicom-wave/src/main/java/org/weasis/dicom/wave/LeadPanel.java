@@ -31,7 +31,6 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.dicom.wave.SignalMarker.Measure;
 
 public class LeadPanel extends JPanel {
-  private static final long serialVersionUID = -2928188250483176572L;
 
   private final WaveView view;
   private final ChannelDefinition channels;

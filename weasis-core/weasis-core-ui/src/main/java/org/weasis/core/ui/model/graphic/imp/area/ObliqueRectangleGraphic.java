@@ -42,7 +42,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "rectangle")
 @XmlRootElement(name = "rectangle")
 public class ObliqueRectangleGraphic extends AbstractDragGraphicArea {
-  private static final long serialVersionUID = -2862114022989550927L;
 
   public static final Integer POINTS_NUMBER = 4;
 

@@ -39,7 +39,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "fourPointsAngle")
 @XmlRootElement(name = "fourPointsAngle")
 public class FourPointsAngleToolGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -3885933187155495525L;
 
   public static final Integer POINTS_NUMBER = 8;
 

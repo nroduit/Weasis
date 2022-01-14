@@ -16,7 +16,6 @@ import javax.swing.JScrollPane;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 
 public class PublishTree extends JScrollPane {
-  private static final long serialVersionUID = -353604550595956677L;
 
   private final CheckboxTree checkboxTree;
   private final PublishTreeModel publishTreeModel;

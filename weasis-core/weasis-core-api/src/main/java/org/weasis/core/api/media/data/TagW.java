@@ -10,7 +10,6 @@
 package org.weasis.core.api.media.data;
 
 import java.awt.Color;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -38,10 +37,9 @@ import org.weasis.core.util.StringUtil;
  * Common DICOM tags used by the application. The role of these tags is to provide a high level
  * accessibility of common tags (DICOM and non DICOM).
  */
-public class TagW implements Serializable {
+public class TagW {
   private static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
 
-  private static final long serialVersionUID = -7914330824854199622L;
   private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
 
   protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<>());

@@ -39,7 +39,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "pixelInfo")
 @XmlRootElement(name = "pixelInfo")
 public class PixelInfoGraphic extends AnnotationGraphic {
-  private static final long serialVersionUID = -6489917524461404874L;
 
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PIXEL_INFO);
 

@@ -17,7 +17,6 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.core.util.StringUtil;
 
 public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
-  private static final long serialVersionUID = -2751941971479265507L;
 
   private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series");
   private static final String SERIE_PREFIX =

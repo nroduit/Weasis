@@ -14,8 +14,6 @@ import java.util.Objects;
 
 public class OpenIdOAuth2AccessToken extends OAuth2AccessToken {
 
-  private static final long serialVersionUID = -4534058186528117610L;
-
   /**
    * Id_token is part of OpenID Connect specification. It can hold user information that you can
    * directly extract without additional request to provider.

@@ -46,7 +46,6 @@ import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
 import org.weasis.core.util.StringUtil;
 
 public class CalibrationView extends JPanel {
-  private static final long serialVersionUID = -1098044466661041480L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(CalibrationView.class);
 

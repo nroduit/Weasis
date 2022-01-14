@@ -30,7 +30,6 @@ import org.weasis.core.ui.model.utils.imp.DefaultViewModel;
 import org.weasis.core.util.StringUtil;
 
 class InfoPanel extends JPanel {
-  private static final long serialVersionUID = -470038831713011257L;
 
   private final JLabel lead = new JLabel(" ");
   private final JLabel maximum = new JLabel();

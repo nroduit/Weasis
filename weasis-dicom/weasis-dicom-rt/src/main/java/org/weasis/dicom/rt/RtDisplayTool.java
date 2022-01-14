@@ -163,7 +163,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     this.treeStructures =
         new CheckboxTree() {
-          private static final long serialVersionUID = 778188275507301929L;
 
           @Override
           public String getToolTipText(MouseEvent evt) {
@@ -185,7 +184,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     this.treeIsodoses =
         new CheckboxTree() {
-          private static final long serialVersionUID = 9185787644491574319L;
 
           @Override
           public String getToolTipText(MouseEvent evt) {

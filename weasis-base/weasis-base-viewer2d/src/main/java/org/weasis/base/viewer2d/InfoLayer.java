@@ -31,7 +31,6 @@ import org.weasis.core.util.StringUtil;
  * @author Nicolas Roduit
  */
 public class InfoLayer extends AbstractInfoLayer<ImageElement> {
-  private static final long serialVersionUID = 1782300490253793711L;
 
   public InfoLayer(ViewCanvas<ImageElement> view2DPane) {
     super(view2DPane);

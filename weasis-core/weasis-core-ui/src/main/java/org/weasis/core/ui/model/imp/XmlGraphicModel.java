@@ -21,7 +21,6 @@ import org.weasis.core.ui.model.ReferencedSeries;
 
 @XmlRootElement(name = "presentation")
 public class XmlGraphicModel extends AbstractGraphicModel {
-  private static final long serialVersionUID = 2427740058858913568L;
 
   public XmlGraphicModel() {
     super();

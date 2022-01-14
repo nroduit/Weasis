@@ -18,7 +18,6 @@ import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
 import org.weasis.core.api.gui.util.GuiUtils;
 
 public class AcquireSubmitButtonsPanel extends JPanel {
-  private static final long serialVersionUID = 4890844708371941062L;
 
   private final AcquireActionButton cancelBtn;
   private final AcquireActionButton resetBtn;

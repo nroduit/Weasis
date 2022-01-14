@@ -15,7 +15,6 @@ import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 
 public class AcquireImageMeta extends AcquireMetadataTableModel {
-  private static final long serialVersionUID = 8912202268139591519L;
 
   private static final TagW[] TAGS_TO_DISPLAY =
       getTags(

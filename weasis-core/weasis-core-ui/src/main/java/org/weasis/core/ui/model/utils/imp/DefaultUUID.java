@@ -16,7 +16,6 @@ import java.util.UUID;
 import org.weasis.core.ui.model.utils.UUIDable;
 
 public class DefaultUUID implements UUIDable {
-  private static final long serialVersionUID = -3178169761934642523L;
 
   private String uuid;
 

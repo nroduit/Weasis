@@ -200,8 +200,6 @@ public class CheckTreeModel {
 
   static class ToolTipTreeNode extends DefaultMutableTreeNode {
 
-    private static final long serialVersionUID = 6815757092280682077L;
-
     public ToolTipTreeNode(TagReadable userObject, boolean allowsChildren) {
       super(Objects.requireNonNull(userObject), allowsChildren);
     }

@@ -18,8 +18,6 @@ import org.weasis.core.api.media.data.Tagable;
 
 public class TagSeq extends TagD {
 
-  private static final long serialVersionUID = -7782852222112967568L;
-
   public TagSeq(
       int tagID,
       String keyword,

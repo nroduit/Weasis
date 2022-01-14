@@ -17,7 +17,6 @@ import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 
 public class OrientationSliderComponent extends AbstractSliderComponent {
-  private static final long serialVersionUID = -4238024766089795426L;
 
   private static final int RECTIFY_ORIENTATION_MIN = -45;
   private static final int RECTIFY_ORIENTATION_MAX = 45;

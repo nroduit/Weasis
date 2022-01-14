@@ -39,7 +39,6 @@ import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
 
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {
-  private static final long serialVersionUID = -8736946182228791444L;
 
   private static final String P_MAX_RANGE = "maxMinuteRange";
 

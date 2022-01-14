@@ -17,7 +17,6 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 
 public class Rotate90Button extends JButton {
-  private static final long serialVersionUID = -4223232320924420952L;
 
   private static final int ANGLE = 90;
   private static final Icon ICON = ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE);

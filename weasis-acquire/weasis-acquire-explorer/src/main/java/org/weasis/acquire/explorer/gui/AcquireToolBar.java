@@ -16,7 +16,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class AcquireToolBar<DicomImageElement> extends WtoolBar {
-  private static final long serialVersionUID = 3195220259820490950L;
 
   public AcquireToolBar(int index) {
     super(Messages.getString("AcquireToolBar.title"), index);

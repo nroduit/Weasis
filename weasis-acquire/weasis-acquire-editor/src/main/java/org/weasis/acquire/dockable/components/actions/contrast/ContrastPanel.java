@@ -35,7 +35,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 public class ContrastPanel extends AbstractAcquireActionPanel
     implements ChangeListener, OpValueChanged {
-  private static final long serialVersionUID = -3978989511436089997L;
 
   private final AbstractSliderComponent contrastSlider;
   private final AbstractSliderComponent brightnessSlider;

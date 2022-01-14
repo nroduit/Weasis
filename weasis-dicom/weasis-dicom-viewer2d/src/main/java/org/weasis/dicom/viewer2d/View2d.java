@@ -145,7 +145,6 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.WlPresentation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
-  private static final long serialVersionUID = 8334123827855840782L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
 

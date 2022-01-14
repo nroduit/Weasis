@@ -65,7 +65,6 @@ import org.weasis.opencv.op.lut.DefaultWlPresentation;
  * @author Nicolas Roduit
  */
 public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
-  private static final long serialVersionUID = 3234560631747133075L;
 
   private static final Color highlight = new Color(255, 153, 153);
 

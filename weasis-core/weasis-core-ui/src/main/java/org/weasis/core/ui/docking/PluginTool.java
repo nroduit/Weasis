@@ -22,8 +22,6 @@ import org.weasis.core.ui.editor.image.dockable.MiniTool;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
 
-  private static final long serialVersionUID = -204558500055275231L;
-
   public enum POSITION {
     NORTH,
     EAST,

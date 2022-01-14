@@ -32,7 +32,6 @@ import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public class RectangleGraphic extends AbstractDragGraphicArea {
-  private static final long serialVersionUID = -2862114022989550927L;
 
   public static final Integer POINTS_NUMBER = 8;
 

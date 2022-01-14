@@ -19,7 +19,6 @@ import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.core.util.StringUtil;
 
 public class ContrastComponent extends AbstractSliderComponent {
-  private static final long serialVersionUID = -8952577162679680694L;
 
   public static final int CONTRAST_VALUE = 100;
   public static final int CONTRAST_MIN = 1;

@@ -55,7 +55,6 @@ import org.weasis.core.util.StringUtil;
 @XmlRootElement(name = "annotation")
 @XmlAccessorType(XmlAccessType.NONE)
 public class AnnotationGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -6993299250389257151L;
 
   public static final Integer POINTS_NUMBER = 2;
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_TEXT);

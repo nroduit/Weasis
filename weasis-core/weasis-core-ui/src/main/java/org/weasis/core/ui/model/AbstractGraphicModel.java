@@ -72,7 +72,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(propOrder = {"referencedSeries", "layers", "models"})
 @XmlAccessorType(XmlAccessType.NONE)
 public abstract class AbstractGraphicModel extends DefaultUUID implements GraphicModel {
-  private static final long serialVersionUID = 1187916695295007387L;
 
   private List<ReferencedSeries> referencedSeries;
   private List<GraphicLayer> layers;

@@ -38,7 +38,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlRootElement(name = "line")
 @XmlAccessorType(XmlAccessType.NONE)
 public class LineGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -4518306673180973310L;
 
   public static final Integer POINTS_NUMBER = 2;
 

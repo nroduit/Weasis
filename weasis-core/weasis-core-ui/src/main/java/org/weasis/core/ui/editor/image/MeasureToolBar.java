@@ -52,7 +52,6 @@ import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class MeasureToolBar extends WtoolBar {
-  private static final long serialVersionUID = -6672565963157176685L;
 
   public static final SelectGraphic selectionGraphic = new SelectGraphic();
 

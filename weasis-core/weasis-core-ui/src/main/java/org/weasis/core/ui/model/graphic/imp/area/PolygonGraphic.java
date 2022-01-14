@@ -47,7 +47,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "polygon")
 @XmlRootElement(name = "polygon")
 public class PolygonGraphic extends AbstractDragGraphicArea {
-  private static final long serialVersionUID = 3835917798842596122L;
 
   public static final Integer POINTS_NUMBER = UNDEFINED;
 

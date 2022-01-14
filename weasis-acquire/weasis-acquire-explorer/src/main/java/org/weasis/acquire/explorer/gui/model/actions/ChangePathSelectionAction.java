@@ -23,7 +23,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 
 public class ChangePathSelectionAction extends AbstractAction {
-  private static final long serialVersionUID = -65145837841144613L;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ChangePathSelectionAction.class);
 
   private final AcquireExplorer mainView;

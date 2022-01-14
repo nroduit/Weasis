@@ -11,8 +11,6 @@ package org.weasis.dicom.send;
 
 public class HttpServerErrorException extends RuntimeException {
 
-  private static final long serialVersionUID = 1253673551984892314L;
-
   public HttpServerErrorException(String message) {
     super(message);
   }

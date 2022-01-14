@@ -74,7 +74,6 @@ import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 
 public class MeasureTool extends PluginTool implements GraphicSelectionListener {
-  private static final long serialVersionUID = 1117961156637401550L;
 
   public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE;
   public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img");

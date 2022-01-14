@@ -50,7 +50,6 @@ import org.weasis.opencv.op.lut.WlPresentation;
  */
 public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     implements Layer, ImageLayer<E> {
-  private static final long serialVersionUID = -7071485066284475687L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RenderedImageLayer.class);
 

@@ -28,7 +28,6 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
-  private static final long serialVersionUID = 1149562889654679335L;
 
   private final ViewCanvas<E> view2d;
   private Graphics2D currentG2d;

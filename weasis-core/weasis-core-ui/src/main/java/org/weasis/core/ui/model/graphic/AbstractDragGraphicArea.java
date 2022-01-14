@@ -17,7 +17,6 @@ import org.weasis.core.ui.editor.image.ImageRegionStatistics;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
 
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implements GraphicArea {
-  private static final long serialVersionUID = -3042328664891626708L;
 
   public AbstractDragGraphicArea(Integer pointNumber) {
     super(pointNumber);

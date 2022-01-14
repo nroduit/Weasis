@@ -30,7 +30,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
 
 public class RectifyPanel extends AbstractAcquireActionPanel {
-  private static final long serialVersionUID = 4041145212218086219L;
 
   private final OrientationSliderComponent orientationPanel;
   private final JButton rotate90btn;

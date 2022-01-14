@@ -30,7 +30,6 @@ import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
 import org.weasis.core.api.gui.util.GuiUtils;
 
 public class AcquireActionButtonsPanel extends JPanel {
-  private static final long serialVersionUID = -8768455915804608493L;
 
   private final ButtonGroup btnGroup = new ButtonGroup();
 

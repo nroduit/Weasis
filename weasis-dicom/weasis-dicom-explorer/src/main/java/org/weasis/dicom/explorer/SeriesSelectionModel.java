@@ -28,7 +28,6 @@ import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
 public class SeriesSelectionModel extends ArrayList<Series<?>> {
-  private static final long serialVersionUID = -7481872614518038371L;
 
   public static final String FOREGROUND = "List.foreground";
   public static final String BACKGROUND = "List.background";

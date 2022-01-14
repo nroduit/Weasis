@@ -22,8 +22,6 @@ import org.weasis.core.ui.model.layer.LayerType;
 @XmlRootElement(name = "layer")
 public class DefaultLayer extends AbstractGraphicLayer {
 
-  private static final long serialVersionUID = 8576601524359423997L;
-
   public DefaultLayer() {
     super(LayerType.TEMP_DRAW);
   }

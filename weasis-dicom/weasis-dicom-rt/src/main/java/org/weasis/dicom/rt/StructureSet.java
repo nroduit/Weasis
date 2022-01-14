@@ -18,7 +18,6 @@ import java.util.Objects;
  * @author Nicolas Roduit
  */
 public class StructureSet extends HashMap<Integer, StructureLayer> {
-  private static final long serialVersionUID = 6156886965129631894L;
 
   private final String label;
   private final Date date;

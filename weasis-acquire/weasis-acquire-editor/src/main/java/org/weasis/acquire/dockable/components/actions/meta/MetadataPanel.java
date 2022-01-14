@@ -19,7 +19,6 @@ import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaP
 import org.weasis.core.api.gui.util.GuiUtils;
 
 public class MetadataPanel extends AbstractAcquireActionPanel {
-  private static final long serialVersionUID = -1474114784513035056L;
 
   private final AcquireMetadataPanel globalInfoPanel =
       new AcquireGlobalMetaPanel(Messages.getString("MetadataPanel.global"));

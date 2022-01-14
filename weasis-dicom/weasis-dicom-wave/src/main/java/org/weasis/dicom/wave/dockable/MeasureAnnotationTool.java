@@ -52,7 +52,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.wave.Messages;
 
 public class MeasureAnnotationTool extends PluginTool implements SeriesViewerListener {
-  private static final long serialVersionUID = 1117961156637401550L;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasureAnnotationTool.class);
 
   public static final String BUTTON_NAME = "Measurements"; // NON-NLS

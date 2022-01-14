@@ -30,7 +30,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.util.ThreadUtil;
 
 public class ImportPanel extends JPanel {
-  private static final long serialVersionUID = -8658686020451614960L;
 
   public static final ExecutorService IMPORT_IMAGES =
       ThreadUtil.buildNewSingleThreadExecutor("ImportImage");

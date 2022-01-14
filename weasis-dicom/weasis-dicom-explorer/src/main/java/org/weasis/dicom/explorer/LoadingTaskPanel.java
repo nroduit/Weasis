@@ -23,7 +23,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 
 public class LoadingTaskPanel extends JPanel {
-  private static final long serialVersionUID = 1L;
 
   private final ExplorerTask<?, ?> task;
   private final boolean globalLoadingManager;

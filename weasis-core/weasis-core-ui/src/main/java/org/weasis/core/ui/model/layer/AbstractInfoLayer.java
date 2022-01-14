@@ -48,8 +48,6 @@ import org.weasis.opencv.op.lut.WlParams;
 public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultUUID
     implements LayerAnnotation {
 
-  private static final long serialVersionUID = 1338490067849040408L;
-
   public static final String P_ALL_VIEWS = "annotations.all.views";
   public static final AtomicBoolean applyToAllView = new AtomicBoolean(true);
   public static final Map<String, Boolean> defaultDisplayPreferences = new HashMap<>();

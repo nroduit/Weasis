@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 public class ReferencedSeries extends DefaultUUID {
-  private static final long serialVersionUID = -6824893762236081155L;
 
   private List<ReferencedImage> images;
 

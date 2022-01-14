@@ -43,7 +43,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
  * @since 2.5.0 - 2016-04-06 - ylar - Creation
  */
 public class EditionTool extends PluginTool implements SeriesViewerListener {
-  private static final long serialVersionUID = -3662409181835644699L;
 
   public static final String BUTTON_NAME = Messages.getString("EditionTool.title_btn");
   private final JScrollPane rootPane = new JScrollPane();

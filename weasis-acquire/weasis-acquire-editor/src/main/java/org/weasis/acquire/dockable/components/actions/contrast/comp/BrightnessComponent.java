@@ -18,7 +18,6 @@ import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.core.util.StringUtil;
 
 public class BrightnessComponent extends AbstractSliderComponent {
-  private static final long serialVersionUID = -4387734543272450700L;
 
   public static final int BRIGHTNESS_VALUE = 0;
   public static final int BRIGHTNESS_MIN = -127;

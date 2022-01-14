@@ -38,7 +38,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "parallelLine")
 @XmlRootElement(name = "parallelLine")
 public class ParallelLineGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -3254108307003667982L;
 
   public static final Integer POINTS_NUMBER = 6;
 

@@ -19,7 +19,6 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class AnnotatePanel extends AbstractAcquireActionPanel {
-  private static final long serialVersionUID = -3096519473431772537L;
 
   public AnnotatePanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

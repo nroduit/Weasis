@@ -66,7 +66,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlAccessorType(XmlAccessType.NONE)
 public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
-  private static final long serialVersionUID = -8152071576417041112L;
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractGraphic.class);
 
   protected static final String NULL_MSG = "Null is not allowed"; // NON-NLS

@@ -35,7 +35,6 @@ import org.weasis.core.ui.model.utils.imp.SelectedDragSequence;
  * @author Benoit Jacquemoud
  */
 public class SelectGraphic extends RectangleGraphic {
-  private static final long serialVersionUID = -7680605225823046153L;
 
   public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_SELECTION);
 

@@ -130,7 +130,6 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     implements ViewCanvas<E> {
-  private static final long serialVersionUID = 4546307243696460899L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 

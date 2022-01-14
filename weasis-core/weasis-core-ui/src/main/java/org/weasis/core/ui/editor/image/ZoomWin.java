@@ -60,7 +60,6 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public class ZoomWin<E extends ImageElement> extends GraphicsPane
     implements ImageLayerChangeListener<E> {
-  private static final long serialVersionUID = 3542710545706544620L;
 
   public static final String SYNCH_CMD = "synchronize"; // NON-NLS
   public static final String FREEZE_CMD = "freeze"; // NON-NLS

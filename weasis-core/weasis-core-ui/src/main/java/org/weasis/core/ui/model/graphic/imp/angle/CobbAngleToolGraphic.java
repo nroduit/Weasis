@@ -32,7 +32,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "cobbAngle")
 @XmlRootElement(name = "cobbAngle")
 public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
-  private static final long serialVersionUID = -5516094184442711688L;
 
   public static final Integer POINTS_NUMBER = 5;
 

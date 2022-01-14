@@ -28,7 +28,6 @@ import org.weasis.dicom.codec.TagD;
 
 public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireGlobalMeta.class);
-  private static final long serialVersionUID = -2336248192936430413L;
 
   protected String[] headers = {
     Messages.getString("AcquireMetadataTableModel.tag"),

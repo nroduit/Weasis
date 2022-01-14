@@ -61,7 +61,6 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
-  private static final long serialVersionUID = -5804430771962614157L;
 
   public static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2");
 

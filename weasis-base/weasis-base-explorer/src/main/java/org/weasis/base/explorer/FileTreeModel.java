@@ -24,7 +24,6 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.service.BundleTools;
 
 public class FileTreeModel extends DefaultTreeModel implements DataExplorerModel {
-  private static final long serialVersionUID = 5866861109081440236L;
 
   private final PropertyChangeSupport propertyChange;
 

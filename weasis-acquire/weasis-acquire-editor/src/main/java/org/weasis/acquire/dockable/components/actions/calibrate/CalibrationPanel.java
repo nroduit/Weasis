@@ -23,7 +23,6 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
 public class CalibrationPanel extends AbstractAcquireActionPanel {
-  private static final long serialVersionUID = 3956795043244254606L;
 
   public static final CalibrationGraphic CALIBRATION_LINE_GRAPHIC = new CalibrationGraphic();
 

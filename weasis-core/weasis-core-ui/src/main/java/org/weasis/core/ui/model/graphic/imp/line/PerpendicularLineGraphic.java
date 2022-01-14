@@ -38,7 +38,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "perpendicularLine")
 @XmlRootElement(name = "perpendicularLine")
 public class PerpendicularLineGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -7056437654935777004L;
 
   public static final Integer POINTS_NUMBER = 4;
 
