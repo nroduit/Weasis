@@ -48,9 +48,9 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   public void initGUI() {
     JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
     btnOpen.addActionListener(e -> browseImgFile());
-    add(GuiUtils.getComponentsInJPanel(btnOpen, fileLabel));
+    add(GuiUtils.getFlowLayoutPanel(btnOpen, fileLabel));
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {

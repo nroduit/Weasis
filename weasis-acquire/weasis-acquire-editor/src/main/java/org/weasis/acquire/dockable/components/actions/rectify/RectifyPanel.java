@@ -39,7 +39,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
 
   public RectifyPanel(RectifyAction rectifyAction) {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
+    setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
     this.rectifyAction = Objects.requireNonNull(rectifyAction);
     orientationPanel = new OrientationSliderComponent(this);
     rotate90btn = new Rotate90Button(rectifyAction);
@@ -48,9 +48,9 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     rotate270btn.setPreferredSize(GuiUtils.getBigIconButtonSize(rotate270btn));
 
     add(orientationPanel);
-    add(GuiUtils.createVerticalStrut(15));
-    add(GuiUtils.getComponentsInJPanel(10, 5, rotate90btn, rotate270btn));
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxVerticalStrut(15));
+    add(GuiUtils.getFlowLayoutPanel(10, 5, rotate90btn, rotate270btn));
+    add(GuiUtils.boxYLastElement(5));
   }
 
   public RectifyAction getRectifyAction() {
@@ -73,7 +73,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
 
     RectifyOrientationChangeListener listener = orientationPanel.getListener();
     orientationPanel.removeChangeListener(listener);
-    orientationPanel.setSliderValue(next.getOrientation());
+    orientationPanel.setValue(next.getOrientation());
     orientationPanel.updatePanelTitle();
     orientationPanel.addChangeListener(listener);
     rectifyAction.init(view.getGraphicManager(), info);

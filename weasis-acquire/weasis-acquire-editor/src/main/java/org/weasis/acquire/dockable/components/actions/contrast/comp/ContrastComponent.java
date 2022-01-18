@@ -9,13 +9,14 @@
  */
 package org.weasis.acquire.dockable.components.actions.contrast.comp;
 
-import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.StringJoiner;
 import javax.swing.JLabel;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.util.FontTools;
 import org.weasis.core.util.StringUtil;
 
 public class ContrastComponent extends AbstractSliderComponent {
@@ -33,7 +34,13 @@ public class ContrastComponent extends AbstractSliderComponent {
   }
 
   public ContrastComponent(ContrastPanel panel) {
-    super(panel, Messages.getString("ContrastComponent.contrast"));
+    super(
+        Messages.getString("ContrastComponent.contrast"),
+        CONTRAST_MIN,
+        CONTRAST_MAX,
+        CONTRAST_VALUE);
+    setLabelTable(labels);
+    SliderChangeListener.setFont(this, FontTools.getMiniFont());
     addChangeListener(panel);
   }
 
@@ -48,20 +55,5 @@ public class ContrastComponent extends AbstractSliderComponent {
   @Override
   public int getDefaultValue() {
     return CONTRAST_VALUE;
-  }
-
-  @Override
-  public int getMin() {
-    return CONTRAST_MIN;
-  }
-
-  @Override
-  public int getMax() {
-    return CONTRAST_MAX;
-  }
-
-  @Override
-  public Dictionary<Integer, JLabel> getLabels() {
-    return labels;
   }
 }

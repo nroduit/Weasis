@@ -40,7 +40,7 @@ public class AcquireActionButtonsPanel extends JPanel {
     super(new GridLayout(0, 2));
     setBorder(
         BorderFactory.createCompoundBorder(
-            GuiUtils.getEmptydBorder(5), UIManager.getBorder("TitledBorder.border")));
+            GuiUtils.getEmptyBorder(5), UIManager.getBorder("TitledBorder.border")));
 
     this.editionTool = editionTool;
 

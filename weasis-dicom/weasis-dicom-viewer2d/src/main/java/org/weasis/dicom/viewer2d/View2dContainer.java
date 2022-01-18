@@ -384,8 +384,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   public JMenu fillSelectedPluginMenu(JMenu menuRoot) {
     if (menuRoot != null) {
       menuRoot.removeAll();
-      if (eventManager instanceof EventManager) {
-        EventManager manager = (EventManager) eventManager;
+      if (eventManager instanceof EventManager manager) {
         JMenu menu = new JMenu(Messages.getString("View2dContainer.3d"));
         ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
         menu.setEnabled(
@@ -461,13 +460,11 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
 
-    if (evt instanceof ObservableEvent) {
-      ObservableEvent event = (ObservableEvent) evt;
+    if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
 
-      if (newVal instanceof SeriesEvent) {
-        SeriesEvent event2 = (SeriesEvent) newVal;
+      if (newVal instanceof SeriesEvent event2) {
 
         SeriesEvent.Action action2 = event2.getActionCommand();
         Object source = event2.getSource();
@@ -476,8 +473,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
         if (ObservableEvent.BasicAction.ADD.equals(action)) {
 
           if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
-            if (source instanceof DicomSeries) {
-              DicomSeries series = (DicomSeries) source;
+            if (source instanceof DicomSeries series) {
               ViewCanvas<DicomImageElement> view2DPane = eventManager.getSelectedViewPane();
               if (view2DPane != null) {
                 DicomImageElement img = view2DPane.getImage();
@@ -506,8 +502,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
               }
             }
           } else if (SeriesEvent.Action.UPDATE_IMAGE.equals(action2)) {
-            if (source instanceof DicomImageElement) {
-              DicomImageElement dcm = (DicomImageElement) source;
+            if (source instanceof DicomImageElement dcm) {
               for (ViewCanvas<DicomImageElement> v : view2ds) {
                 if (dcm == v.getImage()) {
                   // Force to repaint the same image
@@ -524,8 +519,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
               }
             }
           } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
-            if (source instanceof DicomSeries) {
-              DicomSeries dcm = (DicomSeries) source;
+            if (source instanceof DicomSeries dcm) {
               for (ViewCanvas<DicomImageElement> v : view2ds) {
                 if (dcm == v.getSeries()) {
                   v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
@@ -542,8 +536,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           }
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-        if (newVal instanceof MediaSeriesGroup) {
-          MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+        if (newVal instanceof MediaSeriesGroup group) {
           // Patient Group
           if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             if (group.equals(getGroupID())) {
@@ -554,8 +547,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           }
           // Study Group
           else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel) {
-              DicomModel model = (DicomModel) event.getSource();
+            if (event.getSource() instanceof DicomModel model) {
               for (ViewCanvas<DicomImageElement> v : view2ds) {
                 if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
                   v.setSeries(null);
@@ -579,8 +571,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
-        if (newVal instanceof Series) {
-          Series series = (Series) newVal;
+        if (newVal instanceof Series series) {
           for (ViewCanvas<DicomImageElement> v : view2ds) {
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {

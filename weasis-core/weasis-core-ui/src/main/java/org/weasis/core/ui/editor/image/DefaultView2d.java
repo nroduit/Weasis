@@ -68,6 +68,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -869,27 +870,23 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public Font getLayerFont() {
-    int fontSize =
+    Font font = FontTools.getSemiBoldFont();
+    float fontSize =
         // Set font size according to the view size
-        (int)
+        (float)
             Math.ceil(
-                10
-                    / ((this.getGraphics()
-                                .getFontMetrics(FontTools.getDefaultFont())
-                                .stringWidth("0123456789")
-                            * 7.0)
-                        / getWidth()));
-    fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-    return fontSize < 9
-        ? FontTools.getMiniFont()
-        : fontSize < 13 ? FontTools.getSmallFont() : FontTools.getDefaultFont();
+                1.7
+                    * getWidth()
+                    / this.getGraphics().getFontMetrics(font).stringWidth("0123456789"));
+    fontSize = Math.max(8, Math.min(fontSize, font.getSize()));
+    return font.deriveFont(fontSize);
   }
 
   /** paint routine */
   @Override
   public void paintComponent(Graphics g) {
-    if (g instanceof Graphics2D) {
-      draw((Graphics2D) g);
+    if (g instanceof Graphics2D graphics2D) {
+      draw(graphics2D);
     }
   }
 
@@ -1360,8 +1357,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void drawPointer(Graphics2D g, Double x, Double y) {
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
     float[] dash = {5.0f};
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.translate(x, y);
     g.setStroke(new BasicStroke(3.0f));
     g.setPaint(pointerColor1);
@@ -1374,7 +1371,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       g.draw(pointer[i]);
     }
     g.translate(-x, -y);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+    GuiUtils.resetRenderingHints(g, oldRenderingHints);
   }
 
   protected void showPixelInfos(MouseEvent mouseevent) {
@@ -1387,7 +1384,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           Math.max(
               oldBound.width,
               this.getGraphics()
-                      .getFontMetrics(getLayerFont())
+                      .getFontMetrics()
                       .stringWidth(
                           Messages.getString("DefaultView2d.pix")
                               + StringUtil.COLON_AND_SPACE

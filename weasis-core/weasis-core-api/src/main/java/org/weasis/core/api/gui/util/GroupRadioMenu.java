@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.gui.util;
 
-import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;

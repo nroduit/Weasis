@@ -201,7 +201,7 @@ public class ViewSetting {
   }
 
   public Font getFont() {
-    Font font = FontTools.getDefaultFont();
+    Font font = FontTools.getSemiBoldFont();
     return font.deriveFont((float) Math.max(font.getSize() + fontSizeShift, 4));
   }
 

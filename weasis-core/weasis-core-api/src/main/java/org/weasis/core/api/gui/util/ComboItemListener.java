@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import java.awt.Dimension;
 import java.util.Arrays;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -179,9 +180,10 @@ public abstract class ComboItemListener<T> extends BasicActionState
     return group;
   }
 
-  public JComboBox<T> createCombo() {
+  public JComboBox<T> createCombo(int width) {
     final ComboItems combo = new ComboItems();
     registerActionState(combo);
+    GuiUtils.setPreferredWidth(combo, width, width);
     GuiUtils.addTooltipToComboList(combo);
     return combo;
   }
@@ -210,5 +212,12 @@ public abstract class ComboItemListener<T> extends BasicActionState
   }
 
   // Trick to wrap JComboBox in the same interface as the GroupRadioMenu
-  class ComboItems extends JComboBox<T> implements ComboBoxModelAdapter<T> {}
+  class ComboItems extends JComboBox<T> implements ComboBoxModelAdapter<T> {
+    @Override
+    public Dimension getMaximumSize() {
+      Dimension max = super.getMaximumSize();
+      max.height = getPreferredSize().height;
+      return max;
+    }
+  }
 }

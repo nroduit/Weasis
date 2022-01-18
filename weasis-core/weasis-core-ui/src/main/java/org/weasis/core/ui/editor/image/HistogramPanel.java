@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Stroke;
@@ -160,8 +161,9 @@ public class HistogramPanel extends JPanel {
 
     g2d.setStroke(new BasicStroke(1.0f));
 
-    final float fontHeight = FontTools.getAccurateFontHeight(g2d);
-    final float midfontHeight = fontHeight + 3f;
+    FontMetrics fontMetrics = g2d.getFontMetrics();
+    final int fontHeight = fontMetrics.getHeight();
+    final int midfontHeight = fontHeight + 3;
 
     float offsetThick = (xAxisHistoRescaleRatio + 0.5f) / 2f;
 

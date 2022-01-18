@@ -9,13 +9,9 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.AbstractButton;
 import javax.swing.Icon;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
-import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -94,66 +90,11 @@ public class LutToolBar extends WtoolBar {
   }
 
   private Icon buildLutIcon() {
-    final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.LUT);
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton model) {
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(ResourceUtil.getToolBarIcon(ActionIcon.LUT));
   }
 
   private Icon buildWLIcon() {
-    final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.WINDOW_LEVEL);
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton model) {
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(
+        ResourceUtil.getToolBarIcon(ActionIcon.WINDOW_LEVEL));
   }
 }

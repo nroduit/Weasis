@@ -51,14 +51,16 @@ public class CircularProgressBar extends JProgressBar {
     this.arcThickness = arcThickness;
     this.displayText = displayText;
     Font font =
-        fontSize == null ? FontTools.getFont11() : FontTools.getDefaultFont().deriveFont(fontSize);
+        fontSize == null
+            ? FontTools.getMiniFont()
+            : FontTools.getDefaultFont().deriveFont(fontSize);
     this.setFont(font.deriveFont((float) Math.max(font.getSize() - 1, 8)));
     init();
   }
 
   private void init() {
     this.setOpaque(false);
-    this.setBorder(GuiUtils.getEmptydBorder(TEXT_GAP + (int) Math.ceil(arcThickness)));
+    this.setBorder(GuiUtils.getEmptyBorder(TEXT_GAP + (int) Math.ceil(arcThickness)));
     Dimension dim;
     if (displayText) {
       int size = GuiUtils.getComponentWidthFromText(this, "90%");
@@ -124,9 +126,10 @@ public class CircularProgressBar extends JProgressBar {
       float textGap = GuiUtils.getScaleLength(TEXT_GAP);
       float arcSize = getInsets().top - textGap;
       double shift = arcSize / 2.0;
-      g2d.setStroke(new BasicStroke(arcSize, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
 
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
+
+      g2d.setStroke(new BasicStroke(arcSize, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
       Color background = FlatUIUtils.getUIColor("ProgressBar.background", Color.WHITE);
       Color foreground = FlatUIUtils.getUIColor("ProgressBar.foreground", Color.LIGHT_GRAY);
       g2d.setPaint(background);
@@ -164,8 +167,7 @@ public class CircularProgressBar extends JProgressBar {
         }
       }
 
-      g2d.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_DEFAULT);
-      g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
       g2d.setStroke(oldStroke);
       g2d.setFont(oldFont);
     }

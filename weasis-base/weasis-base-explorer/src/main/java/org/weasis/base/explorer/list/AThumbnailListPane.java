@@ -30,7 +30,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
   protected final ThumbnailList<E> thumbnailList;
   protected final ExecutorService pool;
 
-  public AThumbnailListPane(ThumbnailList<E> thumbList) {
+  protected AThumbnailListPane(ThumbnailList<E> thumbList) {
     super(
         thumbList.asComponent(),
         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,

@@ -11,8 +11,6 @@ package org.weasis.acquire.dockable.components.actions.contrast;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
-import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.weasis.acquire.AcquireObject;
@@ -20,7 +18,6 @@ import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
 import org.weasis.acquire.dockable.components.actions.contrast.comp.BrightnessComponent;
 import org.weasis.acquire.dockable.components.actions.contrast.comp.ContrastComponent;
-import org.weasis.acquire.dockable.components.util.AbstractComponent;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
@@ -44,7 +41,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel
 
   public ContrastPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
+    setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
 
     autoLevelListener = new AutoLevelListener();
     autoLevelBtn.addActionListener(autoLevelListener);
@@ -52,10 +49,10 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     brightnessSlider = new BrightnessComponent(this);
 
     add(contrastSlider);
-    add(GuiUtils.createVerticalStrut(10));
+    add(GuiUtils.boxVerticalStrut(10));
     add(brightnessSlider);
-    add(GuiUtils.getComponentsInJPanel(autoLevelBtn));
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.getFlowLayoutPanel(autoLevelBtn));
+    add(GuiUtils.boxYLastElement(5));
   }
 
   @Override
@@ -74,8 +71,8 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     autoLevelBtn.removeActionListener(autoLevelListener);
     contrastSlider.removeChangeListener(this);
     brightnessSlider.removeChangeListener(this);
-    contrastSlider.setSliderValue(next.getContrast());
-    brightnessSlider.setSliderValue(next.getBrightness());
+    contrastSlider.setValue(next.getContrast());
+    brightnessSlider.setValue(next.getBrightness());
     autoLevelBtn.setSelected(next.isAutoLevel());
     autoLevelBtn.addActionListener(autoLevelListener);
     contrastSlider.addChangeListener(this);
@@ -90,10 +87,8 @@ public class ContrastPanel extends AbstractAcquireActionPanel
 
   @Override
   public void stateChanged(ChangeEvent e) {
-    JSlider slider = (JSlider) e.getSource();
-    JPanel panel = (JPanel) slider.getParent();
-    if (panel instanceof AbstractSliderComponent) {
-      ((AbstractComponent) panel).updatePanelTitle();
+    if (e.getSource() instanceof AbstractSliderComponent sliderComponent) {
+      sliderComponent.updatePanelTitle();
     }
 
     AcquireImageInfo imageInfo = AcquireObject.getImageInfo();

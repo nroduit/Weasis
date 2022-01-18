@@ -112,9 +112,8 @@ public class ViewerFactory implements SeriesViewerFactory {
     View2dContainer instance = new View2dContainer(model, uid);
     if (properties != null) {
       Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DataExplorerModel) {
+      if (obj instanceof DataExplorerModel m) {
         // Register the PropertyChangeListener
-        DataExplorerModel m = (DataExplorerModel) obj;
         m.addPropertyChangeListener(instance);
       }
     }

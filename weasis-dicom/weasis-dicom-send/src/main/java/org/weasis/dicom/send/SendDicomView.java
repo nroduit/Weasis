@@ -95,8 +95,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
         new JLabel(Messages.getString("SendDicomView.destination") + StringUtil.COLON);
     AbstractDicomNode.addTooltipToComboList(comboNode);
 
-    add(GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode));
-    add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, lblDest, comboNode));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
     add(exportTree);
   }

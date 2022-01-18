@@ -9,12 +9,13 @@
  */
 package org.weasis.acquire.dockable.components.actions.rectify;
 
-import java.util.Dictionary;
 import java.util.Hashtable;
 import javax.swing.JLabel;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
+import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.util.FontTools;
 
 public class OrientationSliderComponent extends AbstractSliderComponent {
 
@@ -37,7 +38,13 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
   private final RectifyOrientationChangeListener listener;
 
   public OrientationSliderComponent(RectifyPanel panel) {
-    super(panel, Messages.getString("OrientationSliderComponent.orientation"));
+    super(
+        Messages.getString("OrientationSliderComponent.orientation"),
+        RECTIFY_ORIENTATION_MIN,
+        RECTIFY_ORIENTATION_MAX,
+        RECTIFY_ORIENTATION_DEFAULT);
+    setLabelTable(labels);
+    SliderChangeListener.setFont(this, FontTools.getMiniFont());
     listener = new RectifyOrientationChangeListener(panel.getRectifyAction());
     addChangeListener(listener);
   }
@@ -49,21 +56,6 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
   @Override
   public int getDefaultValue() {
     return RECTIFY_ORIENTATION_DEFAULT;
-  }
-
-  @Override
-  public int getMin() {
-    return RECTIFY_ORIENTATION_MIN;
-  }
-
-  @Override
-  public int getMax() {
-    return RECTIFY_ORIENTATION_MAX;
-  }
-
-  @Override
-  public Dictionary<Integer, JLabel> getLabels() {
-    return labels;
   }
 
   @Override

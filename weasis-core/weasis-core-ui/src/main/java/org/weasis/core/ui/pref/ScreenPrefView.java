@@ -96,7 +96,7 @@ public class ScreenPrefView extends AbstractItemDialogPage {
             dialog.setVisible(true);
           });
       realZoomButton.setToolTipText(Messages.getString("ScreenPrefView.calib_real"));
-      add(GuiUtils.getComponentsInJPanel(new JLabel(buf.toString()), realZoomButton));
+      add(GuiUtils.getFlowLayoutPanel(new JLabel(buf.toString()), realZoomButton));
     }
 
     int defIndex = getDefaultMonitor();
@@ -116,14 +116,14 @@ public class ScreenPrefView extends AbstractItemDialogPage {
     final JLabel presetsLabel =
         new JLabel(Messages.getString("ScreenPrefView.def_monitor") + StringUtil.COLON);
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEFT,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
             presetsLabel,
             defMonitorComboBox));
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public static int getDefaultMonitor() {

@@ -118,11 +118,11 @@ public class MprView extends View2d {
     super.drawOnTop(g2d);
     final JProgressBar bar = progressBar;
     if (bar != null && bar.isVisible()) {
-      int shiftx = getWidth() / 2 - progressBar.getWidth() / 2;
-      int shifty = getHeight() / 2 - progressBar.getHeight() / 2;
-      g2d.translate(shiftx, shifty);
+      int shiftX = getWidth() / 2 - progressBar.getWidth() / 2;
+      int shiftY = getHeight() / 2 - progressBar.getHeight() / 2;
+      g2d.translate(shiftX, shiftY);
       progressBar.paint(g2d);
-      g2d.translate(-shiftx, -shifty);
+      g2d.translate(-shiftX, -shiftY);
     }
   }
 

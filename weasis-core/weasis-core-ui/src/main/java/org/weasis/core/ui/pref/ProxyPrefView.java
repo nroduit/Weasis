@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 import org.slf4j.Logger;
@@ -104,14 +105,12 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     formatPortTextField(proxyPortFtp);
     formatPortTextField(proxyPortSocks);
 
+    add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, BLOCK_SEPARATOR, directConnectionRadio));
     add(
-        GuiUtils.getComponentsInJPanel(
-            FlowLayout.LEADING, 0, BLOCK_SEPARATOR, directConnectionRadio));
-    add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, proxyConnectionRadio));
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, buildProxyPanel()));
 
     this.buttonGroup.add(directConnectionRadio);
@@ -128,7 +127,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
         });
     initState();
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy");
@@ -182,10 +181,10 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
   private JPanel buildProxyPanel() {
     JPanel dataPanel = new JPanel();
-    dataPanel.setBorder(GuiUtils.getEmptydBorder(ITEM_SEPARATOR, 30, ITEM_SEPARATOR, 0));
+    dataPanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR, 30, ITEM_SEPARATOR, 0));
     dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
     JComponent strut =
-        GuiUtils.createHorizontalStrut(
+        GuiUtils.boxHorizontalStrut(
             ITEM_SEPARATOR
                 + Math.max(
                     GuiUtils.getComponentWidthFromText(
@@ -193,37 +192,43 @@ public class ProxyPrefView extends AbstractItemDialogPage {
                     GuiUtils.getComponentWidthFromText(
                         proxyLabelSocks, proxyLabelSocks.getText())));
     dataPanel.add(
-        GuiUtils.getHorizontalBoxPanel(
+        GuiUtils.getHorizontalBoxLayoutPanel(
             strut,
             lblAddress,
             (JComponent) Box.createGlue(),
             lblPort,
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR)));
+            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR)));
     dataPanel.add(
-        GuiUtils.getHorizontalBoxPanel(
-            GuiUtils.getVerticalJLabelPane(
-                proxyLabelHttp, proxyLabelSecure, proxyLabelFtp, proxyLabelSocks),
-            GuiUtils.getVerticalBoxPanel(
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            GuiUtils.getGridLayoutPanel(
+                SwingConstants.TRAILING,
+                0,
+                1,
+                proxyLabelHttp,
+                proxyLabelSecure,
+                proxyLabelFtp,
+                proxyLabelSocks),
+            GuiUtils.getVerticalBoxLayoutPanel(
                 proxyHostHttp, proxyHostSecure, proxyHostFtp, proxyHostSocks),
-            GuiUtils.getVerticalBoxPanel(
+            GuiUtils.getVerticalBoxLayoutPanel(
                 proxyPortHttp, proxyPortSecure, proxyPortFtp, proxyPortSocks)));
 
     dataPanel.add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
             proxyLabelExceptions,
             proxyExceptions));
     dataPanel.add(
-        GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR, proxyAuthCheckBox));
+        GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR, proxyAuthCheckBox));
     dataPanel.add(
-        GuiUtils.getHorizontalBoxPanel(
-            GuiUtils.createHorizontalStrut(20),
-            GuiUtils.getVerticalJLabelPane(userLabel, passLabel),
-            GuiUtils.getVerticalBoxPanel(proxyUser, proxyPass)));
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            GuiUtils.boxHorizontalStrut(20),
+            GuiUtils.getGridLayoutPanel(SwingConstants.TRAILING, 0, 1, userLabel, passLabel),
+            GuiUtils.getVerticalBoxLayoutPanel(proxyUser, proxyPass)));
 
-    dataPanel.add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    dataPanel.add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     return dataPanel;
   }
 

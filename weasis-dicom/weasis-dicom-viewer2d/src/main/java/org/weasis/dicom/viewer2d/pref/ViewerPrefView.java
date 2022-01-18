@@ -92,33 +92,31 @@ public class ViewerPrefView extends AbstractItemDialogPage {
           }
         });
 
-    JPanel panel = GuiUtils.getVerticalBoxPanel();
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.mouse_sens")));
-    panel.add(GuiUtils.getComponentsInJPanel(comboBox));
-    panel.add(
-        GuiUtils.getHorizontalBoxPanel(
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
-            slider,
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR)));
-    panel.add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR));
+    panel.add(GuiUtils.getFlowLayoutPanel(comboBox));
+    panel.add(GuiUtils.getHorizontalBoxLayoutPanel(ITEM_SEPARATOR, slider));
+    panel.add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     add(panel);
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     JLabel lblInterpolation =
         new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
     comboBoxInterpolation = new JComboBox<>(ZoomOp.INTERPOLATIONS);
     comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
 
+    int shiftX = ITEM_SEPARATOR - ITEM_SEPARATOR_SMALL;
     JPanel panel1 =
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
+            GuiUtils.boxHorizontalStrut(shiftX),
             lblInterpolation,
             comboBoxInterpolation);
     panel1.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.zoom")));
     add(panel1);
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     checkBoxWLcolor =
         new JCheckBox(
@@ -133,14 +131,14 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             Messages.getString("ViewerPrefView.apply_pr"),
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
 
-    final JPanel winLevelPanel = GuiUtils.getVerticalBoxPanel();
+    final JPanel winLevelPanel = GuiUtils.getVerticalBoxLayoutPanel();
     winLevelPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
-    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxWLcolor));
-    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxLevelInverse));
-    winLevelPanel.add(GuiUtils.getComponentsInJPanel(checkBoxApplyPR));
+    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxWLcolor));
+    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxLevelInverse));
+    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxApplyPR));
     add(winLevelPanel);
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 

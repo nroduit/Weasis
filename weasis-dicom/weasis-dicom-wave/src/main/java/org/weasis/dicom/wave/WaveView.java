@@ -15,6 +15,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -47,7 +48,6 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -540,7 +540,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       if (dcm != null && patient != null && study != null) {
         g2.setColor(Color.black);
         g2.setFont(new Font("SanSerif", Font.PLAIN, 9));
-        float fontHeight = FontTools.getAccurateFontHeight(g2);
+        FontMetrics fontMetrics = g2.getFontMetrics();
+        final int fontHeight = fontMetrics.getHeight();
         float drawY = fontHeight;
         TagW patNameTag = TagD.get(Tag.PatientName);
         g2.drawString(

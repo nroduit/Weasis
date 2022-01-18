@@ -149,7 +149,7 @@ public class AcquirePublishDialog extends JDialog {
   private JPanel initContent() {
     JPanel contentPane = new JPanel();
 
-    contentPane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
+    contentPane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
     contentPane.setLayout(new BorderLayout());
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
@@ -158,7 +158,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.add(questionLabel, BorderLayout.NORTH);
 
     JPanel imageTreePane = new JPanel(new BorderLayout());
-    imageTreePane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
+    imageTreePane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
 
     publishTree = new PublishTree();
     publishTree.addTreeCheckingListener(
@@ -172,7 +172,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.add(imageTreePane, BorderLayout.CENTER);
 
     JPanel actionPane = new JPanel(new BorderLayout());
-    actionPane.setBorder(GuiUtils.getEmptydBorder(10, 10, 10, 10));
+    actionPane.setBorder(GuiUtils.getEmptyBorder(10, 10, 10, 10));
 
     resolutionPane = new JPanel();
     resolutionPane.setBorder(BorderFactory.createLineBorder(Color.BLACK));
@@ -203,7 +203,7 @@ public class AcquirePublishDialog extends JDialog {
     actionPane.add(progressBar, BorderLayout.CENTER);
 
     JPanel bottomPane = new JPanel(new BorderLayout());
-    JPanel buttonPane = GuiUtils.getComponentsInJPanel(FlowLayout.CENTER, 20, 10);
+    JPanel buttonPane = GuiUtils.getFlowLayoutPanel(FlowLayout.CENTER, 20, 10);
 
     publishButton = new JButton(Messages.getString("AcquirePublishDialog.publish"));
     publishButton.addActionListener(e -> publishAction());
@@ -239,7 +239,7 @@ public class AcquirePublishDialog extends JDialog {
       comboNode.addItem(getDestinationConfiguration());
     }
 
-    JPanel destPane = GuiUtils.getComponentsInJPanel(2, 10, lblDestination, comboNode);
+    JPanel destPane = GuiUtils.getFlowLayoutPanel(2, 10, lblDestination, comboNode);
     bottomPane.add(destPane, BorderLayout.WEST);
 
     buttonPane.add(publishButton);

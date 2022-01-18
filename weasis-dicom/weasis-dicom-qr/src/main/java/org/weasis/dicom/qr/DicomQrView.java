@@ -295,7 +295,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     add(getArchivePanel());
     add(getCallingNodePanel());
     add(getSearchPanel());
-    add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR_LARGE));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
     add(getCtrlSearchPanel());
     tree.setBorder(UIManager.getBorder("ScrollPane.border"));
     add(tree);
@@ -308,12 +308,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     JLabel lblTetrieve = new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
     comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
-    return GuiUtils.getComponentsInJPanel(
+    return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL,
         ITEM_SEPARATOR,
         lblDest,
         comboDestinationNode,
-        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         lblTetrieve,
         comboDicomRetrieveType);
   }
@@ -333,12 +333,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           GuiUtils.showCenterScreen(dialog);
           initNodeList();
         });
-    return GuiUtils.getComponentsInJPanel(
+    return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL,
         ITEM_SEPARATOR,
         lblDest,
         comboCallingNode,
-        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         btnGerenralOptions);
   }
 
@@ -358,25 +358,25 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
     searchBtn.addActionListener(e -> dicomQuery());
 
-    return GuiUtils.getComponentsInJPanel(
+    return GuiUtils.getFlowLayoutPanel(
         FlowLayout.TRAILING,
         ITEM_SEPARATOR_SMALL,
         ITEM_SEPARATOR,
         labelLimit,
         limitSpinner,
-        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         labelPage,
         pageSpinner,
-        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         progressBar,
-        GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
         clearBtn,
-        GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_LARGE),
+        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
         searchBtn);
   }
 
   public JPanel getSearchPanel() {
-    final JPanel sPanel = GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR);
+    final JPanel sPanel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR);
     sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
     sPanel.setBorder(
         BorderFactory.createCompoundBorder(
@@ -411,16 +411,16 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     JLabel labetTo = new JLabel(Messages.getString("DicomQrView.to"));
 
     sPanel.add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
             modButton,
-            GuiUtils.getBoxXLastElement(BLOCK_SEPARATOR),
+            GuiUtils.boxXLastElement(BLOCK_SEPARATOR),
             dateButton,
-            GuiUtils.getBoxXLastElement(ITEM_SEPARATOR_LARGE),
+            GuiUtils.boxXLastElement(ITEM_SEPARATOR_LARGE),
             labelFrom,
             startDatePicker.getComponentDateTextField(),
-            GuiUtils.getBoxXLastElement(ITEM_SEPARATOR),
+            GuiUtils.boxXLastElement(ITEM_SEPARATOR),
             labetTo,
             endDatePicker.getComponentDateTextField()));
 
@@ -438,7 +438,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     tfSearch.setToolTipText(buf.toString());
     tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
     sPanel.add(
-        GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch));
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch));
     return sPanel;
   }
 
@@ -504,8 +504,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     AtomicBoolean running = new AtomicBoolean(true);
 
     AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
-    if (selectedItem instanceof DefaultDicomNode) {
-      final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
+    if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
 
       // see http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_C.6
@@ -568,8 +567,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           };
       process = new QueryProcess(runnable, "DICOM C-FIND", running); // $NON-NLS-1$
       process.start();
-    } else if (selectedItem instanceof DicomWebNode) {
-      final DicomWebNode node = (DicomWebNode) selectedItem;
+    } else if (selectedItem instanceof final DicomWebNode node) {
       AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
       if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
         String oldCode = auth.getCode();

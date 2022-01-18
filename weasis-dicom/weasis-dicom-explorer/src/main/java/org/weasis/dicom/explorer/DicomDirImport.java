@@ -68,8 +68,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
 
     add(
-        GuiUtils.getHorizontalBoxPanel(
-            lblImportAFolder, GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            lblImportAFolder, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
 
     JButton btncdrom =
         new JButton(
@@ -85,10 +85,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         });
     chckbxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
 
-    add(GuiUtils.getComponentsInJPanel(btncdrom));
-    add(GuiUtils.getComponentsInJPanel(chckbxWriteInCache));
+    add(GuiUtils.getFlowLayoutPanel(btncdrom));
+    add(GuiUtils.getFlowLayoutPanel(chckbxWriteInCache));
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {

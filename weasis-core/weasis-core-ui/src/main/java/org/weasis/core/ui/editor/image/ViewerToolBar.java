@@ -386,7 +386,8 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
   private static Icon buildSynchIcon(SynchView synch) {
     final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
-    final FlatSVGIcon smallIcon = synch.getIcon(new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
+    final FlatSVGIcon smallIcon =
+        synch.getIcon(new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
         new Icon() {
 

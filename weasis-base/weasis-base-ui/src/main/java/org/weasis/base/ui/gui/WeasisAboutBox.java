@@ -65,10 +65,10 @@ public class WeasisAboutBox extends JDialog {
     JButton jButtonClose = new JButton();
     jButtonClose.setText(Messages.getString("WeasisAboutBox.close"));
     jButtonClose.addActionListener(e -> close());
-    JPanel jPanelClose = GuiUtils.getComponentsInJPanel(FlowLayout.TRAILING, 25, 10, jButtonClose);
+    JPanel jPanelClose = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 25, 10, jButtonClose);
 
     JPanel jPanelInfoSys = new JPanel();
-    jPanelInfoSys.setBorder(GuiUtils.getEmptydBorder(10));
+    jPanelInfoSys.setBorder(GuiUtils.getEmptyBorder(10));
     jPanelInfoSys.setLayout(new BorderLayout());
 
     JTextPane jTextPane1 = new JTextPane();

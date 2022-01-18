@@ -56,6 +56,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
     tools.remove(0);
     this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
+    GuiUtils.setNumberModel(spinner1, 12, 6, 40, 1);
 
     jbInit();
     initialize();
@@ -64,7 +65,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   private void jbInit() {
     JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
     JPanel panelFont =
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, spinner1);
     panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
     add(panelFont);
@@ -75,10 +76,9 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     JLabel shapeLabel =
         new JLabel(Messages.getString("LabelsPrefView.geometricshape") + StringUtil.COLON);
     JPanel panelCombo =
-        GuiUtils.getComponentsInJPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, shapeLabel, comboBoxTool);
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, shapeLabel, comboBoxTool);
     panelShape.add(panelCombo);
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     panelList.setLayout(new GridLayout(0, 2));
     panelShape.add(panelList);
@@ -92,7 +92,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     comboBoxTool.addItemListener(toolsListener);
 
     add(panelShape);
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     JPanel panel = new JPanel();
     panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MeasureTool.pix_stats")));
@@ -115,7 +115,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     }
     add(panel);
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_APPLY, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());

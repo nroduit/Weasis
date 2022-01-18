@@ -278,7 +278,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     add(panelFoot, BorderLayout.SOUTH);
 
-    panelFoot.add(slider.getParent());
+    panelFoot.add(slider);
 
     JPanel panelHead = new JPanel();
     add(panelHead, BorderLayout.NORTH);

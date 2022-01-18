@@ -14,12 +14,12 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Container;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragGestureEvent;
 import java.awt.dnd.DragGestureListener;
@@ -311,9 +311,9 @@ public class SeriesThumbnail extends Thumbnail
   @Override
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
     if (dragPressed == null) {
+      Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
       int inset = 2 * Math.max(width, height) / DEFAULT_SIZE;
       if (series.isOpen()) {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         if (series.isSelected() && series.isFocused()) {
           g2d.setPaint(IconColor.ACTIONS_YELLOW.getColor());
         } else {
@@ -323,12 +323,11 @@ public class SeriesThumbnail extends Thumbnail
         g2d.fillArc(x + inset, y + inset, size, size, 0, 360);
         g2d.setPaint(Color.BLACK);
         g2d.drawArc(x + inset, y + inset, size, size, 0, 360);
-        g2d.setRenderingHint(
-            RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
       }
 
       g2d.setFont(width > DEFAULT_SIZE ? FontTools.getSmallFont() : FontTools.getMiniFont());
-      float fontHeight = FontTools.getAccurateFontHeight(g2d);
+      FontMetrics fontMetrics = g2d.getFontMetrics();
+      final int fontHeight = fontMetrics.getHeight();
       int descent = g2d.getFontMetrics().getDescent();
       Integer splitNb = (Integer) series.getTagValue(TagW.SplitSeriesNumber);
       if (splitNb != null) {
@@ -389,6 +388,7 @@ public class SeriesThumbnail extends Thumbnail
           }
         }
       }
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     }
   }
 

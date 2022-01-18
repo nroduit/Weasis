@@ -82,7 +82,7 @@ class InfoPanel extends JPanel {
     gbcPanel.fill = GridBagConstraints.NONE;
     gbcPanel.gridx = 0;
     gbcPanel.gridy = 0;
-    add(zoomSlider.getParent(), gbcPanel);
+    add(zoomSlider, gbcPanel);
 
     JPanel main = new JPanel();
     main.setLayout(new GridLayout(3, 2, 25, 0));

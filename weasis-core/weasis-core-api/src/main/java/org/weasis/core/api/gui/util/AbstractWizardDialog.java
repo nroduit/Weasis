@@ -71,7 +71,7 @@ public abstract class AbstractWizardDialog extends JDialog {
 
     jPanelBottom.setLayout(new BoxLayout(jPanelBottom, BoxLayout.Y_AXIS));
     jPanelBottom.add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, HORIZONTAL_GAP, VERTICAL_GAP, jButtonClose));
     jButtonClose.addActionListener(e -> cancel());
     jPanelRootPanel.add(jPanelBottom, BorderLayout.SOUTH);

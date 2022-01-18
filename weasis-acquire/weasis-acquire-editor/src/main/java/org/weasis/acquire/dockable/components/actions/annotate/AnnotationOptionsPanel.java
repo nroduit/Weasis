@@ -66,7 +66,7 @@ public class AnnotationOptionsPanel extends JPanel {
 
   public AnnotationOptionsPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    Border spaceY = GuiUtils.getEmptydBorder(10, 5, 2, 5);
+    Border spaceY = GuiUtils.getEmptyBorder(10, 5, 2, 5);
     setBorder(
         BorderFactory.createCompoundBorder(
             spaceY,
@@ -78,9 +78,9 @@ public class AnnotationOptionsPanel extends JPanel {
     if (spUnitAction instanceof ComboItemListener<?> comboListener) {
       JLabel label =
           new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      JComboBox<?> unitComboBox = comboListener.createCombo();
+      JComboBox<?> unitComboBox = comboListener.createCombo(120);
       unitComboBox.setSelectedItem(Unit.PIXEL);
-      add(GuiUtils.getComponentsInJPanel(label, unitComboBox));
+      add(GuiUtils.getFlowLayoutPanel(label, unitComboBox));
     }
 
     ActionState drawOnceAction = EventManager.getInstance().getAction(ActionW.DRAW_ONLY_ONCE);
@@ -88,7 +88,7 @@ public class AnnotationOptionsPanel extends JPanel {
       JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
       checkDraw.setSelected(MeasureTool.viewSetting.isDrawOnlyOnce());
       checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
-      add(GuiUtils.getComponentsInJPanel(checkDraw));
+      add(GuiUtils.getFlowLayoutPanel(checkDraw));
     }
   }
 
@@ -103,7 +103,7 @@ public class AnnotationOptionsPanel extends JPanel {
     GuiUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
     spinner.addChangeListener(changeLineWidth);
 
-    return GuiUtils.getComponentsInJPanel(label, button, spinner);
+    return GuiUtils.getFlowLayoutPanel(label, button, spinner);
   }
 
   private void updateMeasureProperties() {

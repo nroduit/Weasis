@@ -11,7 +11,6 @@ package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
-import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 import org.weasis.core.api.gui.util.ActionW;

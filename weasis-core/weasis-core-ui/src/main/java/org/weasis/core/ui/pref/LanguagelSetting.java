@@ -62,14 +62,14 @@ public class LanguagelSetting extends AbstractItemDialogPage {
 
   private void jbInit() {
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR_LARGE,
             labelLocale,
             comboBoxLang));
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING,
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR,
@@ -80,7 +80,7 @@ public class LanguagelSetting extends AbstractItemDialogPage {
     textPane.setText(getText());
     add(textPane);
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");

@@ -104,14 +104,14 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     btnNewButton.addActionListener(e -> showExportingOptions());
 
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL,
             0,
             lblImportAFolder,
             comboBoxImgFormat,
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
+            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR),
             btnNewButton));
-    add(GuiUtils.createVerticalStrut(ITEM_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR));
     exportTree.setBorder(UIManager.getBorder("ScrollPane.border"));
     add(exportTree);
   }

@@ -22,9 +22,8 @@ import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
-import org.weasis.base.explorer.list.ThumbnailList;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
@@ -36,7 +35,7 @@ import org.weasis.core.util.LangUtil;
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     implements ListCellRenderer<E> {
 
-  public static final Dimension ICON_DIM = new Dimension(150, 150);
+  public static final Dimension ICON_DIM = GuiUtils.getDimension(150, 150);
 
   private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
   private final JLabel iconCheckedLabel = new JLabel((Icon) null);
@@ -57,30 +56,30 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
 
     iconLabel.setPreferredSize(ICON_DIM);
     iconLabel.setMaximumSize(ICON_DIM);
-    iconLabel.setBorder(new EmptyBorder(2, 2, 2, 2));
+    iconLabel.setBorder(GuiUtils.getEmptyBorder(2));
     panel.add(iconLabel);
     this.add(panel);
 
-    descriptionLabel.setFont(FontTools.getFont10());
-    Dimension dim = new Dimension(ICON_DIM.width, descriptionLabel.getFont().getSize() + 4);
+    descriptionLabel.setFont(FontTools.getMiniFont());
+    Dimension dim =
+        new Dimension(
+            ICON_DIM.width,
+            descriptionLabel.getFontMetrics(descriptionLabel.getFont()).getHeight());
     descriptionLabel.setPreferredSize(dim);
     descriptionLabel.setMaximumSize(dim);
 
     this.add(descriptionLabel);
 
-    setBorder(new EmptyBorder(5, 5, 5, 5));
+    setBorder(GuiUtils.getEmptyBorder(5));
   }
 
   @Override
   public Component getListCellRendererComponent(
       JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     ThumbnailIcon icon = null;
-    if (value instanceof ImageElement) {
-      if (list instanceof AbstractThumbnailList) {
-        icon =
-            ((AbstractThumbnailList) list)
-                .getThumbCache()
-                .getThumbnailFor((ImageElement) value, (ThumbnailList<E>) list, index);
+    if (value instanceof ImageElement imageElement) {
+      if (list instanceof AbstractThumbnailList thumbnailList) {
+        icon = thumbnailList.getThumbCache().getThumbnailFor(imageElement, thumbnailList, index);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
         iconCheckedLabel.setIcon(ResourceUtil.getIcon(OtherIcon.TICK_ON));

@@ -66,27 +66,27 @@ public class LoggingPrefView extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getComponentsInJPanel(0, ITEM_SEPARATOR_LARGE, checkboxFileLog));
+    add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxFileLog));
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL,
             10,
             labelNumber,
             spinner,
-            GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+            GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
             labelSize,
             spinner1));
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             0,
             10,
             lblLogLevel,
             comboBoxLogLevel,
-            GuiUtils.createHorizontalStrut(15),
+            GuiUtils.boxHorizontalStrut(15),
             lblStacktraceLimit,
             comboBoxStackLimit));
 
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxYLastElement(5));
 
     checkboxFileLog.addActionListener(e -> checkRollingLog());
 

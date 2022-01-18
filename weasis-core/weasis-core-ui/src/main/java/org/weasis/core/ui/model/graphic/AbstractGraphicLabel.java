@@ -163,12 +163,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
       updateBoundsSize(defaultFont, fontRenderContext);
 
-      labelBounds =
-          new Rectangle.Double(
-              xPos + GROWING_BOUND,
-              yPos + GROWING_BOUND,
-              labelWidth + GROWING_BOUND,
-              (labelHeight * labels.length) + GROWING_BOUND);
+      labelBounds = new Rectangle.Double(xPos, yPos, labelWidth, (labelHeight * labels.length));
       GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
     }
   }
@@ -188,8 +183,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
         }
       }
       labelHeight =
-          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() // NON-NLS
-              + 2;
+          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight(); // NON-NLS
       labelWidth = maxWidth;
     }
   }
@@ -213,7 +207,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       }
 
       float px = (float) pt.getX() + GROWING_BOUND;
-      float py = (float) pt.getY() + GROWING_BOUND;
+      float py = (float) pt.getY() + GROWING_BOUND - g2d.getFontMetrics().getDescent() + 1;
 
       for (String label : labels) {
         if (StringUtil.hasText(label)) {

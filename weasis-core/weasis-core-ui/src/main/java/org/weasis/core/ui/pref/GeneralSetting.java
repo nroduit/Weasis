@@ -38,7 +38,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     try {
       menuPanel.setLayout(new GridLayout(0, 2));
       add(menuPanel);
-      add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+      add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
       jbInit();
       initialize();
@@ -49,7 +49,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     List<AbstractItemDialogPage> childPages =
         List.of(
             new LanguagelSetting(),
-            new LooklSetting(),
+            new ThemeSetting(),
             new ScreenPrefView(),
             new ProxyPrefView(),
             new LoggingPrefView());
@@ -57,10 +57,10 @@ public class GeneralSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    add(GuiUtils.getComponentsInJPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmClosing));
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.getFlowLayoutPanel(0, ITEM_SEPARATOR_LARGE, checkboxConfirmClosing));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }
 

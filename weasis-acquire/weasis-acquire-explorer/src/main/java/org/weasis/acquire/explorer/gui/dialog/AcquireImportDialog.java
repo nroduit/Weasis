@@ -99,17 +99,17 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   }
 
   private JPanel initPanel() {
-    JPanel panel = GuiUtils.getVerticalBoxPanel();
-    panel.setBorder(GuiUtils.getEmptydBorder(10, 5, 20, 15));
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
+    panel.setBorder(GuiUtils.getEmptyBorder(10, 5, 20, 15));
 
     JLabel question =
         new JLabel(Messages.getString("AcquireImportDialog.grp_msg") + StringUtil.COLON);
     JLabel maxRange = new JLabel(Messages.getString("AcquireImportDialog.max_range_min"));
-    panel.add(GuiUtils.getComponentsInJPanel(question));
-    panel.add(GuiUtils.createVerticalStrut(15));
-    panel.add(GuiUtils.getComponentsInJPanel(btn1));
-    panel.add(GuiUtils.getComponentsInJPanel(btn2, spinner, maxRange));
-    panel.add(GuiUtils.getComponentsInJPanel(btn3, serieName));
+    panel.add(GuiUtils.getFlowLayoutPanel(question));
+    panel.add(GuiUtils.boxVerticalStrut(15));
+    panel.add(GuiUtils.getFlowLayoutPanel(btn1));
+    panel.add(GuiUtils.getFlowLayoutPanel(btn2, spinner, maxRange));
+    panel.add(GuiUtils.getFlowLayoutPanel(btn3, serieName));
 
     installFocusListener(spinner);
 

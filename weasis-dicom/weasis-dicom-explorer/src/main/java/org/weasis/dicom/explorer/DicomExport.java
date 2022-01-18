@@ -69,7 +69,7 @@ public class DicomExport extends AbstractWizardDialog {
 
     jPanelBottom.removeAll();
     jPanelBottom.add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING,
             HORIZONTAL_GAP,
             VERTICAL_GAP,

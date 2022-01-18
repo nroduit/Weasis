@@ -20,12 +20,14 @@ import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -101,7 +103,7 @@ public class GuiUtils {
 
   public static Dimension getBigIconButtonSize(JComponent c) {
     Insets insets = c.getInsets();
-    int size = FontTools.getFontSizeInPixels(c.getFont()) + insets.top + insets.bottom;
+    int size = c.getFontMetrics(c.getFont()).getHeight() + insets.top + insets.bottom;
     return new Dimension(size, size);
   }
 
@@ -112,7 +114,7 @@ public class GuiUtils {
     }
     Insets insets = c.getInsets();
     int width = c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
-    int height = FontTools.getFontSizeInPixels(font) + insets.top + insets.bottom;
+    int height = c.getFontMetrics(font).getHeight() + insets.top + insets.bottom;
     return new Dimension(width, height);
   }
 
@@ -168,32 +170,31 @@ public class GuiUtils {
         null);
   }
 
-  public static Border getEmptydBorder(int gap) {
+  public static Border getEmptyBorder(int gap) {
     int g = getScaleLength(gap);
     return new EmptyBorder(g, g, g, g);
   }
 
-  public static Border getEmptydBorder(int horizontal, int vertical) {
+  public static Border getEmptyBorder(int horizontal, int vertical) {
     int h = getScaleLength(horizontal);
     int v = getScaleLength(vertical);
     return new EmptyBorder(v, h, v, h);
   }
 
-  public static Border getEmptydBorder(int top, int left, int bottom, int right) {
+  public static Border getEmptyBorder(int top, int left, int bottom, int right) {
     return new EmptyBorder(
         getScaleLength(top), getScaleLength(left), getScaleLength(bottom), getScaleLength(right));
   }
 
-  public static JPanel getComponentsInJPanel(JComponent... items) {
-    return getComponentsInJPanel(FlowLayout.LEADING, 5, 5, items);
+  public static JPanel getFlowLayoutPanel(JComponent... items) {
+    return getFlowLayoutPanel(FlowLayout.LEADING, 5, 5, items);
   }
 
-  public static JPanel getComponentsInJPanel(
-      int horizontalGap, int verticalGap, JComponent... items) {
-    return getComponentsInJPanel(FlowLayout.LEADING, horizontalGap, verticalGap, items);
+  public static JPanel getFlowLayoutPanel(int horizontalGap, int verticalGap, JComponent... items) {
+    return getFlowLayoutPanel(FlowLayout.LEADING, horizontalGap, verticalGap, items);
   }
 
-  public static JPanel getComponentsInJPanel(
+  public static JPanel getFlowLayoutPanel(
       int align, int horizontalGap, int verticalGap, JComponent... items) {
     int h = getScaleLength(horizontalGap);
     int v = getScaleLength(verticalGap);
@@ -205,29 +206,45 @@ public class GuiUtils {
     return panel;
   }
 
-  public static JPanel getHorizontalBoxPanel(JComponent... items) {
-    return getBoxPanel(BoxLayout.LINE_AXIS, items);
+  public static JPanel getHorizontalBoxLayoutPanel(JComponent... items) {
+    return getBoxLayoutPanel(BoxLayout.LINE_AXIS, 0, false, items);
   }
 
-  public static JPanel getVerticalBoxPanel(JComponent... items) {
-    return getBoxPanel(BoxLayout.PAGE_AXIS, items);
+  public static JPanel getVerticalBoxLayoutPanel(JComponent... items) {
+    return getBoxLayoutPanel(BoxLayout.PAGE_AXIS, 0, false, items);
   }
 
-  private static JPanel getBoxPanel(int axis, JComponent... items) {
+  public static JPanel getHorizontalBoxLayoutPanel(int gap, JComponent... items) {
+    return getBoxLayoutPanel(BoxLayout.LINE_AXIS, gap, true, items);
+  }
+
+  public static JPanel getVerticalBoxLayoutPanel(int gap, JComponent... items) {
+    return getBoxLayoutPanel(BoxLayout.PAGE_AXIS, gap, true, items);
+  }
+
+  private static JPanel getBoxLayoutPanel(
+      int axis, int gap, boolean externalGap, JComponent... items) {
     JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, axis));
+    boolean vertical = axis == BoxLayout.PAGE_AXIS || axis == BoxLayout.Y_AXIS;
+    if (externalGap && gap > 0) {
+      panel.add(vertical ? boxVerticalStrut(gap) : boxHorizontalStrut(gap));
+    }
+
     for (JComponent item : items) {
       panel.add(item);
+      if (gap > 0) {
+        panel.add(vertical ? boxVerticalStrut(gap) : boxHorizontalStrut(gap));
+      }
+    }
+    if (gap > 0 && !externalGap) {
+      panel.remove(panel.getComponentCount() - 1);
     }
     return panel;
   }
 
-  public static JPanel getVerticalJLabelPane(JLabel... items) {
-    return getVerticalJLabelPane(SwingConstants.TRAILING, items);
-  }
-
-  public static JPanel getVerticalJLabelPane(int align, JLabel... items) {
-    JPanel panel = new JPanel(new GridLayout(0, 1));
+  public static JPanel getGridLayoutPanel(int align, int rows, int cols, JLabel... items) {
+    JPanel panel = new JPanel(new GridLayout(rows, cols));
     for (JLabel item : items) {
       item.setHorizontalAlignment(align);
       panel.add(item);
@@ -235,23 +252,23 @@ public class GuiUtils {
     return panel;
   }
 
-  public static JComponent createVerticalStrut(int height) {
+  public static JComponent boxVerticalStrut(int height) {
     int v = getScaleLength(height);
     return new Filler(new Dimension(0, v), new Dimension(0, v), new Dimension(Short.MAX_VALUE, v));
   }
 
-  public static JComponent createHorizontalStrut(int width) {
+  public static JComponent boxHorizontalStrut(int width) {
     int w = getScaleLength(width);
     return new Filler(new Dimension(w, 0), new Dimension(w, 0), new Dimension(w, Short.MAX_VALUE));
   }
 
-  public static Filler getBoxXLastElement(int minimumWidth) {
+  public static Filler boxXLastElement(int minimumWidth) {
     int w = getScaleLength(minimumWidth);
     return new Box.Filler(
         new Dimension(w, 0), new Dimension(w, 0), new Dimension(Integer.MAX_VALUE, 0));
   }
 
-  public static Filler getBoxYLastElement(int minimumHeight) {
+  public static Filler boxYLastElement(int minimumHeight) {
     int h = getScaleLength(minimumHeight);
     return new Box.Filler(
         new Dimension(0, h), new Dimension(0, h), new Dimension(0, Integer.MAX_VALUE));
@@ -265,23 +282,24 @@ public class GuiUtils {
 
   public static void setPreferredWidth(Component component, int width, int minWidth) {
     Dimension dim = component.getPreferredSize();
-    dim.width = width;
+    dim.width = getScaleLength(width);
     component.setPreferredSize(dim);
     dim = component.getMinimumSize();
-    dim.width = minWidth;
+    dim.width = getScaleLength(minWidth);
     component.setMinimumSize(dim);
+    component.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
   }
 
   public static void setPreferredWidth(Component component, int width) {
-    setPreferredWidth(component, width, 50);
+    setPreferredWidth(component, getScaleLength(width), getScaleLength(50));
   }
 
   public static void setPreferredHeight(Component component, int height) {
     Dimension dim = component.getPreferredSize();
-    dim.height = height;
+    dim.height = getScaleLength(height);
     component.setPreferredSize(dim);
     dim = component.getMinimumSize();
-    dim.height = 50;
+    dim.height = getScaleLength(50);
     component.setMinimumSize(dim);
   }
 
@@ -426,8 +444,7 @@ public class GuiUtils {
 
   public static void addTooltipToComboList(final JComboBox<?> combo) {
     Object comp = combo.getUI().getAccessibleChild(combo, 0);
-    if (comp instanceof BasicComboPopup) {
-      final BasicComboPopup popup = (BasicComboPopup) comp;
+    if (comp instanceof final BasicComboPopup popup) {
       popup
           .getList()
           .getSelectionModel()
@@ -496,6 +513,42 @@ public class GuiUtils {
   public static void addItemToMenu(JPopupMenu menu, Component item) {
     if (menu != null && item != null) {
       menu.add(item);
+    }
+  }
+
+  public static Object[] setRenderingHints(
+      Graphics g, boolean antialiasing, boolean stroke, boolean text) {
+    Graphics2D g2 = (Graphics2D) g;
+    Object[] oldRenderingHints =
+        new Object[] {
+          g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING),
+          g2.getRenderingHint(RenderingHints.KEY_STROKE_CONTROL),
+          g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
+        };
+
+    if (antialiasing) {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    }
+    if (stroke) {
+      boolean useQuartz = Boolean.getBoolean("apple.awt.graphics.UseQuartz");
+      g2.setRenderingHint(
+          RenderingHints.KEY_STROKE_CONTROL,
+          useQuartz ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
+    }
+    if (text) {
+      g2.setRenderingHint(
+          RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    }
+
+    return oldRenderingHints;
+  }
+
+  public static void resetRenderingHints(Graphics g, Object[] oldRenderingHints) {
+    if (oldRenderingHints.length == 3) {
+      Graphics2D g2 = (Graphics2D) g;
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, oldRenderingHints[0]);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, oldRenderingHints[1]);
+      g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, oldRenderingHints[2]);
     }
   }
 }

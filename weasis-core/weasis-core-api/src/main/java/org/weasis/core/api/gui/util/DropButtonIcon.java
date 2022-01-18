@@ -14,8 +14,10 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import javax.swing.AbstractButton;
 import javax.swing.ButtonModel;
 import javax.swing.Icon;
+import javax.swing.UIManager;
 
 public class DropButtonIcon implements Icon {
 
@@ -59,5 +61,35 @@ public class DropButtonIcon implements Icon {
   @Override
   public int getIconHeight() {
     return leftIcon.getIconHeight();
+  }
+
+  public static Icon createDropButtonIcon(Icon mainIcon) {
+    return new DropButtonIcon(
+        new Icon() {
+
+          @Override
+          public void paintIcon(Component c, Graphics g, int x, int y) {
+            if (c instanceof AbstractButton model) {
+              Icon icon = null;
+              if (!model.isEnabled()) {
+                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mainIcon);
+              }
+              if (icon == null) {
+                icon = mainIcon;
+              }
+              icon.paintIcon(c, g, x, y);
+            }
+          }
+
+          @Override
+          public int getIconWidth() {
+            return mainIcon.getIconWidth();
+          }
+
+          @Override
+          public int getIconHeight() {
+            return mainIcon.getIconHeight();
+          }
+        });
   }
 }

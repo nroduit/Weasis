@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.gui.util;
 
-import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
@@ -52,16 +51,13 @@ public abstract class SliderCineListener extends SliderChangeListener {
   }
 
   @Override
-  public void updateSliderProoperties(JSliderW slider) {
-    JPanel panel = (JPanel) slider.getParent();
+  public void updateSliderProperties(JSliderW slider) {
     int rate = getCurrentCineRate();
     StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img"));
     buffer.append(StringUtil.COLON_AND_SPACE);
     buffer.append(getValueToDisplay());
 
-    if (slider.isdisplayValueInTitle()
-        && panel != null
-        && panel.getBorder() instanceof TitledBorder titledBorder) {
+    if (slider.isdisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
       if (rate > 0) {
         buffer.append(" (");
         buffer.append(rate);
@@ -79,7 +75,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
               ? IconColor.ACTIONS_RED.getColor()
               : UIManager.getColor("TitledBorder.titleColor"));
       titledBorder.setTitle(buffer.toString());
-      panel.repaint();
+      slider.repaint();
     } else {
       slider.setToolTipText(buffer.toString());
     }

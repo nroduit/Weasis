@@ -31,14 +31,14 @@ public class MetadataPanel extends AbstractAcquireActionPanel {
 
   public MetadataPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(10, 5, 2, 5));
+    setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
 
     add(globalInfoPanel);
-    add(GuiUtils.createVerticalStrut(10));
+    add(GuiUtils.boxVerticalStrut(10));
     add(serieInfoPanel);
-    add(GuiUtils.createVerticalStrut(10));
+    add(GuiUtils.boxVerticalStrut(10));
     add(imageInfoPanel);
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxYLastElement(5));
   }
 
   @Override

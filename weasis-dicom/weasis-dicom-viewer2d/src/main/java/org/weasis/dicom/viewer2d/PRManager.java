@@ -539,8 +539,7 @@ public class PRManager {
                         new RadioMenuItem(dcm.toString(), null, dcm, dcm == pr);
                     menuItem.addActionListener(
                         e -> {
-                          if (e.getSource() instanceof RadioMenuItem) {
-                            RadioMenuItem item = (RadioMenuItem) e.getSource();
+                          if (e.getSource() instanceof RadioMenuItem item) {
                             Object val = item.getUserObject();
                             view.setPresentationState(val, false);
                           }

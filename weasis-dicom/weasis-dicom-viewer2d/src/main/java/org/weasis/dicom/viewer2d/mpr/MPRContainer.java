@@ -247,8 +247,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     if (menuRoot != null) {
       menuRoot.removeAll();
 
-      if (eventManager instanceof EventManager) {
-        EventManager manager = (EventManager) eventManager;
+      if (eventManager instanceof EventManager manager) {
 
         int count = menuRoot.getItemCount();
 
@@ -350,13 +349,11 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
 
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent) {
-      ObservableEvent event = (ObservableEvent) evt;
+    if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
       if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-        if (newVal instanceof MediaSeriesGroup) {
-          MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+        if (newVal instanceof MediaSeriesGroup group) {
           // Patient Group
           if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             if (group.equals(getGroupID())) {
@@ -367,8 +364,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
           }
           // Study Group
           else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel) {
-              DicomModel model = (DicomModel) event.getSource();
+            if (event.getSource() instanceof DicomModel model) {
               for (ViewCanvas<DicomImageElement> v : view2ds) {
                 if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
                   v.setSeries(null);
@@ -392,8 +388,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
           }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
-        if (newVal instanceof Series) {
-          Series series = (Series) newVal;
+        if (newVal instanceof Series series) {
           for (ViewCanvas<DicomImageElement> v : view2ds) {
             MediaSeries<DicomImageElement> s = v.getSeries();
             if (series.equals(s)) {
@@ -492,10 +487,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
 
   public MprView getMprView(SliceOrientation sliceOrientation) {
     for (ViewCanvas v : view2ds) {
-      if (v instanceof MprView) {
-        if (sliceOrientation != null
-            && sliceOrientation.equals(((MprView) v).getSliceOrientation())) {
-          return (MprView) v;
+      if (v instanceof MprView mprView) {
+        if (sliceOrientation != null && sliceOrientation.equals(mprView.getSliceOrientation())) {
+          return mprView;
         }
       }
     }
@@ -508,20 +502,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     // TODO Should be init elsewhere
     for (int i = 0; i < view2ds.size(); i++) {
       ViewCanvas<DicomImageElement> val = view2ds.get(i);
-      if (val instanceof MprView) {
-        SliceOrientation sliceOrientation;
-        switch (i) {
-          case 1:
-            sliceOrientation = SliceOrientation.CORONAL;
-            break;
-          case 2:
-            sliceOrientation = SliceOrientation.SAGITTAL;
-            break;
-          default:
-            sliceOrientation = SliceOrientation.AXIAL;
-            break;
-        }
-        ((MprView) val).setType(sliceOrientation);
+      if (val instanceof MprView mprView) {
+        SliceOrientation sliceOrientation =
+            switch (i) {
+              case 1 -> SliceOrientation.CORONAL;
+              case 2 -> SliceOrientation.SAGITTAL;
+              default -> SliceOrientation.AXIAL;
+            };
+        mprView.setType(sliceOrientation);
       }
     }
 
@@ -566,8 +554,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                           }
                           // Force to propagate the default preset
                           ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                          if (presetAction instanceof ComboItemListener) {
-                            ComboItemListener p = (ComboItemListener) presetAction;
+                          if (presetAction instanceof ComboItemListener p) {
                             p.setSelectedItemWithoutTriggerAction(null);
                             p.setSelectedItem(p.getFirstItem());
                           }
@@ -592,17 +579,18 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
       DefaultView2d<DicomImageElement> view,
       String message) {
     for (ViewCanvas<DicomImageElement> v : view2ds) {
-      if (v != view && v instanceof MprView) {
-        JProgressBar bar = ((MprView) v).getProgressBar();
+      if (v != view && v instanceof MprView mprView) {
+        JProgressBar bar = mprView.getProgressBar();
         if (bar == null) {
           bar = new JProgressBar();
-          Dimension dim = new Dimension(v.getJComponent().getWidth() / 2, 30);
+          Dimension dim =
+              new Dimension(v.getJComponent().getWidth() / 2, GuiUtils.getScaleLength(30));
           bar.setSize(dim);
           bar.setPreferredSize(dim);
           bar.setMaximumSize(dim);
           bar.setValue(0);
           bar.setStringPainted(true);
-          ((MprView) v).setProgressBar(bar);
+          mprView.setProgressBar(bar);
         }
         bar.setString(message);
         v.getJComponent().repaint();

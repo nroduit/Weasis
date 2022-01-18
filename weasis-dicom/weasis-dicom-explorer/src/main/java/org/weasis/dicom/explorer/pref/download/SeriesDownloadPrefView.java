@@ -27,9 +27,9 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
 
     downloadImmediatelyCheckbox.setSelected(
         BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(DOWNLOAD_IMMEDIATELY, true));
-    add(GuiUtils.getComponentsInJPanel(0, 0, downloadImmediatelyCheckbox));
+    add(GuiUtils.getFlowLayoutPanel(0, 0, downloadImmediatelyCheckbox));
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
   }

@@ -501,7 +501,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
           (int) (((float) (lastIndex - firstIndex) / (float) visibleRows) + .5);
       final int visibleItems = visibleRows * visibleColums;
 
-      final int val = ((firstIndex - 1) - visibleItems < 0) ? 0 : (firstIndex - 1) - visibleItems;
+      final int val = Math.max((firstIndex - 1) - visibleItems, 0);
       clearSelection();
       setSelectedIndex(val);
       fireSelectionValueChanged(val, val, false);
@@ -514,16 +514,12 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public void jiThumbnailKeyPressed(final KeyEvent e) {
     switch (e.getKeyCode()) {
-      case KeyEvent.VK_PAGE_DOWN:
-        nextPage(e);
-        break;
-      case KeyEvent.VK_PAGE_UP:
-        lastPage(e);
-        break;
-      case KeyEvent.VK_ENTER:
+      case KeyEvent.VK_PAGE_DOWN -> nextPage(e);
+      case KeyEvent.VK_PAGE_UP -> lastPage(e);
+      case KeyEvent.VK_ENTER -> {
         openSelection();
         e.consume();
-        break;
+      }
     }
   }
 

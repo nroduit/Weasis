@@ -47,7 +47,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
   protected final JButton restoreButton = new JButton(Messages.getString("restore.values"));
   protected final JButton applyButton = new JButton(Messages.getString("LabelPrefView.apply"));
   protected final JPanel bottomPrefPanel =
-      GuiUtils.getComponentsInJPanel(
+      GuiUtils.getFlowLayoutPanel(
           FlowLayout.TRAILING, 10, 7, jButtonHelp, restoreButton, applyButton);
 
   public PreferenceDialog(Window parentWin) {

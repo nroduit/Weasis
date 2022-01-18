@@ -70,8 +70,7 @@ public class SeriesBuilder {
 
       int curImg = extend - 1;
       ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
-      if (sequence instanceof SliderCineListener) {
-        SliderCineListener cineAction = (SliderCineListener) sequence;
+      if (sequence instanceof SliderCineListener cineAction) {
         curImg = cineAction.getSliderValue() - 1;
       }
 

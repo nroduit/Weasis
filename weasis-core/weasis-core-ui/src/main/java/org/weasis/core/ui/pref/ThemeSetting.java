@@ -15,7 +15,6 @@ import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -37,13 +36,13 @@ import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
-public class LooklSetting extends AbstractItemDialogPage {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LooklSetting.class);
+public class ThemeSetting extends AbstractItemDialogPage {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ThemeSetting.class);
 
   public static final String PAGE_NAME = "Appearance";
 
   private final JLabel jLabelMLook = new JLabel();
-  private final JComboBox<LookInfo> jComboBoxlnf = new JComboBox<>();
+  private final JComboBox<LookInfo> comboBoxTheme = new JComboBox<>();
   private final JButton button = new JButton(Messages.getString("GeneralSetting.show"));
 
   private final JRadioButton systemScaleRadio = new JRadioButton("Use the system scale factor");
@@ -51,11 +50,18 @@ public class LooklSetting extends AbstractItemDialogPage {
   private final ButtonGroup buttonGroup = new ButtonGroup();
   private final JSpinner spinner1 = new JSpinner();
 
+  record LookInfo(String name, String className) {
+    @Override
+    public String toString() {
+      return name;
+    }
+  }
+
   private LookInfo oldUILook;
 
-  public LooklSetting() {
+  public ThemeSetting() {
     super(PAGE_NAME, 102);
-    setList(jComboBoxlnf, UIManager.getInstalledLookAndFeels());
+    setList(comboBoxTheme, UIManager.getInstalledLookAndFeels());
     try {
       GuiUtils.setNumberModel(spinner1, 100, 20, 400, 5);
       jbInit();
@@ -69,20 +75,19 @@ public class LooklSetting extends AbstractItemDialogPage {
     jLabelMLook.setText("Theme" + StringUtil.COLON);
 
     add(
-        GuiUtils.getComponentsInJPanel(
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR_SMALL,
             ITEM_SEPARATOR_LARGE,
             jLabelMLook,
-            jComboBoxlnf,
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR),
+            comboBoxTheme,
+            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR),
             button));
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
-    JPanel panel = new JPanel();
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     panel.setBorder(GuiUtils.getTitledBorder("Display Scale Factor"));
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-    panel.add(GuiUtils.getComponentsInJPanel(0, 0, systemScaleRadio));
-    panel.add(GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR_SMALL, 0, userScaleRadio, spinner1));
+    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, systemScaleRadio));
+    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, userScaleRadio, spinner1));
     add(panel);
 
     this.buttonGroup.add(systemScaleRadio);
@@ -92,8 +97,8 @@ public class LooklSetting extends AbstractItemDialogPage {
 
     button.addActionListener(
         e -> {
-          LookInfo item = (LookInfo) jComboBoxlnf.getSelectedItem();
-          final String finalLafClassName = Objects.requireNonNull(item).getClassName();
+          LookInfo item = (LookInfo) comboBoxTheme.getSelectedItem();
+          final String finalLafClassName = Objects.requireNonNull(item).className();
           Runnable runnable =
               () -> {
                 try {
@@ -108,15 +113,15 @@ public class LooklSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");
   }
 
   protected void initialize(boolean afirst) {
-    WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
+    WProperties preferences = BundleTools.SYSTEM_PREFERENCES;
 
-    String className = prfs.getProperty("weasis.theme");
+    String className = preferences.getProperty("weasis.theme");
     if (className == null) {
       LookAndFeel currentLAF = UIManager.getLookAndFeel();
       if (currentLAF != null) {
@@ -125,25 +130,25 @@ public class LooklSetting extends AbstractItemDialogPage {
     }
     LookInfo oldLaf = null;
     if (className != null) {
-      for (int i = 0; i < jComboBoxlnf.getItemCount(); i++) {
-        LookInfo look = jComboBoxlnf.getItemAt(i);
-        if (className.equals(look.getClassName())) {
+      for (int i = 0; i < comboBoxTheme.getItemCount(); i++) {
+        LookInfo look = comboBoxTheme.getItemAt(i);
+        if (className.equals(look.className())) {
           oldLaf = look;
           break;
         }
       }
     }
     if (oldLaf == null) {
-      jComboBoxlnf.setSelectedIndex(0);
-      oldLaf = (LookInfo) jComboBoxlnf.getSelectedItem();
+      comboBoxTheme.setSelectedIndex(0);
+      oldLaf = (LookInfo) comboBoxTheme.getSelectedItem();
     } else {
-      jComboBoxlnf.setSelectedItem(oldLaf);
+      comboBoxTheme.setSelectedItem(oldLaf);
     }
     if (afirst) {
       oldUILook = oldLaf;
     }
 
-    float scale = parseScaleFactor(prfs.getProperty(FlatSystemProperties.UI_SCALE));
+    float scale = parseScaleFactor(preferences.getProperty(FlatSystemProperties.UI_SCALE));
     if (scale <= 0F) {
       scale = 1.0F;
       systemScaleRadio.doClick();
@@ -184,15 +189,15 @@ public class LooklSetting extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    LookInfo look = (LookInfo) jComboBoxlnf.getSelectedItem();
+    LookInfo look = (LookInfo) comboBoxTheme.getSelectedItem();
     if (look != null) {
-      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.theme", look.getClassName());
+      BundleTools.SYSTEM_PREFERENCES.setProperty("weasis.theme", look.className());
     }
     // save preferences
     BundleTools.saveSystemPreferences();
 
     // Restore old laf to avoid display issues.
-    final String finalLafClassName = oldUILook.getClassName();
+    final String finalLafClassName = oldUILook.className();
     LookAndFeel currentLAF = UIManager.getLookAndFeel();
     if (currentLAF != null && !finalLafClassName.equals(currentLAF.getClass().getName())) {
       Runnable runnable =
@@ -220,29 +225,5 @@ public class LooklSetting extends AbstractItemDialogPage {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("flatlaf.uiScale", null);
 
     initialize(false);
-  }
-
-  static class LookInfo {
-
-    private final String name;
-    private final String className;
-
-    public LookInfo(String name, String className) {
-      this.name = name;
-      this.className = className;
-    }
-
-    public String getName() {
-      return name;
-    }
-
-    public String getClassName() {
-      return className;
-    }
-
-    @Override
-    public String toString() {
-      return name;
-    }
   }
 }

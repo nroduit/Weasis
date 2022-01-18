@@ -9,15 +9,12 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Toolkit;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.ImageFilter;
 import java.awt.image.ImageProducer;
 import java.util.Collection;
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
@@ -30,7 +27,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
 import org.dcm4che3.data.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -288,35 +284,7 @@ public class KeyObjectToolBar extends WtoolBar {
   }
 
   private Icon buildKoSelectionIcon() {
-    final Icon mouseIcon = ResourceUtil.getToolBarIcon(OtherIcon.KEY_IMAGE);
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton model) {
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(ResourceUtil.getToolBarIcon(OtherIcon.KEY_IMAGE));
   }
 
   static class ToggleSelectionModel extends DefaultListSelectionModel {

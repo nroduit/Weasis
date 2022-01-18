@@ -293,9 +293,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
     if (menuRoot != null) {
       menuRoot.removeAll();
 
-      if (eventManager instanceof EventManager) {
-        EventManager manager = (EventManager) eventManager;
-
+      if (eventManager instanceof EventManager manager) {
         GuiUtils.addItemToMenu(menuRoot, manager.getLutMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getLutInverseMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getFilterMenu(null));
@@ -342,26 +340,22 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent) {
-      ObservableEvent event = (ObservableEvent) evt;
+    if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
-      if (newVal instanceof SeriesEvent) {
-        SeriesEvent event2 = (SeriesEvent) newVal;
+      if (newVal instanceof SeriesEvent seriesEvent) {
         if (ObservableEvent.BasicAction.ADD.equals(action)) {
-          SeriesEvent.Action action2 = event2.getActionCommand();
-          Object source = event2.getSource();
-          Object param = event2.getParam();
+          SeriesEvent.Action action2 = seriesEvent.getActionCommand();
+          Object source = seriesEvent.getSource();
+          Object param = seriesEvent.getParam();
 
           if (SeriesEvent.Action.ADD_IMAGE.equals(action2)) {
-            if (source instanceof Series) {
-              Series series = (Series) source;
+            if (source instanceof Series series) {
               ViewCanvas view2DPane = eventManager.getSelectedViewPane();
               ImageElement img = view2DPane.getImage();
               if (img != null && view2DPane.getSeries() == series) {
                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderCineListener) {
-                  SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                if (seqAction instanceof SliderCineListener sliceAction) {
                   if (param instanceof ImageElement) {
                     Filter<ImageElement> filter =
                         (Filter<ImageElement>)
@@ -382,8 +376,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
               }
             }
           } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
-            if (source instanceof Series) {
-              Series s = (Series) source;
+            if (source instanceof Series s) {
               for (ViewCanvas<ImageElement> v : view2ds) {
                 if (s == v.getSeries()) {
                   v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
@@ -393,8 +386,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           }
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-        if (newVal instanceof MediaSeriesGroup) {
-          MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+        if (newVal instanceof MediaSeriesGroup group) {
           // Patient Group
           if (TagW.Group.equals(group.getTagID())) {
             if (group.equals(getGroupID())) {
@@ -416,8 +408,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           }
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
-        if (newVal instanceof Series) {
-          Series series = (Series) newVal;
+        if (newVal instanceof Series series) {
           for (ViewCanvas<ImageElement> v : view2ds) {
             MediaSeries<ImageElement> s = v.getSeries();
             if (series.equals(s)) {

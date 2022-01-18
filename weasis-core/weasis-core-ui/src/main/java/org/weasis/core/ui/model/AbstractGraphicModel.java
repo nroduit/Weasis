@@ -17,7 +17,6 @@ import jakarta.xml.bind.annotation.XmlElements;
 import jakarta.xml.bind.annotation.XmlType;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
@@ -34,11 +33,11 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.Canvas;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -602,9 +601,9 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
     g2d.translate(0.5, 0.5);
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOn);
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
-    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, DefaultView2d.antialiasingOff);
+    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     g2d.translate(-0.5, -0.5);
   }
 

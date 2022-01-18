@@ -95,7 +95,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.add(Box.createVerticalStrut(5));
     jtableTag =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableTag.setFont(FontTools.getFont10());
+    jtableTag.setFont(FontTools.getSmallFont());
 
     jtableTag.getTableHeader().setReorderingAllowed(false);
     tableTagContainer.setPreferredSize(new Dimension(50, 80));
@@ -120,7 +120,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.add(Box.createVerticalStrut(5));
     jtableMarker =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableMarker.setFont(FontTools.getFont10());
+    jtableMarker.setFont(FontTools.getSmallFont());
 
     jtableMarker.getTableHeader().setReorderingAllowed(false);
     tableMarkerContainer.setPreferredSize(new Dimension(50, 80));
@@ -372,7 +372,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   public static class TagRenderer extends DefaultTableCellRenderer {
 
     public TagRenderer() {
-      setFont(FontTools.getFont11()); // Default size
+      setFont(FontTools.getSmallFont());
     }
 
     @Override

@@ -32,10 +32,8 @@ public class TreeRenderer extends DefaultTreeCellRenderer {
         super.getTreeCellRendererComponent(
             tree, value, isSelected, isExpanded, leaf, row, hasFocus);
 
-    if (value instanceof TreeNode) {
-      final TreeNode treeNode = (TreeNode) value;
+    if (value instanceof TreeNode treeNode) {
       final Path selectedDir = treeNode.getNodePath();
-
       try {
         setIcon(JIUtility.getSystemIcon(selectedDir.toFile()));
         setText(treeNode.toString());
@@ -43,7 +41,6 @@ public class TreeRenderer extends DefaultTreeCellRenderer {
         LOGGER.error("", e);
       }
     }
-
     return component;
   }
 }

@@ -38,7 +38,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
 
   public BrowsePanel(AcquireExplorer acquisitionView) {
     setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-    setBorder(GuiUtils.getEmptydBorder(5));
+    setBorder(GuiUtils.getEmptyBorder(5));
     try {
       acquisitionView.setSystemDrive(new FileSystemDrive(AcquireExplorer.getLastPath()));
       mediaSourceList.addItem(acquisitionView.getSystemDrive());

@@ -170,8 +170,7 @@ public class MipView extends View2d {
                         ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
                         DataExplorerModel model =
                             (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
-                        if (model instanceof DicomModel) {
-                          DicomModel dicomModel = (DicomModel) model;
+                        if (model instanceof DicomModel dicomModel) {
                           MediaSeriesGroup study = dicomModel.getParent(ser, DicomModel.study);
                           if (study != null) {
                             s.setTag(TagW.ExplorerModel, dicomModel);
@@ -205,8 +204,7 @@ public class MipView extends View2d {
     } else {
       // Force drawing crosslines without changing the slice position
       ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
-      if (sequence instanceof SliderCineListener) {
-        SliderCineListener cineAction = (SliderCineListener) sequence;
+      if (sequence instanceof SliderCineListener cineAction) {
         cineAction.stateChanged(cineAction.getSliderModel());
       }
       // Close stream

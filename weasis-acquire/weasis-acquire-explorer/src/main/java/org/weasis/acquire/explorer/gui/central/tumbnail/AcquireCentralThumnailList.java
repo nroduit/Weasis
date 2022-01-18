@@ -37,7 +37,6 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.StringUtil;
 
-@SuppressWarnings({"serial"})
 public class AcquireCentralThumnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
   private AcquireTabPanel acquireTabPanel;

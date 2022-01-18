@@ -276,8 +276,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (command.equals(ActionW.PRESET.cmd())) {
           actionsInView.put(ActionW.PRESET.cmd(), val);
 
-          if (val instanceof PresetWindowLevel) {
-            PresetWindowLevel preset = (PresetWindowLevel) val;
+          if (val instanceof PresetWindowLevel preset) {
             DicomImageElement img = getImage();
             ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
 
@@ -1232,8 +1231,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       if (toolBar != null) {
         ActionListener leftButtonAction =
             event -> {
-              if (event.getSource() instanceof JRadioButtonMenuItem) {
-                JRadioButtonMenuItem item = (JRadioButtonMenuItem) event.getSource();
+              if (event.getSource() instanceof JRadioButtonMenuItem item) {
                 toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
               }
             };
@@ -1274,8 +1272,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       count = popupMenu.getComponentCount();
     }
 
-    if (eventManager instanceof EventManager) {
-      EventManager manager = (EventManager) eventManager;
+    if (eventManager instanceof EventManager manager) {
       GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
       GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));

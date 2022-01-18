@@ -28,7 +28,7 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
         this, EventManager.getInstance(), ActionW.DRAW, ActionW.DRAW_GRAPHICS, 7);
 
     add(new AnnotationOptionsPanel());
-    add(GuiUtils.getBoxYLastElement(5));
+    add(GuiUtils.boxYLastElement(5));
   }
 
   @Override

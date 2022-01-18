@@ -9,14 +9,11 @@
  */
 package org.weasis.dicom.explorer.pref.node;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 public class DicomNodeListView extends AbstractItemDialogPage {
@@ -32,11 +29,10 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     buildPanel(AbstractDicomNode.Type.WEB);
     // buildPanel(AbstractDicomNode.Type.WEB_QIDO);
 
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   private void buildPanel(AbstractDicomNode.Type nodeType) {
-    JLabel label1 = new JLabel(Messages.getString("DicomNodeListView.node") + StringUtil.COLON);
     final JComboBox<AbstractDicomNode> nodeComboBox = new JComboBox<>();
     AbstractDicomNode.loadDicomNodes(nodeComboBox, nodeType);
     AbstractDicomNode.addTooltipToComboList(nodeComboBox);
@@ -49,23 +45,21 @@ public class DicomNodeListView extends AbstractItemDialogPage {
     addNodeButton.addActionListener(
         e -> AbstractDicomNode.addNodeActionPerformed(nodeComboBox, nodeType));
 
-    JPanel panel = new JPanel();
+    JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
     panel.setBorder(GuiUtils.getTitledBorder(nodeType.toString()));
-    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
     panel.add(
-        GuiUtils.getComponentsInJPanel(
-            ITEM_SEPARATOR_SMALL,
+        GuiUtils.getFlowLayoutPanel(
             ITEM_SEPARATOR,
-            label1,
+            ITEM_SEPARATOR,
             nodeComboBox,
-            GuiUtils.createHorizontalStrut(BLOCK_SEPARATOR),
+            GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
             editButton,
-            GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_LARGE),
+            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
             deleteButton));
-    panel.add(GuiUtils.getComponentsInJPanel(ITEM_SEPARATOR, ITEM_SEPARATOR, addNodeButton));
+    panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR, ITEM_SEPARATOR, addNodeButton));
     add(panel);
 
-    add(GuiUtils.createVerticalStrut(BLOCK_SEPARATOR));
+    add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
   }
 
   @Override

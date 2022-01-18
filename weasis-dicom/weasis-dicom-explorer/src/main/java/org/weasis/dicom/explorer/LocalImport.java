@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 
@@ -52,19 +54,19 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     textField.setPreferredSize(dim);
     textField.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
 
-    JButton button = new JButton(" ... ");
-    button.addActionListener(e -> browseImgFile());
-    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, button);
+    JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
+    btnSearch.addActionListener(e -> browseImgFile());
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
 
     add(
-        GuiUtils.getHorizontalBoxPanel(
-            lblImportAFolder, GuiUtils.createHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            lblImportAFolder, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
 
     chckbxSearch = new JCheckBox(Messages.getString("LocalImport.recursive"));
     chckbxSearch.setSelected(true);
 
-    add(GuiUtils.getComponentsInJPanel(chckbxSearch));
-    add(GuiUtils.getBoxYLastElement(LAST_FILLER_HEIGHT));
+    add(GuiUtils.getFlowLayoutPanel(chckbxSearch));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {

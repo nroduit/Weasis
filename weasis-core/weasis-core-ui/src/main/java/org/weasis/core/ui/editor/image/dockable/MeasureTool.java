@@ -105,7 +105,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   public final JPanel getIconsPanel() {
     final JPanel transform = new JPanel();
     transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-    transform.setBorder(GuiUtils.getEmptydBorder(5, 5, 5, 5));
+    transform.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
 
     MeasureTool.buildIconPanel(transform, eventManager, ActionW.MEASURE, ActionW.DRAW_MEASURE, 5);
     MeasureTool.buildIconPanel(transform, eventManager, ActionW.DRAW, ActionW.DRAW_GRAPHICS, 5);
@@ -138,13 +138,13 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             updateMeasureProperties(viewSetting);
           }
         });
-    transform.add(GuiUtils.getComponentsInJPanel(label, button, spinner));
+    transform.add(GuiUtils.getFlowLayoutPanel(label, button, spinner));
 
     ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
     if (drawOnceAction instanceof ToggleButtonListener toggleListener) {
       JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
       checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
-      transform.add(GuiUtils.getComponentsInJPanel(checkDraw));
+      transform.add(GuiUtils.getFlowLayoutPanel(checkDraw));
     }
 
     JCheckBox checkboxBasicImageStatistics =
@@ -172,14 +172,14 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             }
           }
         });
-    transform.add(GuiUtils.getComponentsInJPanel(checkboxBasicImageStatistics));
+    transform.add(GuiUtils.getFlowLayoutPanel(checkboxBasicImageStatistics));
 
     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
     if (spUnitAction instanceof ComboItemListener<?> comboListener) {
       final JLabel lutLabel = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      JComboBox<?> unitComboBox = comboListener.createCombo();
+      JComboBox<?> unitComboBox = comboListener.createCombo(120);
       unitComboBox.setSelectedItem(Unit.PIXEL);
-      transform.add(GuiUtils.getComponentsInJPanel(lutLabel, unitComboBox));
+      transform.add(GuiUtils.getFlowLayoutPanel(lutLabel, unitComboBox));
     }
 
     final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
@@ -191,7 +191,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           dialog.showPage(LABEL_PREF_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
-    transform.add(GuiUtils.getComponentsInJPanel(btnGerenralOptions));
+    transform.add(GuiUtils.getFlowLayoutPanel(btnGerenralOptions));
     return transform;
   }
 
@@ -213,7 +213,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     tableContainer.setPreferredSize(new Dimension(50, 50));
     tableContainer.setBorder(
         BorderFactory.createCompoundBorder(
-            GuiUtils.getEmptydBorder(10, 3, 0, 3),
+            GuiUtils.getEmptyBorder(10, 3, 0, 3),
             GuiUtils.getTitledBorder(Messages.getString("MeasureTool.sel"))));
     return tableContainer;
   }
@@ -375,7 +375,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     final JPanel pIcons = new JPanel();
     pIcons.setBorder(
         BorderFactory.createCompoundBorder(
-            GuiUtils.getEmptydBorder(10, 5, 0, 5),
+            GuiUtils.getEmptyBorder(10, 5, 0, 5),
             GuiUtils.getTitledBorder(graphicAction.getTitle())));
 
     JToogleButtonGroup<?> measures = actionState.get().createButtonGroup();
@@ -402,6 +402,6 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           });
       pIcons.add(item);
     }
-    rootPanel.add(GuiUtils.getComponentsInJPanel(FlowLayout.LEADING, 0, 0, pIcons));
+    rootPanel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, 0, pIcons));
   }
 }

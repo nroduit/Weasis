@@ -69,14 +69,14 @@ public class WorklistDialog extends JDialog {
 
   private void initComponents() {
     final JPanel rootPane = new JPanel();
-    rootPane.setBorder(GuiUtils.getEmptydBorder(10, 15, 10, 15));
+    rootPane.setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
     this.setContentPane(rootPane);
 
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     rootPane.setLayout(new BorderLayout(0, 0));
 
     jtable = new JTable();
-    jtable.setFont(FontTools.getFont10());
+    jtable.setFont(FontTools.getSmallFont());
     jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jtable.setRowSelectionAllowed(true);
     jtable.setShowHorizontalLines(true);

@@ -100,8 +100,7 @@ public class Activator implements BundleActivator, ServiceListener {
       final BundleContext context =
           FrameworkUtil.getBundle(Activator.this.getClass()).getBundleContext();
       Object service = context.getService(mref);
-      if (service instanceof InsertableFactory) {
-        InsertableFactory factory = (InsertableFactory) service;
+      if (service instanceof InsertableFactory factory) {
         if (event.getType() == ServiceEvent.REGISTERED) {
           registerComponent(factory);
         } else if (event.getType() == ServiceEvent.UNREGISTERING) {
@@ -145,8 +144,7 @@ public class Activator implements BundleActivator, ServiceListener {
   }
 
   private static void registerToolBar(Insertable instance) {
-    if (instance instanceof Toolbar && !View2dContainer.TOOLBARS.contains(instance)) {
-      Toolbar bar = (Toolbar) instance;
+    if (instance instanceof Toolbar bar && !View2dContainer.TOOLBARS.contains(instance)) {
       View2dContainer.TOOLBARS.add(bar);
       updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
       LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
@@ -154,8 +152,7 @@ public class Activator implements BundleActivator, ServiceListener {
   }
 
   private static void registerTool(Insertable instance) {
-    if (instance instanceof DockableTool && !View2dContainer.TOOLS.contains(instance)) {
-      DockableTool tool = (DockableTool) instance;
+    if (instance instanceof DockableTool tool && !View2dContainer.TOOLS.contains(instance)) {
       View2dContainer.TOOLS.add(tool);
       ImageViewerPlugin<DicomImageElement> view =
           EventManager.getInstance().getSelectedView2dContainer();

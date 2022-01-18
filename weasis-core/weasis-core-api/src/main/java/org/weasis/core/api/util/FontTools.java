@@ -12,37 +12,15 @@ package org.weasis.core.api.util;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
-import java.awt.Toolkit;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import javax.swing.UIManager;
 
 public class FontTools {
-
-  private static final Font font11 = new Font(Font.SANS_SERIF, 0, 11);
-  private static final Font font10 = new Font(Font.SANS_SERIF, 0, 10);
-
   private FontTools() {}
-
-  public static Font getFont11() {
-    return font11;
-  }
-
-  public static Font getFont10() {
-    return font10;
-  }
-
-  public static float getAccurateFontHeight(Graphics g) {
-    return (float) g.getFontMetrics().getStringBounds("0", g).getHeight();
-  }
-
-  public static float getMidFontHeightFactor() {
-    return 0.35f;
-  }
 
   public static void paintColorFontOutline(
       Graphics2D g2, String str, float x, float y, Color color) {
@@ -127,13 +105,5 @@ public class FontTools {
 
   public static Font getH1BoldFont() {
     return UIManager.getFont("h1.font");
-  }
-
-  public static int getFontSizeInPixels(Font font) {
-    if (font == null) {
-      font = getDefaultFont();
-    }
-    int screenResolution = Toolkit.getDefaultToolkit().getScreenResolution();
-    return (int) Math.round(font.getSize() * screenResolution / 72.0);
   }
 }

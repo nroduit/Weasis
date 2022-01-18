@@ -40,7 +40,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
     this.title = title == null ? "item" : title; // NON-NLS
     this.pagePosition = pagePosition;
     setBorder(
-        GuiUtils.getEmptydBorder(BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, 0, ITEM_SEPARATOR_LARGE));
+        GuiUtils.getEmptyBorder(BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, 0, ITEM_SEPARATOR_LARGE));
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
   }
 
