@@ -387,7 +387,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // Force to sort the new merged media list
         List sortedMedias = base.getSortedMedias(null);
         sortedMedias.sort(SortSeriesStack.instanceNumber);
-        // update observer
+        // filter observer
         this.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REPLACE, DicomModel.this, base, base));
       }

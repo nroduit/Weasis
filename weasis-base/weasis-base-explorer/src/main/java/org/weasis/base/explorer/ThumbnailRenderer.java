@@ -35,7 +35,7 @@ import org.weasis.core.util.LangUtil;
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     implements ListCellRenderer<E> {
 
-  public static final Dimension ICON_DIM = GuiUtils.getDimension(150, 150);
+  protected static final Dimension ICON_DIM = new Dimension(150, 150);
 
   private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
   private final JLabel iconCheckedLabel = new JLabel((Icon) null);
@@ -47,26 +47,26 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     JPanel panel = new JPanel();
     panel.setLayout(new OverlayLayout(panel));
-    panel.setPreferredSize(ICON_DIM);
-    panel.setMaximumSize(ICON_DIM);
+    Dimension dim = GuiUtils.getDimension(ICON_DIM.width, ICON_DIM.height);
+    panel.setPreferredSize(dim);
+    panel.setMaximumSize(dim);
 
-    iconCheckedLabel.setPreferredSize(ICON_DIM);
-    iconCheckedLabel.setMaximumSize(ICON_DIM);
+    iconCheckedLabel.setPreferredSize(dim);
+    iconCheckedLabel.setMaximumSize(dim);
     panel.add(iconCheckedLabel);
 
-    iconLabel.setPreferredSize(ICON_DIM);
-    iconLabel.setMaximumSize(ICON_DIM);
+    iconLabel.setPreferredSize(dim);
+    iconLabel.setMaximumSize(dim);
     iconLabel.setBorder(GuiUtils.getEmptyBorder(2));
     panel.add(iconLabel);
     this.add(panel);
 
     descriptionLabel.setFont(FontTools.getMiniFont());
-    Dimension dim =
+    Dimension dimLabel =
         new Dimension(
-            ICON_DIM.width,
-            descriptionLabel.getFontMetrics(descriptionLabel.getFont()).getHeight());
-    descriptionLabel.setPreferredSize(dim);
-    descriptionLabel.setMaximumSize(dim);
+            dim.width, descriptionLabel.getFontMetrics(descriptionLabel.getFont()).getHeight());
+    descriptionLabel.setPreferredSize(dimLabel);
+    descriptionLabel.setMaximumSize(dimLabel);
 
     this.add(descriptionLabel);
 

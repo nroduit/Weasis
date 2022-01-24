@@ -10,7 +10,6 @@
 package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.ArrayList;
@@ -30,6 +29,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -102,7 +102,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             }
           }
         });
-    setPreferredSize(new Dimension(1024, 1024));
+    setPreferredSize(GuiUtils.getDimension(1024, 1024));
     setSeries(series);
   }
 

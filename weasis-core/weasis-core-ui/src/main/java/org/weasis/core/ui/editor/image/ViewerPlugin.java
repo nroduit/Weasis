@@ -78,8 +78,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
           @Override
           public void close(CDockable dockable) {
             super.close(dockable);
-            if (dockable.getFocusComponent() instanceof SeriesViewer) {
-              ((SeriesViewer) dockable.getFocusComponent()).close();
+            if (dockable.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+              seriesViewer.close();
             }
             Dockable prevDockable =
                 UIManager.DOCKING_CONTROL
@@ -89,10 +89,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             if (prevDockable == null) {
               handleFocusAfterClosing();
             } else {
-              if (prevDockable instanceof DefaultCommonDockable) {
-                CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
-                if (ld instanceof AbstractCDockable) {
-                  ((AbstractCDockable) ld).toFront();
+              if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable) {
+                if (defaultCommonDockable.getDockable()
+                    instanceof AbstractCDockable abstractCDockable) {
+                  abstractCDockable.toFront();
                 }
               }
             }

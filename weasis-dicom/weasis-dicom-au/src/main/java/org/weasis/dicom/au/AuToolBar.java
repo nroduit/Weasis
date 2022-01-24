@@ -28,9 +28,8 @@ public class AuToolBar extends WtoolBar {
         e -> {
           ImageViewerPlugin<?> container =
               AuContainer.AU_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof AuContainer) {
-            DicomFieldsView.displayHeaderForSpecialElement(
-                container, ((AuContainer) container).getSeries());
+          if (container instanceof AuContainer auContainer) {
+            DicomFieldsView.displayHeaderForSpecialElement(container, auContainer.getSeries());
           }
         });
     add(metaButton);

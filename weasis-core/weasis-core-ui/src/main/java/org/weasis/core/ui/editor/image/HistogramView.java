@@ -11,7 +11,6 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -25,7 +24,6 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -92,8 +90,8 @@ public class HistogramView extends JComponent
     setLayout(new BorderLayout());
     view.setLayout(new BorderLayout());
     add(view, BorderLayout.CENTER);
-    setPreferredSize(new Dimension(400, 300));
-    setMinimumSize(new Dimension(150, 50));
+    setPreferredSize(GuiUtils.getDimension(400, 300));
+    setMinimumSize(GuiUtils.getDimension(150, 50));
   }
 
   @Override
@@ -109,9 +107,9 @@ public class HistogramView extends JComponent
           WindLevelParameters p = getWinLeveParameters();
           for (int i = 0; i < histView.getComponentCount(); i++) {
             Component c = histView.getComponent(i);
-            if (c instanceof ChannelHistogramPanel) {
-              ((ChannelHistogramPanel) c).setWindLevelParameters(p);
-              ((ChannelHistogramPanel) c).getData().updateVoiLut(view2DPane);
+            if (c instanceof ChannelHistogramPanel histogramPanel) {
+              histogramPanel.setWindLevelParameters(p);
+              histogramPanel.getData().updateVoiLut(view2DPane);
             }
           }
         }
@@ -126,8 +124,8 @@ public class HistogramView extends JComponent
         DisplayByteLut[] lut = getLut(p, colorModel);
         for (int i = 0; i < histView.getComponentCount(); i++) {
           Component c = histView.getComponent(i);
-          if (c instanceof ChannelHistogramPanel) {
-            ((ChannelHistogramPanel) c).setLut(lut[i]);
+          if (c instanceof ChannelHistogramPanel histogramPanel) {
+            histogramPanel.setLut(lut[i]);
           }
         }
       }
@@ -161,7 +159,7 @@ public class HistogramView extends JComponent
       headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
       headerPanel.setBorder(
           BorderFactory.createCompoundBorder(
-              BorderFactory.createEmptyBorder(10, 7, 7, 7),
+              GuiUtils.getEmptyBorder(10, 7, 7, 7),
               GuiUtils.getTitledBorder(Messages.getString("HistogramView.histoParams"))));
 
       JPanel row1 = new JPanel();
@@ -197,7 +195,7 @@ public class HistogramView extends JComponent
       }
       row2.add(spinnerBins);
       spinnerBins.addChangeListener(e -> buildHistogram());
-      row2.add(Box.createHorizontalStrut(15));
+      row2.add(GuiUtils.boxHorizontalStrut(15));
 
       final JButton stats = new JButton(Messages.getString("HistogramView.stats"));
       stats.addActionListener((ActionEvent e) -> showStatistics());
@@ -217,8 +215,8 @@ public class HistogramView extends JComponent
     ChannelHistogramPanel[] hist = new ChannelHistogramPanel[histView.getComponentCount()];
     for (int i = 0; i < hist.length; i++) {
       Component c = histView.getComponent(i);
-      if (c instanceof ChannelHistogramPanel) {
-        hist[i] = (ChannelHistogramPanel) c;
+      if (c instanceof ChannelHistogramPanel panel) {
+        hist[i] = panel;
       }
     }
     if (hist.length == 0) {

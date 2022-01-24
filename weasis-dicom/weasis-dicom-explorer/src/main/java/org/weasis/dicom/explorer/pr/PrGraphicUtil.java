@@ -295,9 +295,7 @@ public class PrGraphicUtil {
     Color color = defaultColor;
     if (style != null) {
       int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
-      if (rgb != null) {
-        color = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
-      }
+      color = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
       Float fillOpacity =
           DicomMediaUtils.getFloatFromDicomElement(style, Tag.PatternOnOpacity, null);
       if (fillOpacity != null && fillOpacity < 1.0F) {

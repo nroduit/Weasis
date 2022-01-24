@@ -44,12 +44,12 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.DicomizeTask;
 import org.weasis.acquire.explorer.MediaImporterFactory;
 import org.weasis.acquire.explorer.Messages;
+import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
-import org.weasis.acquire.explorer.util.ImageInfoHelper;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.ImageOpNode;
@@ -311,7 +311,7 @@ public class AcquirePublishDialog extends JDialog {
       if (!overSizedSelected.isEmpty()) {
         for (AcquireImageInfo imgInfo : overSizedSelected) {
           // calculate zoom ration
-          setZoomRatio(imgInfo, ImageInfoHelper.calculateRatio(imgInfo, resolution));
+          setZoomRatio(imgInfo, PublishDicomTask.calculateRatio(imgInfo, resolution));
         }
       }
     }

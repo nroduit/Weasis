@@ -21,6 +21,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
@@ -47,7 +48,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   private void jbInit() {
     setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
 
-    Dimension dim = new Dimension(5, 5);
+    Dimension dim = GuiUtils.getDimension(5, 5);
     add(Box.createRigidArea(dim));
     final DropDownButton button =
         new DropDownButton("Mini", currentAction.getActionW().getDropButtonIcon()) { // NON-NLS
@@ -78,7 +79,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     slider.setInverted(vertical);
     slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
     slider.setPaintTicks(true);
-    slider.setPreferredSize(new Dimension(35, 250));
+    slider.setPreferredSize(GuiUtils.getDimension(35, 250));
     slider.setShowLabels(false);
     action.registerActionState(slider);
     return slider;
@@ -126,9 +127,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof JRadioButtonMenuItem) {
-      JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
-      if (item.getParent() instanceof JPopupMenu) {
+    if (e.getSource() instanceof JRadioButtonMenuItem item) {
+      if (item.getParent() instanceof JPopupMenu popupMenu) {
 
         SliderChangeListener newAction = getAction(e.getActionCommand());
         if (newAction == null || currentAction == newAction) {
@@ -143,10 +143,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
         currentAction = newAction;
 
-        JPopupMenu pop = (JPopupMenu) item.getParent();
-        if (pop.getInvoker() instanceof DropDownButton) {
-          ((DropDownButton) pop.getInvoker())
-              .setIcon(currentAction.getActionW().getDropButtonIcon());
+        if (popupMenu.getInvoker() instanceof DropDownButton dropDownButton) {
+          dropDownButton.setIcon(currentAction.getActionW().getDropButtonIcon());
         }
       }
     }

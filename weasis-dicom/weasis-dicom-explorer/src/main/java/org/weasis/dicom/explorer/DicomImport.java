@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.ArrayList;
@@ -40,7 +39,7 @@ public class DicomImport extends AbstractWizardDialog {
         parent,
         Messages.getString("DicomImport.imp_dicom"),
         ModalityType.APPLICATION_MODAL,
-        new Dimension(650, 500));
+        GuiUtils.getDimension(650, 500));
     this.dicomModel = dicomModel;
 
     final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0"));

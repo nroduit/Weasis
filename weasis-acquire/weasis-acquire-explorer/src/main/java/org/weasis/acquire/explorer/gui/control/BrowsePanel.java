@@ -63,8 +63,6 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
               (FileSystemDrive) mediaSourceSelectionCombo.getSelectedItem());
           acquisitionView.loadSystemDrive();
         });
-    GuiUtils.addTooltipToComboList(mediaSourceSelectionCombo);
-
     add(mediaSourceSelectionCombo);
 
     final JButton pathSelectionBtn = new JButton(new ChangePathSelectionAction(acquisitionView));

@@ -140,7 +140,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
   private String getImportPath() {
     String path = textField.getText().trim();
-    if (path != null && !path.trim().equals("")) {
+    if (StringUtil.hasText(path)) {
       return path;
     }
     return null;
@@ -182,14 +182,13 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
       if (response == JOptionPane.YES_OPTION) {
         Dialog dialog = WinUtil.getParentDialog(this);
-        if (dialog instanceof DicomImport) {
-          DicomImport dcmImport = (DicomImport) dialog;
+        if (dialog instanceof DicomImport dcmImport) {
           dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
           dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
           if (file != null) {
             AbstractItemDialogPage page = dcmImport.getCurrentPage();
-            if (page instanceof LocalImport) {
-              ((LocalImport) page).setImportPath(file.getParent());
+            if (page instanceof LocalImport localImport) {
+              localImport.setImportPath(file.getParent());
             }
           }
         }

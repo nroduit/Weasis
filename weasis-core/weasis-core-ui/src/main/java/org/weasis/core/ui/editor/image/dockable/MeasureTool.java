@@ -210,7 +210,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     jtable.getTableHeader().setReorderingAllowed(false);
 
     tableContainer = new JPanel(new BorderLayout());
-    tableContainer.setPreferredSize(new Dimension(50, 50));
+    tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     tableContainer.setBorder(
         BorderFactory.createCompoundBorder(
             GuiUtils.getEmptyBorder(10, 3, 0, 3),
@@ -280,7 +280,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       tableContainer.add(jtable, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtable);
     } else {
-      tableContainer.setPreferredSize(new Dimension(50, 50));
+      tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableContainer.revalidate();
     tableContainer.repaint();

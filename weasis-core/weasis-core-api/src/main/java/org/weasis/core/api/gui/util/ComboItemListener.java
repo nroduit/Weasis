@@ -184,7 +184,6 @@ public abstract class ComboItemListener<T> extends BasicActionState
     final ComboItems combo = new ComboItems();
     registerActionState(combo);
     GuiUtils.setPreferredWidth(combo, width, width);
-    GuiUtils.addTooltipToComboList(combo);
     return combo;
   }
 

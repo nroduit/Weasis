@@ -171,7 +171,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
           dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
         }
         // Set default size for FlapLayout
-        dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
+        dockable.setMinimizedSize(new Dimension(dockableWidth, GuiUtils.getScaleLength(50)));
         dockable.setExtendedMode(mode);
       }
       dockable.setVisible(true);

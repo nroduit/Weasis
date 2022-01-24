@@ -23,7 +23,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -43,11 +42,9 @@ import javax.swing.Box.Filler;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JFormattedTextField.AbstractFormatterFactory;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -57,7 +54,6 @@ import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
 import javax.swing.UIManager;
@@ -67,7 +63,6 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.text.DefaultFormatterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,15 +234,6 @@ public class GuiUtils {
     }
     if (gap > 0 && !externalGap) {
       panel.remove(panel.getComponentCount() - 1);
-    }
-    return panel;
-  }
-
-  public static JPanel getGridLayoutPanel(int align, int rows, int cols, JLabel... items) {
-    JPanel panel = new JPanel(new GridLayout(rows, cols));
-    for (JLabel item : items) {
-      item.setHorizontalAlignment(align);
-      panel.add(item);
     }
     return panel;
   }
@@ -440,26 +426,6 @@ public class GuiUtils {
       return bounds.height;
     }
     return bounds.width;
-  }
-
-  public static void addTooltipToComboList(final JComboBox<?> combo) {
-    Object comp = combo.getUI().getAccessibleChild(combo, 0);
-    if (comp instanceof final BasicComboPopup popup) {
-      popup
-          .getList()
-          .getSelectionModel()
-          .addListSelectionListener(
-              e -> {
-                if (!e.getValueIsAdjusting()) {
-                  ListSelectionModel model = (ListSelectionModel) e.getSource();
-                  int first = model.getMinSelectionIndex();
-                  if (first >= 0) {
-                    Object item = combo.getItemAt(first);
-                    ((JComponent) combo.getRenderer()).setToolTipText(item.toString());
-                  }
-                }
-              });
-    }
   }
 
   public static void openInDefaultBrowser(Component parent, URL url) {

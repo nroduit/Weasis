@@ -26,7 +26,8 @@
 
     <app.version>${revision}${changelist}</app.version>
     <felix.framework.version>7.0.3</felix.framework.version>
-    <flatlaf.version>2.0-rc1</flatlaf.version>
+    <flatlaf.version>2.0</flatlaf.version>
+    <miglayout.version>11.0</miglayout.version>
     <xz.version>1.9</xz.version>
 
     <osgi.cmpn.version>8.0.0</osgi.cmpn.version>
@@ -551,6 +552,18 @@
       <groupId>com.formdev</groupId>
       <artifactId>flatlaf-extras</artifactId>
       <version>${flatlaf.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.miglayout</groupId>
+      <artifactId>miglayout-swing</artifactId>
+      <version>${miglayout.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.miglayout</groupId>
+      <artifactId>miglayout-core</artifactId>
+      <version>${miglayout.version}</version>
       <scope>provided</scope>
     </dependency>
 

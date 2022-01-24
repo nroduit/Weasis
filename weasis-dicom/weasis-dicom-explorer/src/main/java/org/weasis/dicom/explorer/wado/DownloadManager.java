@@ -329,7 +329,7 @@ public class DownloadManager {
       } catch (SAXException e) {
         LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e);
       } catch (Exception e) {
-        LOGGER.error("Error when validate XSD schema. Try to update JRE", e);
+        LOGGER.error("Error when validate XSD schema. Try to filter JRE", e);
       }
 
       ReaderParams params = new ReaderParams(model, seriesMap);

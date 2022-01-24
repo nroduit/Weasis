@@ -14,20 +14,17 @@ import java.net.Authenticator;
 import java.net.PasswordAuthentication;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBox;
-import javax.swing.JComponent;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -109,9 +106,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, proxyConnectionRadio));
-    add(
-        GuiUtils.getFlowLayoutPanel(
-            FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, buildProxyPanel()));
+    add(GuiUtils.getHorizontalBoxLayoutPanel(buildProxyPanel()));
 
     this.buttonGroup.add(directConnectionRadio);
     this.buttonGroup.add(proxyConnectionRadio);
@@ -181,54 +176,31 @@ public class ProxyPrefView extends AbstractItemDialogPage {
 
   private JPanel buildProxyPanel() {
     JPanel dataPanel = new JPanel();
-    dataPanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR, 30, ITEM_SEPARATOR, 0));
-    dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
-    JComponent strut =
-        GuiUtils.boxHorizontalStrut(
-            ITEM_SEPARATOR
-                + Math.max(
-                    GuiUtils.getComponentWidthFromText(
-                        proxyLabelSecure, proxyLabelSecure.getText()),
-                    GuiUtils.getComponentWidthFromText(
-                        proxyLabelSocks, proxyLabelSocks.getText())));
-    dataPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            strut,
-            lblAddress,
-            (JComponent) Box.createGlue(),
-            lblPort,
-            GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR)));
-    dataPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            GuiUtils.getGridLayoutPanel(
-                SwingConstants.TRAILING,
-                0,
-                1,
-                proxyLabelHttp,
-                proxyLabelSecure,
-                proxyLabelFtp,
-                proxyLabelSocks),
-            GuiUtils.getVerticalBoxLayoutPanel(
-                proxyHostHttp, proxyHostSecure, proxyHostFtp, proxyHostSocks),
-            GuiUtils.getVerticalBoxLayoutPanel(
-                proxyPortHttp, proxyPortSecure, proxyPortFtp, proxyPortSocks)));
+    dataPanel.setLayout(
+        new MigLayout("insets 5lp 15lp 5lp 0, fillx", "[right]rel[grow,fill][grow 0]"));
 
-    dataPanel.add(
-        GuiUtils.getFlowLayoutPanel(
-            FlowLayout.LEADING,
-            ITEM_SEPARATOR_SMALL,
-            ITEM_SEPARATOR,
-            proxyLabelExceptions,
-            proxyExceptions));
-    dataPanel.add(
-        GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR, proxyAuthCheckBox));
-    dataPanel.add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            GuiUtils.boxHorizontalStrut(20),
-            GuiUtils.getGridLayoutPanel(SwingConstants.TRAILING, 0, 1, userLabel, passLabel),
-            GuiUtils.getVerticalBoxLayoutPanel(proxyUser, proxyPass)));
+    dataPanel.add(lblAddress, "newline, cell 1 0, growx 0, alignx center");
+    dataPanel.add(lblPort, "growx 0, alignx center");
+    dataPanel.add(proxyLabelHttp, "newline");
+    dataPanel.add(proxyHostHttp);
+    dataPanel.add(proxyPortHttp);
+    dataPanel.add(proxyLabelSecure, "newline");
+    dataPanel.add(proxyHostSecure);
+    dataPanel.add(proxyPortSecure);
+    dataPanel.add(proxyLabelFtp, "newline");
+    dataPanel.add(proxyHostFtp);
+    dataPanel.add(proxyPortFtp);
+    dataPanel.add(proxyLabelSocks, "newline");
+    dataPanel.add(proxyHostSocks);
+    dataPanel.add(proxyPortSocks);
 
-    dataPanel.add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
+    dataPanel.add(proxyLabelExceptions, "newline");
+    dataPanel.add(proxyExceptions, "spanx 2");
+    dataPanel.add(proxyAuthCheckBox, "newline, spanx, alignx leading, gaptop 15lp");
+    dataPanel.add(userLabel, "newline");
+    dataPanel.add(proxyUser);
+    dataPanel.add(passLabel, "newline");
+    dataPanel.add(proxyPass);
     return dataPanel;
   }
 

@@ -43,6 +43,7 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
@@ -91,7 +92,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   public WaveView(Series series) {
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    setPreferredSize(new Dimension(1024, 1024));
+    setPreferredSize(GuiUtils.getDimension(1024, 1024));
 
     this.channels = new ArrayList<>();
     this.currentFormat = Format.DEFAULT;

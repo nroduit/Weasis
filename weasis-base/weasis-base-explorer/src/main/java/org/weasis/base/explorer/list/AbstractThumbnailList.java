@@ -71,8 +71,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   public static final String SECTION_CHANGED = "SECTION_CHANGED"; // NON-NLS
   public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; // NON-NLS
 
-  public static final Dimension DEF_ICON_DIM = new Dimension(150, 150);
-
   private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
 
   static {
@@ -250,8 +248,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   }
 
   public void reset() {
-    setFixedCellHeight(DEF_ICON_DIM.height);
-    setFixedCellWidth(DEF_ICON_DIM.width);
     setLayoutOrientation(HORIZONTAL_WRAP);
 
     getThumbnailListModel().reload();

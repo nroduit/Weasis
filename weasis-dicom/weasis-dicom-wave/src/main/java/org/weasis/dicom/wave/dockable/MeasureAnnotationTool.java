@@ -98,7 +98,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     jtableTag.setFont(FontTools.getSmallFont());
 
     jtableTag.getTableHeader().setReorderingAllowed(false);
-    tableTagContainer.setPreferredSize(new Dimension(50, 80));
+    tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableTagContainer.setLayout(new BorderLayout());
     transform.add(tableTagContainer);
 
@@ -123,7 +123,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     jtableMarker.setFont(FontTools.getSmallFont());
 
     jtableMarker.getTableHeader().setReorderingAllowed(false);
-    tableMarkerContainer.setPreferredSize(new Dimension(50, 80));
+    tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableMarkerContainer.setLayout(new BorderLayout());
     transform.add(tableMarkerContainer);
 
@@ -187,7 +187,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       tableTagContainer.add(jtableTag, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtableTag);
     } else {
-      tableTagContainer.setPreferredSize(new Dimension(50, 50));
+      tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableTagContainer.revalidate();
     tableTagContainer.repaint();
@@ -218,7 +218,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       tableMarkerContainer.add(jtableMarker, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtableMarker);
     } else {
-      tableMarkerContainer.setPreferredSize(new Dimension(50, 50));
+      tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableMarkerContainer.revalidate();
     tableMarkerContainer.repaint();

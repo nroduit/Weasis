@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor.image;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -25,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Objects;
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Popup;
@@ -33,6 +33,7 @@ import javax.swing.PopupFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.util.WindLevelParameters;
 import org.weasis.core.api.util.FontTools;
@@ -78,12 +79,17 @@ public class HistogramPanel extends JPanel {
     Graphics2D g2d = (Graphics2D) g;
     Color oldColor = g2d.getColor();
     Stroke oldStroke = g2d.getStroke();
+    Font oldFont = g2d.getFont();
     drawHistogramPane(g2d);
+    g2d.setFont(oldFont);
     g2d.setColor(oldColor);
     g2d.setStroke(oldStroke);
   }
 
   private void drawHistogramPane(Graphics2D g2d) {
+    Font font = FontTools.getSemiBoldFont();
+    g2d.setFont(font.deriveFont(font.getSize() - 3f));
+
     float sum = 0.0f;
     float maxHistogramCounts = 1.0f;
     float[] histValues = data.getHistValues();
@@ -163,7 +169,7 @@ public class HistogramPanel extends JPanel {
 
     FontMetrics fontMetrics = g2d.getFontMetrics();
     final int fontHeight = fontMetrics.getHeight();
-    final int midfontHeight = fontHeight + 3;
+    final int midFontHeight = fontHeight + 3;
 
     float offsetThick = (xAxisHistoRescaleRatio + 0.5f) / 2f;
 
@@ -185,6 +191,7 @@ public class HistogramPanel extends JPanel {
 
     g2d.setPaint(Color.WHITE);
 
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
     Line2D.Float line = new Line2D.Float();
     for (int i = 0; i <= separation; i++) {
       float val = firstlevel + i * stepWindow;
@@ -198,7 +205,7 @@ public class HistogramPanel extends JPanel {
               ? g2d.getFontMetrics().stringWidth(str) - SLIDER_X / 2f
               : g2d.getFontMetrics().stringWidth(str) / 2f;
       float xlabel = i == 0 ? posX / 2f : posX - offsetLabel;
-      FontTools.paintFontOutline(g2d, str, xlabel, y + midfontHeight);
+      FontTools.paintFontOutline(g2d, str, xlabel, y + midFontHeight);
     }
 
     rect.setRect(x - 1f - offsetThick, tLut + 6f, lutLength + 1f, 18f);
@@ -226,7 +233,7 @@ public class HistogramPanel extends JPanel {
             g2d,
             label,
             plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
-            SLIDER_Y + midfontHeight);
+            SLIDER_Y + midFontHeight);
         drawWl = true;
       }
       if (high < windLevel.getLevelMax()) {
@@ -239,7 +246,7 @@ public class HistogramPanel extends JPanel {
             g2d,
             label,
             phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,
-            SLIDER_Y + midfontHeight);
+            SLIDER_Y + midFontHeight);
         drawWl = true;
       }
 
@@ -249,6 +256,7 @@ public class HistogramPanel extends JPanel {
         g2d.draw(line);
       }
     }
+    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
   }
 
   public void setHistogram(
@@ -401,10 +409,14 @@ public class HistogramPanel extends JPanel {
         if (popup != null) {
           popup.hide();
         }
-        text.setBorder(BorderFactory.createEmptyBorder(3, 5, 3, 5));
+        text.setBorder(GuiUtils.getEmptyBorder(3, 5, 3, 5));
         popup =
             PopupFactory.getSharedInstance()
-                .getPopup(e.getComponent(), text, e.getXOnScreen() + 15, e.getYOnScreen() - 40);
+                .getPopup(
+                    e.getComponent(),
+                    text,
+                    e.getXOnScreen() + 15,
+                    e.getYOnScreen() - GuiUtils.getScaleLength(40));
         popup.show();
       } else {
         if (popup != null) {

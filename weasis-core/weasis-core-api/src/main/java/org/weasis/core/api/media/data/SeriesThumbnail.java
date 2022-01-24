@@ -189,9 +189,9 @@ public class SeriesThumbnail extends Thumbnail
   }
 
   public synchronized void setThumbnailSize(int thumbnailSize) {
-    boolean update = this.thumbnailSize != thumbnailSize;
-    if (update) {
-      this.thumbnailSize = GuiUtils.getScaleLength(thumbnailSize);
+    int size = GuiUtils.getScaleLength(thumbnailSize);
+    if (this.thumbnailSize != size) {
+      this.thumbnailSize = GuiUtils.getScaleLength(size);
       Object media = series.getMedia(mediaPosition, null, null);
       if (media == null) {
         media = series.getFirstSpecialElement();

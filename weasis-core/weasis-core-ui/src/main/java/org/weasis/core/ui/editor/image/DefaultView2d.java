@@ -210,7 +210,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     setBorder(viewBorder);
     setFocusable(true);
-    // Must be larger to the screens to be resize correctly by the container
+    // Must be larger to the screens to be resized correctly by the container
     setPreferredSize(new Dimension(4096, 4096));
     setMinimumSize(new Dimension(50, 50));
   }
@@ -289,8 +289,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
                     menuItem.addActionListener(
                         e -> {
-                          if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                          if (e.getSource() instanceof JCheckBoxMenuItem item) {
                             synch.getActions().put(item.getText(), item.isSelected());
                           }
                         });

@@ -14,7 +14,6 @@ import com.github.lgooddatepicker.tableeditors.DateTableEditor;
 import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -75,7 +74,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowHorizontalLines(true);
     table.setShowVerticalLines(true);
-    table.setIntercellSpacing(new Dimension(2, 2));
+    table.setIntercellSpacing(GuiUtils.getDimension(2, 2));
     updateTable();
     setMetaVisible(false);
   }
@@ -254,11 +253,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
 
     private static void initCombo(JComboBox<?> combo) {
-      // Set before tooltip, otherwise update UI => remove selection listener
       combo.setFont(AcquireMetadataPanel.font);
       combo.setMaximumRowCount(15);
       GuiUtils.setPreferredWidth(combo, 80);
-      GuiUtils.addTooltipToComboList(combo);
     }
 
     private DateTableEditor buildDatePicker() {

@@ -39,11 +39,10 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
         @Override
         public void addSeries(MediaSeries series) {
-          if (series instanceof FilesExtractor) {
+          if (series instanceof FilesExtractor extractor) {
             // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
             // in KDE session, but actually does not support it.
             // http://bugs.sun.com/view_bug.do?bug_id=6486393
-            FilesExtractor extractor = (FilesExtractor) series;
             for (File file : extractor.getExtractFiles()) {
               if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { // NON-NLS
                 startAssociatedProgramFromLinux(file);

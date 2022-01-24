@@ -10,7 +10,6 @@
 package org.weasis.acquire.explorer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.Arrays;
@@ -84,7 +83,7 @@ public class WorklistDialog extends JDialog {
     jtable.getTableHeader().setReorderingAllowed(false);
 
     tableContainer = new JScrollPane();
-    tableContainer.setPreferredSize(new Dimension(920, 400));
+    tableContainer.setPreferredSize(GuiUtils.getDimension(920, 400));
 
     this.getContentPane().add(tableContainer, BorderLayout.CENTER);
 
@@ -182,7 +181,7 @@ public class WorklistDialog extends JDialog {
         throw new RuntimeException(state.getMessage());
       }
       jtable.setModel(new SimpleTableModel(new String[] {}, new Object[][] {}));
-      tableContainer.setPreferredSize(new Dimension(450, 50));
+      tableContainer.setPreferredSize(GuiUtils.getDimension(450, 50));
     }
     tableContainer.setViewportView(jtable);
   }

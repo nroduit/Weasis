@@ -91,6 +91,7 @@ public class ResourceUtil {
     EXECUTE("svg/action/execute.svg"),
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"),
     EXPORT_DICOM("svg/action/exportDicom.svg"),
+    FILTER("svg/action/filter.svg"),
     FLIP("svg/action/flip.svg"),
     IMPORT_CD("svg/action/importCd.svg"),
     IMPORT_DICOM("svg/action/importDicom.svg"),
@@ -154,13 +155,13 @@ public class ResourceUtil {
 
   public enum OtherIcon implements ResourceIconPath {
     AUDIO("svg/other/audio.svg"),
-    CDROM("svg/other/cdrom.svg"),
     CALENDAR("svg/other/calendar.svg"),
+    CDROM("svg/other/cdrom.svg"),
     ECG("svg/other/ecg.svg"),
     IMAGE_EDIT("svg/other/imageEdit.svg"),
-    PATIENT("svg/other/patient.svg"),
     IMAGE_PRESENTATION("svg/other/imagePresentation.svg"),
     KEY_IMAGE("svg/other/keyImage.svg"),
+    PATIENT("svg/other/patient.svg"),
     RADIOACTIVE("svg/other/radioactive.svg"),
     RASTER_IMAGE("svg/other/rasterImage.svg"),
     TICK_OFF("svg/other/tickOff.svg"),

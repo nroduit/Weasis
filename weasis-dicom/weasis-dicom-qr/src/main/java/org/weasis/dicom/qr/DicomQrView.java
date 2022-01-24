@@ -426,7 +426,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     comboTags.setMaximumRowCount(15);
     GuiUtils.setPreferredWidth(comboTags, 230, 150);
-    GuiUtils.addTooltipToComboList(comboTags);
 
     StringBuilder buf = new StringBuilder("<html>");
     buf.append(Messages.getString("DicomQrView.tips_wildcard"));

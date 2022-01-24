@@ -26,13 +26,13 @@ public abstract class SliderCineListener extends SliderChangeListener {
   private final TIME time;
   private final SpinnerNumberModel speedModel;
 
-  public SliderCineListener(
+  protected SliderCineListener(
       ActionW action, int min, int max, int value, int speed, TIME time, double mouseSensivity) {
     this(action, min, max, value, speed, time);
     setMouseSensivity(mouseSensivity);
   }
 
-  public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
+  protected SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
     super(action, min, max, value);
     this.time = time;
     speedModel = new SpinnerNumberModel(speed, 1, 200, 1);

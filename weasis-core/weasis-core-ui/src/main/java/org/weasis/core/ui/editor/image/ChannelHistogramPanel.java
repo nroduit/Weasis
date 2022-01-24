@@ -64,7 +64,7 @@ public class ChannelHistogramPanel extends JPanel {
   private void init(String name) {
     this.setBorder(
         BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3), GuiUtils.getTitledBorder(name)));
+            GuiUtils.getEmptyBorder(10, 5, 0, 5), GuiUtils.getTitledBorder(name)));
     this.setLayout(borderLayout1);
     this.add(jPanelHistogram, BorderLayout.CENTER);
     this.add(panel, BorderLayout.SOUTH);

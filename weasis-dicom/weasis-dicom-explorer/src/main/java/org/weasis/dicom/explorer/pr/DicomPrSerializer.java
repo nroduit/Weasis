@@ -349,12 +349,9 @@ public class DicomPrSerializer {
     Attributes styles = new Attributes();
     styles.setFloat(Tag.LineThickness, VR.FL, g.getLineThickness());
 
-    if (g.getColorPaint() instanceof Color) {
-      Color color = (Color) g.getColorPaint();
+    if (g.getColorPaint() instanceof Color color) {
       int[] rgb = CIELab.rgbToDicomLab(color);
-      if (rgb != null) {
-        styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, rgb);
-      }
+      styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, rgb);
     }
     style.add(styles);
     attributes.setDouble(
@@ -373,12 +370,9 @@ public class DicomPrSerializer {
   private static Attributes bluildLabelAndBounds(Rectangle2D bound, String text) {
     Attributes attributes = new Attributes(5);
     attributes.setString(Tag.BoundingBoxAnnotationUnits, VR.CS, PIXEL);
+    attributes.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL, bound.getMinX(), bound.getMinY());
     attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, new double[] {bound.getMinX(), bound.getMinY()});
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner,
-        VR.FL,
-        new double[] {bound.getMaxX(), bound.getMaxY()});
+        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bound.getMaxX(), bound.getMaxY());
 
     // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR
     // LF.
@@ -399,19 +393,16 @@ public class DicomPrSerializer {
     while (!iterator.isDone()) {
       int segType = iterator.currentSegment(pts);
       switch (segType) {
-        case PathIterator.SEG_MOVETO:
+        case PathIterator.SEG_MOVETO -> {
           addNewSubGraphic(dcm, graphicSeq, points);
           dcm = getBasicGraphic(graphic);
           points.add(new Point2D.Double(pts[0], pts[1]));
-          break;
-        case PathIterator.SEG_LINETO:
-        case PathIterator.SEG_CLOSE:
-          points.add(new Point2D.Double(pts[0], pts[1]));
-          break;
-        case PathIterator.SEG_CUBICTO:
-        case PathIterator.SEG_QUADTO:
-        default:
-          break; // should never append with FlatteningPathIterator
+        }
+        case PathIterator.SEG_LINETO, PathIterator.SEG_CLOSE -> points.add(
+            new Point2D.Double(pts[0], pts[1]));
+        case PathIterator.SEG_CUBICTO, PathIterator.SEG_QUADTO ->
+        // should never append with FlatteningPathIterator
+        throw new IllegalStateException("cubic iterator is not supported");
       }
       iterator.next();
     }

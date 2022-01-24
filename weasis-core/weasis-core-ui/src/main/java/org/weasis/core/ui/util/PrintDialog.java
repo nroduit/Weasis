@@ -9,16 +9,18 @@
  */
 package org.weasis.core.ui.util;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.List;
+import java.util.Objects;
+import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JRootPane;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -32,10 +34,12 @@ import org.weasis.core.util.StringUtil;
  */
 public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
 
-  private javax.swing.JCheckBox annotationsCheckBox;
-  private javax.swing.JComboBox<String> positionComboBox;
-  private JCheckBox chckbxSelectedView;
-  private JComboBox<PrintOptions.DotPerInches> comboBoxDPI;
+  private final JCheckBox annotationsCheckBox =
+      new JCheckBox(Messages.getString("PrintDialog.annotate"));
+  private final JComboBox<String> positionComboBox = new JComboBox<>();
+  private final JCheckBox selectedViewCheckbox =
+      new JCheckBox(Messages.getString("PrintDialog.selected_view"));
+  private final JComboBox<PrintOptions.DotPerInches> comboBoxDPI = new JComboBox<>();
   private final ImageViewerEventManager<I> eventManager;
 
   /** Creates new form PrintDialog */
@@ -49,97 +53,44 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
   }
 
   private void initComponents(boolean layout) {
+    JRootPane panel = getRootPane();
+    panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
-    GridBagLayout gridBagLayout = new GridBagLayout();
-    getContentPane().setLayout(gridBagLayout);
-    JLabel positionLabel = new JLabel();
+    panel.setBorder(GuiUtils.getEmptyBorder(10, 20, 10, 20));
 
-    positionLabel.setText(Messages.getString("PrintDialog.pos") + StringUtil.COLON);
-    GridBagConstraints gbcPositionLabel = new GridBagConstraints();
-    gbcPositionLabel.anchor = GridBagConstraints.EAST;
-    gbcPositionLabel.insets = new Insets(15, 20, 10, 5);
-    gbcPositionLabel.gridx = 0;
-    gbcPositionLabel.gridy = 0;
-    getContentPane().add(positionLabel, gbcPositionLabel);
-    positionComboBox = new javax.swing.JComboBox<>();
-
+    JLabel positionLabel = new JLabel(Messages.getString("PrintDialog.pos") + StringUtil.COLON);
     positionComboBox.setModel(
         new javax.swing.DefaultComboBoxModel<>(
             new String[] {
               Messages.getString("PrintDialog.center"), Messages.getString("PrintDialog.top")
             }));
-    GridBagConstraints gbcPositionComboBox = new GridBagConstraints();
-    gbcPositionComboBox.anchor = GridBagConstraints.WEST;
-    gbcPositionComboBox.insets = new Insets(15, 0, 10, 5);
-    gbcPositionComboBox.gridx = 1;
-    gbcPositionComboBox.gridy = 0;
-    getContentPane().add(positionComboBox, gbcPositionComboBox);
+    panel.add(GuiUtils.getFlowLayoutPanel(2, 5, positionLabel, positionComboBox));
 
-    JLabel label = new JLabel();
-    label.setText(Messages.getString("PrintDialog.dpi") + StringUtil.COLON);
-    GridBagConstraints gbcLabel = new GridBagConstraints();
-    gbcLabel.anchor = GridBagConstraints.EAST;
-    gbcLabel.insets = new Insets(0, 20, 10, 5);
-    gbcLabel.gridx = 0;
-    gbcLabel.gridy = 1;
-    getContentPane().add(label, gbcLabel);
-
-    comboBoxDPI = new JComboBox<>();
-    GridBagConstraints gbcComboBoxDPI = new GridBagConstraints();
-    gbcComboBoxDPI.anchor = GridBagConstraints.NORTHWEST;
-    gbcComboBoxDPI.insets = new Insets(0, 0, 10, 5);
-    gbcComboBoxDPI.gridx = 1;
-    gbcComboBoxDPI.gridy = 1;
+    JLabel label = new JLabel(Messages.getString("PrintDialog.dpi") + StringUtil.COLON);
     comboBoxDPI.setModel(new DefaultComboBoxModel<>(PrintOptions.DotPerInches.values()));
     comboBoxDPI.setSelectedItem(PrintOptions.DotPerInches.DPI_150);
-    getContentPane().add(comboBoxDPI, gbcComboBoxDPI);
+    panel.add(GuiUtils.getFlowLayoutPanel(2, 5, label, comboBoxDPI));
 
-    annotationsCheckBox = new javax.swing.JCheckBox();
-    annotationsCheckBox.setText(Messages.getString("PrintDialog.annotate"));
     annotationsCheckBox.setSelected(true);
-    GridBagConstraints gbcAnnotationsCheckBox = new GridBagConstraints();
-    gbcAnnotationsCheckBox.anchor = GridBagConstraints.WEST;
-    gbcAnnotationsCheckBox.insets = new Insets(0, 17, 10, 0);
-    gbcAnnotationsCheckBox.gridwidth = 3;
-    gbcAnnotationsCheckBox.gridx = 0;
-    gbcAnnotationsCheckBox.gridy = 2;
-    getContentPane().add(annotationsCheckBox, gbcAnnotationsCheckBox);
-
-    javax.swing.JButton cancelButton = new javax.swing.JButton();
-
-    cancelButton.setText(Messages.getString("PrintDialog.cancel"));
-    cancelButton.addActionListener(e -> dispose());
-
-    javax.swing.JButton printButton = new javax.swing.JButton();
-
-    printButton.setText(Messages.getString("PrintDialog.print"));
-    printButton.addActionListener(e -> printAction());
+    panel.add(GuiUtils.getFlowLayoutPanel(2, 5, annotationsCheckBox));
 
     if (layout) {
-      chckbxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
-      GridBagConstraints gbcChckbxNewCheckBox = new GridBagConstraints();
-      gbcChckbxNewCheckBox.anchor = GridBagConstraints.WEST;
-      gbcChckbxNewCheckBox.gridwidth = 3;
-      gbcChckbxNewCheckBox.insets = new Insets(0, 15, 10, 5);
-      gbcChckbxNewCheckBox.gridx = 0;
-      gbcChckbxNewCheckBox.gridy = 3;
-      getContentPane().add(chckbxSelectedView, gbcChckbxNewCheckBox);
+      panel.add(GuiUtils.getFlowLayoutPanel(2, 5, selectedViewCheckbox));
     }
 
-    getRootPane().setDefaultButton(printButton);
-    GridBagConstraints gbcPrintButton = new GridBagConstraints();
-    gbcPrintButton.anchor = GridBagConstraints.EAST;
-    gbcPrintButton.insets = new Insets(25, 0, 15, 5);
-    gbcPrintButton.gridx = 1;
-    gbcPrintButton.gridy = 4;
-    getContentPane().add(printButton, gbcPrintButton);
-    GridBagConstraints gbcCancelButton = new GridBagConstraints();
-    gbcCancelButton.insets = new Insets(25, 10, 15, 15);
-    gbcCancelButton.anchor = GridBagConstraints.NORTHWEST;
-    gbcCancelButton.gridx = 2;
-    gbcCancelButton.gridy = 4;
-    getContentPane().add(cancelButton, gbcCancelButton);
+    javax.swing.JButton cancelButton =
+        new javax.swing.JButton(Messages.getString("PrintDialog.cancel"));
+    cancelButton.addActionListener(e -> dispose());
 
+    javax.swing.JButton printButton =
+        new javax.swing.JButton(Messages.getString("PrintDialog.print"));
+    printButton.addActionListener(e -> printAction());
+    getRootPane().setDefaultButton(printButton);
+
+    panel.add(GuiUtils.boxYLastElement(15));
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(
+            FlowLayout.TRAILING, 2, 5, printButton, GuiUtils.boxHorizontalStrut(20), cancelButton));
     pack();
   }
 
@@ -148,7 +99,8 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     printOptions.setShowingAnnotations(annotationsCheckBox.isSelected());
     printOptions.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
     printOptions.setCenter(
-        positionComboBox.getSelectedItem().equals(Messages.getString("PrintDialog.center")));
+        Objects.equals(
+            positionComboBox.getSelectedItem(), Messages.getString("PrintDialog.center")));
 
     ImageViewerPlugin<I> container = eventManager.getSelectedView2dContainer();
 
@@ -162,7 +114,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     dispose();
 
     ExportLayout<I> layout;
-    if (chckbxSelectedView != null && !chckbxSelectedView.isSelected()) {
+    if (!selectedViewCheckbox.isSelected()) {
       // Several views
       layout = new ExportLayout<>(container.getLayoutModel());
     } else {

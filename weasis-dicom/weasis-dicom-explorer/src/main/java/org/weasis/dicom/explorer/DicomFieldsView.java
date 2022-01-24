@@ -15,28 +15,19 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.Document;
-import javax.swing.text.Highlighter;
-import javax.swing.text.JTextComponent;
 import javax.swing.text.Style;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyleContext;
@@ -99,11 +90,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       };
 
   private final JTable jtable = new JTable(model);
-
-  private static final Highlighter.HighlightPainter searchHighlightPainter =
-      new SearchHighlightPainter(new Color(255, 125, 0));
-  private static final Highlighter.HighlightPainter searchResultHighlightPainter =
-      new SearchHighlightPainter(Color.YELLOW);
+  private final TagSearchTablePanel tagSearchTablePanel;
+  private final TagSearchDocumentPanel tagSearchDocumentPanel;
 
   public DicomFieldsView(SeriesViewer<?> viewer) {
     this.viewer = viewer;
@@ -111,7 +99,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     panel.setLayout(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     addTab(Messages.getString("DicomFieldsView.limited"), null, panel, null);
-    panel.add(new SearchPanel(jTextPaneLimited), BorderLayout.NORTH);
+    this.tagSearchDocumentPanel = new TagSearchDocumentPanel(jTextPaneLimited);
+    panel.add(tagSearchDocumentPanel, BorderLayout.NORTH);
     panel.add(limitedPane, BorderLayout.CENTER);
     jTextPaneLimited.setBorder(new EmptyBorder(5, 5, 5, 5));
     jTextPaneLimited.setContentType("text/html");
@@ -121,14 +110,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     dump.setLayout(new BorderLayout());
     dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
-    // dump.add(new SearchPanel(jTextPaneAll), BorderLayout.NORTH);
+    this.tagSearchTablePanel = new TagSearchTablePanel(jtable);
+    dump.add(tagSearchTablePanel, BorderLayout.NORTH);
     jtable.getTableHeader().setReorderingAllowed(false);
     jtable.setShowHorizontalLines(true);
     jtable.setShowVerticalLines(true);
     dump.add(allPane, BorderLayout.CENTER);
 
-    setPreferredSize(new Dimension(400, 300));
-    setMinimumSize(new Dimension(150, 50));
+    setPreferredSize(GuiUtils.getDimension(400, 300));
+    setMinimumSize(GuiUtils.getDimension(150, 50));
 
     this.addChangeListener(changeEvent -> changeDicomInfo(currentSeries, currentMedia));
   }
@@ -200,6 +190,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
         new Dimension(jtable.getColumnModel().getTotalColumnWidth(), height));
     tableContainer.add(jtable.getTableHeader(), BorderLayout.PAGE_START);
     tableContainer.add(jtable, BorderLayout.CENTER);
+    tagSearchTablePanel.filter();
     TableColumnAdjuster.pack(jtable);
     allPane.setViewportView(tableContainer);
     tableContainer.revalidate();
@@ -322,11 +313,12 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
     oldCaretPosition = Math.min(oldCaretPosition, doc.getLength());
     jTextPaneLimited.setCaretPosition(oldCaretPosition);
+    tagSearchDocumentPanel.filter();
     limitedPane.setViewportView(jTextPaneLimited);
   }
 
   private MediaSeriesGroup getGroup(DicomModel model, MediaSeries<?> series, DicomData dicomData) {
-    Level level = dicomData.getLevel();
+    Level level = dicomData.level;
 
     if (Level.PATIENT.equals(level)) {
       return model.getParent(series, DicomModel.patient);
@@ -342,7 +334,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     int insertTitle = doc.getLength();
     boolean exist = false;
 
-    for (TagView t : dicomData.getInfos()) {
+    for (TagView t : dicomData.infos) {
       for (TagW tag : t.getTag()) {
         if (!anonymize || tag.getAnonymizationType() != 1) {
           try {
@@ -365,7 +357,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     if (exist) {
       try {
         String formatTitle =
-            insertTitle < 3 ? dicomData.getTitle() + "\n" : "\n" + dicomData.getTitle() + "\n";
+            insertTitle < 3 ? dicomData.title + "\n" : "\n" + dicomData.title + "\n";
         doc.insertString(insertTitle, formatTitle, doc.getStyle("h3"));
       } catch (BadLocationException e) {
         LOGGER.error("Writing text issue", e);
@@ -404,9 +396,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       frame.setAlwaysOnTop(true);
       frame.setIconImage(ResourceUtil.getIcon(ActionIcon.METADATA).derive(64, 64).getImage());
       Component c =
-          container instanceof Component
-              ? (Component) container
-              : UIManager.MAIN_AREA.getComponent();
+          container instanceof Component component ? component : UIManager.MAIN_AREA.getComponent();
       GuiUtils.showCenterScreen(frame, c);
     }
   }
@@ -417,175 +407,16 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     }
   }
 
-  static class SearchPanel extends JPanel {
-    private final List<Integer> searchPostions = new ArrayList<>();
-    private final JTextComponent textComponent;
-    private int currentSearchIndex = 0;
-    private String currentSearchPattern;
-
-    public SearchPanel(JTextComponent textComponent) {
-      super();
-      this.textComponent = textComponent;
-      this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-      init();
-    }
-
-    private void init() {
-      this.add(
-          new JLabel(Messages.getString("DicomFieldsView.search") + StringUtil.COLON_AND_SPACE));
-      final JTextField tf = new JTextField();
-      GuiUtils.setPreferredWidth(tf, 300, 100);
-      tf.addActionListener(
-          evt -> {
-            currentSearchPattern = tf.getText().trim();
-            highlight(currentSearchPattern);
-            if (!searchPostions.isEmpty()) {
-              try {
-                textComponent.scrollRectToVisible(textComponent.modelToView(searchPostions.get(0)));
-                textComponent.requestFocusInWindow();
-              } catch (BadLocationException e) {
-                LOGGER.error("Scroll to highight", e);
-              }
-            }
-          });
-      this.add(tf);
-      JButton up = new JButton(GuiUtils.getDownArrowIcon());
-      up.setToolTipText(Messages.getString("DicomFieldsView.previous"));
-      up.addActionListener(evt -> previous());
-      this.add(up);
-      JButton down = new JButton(GuiUtils.getUpArrowIcon());
-      down.setToolTipText(Messages.getString("DicomFieldsView.next"));
-      down.addActionListener(evt -> next());
-      this.add(down);
-      textComponent.addKeyListener(
-          new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {}
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-              if (e.isShiftDown() && e.getKeyCode() == KeyEvent.VK_F3) {
-                previous();
-              } else if (e.getKeyCode() == KeyEvent.VK_F3) {
-                next();
-              }
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {}
-          });
-
-      textComponent.setFocusable(true);
-    }
-
-    private void previous() {
-      if (!searchPostions.isEmpty()) {
-        currentSearchIndex =
-            currentSearchIndex <= 0 ? searchPostions.size() - 1 : currentSearchIndex - 1;
-        showCurrentSearch(currentSearchPattern);
-      }
-    }
-
-    private void next() {
-      if (!searchPostions.isEmpty()) {
-        currentSearchIndex =
-            currentSearchIndex >= searchPostions.size() - 1 ? 0 : currentSearchIndex + 1;
-        showCurrentSearch(currentSearchPattern);
-      }
-    }
-
-    public void highlight(String pattern) {
-      removeHighlights(textComponent);
-      searchPostions.clear();
-      if (StringUtil.hasText(pattern)) {
-        try {
-          Highlighter hilite = textComponent.getHighlighter();
-          Document doc = textComponent.getDocument();
-          String text = doc.getText(0, doc.getLength()).toUpperCase();
-          String patternUp = pattern.toUpperCase();
-          int pos = 0;
-
-          while ((pos = text.indexOf(patternUp, pos)) >= 0) {
-            if (searchPostions.isEmpty()) {
-              hilite.addHighlight(pos, pos + patternUp.length(), searchHighlightPainter);
-            } else {
-              hilite.addHighlight(pos, pos + patternUp.length(), searchResultHighlightPainter);
-            }
-            searchPostions.add(pos);
-            pos += patternUp.length();
-          }
-        } catch (BadLocationException e) {
-          LOGGER.error("Highight result of search", e);
-        }
-      }
-    }
-
-    public void removeHighlights(JTextComponent textComonent) {
-      Highlighter hilite = textComonent.getHighlighter();
-      for (Highlighter.Highlight highlight : hilite.getHighlights()) {
-        if (highlight.getPainter() instanceof SearchHighlightPainter) {
-          hilite.removeHighlight(highlight);
-        }
-      }
-    }
-
-    public void showCurrentSearch(String pattern) {
-      if (!searchPostions.isEmpty() && StringUtil.hasText(pattern)) {
-        removeHighlights(textComponent);
-
-        try {
-          if (currentSearchIndex < 0 || currentSearchIndex >= searchPostions.size()) {
-            currentSearchIndex = 0;
-          }
-          int curPos = searchPostions.get(currentSearchIndex);
-          Highlighter hilite = textComponent.getHighlighter();
-
-          for (Integer pos : searchPostions) {
-            if (pos == curPos) {
-              hilite.addHighlight(pos, pos + pattern.length(), searchHighlightPainter);
-            } else {
-              hilite.addHighlight(pos, pos + pattern.length(), searchResultHighlightPainter);
-            }
-          }
-          textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
-        } catch (BadLocationException e) {
-          LOGGER.error("Highight result of search", e);
-        }
-      }
-    }
-  }
-
-  public static class DicomData {
-
-    private final String title;
-    private final TagView[] infos;
-    private final Level level;
-
+  public record DicomData(String title, TagView[] infos, Level level) {
     public DicomData(String title, TagView[] infos, Level level) {
-      if (infos == null) {
-        throw new IllegalArgumentException();
-      }
       this.title = title;
-      this.infos = infos;
+      this.infos = Objects.requireNonNull(infos);
       this.level = level;
       for (TagView tagView : infos) {
         for (TagW tag : tagView.getTag()) {
           DicomMediaIO.tagManager.addTag(tag, level);
         }
       }
-    }
-
-    public TagView[] getInfos() {
-      return infos;
-    }
-
-    public String getTitle() {
-      return title;
-    }
-
-    public Level getLevel() {
-      return level;
     }
   }
 }

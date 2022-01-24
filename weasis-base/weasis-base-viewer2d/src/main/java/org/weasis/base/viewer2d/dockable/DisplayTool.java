@@ -138,8 +138,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         Enumeration<?> en = info.children();
         while (en.hasMoreElements()) {
           Object node = en.nextElement();
-          if (node instanceof TreeNode) {
-            TreeNode checkNode = (TreeNode) node;
+          if (node instanceof TreeNode checkNode) {
             initPathSelection(getTreePath(checkNode), layer.getDisplayPreferences(node.toString()));
           }
         }
@@ -153,8 +152,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           if (cps > 0) {
             Component cp = panelFoot.getComponent(0);
             if (cp != panner) {
-              if (cp instanceof Thumbnailable) {
-                ((Thumbnailable) cp).removeMouseAndKeyListener();
+              if (cp instanceof Thumbnailable thumbnailable) {
+                thumbnailable.removeMouseAndKeyListener();
               }
               panner.registerListeners();
               panelFoot.removeAll();
@@ -266,8 +265,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     Enumeration<?> children = start.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode) {
-        DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+      if (child instanceof DefaultMutableTreeNode dtm) {
         if (!dtm.isLeaf()) {
           TreePath tp = new TreePath(dtm.getPath());
           tree.expandPath(tp);

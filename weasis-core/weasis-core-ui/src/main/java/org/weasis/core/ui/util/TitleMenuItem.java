@@ -10,7 +10,6 @@
 package org.weasis.core.ui.util;
 
 import java.awt.Component;
-import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -27,10 +26,6 @@ import javax.swing.border.EmptyBorder;
 public class TitleMenuItem extends JLabel implements MenuElement {
 
   public TitleMenuItem(String title, Insets insets) {
-    Font f = getFont();
-    if (f != null) {
-      setFont(new Font(f.getName(), Font.BOLD, f.getSize()));
-    }
     if (insets != null) {
       setBorder(new EmptyBorder(insets));
     }
