@@ -20,13 +20,10 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
@@ -40,7 +37,6 @@ public interface ViewCanvas<E extends ImageElement>
         KeyListener {
 
   String ZOOM_TYPE_CMD = "zoom.type";
-  ImageIcon SYNCH_ICON = ResourceUtil.getIcon(ActionIcon.SYNCH);
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
 

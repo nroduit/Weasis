@@ -15,6 +15,7 @@ import com.github.lgooddatepicker.tableeditors.TimeTableEditor;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
+import java.awt.Insets;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -26,6 +27,7 @@ import javax.swing.AbstractCellEditor;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -223,18 +225,27 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       } else if (tagID == Tag.SeriesDescription) {
         cellEditor = getCellEditor(seriesDescCombo);
       } else if (date) {
-        DateTableEditor teditor = buildDatePicker();
+        DateTableEditor editor = buildDatePicker();
+        JTextField picker = editor.getDatePicker().getComponentDateTextField();
+        Insets margin = picker.getMargin();
+        int height = table.getRowHeight(row) - margin.top - margin.bottom;
+        GuiUtils.setPreferredHeight(picker, height);
         GuiUtils.setPreferredHeight(
-            teditor.getDatePicker().getComponentToggleCalendarButton(), table.getRowHeight(row));
-        cellEditor = teditor;
+            editor.getDatePicker().getComponentToggleCalendarButton(), height);
+        cellEditor = editor;
       } else if (time) {
-        TimeTableEditor teditor = new TimeTableEditor(false, true, true);
-        teditor.getTimePickerSettings().fontInvalidTime = font;
-        teditor.getTimePickerSettings().fontValidTime = font;
-        teditor.getTimePickerSettings().fontVetoedTime = font;
+        TimeTableEditor editor = new TimeTableEditor(false, true, true);
+        editor.getTimePickerSettings().fontInvalidTime = font;
+        editor.getTimePickerSettings().fontValidTime = font;
+        editor.getTimePickerSettings().fontVetoedTime = font;
+        JButton button = editor.getTimePicker().getComponentToggleTimeMenuButton();
+        Insets margin = button.getMargin();
+        int height = table.getRowHeight(row) - margin.top - margin.bottom;
+        GuiUtils.setPreferredHeight(button, height, height);
+        GuiUtils.setPreferredHeight(editor.getTimePicker(), height, height);
         GuiUtils.setPreferredHeight(
-            teditor.getTimePicker().getComponentToggleTimeMenuButton(), table.getRowHeight(row));
-        cellEditor = teditor;
+            editor.getTimePicker().getComponentTimeTextField(), height, height);
+        cellEditor = editor;
       } else {
         cellEditor = new DefaultCellEditor(new JTextField());
       }

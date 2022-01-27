@@ -10,7 +10,9 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.FlatIconColors;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import com.formdev.flatlaf.icons.FlatTreeCollapsedIcon;
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import com.formdev.flatlaf.util.UIScale;
 import java.awt.Color;
 import java.awt.Component;
@@ -37,6 +39,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.text.ParseException;
 import javax.swing.AbstractAction;
+import javax.swing.AbstractButton;
 import javax.swing.Box;
 import javax.swing.Box.Filler;
 import javax.swing.BoxLayout;
@@ -69,6 +72,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil.SvgIcon;
 import org.weasis.core.util.StringUtil;
 
 public class GuiUtils {
@@ -120,6 +124,29 @@ public class GuiUtils {
     }
     Insets insets = c.getInsets();
     return c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
+  }
+
+  public static SvgIcon getDerivedIcon(SvgIcon svgIcon, ColorFilter filter) {
+    // TODO modify with FlatLaf 2.0.1
+    return new SvgIcon(svgIcon, filter);
+  }
+
+  public static void applySelectedIconEffect(AbstractButton button, Icon icon) {
+    if (icon instanceof SvgIcon svgIcon) {
+      button.setSelectedIcon(
+          GuiUtils.getDerivedIcon(svgIcon, GuiUtils.getSelectedColorFilter(button)));
+    }
+  }
+
+  public static ColorFilter getSelectedColorFilter(JComponent c) {
+    ColorFilter colorFilter = new ColorFilter();
+    Color color = IconColor.ACTIONS_BLUE.color;
+    if (c instanceof JMenuItem) {
+      color = FlatUIUtils.getUIColor("MenuItem.selectionForeground", color);
+    }
+
+    colorFilter.add(new Color(0x6E6E6E), color);
+    return colorFilter;
   }
 
   public static Icon getUpArrowIcon() {
@@ -281,11 +308,15 @@ public class GuiUtils {
   }
 
   public static void setPreferredHeight(Component component, int height) {
+    setPreferredHeight(component, height, 50);
+  }
+
+  public static void setPreferredHeight(Component component, int height, int minHeight) {
     Dimension dim = component.getPreferredSize();
     dim.height = getScaleLength(height);
     component.setPreferredSize(dim);
     dim = component.getMinimumSize();
-    dim.height = getScaleLength(50);
+    dim.height = getScaleLength(minHeight);
     component.setMinimumSize(dim);
   }
 

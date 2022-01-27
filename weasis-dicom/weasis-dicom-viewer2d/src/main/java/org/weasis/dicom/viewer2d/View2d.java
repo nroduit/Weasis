@@ -34,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
@@ -77,8 +76,6 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.ResourceUtil;
-import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -147,10 +144,6 @@ import org.weasis.opencv.op.lut.WlPresentation;
 public class View2d extends DefaultView2d<DicomImageElement> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
-
-  public static final ImageIcon KO_ICON = ResourceUtil.getIcon(OtherIcon.KEY_IMAGE);
-  public static final ImageIcon PR_ICON = ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION);
-  ;
 
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -537,7 +530,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     boolean needToRepaint = false;
 
     for (ViewButton vb : getViewButtons()) {
-      if (vb != null && vb.getIcon() == View2d.KO_ICON) {
+      if (vb != null && ActionW.KO_SELECTION.getTitle().equals(vb.getName())) {
         if (vb.isVisible() != koElementExist) {
           vb.setVisible(koElementExist);
           // repaint(getExtendedActionsBound());
@@ -585,8 +578,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
       if (sopInstanceUID != null && seriesInstanceUID != null) {
         Integer frame = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
-        if (selectedKO instanceof KOSpecialElement) {
-          KOSpecialElement koElement = (KOSpecialElement) selectedKO;
+        if (selectedKO instanceof KOSpecialElement koElement) {
           if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID, frame)) {
             newSelectionState = eState.SELECTED;
           }
@@ -683,7 +675,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private synchronized void updatePrButtonState(DicomImageElement img) {
     Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
     ViewButton prButton = PRManager.buildPrSelection(this, series, img);
-    getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
+    getViewButtons().removeIf(b -> b == null || ActionW.PR_STATE.getTitle().equals(b.getName()));
     if (prButton != null) {
       getViewButtons().add(prButton);
     } else if (oldPR instanceof PRSpecialElement) {
@@ -1007,8 +999,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   protected void resetMouseAdapter() {
     for (ActionState adapter : eventManager.getAllActionValues()) {
-      if (adapter instanceof MouseActionAdapter) {
-        ((MouseActionAdapter) adapter).setButtonMaskEx(0);
+      if (adapter instanceof MouseActionAdapter mouseActionAdapter) {
+        mouseActionAdapter.setButtonMaskEx(0);
       }
     }
     // reset context menu that is a field of this instance
@@ -1018,8 +1010,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   protected MouseActionAdapter getAction(ActionW action) {
     ActionState a = eventManager.getAction(action);
-    if (a instanceof MouseActionAdapter) {
-      return (MouseActionAdapter) a;
+    if (a instanceof MouseActionAdapter adapter) {
+      return adapter;
     }
     return null;
   }
@@ -1058,8 +1050,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
     if (selected != null) {
       final JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
       boolean graphicComplete = true;
@@ -1218,8 +1209,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected JPopupMenu buildContexMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = new JPopupMenu();
     TitleMenuItem itemTitle =
-        new TitleMenuItem(
-            Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets());
+        new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
     popupMenu.add(itemTitle);
     popupMenu.setLabel(MouseActions.T_LEFT);
     String action = eventManager.getMouseActions().getLeft();
@@ -1242,6 +1232,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+              GuiUtils.applySelectedIconEffect(radio, b.getIcon());
               radio.setActionCommand(b.cmd());
               radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
               // Trigger the selected mouse action
@@ -1341,8 +1332,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public Transferable createTransferable(JComponent comp) {
-      if (comp instanceof SeriesThumbnail) {
-        MediaSeries<?> t = ((SeriesThumbnail) comp).getSeries();
+      if (comp instanceof SeriesThumbnail thumbnail) {
+        MediaSeries<?> t = thumbnail.getSeries();
         if (t instanceof Series) {
           return t;
         }
@@ -1405,7 +1396,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                       p instanceof View2dContainer
                           && ((View2dContainer) p).isContainingView(View2d.this))
               .findFirst();
-      if (!pluginOp.isPresent()) {
+      if (pluginOp.isEmpty()) {
         return false;
       }
 

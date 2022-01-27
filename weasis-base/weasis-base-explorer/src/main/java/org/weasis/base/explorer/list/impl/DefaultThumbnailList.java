@@ -47,9 +47,7 @@ public final class DefaultThumbnailList<E extends MediaElement> extends Abstract
         return null;
       } else {
         JPopupMenu popupMenu = new JPopupMenu();
-        TitleMenuItem itemTitle =
-            new TitleMenuItem(
-                Messages.getString("JIThumbnailList.sel_menu"), popupMenu.getInsets());
+        TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("JIThumbnailList.sel_menu"));
         popupMenu.add(itemTitle);
         popupMenu.addSeparator();
 

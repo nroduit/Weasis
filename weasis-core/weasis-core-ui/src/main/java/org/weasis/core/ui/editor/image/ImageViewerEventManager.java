@@ -450,7 +450,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected ComboItemListener<GridBagLayoutModel> newLayoutAction(GridBagLayoutModel[] layouts) {
-    return new ComboItemListener<GridBagLayoutModel>(
+    return new ComboItemListener<>(
         ActionW.LAYOUT, Optional.ofNullable(layouts).orElseGet(() -> new GridBagLayoutModel[0])) {
 
       @Override
@@ -475,7 +475,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected ComboItemListener<SynchView> newSynchAction(SynchView[] synchViewList) {
-    return new ComboItemListener<SynchView>(
+    return new ComboItemListener<>(
         ActionW.SYNCH, Optional.ofNullable(synchViewList).orElseGet(() -> new SynchView[0])) {
 
       @Override

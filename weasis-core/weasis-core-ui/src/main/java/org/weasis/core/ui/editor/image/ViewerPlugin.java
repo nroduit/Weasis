@@ -240,13 +240,13 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       for (Dockable child : children) {
         // we are not interested in things like entire stacks, or our own Dockable. So let's do
         // some checks before closing a Dockable
-        if (child instanceof CommonDockable) {
-          CDockable cChild = ((CommonDockable) child).getDockable();
+        if (child instanceof CommonDockable commonDockable) {
+          CDockable cChild = commonDockable.getDockable();
           if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
-            if (cChild.getFocusComponent() instanceof SeriesViewer) {
-              ((SeriesViewer) cChild.getFocusComponent()).close();
-              if (cChild.getFocusComponent() instanceof ViewerPlugin) {
-                ((ViewerPlugin) cChild.getFocusComponent()).handleFocusAfterClosing();
+            if (cChild.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+              seriesViewer.close();
+              if (cChild.getFocusComponent() instanceof ViewerPlugin viewerPlugin) {
+                viewerPlugin.handleFocusAfterClosing();
               }
             } else {
               cChild.setVisible(false);

@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.image.RGBImageFilter;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
@@ -20,6 +19,9 @@ import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ShowPopup;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.util.TitleMenuItem;
@@ -42,7 +44,7 @@ public final class KOComponentFactory {
               ((ComboItemListener<?>) evtMgr.getAction(ActionW.KO_SELECTION));
           JPopupMenu popupMenu = new JPopupMenu();
 
-          popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+          popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle()));
           popupMenu.addSeparator();
 
           GroupPopup groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
@@ -57,13 +59,15 @@ public final class KOComponentFactory {
           ToggleButtonListener koFilterAction =
               (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
           final JCheckBoxMenuItem menuItem =
-              koFilterAction.createUnregiteredJCheckBoxMenuItem(ActionW.KO_FILTER.getTitle());
+              koFilterAction.createUnregisteredJCCheckBoxMenuItem(
+                  ActionW.KO_FILTER.getTitle(), ResourceUtil.getIcon(ActionIcon.SYNCH_STAR));
 
           popupMenu.add(menuItem);
           popupMenu.setEnabled(koSelectionAction.isActionEnabled());
           popupMenu.show(invoker, x, y);
         },
-        View2d.KO_ICON);
+        ResourceUtil.getIcon(OtherIcon.KEY_IMAGE).derive(24, 24),
+        ActionW.KO_SELECTION.getTitle());
   }
 
   public static KOViewButton buildKoStarButton(final View2d view2d) {
@@ -89,25 +93,6 @@ public final class KOComponentFactory {
         });
   }
 
-  public static class SelectedImageFilter extends RGBImageFilter {
-    private final float[] filter;
-
-    public SelectedImageFilter(float[] filter) {
-      this.filter = filter;
-      // Filter's operation doesn't depend on the pixel's location, so IndexColorModels can be
-      // filtered directly.
-      canFilterIndexColorModel = true;
-    }
-
-    @Override
-    public int filterRGB(int x, int y, int argb) {
-      int r = (int) (((argb >> 16) & 0xff) * filter[0]);
-      int g = (int) (((argb >> 8) & 0xff) * filter[1]);
-      int b = (int) (((argb) & 0xff) * filter[2]);
-      return (argb & 0xff000000) | (r << 16) | (g << 8) | (b);
-    }
-  }
-
   public static class KOViewButton extends ViewButton {
 
     protected eState state = eState.UNSELECTED;
@@ -119,7 +104,7 @@ public final class KOComponentFactory {
     }
 
     public KOViewButton(ShowPopup popup) {
-      super(popup, KeyObjectToolBar.KO_STAR_ICON);
+      super(popup, KeyObjectToolBar.KO_STAR_ICON.derive(24, 24), "star");
     }
 
     public eState getState() {

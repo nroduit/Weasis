@@ -306,8 +306,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     try {
       JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
 

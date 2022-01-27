@@ -38,10 +38,12 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.SvgIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -233,6 +235,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         if (eventManager.isActionRegistered(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+          GuiUtils.applySelectedIconEffect(radio, b.getIcon());
           radio.setActionCommand(b.cmd());
           radio.addActionListener(this);
           if (MouseActions.T_LEFT.equals(type)) {
@@ -257,6 +260,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
                 actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
+        GuiUtils.applySelectedIconEffect(radio, actionW.getIcon());
         radio.setActionCommand(actionW.cmd());
         radio.addActionListener(this);
         popupMouseScroll.add(radio);
@@ -387,7 +391,9 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   private static Icon buildSynchIcon(SynchView synch) {
     final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
     final FlatSVGIcon smallIcon =
-        synch.getIcon(new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
+        GuiUtils.getDerivedIcon(
+            (SvgIcon) synch.getIcon(),
+            new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
         new Icon() {
 

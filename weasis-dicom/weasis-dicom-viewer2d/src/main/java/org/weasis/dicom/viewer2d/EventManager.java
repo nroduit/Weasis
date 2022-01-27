@@ -52,6 +52,7 @@ import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -1471,6 +1472,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(Messages.getString("ResetTools.reset"));
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
+      GuiUtils.applySelectedIconEffect(menu, menu.getIcon());
       menu.setEnabled(getSelectedSeries() != null);
 
       if (menu.isEnabled()) {
@@ -1496,8 +1498,9 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu =
             presetAction
                 .get()
-                .createUnregisteredRadioMenu(Messages.getString("View2dContainer.presets"));
-        menu.setIcon(ActionW.WINLEVEL.getIcon());
+                .createUnregisteredRadioMenu(
+                    Messages.getString("View2dContainer.presets"), ActionW.WINLEVEL.getIcon());
+        GuiUtils.applySelectedIconEffect(menu, menu.getIcon());
         for (Component mitem : menu.getMenuComponents()) {
           RadioMenuItem ritem = (RadioMenuItem) mitem;
           PresetWindowLevel preset = (PresetWindowLevel) ritem.getUserObject();
@@ -1530,6 +1533,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
         menu.setIcon(ActionW.ZOOM.getIcon());
+        GuiUtils.applySelectedIconEffect(menu, menu.getIcon());
         menu.setEnabled(zoomAction.get().isActionEnabled());
 
         if (zoomAction.get().isActionEnabled()) {
@@ -1550,6 +1554,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
+        GuiUtils.applySelectedIconEffect(menu, menu.getIcon());
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
@@ -1558,6 +1563,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
+          GuiUtils.applySelectedIconEffect(menuItem, menuItem.getIcon());
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
@@ -1567,6 +1573,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
+          GuiUtils.applySelectedIconEffect(menuItem, menuItem.getIcon());
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
@@ -1589,8 +1596,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             menuItem =
                 flipAction
                     .get()
-                    .createUnregiteredJCheckBoxMenuItem(
-                        Messages.getString("View2dContainer.flip_h"));
+                    .createUnregisteredJCCheckBoxMenuItem(
+                        Messages.getString("View2dContainer.flip_h"),
+                        ResourceUtil.getIcon(ActionIcon.FLIP));
+            GuiUtils.applySelectedIconEffect(menuItem, menuItem.getIcon());
             menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
             menu.add(menuItem);
           }
@@ -1617,7 +1626,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menu.add(
               inverseStackAction
                   .get()
-                  .createUnregiteredJCheckBoxMenuItem(
+                  .createUnregisteredJCCheckBoxMenuItem(
                       Messages.getString("View2dContainer.inv_stack")));
         }
       }
@@ -1630,7 +1639,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       Optional<ComboItemListener> lutAction = getAction(ActionW.LUT, ComboItemListener.class);
       if (lutAction.isPresent()) {
-        menu = lutAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));
+        menu =
+            lutAction
+                .get()
+                .createUnregisteredRadioMenu(
+                    Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
     return menu;
@@ -1645,7 +1658,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu =
             inverseLutAction
                 .get()
-                .createUnregiteredJCheckBoxMenuItem(ActionW.INVERT_LUT.getTitle());
+                .createUnregisteredJCCheckBoxMenuItem(
+                    ActionW.INVERT_LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.INVERSE_LUT));
       }
     }
     return menu;
@@ -1657,7 +1671,11 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       Optional<ComboItemListener> filterAction = getAction(ActionW.FILTER, ComboItemListener.class);
       if (filterAction.isPresent()) {
         menu =
-            filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter"));
+            filterAction
+                .get()
+                .createUnregisteredRadioMenu(
+                    Messages.getString("ImageTool.filter"),
+                    ResourceUtil.getIcon(ActionIcon.FILTER));
       }
     }
     return menu;

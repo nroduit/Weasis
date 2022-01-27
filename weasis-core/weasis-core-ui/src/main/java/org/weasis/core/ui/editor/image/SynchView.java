@@ -10,7 +10,6 @@
 package org.weasis.core.ui.editor.image;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import java.util.HashMap;
 import java.util.Map;
 import org.weasis.core.api.gui.util.ActionW;
@@ -115,12 +114,6 @@ public class SynchView implements GUIEntry {
   @Override
   public FlatSVGIcon getIcon() {
     return svgIcon;
-  }
-
-  public FlatSVGIcon getIcon(ColorFilter filter) {
-    FlatSVGIcon filteredIcon = ResourceUtil.getIcon(icon);
-    filteredIcon.setColorFilter(filter);
-    return filteredIcon;
   }
 
   @Override

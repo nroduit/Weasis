@@ -44,6 +44,8 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ViewButton;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
@@ -528,8 +530,7 @@ public class PRManager {
                 (invoker, x, y) -> {
                   Object pr = view.getActionValue(ActionW.PR_STATE.cmd());
                   JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle =
-                      new TitleMenuItem(ActionW.PR_STATE.getTitle(), popupMenu.getInsets());
+                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.PR_STATE.getTitle());
                   popupMenu.add(itemTitle);
                   popupMenu.addSeparator();
                   ButtonGroup groupButtons = new ButtonGroup();
@@ -549,7 +550,8 @@ public class PRManager {
                   }
                   popupMenu.show(invoker, x, y);
                 },
-                View2d.PR_ICON);
+                ResourceUtil.getIcon(OtherIcon.IMAGE_PRESENTATION).derive(24, 24),
+                ActionW.PR_STATE.getTitle());
 
         prButton.setVisible(true);
         return prButton;

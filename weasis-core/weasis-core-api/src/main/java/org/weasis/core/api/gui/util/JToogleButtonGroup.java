@@ -42,6 +42,7 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
         icon = entry.getIcon();
       }
       JToggleButton b = new JToggleButton(icon);
+      GuiUtils.applySelectedIconEffect(b, icon);
       b.setToolTipText(object.toString());
       map.put(b, object);
       b.setSelected(object == selectedItem);

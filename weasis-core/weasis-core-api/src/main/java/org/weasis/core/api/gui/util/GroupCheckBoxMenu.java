@@ -66,6 +66,7 @@ public class GroupCheckBoxMenu implements GroupPopup {
         icon = entry.getIcon();
       }
       JCheckBox box = new JCheckBox(item.getObject().toString(), icon, item.isSelected());
+      GuiUtils.applySelectedIconEffect(box, icon);
       box.addActionListener(
           e -> {
             if (e.getSource() instanceof JCheckBox btn) {

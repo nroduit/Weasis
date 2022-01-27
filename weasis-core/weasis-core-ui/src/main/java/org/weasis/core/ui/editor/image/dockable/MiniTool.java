@@ -116,6 +116,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
               actions[i].toString(),
               actions[i].getActionW().getIcon(),
               actions[i].equals(currentAction));
+      GuiUtils.applySelectedIconEffect(radio, radio.getIcon());
       radio.setActionCommand(Integer.toString(i));
       radio.addActionListener(this);
       popupMouseScroll.add(radio);

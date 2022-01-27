@@ -280,8 +280,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                   }
 
                   JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle =
-                      new TitleMenuItem(ActionW.SYNCH.getTitle(), popupMenu.getInsets());
+                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.SYNCH.getTitle());
                   popupMenu.add(itemTitle);
                   popupMenu.addSeparator();
 
@@ -297,7 +296,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                   }
                   popupMenu.show(invoker, x, y);
                 },
-                SYNCH_ICON);
+                ResourceUtil.getIcon(ActionIcon.SYNCH).derive(24, 24),
+                ActionW.SYNCH.getTitle());
         synchButton.setVisible(true);
         synchButton.setPosition(GridBagConstraints.SOUTHEAST);
       }

@@ -21,6 +21,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.service.AuditLog;
@@ -86,6 +87,7 @@ public class ZoomToolBar extends WtoolBar {
         new JMenuItem(
             Messages.getString("ViewerToolBar.zoom_1"),
             ResourceUtil.getIcon(ActionIcon.ZOOM_ORIGINAL));
+    GuiUtils.applySelectedIconEffect(actualZoomMenu, actualZoomMenu.getIcon());
     actualZoomMenu.addActionListener(
         e -> {
           ActionState zoom = eventManager.getAction(ActionW.ZOOM);
@@ -107,6 +109,7 @@ public class ZoomToolBar extends WtoolBar {
               new JMenuItem(
                   Messages.getString("ZoomToolBar.real_zoom"),
                   ResourceUtil.getIcon(ActionIcon.ZOOM_REAL_WORLD));
+          GuiUtils.applySelectedIconEffect(realSizeMenu, realSizeMenu.getIcon());
           realSizeMenu.addActionListener(
               e -> {
                 /*
@@ -126,6 +129,7 @@ public class ZoomToolBar extends WtoolBar {
         new JMenuItem(
             Messages.getString("ViewerToolBar.zoom_b"),
             ResourceUtil.getIcon(ActionIcon.ZOOM_BEST_FIT));
+    GuiUtils.applySelectedIconEffect(bestFitMenu, bestFitMenu.getIcon());
     bestFitMenu.addActionListener(
         e -> {
           // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the

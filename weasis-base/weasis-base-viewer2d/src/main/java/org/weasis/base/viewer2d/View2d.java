@@ -275,8 +275,7 @@ public class View2d extends DefaultView2d<ImageElement> {
   protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
     if (selected != null) {
       final JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
       boolean graphicComplete = true;
@@ -433,8 +432,7 @@ public class View2d extends DefaultView2d<ImageElement> {
   protected JPopupMenu buildContexMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = new JPopupMenu();
     TitleMenuItem itemTitle =
-        new TitleMenuItem(
-            Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets());
+        new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
     popupMenu.add(itemTitle);
     popupMenu.setLabel(MouseActions.T_LEFT);
     String action = eventManager.getMouseActions().getLeft();
@@ -457,7 +455,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-
+              GuiUtils.applySelectedIconEffect(radio, b.getIcon());
               radio.setActionCommand(b.cmd());
               radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
               // Trigger the selected mouse action

@@ -225,8 +225,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public GridBagLayoutModel getOriginalLayoutModel() {
     // Get the non clone layout from the list
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener) {
-      for (Object element : ((ComboItemListener) layout).getAllItem()) {
+    if (layout instanceof ComboItemListener<?> comboItemListener) {
+      for (Object element : comboItemListener.getAllItem()) {
         if (element instanceof GridBagLayoutModel gbm) {
           if ((layoutModel.getIcon() != null && gbm.getIcon() == layoutModel.getIcon())
               || layoutModel.toString().equals(gbm.toString())) {

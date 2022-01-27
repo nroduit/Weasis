@@ -10,11 +10,16 @@
 package org.weasis.core.api.image.op;
 
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 import java.util.function.Supplier;
+import javax.swing.Icon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
@@ -201,5 +206,41 @@ public class ByteLutCollection {
       lineIndex++;
     }
     return lut;
+  }
+
+  public static BufferedImage getLUT(byte[][] lut) {
+    BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_INT_BGR);
+    Graphics2D g = image.createGraphics();
+    for (int k = 0; k < 256; k++) {
+      g.setPaint(new Color(lut[0][k] & 0xff, lut[1][k] & 0xff, lut[2][k] & 0xff));
+      g.fillRect(0, k, 20, 1);
+    }
+    return image;
+  }
+
+  public static Icon getLUTIcon(byte[][] lut, int height) {
+    int border = 2;
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        int lutHeight = height - 2 * border;
+        int sx = x + border;
+        int sy = y + border;
+        for (int k = 0; k < 256; k++) {
+          g.setColor(new Color(lut[2][k] & 0xff, lut[1][k] & 0xff, lut[0][k] & 0xff));
+          g.drawLine(sx + k, sy, sx + k, sy + lutHeight);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return 256 + 2 * border;
+      }
+
+      @Override
+      public int getIconHeight() {
+        return height;
+      }
+    };
   }
 }

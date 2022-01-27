@@ -27,6 +27,7 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
+import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -685,7 +686,9 @@ public class WeasisWin {
                 webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")));
     helpMenuItem.add(webMenuItem);
 
-    final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online"));
+    final JMenuItem websiteMenuItem =
+        new JMenuItem(Messages.getString("WeasisWin.online"), new FlatHelpButtonIcon());
+    GuiUtils.applySelectedIconEffect(websiteMenuItem, websiteMenuItem.getIcon());
     websiteMenuItem.addActionListener(
         e ->
             openBrowser(
@@ -791,7 +794,15 @@ public class WeasisWin {
   }
 
   private static void fillMenu(final JMenu menu, List<Action> actions) {
-    Optional.ofNullable(actions).ifPresent(l -> l.forEach(a -> menu.add(new JMenuItem(a))));
+    Optional.ofNullable(actions)
+        .ifPresent(
+            l ->
+                l.forEach(
+                    a -> {
+                      JMenuItem item = new JMenuItem(a);
+                      GuiUtils.applySelectedIconEffect(item, item.getIcon());
+                      menu.add(item);
+                    }));
   }
 
   private void buildSelectedPluginMenu(final JMenu selectedPluginMenu) {
@@ -1100,6 +1111,7 @@ public class WeasisWin {
 
       for (final DataExplorerView dataExplorerView : exps) {
         JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
+        GuiUtils.applySelectedIconEffect(item, dataExplorerView.getIcon());
         item.addActionListener(e -> dataExplorerView.importFiles(vals.toArray(new File[0]), true));
         popup.add(item);
       }

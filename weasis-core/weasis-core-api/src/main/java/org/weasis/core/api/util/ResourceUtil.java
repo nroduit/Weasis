@@ -11,6 +11,7 @@ package org.weasis.core.api.util;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;
@@ -158,6 +159,7 @@ public class ResourceUtil {
     CALENDAR("svg/other/calendar.svg"),
     CDROM("svg/other/cdrom.svg"),
     ECG("svg/other/ecg.svg"),
+    HISTOGRAM("svg/other/histogram.svg"),
     IMAGE_EDIT("svg/other/imageEdit.svg"),
     IMAGE_PRESENTATION("svg/other/imagePresentation.svg"),
     KEY_IMAGE("svg/other/keyImage.svg"),
@@ -218,20 +220,19 @@ public class ResourceUtil {
   }
 
   public static FlatSVGIcon getIcon(String path) {
-    return new FlatSVGIcon(getResourcePath().resolve(path).toUri());
+    return new SvgIcon(getResourcePath().resolve(path).toUri());
   }
 
   public static FlatSVGIcon getIcon(ResourceIconPath path) {
-    return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri());
+    return new SvgIcon(getResourcePath().resolve(path.getPath()).toUri());
   }
 
   public static FlatSVGIcon getToolBarIcon(ResourceIconPath path) {
-    int size = TOOLBAR_ICON_SIZE;
-    return getIcon(path, size, size);
+    return getIcon(path, TOOLBAR_ICON_SIZE, TOOLBAR_ICON_SIZE);
   }
 
   public static FlatSVGIcon getIcon(ResourceIconPath path, int width, int height) {
-    return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri()).derive(width, height);
+    return new SvgIcon(getResourcePath().resolve(path.getPath()).toUri()).derive(width, height);
   }
 
   public static File getResource(String filename) {
@@ -247,5 +248,31 @@ public class ResourceUtil {
 
   public static File getResource(ResourcePath path) {
     return getResourcePath().resolve(path.getPath()).toFile();
+  }
+
+  public static class SvgIcon extends FlatSVGIcon {
+    private final URI uriCopy;
+
+    public SvgIcon(SvgIcon icon, ColorFilter colorFilter) {
+      super(
+          icon.getName(),
+          icon.getWidth(),
+          icon.getHeight(),
+          icon.getScale(),
+          icon.isDisabled(),
+          icon.getClassLoader(),
+          icon.getUri());
+      this.uriCopy = icon.getUri();
+      setColorFilter(colorFilter);
+    }
+
+    public SvgIcon(URI uri) {
+      super(uri);
+      this.uriCopy = uri;
+    }
+
+    public URI getUri() {
+      return this.uriCopy;
+    }
   }
 }

@@ -30,6 +30,7 @@ public final class LookAndFeels {
   private LookAndFeels() {}
 
   private static final String[] FLAT_NAMES = {
+    "Core Dark - FlatWeasis",
     "Core Dark - FlatDarcula",
     "Core Dark - FlatDark",
     "Core Light - FlatIntelliJ",
@@ -37,6 +38,7 @@ public final class LookAndFeels {
   };
 
   private static final String[] FLAT_CLASSES = {
+    "org.weasis.launcher.FlatWeasisTheme",
     "com.formdev.flatlaf.FlatDarculaLaf",
     "com.formdev.flatlaf.FlatDarkLaf",
     "com.formdev.flatlaf.FlatIntelliJLaf",
@@ -150,8 +152,7 @@ public final class LookAndFeels {
       if ("dicomizer".equalsIgnoreCase(profileName)) { // NON-NLS
         laf = "com.formdev.flatlaf.FlatIntelliJLaf";
       } else {
-        laf =
-            "com.formdev.flatlaf.intellijthemes.materialthemeuilite.FlatMonokaiProContrastIJTheme";
+        laf = "org.weasis.launcher.FlatWeasisTheme";
       }
     }
     return laf;

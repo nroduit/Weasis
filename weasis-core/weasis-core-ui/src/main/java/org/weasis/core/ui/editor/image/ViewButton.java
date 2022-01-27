@@ -12,22 +12,22 @@ package org.weasis.core.ui.editor.image;
 import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.awt.geom.Rectangle2D;
+import java.util.Objects;
 import javax.swing.Icon;
 
 public class ViewButton extends Rectangle2D.Double implements ShowPopup {
 
   private final ShowPopup popup;
   private final Icon icon;
+  private final String name;
   private boolean visible;
   private boolean enable;
   private int position;
 
-  public ViewButton(ShowPopup popup, Icon icon) {
-    if (icon == null || popup == null) {
-      throw new IllegalArgumentException("Null parameter");
-    }
-    this.popup = popup;
-    this.icon = icon;
+  public ViewButton(ShowPopup popup, Icon icon, String name) {
+    this.popup = Objects.requireNonNull(popup);
+    this.icon = Objects.requireNonNull(icon);
+    this.name = Objects.requireNonNull(name);
     this.position = GridBagConstraints.EAST;
     this.setFrame(0, 0, icon.getIconWidth(), icon.getIconHeight());
   }
@@ -52,6 +52,10 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
     return icon;
   }
 
+  public String getName() {
+    return name;
+  }
+
   public int getPosition() {
     return position;
   }
@@ -61,16 +65,23 @@ public class ViewButton extends Rectangle2D.Double implements ShowPopup {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (obj instanceof ViewButton) {
-      return ((ViewButton) obj).popup == popup;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-    return false;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    ViewButton that = (ViewButton) o;
+    return popup.equals(that.popup) && name.equals(that.name);
   }
 
   @Override
   public int hashCode() {
-    return popup.hashCode();
+    return Objects.hash(super.hashCode(), popup, name);
   }
 
   @Override

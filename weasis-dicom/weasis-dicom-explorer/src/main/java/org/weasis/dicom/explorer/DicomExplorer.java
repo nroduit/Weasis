@@ -595,12 +595,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 } else {
                   list.sort(DicomSpecialElement.ORDER_BY_DATE);
                   JPopupMenu popupMenu = new JPopupMenu();
-                  popupMenu.add(
-                      new TitleMenuItem(ActionW.KO_SELECTION.getTitle(), popupMenu.getInsets()));
+                  popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle()));
                   popupMenu.addSeparator();
 
                   ButtonGroup group = new ButtonGroup();
-
                   for (final KOSpecialElement koSpecialElement : list) {
                     final JMenuItem item = new JMenuItem(koSpecialElement.getShortLabel());
                     item.addActionListener(
@@ -608,7 +606,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                     popupMenu.add(item);
                     group.add(item);
                   }
-                  popupMenu.show(button, 5, 5);
+                  popupMenu.show(button, 0, button.getHeight());
                 }
               }
             }
@@ -1047,9 +1045,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     Callable<SeriesThumbnail> callable =
         () -> {
           final SeriesThumbnail thumb = new SeriesThumbnail(series, thumbnailSize);
-          if (series.getSeriesLoader() instanceof LoadSeries) {
+          if (series.getSeriesLoader() instanceof LoadSeries loader) {
             // In case series is downloaded or canceled
-            LoadSeries loader = (LoadSeries) series.getSeriesLoader();
             thumb.setProgressBar(loader.isDone() ? null : loader.getProgressBar());
           }
           thumb.registerListeners();

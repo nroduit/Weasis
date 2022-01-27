@@ -10,13 +10,12 @@
 package org.weasis.core.ui.util;
 
 import java.awt.Component;
-import java.awt.Insets;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import javax.swing.JLabel;
 import javax.swing.MenuElement;
 import javax.swing.MenuSelectionManager;
-import javax.swing.border.EmptyBorder;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 /**
  * Title menu item for JPopupMenu
@@ -25,10 +24,8 @@ import javax.swing.border.EmptyBorder;
  */
 public class TitleMenuItem extends JLabel implements MenuElement {
 
-  public TitleMenuItem(String title, Insets insets) {
-    if (insets != null) {
-      setBorder(new EmptyBorder(insets));
-    }
+  public TitleMenuItem(String title) {
+    setBorder(GuiUtils.getEmptyBorder(2, 4, 2, 4));
     setText(title);
   }
 
