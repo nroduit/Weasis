@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
@@ -248,8 +247,7 @@ public class ConfigData {
   private void extractArgFromUri(String uri) {
     String url = URLDecoder.decode(uri, StandardCharsets.UTF_8);
     String[] cmds = url.split("\\$");
-    boolean windows =
-        System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS
+    boolean windows = System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS
     if (cmds.length > 0) {
       for (int i = 1; i < cmds.length; i++) {
         // Fix Windows issue (add a trailing slash)

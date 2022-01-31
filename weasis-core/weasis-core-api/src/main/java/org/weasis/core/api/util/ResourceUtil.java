@@ -11,7 +11,6 @@ package org.weasis.core.api.util;
 
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.io.File;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicReference;

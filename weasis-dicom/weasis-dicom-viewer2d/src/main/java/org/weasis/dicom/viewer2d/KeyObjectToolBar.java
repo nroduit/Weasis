@@ -65,15 +65,12 @@ public class KeyObjectToolBar extends WtoolBar {
   static {
     ColorFilter colorFilter = new ColorFilter();
     colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_YELLOW.color);
-    KO_STAR_ICON_SELECTED =
-        GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
-    KO_FILTER_ICON_SELECTED =
-        GuiUtils.getDerivedIcon(KO_FILTER_ICON, colorFilter);
+    KO_STAR_ICON_SELECTED = GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
+    KO_FILTER_ICON_SELECTED = GuiUtils.getDerivedIcon(KO_FILTER_ICON, colorFilter);
 
     colorFilter = new ColorFilter();
     colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_BLUE.color);
-    KO_STAR_ICON_EXIST =
-        GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
+    KO_STAR_ICON_EXIST = GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
   }
 
   public KeyObjectToolBar(int index) {

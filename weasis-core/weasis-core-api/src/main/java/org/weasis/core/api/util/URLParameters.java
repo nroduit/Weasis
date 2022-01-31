@@ -110,7 +110,8 @@ public class URLParameters {
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {
       final int idx = pair.indexOf("=");
-      final String key = idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
+      final String key =
+          idx > 0 ? URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8) : pair;
       if (!queryPairs.containsKey(key)) {
         queryPairs.put(key, new LinkedList<>());
       }

@@ -14,11 +14,9 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.location.CBaseLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
-import java.awt.Dimension;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.ui.editor.image.dockable.MiniTool;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
 

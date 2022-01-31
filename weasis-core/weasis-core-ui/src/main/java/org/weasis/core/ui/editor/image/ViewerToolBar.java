@@ -390,8 +390,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
     final FlatSVGIcon smallIcon =
         GuiUtils.getDerivedIcon(
-            synch.getIcon(),
-            new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
+            synch.getIcon(), new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
         new Icon() {
 

@@ -354,12 +354,9 @@ public class DicomPrSerializer {
       styles.setInt(Tag.PatternOnColorCIELabValue, VR.US, rgb);
     }
     style.add(styles);
+    attributes.setDouble(Tag.BoundingBoxTopLeftHandCorner, VR.FL, bound.getMinX(), bound.getMinY());
     attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bound.getMinX(), bound.getMinY());
-    attributes.setDouble(
-        Tag.BoundingBoxBottomRightHandCorner,
-        VR.FL,
-        bound.getMaxX(), bound.getMaxY());
+        Tag.BoundingBoxBottomRightHandCorner, VR.FL, bound.getMaxX(), bound.getMaxY());
     // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR
     // LF.
     // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html

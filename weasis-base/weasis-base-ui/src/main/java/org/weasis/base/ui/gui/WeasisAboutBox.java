@@ -77,7 +77,8 @@ public class WeasisAboutBox extends JDialog {
     jTextPane1.setEditable(false);
 
     jTextPane1.addHyperlinkListener(GuiUtils.buildHyperlinkListener());
-    String html = """
+    String html =
+        """
       <div align="center">
         <h2>%s %s</h2>
         <a href="%s">%s</a><br>
@@ -86,10 +87,18 @@ public class WeasisAboutBox extends JDialog {
         <p>%s %s, %s<br>
         Java VM: %s</p><br>
       </div>
-      """.formatted(AppProperties.WEASIS_NAME, AppProperties.WEASIS_VERSION, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""),
-        Messages.getString("WeasisWin.release"), BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", ""),
-        AppProperties.WEASIS_NAME, System.getProperty("os.name"), System.getProperty("os.version"),
-        System.getProperty("os.arch"),System.getProperty("java.vendor.version", "") );
+      """
+            .formatted(
+                AppProperties.WEASIS_NAME,
+                AppProperties.WEASIS_VERSION,
+                BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""),
+                Messages.getString("WeasisWin.release"),
+                BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", ""),
+                AppProperties.WEASIS_NAME,
+                System.getProperty("os.name"),
+                System.getProperty("os.version"),
+                System.getProperty("os.arch"),
+                System.getProperty("java.vendor.version", ""));
 
     jTextPane1.setText(html);
     JLabel jLabel1 = new JLabel();

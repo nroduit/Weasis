@@ -10,7 +10,6 @@
 package org.weasis.core.ui.editor.image.dockable;
 
 import bibliothek.gui.dock.common.CLocation;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
