@@ -575,7 +575,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
         menu.setIcon(ActionW.ZOOM.getIcon());
-        GuiUtils.applySelectedIconEffect(menu, ActionW.ZOOM.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(zoomAction.get().isActionEnabled());
 
         if (zoomAction.get().isActionEnabled()) {
@@ -596,7 +596,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
-        GuiUtils.applySelectedIconEffect(menu, menu.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {

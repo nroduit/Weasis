@@ -32,6 +32,7 @@ import javax.swing.JSeparator;
 import javax.swing.SwingUtilities;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -129,6 +130,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
       for (final SeriesViewerFactory viewerFactory : plugins) {
         JMenu menuFactory = new JMenu(viewerFactory.getUIName());
         menuFactory.setIcon(viewerFactory.getIcon());
+        GuiUtils.applySelectedIconEffect(menuFactory);
 
         JMenuItem item4 = new JMenuItem(Messages.getString("DicomExplorer.open"));
         item4.addActionListener(
@@ -146,6 +148,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
               new JMenuItem(
                   Messages.getString("DicomExplorer.open_win"),
                   ResourceUtil.getIcon(ActionIcon.OPEN_NEW_TAB));
+          GuiUtils.applySelectedIconEffect(item4);
           item4.addActionListener(
               e -> {
                 selList.setOpenningSeries(true);
@@ -195,6 +198,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
               new JMenuItem(
                   Messages.getString("DicomExplorer.open_info"),
                   ResourceUtil.getIcon(ActionIcon.METADATA));
+          GuiUtils.applySelectedIconEffect(item5);
           item5.addActionListener(
               e -> {
                 SeriesViewer<?> viewer = viewerFactory.createSeriesViewer(null);

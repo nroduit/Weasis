@@ -396,7 +396,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
               new JMenuItem(
                   Messages.getString("View2dContainer.mpr"),
                   ResourceUtil.getIcon(OtherIcon.VIEW_3D));
-          GuiUtils.applySelectedIconEffect(mpr, mpr.getIcon());
+          GuiUtils.applySelectedIconEffect(mpr);
           mpr.addActionListener(Basic3DToolBar.getMprAction());
           menu.add(mpr);
 
@@ -404,7 +404,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
               new JMenuItem(
                   Messages.getString("View2dContainer.mip"),
                   ResourceUtil.getIcon(OtherIcon.VIEW_MIP));
-          GuiUtils.applySelectedIconEffect(mip, mip.getIcon());
+          GuiUtils.applySelectedIconEffect(mip);
           mip.addActionListener(Basic3DToolBar.getMipAction());
           menu.add(mip);
         }

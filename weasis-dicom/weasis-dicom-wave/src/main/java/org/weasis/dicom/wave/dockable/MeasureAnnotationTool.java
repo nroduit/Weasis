@@ -69,8 +69,8 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
         BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
-    setDockableWidth(300);
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
+    setDockableWidth(280);
     jbInit();
   }
 

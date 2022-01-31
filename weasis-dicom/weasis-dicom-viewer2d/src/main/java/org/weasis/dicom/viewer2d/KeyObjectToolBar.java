@@ -42,7 +42,6 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
-import org.weasis.core.api.util.ResourceUtil.SvgIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
@@ -55,7 +54,8 @@ public class KeyObjectToolBar extends WtoolBar {
 
   public static final FlatSVGIcon KO_STAR_ICON = ResourceUtil.getToolBarIcon(ActionIcon.STAR);
   public static final ImageIcon KO_STAR_ICON_SELECTED;
-  public static final FlatSVGIcon KO_FILTER_ICON = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_STAR);
+  public static final FlatSVGIcon KO_FILTER_ICON =
+      ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_STAR);
   public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
   public static final ImageIcon KO_EDIT_SELECTION_ICON =
@@ -65,19 +65,15 @@ public class KeyObjectToolBar extends WtoolBar {
   static {
     ColorFilter colorFilter = new ColorFilter();
     colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_YELLOW.color);
-    int iconSize = ResourceUtil.TOOLBAR_ICON_SIZE;
     KO_STAR_ICON_SELECTED =
-        GuiUtils.getDerivedIcon((SvgIcon) ResourceUtil.getIcon(ActionIcon.STAR), colorFilter)
-            .derive(iconSize, iconSize);
+        GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
     KO_FILTER_ICON_SELECTED =
-        GuiUtils.getDerivedIcon((SvgIcon) ResourceUtil.getIcon(ActionIcon.SYNCH_STAR), colorFilter)
-            .derive(iconSize, iconSize);
+        GuiUtils.getDerivedIcon(KO_FILTER_ICON, colorFilter);
 
     colorFilter = new ColorFilter();
     colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_BLUE.color);
     KO_STAR_ICON_EXIST =
-        GuiUtils.getDerivedIcon((SvgIcon) ResourceUtil.getIcon(ActionIcon.STAR), colorFilter)
-            .derive(iconSize, iconSize);
+        GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
   }
 
   public KeyObjectToolBar(int index) {

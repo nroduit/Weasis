@@ -15,6 +15,7 @@ import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
+import java.awt.image.ImageObserver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -234,7 +235,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         g2d.setRenderingHint(
             RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
       }
-      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), null, null);
+      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), 0, 0, null);
     } catch (Exception e) {
       LOGGER.error("Cannot draw the image", e);
       if ("java.io.IOException: closed".equals(e.getMessage())) { // NON-NLS
@@ -358,8 +359,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     double imageResY = viewScale;
     // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not
     // interpolate)
-    imageResX = imageResX < ratioX ? ratioX : imageResX;
-    imageResY = imageResY < ratioY ? ratioY : imageResY;
+    imageResX = Math.max(imageResX, ratioX);
+    imageResY = Math.max(imageResY, ratioY);
     matrix[0] = imageResX;
     matrix[4] = imageResY;
 

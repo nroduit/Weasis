@@ -220,11 +220,11 @@ public class ResourceUtil {
   }
 
   public static FlatSVGIcon getIcon(String path) {
-    return new SvgIcon(getResourcePath().resolve(path).toUri());
+    return new FlatSVGIcon(getResourcePath().resolve(path).toUri());
   }
 
   public static FlatSVGIcon getIcon(ResourceIconPath path) {
-    return new SvgIcon(getResourcePath().resolve(path.getPath()).toUri());
+    return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri());
   }
 
   public static FlatSVGIcon getToolBarIcon(ResourceIconPath path) {
@@ -232,7 +232,7 @@ public class ResourceUtil {
   }
 
   public static FlatSVGIcon getIcon(ResourceIconPath path, int width, int height) {
-    return new SvgIcon(getResourcePath().resolve(path.getPath()).toUri()).derive(width, height);
+    return new FlatSVGIcon(getResourcePath().resolve(path.getPath()).toUri()).derive(width, height);
   }
 
   public static File getResource(String filename) {
@@ -248,31 +248,5 @@ public class ResourceUtil {
 
   public static File getResource(ResourcePath path) {
     return getResourcePath().resolve(path.getPath()).toFile();
-  }
-
-  public static class SvgIcon extends FlatSVGIcon {
-    private final URI uriCopy;
-
-    public SvgIcon(SvgIcon icon, ColorFilter colorFilter) {
-      super(
-          icon.getName(),
-          icon.getWidth(),
-          icon.getHeight(),
-          icon.getScale(),
-          icon.isDisabled(),
-          icon.getClassLoader(),
-          icon.getUri());
-      this.uriCopy = icon.getUri();
-      setColorFilter(colorFilter);
-    }
-
-    public SvgIcon(URI uri) {
-      super(uri);
-      this.uriCopy = uri;
-    }
-
-    public URI getUri() {
-      return this.uriCopy;
-    }
   }
 }

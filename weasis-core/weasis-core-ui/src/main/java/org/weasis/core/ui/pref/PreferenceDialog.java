@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.pref;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.ActionListener;
@@ -54,7 +55,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
         parentWin,
         Messages.getString("OpenPreferencesAction.title"),
         ModalityType.APPLICATION_MODAL,
-        GuiUtils.getDimension(600, 450));
+        new Dimension(600, 450));
 
     jPanelBottom.add(bottomPrefPanel, 0);
 

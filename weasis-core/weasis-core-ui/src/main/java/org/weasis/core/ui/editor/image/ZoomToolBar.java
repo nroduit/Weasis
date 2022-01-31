@@ -87,7 +87,7 @@ public class ZoomToolBar extends WtoolBar {
         new JMenuItem(
             Messages.getString("ViewerToolBar.zoom_1"),
             ResourceUtil.getIcon(ActionIcon.ZOOM_ORIGINAL));
-    GuiUtils.applySelectedIconEffect(actualZoomMenu, actualZoomMenu.getIcon());
+    GuiUtils.applySelectedIconEffect(actualZoomMenu);
     actualZoomMenu.addActionListener(
         e -> {
           ActionState zoom = eventManager.getAction(ActionW.ZOOM);
@@ -109,7 +109,7 @@ public class ZoomToolBar extends WtoolBar {
               new JMenuItem(
                   Messages.getString("ZoomToolBar.real_zoom"),
                   ResourceUtil.getIcon(ActionIcon.ZOOM_REAL_WORLD));
-          GuiUtils.applySelectedIconEffect(realSizeMenu, realSizeMenu.getIcon());
+          GuiUtils.applySelectedIconEffect(realSizeMenu);
           realSizeMenu.addActionListener(
               e -> {
                 /*
@@ -129,7 +129,7 @@ public class ZoomToolBar extends WtoolBar {
         new JMenuItem(
             Messages.getString("ViewerToolBar.zoom_b"),
             ResourceUtil.getIcon(ActionIcon.ZOOM_BEST_FIT));
-    GuiUtils.applySelectedIconEffect(bestFitMenu, bestFitMenu.getIcon());
+    GuiUtils.applySelectedIconEffect(bestFitMenu);
     bestFitMenu.addActionListener(
         e -> {
           // Pass the value -200.0 (convention: -200.0 = > best fit zoom value) directly to the

@@ -43,7 +43,6 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
-import org.weasis.core.api.util.ResourceUtil.SvgIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
@@ -235,7 +234,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         if (eventManager.isActionRegistered(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-          GuiUtils.applySelectedIconEffect(radio, b.getIcon());
+          GuiUtils.applySelectedIconEffect(radio);
           radio.setActionCommand(b.cmd());
           radio.addActionListener(this);
           if (MouseActions.T_LEFT.equals(type)) {
@@ -260,7 +259,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
                 actionW.getTitle(), actionW.getIcon(), actionW.cmd().equals(action));
-        GuiUtils.applySelectedIconEffect(radio, actionW.getIcon());
+        GuiUtils.applySelectedIconEffect(radio);
         radio.setActionCommand(actionW.cmd());
         radio.addActionListener(this);
         popupMouseScroll.add(radio);
@@ -392,7 +391,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     final Icon mouseIcon = ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_LARGE);
     final FlatSVGIcon smallIcon =
         GuiUtils.getDerivedIcon(
-            (SvgIcon) synch.getIcon(),
+            synch.getIcon(),
             new ColorFilter().add(new Color(0x6E6E6E), new Color(0x389FD6)));
     return new DropButtonIcon(
         new Icon() {
@@ -407,18 +406,16 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
               if (icon == null) {
                 icon = mouseIcon;
               }
-              if (smallIcon != null) {
-                Icon sIcon = null;
-                if (!model.isEnabled()) {
-                  sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
-                }
-                if (sIcon == null) {
-                  sIcon = smallIcon;
-                }
-                int x2 = x + mouseIcon.getIconWidth() / 2 - sIcon.getIconWidth() / 2;
-                int y2 = y + mouseIcon.getIconHeight() / 2 - sIcon.getIconHeight() / 2;
-                sIcon.paintIcon(c, g, x2, y2);
+              Icon sIcon = null;
+              if (!model.isEnabled()) {
+                sIcon = UIManager.getLookAndFeel().getDisabledIcon(model, smallIcon);
               }
+              if (sIcon == null) {
+                sIcon = smallIcon;
+              }
+              int x2 = x + mouseIcon.getIconWidth() / 2 - sIcon.getIconWidth() / 2;
+              int y2 = y + mouseIcon.getIconHeight() / 2 - sIcon.getIconHeight() / 2;
+              sIcon.paintIcon(c, g, x2, y2);
               icon.paintIcon(c, g, x, y);
             }
           }

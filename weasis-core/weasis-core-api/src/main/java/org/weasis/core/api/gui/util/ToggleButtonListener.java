@@ -90,7 +90,7 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
 
   public JCheckBoxMenuItem createUnregisteredJCCheckBoxMenuItem(String text, Icon icon) {
     final JCheckBoxMenuItem checkBoxItem = new JCheckBoxMenuItem(text, icon, model.isSelected());
-    GuiUtils.applySelectedIconEffect(checkBoxItem, icon);
+    GuiUtils.applySelectedIconEffect(checkBoxItem);
     checkBoxItem.setModel(model);
     return checkBoxItem;
   }

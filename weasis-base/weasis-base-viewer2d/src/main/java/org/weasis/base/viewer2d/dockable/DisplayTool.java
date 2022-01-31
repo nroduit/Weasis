@@ -66,7 +66,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   public DisplayTool(String pluginName) {
     super(BUTTON_NAME, pluginName, Insertable.Type.TOOL, 10);
     dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.VIEW_SETTING));
-    setDockableWidth(235);
+    setDockableWidth(230);
 
     tree = new CheckboxTree();
     initPathSelection = false;

@@ -47,9 +47,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
 
   private void jbInit() {
     setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-
     Dimension dim = GuiUtils.getDimension(5, 5);
-    add(Box.createRigidArea(dim));
     final DropDownButton button =
         new DropDownButton("Mini", currentAction.getActionW().getDropButtonIcon()) { // NON-NLS
 
@@ -79,7 +77,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
     slider.setInverted(vertical);
     slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
     slider.setPaintTicks(true);
-    slider.setPreferredSize(GuiUtils.getDimension(35, 250));
+    slider.setPreferredSize(GuiUtils.getDimension(28, 250));
     slider.setShowLabels(false);
     action.registerActionState(slider);
     return slider;
@@ -116,7 +114,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
               actions[i].toString(),
               actions[i].getActionW().getIcon(),
               actions[i].equals(currentAction));
-      GuiUtils.applySelectedIconEffect(radio, radio.getIcon());
+      GuiUtils.applySelectedIconEffect(radio);
       radio.setActionCommand(Integer.toString(i));
       radio.addActionListener(this);
       popupMouseScroll.add(radio);

@@ -10,6 +10,7 @@
 package org.weasis.core.api.gui.util;
 
 import com.formdev.flatlaf.FlatIconColors;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import com.formdev.flatlaf.icons.FlatTreeCollapsedIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
@@ -72,7 +73,6 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontTools;
-import org.weasis.core.api.util.ResourceUtil.SvgIcon;
 import org.weasis.core.util.StringUtil;
 
 public class GuiUtils {
@@ -126,15 +126,16 @@ public class GuiUtils {
     return c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
   }
 
-  public static SvgIcon getDerivedIcon(SvgIcon svgIcon, ColorFilter filter) {
-    // TODO modify with FlatLaf 2.0.1
-    return new SvgIcon(svgIcon, filter);
+  public static FlatSVGIcon getDerivedIcon(FlatSVGIcon flatSVGIcon, ColorFilter filter) {
+    FlatSVGIcon icon = new FlatSVGIcon(flatSVGIcon);
+    icon.setColorFilter(filter);
+    return icon;
   }
 
-  public static void applySelectedIconEffect(AbstractButton button, Icon icon) {
-    if (icon instanceof SvgIcon svgIcon) {
+  public static void applySelectedIconEffect(AbstractButton button) {
+    if (button.getIcon() instanceof FlatSVGIcon flatSVGIcon) {
       button.setSelectedIcon(
-          GuiUtils.getDerivedIcon(svgIcon, GuiUtils.getSelectedColorFilter(button)));
+          GuiUtils.getDerivedIcon(flatSVGIcon, GuiUtils.getSelectedColorFilter(button)));
     }
   }
 
@@ -304,7 +305,7 @@ public class GuiUtils {
   }
 
   public static void setPreferredWidth(Component component, int width) {
-    setPreferredWidth(component, getScaleLength(width), getScaleLength(50));
+    setPreferredWidth(component, width, 50);
   }
 
   public static void setPreferredHeight(Component component, int height) {

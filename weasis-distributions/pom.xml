@@ -67,76 +67,6 @@
     <pluginManagement>
       <plugins>
         <plugin>
-          <groupId>com.akathist.maven.plugins.launch4j</groupId>
-          <artifactId>launch4j-maven-plugin</artifactId>
-          <version>2.1.2</version>
-          <executions>
-            <execution>
-              <id>l4j-clui</id>
-              <phase>package</phase>
-              <goals>
-                <goal>launch4j</goal>
-              </goals>
-              <configuration>
-                <headerType>gui</headerType>
-                <dontWrapJar>true</dontWrapJar>
-                <outfile>${project.build.directory}/tmp/viewer-win32.exe</outfile>
-                <jar>weasis/weasis-launcher.jar</jar>
-                <errTitle>weasis</errTitle>
-                <!-- The custom process feature was dropped in 3.1.0-beta2, this was designed for windows 98/xp. -->
-                <!-- Set the process name as the executable filename -->
-                <!-- <customProcName>true</customProcName> -->
-                <icon>etc/weasis.ico</icon>
-                <cmdLine>$dicom:get --portable</cmdLine>
-                <!-- Setting it to . will change the current dir to the same directory as the executable -->
-                <chdir>.</chdir>
-                <classPath>
-                  <mainClass>org.weasis.launcher.WeasisLauncher</mainClass>
-                  <addDependencies>false</addDependencies>
-                  <preCp>weasis\*.jar</preCp>
-                </classPath>
-                <singleInstance>
-                  <!-- To disable singleInstance in portable version simply set windowsName property empty -->
-                  <!-- $ mvn clean package -Dportable=true -DwindowsName= -->
-                  <mutexName>${windowsName}</mutexName>
-                </singleInstance>
-                <jre>
-                  <path>jre/windows</path>
-                  <minVersion>1.8.0</minVersion>
-                  <maxVersion/>
-                  <initialHeapSize>64</initialHeapSize>
-                  <maxHeapSize>768</maxHeapSize>
-                  <!-- Optional, defaults to 64/32; Allows to select between 64-bit and 32-bit runtimes: 1) "64" Use only 64-bit runtimes. 2) "64/32" Use 64-bit runtimes if available, otherwise use 32-bit. 3) "32/64" Use 32-bit runtimes if available, otherwise
-                    use 64-bit. 4) "32" Use only 32-bit runtimes -->
-                  <runtimeBits>64/32</runtimeBits>
-                  <!-- Optional, defaults to false which treats the bundled JRE as the primary runtime. When set to true, the bundled JRE will only be used in case the mix/max version search fails. This can be used as a fallback option if the user does not have
-                    the required Java installed and the bundled JRE is provided on a CD or shared network location. -->
-                  <bundledJreAsFallback>true</bundledJreAsFallback>
-                  <opts>
-                    <opt>-Dweasis.portable.dir=&quot;%EXEDIR%&quot;</opt>
-                  </opts>
-                </jre>
-                <versionInfo>
-                  <fileVersion>0.0.0.0</fileVersion>
-                  <txtFileVersion>${app.version}</txtFileVersion>
-                  <fileDescription>Weasis DICOM Viewer: https://nroduit.github.io</fileDescription>
-                  <copyright>Weasis team, Nicolas Roduit</copyright>
-                  <productVersion>0.0.0.0</productVersion>
-                  <txtProductVersion>${app.version}</txtProductVersion>
-                  <productName>Weasis</productName>
-                  <internalName>weasis-launcher</internalName>
-                  <originalFilename>viewer-win32.exe</originalFilename>
-                </versionInfo>
-              </configuration>
-            </execution>
-          </executions>
-        </plugin>
-        <plugin>
-          <groupId>net.jsign</groupId>
-          <artifactId>jsign-maven-plugin</artifactId>
-          <version>4.0</version>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
           <version>3.2.0</version>
@@ -224,6 +154,25 @@
             </goals>
             <configuration>
               <artifactItems>
+                <!-- ===================================== -->
+                <!-- OSGI Framework and Launcher -->
+                <!-- (only one version, referenced in JNLP) -->
+                <!-- ===================================== -->
+                <artifactItem>
+                  <groupId>org.apache.felix</groupId>
+                  <artifactId>org.apache.felix.framework</artifactId>
+                  <version>${felix.framework.version}</version>
+                  <outputDirectory>${tmp.dir}</outputDirectory>
+                  <destFileName>felix.jar</destFileName>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.launcher</groupId>
+                  <artifactId>weasis-launcher</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.dir}</outputDirectory>
+                  <destFileName>weasis-launcher.jar</destFileName>
+                </artifactItem>
+
                 <!-- ===================================== -->
                 <!-- Felix bundles -->
                 <!-- ===================================== -->
@@ -316,11 +265,22 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
+                  <groupId>com.miglayout</groupId>
+                  <artifactId>miglayout-swing</artifactId>
+                  <version>${miglayout.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>com.miglayout</groupId>
+                  <artifactId>miglayout-core</artifactId>
+                  <version>${miglayout.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
                   <groupId>org.weasis.thirdparty</groupId>
                   <artifactId>docking-frames</artifactId>
                   <version>${dockingframes.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                  <!-- Workaround to get a snapshot name without timestamp (download from nexus) -->
                   <destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
                 </artifactItem>
                 <artifactItem>
@@ -709,83 +669,10 @@
     <profile>
       <id>portable.builder.no.exe</id>
       <activation>
-        <!-- Build portable distribution -->
-        <property>
-          <name>portable-noexe</name>
-          <value>true</value>
-        </property>
+        <activeByDefault>true</activeByDefault>
       </activation>
       <build>
         <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>portable.builder</id>
-      <activation>
-        <!-- Build portable distribution -->
-        <property>
-          <name>portable</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.akathist.maven.plugins.launch4j</groupId>
-            <artifactId>launch4j-maven-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-dependency-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-assembly-plugin</artifactId>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>portable.builder.sign</id>
-      <activation>
-        <!-- Build portable distribution with signed exe -->
-        <property>
-          <name>portable-sign</name>
-          <value>true</value>
-        </property>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>com.akathist.maven.plugins.launch4j</groupId>
-            <artifactId>launch4j-maven-plugin</artifactId>
-          </plugin>
-          <plugin>
-            <groupId>net.jsign</groupId>
-            <artifactId>jsign-maven-plugin</artifactId>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>sign</goal>
-                </goals>
-                <phase>package</phase>
-                <configuration>
-                  <file>${project.build.directory}/tmp/viewer-win32.exe</file>
-                  <name>Weasis</name>
-                  <url>https://nroduit.github.io</url>
-                </configuration>
-              </execution>
-            </executions>
-          </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>

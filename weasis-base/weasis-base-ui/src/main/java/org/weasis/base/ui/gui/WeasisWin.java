@@ -688,7 +688,7 @@ public class WeasisWin {
 
     final JMenuItem websiteMenuItem =
         new JMenuItem(Messages.getString("WeasisWin.online"), new FlatHelpButtonIcon());
-    GuiUtils.applySelectedIconEffect(websiteMenuItem, websiteMenuItem.getIcon());
+    GuiUtils.applySelectedIconEffect(websiteMenuItem);
     websiteMenuItem.addActionListener(
         e ->
             openBrowser(
@@ -800,7 +800,7 @@ public class WeasisWin {
                 l.forEach(
                     a -> {
                       JMenuItem item = new JMenuItem(a);
-                      GuiUtils.applySelectedIconEffect(item, item.getIcon());
+                      GuiUtils.applySelectedIconEffect(item);
                       menu.add(item);
                     }));
   }
@@ -1111,7 +1111,7 @@ public class WeasisWin {
 
       for (final DataExplorerView dataExplorerView : exps) {
         JMenuItem item = new JMenuItem(dataExplorerView.getUIName(), dataExplorerView.getIcon());
-        GuiUtils.applySelectedIconEffect(item, dataExplorerView.getIcon());
+        GuiUtils.applySelectedIconEffect(item);
         item.addActionListener(e -> dataExplorerView.importFiles(vals.toArray(new File[0]), true));
         popup.add(item);
       }

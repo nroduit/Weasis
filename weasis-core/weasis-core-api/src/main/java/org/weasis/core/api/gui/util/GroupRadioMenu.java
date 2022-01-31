@@ -52,8 +52,8 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
         icon = lut.getIcon(GuiUtils.getBigIconButtonSize(radioMenuItem).height);
       }
       radioMenuItem.setIcon(icon);
+      GuiUtils.applySelectedIconEffect(radioMenuItem);
       radioMenuItem.setSelected(object == selectedItem);
-      GuiUtils.applySelectedIconEffect(radioMenuItem, icon);
       group.add(radioMenuItem);
       itemList.add(radioMenuItem);
       radioMenuItem.addActionListener(this);
@@ -86,7 +86,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     JMenu menu = new JMenu(title);
     if (icon != null) {
       menu.setIcon(icon);
-      GuiUtils.applySelectedIconEffect(menu, icon);
+      GuiUtils.applySelectedIconEffect(menu);
     }
     for (RadioMenuItem radioMenuItem : itemList) {
       menu.add(radioMenuItem);

@@ -455,7 +455,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-              GuiUtils.applySelectedIconEffect(radio, b.getIcon());
+              GuiUtils.applySelectedIconEffect(radio);
               radio.setActionCommand(b.cmd());
               radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
               // Trigger the selected mouse action

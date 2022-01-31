@@ -77,26 +77,23 @@ public class WeasisAboutBox extends JDialog {
     jTextPane1.setEditable(false);
 
     jTextPane1.addHyperlinkListener(GuiUtils.buildHyperlinkListener());
-    StringBuilder message = new StringBuilder("<div align=\"center\"><H2>"); // NON-NLS
-    message.append(AppProperties.WEASIS_NAME);
-    message.append(" ");
-    message.append(AppProperties.WEASIS_VERSION);
-    message.append("</H2>"); // NON-NLS
+    String html = """
+      <div align="center">
+        <h2>%s %s</h2>
+        <a href="%s">%s</a><br>
+        %s<br>
+        %s includes other open source software
+        <p>%s %s, %s<br>
+        Java VM: %s</p><br>
+      </div>
+      """.formatted(AppProperties.WEASIS_NAME, AppProperties.WEASIS_VERSION, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""),
+        Messages.getString("WeasisWin.release"), BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", ""),
+        AppProperties.WEASIS_NAME, System.getProperty("os.name"), System.getProperty("os.version"),
+        System.getProperty("os.arch"),System.getProperty("java.vendor.version", "") );
 
-    String rn = Messages.getString("WeasisWin.release");
-    message.append(
-        String.format(
-            "<a href=\"%s", // NON-NLS
-            BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.releasenotes", ""))); // NON-NLS
-    message.append("\">"); // NON-NLS
-    message.append(rn);
-    message.append("</a>"); // NON-NLS
-    message.append("<BR>");
-    message.append(BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", "")); // NON-NLS
-    message.append("</div>"); // NON-NLS
-    jTextPane1.setText(message.toString());
+    jTextPane1.setText(html);
     JLabel jLabel1 = new JLabel();
-    jLabel1.setIcon(ResourceUtil.getIcon(ResourceUtil.LogoIcon.LARGE));
+    jLabel1.setIcon(ResourceUtil.getIcon(ResourceUtil.LogoIcon.LARGE).derive(0.8f));
     JPanel jPanel3 = new JPanel();
     jPanel3.setLayout(new BorderLayout());
 
@@ -112,7 +109,7 @@ public class WeasisAboutBox extends JDialog {
 
     JScrollPane jScrollPane1 = new JScrollPane();
     jPanelInfoSys.add(jScrollPane1, BorderLayout.CENTER);
-    jScrollPane1.setPreferredSize(GuiUtils.getDimension(320, 270));
+    jScrollPane1.setPreferredSize(GuiUtils.getDimension(430, jLabel1.getHeight()));
     jScrollPane1.getViewport().add(sysTable, null);
 
     panelRoot.add(jPanelClose, BorderLayout.SOUTH);

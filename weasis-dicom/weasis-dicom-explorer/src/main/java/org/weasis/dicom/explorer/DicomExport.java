@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel.CheckingMode;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.io.IOException;
@@ -52,7 +53,7 @@ public class DicomExport extends AbstractWizardDialog {
         parent,
         Messages.getString("DicomExport.exp_dicom"),
         ModalityType.APPLICATION_MODAL,
-        GuiUtils.getDimension(650, 500));
+        new Dimension(650, 500));
     this.dicomModel = dicomModel;
     this.treeModel = new CheckTreeModel(dicomModel);
 

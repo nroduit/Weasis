@@ -21,15 +21,6 @@
       </includes>
     </fileSet>
     <fileSet>
-      <!-- copy win32 exe -->
-      <directory>target/tmp</directory>
-      <includes>
-        <include>viewer-win32.exe</include>
-      </includes>
-      <fileMode>0755</fileMode>
-      <outputDirectory/>
-    </fileSet>
-    <fileSet>
       <!-- Direct resources copy -->
       <directory>src/main/resources-portable</directory>
       <outputDirectory/>

@@ -149,10 +149,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   public DicomExplorer(DicomModel model) {
     super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 20);
-    setDockableWidth(180);
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(selectedPatient);
+    setDockableWidth(Thumbnail.DEFAULT_SIZE + 42);
 
     patientCombobox.setMaximumRowCount(15);
     patientCombobox.addItemListener(patientChangeListener);
@@ -187,7 +187,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         modelStudy.setSelectedItem(ALL_STUDIES);
         koOpen.setVisible(false);
       }
-      return;
     }
   }
 
@@ -349,7 +348,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       if (show && patient != null) {
         TitledBorder title = GuiUtils.getTitledBorder(patient.toString());
         this.setBorder(
-            BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5), title));
+            BorderFactory.createCompoundBorder(GuiUtils.getEmptyBorder(0, 3, 5, 3), title));
       } else {
         this.setBorder(BorderFactory.createEmptyBorder());
       }
@@ -439,7 +438,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.dicomStudy = dicomStudy;
       title = GuiUtils.getTitledBorder(dicomStudy.toString());
       this.setBorder(
-          BorderFactory.createCompoundBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5), title));
+          BorderFactory.createCompoundBorder(GuiUtils.getEmptyBorder(0, 3, 0, 3), title));
       this.setFocusable(false);
       refreshLayout();
     }
@@ -1006,12 +1005,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   protected void changeToolWindowAnchor(CLocation clocation) {
     removeAll();
     if (verticalLayout) {
-      setLayout(new MigLayout("fillx", "[grow,fill]", "[]rel[grow,fill]unrel[]"));
+      setLayout(new MigLayout("fillx, ins 0", "[grow,fill]", "[]rel[grow,fill]unrel[]"));
       add(getMainPanel(), "");
       add(thumnailView, "newline, top");
       add(loadingPanel, "newline,");
     } else {
-      setLayout(new MigLayout("fillx", "[right]rel[grow,fill]"));
+      setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]"));
       add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel));
       add(thumnailView);
     }
