@@ -236,20 +236,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       fileChooser.setFileFilter(filter);
 
     } else {
-      /**
-       * Idea is to show all the files in the directories to give the user some context, but only
-       * directories should be accepted as selections. As the effect is L&F dependent, consider
-       * using DIRECTORIES_ONLY on platforms that already meet your UI requirements. Empirically,
-       * it's platform-dependent, with files appearing gray in all supported L&Fs on Mac OS X. <br>
-       * Disabling file selection may be annoying. A solution is just to allow the user to select
-       * either a file or a directory and if the user select a file just use the directory where
-       * that file is located.
-       */
-      if (System.getProperty("os.name").startsWith("Mac OS X")) { // NON-NLS
-        fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-      } else {
-        fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-      }
+      fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
     }
 
     fileChooser.setMultiSelectionEnabled(false);
@@ -272,7 +259,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     if (fileChooser.showSaveDialog(this) != JFileChooser.APPROVE_OPTION
         || (selectedFile = fileChooser.getSelectedFile()) == null) {
       outputFolder = null;
-      return;
     } else {
       if (isSaveFileMode) {
         outputFolder =
