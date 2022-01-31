@@ -126,7 +126,6 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
 
         Color background = IconColor.ACTIONS_GREY.color;
         Color foreground = FlatUIUtils.getUIColor("MenuItem.background", Color.WHITE);
-        ;
         if (c instanceof RadioMenuItem menuItem && menuItem.isArmed()) {
           background = FlatUIUtils.getUIColor("MenuItem.selectionForeground", Color.DARK_GRAY);
         } else if (c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {

@@ -349,7 +349,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     if (dcmElement != null) {
       DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
       if (dcm != null && dcm.getMediaReader() instanceof DcmMediaReader) {
-        Attributes dicomSourceAttribute = ((DcmMediaReader) dcm.getMediaReader()).getDicomObject();
+        Attributes dicomSourceAttribute = dcm.getMediaReader().getDicomObject();
         Attributes attributes =
             DicomMediaUtils.createDicomKeyObject(
                 dicomSourceAttribute, dcmElement.getShortLabel(), null);

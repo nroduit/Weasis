@@ -16,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -60,7 +61,7 @@ public class RemotePrefService {
   }
 
   private String getEncodedValue(String val) throws UnsupportedEncodingException {
-    return URLEncoder.encode(val, "UTF-8");
+    return URLEncoder.encode(val, StandardCharsets.UTF_8);
   }
 
   private String getRemoteLauncherUrl() throws UnsupportedEncodingException {

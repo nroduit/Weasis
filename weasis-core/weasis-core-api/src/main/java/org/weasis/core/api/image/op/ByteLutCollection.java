@@ -15,6 +15,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
@@ -174,7 +175,7 @@ public class ByteLutCollection {
       File[] files = lutFolder.listFiles();
       for (File file : files) {
         if (file.isFile() && file.canRead()) {
-          try (Scanner scan = new Scanner(file, "UTF-8")) { // NON-NLS
+          try (Scanner scan = new Scanner(file, StandardCharsets.UTF_8)) {
             byte[][] lut = readLutFile(scan);
             luts.add(new ByteLut(FileUtil.nameWithoutExtension(file.getName()), lut));
           } catch (Exception e) {

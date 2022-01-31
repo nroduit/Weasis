@@ -167,7 +167,7 @@ public class MipView extends View2d {
                             new DicomSeries(
                                 TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class));
                         s.addAll(dicoms);
-                        ((DcmMediaReader) dcm.getMediaReader()).writeMetaData(s);
+                        dcm.getMediaReader().writeMetaData(s);
                         DataExplorerModel model =
                             (DataExplorerModel) ser.getTagValue(TagW.ExplorerModel);
                         if (model instanceof DicomModel dicomModel) {

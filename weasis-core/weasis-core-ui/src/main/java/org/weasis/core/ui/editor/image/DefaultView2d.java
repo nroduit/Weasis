@@ -784,8 +784,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Only apply when the panel size is not zero.
     if (getWidth() != 0 && getHeight() != 0) {
       getViewModel().setModelOffset(modelOffsetX, modelOffsetY);
-      Optional.ofNullable(panner).ifPresent(Panner<E>::updateImageSize);
-      Optional.ofNullable(lens).ifPresent(ZoomWin<E>::updateZoom);
+      Optional.ofNullable(panner).ifPresent(Panner::updateImageSize);
+      Optional.ofNullable(lens).ifPresent(ZoomWin::updateZoom);
       updateAffineTransform();
     }
   }
@@ -1244,7 +1244,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     for (MouseWheelListener wheelListener : wheelListeners) {
       this.removeMouseWheelListener(wheelListener);
     }
-    Optional.ofNullable(lens).ifPresent(ZoomWin<E>::disableMouseAndKeyListener);
+    Optional.ofNullable(lens).ifPresent(ZoomWin::disableMouseAndKeyListener);
   }
 
   @Override

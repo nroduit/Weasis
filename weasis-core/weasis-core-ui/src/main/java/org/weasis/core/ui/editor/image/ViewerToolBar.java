@@ -74,7 +74,6 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_MIDDLE);
   public static final FlatSVGIcon MouseWheelIcon =
       ResourceUtil.getToolBarIcon(ActionIcon.MOUSE_WHEEL);
-  ;
 
   protected final ImageViewerEventManager<E> eventManager;
   private final DropDownButton mouseLeft;

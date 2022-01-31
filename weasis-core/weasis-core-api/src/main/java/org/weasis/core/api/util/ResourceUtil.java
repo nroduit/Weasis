@@ -35,7 +35,7 @@ public class ResourceUtil {
     SMALL("svg/logo/Weasis.svg"),
     SMALL_DICOMIZER("svg/logo/Dicomizer.svg");
 
-    private String path;
+    private final String path;
 
     LogoIcon(String path) {
       this.path = path;
@@ -57,7 +57,7 @@ public class ResourceUtil {
     VIDEO("svg/file/video.svg"),
     XML("svg/file/xml.svg");
 
-    private String path;
+    private final String path;
 
     FileIcon(String path) {
       this.path = path;
@@ -143,7 +143,7 @@ public class ResourceUtil {
     ZOOM_PAN("svg/action/zoomPan.svg"),
     ZOOM_REAL_WORLD("svg/action/zoomRealWorld.svg");
 
-    private String path;
+    private final String path;
 
     ActionIcon(String path) {
       this.path = path;
@@ -173,7 +173,7 @@ public class ResourceUtil {
     VIEW_SETTING("svg/other/viewSettings.svg"),
     XRAY("svg/other/xray.svg");
 
-    private String path;
+    private final String path;
 
     OtherIcon(String path) {
       this.path = path;

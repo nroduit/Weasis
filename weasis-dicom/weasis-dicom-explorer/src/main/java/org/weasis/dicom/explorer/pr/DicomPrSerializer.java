@@ -117,7 +117,7 @@ public class DicomPrSerializer {
       String sopInstanceUID) {
     Attributes imgAttributes =
         img.getMediaReader() instanceof DcmMediaReader
-            ? ((DcmMediaReader) img.getMediaReader()).getDicomObject()
+            ? img.getMediaReader().getDicomObject()
             : null;
     return writePresentation(
         model, imgAttributes, outputFile, seriesInstanceUID, sopInstanceUID, null);
@@ -355,11 +355,11 @@ public class DicomPrSerializer {
     }
     style.add(styles);
     attributes.setDouble(
-        Tag.BoundingBoxTopLeftHandCorner, VR.FL, new double[] {bound.getMinX(), bound.getMinY()});
+        Tag.BoundingBoxTopLeftHandCorner, VR.FL, bound.getMinX(), bound.getMinY());
     attributes.setDouble(
         Tag.BoundingBoxBottomRightHandCorner,
         VR.FL,
-        new double[] {bound.getMaxX(), bound.getMaxY()});
+        bound.getMaxX(), bound.getMaxY());
     // In text strings (value representation ST, LT, or UT) a new line shall be represented as CR
     // LF.
     // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/chapter_6.html

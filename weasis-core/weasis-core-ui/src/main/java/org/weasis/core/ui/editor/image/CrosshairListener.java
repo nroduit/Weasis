@@ -69,7 +69,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
       pointChanged(point);
       AuditLog.LOGGER.info(
           "action:{} val:{},{}",
-          new Object[] {basicState.getActionW().cmd(), point.getX(), point.getY()});
+          basicState.getActionW().cmd(), point.getX(), point.getY());
     }
   }
 

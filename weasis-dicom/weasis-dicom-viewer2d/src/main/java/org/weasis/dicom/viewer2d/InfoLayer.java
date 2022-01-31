@@ -545,7 +545,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           g2.setFont(subscriptFont);
           FontTools.paintColorFontOutline(
               g2,
-              colLeft.substring(1, colLeft.length()),
+              colLeft.substring(1),
               (float) (border + thickLength + shiftX),
               midY + fontHeight / 2.0f,
               highlight);

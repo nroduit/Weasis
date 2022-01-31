@@ -387,9 +387,9 @@ public class AcquirePublishDialog extends JDialog {
 
   private List<AcquireImageInfo> getSelectedImages(PublishTree tree) {
     return Arrays.stream(tree.getModel().getCheckingPaths())
-        .map(o1 -> DefaultMutableTreeNode.class.cast(o1.getLastPathComponent()))
-        .filter(o2 -> AcquireImageInfo.class.isInstance(o2.getUserObject()))
-        .map(o3 -> AcquireImageInfo.class.cast(o3.getUserObject()))
+        .map(o1 -> (DefaultMutableTreeNode) o1.getLastPathComponent())
+        .filter(o2 -> o2.getUserObject() instanceof AcquireImageInfo)
+        .map(o3 -> (AcquireImageInfo) o3.getUserObject())
         .collect(Collectors.toList());
   }
 

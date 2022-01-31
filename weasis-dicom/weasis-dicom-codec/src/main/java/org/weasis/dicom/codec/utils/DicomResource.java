@@ -19,7 +19,7 @@ public enum DicomResource implements ResourcePath {
   SERIES_SPITTING_RULES("series-splitting-rules.xml"),
   CGET_SOP_UID("store-tcs.properties");
 
-  private String path;
+  private final String path;
 
   DicomResource(String path) {
     this.path = path;

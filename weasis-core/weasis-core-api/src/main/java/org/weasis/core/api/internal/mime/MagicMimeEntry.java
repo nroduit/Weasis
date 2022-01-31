@@ -210,9 +210,7 @@ public class MagicMimeEntry {
             return mtype;
           }
         }
-        if (myMimeType != null) {
-          return myMimeType;
-        }
+        return myMimeType;
       } else {
         return myMimeType;
       }
@@ -236,9 +234,7 @@ public class MagicMimeEntry {
             return mtype;
           }
         }
-        if (myMimeType != null) {
-          return myMimeType;
-        }
+        return myMimeType;
       } else {
         return myMimeType;
       }
