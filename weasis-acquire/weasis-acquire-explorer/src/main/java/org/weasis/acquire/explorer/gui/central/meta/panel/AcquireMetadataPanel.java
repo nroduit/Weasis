@@ -34,6 +34,8 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -61,9 +63,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   protected final JTable table;
   protected AcquireImageInfo imageInfo;
   protected TitledBorder titleBorder;
-  protected static final Font font = FontTools.getSmallFont();
+  protected static final Font SMALL_FONT = FontTools.getSmallFont();
 
-  public AcquireMetadataPanel(String title) {
+  protected AcquireMetadataPanel(String title) {
     this.title = title;
     this.titleBorder = GuiUtils.getTitledBorder(getDisplayText());
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -72,7 +74,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     this.table = new JTable();
     // Force committing value when losing the focus
     table.putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
-    table.setFont(font);
+    table.setFont(SMALL_FONT);
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowHorizontalLines(true);
     table.setShowVerticalLines(true);
@@ -235,9 +237,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
         cellEditor = editor;
       } else if (time) {
         TimeTableEditor editor = new TimeTableEditor(false, true, true);
-        editor.getTimePickerSettings().fontInvalidTime = font;
-        editor.getTimePickerSettings().fontValidTime = font;
-        editor.getTimePickerSettings().fontVetoedTime = font;
+        editor.getTimePickerSettings().fontInvalidTime = SMALL_FONT;
+        editor.getTimePickerSettings().fontValidTime = SMALL_FONT;
+        editor.getTimePickerSettings().fontVetoedTime = SMALL_FONT;
         JButton button = editor.getTimePicker().getComponentToggleTimeMenuButton();
         Insets margin = button.getMargin();
         int height = table.getRowHeight(row) - margin.top - margin.bottom;
@@ -251,7 +253,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       }
       editor = Optional.of(cellEditor);
       Component c = cellEditor.getTableCellEditorComponent(table, value, isSelected, row, column);
-      c.setFont(font);
+      c.setFont(SMALL_FONT);
       return c;
     }
 
@@ -264,7 +266,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     }
 
     private static void initCombo(JComboBox<?> combo) {
-      combo.setFont(AcquireMetadataPanel.font);
+      combo.setFont(AcquireMetadataPanel.SMALL_FONT);
       combo.setMaximumRowCount(15);
       GuiUtils.setPreferredWidth(combo, 80);
     }
@@ -272,9 +274,9 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
     private DateTableEditor buildDatePicker() {
       DateTableEditor d = new DateTableEditor(false, true, true);
       DatePickerSettings settings = d.getDatePickerSettings();
-      settings.setFontInvalidDate(font);
-      settings.setFontValidDate(font);
-      settings.setFontVetoedDate(font);
+      settings.setFontInvalidDate(SMALL_FONT);
+      settings.setFontValidDate(SMALL_FONT);
+      settings.setFontVetoedDate(SMALL_FONT);
 
       CalendarUtil.adaptCalendarColors(settings);
 

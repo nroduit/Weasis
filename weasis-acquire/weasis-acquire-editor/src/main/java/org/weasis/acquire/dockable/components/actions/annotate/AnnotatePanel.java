@@ -23,9 +23,9 @@ public class AnnotatePanel extends AbstractAcquireActionPanel {
   public AnnotatePanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     MeasureTool.buildIconPanel(
-        this, EventManager.getInstance(), ActionW.MEASURE, ActionW.DRAW_MEASURE, 7);
+        this, EventManager.getInstance(), ActionW.MEASURE, ActionW.DRAW_MEASURE, 8);
     MeasureTool.buildIconPanel(
-        this, EventManager.getInstance(), ActionW.DRAW, ActionW.DRAW_GRAPHICS, 7);
+        this, EventManager.getInstance(), ActionW.DRAW, ActionW.DRAW_GRAPHICS, 8);
 
     add(new AnnotationOptionsPanel());
     add(GuiUtils.boxYLastElement(5));
