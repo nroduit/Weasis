@@ -124,6 +124,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   }
 
   public void updateTable() {
+    if (table.isEditing()) table.getCellEditor().stopCellEditing();
     AcquireMetadataTableModel model = newTableModel();
     model.addTableModelListener(this);
     table.setModel(model);
