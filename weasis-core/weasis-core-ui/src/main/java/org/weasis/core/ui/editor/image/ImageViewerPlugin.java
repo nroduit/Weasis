@@ -718,16 +718,80 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
     if (layout instanceof ComboItemListener) {
       Object[] list = ((ComboItemListener) layout).getAllItem();
+      GridBagLayoutModel bestModel = VIEWS_2x2;
+      int diff = Integer.MAX_VALUE;
+      int diffLayout = Integer.MAX_VALUE;
       for (Object m : list) {
         if (m instanceof GridBagLayoutModel) {
-          if (getViewTypeNumber((GridBagLayoutModel) m, view2dClass) >= size) {
-            return (GridBagLayoutModel) m;
+          GridBagLayoutModel model = (GridBagLayoutModel) m;
+          int layoutSize = getViewTypeNumber(model, view2dClass);
+          int layoutDiff = Math.abs(layoutSize - size);
+          if (layoutSize >= size && layoutDiff <= diff) {
+            if (layoutDiff == diff) {
+              Dimension dim = model.getGridSize();
+              if (Math.abs(dim.width - dim.height) < diffLayout) {
+                diffLayout = Math.abs(dim.width - dim.height);
+              } else {
+                continue;
+              }
+            }
+            diff = layoutDiff;
+            bestModel = model;
           }
         }
       }
+      return bestModel;
     }
 
     return VIEWS_2x2;
+  }
+
+  public static GridBagLayoutModel getBestDefaultViewLayout(ActionState layout, int size) {
+    if (size <= 1) {
+      return VIEWS_1x1;
+    }
+    if (layout instanceof ComboItemListener) {
+      Object[] list = ((ComboItemListener) layout).getAllItem();
+      GridBagLayoutModel bestModel = VIEWS_2x2;
+      int diffNumber = Integer.MAX_VALUE;
+      int diffLayout = Integer.MAX_VALUE;
+      for (Object m : list) {
+        if (m instanceof GridBagLayoutModel) {
+          GridBagLayoutModel model = (GridBagLayoutModel) m;
+          int layoutSize = getViewTypeNumber(model);
+          int dn = Math.abs(layoutSize - size);
+          if (layoutSize >= size && dn <= diffNumber) {
+            Dimension dim = model.getGridSize();
+            if (dn == diffNumber) {
+              int dwh = Math.abs(dim.width - dim.height);
+              if (dwh < diffLayout) {
+                diffLayout = dwh;
+              } else if (dwh == diffLayout && dim.width > dim.height) {
+                diffLayout = dwh;
+              } else {
+                continue;
+              }
+            }
+            diffNumber = dn;
+            bestModel = model;
+          }
+        }
+      }
+      return bestModel;
+    }
+    return VIEWS_2x2;
+  }
+
+  public static int getViewTypeNumber(GridBagLayoutModel layout) {
+    int val = 0;
+    if (layout != null) {
+      for (LayoutConstraints layoutConstraints : layout.getConstraints().keySet()) {
+        if (layoutConstraints.getColor() == null) {
+          val++;
+        }
+      }
+    }
+    return val;
   }
 
   public GridBagLayoutModel getViewLayout(String title) {
