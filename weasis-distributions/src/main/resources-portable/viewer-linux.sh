@@ -92,4 +92,4 @@ echo "Weasis launcher directory: $curPath"
 
 cps="$curPath/weasis/weasis-launcher.jar:$curPath/weasis/felix.jar:$curPath/weasis/substance.jar"
 # Launch
-$JAVACMD "$DEFAULT_JVM_OPTIONS""$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable "${userParameters[@]}"
+$JAVACMD $DEFAULT_JVM_OPTIONS"$GOSH_ARGS" -Dweasis.portable.dir="$curPath" -classpath "$cps" org.weasis.launcher.WeasisLauncher \$dicom:get --portable "${userParameters[@]}"
