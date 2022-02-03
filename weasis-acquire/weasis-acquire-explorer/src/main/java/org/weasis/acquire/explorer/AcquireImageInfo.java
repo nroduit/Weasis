@@ -354,7 +354,7 @@ public class AcquireImageInfo {
       String date = (String) TagUtil.getTagValue(TagW.ExifDateTime, imageElement);
       LocalDateTime dateTime = null;
       if (StringUtil.hasText(date)) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss"); //NON-NLS
         try {
           dateTime = LocalDateTime.parse(date, formatter);
         } catch (DateTimeParseException ex) {

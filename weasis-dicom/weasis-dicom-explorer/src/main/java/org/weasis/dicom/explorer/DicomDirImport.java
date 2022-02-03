@@ -159,9 +159,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
             if (f.isDirectory()) {
               return true;
             }
-            // NON-NLS
             return f.getName().equalsIgnoreCase("dicomdir") // NON-NLS
-                || f.getName().equalsIgnoreCase("dicomdir.");
+                || f.getName().equalsIgnoreCase("dicomdir."); //NON-NLS
           }
         });
     File selectedFile = null;

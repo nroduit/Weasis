@@ -28,7 +28,7 @@ public class SocketUtil {
     try {
       ServerSocket socket =
           ServerSocketFactory.getDefault()
-              .createServerSocket(port, 1, InetAddress.getByName("localhost"));
+              .createServerSocket(port, 1, InetAddress.getByName("localhost")); //NON-NLS
       socket.close();
       return true;
     } catch (Exception ex) {
