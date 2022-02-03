@@ -771,7 +771,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         int lastPointIndex = pts.size() - 1;
         if (lastPointIndex > 0) {
           Point2D checkPoint = pts.get(lastPointIndex);
-          if(Objects.equals(checkPoint, pts.get(--lastPointIndex))){
+          if (Objects.equals(checkPoint, pts.get(--lastPointIndex))) {
             pts.remove(lastPointIndex);
           }
         }

@@ -94,15 +94,7 @@ public class View2dFactory implements SeriesViewerFactory {
         if (obj instanceof Integer) {
           ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
           if (layout instanceof ComboItemListener) {
-            Object[] list = ((ComboItemListener) layout).getAllItem();
-            for (Object m : list) {
-              if (m instanceof GridBagLayoutModel) {
-                if (getViewTypeNumber((GridBagLayoutModel) m, ViewCanvas.class) >= (Integer) obj) {
-                  model = (GridBagLayoutModel) m;
-                  break;
-                }
-              }
-            }
+            model = ImageViewerPlugin.getBestDefaultViewLayout(layout, (Integer) obj);
           }
         }
       }
