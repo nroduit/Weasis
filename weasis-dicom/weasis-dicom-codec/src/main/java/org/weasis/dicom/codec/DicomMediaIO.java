@@ -633,6 +633,10 @@ public class DicomMediaIO implements DcmMediaReader {
           reader.setInput(inputStream);
           ImageDescriptor desc = reader.getImageDescriptor();
           PlanarImage img = reader.getPlanarImage(frame, null);
+          if (img.width() != desc.getColumns() || img.height() != desc.getRows()) {
+            LOGGER.error(
+                "The native image size ({}x{}) does not match with the DICOM attributes({}x{})", img.width(), img.height(), desc.getColumns(),  desc.getRows());
+            }
           return noEmbeddedOverlay ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc) : img;
         } finally {
           reader.dispose();
