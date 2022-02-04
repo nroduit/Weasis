@@ -989,7 +989,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           } else {
             AuthResponse authResponse = (AuthResponse) response;
             Multipart.parseMultipartRelated(
-                authResponse.getResponse().getHeader("Content-Type"),
+                authResponse.getResponse().getHeader("Content-Type"), //NON-NLS
                 response.getInputStream(),
                 handler);
           }

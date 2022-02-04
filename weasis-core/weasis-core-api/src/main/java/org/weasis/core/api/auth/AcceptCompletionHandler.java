@@ -57,7 +57,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
               BufferedReader reader = new BufferedReader(new StringReader(req));
               String line = reader.readLine();
               while (StringUtil.hasText(line)) {
-                int idx = line.indexOf("code=");
+                int idx = line.indexOf("code="); //NON-NLS
                 if (idx >= 0) {
                   String key = line.substring(idx + 5).trim();
                   idx = key.indexOf('&');

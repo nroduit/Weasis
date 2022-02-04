@@ -110,8 +110,8 @@ public class NetworkUtil {
         request.addHeader(element.getKey(), element.getValue());
       }
     }
-    request.addHeader("User-Agent", AppProperties.WEASIS_USER_AGENT);
-    request.addHeader("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase());
+    request.addHeader("User-Agent", AppProperties.WEASIS_USER_AGENT); //NON-NLS
+    request.addHeader("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase()); //NON-NLS
 
     try {
       OAuth20Service service = OAuth2ServiceFactory.getService(authMethod);
