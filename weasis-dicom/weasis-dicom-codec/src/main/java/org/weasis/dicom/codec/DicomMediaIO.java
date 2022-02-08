@@ -324,7 +324,7 @@ public class DicomMediaIO implements DcmMediaReader {
       // Return true only to display the error message in the view
       return true;
     }
-    if ("data".equals(uri.getScheme()) && dcmMetadata == null) { //NON-NLS
+    if ("data".equals(uri.getScheme()) && dcmMetadata == null) { // NON-NLS
       return false;
     }
 
@@ -635,8 +635,12 @@ public class DicomMediaIO implements DcmMediaReader {
           PlanarImage img = reader.getPlanarImage(frame, null);
           if (img.width() != desc.getColumns() || img.height() != desc.getRows()) {
             LOGGER.error(
-                "The native image size ({}x{}) does not match with the DICOM attributes({}x{})", img.width(), img.height(), desc.getColumns(),  desc.getRows());
-            }
+                "The native image size ({}x{}) does not match with the DICOM attributes({}x{})",
+                img.width(),
+                img.height(),
+                desc.getColumns(),
+                desc.getRows());
+          }
           return noEmbeddedOverlay ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc) : img;
         } finally {
           reader.dispose();

@@ -10,6 +10,7 @@
 package org.weasis.launcher;
 
 import com.formdev.flatlaf.FlatSystemProperties;
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.awt.EventQueue;
 import java.io.File;
@@ -44,6 +45,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -52,6 +54,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 import org.osgi.framework.Version;
 import org.osgi.util.tracker.ServiceTracker;
+import org.weasis.launcher.LookAndFeels.ReadableLookAndFeelInfo;
 
 /**
  * @author Richard S. Hall
@@ -824,13 +827,6 @@ public class WeasisLauncher {
       SwingResources.loadResources("/swing/synth_" + suffix + ".properties"); // NON-NLS
     }
 
-    // JVM Locale
-    Locale.setDefault(locale);
-    // LookAndFeel Locale
-    UIManager.getDefaults().setDefaultLocale(locale);
-    // For new components
-    JComponent.setDefaultLocale(locale);
-
     String nativeLook;
     String sysSpec = System.getProperty(P_NATIVE_LIB_SPEC, "unknown"); // NON-NLS
     int index = sysSpec.indexOf('-');
@@ -847,13 +843,33 @@ public class WeasisLauncher {
         look = serverProp.get(P_WEASIS_LOOK);
       }
     }
-
-    LookAndFeels.installFlatLaf();
     String localLook = currentProps.getProperty(P_WEASIS_LOOK, null);
     // If look is in local preferences, use it
     if (localLook != null) {
       look = localLook;
     }
+    final LookAndFeels lookAndFeels = new LookAndFeels();
+    final ReadableLookAndFeelInfo lookAndFeelInfo =
+        lookAndFeels.getAvailableLookAndFeel(look, profileName);
+
+    if (SystemInfo.isMacOS) {
+      // Enable screen menu bar - MUST BE initialized before UI components
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+      System.setProperty("apple.awt.application.name", System.getProperty(P_WEASIS_NAME));
+      System.setProperty(
+          "apple.awt.application.appearance",
+          lookAndFeelInfo.isDark() ? "NSAppearanceNameDarkAqua" : "NSAppearanceNameAqua");
+    }
+
+    // JVM Locale
+    Locale.setDefault(locale);
+    // LookAndFeel Locale
+    UIManager.getDefaults().setDefaultLocale(locale);
+    // For new components
+    JComponent.setDefaultLocale(locale);
+
+    UIManager.setInstalledLookAndFeels(
+        lookAndFeels.getLookAndFeels().toArray(new LookAndFeelInfo[0]));
 
     final String scaleFactor =
         getGeneralProperty(
@@ -874,7 +890,7 @@ public class WeasisLauncher {
       SwingUtilities.invokeAndWait(
           () -> {
             // Set look and feels
-            look = LookAndFeels.setLookAndFeel(look, profileName);
+            look = lookAndFeels.setLookAndFeel(lookAndFeelInfo);
 
             try {
               // Build a JFrame which will be used later in base.ui module
