@@ -103,12 +103,12 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           view2dClass.getName());
   public static final GridBagLayoutModel VIEWS_2x2_f2 =
       new GridBagLayoutModel(
-          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), //NON-NLS
+          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2x2_f2.xml"), // NON-NLS
           "layout_c2x1", // NON-NLS
           Messages.getString("ImageViewerPlugin.layout_c2x1"));
   public static final GridBagLayoutModel VIEWS_2_f1x2 =
       new GridBagLayoutModel(
-          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), //NON-NLS
+          ImageViewerPlugin.class.getResourceAsStream("/config/layoutModel2_f1x2.xml"), // NON-NLS
           "layout_c1x2", // NON-NLS
           Messages.getString("ImageViewerPlugin.layout_c1x2"));
   public static final GridBagLayoutModel VIEWS_2x2 =
