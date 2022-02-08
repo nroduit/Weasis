@@ -1,5 +1,27 @@
 # Changelog
 
+## [v3.8.1](https://github.com/nroduit/Weasis/tree/v3.8.1) (2022-02-03)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.0...v3.8.1)
+
+**Implemented enhancements:**
+
+- Improve the automatic layout choice when opening several series [\#242](https://github.com/nroduit/Weasis/issues/242)
+- Update to dcm4che 5.25.1 [\#241](https://github.com/nroduit/Weasis/issues/241)
+- Add new default layouts for panoramic screens and MPR [\#229](https://github.com/nroduit/Weasis/issues/229)
+
+**Fixed bugs:**
+
+- Dicomizer: picker date do not commit the value when the focus is lost [\#240](https://github.com/nroduit/Weasis/issues/240)
+- Cannot display image with invalid shutter [\#236](https://github.com/nroduit/Weasis/issues/236)
+- Support measurement computations across Ultrasound regions with different scale factors [\#227](https://github.com/nroduit/Weasis/issues/227)
+
+**Closed issues:**
+
+- All Patients option not shown in dropdown [\#239](https://github.com/nroduit/Weasis/issues/239)
+- Building on aarch64: is it supposed to work? [\#234](https://github.com/nroduit/Weasis/issues/234)
+- Weasis icon at higher resolutions [\#233](https://github.com/nroduit/Weasis/issues/233)
+
 ## [v3.8.0](https://github.com/nroduit/Weasis/tree/v3.8.0) (2021-12-11)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.7.1...v3.8.0)
