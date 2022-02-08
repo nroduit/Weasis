@@ -31,6 +31,7 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.Messages;
 import org.weasis.dicom.codec.TagD;
+import org.weasis.dicom.codec.utils.DicomResource;
 
 public class ModalityView {
   private static final Logger LOGGER = LoggerFactory.getLogger(ModalityView.class);
@@ -170,7 +171,7 @@ public class ModalityView {
   private static void readTagDisplayByModality() {
     XMLStreamReader xmler = null;
     try {
-      File file = ResourceUtil.getResource("attributes-view.xml"); // NON-NLS
+      File file = ResourceUtil.getResource(DicomResource.ATTRIBUTES_VIEW);
       if (!file.canRead()) {
         return;
       }

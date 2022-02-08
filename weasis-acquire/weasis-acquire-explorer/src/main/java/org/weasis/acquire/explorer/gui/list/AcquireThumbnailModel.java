@@ -19,7 +19,6 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 
-@SuppressWarnings({"serial"})
 public class AcquireThumbnailModel<E extends MediaElement> extends AThumbnailModel<E> {
 
   public AcquireThumbnailModel(JList<E> list, JIThumbnailCache thumbCache) {

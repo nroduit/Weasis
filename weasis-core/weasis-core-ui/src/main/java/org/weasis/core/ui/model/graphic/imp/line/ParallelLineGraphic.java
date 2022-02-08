@@ -21,12 +21,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -37,12 +38,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "parallelLine")
 @XmlRootElement(name = "parallelLine")
 public class ParallelLineGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -3254108307003667982L;
 
   public static final Integer POINTS_NUMBER = 6;
 
-  public static final Icon ICON =
-      new ImageIcon(ParallelLineGraphic.class.getResource("/icon/22x22/draw-parallel.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PARALLEL);
 
   public static final Measurement DISTANCE =
       new Measurement(Messages.getString("measure.distance"), 1, true, true, true);

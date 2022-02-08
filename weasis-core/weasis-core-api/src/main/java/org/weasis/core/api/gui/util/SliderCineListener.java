@@ -9,12 +9,11 @@
  */
 package org.weasis.core.api.gui.util;
 
-import java.awt.Color;
-import javax.swing.JPanel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.UIManager;
 import javax.swing.border.TitledBorder;
 import org.weasis.core.api.Messages;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.util.StringUtil;
 
 public abstract class SliderCineListener extends SliderChangeListener {
@@ -27,13 +26,13 @@ public abstract class SliderCineListener extends SliderChangeListener {
   private final TIME time;
   private final SpinnerNumberModel speedModel;
 
-  public SliderCineListener(
+  protected SliderCineListener(
       ActionW action, int min, int max, int value, int speed, TIME time, double mouseSensivity) {
     this(action, min, max, value, speed, time);
     setMouseSensivity(mouseSensivity);
   }
 
-  public SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
+  protected SliderCineListener(ActionW action, int min, int max, int value, int speed, TIME time) {
     super(action, min, max, value);
     this.time = time;
     speedModel = new SpinnerNumberModel(speed, 1, 200, 1);
@@ -52,20 +51,15 @@ public abstract class SliderCineListener extends SliderChangeListener {
   }
 
   @Override
-  public void updateSliderProoperties(JSliderW slider) {
-    JPanel panel = (JPanel) slider.getParent();
+  public void updateSliderProperties(JSliderW slider) {
     int rate = getCurrentCineRate();
     StringBuilder buffer = new StringBuilder(Messages.getString("SliderCineListener.img"));
     buffer.append(StringUtil.COLON_AND_SPACE);
     buffer.append(getValueToDisplay());
 
-    if (slider.isdisplayValueInTitle()
-        && panel != null
-        && panel.getBorder() instanceof TitledBorder) {
+    if (slider.isdisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
       if (rate > 0) {
-        buffer.append(" - ");
-        buffer.append(Messages.getString("SliderCineListener.cine"));
-        buffer.append(StringUtil.COLON_AND_SPACE);
+        buffer.append(" (");
         buffer.append(rate);
         if (TIME.SECOND.equals(time)) {
           buffer.append(Messages.getString("SliderCineListener.fps"));
@@ -74,14 +68,14 @@ public abstract class SliderCineListener extends SliderChangeListener {
         } else if (TIME.HOUR.equals(time)) {
           buffer.append(Messages.getString("SliderCineListener.fph"));
         }
+        buffer.append(")");
       }
-      ((TitledBorder) panel.getBorder())
-          .setTitleColor(
-              rate > 0 && rate < (getSpeed() - 1)
-                  ? Color.red
-                  : UIManager.getColor("TitledBorder.titleColor"));
-      ((TitledBorder) panel.getBorder()).setTitle(buffer.toString());
-      panel.repaint();
+      titledBorder.setTitleColor(
+          rate > 0 && rate < (getSpeed() - 1)
+              ? IconColor.ACTIONS_RED.getColor()
+              : UIManager.getColor("TitledBorder.titleColor"));
+      titledBorder.setTitle(buffer.toString());
+      slider.repaint();
     } else {
       slider.setToolTipText(buffer.toString());
     }

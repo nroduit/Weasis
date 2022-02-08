@@ -50,7 +50,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
+import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -58,9 +58,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +68,8 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -94,6 +94,8 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -129,7 +131,6 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     implements ViewCanvas<E> {
-  private static final long serialVersionUID = 4546307243696460899L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultView2d.class);
 
@@ -159,9 +160,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
 
   public static final Cursor EDIT_CURSOR =
-      DefaultView2d.getCustomCursor("editpoint.png", "Edit Point", 16, 16); // NON-NLS
+      ActionW.getImageCursor("editPoint.png", "Edit Point", 0.5f, 0.5f); // NON-NLS
   public static final Cursor HAND_CURSOR =
-      DefaultView2d.getCustomCursor("hand.gif", "hand", 16, 16); // NON-NLS
+      ActionW.getSvgCursor("hand.svg", "hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
   public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
   public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
@@ -176,12 +177,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final Color pointerColor1 = Color.black;
   protected final Color pointerColor2 = Color.white;
-  protected final Border normalBorder =
-      new EtchedBorder(BevelBorder.LOWERED, Color.gray, Color.white);
   protected final Border focusBorder =
-      new EtchedBorder(BevelBorder.LOWERED, focusColor, focusColor);
-  protected final Border lostFocusBorder =
-      new EtchedBorder(BevelBorder.LOWERED, lostFocusColor, lostFocusColor);
+      BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
+  protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
 
   protected final RenderedImageLayer<E> imageLayer;
   protected Panner<E> panner;
@@ -210,9 +208,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     initActionWState();
     graphicMouseHandler = new GraphicMouseHandler<>(this);
 
-    setBorder(normalBorder);
+    setBorder(viewBorder);
     setFocusable(true);
-    // Must be larger to the screens to be resize correctly by the container
+    // Must be larger to the screens to be resized correctly by the container
     setPreferredSize(new Dimension(4096, 4096));
     setMinimumSize(new Dimension(50, 50));
   }
@@ -282,8 +280,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                   }
 
                   JPopupMenu popupMenu = new JPopupMenu();
-                  TitleMenuItem itemTitle =
-                      new TitleMenuItem(ActionW.SYNCH.getTitle(), popupMenu.getInsets());
+                  TitleMenuItem itemTitle = new TitleMenuItem(ActionW.SYNCH.getTitle());
                   popupMenu.add(itemTitle);
                   popupMenu.addSeparator();
 
@@ -291,8 +288,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                     JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(a.getKey(), a.getValue());
                     menuItem.addActionListener(
                         e -> {
-                          if (e.getSource() instanceof JCheckBoxMenuItem) {
-                            JCheckBoxMenuItem item = (JCheckBoxMenuItem) e.getSource();
+                          if (e.getSource() instanceof JCheckBoxMenuItem item) {
                             synch.getActions().put(item.getText(), item.isSelected());
                           }
                         });
@@ -300,7 +296,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
                   }
                   popupMenu.show(invoker, x, y);
                 },
-                SYNCH_ICON);
+                ResourceUtil.getIcon(ActionIcon.SYNCH).derive(24, 24),
+                ActionW.SYNCH.getTitle());
         synchButton.setVisible(true);
         synchButton.setPosition(GridBagConstraints.SOUTHEAST);
       }
@@ -517,10 +514,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (series != null) {
       series.setFocused(focused);
     }
-    if (focused && getBorder() == lostFocusBorder) {
+    if (focused && getBorder() == viewBorder) {
       setBorder(focusBorder);
     } else if (!focused && getBorder() == focusBorder) {
-      setBorder(lostFocusBorder);
+      setBorder(viewBorder);
     }
   }
 
@@ -787,8 +784,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     // Only apply when the panel size is not zero.
     if (getWidth() != 0 && getHeight() != 0) {
       getViewModel().setModelOffset(modelOffsetX, modelOffsetY);
-      Optional.ofNullable(panner).ifPresent(Panner<E>::updateImageSize);
-      Optional.ofNullable(lens).ifPresent(ZoomWin<E>::updateZoom);
+      Optional.ofNullable(panner).ifPresent(Panner::updateImageSize);
+      Optional.ofNullable(lens).ifPresent(ZoomWin::updateZoom);
       updateAffineTransform();
     }
   }
@@ -853,7 +850,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void setSelected(Boolean selected) {
-    setBorder(selected ? focusBorder : normalBorder);
+    setBorder(selected ? focusBorder : viewBorder);
     // Remove the selection of graphics
     graphicManager.setSelectedGraphic(null);
     // Throws to the tool listener the current graphic selection.
@@ -872,25 +869,23 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public Font getLayerFont() {
-    int fontSize =
+    Font font = FontTools.getSemiBoldFont();
+    float fontSize =
         // Set font size according to the view size
-        (int)
+        (float)
             Math.ceil(
-                10
-                    / ((this.getGraphics()
-                                .getFontMetrics(FontTools.getFont12())
-                                .stringWidth("0123456789")
-                            * 7.0)
-                        / getWidth()));
-    fontSize = fontSize < 6 ? 6 : fontSize > 16 ? 16 : fontSize;
-    return new Font(Font.SANS_SERIF, 0, fontSize);
+                1.7
+                    * getWidth()
+                    / this.getGraphics().getFontMetrics(font).stringWidth("0123456789"));
+    fontSize = Math.max(8, Math.min(fontSize, font.getSize()));
+    return font.deriveFont(fontSize);
   }
 
   /** paint routine */
   @Override
   public void paintComponent(Graphics g) {
-    if (g instanceof Graphics2D) {
-      draw((Graphics2D) g);
+    if (g instanceof Graphics2D graphics2D) {
+      draw(graphics2D);
     }
   }
 
@@ -1014,6 +1009,70 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return imageLayer.getDisplayOpManager();
   }
 
+  public void propertyChange(SynchCineEvent synch) {
+    E imgElement = getImage();
+    graphicManager.deleteByLayerType(LayerType.CROSSLINES);
+
+    if (synch.getView() == this) {
+      if (tileOffset != 0) {
+        // Index could have changed when loading series.
+        imgElement =
+            series.getMedia(
+                synch.getSeriesIndex() + tileOffset,
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                getCurrentSortComparator());
+      } else if (synch.getMedia() instanceof ImageElement) {
+        imgElement = (E) synch.getMedia();
+      }
+    } else if (synch.getLocation() != null) {
+      Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
+      if (cutlines != null && cutlines) {
+        if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
+          // Compute cutlines from the location of selected image
+          computeCrosslines(synch.getLocation().doubleValue());
+        }
+      } else {
+        double location = synch.getLocation().doubleValue();
+        // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and
+        // related
+        // to
+        // a specific series
+        // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
+        // if (offset != null) {
+        // location += offset;
+        // }
+        imgElement =
+            series.getNearestImage(
+                location,
+                tileOffset,
+                (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+                getCurrentSortComparator());
+
+        AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+      }
+    } else {
+      // When no 3D information on the slice position
+      imgElement =
+          series.getMedia(
+              synch.getSeriesIndex() + tileOffset,
+              (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
+              getCurrentSortComparator());
+
+      AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
+    }
+
+    Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
+    // Avoid resetting zoom when the mode is not best fit
+    if (zoomFactor != null && zoomFactor >= 0.0) {
+      Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
+      actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
+      setImage(imgElement);
+      actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
+    } else {
+      setImage(imgElement);
+    }
+  }
+
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (series == null) {
@@ -1025,69 +1084,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (command.equals(ActionW.SYNCH.cmd())) {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
       if (synch instanceof SynchCineEvent) {
-        SynchCineEvent value = (SynchCineEvent) synch;
-
-        E imgElement = getImage();
-        graphicManager.deleteByLayerType(LayerType.CROSSLINES);
-
-        if (value.getView() == this) {
-          if (tileOffset != 0) {
-            // Index could have changed when loading series.
-            imgElement =
-                series.getMedia(
-                    value.getSeriesIndex() + tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                    getCurrentSortComparator());
-          } else if (value.getMedia() instanceof ImageElement) {
-            imgElement = (E) value.getMedia();
-          }
-        } else if (value.getLocation() != null) {
-          Boolean cutlines = (Boolean) actionsInView.get(ActionW.SYNCH_CROSSLINE.cmd());
-          if (cutlines != null && cutlines) {
-            if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(LayerType.CROSSLINES.name()))) {
-              // Compute cutlines from the location of selected image
-              computeCrosslines(value.getLocation().doubleValue());
-            }
-          } else {
-            double location = value.getLocation().doubleValue();
-            // TODO add a way in GUI to resynchronize series. Offset should be in Series tag and
-            // related
-            // to
-            // a specific series
-            // Double offset = (Double) actionsInView.get(ActionW.STACK_OFFSET.cmd());
-            // if (offset != null) {
-            // location += offset;
-            // }
-            imgElement =
-                series.getNearestImage(
-                    location,
-                    tileOffset,
-                    (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                    getCurrentSortComparator());
-
-            AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
-          }
-        } else {
-          // When no 3D information on the slice position
-          imgElement =
-              series.getMedia(
-                  value.getSeriesIndex() + tileOffset,
-                  (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
-                  getCurrentSortComparator());
-
-          AuditLog.LOGGER.info("synch:series nb:{}", series.getSeriesNumber());
-        }
-
-        Double zoomFactor = (Double) actionsInView.get(ActionW.ZOOM.cmd());
-        // Avoid resetting zoom when the mode is not best fit
-        if (zoomFactor != null && zoomFactor >= 0.0) {
-          Object zoomType = actionsInView.get(ViewCanvas.ZOOM_TYPE_CMD);
-          actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, ZoomType.CURRENT);
-          setImage(imgElement);
-          actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
-        } else {
-          setImage(imgElement);
-        }
+        propertyChange((SynchCineEvent) synch);
       } else {
         propertyChange(synch);
       }
@@ -1247,7 +1244,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     for (MouseWheelListener wheelListener : wheelListeners) {
       this.removeMouseWheelListener(wheelListener);
     }
-    Optional.ofNullable(lens).ifPresent(ZoomWin<E>::disableMouseAndKeyListener);
+    Optional.ofNullable(lens).ifPresent(ZoomWin::disableMouseAndKeyListener);
   }
 
   @Override
@@ -1359,8 +1356,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void drawPointer(Graphics2D g, Double x, Double y) {
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
     float[] dash = {5.0f};
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.translate(x, y);
     g.setStroke(new BasicStroke(3.0f));
     g.setPaint(pointerColor1);
@@ -1373,7 +1370,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       g.draw(pointer[i]);
     }
     g.translate(-x, -y);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_DEFAULT);
+    GuiUtils.resetRenderingHints(g, oldRenderingHints);
   }
 
   protected void showPixelInfos(MouseEvent mouseevent) {
@@ -1386,7 +1383,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           Math.max(
               oldBound.width,
               this.getGraphics()
-                      .getFontMetrics(getLayerFont())
+                      .getFontMetrics()
                       .stringWidth(
                           Messages.getString("DefaultView2d.pix")
                               + StringUtil.COLON_AND_SPACE
@@ -1470,7 +1467,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     AbstractAction exportToClipboardAction =
         new DefaultAction(
             Messages.getString("DefaultView2d.clipboard"),
-            new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/camera.png")),
+            ResourceUtil.getIcon(ActionIcon.EXPORT_CLIPBOARD),
             event -> {
               final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
               imageTransferHandler.exportToClipboard(
@@ -1567,18 +1564,5 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   public static Cursor getNewCursor(int type) {
     return new Cursor(type);
-  }
-
-  public static Cursor getCustomCursor(
-      String filename, String cursorName, int hotSpotX, int hotSpotY) {
-    Toolkit defaultToolkit = Toolkit.getDefaultToolkit();
-    ImageIcon icon = new ImageIcon(DefaultView2d.class.getResource("/icon/cursor/" + filename));
-    Dimension bestCursorSize =
-        defaultToolkit.getBestCursorSize(icon.getIconWidth(), icon.getIconHeight());
-    Point hotSpot =
-        new Point(
-            (hotSpotX * bestCursorSize.width) / icon.getIconWidth(),
-            (hotSpotY * bestCursorSize.height) / icon.getIconHeight());
-    return defaultToolkit.createCustomCursor(icon.getImage(), hotSpot, cursorName);
   }
 }

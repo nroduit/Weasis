@@ -9,15 +9,11 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
+import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Toolkit;
-import java.awt.image.FilteredImageSource;
-import java.awt.image.ImageFilter;
-import java.awt.image.ImageProducer;
 import java.util.Collection;
-import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.Icon;
@@ -30,7 +26,6 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JToggleButton;
 import javax.swing.ListSelectionModel;
-import javax.swing.UIManager;
 import org.dcm4che3.data.Attributes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,51 +34,49 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.viewer2d.KOComponentFactory.SelectedImageFilter;
 
-@SuppressWarnings("serial")
 public class KeyObjectToolBar extends WtoolBar {
   private static final Logger LOGGER = LoggerFactory.getLogger(KeyObjectToolBar.class);
 
-  public static final ImageIcon KO_STAR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw.png"));
+  public static final FlatSVGIcon KO_STAR_ICON = ResourceUtil.getToolBarIcon(ActionIcon.STAR);
   public static final ImageIcon KO_STAR_ICON_SELECTED;
-  public static final ImageIcon KO_FILTER_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/synch-KO.png"));
+  public static final FlatSVGIcon KO_FILTER_ICON =
+      ResourceUtil.getToolBarIcon(ActionIcon.SYNCH_STAR);
   public static final ImageIcon KO_FILTER_ICON_SELECTED;
 
-  public static final ImageIcon KO_ALL_STAR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/star_bw_all.png"));
-
   public static final ImageIcon KO_EDIT_SELECTION_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/32x32/edit-KO.png"));
+      ResourceUtil.getToolBarIcon(ActionIcon.EDIT_KEY_IMAGE);
+  public static final ImageIcon KO_STAR_ICON_EXIST;
 
   static {
-    ImageFilter imageFilter = new SelectedImageFilter(new float[] {1.0f, 0.78f, 0.0f}); // ORANGE
+    ColorFilter colorFilter = new ColorFilter();
+    colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_YELLOW.color);
+    KO_STAR_ICON_SELECTED = GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
+    KO_FILTER_ICON_SELECTED = GuiUtils.getDerivedIcon(KO_FILTER_ICON, colorFilter);
 
-    ImageProducer imageProducer =
-        new FilteredImageSource(KO_STAR_ICON.getImage().getSource(), imageFilter);
-    KO_STAR_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
-
-    imageProducer = new FilteredImageSource(KO_FILTER_ICON.getImage().getSource(), imageFilter);
-    KO_FILTER_ICON_SELECTED = new ImageIcon(Toolkit.getDefaultToolkit().createImage(imageProducer));
+    colorFilter = new ColorFilter();
+    colorFilter.add(new Color(0x6E6E6E), IconColor.ACTIONS_BLUE.color);
+    KO_STAR_ICON_EXIST = GuiUtils.getDerivedIcon(KO_STAR_ICON, colorFilter);
   }
 
   public KeyObjectToolBar(int index) {
     super(Messages.getString("KeyObjectToolBar.title"), index);
 
     final EventManager evtMgr = EventManager.getInstance();
-
-    // --------------------------------------------------------------------------------------------------
     final ToggleButtonListener koToggleAction =
         (ToggleButtonListener) evtMgr.getAction(ActionW.KO_TOOGLE_STATE);
     final JToggleButton toggleKOSelectionBtn = new JToggleButton();
@@ -95,7 +88,6 @@ public class KeyObjectToolBar extends WtoolBar {
     koToggleAction.registerActionState(toggleKOSelectionBtn);
     add(toggleKOSelectionBtn);
 
-    // --------------------------------------------------------------------------------------------------
     final ToggleButtonListener koFilterAction =
         (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
     final JToggleButton koFilterBtn = new JToggleButton();
@@ -107,7 +99,6 @@ public class KeyObjectToolBar extends WtoolBar {
     koFilterAction.registerActionState(koFilterBtn);
     add(koFilterBtn);
 
-    // --------------------------------------------------------------------------------------------------
     final ComboItemListener koSelectionAction =
         (ComboItemListener) evtMgr.getAction(ActionW.KO_SELECTION);
     GroupPopup koSelectionMenu = koSelectionAction.createGroupRadioMenu();
@@ -127,24 +118,6 @@ public class KeyObjectToolBar extends WtoolBar {
     koSelectionAction.registerActionState(koSelectionButton);
     add(koSelectionButton);
 
-    // --------------------------------------------------------------------------------------------------
-    // final JButton koToggleAllBtn = new JButton(KO_ALL_STAR_ICON);
-    //
-    // koToggleAllBtn.addActionListener(new ActionListener() {
-    //
-    // @Override
-    // public void actionPerformed(ActionEvent e) {
-    //
-    // View2d selectedViewPane = (View2d) EventManager.getInstance().getSelectedViewPane();
-    // KOSpecialElement koSelection = KOManager.getCurrentKOSelection(selectedViewPane);
-    // if (koSelection != null) {
-    // KOManager.setKeyObjectReferenceAllSeries(koSelection.isEmpty(), selectedViewPane);
-    // }
-    // }
-    // });
-    // add(koToggleAllBtn);
-
-    // --------------------------------------------------------------------------------------------------
     JButton koEditSelectionBtn = new JButton(KO_EDIT_SELECTION_ICON);
     koSelectionAction.registerActionState(koEditSelectionBtn);
     koEditSelectionBtn.addActionListener(e -> editKo(evtMgr, koSelectionAction, koFilterAction));
@@ -180,7 +153,7 @@ public class KeyObjectToolBar extends WtoolBar {
     list.setSelectionModel(new ToggleSelectionModel());
 
     if (koElementCollection != null) {
-      list.setListData(koElementCollection.stream().toArray(KOSpecialElement[]::new));
+      list.setListData(koElementCollection.toArray(KOSpecialElement[]::new));
     }
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -250,9 +223,8 @@ public class KeyObjectToolBar extends WtoolBar {
         DicomModel dicomModel = (DicomModel) selectedDicomSeries.getTagValue(TagW.ExplorerModel);
         if (dicomModel != null) {
           dicomModel.removeSpecialElement(list.getSelectedValue());
-          if (selectedView2d instanceof View2d) {
-            boolean needToRepaint =
-                ((View2d) selectedView2d).updateKOselectedState(selectedView2d.getImage());
+          if (selectedView2d instanceof View2d view2d) {
+            boolean needToRepaint = view2d.updateKOselectedState(selectedView2d.getImage());
             if (needToRepaint) {
               evtMgr.updateKeyObjectComponentsListener(selectedView2d);
               repaint();
@@ -286,36 +258,7 @@ public class KeyObjectToolBar extends WtoolBar {
   }
 
   private Icon buildKoSelectionIcon() {
-    final Icon mouseIcon = new ImageIcon(View2d.class.getResource("/icon/32x32/dcm-KO.png"));
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton) {
-              AbstractButton model = (AbstractButton) c;
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(ResourceUtil.getToolBarIcon(OtherIcon.KEY_IMAGE));
   }
 
   static class ToggleSelectionModel extends DefaultListSelectionModel {

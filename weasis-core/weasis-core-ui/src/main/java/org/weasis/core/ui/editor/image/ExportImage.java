@@ -13,13 +13,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import javax.swing.ToolTipManager;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageLayer;
@@ -28,7 +28,6 @@ import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
-  private static final long serialVersionUID = 1149562889654679335L;
 
   private final ViewCanvas<E> view2d;
   private Graphics2D currentG2d;
@@ -39,7 +38,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     this.view2d = view2d;
     // Remove OpEventListener to avoid reseting some parameters when setting the series
     this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
-    setFont(FontTools.getFont8());
+    setFont(FontTools.getMiniFont());
     this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
     infoLayer.setVisible(view2d.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);
@@ -114,8 +113,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
     // Set font size according to the view size
     g2d.setFont(getLayerFont());
-    g2d.setRenderingHint(
-        RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, true, true);
     // Set label box size and spaces between items
     graphicManager.updateLabels(Boolean.TRUE, this);
 
@@ -137,10 +135,9 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     if (infoLayer != null) {
       infoLayer.paint(g2d);
     }
+    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
-    g2d.setRenderingHint(
-        RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_DEFAULT);
 
     // Reset label box size and spaces between items
     graphicManager.updateLabels(Boolean.TRUE, view2d);

@@ -9,6 +9,9 @@
  */
 package org.weasis.core.api.image.op;
 
+import javax.swing.Icon;
+import org.weasis.core.api.image.op.ByteLutCollection.Lut;
+
 public class ByteLut {
 
   private final String name;
@@ -30,5 +33,10 @@ public class ByteLut {
 
   public byte[][] getLutTable() {
     return lutTable;
+  }
+
+  public Icon getIcon(int height) {
+    return ByteLutCollection.getLUTIcon(
+        lutTable == null ? Lut.GRAY.getByteLut().getLutTable() : lutTable, height);
   }
 }

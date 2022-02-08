@@ -14,15 +14,11 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.location.CBaseLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.Component;
-import java.awt.Dimension;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
-import org.weasis.core.ui.editor.image.dockable.MiniTool;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public abstract class PluginTool extends JPanel implements DockableTool {
-
-  private static final long serialVersionUID = -204558500055275231L;
 
   public enum POSITION {
     NORTH,
@@ -131,11 +127,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     if (!dockable.isVisible()) {
       UIManager.DOCKING_CONTROL.addVetoFocusListener(UIManager.DOCKING_VETO_FOCUS);
       Component component = getToolComponent();
-      if (component instanceof MiniTool) {
-        JMVUtils.setPreferredWidth(component, getDockableWidth(), getDockableWidth());
-      } else {
-        JMVUtils.setPreferredWidth(component, getDockableWidth());
-      }
+      GuiUtils.setPreferredWidth(component, dockableWidth, dockableWidth);
       if (dockable.getFocusComponent() == component) {
         UIManager.DOCKING_CONTROL.addDockable(dockable);
         dockable.setExtendedMode(defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode);
@@ -173,7 +165,7 @@ public abstract class PluginTool extends JPanel implements DockableTool {
           dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
         }
         // Set default size for FlapLayout
-        dockable.setMinimizedSize(new Dimension(dockableWidth, 50));
+        dockable.setMinimizedSize(GuiUtils.getDimension(dockableWidth, 50));
         dockable.setExtendedMode(mode);
       }
       dockable.setVisible(true);

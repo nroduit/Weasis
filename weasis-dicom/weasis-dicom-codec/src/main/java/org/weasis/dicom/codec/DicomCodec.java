@@ -16,7 +16,7 @@ import java.util.Hashtable;
 import javax.imageio.spi.IIOServiceProvider;
 import org.dcm4che3.data.SpecificCharacterSet;
 import org.dcm4che3.data.Tag;
-import org.dcm4che3.imageio.plugins.dcm.DicomImageReaderSpi;
+import org.dcm4che3.img.DicomImageReaderSpi;
 import org.dcm4che3.io.BulkDataDescriptor;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
@@ -80,16 +80,7 @@ public class DicomCodec implements Codec {
         return false;
       };
 
-  private static final IIOServiceProvider[] dcm4cheCodecs = {
-    new DicomImageReaderSpi(),
-    new org.dcm4che3.imageio.plugins.rle.RLEImageReaderSpi(),
-    new org.dcm4che3.opencv.NativeJLSImageReaderSpi(),
-    new org.dcm4che3.opencv.NativeJPEGImageReaderSpi(),
-    new org.dcm4che3.opencv.NativeJ2kImageReaderSpi(),
-    new org.dcm4che3.opencv.NativeJLSImageWriterSpi(),
-    new org.dcm4che3.opencv.NativeJPEGImageWriterSpi(),
-    new org.dcm4che3.opencv.NativeJ2kImageWriterSpi()
-  };
+  private static final IIOServiceProvider[] dcm4cheCodecs = {new DicomImageReaderSpi()};
 
   @Override
   public String[] getReaderMIMETypes() {
@@ -167,8 +158,6 @@ public class DicomCodec implements Codec {
     // Set the default encoding (must contain ASCII)
     SpecificCharacterSet.setDefaultCharacterSet("ISO_IR 100"); // NON-NLS
 
-    // Register SPI in imageio registry with the classloader of this bundle (provides also the
-    // classpath for discovering the SPI files). Here are the codecs:
     for (IIOServiceProvider p : dcm4cheCodecs) {
       ImageioUtil.registerServiceProvider(p);
     }

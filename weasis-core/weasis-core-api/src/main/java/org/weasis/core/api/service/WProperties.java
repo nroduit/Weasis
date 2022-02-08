@@ -22,7 +22,6 @@ import org.weasis.core.api.util.GzipManager;
 import org.weasis.core.util.StringUtil;
 
 public class WProperties extends Properties {
-  private static final long serialVersionUID = 3647479963645248145L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(WProperties.class);
 

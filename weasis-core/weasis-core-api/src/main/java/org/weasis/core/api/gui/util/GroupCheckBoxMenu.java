@@ -49,11 +49,10 @@ public class GroupCheckBoxMenu implements GroupPopup {
       CheckBoxModel item = itemList.get(0);
       item.setSelected(all);
       JCheckBox box = new JCheckBox(item.getObject().toString(), null, item.isSelected());
-      box.setFont(FontTools.getFont12Bold());
+      box.setFont(FontTools.getBoldFont());
       box.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBox) {
-              JCheckBox btn = (JCheckBox) e.getSource();
+            if (e.getSource() instanceof JCheckBox btn) {
               selectAll(popupMouseButtons, btn.isSelected());
             }
           });
@@ -63,14 +62,14 @@ public class GroupCheckBoxMenu implements GroupPopup {
     for (int i = 1; i < itemList.size(); i++) {
       Icon icon = null;
       CheckBoxModel item = itemList.get(i);
-      if (item.getObject() instanceof GUIEntry) {
-        icon = ((GUIEntry) item.getObject()).getIcon();
+      if (item.getObject() instanceof GUIEntry entry) {
+        icon = entry.getIcon();
       }
       JCheckBox box = new JCheckBox(item.getObject().toString(), icon, item.isSelected());
+      GuiUtils.applySelectedIconEffect(box);
       box.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBox) {
-              JCheckBox btn = (JCheckBox) e.getSource();
+            if (e.getSource() instanceof JCheckBox btn) {
               item.setSelected(btn.isSelected());
             }
           });
@@ -82,8 +81,8 @@ public class GroupCheckBoxMenu implements GroupPopup {
   private void selectAll(final JComponent parent, boolean selected) {
     for (int i = 0; i < parent.getComponentCount(); i++) {
       Component c = parent.getComponent(i);
-      if (c instanceof AbstractButton) {
-        ((AbstractButton) c).setSelected(selected);
+      if (c instanceof AbstractButton button) {
+        button.setSelected(selected);
       }
     }
 
@@ -99,16 +98,15 @@ public class GroupCheckBoxMenu implements GroupPopup {
     JMenu menu = new JMenu(title);
     for (CheckBoxModel item : itemList) {
       Icon icon = null;
-      if (item.getObject() instanceof GUIEntry) {
-        icon = ((GUIEntry) item.getObject()).getIcon();
+      if (item.getObject() instanceof GUIEntry entry) {
+        icon = entry.getIcon();
       }
 
       JCheckBoxMenuItem box =
           new JCheckBoxMenuItem(item.getObject().toString(), icon, item.isSelected());
       box.addActionListener(
           e -> {
-            if (e.getSource() instanceof JCheckBoxMenuItem) {
-              JCheckBoxMenuItem btn = (JCheckBoxMenuItem) e.getSource();
+            if (e.getSource() instanceof JCheckBoxMenuItem btn) {
               if (startBySelectAll
                   && itemList.get(0).getObject().toString().equals(btn.getText())) {
                 selectAll(menu, btn.isSelected());

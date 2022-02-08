@@ -30,11 +30,12 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphicArea;
 import org.weasis.core.ui.model.utils.algo.MinimumEnclosingRectangle;
@@ -46,12 +47,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "polygon")
 @XmlRootElement(name = "polygon")
 public class PolygonGraphic extends AbstractDragGraphicArea {
-  private static final long serialVersionUID = 3835917798842596122L;
 
   public static final Integer POINTS_NUMBER = UNDEFINED;
 
-  public static final Icon ICON =
-      new ImageIcon(PolygonGraphic.class.getResource("/icon/22x22/draw-polygon.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_POLYGON);
 
   public static final Measurement AREA =
       new Measurement(Messages.getString("measure.area"), 1, true, true, true);

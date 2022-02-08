@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer.print;
 
-import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Window;
@@ -22,12 +21,12 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.WindowConstants;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -130,37 +129,24 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
   }
 
   private void initComponents() {
-    final JPanel rootPane = new JPanel();
-    rootPane.setBorder(new EmptyBorder(10, 15, 10, 15));
-    this.setContentPane(rootPane);
+    JRootPane rootPane = getRootPane();
+    rootPane.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
 
-    final JPanel printersCfg = new JPanel();
+    JPanel printersCfg = GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 5, 5);
     printersCfg.setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomPrintDialog.print_title"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
-    FlowLayout flPrintersCfg = new FlowLayout();
-    flPrintersCfg.setAlignment(FlowLayout.LEFT);
-    printersCfg.setLayout(flPrintersCfg);
+        GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.print_title")));
 
-    rootPane.setLayout(new BorderLayout(0, 0));
-    this.getContentPane().add(printersCfg, BorderLayout.NORTH);
-
-    JLabel printerLabel = new JLabel();
+    JLabel printerLabel =
+        new JLabel(Messages.getString("DicomPrintDialog.printer") + StringUtil.COLON);
     printersCfg.add(printerLabel);
 
-    printerLabel.setText(Messages.getString("DicomPrintDialog.printer") + StringUtil.COLON);
     printersComboBox = new JComboBox<>();
     printersCfg.add(printersComboBox);
 
     printersComboBox.setModel(new DefaultComboBoxModel<>());
 
     AbstractDicomNode.loadDicomNodes(printersComboBox, AbstractDicomNode.Type.PRINTER);
-    JMVUtils.setPreferredWidth(printersComboBox, 185, 185);
+    GuiUtils.setPreferredWidth(printersComboBox, 200, 185);
     AbstractDicomNode.addTooltipToComboList(printersComboBox);
 
     Component horizontalStrut = Box.createHorizontalStrut(20);
@@ -168,14 +154,12 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     JButton addPrinterButton = new JButton(Messages.getString("DicomPrintDialog.add"));
     printersCfg.add(addPrinterButton);
 
-    JButton editButton = new JButton();
+    JButton editButton = new JButton(Messages.getString("DicomPrintDialog.edit"));
     printersCfg.add(editButton);
 
-    editButton.setText(Messages.getString("DicomPrintDialog.edit"));
-    JButton deleteButton = new JButton();
+    JButton deleteButton = new JButton(Messages.getString("DicomPrintDialog.delete"));
     printersCfg.add(deleteButton);
 
-    deleteButton.setText(Messages.getString("DicomPrintDialog.delete"));
     deleteButton.addActionListener(
         evt -> {
           AbstractDicomNode.deleteNodeActionPerformed(printersComboBox);
@@ -194,25 +178,19 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         });
     printersComboBox.addActionListener(evt -> applyOptionsfromSelected());
 
+    rootPane.add(printersCfg, "newline, spanx");
+
     optionPane = new DicomPrintOptionPane();
-    this.getContentPane().add(optionPane, BorderLayout.CENTER);
+    rootPane.add(optionPane, "newline, gaptop 10, spanx");
 
-    JPanel footPanel = new JPanel();
-    FlowLayout flowLayout = (FlowLayout) footPanel.getLayout();
-    flowLayout.setVgap(15);
-    flowLayout.setAlignment(FlowLayout.RIGHT);
-    flowLayout.setHgap(20);
-    getContentPane().add(footPanel, BorderLayout.SOUTH);
-    JButton printButton = new JButton();
-    footPanel.add(printButton);
-
-    printButton.setText(Messages.getString("DicomPrintDialog.print"));
+    JButton printButton = new JButton(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);
-
     getRootPane().setDefaultButton(printButton);
     JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
-    footPanel.add(cancelButton);
     cancelButton.addActionListener(evt -> doClose());
+
+    rootPane.add(printButton, "newline, skip, growx 0, alignx trailing");
+    rootPane.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
   }
 
   private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -265,8 +243,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
   private void applyOptionsfromSelected() {
     Object selectedItem = printersComboBox.getSelectedItem();
-    if (selectedItem instanceof DicomPrintNode) {
-      optionPane.applyOptions(((DicomPrintNode) selectedItem).getPrintOptions());
+    if (selectedItem instanceof DicomPrintNode printNode) {
+      optionPane.applyOptions(printNode.getPrintOptions());
     }
   }
 }

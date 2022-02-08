@@ -61,7 +61,6 @@ import org.weasis.core.ui.pref.Monitor;
 import org.weasis.core.ui.util.MouseEventDouble;
 
 public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPlugin<E> {
-  private static final long serialVersionUID = -5804430771962614157L;
 
   public static final String F_VIEWS = Messages.getString("ImageViewerPlugin.2");
 
@@ -226,10 +225,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public GridBagLayoutModel getOriginalLayoutModel() {
     // Get the non clone layout from the list
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener) {
-      for (Object element : ((ComboItemListener) layout).getAllItem()) {
-        if (element instanceof GridBagLayoutModel) {
-          GridBagLayoutModel gbm = (GridBagLayoutModel) element;
+    if (layout instanceof ComboItemListener<?> comboItemListener) {
+      for (Object element : comboItemListener.getAllItem()) {
+        if (element instanceof GridBagLayoutModel gbm) {
           if ((layoutModel.getIcon() != null && gbm.getIcon() == layoutModel.getIcon())
               || layoutModel.toString().equals(gbm.toString())) {
             return gbm;

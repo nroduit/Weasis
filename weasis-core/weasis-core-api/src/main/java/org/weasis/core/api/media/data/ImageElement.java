@@ -23,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.LutShape;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
@@ -34,6 +33,10 @@ import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
+import org.weasis.opencv.op.lut.LutShape;
+import org.weasis.opencv.op.lut.WlParams;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 public class ImageElement extends MediaElement {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageElement.class);
@@ -42,7 +45,7 @@ public class ImageElement extends MediaElement {
       ThreadUtil.buildNewSingleThreadExecutor("Image Loader"); // NON-NLS
 
   private static final NativeCache<ImageElement, PlanarImage> mCache =
-      new NativeCache<ImageElement, PlanarImage>(Runtime.getRuntime().maxMemory() / 2) {
+      new NativeCache<>(Runtime.getRuntime().maxMemory() / 2) {
 
         @Override
         protected void afterEntryRemove(ImageElement key, PlanarImage img) {
@@ -85,29 +88,19 @@ public class ImageElement extends MediaElement {
     // Do not compute min and max it has already been done
 
     if (img != null && !isImageAvailable()) {
-
-      if (ImageConversion.convertToDataType(img.type()) == DataBuffer.TYPE_BYTE
-          && exclude8bitImage) {
-        this.minPixelValue = 0.0;
-        this.maxPixelValue = 255.0;
-      } else {
-        MinMaxLocResult val = ImageProcessor.findMinMaxValues(img.toMat());
-        if (val != null) {
-          this.minPixelValue = val.minVal;
-          this.maxPixelValue = val.maxVal;
-        }
-
-        // Handle special case when min and max are equal, ex. black image
-        // + 1 to max enables to display the correct value
-        if (this.minPixelValue.equals(this.maxPixelValue)) {
-          this.maxPixelValue += 1.0;
-        }
-      }
+      MinMaxLocResult res = ImageProcessor.findRawMinMaxValues(img, exclude8bitImage);
+      this.minPixelValue = res.minVal;
+      this.maxPixelValue = res.maxVal;
     }
   }
 
   public boolean isImageAvailable() {
     return maxPixelValue != null && minPixelValue != null;
+  }
+
+  public void resetImageAvailable() {
+    this.maxPixelValue = null;
+    this.minPixelValue = null;
   }
 
   protected boolean isGrayImage(RenderedImage source) {
@@ -116,27 +109,27 @@ public class ImageElement extends MediaElement {
         && !(source.getColorModel() instanceof IndexColorModel);
   }
 
-  public LutShape getDefaultShape(boolean pixelPadding) {
+  public LutShape getDefaultShape(WlPresentation wlp) {
     return LutShape.LINEAR;
   }
 
-  public double getDefaultWindow(boolean pixelPadding) {
-    return getMaxValue(null, pixelPadding) - getMinValue(null, pixelPadding);
+  public double getDefaultWindow(WlPresentation wlp) {
+    return getMaxValue(wlp) - getMinValue(wlp);
   }
 
-  public double getDefaultLevel(boolean pixelPadding) {
+  public double getDefaultLevel(WlPresentation wlp) {
     if (isImageAvailable()) {
-      double min = getMinValue(null, pixelPadding);
-      return min + (getMaxValue(null, pixelPadding) - min) / 2.0;
+      double min = getMinValue(wlp);
+      return min + (getMaxValue(wlp) - min) / 2.0;
     }
     return 0.0f;
   }
 
-  public double getMaxValue(TagReadable tagable, boolean pixelPadding) {
+  public double getMaxValue(WlPresentation wlp) {
     return getPixelMax();
   }
 
-  public double getMinValue(TagReadable tagable, boolean pixelPadding) {
+  public double getMinValue(WlPresentation wlp) {
     return getPixelMin();
   }
 
@@ -220,19 +213,11 @@ public class ImageElement extends MediaElement {
     return pixelSizeCalibrationDescription;
   }
 
-  public Number pixelToRealValue(Number pixelValue, TagReadable tagable, boolean pixelPadding) {
+  public Number pixelToRealValue(Number pixelValue, WlPresentation wlp) {
     return pixelValue;
   }
 
-  public LookupTableCV getVOILookup(
-      TagReadable tagable,
-      Double window,
-      Double level,
-      Double minLevel,
-      Double maxLevel,
-      LutShape shape,
-      boolean fillLutOutside,
-      boolean pixelPadding) {
+  public LookupTableCV getVOILookup(WlParams wl) {
     return null;
   }
 
@@ -298,8 +283,9 @@ public class ImageElement extends MediaElement {
         (params == null) ? null : (Boolean) params.get(ActionW.IMAGE_PIX_PADDING.cmd());
 
     pixelPadding = (pixelPadding == null) ? Boolean.TRUE : pixelPadding;
-    window = (window == null) ? getDefaultWindow(pixelPadding) : window;
-    level = (level == null) ? getDefaultLevel(pixelPadding) : level;
+    DefaultWlPresentation pr = new DefaultWlPresentation(null, pixelPadding);
+    window = (window == null) ? getDefaultWindow(pr) : window;
+    level = (level == null) ? getDefaultLevel(pr) : level;
 
     return getDefaultRenderedImage(this, imageSource, window, level, pixelPadding);
   }
@@ -342,13 +328,9 @@ public class ImageElement extends MediaElement {
   }
 
   public static PlanarImage getDefaultRenderedImage(
-      ImageElement image, PlanarImage source, boolean pixelPadding) {
+      ImageElement image, PlanarImage source, WlParams wl) {
     return getDefaultRenderedImage(
-        image,
-        source,
-        image.getDefaultWindow(pixelPadding),
-        image.getDefaultLevel(pixelPadding),
-        true);
+        image, source, image.getDefaultWindow(wl), image.getDefaultLevel(wl), true);
   }
 
   /**
@@ -393,6 +375,9 @@ public class ImageElement extends MediaElement {
       if (manager.getFirstNodeInputImage() != cacheImage || manager.needProcessing()) {
         manager.setFirstNode(cacheImage);
         img = manager.process();
+        // Compute again the min/max with the manager (preprocessing)
+        resetImageAvailable();
+        findMinMaxValues(img, true);
       }
 
       if (img != null) {

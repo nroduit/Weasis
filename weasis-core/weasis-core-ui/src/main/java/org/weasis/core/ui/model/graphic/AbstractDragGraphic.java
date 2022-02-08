@@ -27,7 +27,6 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 @XmlTransient
 public abstract class AbstractDragGraphic extends AbstractGraphic implements DragGraphic {
-  private static final long serialVersionUID = 4694941331227706591L;
 
   private Boolean resizingOrMoving = DEFAULT_RESIZE_OR_MOVING;
 

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpNode;
@@ -34,16 +33,15 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.editor.image.Canvas;
 import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
-import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 /**
  * The Class RenderedImageLayer.
@@ -52,7 +50,6 @@ import org.weasis.opencv.op.ImageConversion;
  */
 public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     implements Layer, ImageLayer<E> {
-  private static final long serialVersionUID = -7071485066284475687L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(RenderedImageLayer.class);
 
@@ -237,7 +234,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         g2d.setRenderingHint(
             RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
       }
-      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), null, null);
+      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), 0, 0, null);
     } catch (Exception e) {
       LOGGER.error("Cannot draw the image", e);
       if ("java.io.IOException: closed".equals(e.getMessage())) { // NON-NLS
@@ -361,8 +358,8 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     double imageResY = viewScale;
     // Do not print lower than 72 dpi (drawRenderedImage can only decrease the size for printer not
     // interpolate)
-    imageResX = imageResX < ratioX ? ratioX : imageResX;
-    imageResY = imageResY < ratioY ? ratioY : imageResY;
+    imageResX = Math.max(imageResX, ratioX);
+    imageResY = Math.max(imageResY, ratioY);
     matrix[0] = imageResX;
     matrix[4] = imageResY;
 
@@ -495,15 +492,12 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
     Number val = pixelValue;
     E imageElement = getSourceImage();
     if (imageElement != null) {
-      TagReadable tagable = null;
-      boolean pixelPadding = false;
+      WlPresentation wlp = null;
       WindowOp wlOp = (WindowOp) disOpManager.getNode(WindowOp.OP_NAME);
       if (wlOp != null) {
-        pixelPadding =
-            LangUtil.getNULLtoTrue((Boolean) wlOp.getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-        tagable = (TagReadable) wlOp.getParam("pr.element");
+        wlp = wlOp.getWlPresentation();
       }
-      val = imageElement.pixelToRealValue(pixelValue, tagable, pixelPadding);
+      val = imageElement.pixelToRealValue(pixelValue, wlp);
     }
 
     if (val != null) {

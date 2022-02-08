@@ -15,7 +15,6 @@ import org.weasis.acquire.explorer.core.ItemList;
 import org.weasis.acquire.explorer.core.ItemList.Interval;
 
 public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboBoxModel<T> {
-  private static final long serialVersionUID = -7664267643457177724L;
 
   private T selectedItem = null;
   private T lastSelectedItem = null;
@@ -61,17 +60,15 @@ public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboB
   @Override
   protected PropertyChangeListener getPropertyChangeListener() {
     return evt -> {
-      if (evt.getNewValue() instanceof Interval) {
-        Interval interval = (Interval) evt.getNewValue();
-
+      if (evt.getNewValue() instanceof Interval interval) {
         switch (ItemList.eProperty.valueOf(evt.getPropertyName())) {
-          case INTERVAL_ADDED:
+          case INTERVAL_ADDED -> {
             fireIntervalAdded(ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
             if (selectedItem == null && itemList.getSize() > 0) {
               setSelectedItem(itemList.getLastItem());
             }
-            break;
-          case INTERVAL_REMOVED:
+          }
+          case INTERVAL_REMOVED -> {
             for (int i = interval.getMin(); i <= interval.getMax(); i++) {
               T item = itemList.getItem(i);
               if (item != null && item.equals(selectedItem)) {
@@ -86,12 +83,12 @@ public class ItemListComboBoxModel<T> extends ItemListModel<T> implements ComboB
               }
             }
             fireIntervalRemoved(ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
-            break;
-          case CONTENT_CHANGED:
-            fireContentsChanged(ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
+          }
+          case CONTENT_CHANGED -> fireContentsChanged(
+              ItemListComboBoxModel.this, interval.getMin(), interval.getMax());
+
             // note : used by JComboBox only to check if selectedItem has changed but not used by
             // the renderer
-            break;
         }
       }
     };

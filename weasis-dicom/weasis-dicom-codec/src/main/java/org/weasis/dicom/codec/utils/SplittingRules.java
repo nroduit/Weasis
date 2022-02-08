@@ -91,7 +91,7 @@ public class SplittingRules {
     XMLStreamReader xmler = null;
     InputStream stream = null;
     try {
-      File file = ResourceUtil.getResource("series-splitting-rules.xml"); // NON-NLS
+      File file = ResourceUtil.getResource(DicomResource.SERIES_SPITTING_RULES);
       if (!file.canRead()) {
         return;
       }

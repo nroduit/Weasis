@@ -31,12 +31,13 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TransferSyntax;
+import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
 
@@ -54,7 +55,8 @@ public abstract class AbstractDicomNode {
   public enum Type {
     DICOM(Messages.getString("AbstractDicomNode.dcm_node"), "dicomNodes.xml"),
     DICOM_CALLING(
-        Messages.getString("AbstractDicomNode.dcm_calling_node"), "dicomCallingNodes.xml"),
+        Messages.getString("AbstractDicomNode.dcm_calling_node"),
+        DicomResource.CALLING_NODES.getPath()),
     PRINTER(Messages.getString("AbstractDicomNode.dcm_printer"), "dicomPrinterNodes.xml"),
     WEB(Messages.getString("AbstractDicomNode.dcm_web_node"), "dicomWebNodes.xml");
 
@@ -373,7 +375,7 @@ public abstract class AbstractDicomNode {
               (JComboBox<DefaultDicomNode>) comboBox,
               type);
     }
-    JMVUtils.showCenterScreen(dialog, comboBox);
+    GuiUtils.showCenterScreen(dialog, comboBox);
   }
 
   public static void editNodeActionPerformed(JComboBox<? extends AbstractDicomNode> comboBox) {
@@ -398,7 +400,7 @@ public abstract class AbstractDicomNode {
                   (JComboBox<DefaultDicomNode>) comboBox,
                   type);
         }
-        JMVUtils.showCenterScreen(dialog, comboBox);
+        GuiUtils.showCenterScreen(dialog, comboBox);
       } else {
         JOptionPane.showMessageDialog(
             comboBox,

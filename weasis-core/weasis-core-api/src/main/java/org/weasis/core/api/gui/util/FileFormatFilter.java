@@ -142,7 +142,7 @@ public class FileFormatFilter extends FileFilter {
     // Get the current available codecs.
     List<String> namesList =
         BundleTools.CODEC_PLUGINS.stream()
-            .flatMap(c -> Arrays.asList(c.getReaderExtensions()).stream())
+            .flatMap(c -> Arrays.stream(c.getReaderExtensions()))
             .distinct()
             .sorted()
             .collect(Collectors.toList());

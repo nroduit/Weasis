@@ -38,10 +38,11 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
     for (int i = 0; i < dataModel.getSize(); i++) {
       Object object = dataModel.getElementAt(i);
       Icon icon = null;
-      if (object instanceof GUIEntry) {
-        icon = ((GUIEntry) object).getIcon();
+      if (object instanceof GUIEntry entry) {
+        icon = entry.getIcon();
       }
       JToggleButton b = new JToggleButton(icon);
+      GuiUtils.applySelectedIconEffect(b);
       b.setToolTipText(object.toString());
       map.put(b, object);
       b.setSelected(object == selectedItem);
@@ -85,8 +86,7 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof JToggleButton) {
-      JToggleButton item = (JToggleButton) e.getSource();
+    if (e.getSource() instanceof JToggleButton item) {
       if (item.isSelected()) {
         dataModel.setSelectedItem(map.get(item));
       }

@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
@@ -27,8 +26,7 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
 public abstract class AcquireMetadataTableModel extends AbstractTableModel {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AcquireGlobalMeta.class);
-  private static final long serialVersionUID = -2336248192936430413L;
+  private static final Logger LOGGER = LoggerFactory.getLogger(AcquireMetadataTableModel.class);
 
   protected String[] headers = {
     Messages.getString("AcquireMetadataTableModel.tag"),
@@ -39,7 +37,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   private final TagW[] tagsEditable;
   private final TagW[] tagsToPublish;
 
-  public AcquireMetadataTableModel(
+  protected AcquireMetadataTableModel(
       Tagable tagable, TagW[] tagsToDisplay, TagW[] tagsEditable, TagW[] tagsToPublish) {
     this.tagable = Optional.ofNullable(tagable);
     this.tagsToPublish = tagsToPublish == null ? new TagW[0] : tagsToPublish;
@@ -71,7 +69,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
         if (val == null) {
           return false;
         }
-        if (val instanceof String && !StringUtil.hasText((String) val)) {
+        if (val instanceof String str && !StringUtil.hasText(str)) {
           return false;
         }
       }
@@ -109,14 +107,11 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     TagW tag = tagsToDisplay()[rowIndex];
-    switch (columnIndex) {
-      case 0:
-        return tag;
-      case 1:
-        return tagable.map(value -> value.getTagValue(tag)).orElse(null);
-    }
-
-    return null;
+    return switch (columnIndex) {
+      case 0 -> tag;
+      case 1 -> tagable.map(value -> value.getTagValue(tag)).orElse(null);
+      default -> null;
+    };
   }
 
   public boolean isValueRequired(int rowIndex) {
@@ -128,7 +123,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   public boolean isCellEditable(int rowIndex, int columnIndex) {
     TagW tag = tagsToDisplay()[rowIndex];
     if (columnIndex == 1) {
-      return Arrays.stream(tagsEditable()).anyMatch(t -> t.equals(tag));
+      return Arrays.asList(tagsEditable()).contains(tag);
     }
     return false;
   }
@@ -157,7 +152,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
       if (tag != null) {
         list.add(tag);
       } else if (StringUtil.hasText(s)) {
-        LOGGER.warn("Cannot find the tag named {}", s.trim());
+        LOGGER.warn("Cannot find the tag named {}", s);
       }
     }
     return list.toArray(new TagW[0]);

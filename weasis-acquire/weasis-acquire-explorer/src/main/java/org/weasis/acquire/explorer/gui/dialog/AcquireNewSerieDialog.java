@@ -24,7 +24,6 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.core.api.media.data.ImageElement;
 
-@SuppressWarnings("serial")
 public class AcquireNewSerieDialog extends JDialog implements PropertyChangeListener {
   private final JTextField serieName = new JTextField();
   private final JOptionPane optionPane;

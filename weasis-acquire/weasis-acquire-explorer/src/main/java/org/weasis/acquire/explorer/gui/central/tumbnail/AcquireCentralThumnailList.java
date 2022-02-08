@@ -28,7 +28,7 @@ import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
@@ -37,7 +37,6 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.StringUtil;
 
-@SuppressWarnings({"serial"})
 public class AcquireCentralThumnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
   private AcquireTabPanel acquireTabPanel;
@@ -174,7 +173,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
                       new AcquireNewSerieDialog(
                           AcquireCentralThumnailList.this.acquireTabPanel,
                           AcquireManager.toImageElement(medias));
-                  JMVUtils.showCenterScreen(
+                  GuiUtils.showCenterScreen(
                       dialog, AcquireCentralThumnailList.this.acquireTabPanel);
                   repaint();
                 })));

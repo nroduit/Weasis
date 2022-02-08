@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <g fill="none">
+  <g stroke="#6e6e6e" stroke-linejoin="bevel" stroke-width="1.467">
+   <path d="m4.6186 3.6389 12.352 3.7505"/>
+   <path d="m11.934 5.9381c-2.8289 3.5039-3.701 6.9484 0 10.254"/>
+   <path d="m4.7933 18.519 12.377-3.4535"/>
+  </g>
+  <g stroke="#389fd6">
+   <rect transform="scale(-1,1)" x="-20.266" y="12.95" width="2.944" height="2.944" stroke-width="1.467" style="paint-order:stroke fill markers"/>
+   <g stroke-width="1.467">
+    <rect transform="scale(-1,1)" x="-20.266" y="6.1057" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
+    <rect transform="scale(-1,1)" x="-4.6775" y="17.563" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
+    <rect transform="scale(-1,1)" x="-4.6775" y="1.7335" width="2.944" height="2.944" style="paint-order:stroke fill markers"/>
+   </g>
+   <rect x="2.4042" y="2.4042" width="17.192" height="17.192" display="none" stroke-width="4.8083" style="paint-order:stroke fill markers"/>
+  </g>
+ </g>
+</svg>

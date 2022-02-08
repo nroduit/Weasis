@@ -9,12 +9,12 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.explorer.DicomFieldsView;
@@ -28,9 +28,7 @@ public class DcmHeaderToolBar extends WtoolBar {
       throw new IllegalArgumentException("EventManager cannot be null");
     }
 
-    final JButton metaButton =
-        new JButton(
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")));
+    final JButton metaButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.METADATA));
     metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
     metaButton.addActionListener(
         e -> DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer()));

@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
@@ -40,6 +39,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLConnection;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -245,22 +245,17 @@ public class ConfigData {
   }
 
   private void extractArgFromUri(String uri) {
-    try {
-      String url = URLDecoder.decode(uri, "UTF-8"); // NON-NLS
-      String[] cmds = url.split("\\$");
-      boolean windows =
-          System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS
-      if (cmds.length > 0) {
-        for (int i = 1; i < cmds.length; i++) {
-          // Fix Windows issue (add a trailing slash)
-          if (windows && i == cmds.length - 1 && cmds[i].endsWith("/")) {
-            cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
-          }
-          arguments.add(cmds[i]);
+    String url = URLDecoder.decode(uri, StandardCharsets.UTF_8);
+    String[] cmds = url.split("\\$");
+    boolean windows = System.getProperty(P_OS_NAME, "").toLowerCase().startsWith("win"); // NON-NLS
+    if (cmds.length > 0) {
+      for (int i = 1; i < cmds.length; i++) {
+        // Fix Windows issue (add a trailing slash)
+        if (windows && i == cmds.length - 1 && cmds[i].endsWith("/")) {
+          cmds[i] = cmds[i].substring(0, cmds[i].length() - 1);
         }
+        arguments.add(cmds[i]);
       }
-    } catch (UnsupportedEncodingException e) {
-      LOGGER.log(Level.SEVERE, "Decoding weasis URI", e);
     }
   }
 

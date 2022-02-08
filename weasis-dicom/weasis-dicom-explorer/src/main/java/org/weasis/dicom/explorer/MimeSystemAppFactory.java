@@ -13,11 +13,11 @@ import java.awt.Desktop;
 import java.io.File;
 import java.util.Map;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.MimeSystemAppViewer;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -28,8 +28,7 @@ import org.weasis.dicom.codec.FilesExtractor;
 public class MimeSystemAppFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MimeSystemAppViewer.app");
-  public static final Icon ICON =
-      new ImageIcon(MimeInspector.class.getResource("/icon/16x16/apps-system.png"));
+
   public static final MimeSystemAppViewer mimeSystemViewer =
       new MimeSystemAppViewer() {
 
@@ -40,11 +39,10 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
         @Override
         public void addSeries(MediaSeries series) {
-          if (series instanceof FilesExtractor) {
+          if (series instanceof FilesExtractor extractor) {
             // As SUN JRE supports only Gnome and responds "true" for Desktop.isDesktopSupported()
             // in KDE session, but actually does not support it.
             // http://bugs.sun.com/view_bug.do?bug_id=6486393
-            FilesExtractor extractor = (FilesExtractor) series;
             for (File file : extractor.getExtractFiles()) {
               if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { // NON-NLS
                 startAssociatedProgramFromLinux(file);
@@ -72,7 +70,7 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return ResourceUtil.getIcon(ActionIcon.OPEN_EXTERNAL);
   }
 
   @Override

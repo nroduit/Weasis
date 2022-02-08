@@ -14,7 +14,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.Optional;
-import javax.swing.ImageIcon;
+import javax.swing.BorderFactory;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import org.weasis.acquire.Messages;
@@ -27,9 +27,10 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.base.viewer2d.View2dContainer;
-import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -42,7 +43,6 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
  * @since 2.5.0 - 2016-04-06 - ylar - Creation
  */
 public class EditionTool extends PluginTool implements SeriesViewerListener {
-  private static final long serialVersionUID = -3662409181835644699L;
 
   public static final String BUTTON_NAME = Messages.getString("EditionTool.title_btn");
   private final JScrollPane rootPane = new JScrollPane();
@@ -52,13 +52,14 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
 
   public EditionTool(Type type) {
     super(BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, type, 9);
-    dockable.setTitleIcon(new ImageIcon(ImageTool.class.getResource("/icon/16x16/image.png")));
+    dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RASTER_IMAGE));
     setDockableWidth(300);
     setLayout(new BorderLayout());
 
     topPanel = new AcquireActionButtonsPanel(this);
 
     add(topPanel, BorderLayout.NORTH);
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
   }
 
   @Override

@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import org.dcm4che3.data.DatePrecision;
 import org.dcm4che3.util.DateUtils;
@@ -37,17 +38,16 @@ public class TagDTest {
    * <p>Note The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters of
    * the format YYYY.MM.DD for this VR. Use of this format is not compliant.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomDate() throws Exception {
+  public void testGetDicomDate() {
     LocalDate date1 = TagD.getDicomDate("19930822");
     assertEquals(LocalDate.of(1993, 8, 22), date1);
 
-    date1 = TagD.getDicomDate("1993:08:22");
+    date1 = TagD.getDicomDate("1993.08.22");
     assertEquals(LocalDate.of(1993, 8, 22), date1);
   }
 
@@ -75,13 +75,12 @@ public class TagDTest {
    * <p>Notes: 1. The ACR-NEMA Standard 300 (predecessor to DICOM) supported a string of characters
    * of the format HH:MM:SS.frac for this VR. Use of this format is not compliant.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomTime() throws Exception {
+  public void testGetDicomTime() {
     LocalTime time = TagD.getDicomTime("070907.0705 ");
     assertEquals(LocalTime.of(7, 9, 7, 70_500_000), time);
 
@@ -120,13 +119,12 @@ public class TagDTest {
    * <p>A 24-hour clock is used. Midnight shall be represented by only "0000" since "2400" would
    * violate the hour range.
    *
-   * @throws Exception
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_6.2.html">6.2
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomDateTime() throws Exception {
+  public void testGetDicomDateTime() {
 
     Date date = DateUtils.parseDA(null, "1993:08:22");
     LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -137,21 +135,21 @@ public class TagDTest {
     datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
     assertEquals(LocalTime.of(7, 9, 7, 70_000_000), datetime.toLocalTime());
 
-    LocalDateTime time = TagD.getDicomDateTime(null, "1953082711");
+    TemporalAccessor time = TagD.getDicomDateTime("1953082711");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300");
+    time = TagD.getDicomDateTime("19530827111300");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300.0");
+    time = TagD.getDicomDateTime("19530827111300.0");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0), time);
 
-    time = TagD.getDicomDateTime(null, "19530827111300.005");
+    time = TagD.getDicomDateTime("19530827111300.005");
     assertEquals(LocalDateTime.of(1953, 8, 27, 11, 13, 0, 5_000_000), time);
   }
 
   @Test
-  public void testGetDicomPatientSex() throws Exception {
+  public void testGetDicomPatientSex() {
     String sex = TagD.getDicomPatientSex(null);
     assertEquals("", sex);
 
@@ -175,7 +173,7 @@ public class TagDTest {
   }
 
   @Test
-  public void testGetDicomPersonName() throws Exception {
+  public void testGetDicomPersonName() {
     String name = TagD.getDicomPersonName(null);
     assertEquals("", name);
 
@@ -187,7 +185,7 @@ public class TagDTest {
   }
 
   @Test
-  public void testGetDicomPeriod() throws Exception {
+  public void testGetDicomPeriod() {
     String period = TagD.getDicomPeriod(null);
     assertEquals("", period);
 

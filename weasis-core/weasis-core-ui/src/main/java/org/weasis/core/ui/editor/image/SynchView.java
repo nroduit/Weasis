@@ -9,12 +9,13 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.util.HashMap;
 import java.util.Map;
-import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
 
@@ -24,7 +25,7 @@ public class SynchView implements GUIEntry {
           Messages.getString("SynchView.none"),
           "None", // NON-NLS
           Mode.NONE,
-          new ImageIcon(SynchView.class.getResource("/icon/22x22/none.png")),
+          ActionIcon.NONE,
           new HashMap<>());
   public static final SynchView DEFAULT_TILE;
   public static final SynchView DEFAULT_STACK;
@@ -51,7 +52,7 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_t"),
             "Tile", // NON-NLS
             Mode.TILE,
-            new ImageIcon(SynchView.class.getResource("/icon/22x22/tile.png")),
+            ActionIcon.TILE,
             actions);
 
     actions = new HashMap<>();
@@ -66,17 +67,18 @@ public class SynchView implements GUIEntry {
             Messages.getString("SynchView.def_s"),
             "Stack", // NON-NLS
             Mode.STACK,
-            new ImageIcon(SynchView.class.getResource("/icon/22x22/sequence.png")),
+            ActionIcon.SEQUENCE,
             actions);
   }
 
   private final String name;
   private final String command;
-  private final Icon icon;
+  private final FlatSVGIcon svgIcon;
+  private final ActionIcon icon;
   private final SynchData synchData;
 
   public SynchView(
-      String name, String command, Mode mode, Icon icon, Map<String, Boolean> actions) {
+      String name, String command, Mode mode, ActionIcon icon, Map<String, Boolean> actions) {
     if (name == null) {
       throw new IllegalArgumentException("A parameter is null!");
     }
@@ -84,6 +86,7 @@ public class SynchView implements GUIEntry {
     this.name = name;
     this.command = command;
     this.icon = icon;
+    this.svgIcon = ResourceUtil.getIcon(icon);
   }
 
   public String getName() {
@@ -109,8 +112,8 @@ public class SynchView implements GUIEntry {
   }
 
   @Override
-  public Icon getIcon() {
-    return icon;
+  public FlatSVGIcon getIcon() {
+    return svgIcon;
   }
 
   @Override

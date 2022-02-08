@@ -17,7 +17,6 @@ import javax.swing.ListCellRenderer;
 import org.weasis.acquire.explorer.media.MediaSource;
 
 public class MediaSourceListCellRenderer extends JLabel implements ListCellRenderer<MediaSource> {
-  private static final long serialVersionUID = -8043563870643819771L;
 
   public MediaSourceListCellRenderer(JComboBox<MediaSource> combo) {
     setOpaque(true);

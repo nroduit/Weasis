@@ -13,7 +13,6 @@ import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 
-@SuppressWarnings("serial")
 public class MouseEventDouble extends MouseEvent {
 
   final Point2D.Double point2d;

@@ -22,6 +22,7 @@ import javax.swing.Icon;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
 import javax.swing.event.ListDataEvent;
+import org.weasis.core.api.image.op.ByteLut;
 
 public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T>, GroupPopup {
 
@@ -43,11 +44,15 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
     for (int i = 0; i < dataModel.getSize(); i++) {
       Object object = dataModel.getElementAt(i);
+      RadioMenuItem radioMenuItem = new RadioMenuItem(object.toString(), object);
       Icon icon = null;
-      if (object instanceof GUIEntry) {
-        icon = ((GUIEntry) object).getIcon();
+      if (object instanceof GUIEntry entry) {
+        icon = entry.getIcon();
+      } else if (object instanceof ByteLut lut) {
+        icon = lut.getIcon(GuiUtils.getBigIconButtonSize(radioMenuItem).height);
       }
-      RadioMenuItem radioMenuItem = new RadioMenuItem(object.toString(), icon, object);
+      radioMenuItem.setIcon(icon);
+      GuiUtils.applySelectedIconEffect(radioMenuItem);
       radioMenuItem.setSelected(object == selectedItem);
       group.add(radioMenuItem);
       itemList.add(radioMenuItem);
@@ -77,6 +82,18 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     return menu;
   }
 
+  public JMenu createMenu(String title, Icon icon) {
+    JMenu menu = new JMenu(title);
+    if (icon != null) {
+      menu.setIcon(icon);
+      GuiUtils.applySelectedIconEffect(menu);
+    }
+    for (RadioMenuItem radioMenuItem : itemList) {
+      menu.add(radioMenuItem);
+    }
+    return menu;
+  }
+
   @Override
   public void contentsChanged(ListDataEvent e) {
     setSelected(dataModel.getSelectedItem());
@@ -96,8 +113,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof RadioMenuItem) {
-      RadioMenuItem item = (RadioMenuItem) e.getSource();
+    if (e.getSource() instanceof RadioMenuItem item) {
       if (item.isSelected()) {
         dataModel.setSelectedItem(item.getUserObject());
       }

@@ -34,6 +34,7 @@ import java.util.Optional;
 import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -60,7 +61,6 @@ import org.weasis.opencv.data.PlanarImage;
  */
 public class ZoomWin<E extends ImageElement> extends GraphicsPane
     implements ImageLayerChangeListener<E> {
-  private static final long serialVersionUID = 3542710545706544620L;
 
   public static final String SYNCH_CMD = "synchronize"; // NON-NLS
   public static final String FREEZE_CMD = "freeze"; // NON-NLS
@@ -213,7 +213,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     g2d.setStroke(stroke);
     g2d.setPaint(lineColor);
     Rectangle bound = getBounds();
-    g2d.drawRect(bound.width - 12 - borderOffset, bound.height - 12 - borderOffset, 12, 12);
+    int size = GuiUtils.getScaleLength(12);
+    g2d.drawRect(bound.width - size - borderOffset, bound.height - size - borderOffset, size, size);
     g2d.draw(shape);
     g2d.setPaint(oldColor);
     g2d.setStroke(oldStroke);
@@ -391,8 +392,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
         if (cursor == Cursor.SE_RESIZE_CURSOR) {
           int nw = pickWidth + dx;
           int nh = pickHeight + dy;
-          nw = nw < 50 ? 50 : nw > 500 ? 500 : nw;
-          nh = nh < 50 ? 50 : nh > 500 ? 500 : nh;
+          nw = nw < 50 ? 50 : Math.min(nw, 500);
+          nh = nh < 50 ? 50 : Math.min(nh, 500);
           setSize(nw, nh);
           updateAffineTransform();
         } else {
@@ -417,8 +418,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
       Component c = me.getComponent();
       int w = c.getWidth();
       int h = c.getHeight();
-
-      Rectangle rect = new Rectangle(w - 12 - borderOffset, h - 12 - borderOffset, 12, 12);
+      int size = GuiUtils.getScaleLength(12);
+      Rectangle rect = new Rectangle(w - size - borderOffset, h - size - borderOffset, size, size);
       if (rect.contains(me.getPoint())) {
         return Cursor.SE_RESIZE_CURSOR;
       }

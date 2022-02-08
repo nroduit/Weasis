@@ -11,15 +11,13 @@ package org.weasis.core.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.DragGraphic;
@@ -46,11 +44,10 @@ public class MeasureDialog extends PropertiesDialog {
   public void iniGraphicDialog() {
     if (!graphics.isEmpty()) {
       DragGraphic graphic = graphics.get(0);
-      Color color = (Color) graphic.getColorPaint();
+      this.color = (Color) graphic.getColorPaint();
       int width = graphic.getLineThickness().intValue();
       boolean fill = graphic.getFilled();
 
-      jButtonColor.setBackground(color);
       spinnerLineWidth.setValue(width);
       jCheckBoxFilled.setSelected(fill);
 
@@ -73,33 +70,37 @@ public class MeasureDialog extends PropertiesDialog {
         }
       }
 
-      checkBoxColor.setVisible(mcolor);
+      checkBoxColor.setEnabled(mcolor);
       jLabelLineColor.setEnabled(!mcolor);
       jButtonColor.setEnabled(!mcolor);
-      checkBoxWidth.setVisible(mwidth);
+      checkBoxWidth.setEnabled(mwidth);
       spinnerLineWidth.setEnabled(!mwidth);
       jLabelLineWidth.setEnabled(!mwidth);
 
-      checkBoxFill.setVisible(mfill);
+      checkBoxFill.setEnabled(mfill);
       jCheckBoxFilled.setEnabled(areaGraphics && !mfill);
 
       if (graphics.size() == 1 || (!mcolor && !mfill && !mwidth)) {
-        lbloverridesmultipleValues.setVisible(false);
+        overrideMultipleValues.setVisible(false);
+      } else {
+        int size = overrideMultipleValues.getPreferredSize().width / 2;
+        panelColor.add(GuiUtils.boxHorizontalStrut(size));
+        panelColor.add(checkBoxColor);
+        panelColor.add(GuiUtils.boxHorizontalStrut(size));
+        panelLine.add(GuiUtils.boxHorizontalStrut(size));
+        panelLine.add(checkBoxWidth);
+        panelLine.add(GuiUtils.boxHorizontalStrut(size));
+        panelFilled.add(GuiUtils.boxHorizontalStrut(size));
+        panelFilled.add(checkBoxFill);
+        panelFilled.add(GuiUtils.boxHorizontalStrut(size));
       }
       if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
         JScrollPane panel = new JScrollPane();
-
         panel.setBorder(
             new CompoundBorder(
-                new EmptyBorder(10, 15, 5, 15),
-                new TitledBorder(
-                    null,
-                    Messages.getString("MeasureDialog.text"),
-                    TitledBorder.LEADING,
-                    TitledBorder.TOP,
-                    null,
-                    null)));
-        panel.setPreferredSize(new Dimension(400, 140));
+                GuiUtils.getEmptyBorder(10, 15, 5, 15),
+                GuiUtils.getTitledBorder(Messages.getString("MeasureDialog.text"))));
+        panel.setPreferredSize(GuiUtils.getDimension(400, 140));
         StringBuilder buf = new StringBuilder();
         String[] labels = ((AnnotationGraphic) graphic).getLabels();
         for (String s : labels) {
@@ -122,7 +123,7 @@ public class MeasureDialog extends PropertiesDialog {
         graphic.setLineThickness(((Integer) spinnerLineWidth.getValue()).floatValue());
       }
       if (jButtonColor.isEnabled()) {
-        graphic.setPaint(jButtonColor.getBackground());
+        graphic.setPaint(color);
       }
       if (jCheckBoxFilled.isEnabled()) {
         graphic.setFilled(jCheckBoxFilled.isSelected());

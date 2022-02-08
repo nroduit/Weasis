@@ -16,7 +16,6 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.util.StringUtil;
 
 class ToolPanel extends JPanel {
-  private static final long serialVersionUID = 2827148456926205919L;
 
   public enum Speed {
     AUTO(WaveLayoutManager.AUTO_SPEED),

@@ -9,21 +9,19 @@
  */
 package org.weasis.acquire.explorer.gui;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.acquire.explorer.Messages;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class AcquireToolBar<DicomImageElement> extends WtoolBar {
-  private static final long serialVersionUID = 3195220259820490950L;
 
   public AcquireToolBar(int index) {
     super(Messages.getString("AcquireToolBar.title"), index);
 
     // TODO add button for publishing, help...
-    final JButton printButton =
-        new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png")));
+    final JButton printButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.PRINT));
     printButton.setToolTipText("");
     printButton.addActionListener(
         e -> {

@@ -83,7 +83,7 @@ public class DefaultMimeIO implements MediaReader {
   public MediaSeries<MediaElement> getMediaSeries() {
 
     MediaSeries<MediaElement> mediaSeries =
-        new Series<MediaElement>(TagW.FilePath, this.toString(), defaultTagView, 1) {
+        new Series<>(TagW.FilePath, this.toString(), defaultTagView, 1) {
 
           @Override
           public String getMimeType() {
@@ -112,6 +112,11 @@ public class DefaultMimeIO implements MediaReader {
                         new SeriesEvent(SeriesEvent.Action.ADD_IMAGE, this, media)));
               }
             }
+          }
+
+          @Override
+          public MediaElement getFirstSpecialElement() {
+            return null;
           }
         };
     mediaSeries.add(getSingleImage());

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" fill="none" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g clip-rule="evenodd" fill-rule="evenodd">
+  <path d="m1 16h15v-7h-15z" fill="#40b6e0" fill-opacity=".6"/>
+  <text x="1.3192184" y="15.310839" fill="#231f20" fill-opacity=".70196" font-family="'Open Sans Condensed'" font-size="7.9797px" letter-spacing="0px" stroke-width=".19949" word-spacing="0px" style="font-variant-caps:normal;font-variant-east-asian:normal;font-variant-ligatures:normal;font-variant-numeric:normal;line-height:1.25" xml:space="preserve"><tspan x="1.3192184" y="15.310839" fill="#231f20" fill-opacity=".70196" stroke-width=".19949">DCM</tspan></text>
+  <path d="m9 1 4 4h-4z" fill="#9aa7b0" fill-opacity=".8"/>
+  <path d="m8 1v5h5v2h-10v-7z" fill="#9aa7b0" fill-opacity=".8"/>
+ </g>
+</svg>

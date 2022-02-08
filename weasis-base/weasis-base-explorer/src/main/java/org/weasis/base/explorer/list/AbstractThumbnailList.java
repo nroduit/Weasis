@@ -9,6 +9,7 @@
  */
 package org.weasis.base.explorer.list;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -64,14 +65,11 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 
-@SuppressWarnings("serial")
 public abstract class AbstractThumbnailList<E extends MediaElement> extends JList<E>
     implements ThumbnailList<E> {
 
   public static final String SECTION_CHANGED = "SECTION_CHANGED"; // NON-NLS
   public static final String DIRECTORY_SIZE = "DIRECTORY_SIZE"; // NON-NLS
-
-  public static final Dimension DEF_ICON_DIM = new Dimension(150, 150);
 
   private static final NumberFormat intGroupFormat = LocalUtil.getIntegerInstance();
 
@@ -96,8 +94,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     this.changed = false;
 
     DefaultListSelectionModel selectionModel = new DefaultListSelectionModel();
-    this.setBackground(new Color(242, 242, 242));
-
+    this.setBackground(FlatUIUtils.getUIColor("List.background", Color.DARK_GRAY));
     setSelectionModel(selectionModel);
     // setTransferHandler(new ListTransferHandler());
     ThumbnailRenderer<E> panel = new ThumbnailRenderer<>();
@@ -251,8 +248,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   }
 
   public void reset() {
-    setFixedCellHeight(DEF_ICON_DIM.height);
-    setFixedCellWidth(DEF_ICON_DIM.width);
     setLayoutOrientation(HORIZONTAL_WRAP);
 
     getThumbnailListModel().reload();
@@ -502,7 +497,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
           (int) (((float) (lastIndex - firstIndex) / (float) visibleRows) + .5);
       final int visibleItems = visibleRows * visibleColums;
 
-      final int val = ((firstIndex - 1) - visibleItems < 0) ? 0 : (firstIndex - 1) - visibleItems;
+      final int val = Math.max((firstIndex - 1) - visibleItems, 0);
       clearSelection();
       setSelectedIndex(val);
       fireSelectionValueChanged(val, val, false);
@@ -515,16 +510,12 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public void jiThumbnailKeyPressed(final KeyEvent e) {
     switch (e.getKeyCode()) {
-      case KeyEvent.VK_PAGE_DOWN:
-        nextPage(e);
-        break;
-      case KeyEvent.VK_PAGE_UP:
-        lastPage(e);
-        break;
-      case KeyEvent.VK_ENTER:
+      case KeyEvent.VK_PAGE_DOWN -> nextPage(e);
+      case KeyEvent.VK_PAGE_UP -> lastPage(e);
+      case KeyEvent.VK_ENTER -> {
         openSelection();
         e.consume();
-        break;
+      }
     }
   }
 

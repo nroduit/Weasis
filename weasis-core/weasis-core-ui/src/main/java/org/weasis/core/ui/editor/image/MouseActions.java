@@ -40,7 +40,7 @@ public class MouseActions {
   public MouseActions(Preferences prefs) {
     this.activeButtons =
         BundleTools.SYSTEM_PREFERENCES.getIntProperty(
-            "weasis.toolbar.mouseboutons",
+            "weasis.toolbar.mouse.buttons",
             InputEvent.BUTTON1_DOWN_MASK
                 | InputEvent.BUTTON2_DOWN_MASK
                 | InputEvent.BUTTON3_DOWN_MASK

@@ -18,7 +18,6 @@ import java.util.Objects;
  * @author Nicolas Roduit
  */
 public class StructureSet extends HashMap<Integer, StructureLayer> {
-  private static final long serialVersionUID = 6156886965129631894L;
 
   private final String label;
   private final Date date;
@@ -42,25 +41,22 @@ public class StructureSet extends HashMap<Integer, StructureLayer> {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = super.hashCode();
-    result = prime * result + ((date == null) ? 0 : date.hashCode());
-    result = prime * result + ((label == null) ? 0 : label.hashCode());
-    return result;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    if (!super.equals(o)) {
+      return false;
+    }
+    StructureSet that = (StructureSet) o;
+    return Objects.equals(label, that.label) && Objects.equals(date, that.date);
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (!super.equals(obj)) return false;
-    if (getClass() != obj.getClass()) return false;
-    StructureSet other = (StructureSet) obj;
-    if (date == null) {
-      if (other.date != null) return false;
-    } else if (!date.equals(other.date)) return false;
-    if (label == null) {
-      return other.label == null;
-    } else return label.equals(other.label);
+  public int hashCode() {
+    return Objects.hash(super.hashCode(), label, date);
   }
 }

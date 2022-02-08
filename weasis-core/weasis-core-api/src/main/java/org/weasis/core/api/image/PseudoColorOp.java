@@ -9,9 +9,6 @@
  */
 package org.weasis.core.api.image;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.op.ByteLut;
@@ -74,15 +71,5 @@ public class PseudoColorOp extends AbstractOp {
     }
 
     params.put(Param.OUTPUT_IMG, result);
-  }
-
-  public static BufferedImage getLUT(byte[][] lut) {
-    BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_INT_BGR);
-    Graphics2D g = image.createGraphics();
-    for (int k = 0; k < 256; k++) {
-      g.setPaint(new Color(lut[0][k] & 0xff, lut[1][k] & 0xff, lut[2][k] & 0xff));
-      g.fillRect(0, k, 20, 1);
-    }
-    return image;
   }
 }

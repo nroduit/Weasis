@@ -9,6 +9,8 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
@@ -16,27 +18,30 @@ import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JPanel;
-import org.weasis.core.api.gui.util.JMVUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.dicom.explorer.DicomExplorer.PatientContainerPane;
 import org.weasis.dicom.explorer.DicomExplorer.PatientPane;
 import org.weasis.dicom.explorer.DicomExplorer.SeriesPane;
 import org.weasis.dicom.explorer.DicomExplorer.StudyPane;
 
 public class SeriesSelectionModel extends ArrayList<Series<?>> {
-  private static final long serialVersionUID = -7481872614518038371L;
 
-  private final PatientContainerPane patientContainer;
+  public static final String FOREGROUND = "List.foreground";
+  public static final String BACKGROUND = "List.background";
+  public static final String SELECTION_FOREGROUND = "List.selectionForeground";
+  public static final String SELECTION_BACKGROUND = "List.selectionBackground";
+
+  private final PatientPane patientContainer;
 
   private Series<?> anchorSelection;
   private Series<?> leadSelection;
   private boolean openningSeries = false;
 
-  public SeriesSelectionModel(PatientContainerPane patientContainer) {
-    this.patientContainer = patientContainer;
+  public SeriesSelectionModel(PatientPane patientContainer) {
+    this.patientContainer = Objects.requireNonNull(patientContainer);
   }
 
   @Override
@@ -111,8 +116,8 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
   protected void removeRange(int fromIndex, int toIndex) {
     if (fromIndex < toIndex) {
       int seriesSize = this.size();
-      int end = toIndex > seriesSize ? seriesSize : toIndex;
-      int start = fromIndex < 0 ? 0 : fromIndex;
+      int end = Math.min(toIndex, seriesSize);
+      int start = Math.max(fromIndex, 0);
       for (int i = start; i < end; i++) {
         Series<?> val = this.get(i);
         setBackgroundColor(val, false);
@@ -139,8 +144,19 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
       if (thumb != null) {
         Container parent = thumb.getParent();
         if (parent instanceof JPanel) {
-          parent.setBackground(
-              selected ? JMVUtils.TREE_SELECTION_BACKROUND : JMVUtils.TREE_BACKROUND);
+          Color background;
+          Color foreground;
+          if (selected) {
+            background = FlatUIUtils.getUIColor(SELECTION_BACKGROUND, Color.DARK_GRAY);
+            foreground = FlatUIUtils.getUIColor(SELECTION_FOREGROUND, Color.LIGHT_GRAY);
+          } else {
+            background = FlatUIUtils.getUIColor(BACKGROUND, Color.LIGHT_GRAY);
+            foreground = FlatUIUtils.getUIColor(FOREGROUND, Color.DARK_GRAY);
+          }
+          parent.setBackground(background);
+          if (parent instanceof SeriesPane pane) {
+            pane.getLabel().setForeground(foreground);
+          }
         }
       }
     }
@@ -235,28 +251,26 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
     }
 
     boolean first = false;
-    if (patientContainer == null || anchorIndex == row) {
+    if (anchorIndex == row) {
       add(anchorIndex);
     } else {
       pat:
-      for (PatientPane p : patientContainer.getPatientPaneList()) {
-        for (StudyPane studyPane : p.getStudyPaneList()) {
-          for (SeriesPane series : studyPane.getSeriesPaneList()) {
-            if (anchorIndex == series.getSequence()) {
-              add(anchorIndex);
-              if (first) {
-                break pat;
-              }
-              first = true;
-            } else if (row == series.getSequence()) {
-              add(row);
-              if (first) {
-                break pat;
-              }
-              first = true;
-            } else if (first) {
-              add((Series) series.getSequence());
+      for (StudyPane studyPane : patientContainer.getStudyPaneList()) {
+        for (SeriesPane series : studyPane.getSeriesPaneList()) {
+          if (anchorIndex == series.getSequence()) {
+            add(anchorIndex);
+            if (first) {
+              break pat;
             }
+            first = true;
+          } else if (row == series.getSequence()) {
+            add(row);
+            if (first) {
+              break pat;
+            }
+            first = true;
+          } else if (first) {
+            add((Series) series.getSequence());
           }
         }
       }
@@ -268,12 +282,10 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
 
   Series getFirstElement() {
     if (patientContainer != null) {
-      for (PatientPane p : patientContainer.getPatientPaneList()) {
-        for (StudyPane studyPane : p.getStudyPaneList()) {
-          List<SeriesPane> list = studyPane.getSeriesPaneList();
-          if (list.size() > 0) {
-            return (Series) list.get(0).getSequence();
-          }
+      for (StudyPane studyPane : patientContainer.getStudyPaneList()) {
+        List<SeriesPane> list = studyPane.getSeriesPaneList();
+        if (list.size() > 0) {
+          return (Series) list.get(0).getSequence();
         }
       }
     }
@@ -282,14 +294,11 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
 
   Series getLastElement() {
     if (patientContainer != null) {
-      List<PatientPane> pts = patientContainer.getPatientPaneList();
-      for (int i = pts.size() - 1; i >= 0; i--) {
-        List<StudyPane> st = pts.get(i).getStudyPaneList();
-        for (int j = st.size() - 1; j >= 0; j--) {
-          List<SeriesPane> list = st.get(j).getSeriesPaneList();
-          if (list.size() > 0) {
-            return (Series) list.get(list.size() - 1).getSequence();
-          }
+      List<StudyPane> st = patientContainer.getStudyPaneList();
+      for (int j = st.size() - 1; j >= 0; j--) {
+        List<SeriesPane> list = st.get(j).getSeriesPaneList();
+        if (list.size() > 0) {
+          return (Series) list.get(list.size() - 1).getSequence();
         }
       }
     }
@@ -299,18 +308,15 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
   Series getPreviousElement(Series element) {
     if (element != null && patientContainer != null) {
       boolean next = false;
-      List<PatientPane> pts = patientContainer.getPatientPaneList();
-      for (int i = pts.size() - 1; i >= 0; i--) {
-        List<StudyPane> st = pts.get(i).getStudyPaneList();
-        for (int j = st.size() - 1; j >= 0; j--) {
-          List<SeriesPane> list = st.get(j).getSeriesPaneList();
-          for (int k = list.size() - 1; k >= 0; k--) {
-            if (next) {
-              return (Series) list.get(k).getSequence();
-            }
-            if (element == list.get(k).getSequence()) {
-              next = true;
-            }
+      List<StudyPane> st = patientContainer.getStudyPaneList();
+      for (int j = st.size() - 1; j >= 0; j--) {
+        List<SeriesPane> list = st.get(j).getSeriesPaneList();
+        for (int k = list.size() - 1; k >= 0; k--) {
+          if (next) {
+            return (Series) list.get(k).getSequence();
+          }
+          if (element == list.get(k).getSequence()) {
+            next = true;
           }
         }
       }
@@ -322,16 +328,14 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
   Series getNextElement(Series element) {
     if (element != null && patientContainer != null) {
       boolean next = false;
-      for (PatientPane p : patientContainer.getPatientPaneList()) {
-        for (StudyPane studyPane : p.getStudyPaneList()) {
-          List<SeriesPane> list = studyPane.getSeriesPaneList();
-          for (SeriesPane seriesPane : list) {
-            if (next) {
-              return (Series) seriesPane.getSequence();
-            }
-            if (element == seriesPane.getSequence()) {
-              next = true;
-            }
+      for (StudyPane studyPane : patientContainer.getStudyPaneList()) {
+        List<SeriesPane> list = studyPane.getSeriesPaneList();
+        for (SeriesPane seriesPane : list) {
+          if (next) {
+            return (Series) seriesPane.getSequence();
+          }
+          if (element == seriesPane.getSequence()) {
+            next = true;
           }
         }
       }

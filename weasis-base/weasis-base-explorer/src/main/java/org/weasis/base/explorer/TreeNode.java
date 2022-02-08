@@ -19,7 +19,6 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@SuppressWarnings("serial")
 public class TreeNode extends DefaultMutableTreeNode {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(TreeNode.class);

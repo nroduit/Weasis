@@ -34,12 +34,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicLabel;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
@@ -54,11 +55,9 @@ import org.weasis.core.util.StringUtil;
 @XmlRootElement(name = "annotation")
 @XmlAccessorType(XmlAccessType.NONE)
 public class AnnotationGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = -6993299250389257151L;
 
   public static final Integer POINTS_NUMBER = 2;
-  public static final Icon ICON =
-      new ImageIcon(AnnotationGraphic.class.getResource("/icon/22x22/draw-text.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_TEXT);
 
   protected Point2D ptBox;
   protected Point2D ptAnchor; // Let AB be a simple a line segment
@@ -260,7 +259,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
           py += labelHeight;
-          AbstractGraphicLabel.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
+          FontTools.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }
       g2d.setPaint(oldPaint);

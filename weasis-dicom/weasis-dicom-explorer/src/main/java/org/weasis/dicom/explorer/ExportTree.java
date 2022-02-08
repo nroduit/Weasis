@@ -11,31 +11,34 @@ package org.weasis.dicom.explorer;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import javax.swing.JScrollPane;
+import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
-public class ExportTree extends JScrollPane {
-
-  private final CheckboxTree checkboxTree;
-  private final CheckTreeModel checkTreeModel;
+public class ExportTree extends JPanel {
 
   public ExportTree(DicomModel dicomModel) {
     this(new CheckTreeModel(dicomModel));
   }
 
   public ExportTree(final CheckTreeModel checkTreeModel) {
-    this.checkTreeModel = Objects.requireNonNull(checkTreeModel);
+    this.setLayout(new BorderLayout());
+    setCheckboxTreeModel(checkTreeModel);
+  }
 
-    checkboxTree =
+  public void setCheckboxTreeModel(CheckTreeModel checkTreeModel) {
+    Objects.requireNonNull(checkTreeModel);
+    CheckboxTree checkboxTree =
         new CheckboxTree(checkTreeModel.getModel()) {
           @Override
           public String getToolTipText(MouseEvent evt) {
@@ -53,6 +56,7 @@ public class ExportTree extends JScrollPane {
           }
         };
 
+    checkboxTree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     // Register tooltips
     checkboxTree.setToolTipText("");
 
@@ -91,15 +95,7 @@ public class ExportTree extends JScrollPane {
     }
 
     expandTree(checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
-    setViewportView(checkboxTree);
-  }
-
-  public CheckboxTree getTree() {
-    return checkboxTree;
-  }
-
-  public CheckTreeModel getModel() {
-    return checkTreeModel;
+    add(checkboxTree, BorderLayout.CENTER);
   }
 
   public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
@@ -107,8 +103,7 @@ public class ExportTree extends JScrollPane {
       Enumeration<?> children = start.children();
       while (children.hasMoreElements()) {
         Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode) {
-          DefaultMutableTreeNode dtm = (DefaultMutableTreeNode) child;
+        if (child instanceof DefaultMutableTreeNode dtm) {
           if (!dtm.isLeaf()) {
             TreePath tp = new TreePath(dtm.getPath());
             tree.expandPath(tp);

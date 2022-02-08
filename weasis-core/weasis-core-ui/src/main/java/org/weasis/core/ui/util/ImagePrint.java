@@ -181,8 +181,8 @@ public class ImagePrint implements Printable {
       ExportImage<? extends ImageElement> image = null;
       Point2D.Double pad = new Point2D.Double(0.0, 0.0);
 
-      if (value instanceof ExportImage) {
-        image = (ExportImage) value;
+      if (value instanceof ExportImage<? extends ImageElement> exportImage) {
+        image = exportImage;
         formatImage(image, key, placeholder, pad);
       }
 

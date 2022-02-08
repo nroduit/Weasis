@@ -25,6 +25,7 @@ import bibliothek.gui.dock.common.intern.CommonDockable;
 import bibliothek.gui.dock.common.intern.DefaultCommonDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.util.List;
@@ -63,10 +64,11 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     this.icon = icon;
     this.tooltips = tooltips;
     this.dockableUID = uid == null ? UUID.randomUUID().toString() : uid;
-    this.dockable = new DefaultSingleCDockable(dockableUID, icon, pluginName);
+    Icon titleIcon = icon instanceof FlatSVGIcon flatSVGIcon ? flatSVGIcon.derive(20, 20) : icon;
+    this.dockable = new DefaultSingleCDockable(dockableUID, titleIcon, pluginName);
     this.dockable.setTitleText(pluginName);
     this.dockable.setTitleToolTip(tooltips);
-    this.dockable.setTitleIcon(icon);
+    this.dockable.setTitleIcon(titleIcon);
     this.dockable.setFocusComponent(this);
     this.dockable.setStackable(true);
     this.dockable.setSingleTabShown(true);
@@ -76,8 +78,8 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
           @Override
           public void close(CDockable dockable) {
             super.close(dockable);
-            if (dockable.getFocusComponent() instanceof SeriesViewer) {
-              ((SeriesViewer) dockable.getFocusComponent()).close();
+            if (dockable.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+              seriesViewer.close();
             }
             Dockable prevDockable =
                 UIManager.DOCKING_CONTROL
@@ -87,10 +89,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             if (prevDockable == null) {
               handleFocusAfterClosing();
             } else {
-              if (prevDockable instanceof DefaultCommonDockable) {
-                CDockable ld = ((DefaultCommonDockable) prevDockable).getDockable();
-                if (ld instanceof AbstractCDockable) {
-                  ((AbstractCDockable) ld).toFront();
+              if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable) {
+                if (defaultCommonDockable.getDockable()
+                    instanceof AbstractCDockable abstractCDockable) {
+                  abstractCDockable.toFront();
                 }
               }
             }
@@ -238,13 +240,13 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
       for (Dockable child : children) {
         // we are not interested in things like entire stacks, or our own Dockable. So let's do
         // some checks before closing a Dockable
-        if (child instanceof CommonDockable) {
-          CDockable cChild = ((CommonDockable) child).getDockable();
+        if (child instanceof CommonDockable commonDockable) {
+          CDockable cChild = commonDockable.getDockable();
           if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
-            if (cChild.getFocusComponent() instanceof SeriesViewer) {
-              ((SeriesViewer) cChild.getFocusComponent()).close();
-              if (cChild.getFocusComponent() instanceof ViewerPlugin) {
-                ((ViewerPlugin) cChild.getFocusComponent()).handleFocusAfterClosing();
+            if (cChild.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+              seriesViewer.close();
+              if (cChild.getFocusComponent() instanceof ViewerPlugin viewerPlugin) {
+                viewerPlugin.handleFocusAfterClosing();
               }
             } else {
               cChild.setVisible(false);

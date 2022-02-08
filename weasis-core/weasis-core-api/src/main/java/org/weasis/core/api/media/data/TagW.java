@@ -10,7 +10,6 @@
 package org.weasis.core.api.media.data;
 
 import java.awt.Color;
-import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
@@ -38,10 +37,9 @@ import org.weasis.core.util.StringUtil;
  * Common DICOM tags used by the application. The role of these tags is to provide a high level
  * accessibility of common tags (DICOM and non DICOM).
  */
-public class TagW implements Serializable {
+public class TagW {
   private static final Logger LOGGER = LoggerFactory.getLogger(TagW.class);
 
-  private static final long serialVersionUID = -7914330824854199622L;
   private static final AtomicInteger idCounter = new AtomicInteger(Integer.MAX_VALUE);
 
   protected static final Map<String, TagW> tags = Collections.synchronizedMap(new HashMap<>());
@@ -136,10 +134,9 @@ public class TagW implements Serializable {
   public static final TagW ShutterFinalShape = new TagW("ShutterFinalShape", TagType.OBJECT);
   public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR);
   public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER);
-  public static final TagW OverlayBitMask = new TagW("OverlayBitMask", TagType.INTEGER);
+  public static final TagW ImageDescriptor = new TagW("ImageDescriptor", TagType.OBJECT);
   public static final TagW OverlayBurninDataPath =
       new TagW("OverlayBurninDataPath", TagType.STRING);
-  public static final TagW HasOverlay = new TagW("HasOverlay", TagType.BOOLEAN);
   public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN);
 
   public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER);
@@ -180,7 +177,7 @@ public class TagW implements Serializable {
 
   // Only a single Item shall be included in this sequence
   public static final TagW PRLUTsExplanation = new TagW("PRLUTsExplanation", TagType.STRING);
-  public static final TagW PRLUTsData = new TagW("PRLUTsData", TagType.OBJECT);
+  public static final TagW PrDicomObject = new TagW("PrDicomObject", TagType.OBJECT);
 
   public static final TagW MonoChrome = new TagW("MonoChrome", TagType.BOOLEAN);
 
@@ -225,7 +222,7 @@ public class TagW implements Serializable {
     addTag(ModalityLUTType);
     addTag(ModalityLUTData);
     addTag(PRLUTsExplanation);
-    addTag(PRLUTsData);
+    addTag(PrDicomObject);
     addTag(MonoChrome);
   }
 

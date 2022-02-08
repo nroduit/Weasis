@@ -19,7 +19,6 @@ import org.weasis.base.explorer.list.AThumbnailModel;
 import org.weasis.base.explorer.list.IThumbnailModel;
 import org.weasis.core.api.media.data.MediaElement;
 
-@SuppressWarnings("serial")
 public class JIListModel<E extends MediaElement> extends AThumbnailModel<E>
     implements IThumbnailModel<E> {
 
@@ -41,9 +40,7 @@ public class JIListModel<E extends MediaElement> extends AThumbnailModel<E>
       this.list.getSelectionModel().setValueIsAdjusting(true);
       this.list.requestFocusInWindow();
       Optional<TreeNode> t = this.reloadContext.getSelectedDirNodes().stream().findFirst();
-      if (t.isPresent()) {
-        loadContent(t.get().getNodePath());
-      }
+      t.ifPresent(treeNode -> loadContent(treeNode.getNodePath()));
       synchronized (this) {
         fireContentsChanged(this, 0, getSize() - 1);
         this.loading = false;

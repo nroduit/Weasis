@@ -9,29 +9,24 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Graphics;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import javax.swing.AbstractButton;
-import javax.swing.Box;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
-import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.GraphicModel;
@@ -56,16 +51,10 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.pref.ViewSetting;
 import org.weasis.core.ui.util.WtoolBar;
 
-@SuppressWarnings("serial")
 public class MeasureToolBar extends WtoolBar {
-  private static final long serialVersionUID = -6672565963157176685L;
 
   public static final SelectGraphic selectionGraphic = new SelectGraphic();
 
-  public static final Icon MeasureIcon =
-      new ImageIcon(MouseActions.class.getResource("/icon/32x32/measure.png"));
-  public static final Icon drawIcon =
-      new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw.png"));
   public static final List<Graphic> measureGraphicList = new ArrayList<>();
   public static final List<Graphic> drawGraphicList = new ArrayList<>();
 
@@ -163,8 +152,6 @@ public class MeasureToolBar extends WtoolBar {
   }
 
   protected final JButton jButtondelete = new JButton();
-  protected final JButton jButtonText = new JButton();
-  protected final Component measureButtonGap = Box.createRigidArea(new Dimension(10, 0));
   protected final ImageViewerEventManager<?> eventManager;
 
   @SuppressWarnings("rawtypes")
@@ -184,17 +171,12 @@ public class MeasureToolBar extends WtoolBar {
         eventManager.getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
     Optional<ComboItemListener> draw =
         eventManager.getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class);
-    if (measure.isPresent()) {
-      add(buildButton(measure.get()));
-    }
-    if (draw.isPresent()) {
-      add(buildButton(draw.get()));
-    }
+    measure.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
+    draw.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
 
     if (measure.isPresent() || draw.isPresent()) {
       jButtondelete.setToolTipText(Messages.getString("MeasureToolBar.del"));
-      jButtondelete.setIcon(
-          new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png")));
+      jButtondelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
       jButtondelete.addActionListener(
           e -> {
             GraphicModel gm = eventManager.getSelectedViewPane().getGraphicManager();
@@ -205,16 +187,14 @@ public class MeasureToolBar extends WtoolBar {
           });
       if (measure.isPresent()) {
         measure.get().registerActionState(jButtondelete);
-      } else if (draw.isPresent()) {
-        draw.get().registerActionState(jButtondelete);
-      }
+      } else
+        draw.ifPresent(comboItemListener -> comboItemListener.registerActionState(jButtondelete));
       add(jButtondelete);
     }
   }
 
   public static void applyDefaultSetting(ViewSetting setting, Graphic graphic) {
-    if (graphic instanceof DragGraphic) {
-      DragGraphic g = (DragGraphic) graphic;
+    if (graphic instanceof DragGraphic g) {
       g.setLineThickness((float) setting.getLineWidth());
       g.setPaint(setting.getLineColor());
     }
@@ -226,12 +206,10 @@ public class MeasureToolBar extends WtoolBar {
     MeasureGroupMenu menu = new MeasureGroupMenu(action.getActionW());
     action.registerActionState(menu);
 
-    for (Component mitem : menu.getRadioMenuItemListCopy()) {
-      RadioMenuItem ritem = (RadioMenuItem) mitem;
-      if (ritem.getUserObject() instanceof Graphic) {
-        Graphic g = (Graphic) ritem.getUserObject();
+    for (RadioMenuItem item : menu.getRadioMenuItemListCopy()) {
+      if (item.getUserObject() instanceof Graphic g) {
         if (g.getKeyCode() != 0) {
-          ritem.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
+          item.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
         }
       }
     }
@@ -239,7 +217,11 @@ public class MeasureToolBar extends WtoolBar {
     DropDownButton dropDownButton =
         new DropDownButton(
             action.getActionW().cmd(),
-            buildIcon(selectionGraphic, draw ? drawIcon : MeasureIcon),
+            buildIcon(
+                selectionGraphic,
+                draw
+                    ? ResourceUtil.getToolBarIcon(ActionIcon.DRAW_TOP_LEFT)
+                    : ResourceUtil.getToolBarIcon(ActionIcon.MEASURE_TOP_LEFT)),
             menu) {
           @Override
           protected JPopupMenu getPopupMenu() {
@@ -279,50 +261,17 @@ public class MeasureToolBar extends WtoolBar {
   }
 
   public static Icon buildIcon(final Graphic graphic, Icon bckIcon) {
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton) {
-              AbstractButton model = (AbstractButton) c;
-              Icon icon = null;
-
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, bckIcon);
-              }
-              if (icon == null) {
-                icon = bckIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-              if (graphic != null) {
-                Icon smallIcon = null;
-                if (!model.isEnabled()) {
-                  smallIcon = UIManager.getLookAndFeel().getDisabledIcon(model, graphic.getIcon());
-                }
-                if (smallIcon == null) {
-                  smallIcon = graphic.getIcon();
-                }
-                if (smallIcon != null) {
-                  int offsetx = bckIcon.getIconWidth() - smallIcon.getIconWidth() - 1;
-                  int offsety = bckIcon.getIconHeight() - smallIcon.getIconHeight() - 1;
-                  smallIcon.paintIcon(c, g, x + offsetx, y + offsety);
-                }
-              }
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return bckIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return bckIcon.getIconHeight();
-          }
-        });
+    final Icon smallIcon;
+    if (graphic == null) {
+      smallIcon = null;
+    } else {
+      if (graphic.getIcon() instanceof FlatSVGIcon flatSVGIcon) {
+        smallIcon = flatSVGIcon.derive(18, 18);
+      } else {
+        smallIcon = graphic.getIcon();
+      }
+    }
+    return ViewerToolBar.getDopButtonIcon(bckIcon, smallIcon);
   }
 
   static class MeasureGroupMenu extends GroupRadioMenu<Graphic> {
@@ -342,9 +291,12 @@ public class MeasureToolBar extends WtoolBar {
 
     public void changeButtonState() {
       Object sel = dataModel.getSelectedItem();
-      if (sel instanceof Graphic && button != null) {
-        Icon icon =
-            buildIcon((Graphic) sel, action == ActionW.DRAW_GRAPHICS ? drawIcon : MeasureIcon);
+      if (button != null && sel instanceof Graphic graphic) {
+        FlatSVGIcon drawIcon =
+            action == ActionW.DRAW_GRAPHICS
+                ? ResourceUtil.getToolBarIcon(ActionIcon.DRAW_TOP_LEFT)
+                : ResourceUtil.getToolBarIcon(ActionIcon.MEASURE_TOP_LEFT);
+        Icon icon = buildIcon(graphic, drawIcon);
         button.setIcon(icon);
         button.setActionCommand(sel.toString());
       }

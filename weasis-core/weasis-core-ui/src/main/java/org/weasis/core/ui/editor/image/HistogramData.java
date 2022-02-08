@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
@@ -34,6 +35,8 @@ import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
+import org.weasis.opencv.op.lut.PresentationStateLut;
+import org.weasis.opencv.op.lut.WlParams;
 
 public class HistogramData {
   private final float[] histValues;
@@ -42,7 +45,7 @@ public class HistogramData {
   private final double pixMin;
   private final double pixMax;
   private final Model colorModel;
-  private WindLevelParameters windLevel;
+  private WlParams windLevel;
   private DisplayByteLut lut;
   private LookupTableCV voiLut;
 
@@ -108,7 +111,7 @@ public class HistogramData {
       DisplayByteLut lut,
       int bandIndex,
       Model colorModel,
-      WindLevelParameters windLevel,
+      WlParams windLevel,
       double pixMin,
       double pixMax,
       MeasurableLayer layer) {
@@ -138,7 +141,7 @@ public class HistogramData {
     this.lut = lut;
   }
 
-  public WindLevelParameters getWindLevel() {
+  public WlParams getWindLevel() {
     return windLevel;
   }
 
@@ -181,11 +184,14 @@ public class HistogramData {
         int b = voiLut.getNumBands() <= bandIndex ? 0 : bandIndex;
         index = voiLut.lookup(b, level.intValue());
       }
-      LookupTableCV prLutData = windLevel.getPresentationStateLut();
-      if (prLutData != null) {
-        int val = index == null ? level.intValue() : index;
-        int b = prLutData.getNumBands() <= bandIndex ? 0 : bandIndex;
-        index = prLutData.lookup(b, val);
+      PresentationStateLut pr = windLevel.getPresentationState();
+      if (pr != null) {
+        Optional<LookupTableCV> prLutData = pr.getPrLut();
+        if (prLutData.isPresent()) {
+          int val = index == null ? level.intValue() : index;
+          int b = prLutData.get().getNumBands() <= bandIndex ? 0 : bandIndex;
+          index = prLutData.get().lookup(b, val);
+        }
       }
     }
 
@@ -228,19 +234,13 @@ public class HistogramData {
       PlanarImage imageSource = view2DPane.getSourceImage();
       int datatype = ImageConversion.convertToDataType(imageSource.type());
       if (datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT) {
-        LookupTableCV prLutData = windLevel.getPresentationStateLut();
-        if (prLutData == null || windLevel.getLutShape().getLookup() != null) {
-          LookupTableCV voiLookup =
-              img.getVOILookup(
-                  windLevel.getPresentationStateTags(),
-                  windLevel.getWindow(),
-                  windLevel.getLevel(),
-                  windLevel.getLevelMin(),
-                  windLevel.getLevelMax(),
-                  windLevel.getLutShape(),
-                  windLevel.isFillOutsideLutRange(),
-                  windLevel.isPixelPadding());
-          setVoiLut(voiLookup);
+        Optional<LookupTableCV> prLutData = Optional.empty();
+        PresentationStateLut pr = windLevel.getPresentationState();
+        if (pr != null) {
+          prLutData = pr.getPrLut();
+        }
+        if (prLutData.isEmpty() || windLevel.getLutShape().getLookup() != null) {
+          setVoiLut(img.getVOILookup(windLevel));
         }
       }
     }

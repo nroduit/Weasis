@@ -9,15 +9,13 @@
  */
 package org.weasis.dicom.rt;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import org.weasis.core.util.StringUtil;
 
 /** @author Tomas Skripcak */
-public class Plan implements Serializable {
-  private static final long serialVersionUID = -7174986553617095338L;
+public class Plan {
 
   private String sopInstanceUid;
   private String label;

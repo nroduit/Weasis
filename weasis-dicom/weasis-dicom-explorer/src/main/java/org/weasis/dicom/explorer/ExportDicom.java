@@ -11,9 +11,9 @@ package org.weasis.dicom.explorer;
 
 import java.io.IOException;
 import javax.swing.JProgressBar;
-import org.weasis.core.api.gui.util.PageProps;
+import org.weasis.core.api.gui.util.PageItem;
 
-public interface ExportDicom extends PageProps {
+public interface ExportDicom extends PageItem {
 
   void exportDICOM(CheckTreeModel model, JProgressBar info) throws IOException;
 }

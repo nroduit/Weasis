@@ -30,7 +30,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 
-@SuppressWarnings({"serial"})
 public abstract class AThumbnailModel<E extends MediaElement> extends AbstractListModel<E>
     implements IThumbnailModel<E> {
   private static final Logger LOGGER = LoggerFactory.getLogger(AThumbnailModel.class);
@@ -42,7 +41,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
   protected final DefaultListModel<E> listModel;
   protected final JIThumbnailCache thumbCache;
 
-  public AThumbnailModel(JList<E> list, JIThumbnailCache thumbCache) {
+  protected AThumbnailModel(JList<E> list, JIThumbnailCache thumbCache) {
     this.list = list;
     this.thumbCache = thumbCache;
     // Fix list reselection interval when dragging
@@ -63,9 +62,7 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
   @Override
   public void reload() {
     Optional<TreeNode> t = this.reloadContext.getSelectedDirNodes().stream().findFirst();
-    if (t.isPresent()) {
-      setData(t.get().getNodePath());
-    }
+    t.ifPresent(treeNode -> setData(treeNode.getNodePath()));
   }
 
   @Override
@@ -99,9 +96,8 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
   public void clear() {
     if (thumbCache != null) {
       for (int i = 0; i < listModel.size(); i++) {
-        E m = listModel.getElementAt(i);
-        if (m instanceof ImageElement) {
-          thumbCache.removeInQueue((ImageElement) m);
+        if (listModel.getElementAt(i) instanceof ImageElement imageElement) {
+          thumbCache.removeInQueue(imageElement);
         }
       }
     }
@@ -126,8 +122,8 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
 
   @Override
   public boolean removeElement(E obj) {
-    if (thumbCache != null && obj instanceof ImageElement) {
-      thumbCache.removeInQueue((ImageElement) obj);
+    if (thumbCache != null && obj instanceof ImageElement imageElement) {
+      thumbCache.removeInQueue(imageElement);
     }
     return listModel.removeElement(obj);
   }
@@ -167,7 +163,4 @@ public abstract class AThumbnailModel<E extends MediaElement> extends AbstractLi
     DirectoryStream.Filter<Path> filter = p -> !Files.isDirectory(p);
     loadContent(path, filter);
   }
-
-  @Override
-  public abstract void setData(Path path);
 }

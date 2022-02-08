@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -180,7 +181,7 @@ public class BundleTools {
   }
 
   public static String getEncodedValue(String val) throws UnsupportedEncodingException {
-    return URLEncoder.encode(val, "UTF-8");
+    return URLEncoder.encode(val, StandardCharsets.UTF_8);
   }
 
   private static void storeLauncherPref(Properties props, String remotePrefURL) throws IOException {

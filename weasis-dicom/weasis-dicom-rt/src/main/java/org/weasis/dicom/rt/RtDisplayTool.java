@@ -11,7 +11,6 @@ package org.weasis.dicom.rt;
 
 import bibliothek.gui.dock.common.CLocation;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
-import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingEvent;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
@@ -28,9 +27,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultBoundedRangeModel;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -56,7 +55,7 @@ import org.knowm.xchart.XYSeries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.task.CircularProgressBar;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.WinUtil;
@@ -66,6 +65,8 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerListener;
@@ -75,6 +76,7 @@ import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.layer.LayerType;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
@@ -141,9 +143,9 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
     this.setLayout(new BorderLayout(0, 0));
     this.rootPane = new JScrollPane();
-    this.dockable.setTitleIcon(
-        new ImageIcon(RtDisplayTool.class.getResource("/icon/16x16/rtDose.png")));
+    this.dockable.setTitleIcon(ResourceUtil.getIcon(OtherIcon.RADIOACTIVE));
     this.setDockableWidth(350);
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     this.btnLoad.setToolTipText(Messages.getString("populate.rt.objects"));
     // By default, recalculate DVH only when it is missing for structure
     this.cbDvhRecalculate.setSelected(false);
@@ -161,7 +163,6 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     this.treeStructures =
         new CheckboxTree() {
-          private static final long serialVersionUID = 778188275507301929L;
 
           @Override
           public String getToolTipText(MouseEvent evt) {
@@ -179,10 +180,10 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
           }
         };
     treeStructures.setToolTipText(StringUtil.EMPTY_STRING);
+    treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
 
     this.treeIsodoses =
         new CheckboxTree() {
-          private static final long serialVersionUID = 9185787644491574319L;
 
           @Override
           public String getToolTipText(MouseEvent evt) {
@@ -200,6 +201,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
           }
         };
     treeIsodoses.setToolTipText(StringUtil.EMPTY_STRING);
+    treeIsodoses.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     this.nodeStructures = new DefaultMutableTreeNode(Messages.getString("structures"), true);
     this.nodeIsodoses = new DefaultMutableTreeNode(Messages.getString("isodoses"), true);
     this.initData();
@@ -208,7 +210,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   private void loadData() {
     final RtSet rt = this.rtSet;
     SwingWorker<Boolean, Boolean> loadTask =
-        new SwingWorker<Boolean, Boolean>() {
+        new SwingWorker<>() {
 
           @Override
           protected Boolean doInBackground() throws Exception {
@@ -276,7 +278,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
 
     add(panelFoot, BorderLayout.SOUTH);
 
-    panelFoot.add(slider.getParent());
+    panelFoot.add(slider);
 
     JPanel panelHead = new JPanel();
     add(panelHead, BorderLayout.NORTH);
@@ -367,7 +369,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
         XChartPanel<XYChart> chartPanel = new XChartPanel<>(dvhChart);
         d.getContentPane().add(chartPanel, BorderLayout.CENTER);
         d.pack();
-        JMVUtils.showCenterScreen(d);
+        GuiUtils.showCenterScreen(d);
       }
     }
   }
@@ -395,11 +397,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeStructures.setShowsRootHandles(true);
     treeStructures.setRootVisible(false);
     treeStructures.setExpandsSelectedPaths(true);
-    DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
-    renderer.setOpenIcon(null);
-    renderer.setClosedIcon(null);
-    renderer.setLeafIcon(null);
-    treeStructures.setCellRenderer(renderer);
+    treeStructures.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     treeStructures.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeStructures, rootNodeStructures);
@@ -418,11 +416,7 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     treeIsodoses.setShowsRootHandles(true);
     treeIsodoses.setRootVisible(false);
     treeIsodoses.setExpandsSelectedPaths(true);
-    DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
-    renderer.setOpenIcon(null);
-    renderer.setClosedIcon(null);
-    renderer.setLeafIcon(null);
-    treeIsodoses.setCellRenderer(renderer);
+    treeIsodoses.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     treeIsodoses.addTreeCheckingListener(this::treeValueChanged);
 
     expandTree(treeIsodoses, rootNodeIsodoses);

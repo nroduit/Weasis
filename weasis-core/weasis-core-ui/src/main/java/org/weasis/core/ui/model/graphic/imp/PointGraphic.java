@@ -23,7 +23,6 @@ import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 @XmlType(name = "point")
 @XmlRootElement(name = "point")
 public class PointGraphic extends AbstractGraphic {
-  private static final long serialVersionUID = 3485484151733273261L;
 
   static final Integer DEFAULT_POINT_SIZE = 1;
 

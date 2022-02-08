@@ -9,35 +9,26 @@
  */
 package org.weasis.acquire.dockable.components.actions.annotate;
 
-import java.awt.BorderLayout;
-import javax.swing.JPanel;
+import javax.swing.BoxLayout;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
-import org.weasis.acquire.dockable.components.actions.annotate.comp.AnnotationIconsPanel;
-import org.weasis.acquire.dockable.components.actions.annotate.comp.AnnotationOptionsPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
+import org.weasis.base.viewer2d.EventManager;
+import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 
 public class AnnotatePanel extends AbstractAcquireActionPanel {
-  private static final long serialVersionUID = -3096519473431772537L;
-
-  private final JPanel buttonsPanel = new AnnotationIconsPanel();
-  private final JPanel optionsPanel = new AnnotationOptionsPanel();
 
   public AnnotatePanel() {
-    setLayout(new BorderLayout());
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+    MeasureTool.buildIconPanel(
+        this, EventManager.getInstance(), ActionW.MEASURE, ActionW.DRAW_MEASURE, 8);
+    MeasureTool.buildIconPanel(
+        this, EventManager.getInstance(), ActionW.DRAW, ActionW.DRAW_GRAPHICS, 8);
 
-    JPanel content = createContent();
-    add(content, BorderLayout.NORTH);
-  }
-
-  private JPanel createContent() {
-    JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
-
-    panel.add(buttonsPanel, BorderLayout.NORTH);
-    panel.add(optionsPanel, BorderLayout.CENTER);
-
-    return panel;
+    add(new AnnotationOptionsPanel());
+    add(GuiUtils.boxYLastElement(5));
   }
 
   @Override

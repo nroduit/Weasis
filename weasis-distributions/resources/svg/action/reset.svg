@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g transform="translate(2,1)" fill="#6E6E6E" fill-rule="evenodd">
+  <polygon transform="matrix(-1,0,0,1,6.6,0)" points="0 8.1 0 0.1 4 4.1"/>
+  <path d="m-0.16521 11h8.1652c1.6569 0 3-1.3431 3-3s-1.3431-3-3-3h-1.5825l-0.038989-2h1.6215c2.7614 0 5 2.2386 5 5 0 2.7614-2.2386 5-5 5h-8.1262z" fill="#6E6E6E"/>
+  <circle cx=".43689" cy="4.15" r="1.75" fill="#db5860" stroke-width=".35"/>
+ </g>
+</svg>

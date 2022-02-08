@@ -30,10 +30,10 @@ public class BasicActionState implements ActionState {
   public void enableAction(boolean enabled) {
     this.enabled = enabled;
     for (Object c : components) {
-      if (c instanceof Component) {
-        ((Component) c).setEnabled(enabled);
-      } else if (c instanceof State) {
-        ((State) c).setEnabled(enabled);
+      if (c instanceof Component component) {
+        component.setEnabled(enabled);
+      } else if (c instanceof State state) {
+        state.setEnabled(enabled);
       }
     }
   }
@@ -56,10 +56,10 @@ public class BasicActionState implements ActionState {
   public boolean registerActionState(Object c) {
     if (!components.contains(c)) {
       components.add(c);
-      if (c instanceof Component) {
-        ((Component) c).setEnabled(enabled);
-      } else if (c instanceof State) {
-        ((State) c).setEnabled(enabled);
+      if (c instanceof Component component) {
+        component.setEnabled(enabled);
+      } else if (c instanceof State state) {
+        state.setEnabled(enabled);
       }
       return true;
     }

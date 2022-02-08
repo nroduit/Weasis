@@ -21,8 +21,9 @@ import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
 import org.weasis.core.ui.model.utils.bean.Measurement;
@@ -31,12 +32,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "cobbAngle")
 @XmlRootElement(name = "cobbAngle")
 public class CobbAngleToolGraphic extends OpenAngleToolGraphic {
-  private static final long serialVersionUID = -5516094184442711688L;
 
   public static final Integer POINTS_NUMBER = 5;
 
-  public static final Icon ICON =
-      new ImageIcon(CobbAngleToolGraphic.class.getResource("/icon/22x22/draw-cobb.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_COBB);
 
   public static final Measurement ANGLE =
       new Measurement(Messages.getString("measure.angle"), 1, true);

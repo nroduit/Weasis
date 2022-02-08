@@ -11,12 +11,9 @@ package org.weasis.core.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.WindowEvent;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -24,139 +21,74 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
-import javax.swing.border.EmptyBorder;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
 public abstract class PropertiesDialog extends JDialog {
-  private static final long serialVersionUID = 8140414207263317080L;
+
+  protected Color color;
 
   private final JPanel panel1 = new JPanel();
-  private final BorderLayout borderLayout1 = new BorderLayout();
-
-  private final JPanel jPanelFooter = new JPanel();
   private final JButton jButtonOk = new JButton();
   private final JButton jButtonCancel = new JButton();
-  private final GridBagLayout gridBagLayout2 = new GridBagLayout();
-  private final JPanel jPanel1 = new JPanel();
-  private final GridBagLayout gridBagLayout1 = new GridBagLayout();
   protected final JSpinner spinnerLineWidth = new JSpinner();
   protected final JLabel jLabelLineWidth = new JLabel();
   protected final JLabel jLabelLineColor = new JLabel();
-  protected final JButton jButtonColor = new JButton();
+  protected final JButton jButtonColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
   protected final JCheckBox jCheckBoxFilled = new JCheckBox();
-  protected final JLabel lbloverridesmultipleValues =
-      new JLabel(Messages.getString("PropertiesDialog.header_override"));
+  protected final JButton overrideMultipleValues =
+      new JButton(Messages.getString("PropertiesDialog.header_override"));
   protected final JCheckBox checkBoxColor = new JCheckBox();
   protected final JCheckBox checkBoxWidth = new JCheckBox();
   protected final JCheckBox checkBoxFill = new JCheckBox();
 
-  public PropertiesDialog(Window parent, String title) {
+  protected final JPanel panelColor = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
+  protected final JPanel panelLine = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
+  protected final JPanel panelFilled = GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5);
+
+  protected PropertiesDialog(Window parent, String title) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
     init();
   }
 
   private void init() {
-    panel1.setBorder(new EmptyBorder(0, 15, 0, 15));
-    panel1.setLayout(borderLayout1);
+    panel1.setBorder(GuiUtils.getEmptyBorder(10, 15, 0, 15));
+    panel1.setLayout(new BorderLayout());
+
     jButtonOk.setText(Messages.getString("PropertiesDialog.ok"));
     jButtonOk.addActionListener(e -> okAction());
     jButtonCancel.setText(Messages.getString("PropertiesDialog.cancel"));
     jButtonCancel.addActionListener(e -> quitWithoutSaving());
-    jPanelFooter.setLayout(gridBagLayout2);
 
-    jPanel1.setLayout(gridBagLayout1);
-    JMVUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
+    GuiUtils.setNumberModel(spinnerLineWidth, 1, 1, 8, 1);
     jLabelLineWidth.setText(Messages.getString("PropertiesDialog.line_width") + StringUtil.COLON);
     jLabelLineColor.setText(Messages.getString("PropertiesDialog.line_color") + StringUtil.COLON);
-    jButtonColor.setText(Messages.getString("MeasureTool.pick"));
-
+    jButtonColor.setToolTipText(Messages.getString("MeasureTool.pick"));
     jButtonColor.addActionListener(e -> openColorChooser((JButton) e.getSource()));
 
     jCheckBoxFilled.setText(Messages.getString("PropertiesDialog.fill_shape"));
+
     getContentPane().add(panel1);
+
+    JPanel jPanelFooter =
+        GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 15, 15, jButtonOk, jButtonCancel);
     panel1.add(jPanelFooter, BorderLayout.SOUTH);
-    jPanelFooter.add(
-        jButtonCancel,
-        new GridBagConstraints(
-            1,
-            1,
-            1,
-            1,
-            1.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(30, 15, 15, 15),
-            0,
-            0));
-    jPanelFooter.add(
-        jButtonOk,
-        new GridBagConstraints(
-            0,
-            1,
-            1,
-            1,
-            1.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(30, 15, 15, 15),
-            0,
-            0));
-    panel1.add(jPanel1, BorderLayout.CENTER);
 
-    GridBagConstraints gbcLbloverridesmultipleValues = new GridBagConstraints();
-    gbcLbloverridesmultipleValues.insets = new Insets(15, 10, 0, 25);
-    gbcLbloverridesmultipleValues.gridx = 2;
-    gbcLbloverridesmultipleValues.gridy = 0;
-    lbloverridesmultipleValues.setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(3, 3, 3, 3)));
-    lbloverridesmultipleValues.setOpaque(true);
-    jPanel1.add(lbloverridesmultipleValues, gbcLbloverridesmultipleValues);
-    jPanel1.add(
-        jLabelLineColor,
-        new GridBagConstraints(
-            0,
-            1,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.EAST,
-            GridBagConstraints.NONE,
-            new Insets(10, 25, 0, 0),
-            0,
-            0));
-    jPanel1.add(
-        jButtonColor,
-        new GridBagConstraints(
-            1,
-            1,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.WEST,
-            GridBagConstraints.NONE,
-            new Insets(10, 2, 0, 0),
-            0,
-            0));
+    overrideMultipleValues.setEnabled(false);
 
-    GridBagConstraints gbcCheckBoxColor = new GridBagConstraints();
-    gbcCheckBoxColor.insets = new Insets(10, 0, 0, 0);
-    gbcCheckBoxColor.gridx = 2;
-    gbcCheckBoxColor.gridy = 1;
     checkBoxColor.addActionListener(
         e -> {
           JCheckBox box = (JCheckBox) e.getSource();
+          jLabelLineColor.setEnabled(box.isSelected());
           jButtonColor.setEnabled(box.isSelected());
         });
     checkBoxWidth.addActionListener(
         e -> {
           JCheckBox box = (JCheckBox) e.getSource();
+          jLabelLineWidth.setEnabled(box.isSelected());
           spinnerLineWidth.setEnabled(box.isSelected());
         });
     checkBoxFill.addActionListener(
@@ -164,61 +96,23 @@ public abstract class PropertiesDialog extends JDialog {
           JCheckBox box = (JCheckBox) e.getSource();
           jCheckBoxFilled.setEnabled(box.isSelected());
         });
-    jPanel1.add(checkBoxColor, gbcCheckBoxColor);
-    jPanel1.add(
-        jLabelLineWidth,
-        new GridBagConstraints(
-            0,
-            2,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.EAST,
-            GridBagConstraints.NONE,
-            new Insets(10, 25, 0, 0),
-            0,
-            0));
-    jPanel1.add(
-        spinnerLineWidth,
-        new GridBagConstraints(
-            1,
-            2,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.WEST,
-            GridBagConstraints.NONE,
-            new Insets(10, 2, 0, 0),
-            0,
-            0));
 
-    GridBagConstraints gbcCheckBoxWidth = new GridBagConstraints();
-    gbcCheckBoxWidth.insets = new Insets(10, 0, 0, 0);
-    gbcCheckBoxWidth.gridx = 2;
-    gbcCheckBoxWidth.gridy = 2;
-    jPanel1.add(checkBoxWidth, gbcCheckBoxWidth);
-    jPanel1.add(
-        jCheckBoxFilled,
-        new GridBagConstraints(
-            0,
-            3,
-            2,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(10, 0, 0, 0),
-            0,
-            0));
+    JPanel centerPanel = GuiUtils.getVerticalBoxLayoutPanel();
+    centerPanel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 2, 5, overrideMultipleValues));
 
-    GridBagConstraints gbcCheckBoxFill = new GridBagConstraints();
-    gbcCheckBoxFill.insets = new Insets(10, 0, 0, 0);
-    gbcCheckBoxFill.gridx = 2;
-    gbcCheckBoxFill.gridy = 3;
-    jPanel1.add(checkBoxFill, gbcCheckBoxFill);
+    panelColor.add(jLabelLineColor);
+    panelColor.add(jButtonColor);
+
+    panelLine.add(jLabelLineWidth);
+    panelLine.add(spinnerLineWidth);
+
+    panelFilled.add(jCheckBoxFilled);
+
+    centerPanel.add(panelColor);
+    centerPanel.add(panelLine);
+    centerPanel.add(panelFilled);
+    centerPanel.add(GuiUtils.boxVerticalStrut(10));
+    panel1.add(centerPanel, BorderLayout.CENTER);
   }
 
   // Overridden so we can exit when window is closed
@@ -236,13 +130,12 @@ public abstract class PropertiesDialog extends JDialog {
     dispose();
   }
 
-  public static void openColorChooser(JButton button) {
+  public void openColorChooser(JButton button) {
     if (button != null) {
       Color newColor =
-          JColorChooser.showDialog(
-              button, Messages.getString("MeasureTool.pick_color"), button.getBackground());
+          JColorChooser.showDialog(button, Messages.getString("MeasureTool.pick_color"), color);
       if (newColor != null) {
-        button.setBackground(newColor);
+        color = newColor;
       }
     }
   }

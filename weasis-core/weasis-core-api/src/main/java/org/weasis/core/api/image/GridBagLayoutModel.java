@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.image;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -26,8 +27,12 @@ import javax.xml.parsers.SAXParserFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GUIEntry;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.Copyable;
+import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.util.StringUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -37,11 +42,10 @@ import org.xml.sax.helpers.DefaultHandler;
 public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(GridBagLayoutModel.class);
-
-  private static final Color background = new Color(67, 72, 70);
+  public static final int ICON_SIZE = 22;
 
   private String title;
-  private final Icon icon;
+  private Icon icon;
   private final String id;
 
   private final Map<LayoutConstraints, Component> constraints;
@@ -97,7 +101,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
     } catch (Exception e) {
       LOGGER.error("Loading layout xml", e);
     }
-    this.icon = buildIcon();
+    this.icon = icon == null ? buildIcon() : icon;
   }
 
   public GridBagLayoutModel(GridBagLayoutModel layoutModel) {
@@ -117,9 +121,19 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2d = (Graphics2D) g;
+        Color oldColor = g.getColor();
+        Object[] hints = GuiUtils.setRenderingHints(g, true, true, false);
+
+        Color background = IconColor.ACTIONS_GREY.color;
+        Color foreground = FlatUIUtils.getUIColor("MenuItem.background", Color.WHITE);
+        if (c instanceof RadioMenuItem menuItem && menuItem.isArmed()) {
+          background = FlatUIUtils.getUIColor("MenuItem.selectionForeground", Color.DARK_GRAY);
+        } else if (c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {
+          foreground = FlatUIUtils.getUIColor("MenuItem.checkBackground", Color.BLUE);
+        }
         g2d.setColor(background);
         g2d.fillRect(x, y, getIconWidth(), getIconHeight());
-        g2d.setColor(Color.WHITE);
+        g2d.setColor(foreground);
         Dimension dim = getGridSize();
         double stepX = getIconWidth() / dim.getWidth();
         double stepY = getIconHeight() / dim.getHeight();
@@ -135,20 +149,22 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
           if (color != null) {
             g2d.setColor(color);
             g2d.fill(rect);
-            g2d.setColor(Color.WHITE);
+            g2d.setColor(foreground);
           }
           g2d.draw(rect);
         }
+        g2d.setColor(oldColor);
+        GuiUtils.resetRenderingHints(g, hints);
       }
 
       @Override
       public int getIconWidth() {
-        return 22;
+        return ICON_SIZE;
       }
 
       @Override
       public int getIconHeight() {
-        return 22;
+        return ICON_SIZE;
       }
     };
   }
@@ -188,6 +204,10 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
   @Override
   public Icon getIcon() {
     return icon;
+  }
+
+  public void setIcon(Icon icon) {
+    this.icon = icon;
   }
 
   @Override
@@ -257,8 +277,14 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         if (StringUtil.hasText(ctype)) {
           color = WProperties.hexadecimal2Color(ctype);
         }
-      } else if (title == null && "layoutModel".equals(qName)) {
-        title = attributes.getValue("name"); // NON-NLS
+      } else if ("layoutModel".equals(qName)) {
+        if (title == null) {
+          title = attributes.getValue("name"); // NON-NLS
+        }
+        String path = attributes.getValue("icon");
+        if (StringUtil.hasText(path)) {
+          icon = ResourceUtil.getIcon(path).derive(ICON_SIZE, ICON_SIZE);
+        }
       }
     }
 

@@ -15,6 +15,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
@@ -42,12 +43,12 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -91,7 +92,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   public WaveView(Series series) {
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    setPreferredSize(new Dimension(1024, 1024));
+    setPreferredSize(GuiUtils.getDimension(1024, 1024));
 
     this.channels = new ArrayList<>();
     this.currentFormat = Format.DEFAULT;
@@ -540,7 +541,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       if (dcm != null && patient != null && study != null) {
         g2.setColor(Color.black);
         g2.setFont(new Font("SanSerif", Font.PLAIN, 9));
-        float fontHeight = FontTools.getAccurateFontHeight(g2);
+        FontMetrics fontMetrics = g2.getFontMetrics();
+        final int fontHeight = fontMetrics.getHeight();
         float drawY = fontHeight;
         TagW patNameTag = TagD.get(Tag.PatientName);
         g2.drawString(

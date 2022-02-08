@@ -9,30 +9,28 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.WtoolBar;
 
-@SuppressWarnings("serial")
-public class CineToolBar<DicomImageElement> extends WtoolBar {
+public class CineToolBar extends WtoolBar {
 
   public CineToolBar(int index) {
     super(Messages.getString("CineToolBar.name"), index);
 
     ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-    if (sequence instanceof SliderCineListener) {
-      final SliderCineListener cineAction = (SliderCineListener) sequence;
+    if (sequence instanceof final SliderCineListener cineAction) {
       WProperties p = BundleTools.SYSTEM_PREFERENCES;
       if (p.getBooleanProperty("weasis.cinetoolbar.gotostart", true)) {
         final JButton rwdButton = new JButton();
         rwdButton.setToolTipText(Messages.getString("CineToolBar.start"));
-        rwdButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-rwd.png")));
+        rwdButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SKIP_START));
         rwdButton.addActionListener(e -> cineAction.setSliderValue(0));
         add(rwdButton);
         sequence.registerActionState(rwdButton);
@@ -41,8 +39,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
       if (p.getBooleanProperty("weasis.cinetoolbar.prev", true)) {
         final JButton prevButton = new JButton();
         prevButton.setToolTipText(Messages.getString("CineToolBar.prev"));
-        prevButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-prev.png")));
+        prevButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.PREVIOUS));
         prevButton.addActionListener(
             e -> {
               cineAction.stop();
@@ -52,23 +49,11 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
         sequence.registerActionState(prevButton);
       }
 
-      if (p.getBooleanProperty("weasis.cinetoolbar.pause", true)) {
-        final JButton pauseButton = new JButton();
-        pauseButton.setActionCommand(ActionW.CINESTOP.cmd());
-        pauseButton.setToolTipText(Messages.getString("CineToolBar.pause"));
-        pauseButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-pause.png")));
-        pauseButton.addActionListener(EventManager.getInstance());
-        add(pauseButton);
-        sequence.registerActionState(pauseButton);
-      }
-
       if (p.getBooleanProperty("weasis.cinetoolbar.start", true)) {
         final JButton startButton = new JButton();
         startButton.setActionCommand(ActionW.CINESTART.cmd());
         startButton.setToolTipText(Messages.getString("CineToolBar.play"));
-        startButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-play.png")));
+        startButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.EXECUTE));
         startButton.addActionListener(EventManager.getInstance());
         add(startButton);
         sequence.registerActionState(startButton);
@@ -76,14 +61,10 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
 
       if (p.getBooleanProperty("weasis.cinetoolbar.stop", true)) {
         final JButton stopButton = new JButton();
+        stopButton.setActionCommand(ActionW.CINESTOP.cmd());
         stopButton.setToolTipText(Messages.getString("CineToolBar.stop"));
-        stopButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-stop.png")));
-        stopButton.addActionListener(
-            e -> {
-              cineAction.stop();
-              cineAction.setSliderValue(0);
-            });
+        stopButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SUSPEND));
+        stopButton.addActionListener(EventManager.getInstance());
         add(stopButton);
         sequence.registerActionState(stopButton);
       }
@@ -91,8 +72,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
       if (p.getBooleanProperty("weasis.cinetoolbar.next", true)) {
         final JButton nextButton = new JButton();
         nextButton.setToolTipText(Messages.getString("CineToolBar.next"));
-        nextButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-next.png")));
+        nextButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.NEXT));
         nextButton.addActionListener(
             e -> {
               cineAction.stop();
@@ -105,8 +85,7 @@ public class CineToolBar<DicomImageElement> extends WtoolBar {
       if (p.getBooleanProperty("weasis.cinetoolbar.gotoend", true)) {
         final JButton fwdButton = new JButton();
         fwdButton.setToolTipText(Messages.getString("CineToolBar.end"));
-        fwdButton.setIcon(
-            new ImageIcon(CineToolBar.class.getResource("/icon/24x24/player-fwd.png")));
+        fwdButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SKIP_END));
         fwdButton.addActionListener(e -> cineAction.setSliderValue(Integer.MAX_VALUE));
         add(fwdButton);
         sequence.registerActionState(fwdButton);

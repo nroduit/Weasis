@@ -15,16 +15,13 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -37,19 +34,20 @@ import javax.swing.JTable;
 import javax.swing.JToggleButton;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.TableModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JToogleButtonGroup;
-import org.weasis.core.api.gui.util.TableHeaderRenderer;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -76,7 +74,6 @@ import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 
 public class MeasureTool extends PluginTool implements GraphicSelectionListener {
-  private static final long serialVersionUID = 1117961156637401550L;
 
   public static final String BUTTON_NAME = ActionW.DRAW + " & " + ActionW.MEASURE;
   public static final String LABEL_PREF_NAME = Messages.getString("MeasureTool.lab_img");
@@ -90,23 +87,16 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   private List<DragGraphic> selectedGraphic;
 
   public MeasureTool(ImageViewerEventManager<? extends ImageElement> eventManager) {
-    super(BUTTON_NAME, BUTTON_NAME, PluginTool.Type.TOOL, 30);
+    super(BUTTON_NAME, BUTTON_NAME, Insertable.Type.TOOL, 30);
     this.eventManager = eventManager;
     this.rootPane = new JScrollPane();
-    dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
-    setDockableWidth(
-        javax.swing.UIManager.getLookAndFeel() != null
-            ? javax.swing.UIManager.getLookAndFeel()
-                    .getClass()
-                    .getName()
-                    .startsWith("org.pushingpixels")
-                ? 190
-                : 205
-            : 205);
+    dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
+    setDockableWidth(220);
     jbInit();
   }
 
   private void jbInit() {
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     add(getIconsPanel());
     add(getSelectedMeasurePanel());
@@ -114,70 +104,52 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   public final JPanel getIconsPanel() {
     final JPanel transform = new JPanel();
-    transform.setAlignmentX(Component.LEFT_ALIGNMENT);
-    transform.setAlignmentY(Component.TOP_ALIGNMENT);
     transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
+    transform.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
 
-    MeasureTool.buildIconPanel(transform, eventManager, ActionW.MEASURE, ActionW.DRAW_MEASURE, 4);
-    MeasureTool.buildIconPanel(transform, eventManager, ActionW.DRAW, ActionW.DRAW_GRAPHICS, 4);
-
+    MeasureTool.buildIconPanel(transform, eventManager, ActionW.MEASURE, ActionW.DRAW_MEASURE, 5);
+    MeasureTool.buildIconPanel(transform, eventManager, ActionW.DRAW, ActionW.DRAW_GRAPHICS, 5);
     transform.add(Box.createVerticalStrut(5));
 
-    JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 3, 0));
-    transform.add(panel);
-
     JLabel label = new JLabel(Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
-    panel.add(label);
-
-    JButton button = new JButton(Messages.getString("MeasureTool.pick"));
-    button.setBackground(viewSetting.getLineColor());
+    JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
+    button.setToolTipText(Messages.getString("MeasureTool.pick"));
     button.addActionListener(
         e -> {
-          JButton btn = (JButton) e.getSource();
           Color newColor =
               JColorChooser.showDialog(
                   SwingUtilities.getWindowAncestor(MeasureTool.this),
                   Messages.getString("MeasureTool.pick_color"),
-                  btn.getBackground());
+                  viewSetting.getLineColor());
           if (newColor != null) {
-            btn.setBackground(newColor);
             viewSetting.setLineColor(newColor);
             updateMeasureProperties(viewSetting);
           }
         });
-    panel.add(button);
 
     JSpinner spinner = new JSpinner();
-    JMVUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
+    GuiUtils.setNumberModel(spinner, viewSetting.getLineWidth(), 1, 8, 1);
     spinner.addChangeListener(
         e -> {
           Object val = ((JSpinner) e.getSource()).getValue();
 
-          if (val instanceof Integer) {
-            viewSetting.setLineWidth((Integer) val);
+          if (val instanceof Integer intVal) {
+            viewSetting.setLineWidth(intVal);
             updateMeasureProperties(viewSetting);
           }
         });
-    panel.add(spinner);
+    transform.add(GuiUtils.getFlowLayoutPanel(label, button, spinner));
 
     ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
-    if (drawOnceAction instanceof ToggleButtonListener) {
-      transform.add(Box.createVerticalStrut(5));
-      JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      transform.add(panel1);
-      JCheckBox checkDraw =
-          ((ToggleButtonListener) drawOnceAction).createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
+    if (drawOnceAction instanceof ToggleButtonListener toggleListener) {
+      JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
       checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
-      checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
-      panel1.add(checkDraw);
+      transform.add(GuiUtils.getFlowLayoutPanel(checkDraw));
     }
-    JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    transform.add(panel1);
-    JCheckBox chckbxBasicImageStatistics =
+
+    JCheckBox checkboxBasicImageStatistics =
         new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics());
-    chckbxBasicImageStatistics.setAlignmentX(Component.LEFT_ALIGNMENT);
-    panel1.add(chckbxBasicImageStatistics);
-    chckbxBasicImageStatistics.addActionListener(
+    checkboxBasicImageStatistics.addActionListener(
         e -> {
           JCheckBox box = (JCheckBox) e.getSource();
           boolean sel = box.isSelected();
@@ -191,9 +163,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
               ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
               if (p instanceof ImageViewerPlugin) {
-                for (Object v : ((ImageViewerPlugin<?>) p).getImagePanels()) {
-                  if (v instanceof ViewCanvas) {
-                    ViewCanvas<?> view = (ViewCanvas<?>) v;
+                for (ViewCanvas<?> view : ((ImageViewerPlugin<?>) p).getImagePanels()) {
+                  if (view != null) {
                     view.getGraphicManager().updateLabels(true, view);
                   }
                 }
@@ -201,26 +172,17 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             }
           }
         });
-    panel1.add(chckbxBasicImageStatistics);
+    transform.add(GuiUtils.getFlowLayoutPanel(checkboxBasicImageStatistics));
 
     ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-    if (spUnitAction instanceof ComboItemListener) {
-      final JPanel panel4 = new JPanel(new FlowLayout(FlowLayout.LEADING, 2, 3));
-      final JLabel lutLabel = new JLabel();
-      lutLabel.setText(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      panel4.add(lutLabel);
-      final JComboBox unitComboBox = ((ComboItemListener) spUnitAction).createCombo(120);
+    if (spUnitAction instanceof ComboItemListener<?> comboListener) {
+      final JLabel lutLabel = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+      JComboBox<?> unitComboBox = comboListener.createCombo(120);
       unitComboBox.setSelectedItem(Unit.PIXEL);
-      panel4.add(unitComboBox);
-      transform.add(panel4);
+      transform.add(GuiUtils.getFlowLayoutPanel(lutLabel, unitComboBox));
     }
 
-    transform.add(Box.createVerticalStrut(5));
-    JPanel panel2 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    transform.add(panel2);
     final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
-    btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
-    panel2.add(btnGerenralOptions);
     btnGerenralOptions.addActionListener(
         e -> {
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MeasureTool.this);
@@ -229,9 +191,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           dialog.showPage(LABEL_PREF_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
-    transform.add(panel2);
-    transform.add(Box.createVerticalStrut(5));
-
+    transform.add(GuiUtils.getFlowLayoutPanel(btnGerenralOptions));
     return transform;
   }
 
@@ -244,36 +204,18 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   }
 
   public JPanel getSelectedMeasurePanel() {
-    final JPanel transform = new JPanel();
-    transform.setAlignmentY(Component.TOP_ALIGNMENT);
-    transform.setAlignmentX(Component.LEFT_ALIGNMENT);
-    transform.setLayout(new BoxLayout(transform, BoxLayout.Y_AXIS));
-    transform.setBorder(
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                Messages.getString("MeasureTool.sel"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
-
-    JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    transform.add(panel1);
-    transform.add(Box.createVerticalStrut(5));
     jtable = createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.setFont(FontTools.getFont10());
+    jtable.setFont(FontTools.getMiniFont());
 
     jtable.getTableHeader().setReorderingAllowed(false);
 
-    tableContainer = new JPanel();
-    tableContainer.setBorder(BorderFactory.createEtchedBorder());
-    tableContainer.setPreferredSize(new Dimension(50, 80));
-    tableContainer.setLayout(new BorderLayout());
-    transform.add(tableContainer);
-
-    return transform;
+    tableContainer = new JPanel(new BorderLayout());
+    tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
+    tableContainer.setBorder(
+        BorderFactory.createCompoundBorder(
+            GuiUtils.getEmptyBorder(10, 3, 0, 3),
+            GuiUtils.getTitledBorder(Messages.getString("MeasureTool.sel"))));
+    return tableContainer;
   }
 
   @Override
@@ -296,13 +238,11 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   public static JTable createMultipleRenderingTable(TableModel model) {
     JTable table = new JTable(model);
+    table.getTableHeader().setReorderingAllowed(false);
+    table.setShowHorizontalLines(true);
+    table.setShowVerticalLines(true);
     table.getColumnModel().setColumnMargin(3);
     return table;
-  }
-
-  public static void createTableHeaders(JTable table) {
-    table.getColumnModel().getColumn(0).setHeaderRenderer(new TableHeaderRenderer());
-    table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
   }
 
   public void setSelectedGraphic(Graphic graph, MeasurableLayer layer) {
@@ -311,8 +251,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     if (graph != null && layer != null && graph.getLayerType() == LayerType.MEASURE) {
       Unit unit = null;
       ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-      if (spUnitAction instanceof ComboItemListener) {
-        unit = (Unit) ((ComboItemListener) spUnitAction).getSelectedItem();
+      if (spUnitAction instanceof ComboItemListener<?> comboListener) {
+        unit = (Unit) comboListener.getSelectedItem();
       }
       measList = graph.computeMeasurements(layer, true, unit);
     }
@@ -330,7 +270,6 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       };
       jtable.setModel(new SimpleTableModel(headers, getLabels(measList)));
       jtable.getColumnModel().getColumn(1).setCellRenderer(new TableNumberRenderer());
-      createTableHeaders(jtable);
       int height =
           (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
               + jtable.getTableHeader().getHeight()
@@ -341,7 +280,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       tableContainer.add(jtable, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtable);
     } else {
-      tableContainer.setPreferredSize(new Dimension(50, 50));
+      tableContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableContainer.revalidate();
     tableContainer.repaint();
@@ -394,8 +333,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       list = new ArrayList<>();
 
       for (Graphic graphic : selectedGraphicList) {
-        if (graphic instanceof DragGraphic) {
-          list.add((DragGraphic) graphic);
+        if (graphic instanceof DragGraphic dragGraphic) {
+          list.add(dragGraphic);
         }
       }
     }
@@ -429,33 +368,27 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       int lineLength) {
     Optional<ComboItemListener> actionState =
         eventManager.getAction(graphicAction, ComboItemListener.class);
-    if (!actionState.isPresent()) {
+    if (actionState.isEmpty()) {
       return;
     }
 
     final JPanel pIcons = new JPanel();
     pIcons.setBorder(
         BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                graphicAction.getTitle(),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getEmptyBorder(10, 5, 0, 5),
+            GuiUtils.getTitledBorder(graphicAction.getTitle())));
 
-    JToogleButtonGroup measures = actionState.get().createButtonGroup();
+    JToogleButtonGroup<?> measures = actionState.get().createButtonGroup();
     JToggleButton[] items = measures.getJToggleButtonList();
 
-    pIcons.setLayout(new GridBagLayout());
-    for (int i = 0; i < items.length; i++) {
-      items[i].addActionListener(
+    pIcons.setLayout(new GridLayout(0, lineLength));
+    for (JToggleButton item : items) {
+      item.addActionListener(
           e -> {
             ImageViewerPlugin<? extends ImageElement> view =
                 eventManager.getSelectedView2dContainer();
             if (view != null) {
-              final ViewerToolBar toolBar = view.getViewerToolBar();
+              final ViewerToolBar<?> toolBar = view.getViewerToolBar();
               if (toolBar != null) {
                 String cmd = action.cmd();
                 if (!toolBar.isCommandActive(cmd)) {
@@ -467,18 +400,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
               }
             }
           });
-      GridBagConstraints constraints = new GridBagConstraints();
-      constraints.insets = new Insets(0, 0, 5, 5);
-      constraints.gridx = i % lineLength;
-      constraints.gridy = i / lineLength;
-      Dimension size = items[i].getPreferredSize();
-      if (size != null && size.width > size.height) {
-        items[i].setPreferredSize(new Dimension(size.height + 2, size.height));
-      }
-      pIcons.add(items[i], constraints);
+      pIcons.add(item);
     }
-    JPanel panelLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-    panelLeft.add(pIcons);
-    rootPanel.add(panelLeft);
+    rootPanel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, 0, pIcons));
   }
 }

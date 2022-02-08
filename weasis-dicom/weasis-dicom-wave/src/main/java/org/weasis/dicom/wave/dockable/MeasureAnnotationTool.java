@@ -12,7 +12,6 @@ package org.weasis.dicom.wave.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -22,12 +21,10 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
-import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import org.dcm4che3.data.Attributes;
@@ -35,15 +32,16 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.TableHeaderRenderer;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.SeriesViewerListener;
-import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.core.util.StringUtil;
@@ -54,7 +52,7 @@ import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.wave.Messages;
 
 public class MeasureAnnotationTool extends PluginTool implements SeriesViewerListener {
-  private static final long serialVersionUID = 1117961156637401550L;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(MeasureAnnotationTool.class);
 
   public static final String BUTTON_NAME = "Measurements"; // NON-NLS
@@ -70,8 +68,9 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     super(
         BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
-    dockable.setTitleIcon(new ImageIcon(MeasureTool.class.getResource("/icon/16x16/measure.png")));
-    setDockableWidth(300);
+    dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
+    rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
+    setDockableWidth(280);
     jbInit();
   }
 
@@ -89,24 +88,17 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.setBorder(
         BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                Messages.getString("annotations"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getTitledBorder(Messages.getString("annotations"))));
 
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);
     transform.add(Box.createVerticalStrut(5));
     jtableTag =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableTag.setFont(FontTools.getFont10());
+    jtableTag.setFont(FontTools.getSmallFont());
 
     jtableTag.getTableHeader().setReorderingAllowed(false);
-    tableTagContainer.setBorder(BorderFactory.createEtchedBorder());
-    tableTagContainer.setPreferredSize(new Dimension(50, 80));
+    tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableTagContainer.setLayout(new BorderLayout());
     transform.add(tableTagContainer);
 
@@ -121,24 +113,17 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.setBorder(
         BorderFactory.createCompoundBorder(
             BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                Messages.getString("markers"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getTitledBorder(Messages.getString("markers"))));
 
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);
     transform.add(Box.createVerticalStrut(5));
     jtableMarker =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableMarker.setFont(FontTools.getFont10());
+    jtableMarker.setFont(FontTools.getSmallFont());
 
     jtableMarker.getTableHeader().setReorderingAllowed(false);
-    tableMarkerContainer.setBorder(BorderFactory.createEtchedBorder());
-    tableMarkerContainer.setPreferredSize(new Dimension(50, 80));
+    tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableMarkerContainer.setLayout(new BorderLayout());
     transform.add(tableMarkerContainer);
 
@@ -165,13 +150,11 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   public static JTable createMultipleRenderingTable(TableModel model) {
     JTable table = new JTable(model);
+    table.getTableHeader().setReorderingAllowed(false);
+    table.setShowHorizontalLines(true);
+    table.setShowVerticalLines(true);
     table.getColumnModel().setColumnMargin(3);
     return table;
-  }
-
-  public static void createTableHeaders(JTable table) {
-    table.getColumnModel().getColumn(0).setHeaderRenderer(new TableHeaderRenderer());
-    table.getColumnModel().getColumn(1).setHeaderRenderer(new TableHeaderRenderer());
   }
 
   public void readAnnotations(Attributes attributes) {
@@ -194,7 +177,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       jtableTag.setModel(new SimpleTableModel(headers, labels));
       jtableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      createTableHeaders(jtableTag);
       int height =
           (jtableTag.getRowHeight() + jtableTag.getRowMargin()) * jtableTag.getRowCount()
               + jtableTag.getTableHeader().getHeight()
@@ -205,7 +187,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       tableTagContainer.add(jtableTag, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtableTag);
     } else {
-      tableTagContainer.setPreferredSize(new Dimension(50, 50));
+      tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableTagContainer.revalidate();
     tableTagContainer.repaint();
@@ -226,7 +208,6 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       };
       jtableMarker.setModel(new SimpleTableModel(headers, labels));
       jtableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
-      createTableHeaders(jtableMarker);
       int height =
           (jtableMarker.getRowHeight() + jtableMarker.getRowMargin()) * jtableMarker.getRowCount()
               + jtableMarker.getTableHeader().getHeight()
@@ -237,7 +218,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
       tableMarkerContainer.add(jtableMarker, BorderLayout.CENTER);
       TableColumnAdjuster.pack(jtableMarker);
     } else {
-      tableMarkerContainer.setPreferredSize(new Dimension(50, 50));
+      tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
     tableMarkerContainer.revalidate();
     tableMarkerContainer.repaint();
@@ -391,7 +372,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   public static class TagRenderer extends DefaultTableCellRenderer {
 
     public TagRenderer() {
-      setFont(FontTools.getFont11()); // Default size
+      setFont(FontTools.getSmallFont());
     }
 
     @Override

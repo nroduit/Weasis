@@ -35,6 +35,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.img.util.DicomObjectUtil;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -49,7 +50,6 @@ import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
-import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
@@ -290,7 +290,7 @@ public class RtSet {
           rgb = new int[] {rand.nextInt(255), rand.nextInt(255), rand.nextInt(255)};
         }
 
-        Color color1 = PresentationStateReader.getRGBColor(255, rgb);
+        Color color1 = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
         Color color2 =
             new Color(
                 color1.getRed(), color1.getGreen(), color1.getBlue(), structureFillTransparency);

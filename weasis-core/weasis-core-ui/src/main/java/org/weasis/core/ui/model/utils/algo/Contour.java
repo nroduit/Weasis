@@ -10,7 +10,6 @@
 package org.weasis.core.ui.model.utils.algo;
 
 import java.awt.Rectangle;
-import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -18,9 +17,7 @@ import java.util.List;
  *
  * @author Nicolas Roduit
  */
-public class Contour implements Serializable {
-  private static final long serialVersionUID = 9056317484468365515L;
-
+public class Contour {
   public static final int[] DIRX = {1, 1, 0, -1, -1, -1, 0, 1};
   public static final int[] DIRY = {0, -1, -1, -1, 0, 1, 1, 1};
 

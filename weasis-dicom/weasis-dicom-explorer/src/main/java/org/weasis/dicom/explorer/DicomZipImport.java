@@ -9,7 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.FlowLayout;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -18,12 +17,12 @@ import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
-import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.FileFormatFilter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
@@ -33,7 +32,6 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
-@SuppressWarnings("serial")
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
 
@@ -43,26 +41,16 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   private final JLabel fileLabel = new JLabel();
 
   public DicomZipImport() {
-    super(Messages.getString("DicomZipImport.title"));
-    setComponentPosition(3);
+    super(Messages.getString("DicomZipImport.title"), 3);
     initGUI();
-    initialize(true);
   }
 
   public void initGUI() {
-    setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("DicomZipImport.title"),
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
-    setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     JButton btnOpen = new JButton(Messages.getString("DicomZipImport.select_file"));
     btnOpen.addActionListener(e -> browseImgFile());
-    add(btnOpen);
-    add(fileLabel);
+    add(GuiUtils.getFlowLayoutPanel(btnOpen, fileLabel));
+
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {
@@ -81,29 +69,13 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
     }
   }
 
-  protected void initialize(boolean afirst) {
-    // Do nothing
-  }
-
-  public void resetSettingsToDefault() {
-    initialize(false);
-  }
-
-  public void applyChange() {
-    // Do nothing
-  }
-
-  protected void updateChanges() {
-    // Do nothing
-  }
-
   @Override
   public void closeAdditionalWindow() {
-    applyChange();
+    // Do nothing
   }
 
   @Override
-  public void resetoDefaultValues() {
+  public void resetToDefaultValues() {
     // Do nothing
   }
 

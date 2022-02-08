@@ -10,43 +10,28 @@
 package org.weasis.dicom.explorer.pref.node;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.awt.FlowLayout;
 import java.awt.Window;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.util.List;
-import javax.swing.BorderFactory;
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
-import javax.swing.border.Border;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.Messages;
 
 public class HttpHeadersEditor extends JDialog {
-  private final DefaultListSelectionModel selctedModel = new DefaultListSelectionModel();
-  private final JPanel panel1 = new JPanel();
-  private final BorderLayout borderLayout1 = new BorderLayout();
-  private final JButton jButtonClose = new JButton();
-  private final GridBagLayout gridBagLayout3 = new GridBagLayout();
-  private final JPanel jPanelComponentBar = new JPanel();
+  private final DefaultListSelectionModel selectedModel = new DefaultListSelectionModel();
   private final JList<String> jList1 = new JList<>();
-  private final JPanel jPanelComponentAction = new JPanel();
-  private final JButton jButtonDelete = new JButton();
-  private final JButton jButtonEdit = new JButton();
-  private final GridBagLayout gridBagLayout2 = new GridBagLayout();
-  private final JButton jButtonAdd = new JButton();
-  private final JScrollPane jScrollPane1 = new JScrollPane();
   private final DicomWebNode node;
 
   public HttpHeadersEditor(Window parent, DicomWebNode node) {
@@ -72,93 +57,36 @@ public class HttpHeadersEditor extends JDialog {
 
   private void jbInit() {
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-    selctedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    JRootPane panel = getRootPane();
+    panel.setLayout(new BorderLayout());
+    panel.setBorder(GuiUtils.getEmptyBorder(10, 15, 5, 15));
 
-    Border border1 = BorderFactory.createEmptyBorder(5, 5, 5, 5);
-    Border border2 =
-        BorderFactory.createCompoundBorder(
-            BorderFactory.createEtchedBorder(), BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    panel1.setLayout(borderLayout1);
+    selectedModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    jButtonClose.setText(Messages.getString("HttpHeadersEditor.close"));
+    JButton jButtonClose = new JButton(Messages.getString("HttpHeadersEditor.close"));
     jButtonClose.addActionListener(e -> cancel());
-    jPanelComponentBar.setLayout(gridBagLayout3);
-    jList1.setBorder(border2);
-    jList1.setSelectionModel(selctedModel);
-    jPanelComponentAction.setLayout(gridBagLayout2);
-    jButtonDelete.addActionListener(e -> deleteSelectedComponents());
-    jButtonDelete.setText(Messages.getString("HttpHeadersEditor.delete"));
 
-    jButtonEdit.setText(Messages.getString("HttpHeadersEditor.edit"));
+    jList1.setSelectionModel(selectedModel);
+
+    JButton jButtonDelete = new JButton(Messages.getString("HttpHeadersEditor.delete"));
+    jButtonDelete.addActionListener(e -> deleteSelectedComponents());
+
+    JButton jButtonEdit = new JButton(Messages.getString("HttpHeadersEditor.edit"));
     jButtonEdit.addActionListener(e -> editHeader());
 
+    JButton jButtonAdd = new JButton(Messages.getString("HttpHeadersEditor.add"));
     jButtonAdd.addActionListener(e -> add());
-    jButtonAdd.setText(Messages.getString("HttpHeadersEditor.add"));
 
-    jScrollPane1.setBorder(border1);
-    jScrollPane1.setPreferredSize(new Dimension(300, 150));
-    panel1.add(jPanelComponentBar, BorderLayout.SOUTH);
+    JScrollPane jScrollPane1 = new JScrollPane(jList1);
+    jScrollPane1.setPreferredSize(GuiUtils.getDimension(300, 150));
 
-    jPanelComponentBar.add(
-        jButtonClose,
-        new GridBagConstraints(
-            2,
-            0,
-            1,
-            1,
-            0.5,
-            0.0,
-            GridBagConstraints.EAST,
-            GridBagConstraints.NONE,
-            new Insets(10, 0, 10, 20),
-            0,
-            0));
-    panel1.add(jPanelComponentAction, BorderLayout.EAST);
-    panel1.add(jScrollPane1, BorderLayout.CENTER);
-    jScrollPane1.getViewport().add(jList1, null);
-    this.getContentPane().add(panel1, BorderLayout.CENTER);
-    jPanelComponentAction.add(
-        jButtonEdit,
-        new GridBagConstraints(
-            0,
-            1,
-            1,
-            1,
-            1.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(7, 5, 0, 10),
-            0,
-            0));
-    jPanelComponentAction.add(
-        jButtonAdd,
-        new GridBagConstraints(
-            0,
-            0,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(15, 0, 0, 5),
-            0,
-            0));
-    jPanelComponentAction.add(
-        jButtonDelete,
-        new GridBagConstraints(
-            0,
-            2,
-            1,
-            1,
-            0.0,
-            0.0,
-            GridBagConstraints.CENTER,
-            GridBagConstraints.NONE,
-            new Insets(7, 0, 0, 5),
-            0,
-            0));
+    panel.add(
+        GuiUtils.getFlowLayoutPanel(FlowLayout.TRAILING, 0, 10, jButtonClose), BorderLayout.SOUTH);
+    panel.add(
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            10, GuiUtils.getVerticalBoxLayoutPanel(10, jButtonEdit, jButtonAdd, jButtonDelete)),
+        BorderLayout.EAST);
+    panel.add(jScrollPane1, BorderLayout.CENTER);
   }
 
   // Overridden so we can exit when window is closed
@@ -198,7 +126,7 @@ public class HttpHeadersEditor extends JDialog {
         node.removeHeader(kv[0]);
       }
     }
-    selctedModel.clearSelection();
+    selectedModel.clearSelection();
     initializeList();
   }
 
@@ -220,7 +148,7 @@ public class HttpHeadersEditor extends JDialog {
   }
 
   private boolean isNoComponentSelected() {
-    if (selctedModel.isSelectionEmpty()) {
+    if (selectedModel.isSelectionEmpty()) {
       JOptionPane.showMessageDialog(
           this,
           Messages.getString("HttpHeadersEditor.msg_noheader"),

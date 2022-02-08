@@ -19,9 +19,11 @@ import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireExplorer;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.media.MediaSource;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 
 public class ChangePathSelectionAction extends AbstractAction {
-  private static final long serialVersionUID = -65145837841144613L;
+
   private static final Logger LOGGER = LoggerFactory.getLogger(ChangePathSelectionAction.class);
 
   private final AcquireExplorer mainView;
@@ -29,7 +31,7 @@ public class ChangePathSelectionAction extends AbstractAction {
   public ChangePathSelectionAction(AcquireExplorer acquisitionView) {
     this.mainView = acquisitionView;
 
-    putValue(Action.NAME, " ... ");
+    putValue(Action.SMALL_ICON, ResourceUtil.getIcon(ActionIcon.MORE_H));
     putValue(Action.ACTION_COMMAND_KEY, "onChangeRootPath");
     putValue(
         Action.SHORT_DESCRIPTION, Messages.getString("ChangePathSelectionAction.select_folder"));
@@ -38,8 +40,8 @@ public class ChangePathSelectionAction extends AbstractAction {
   @Override
   public void actionPerformed(ActionEvent e) {
     MediaSource drive = mainView.getSystemDrive();
-    if (drive != null && e.getSource() instanceof Component) {
-      String newRootPath = openDirectoryChooser(drive.getPath(), (Component) e.getSource());
+    if (drive != null && e.getSource() instanceof Component component) {
+      String newRootPath = openDirectoryChooser(drive.getPath(), component);
       if (newRootPath != null) {
         try {
           mainView.applyNewPath(newRootPath);

@@ -36,6 +36,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -262,7 +263,9 @@ public class SeriesBuilder {
                         for (int i = 0; i < 2; i++) {
                           if (needBuild[i]) {
                             bar[i] = new JProgressBar(0, size);
-                            Dimension dim = new Dimension(recView[i].getWidth() / 2, 30);
+                            Dimension dim =
+                                new Dimension(
+                                    recView[i].getWidth() / 2, GuiUtils.getScaleLength(30));
                             bar[i].setSize(dim);
                             bar[i].setPreferredSize(dim);
                             bar[i].setMaximumSize(dim);
@@ -391,7 +394,7 @@ public class SeriesBuilder {
                 () -> {
                   bar.setMaximum(newSeries.length);
                   bar.setValue(0);
-                  // Force to reset the progress bar (substance)
+                  // Force to reset the progress bar
                   bar.updateUI();
                   view.repaint();
                 });

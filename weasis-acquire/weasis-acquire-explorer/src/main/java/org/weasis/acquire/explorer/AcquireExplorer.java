@@ -41,7 +41,6 @@ import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 
 public class AcquireExplorer extends PluginTool implements DataExplorerView {
-  private static final long serialVersionUID = 661412595299625116L;
 
   public static final String BUTTON_NAME = "dicomizer"; // NON-NLS
   public static final String TOOL_NAME = Messages.getString("AcquireExplorer.acquisition");

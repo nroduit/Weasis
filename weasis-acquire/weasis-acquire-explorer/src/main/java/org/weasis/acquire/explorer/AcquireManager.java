@@ -55,7 +55,7 @@ import org.weasis.core.api.command.Option;
 import org.weasis.core.api.command.Options;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -444,7 +444,7 @@ public class AcquireManager {
                 Messages.getString("AcquireManager.dcm_worklist"),
                 calling,
                 called);
-        JMVUtils.showCenterScreen(dialog);
+        GuiUtils.showCenterScreen(dialog);
       } catch (Exception e) {
         LOGGER.error("Cannot get items from worklist", e);
       }

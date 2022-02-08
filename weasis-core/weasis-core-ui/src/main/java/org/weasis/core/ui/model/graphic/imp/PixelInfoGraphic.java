@@ -20,11 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.PixelInfo;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -38,10 +39,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "pixelInfo")
 @XmlRootElement(name = "pixelInfo")
 public class PixelInfoGraphic extends AnnotationGraphic {
-  private static final long serialVersionUID = -6489917524461404874L;
 
-  public static final Icon ICON =
-      new ImageIcon(PixelInfoGraphic.class.getResource("/icon/22x22/draw-pixelinfo.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_PIXEL_INFO);
 
   public static final Measurement ANCHOR_POINT_X =
       new Measurement(Messages.getString("PixelInfoGraphic.x"), 1, true, true, false);

@@ -10,19 +10,17 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.border.TitledBorder;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.WindLevelParameters;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 
 /**
@@ -58,37 +56,26 @@ public class ChannelHistogramPanel extends JPanel {
     this.jCheckShowIntensity =
         new JCheckBox(Messages.getString("ChannelHistogramPanel.ShowIntensity"), showIntensity);
     this.jPanelHistogram = new HistogramPanel();
-    this.jButtonHistoMinus =
-        new JButton(new ImageIcon(getClass().getResource("/icon/16x16/minus.png")));
-    this.jButtonHistoPlus =
-        new JButton(new ImageIcon(getClass().getResource("/icon/16x16/plus.png")));
+    this.jButtonHistoMinus = new JButton(ResourceUtil.getIcon(ActionIcon.MINUS));
+    this.jButtonHistoPlus = new JButton(ResourceUtil.getIcon(ActionIcon.PLUS));
     init(name);
   }
 
   private void init(String name) {
     this.setBorder(
         BorderFactory.createCompoundBorder(
-            BorderFactory.createEmptyBorder(10, 3, 0, 3),
-            new TitledBorder(
-                null,
-                name,
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
+            GuiUtils.getEmptyBorder(10, 5, 0, 5), GuiUtils.getTitledBorder(name)));
     this.setLayout(borderLayout1);
     this.add(jPanelHistogram, BorderLayout.CENTER);
     this.add(panel, BorderLayout.SOUTH);
-    panel.setLayout(new FlowLayout(FlowLayout.LEADING, 5, 5));
+    panel.setLayout(new FlowLayout(FlowLayout.LEADING));
     panel.add(jButtonHistoMinus);
 
     jButtonHistoMinus.setToolTipText(Messages.getString("ChannelHistogramPanel.shrink"));
-    jButtonHistoMinus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
     panel.add(jButtonHistoPlus);
     jButtonHistoPlus.setToolTipText(Messages.getString("ChannelHistogramPanel.strech"));
-    jButtonHistoPlus.setPreferredSize(JMVUtils.getSmallIconButtonSize());
 
-    panel.add(Box.createHorizontalStrut(15));
+    panel.add(Box.createHorizontalStrut(GuiUtils.getScaleLength(15)));
     panel.add(jCheckAccumulate);
     jCheckAccumulate.addActionListener(
         e -> jPanelHistogram.setAccumulate(jCheckAccumulate.isSelected()));

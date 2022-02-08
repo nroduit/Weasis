@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <artifactId>weasis-base-parent</artifactId>
+    <groupId>org.weasis.base</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../weasis-base-parent/pom.xml</relativePath>
+  </parent>
+  <artifactId>weasis-base-ui</artifactId>
+  <packaging>jar</packaging>
+  <name>Base UI [${project.artifactId}]</name>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            Bundle-SymbolicName: weasis-base-ui
+            Export-Package:!org.weasis.base.ui.internal,org.weasis.base.ui.*
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.gogo.command</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.felix</groupId>
+      <artifactId>org.apache.felix.gogo.runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-img</artifactId>
+      <version>${weasis.core.img.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+</project>

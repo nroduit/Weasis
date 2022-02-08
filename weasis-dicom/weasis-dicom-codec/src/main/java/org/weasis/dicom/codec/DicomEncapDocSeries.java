@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.MimeInspector;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.FileUtil;
@@ -82,6 +83,11 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
         }
       }
     }
+  }
+
+  @Override
+  public MediaElement getFirstSpecialElement() {
+    return null;
   }
 
   @Override

@@ -25,6 +25,7 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.FileUtil;
@@ -92,6 +93,11 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
         }
       }
     }
+  }
+
+  @Override
+  public MediaElement getFirstSpecialElement() {
+    return null;
   }
 
   public int getWidth() {

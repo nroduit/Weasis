@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -21,7 +20,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
@@ -39,12 +37,8 @@ public interface ViewCanvas<E extends ImageElement>
         KeyListener {
 
   String ZOOM_TYPE_CMD = "zoom.type";
-  ImageIcon SYNCH_ICON = new ImageIcon(DefaultView2d.class.getResource("/icon/22x22/synch.png"));
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
-
-  Color focusColor = Color.orange;
-  Color lostFocusColor = new Color(255, 224, 178);
 
   void registerDefaultListeners();
 

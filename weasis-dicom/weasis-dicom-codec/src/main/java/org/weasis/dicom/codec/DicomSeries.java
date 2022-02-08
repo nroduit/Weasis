@@ -208,6 +208,16 @@ public class DicomSeries extends Series<DicomImageElement> {
     return (offset > 0) ? (bestIndex + offset) : bestIndex;
   }
 
+  @Override
+  public DicomSpecialElement getFirstSpecialElement() {
+    List<DicomSpecialElement> specialElements =
+        (List<DicomSpecialElement>) getTagValue(TagW.DicomSpecialElementList);
+    if (specialElements != null && !specialElements.isEmpty()) {
+      return specialElements.get(0);
+    }
+    return null;
+  }
+
   public static synchronized void startPreloading(
       DicomSeries series, List<DicomImageElement> imageList, int currentIndex) {
     if (series != null && imageList != null) {

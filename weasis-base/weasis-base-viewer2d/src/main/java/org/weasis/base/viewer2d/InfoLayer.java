@@ -9,19 +9,20 @@
  */
 package org.weasis.base.viewer2d;
 
-import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.model.graphic.AbstractGraphicLabel;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.StringUtil;
@@ -32,7 +33,6 @@ import org.weasis.core.util.StringUtil;
  * @author Nicolas Roduit
  */
 public class InfoLayer extends AbstractInfoLayer<ImageElement> {
-  private static final long serialVersionUID = 1782300490253793711L;
 
   public InfoLayer(ViewCanvas<ImageElement> view2DPane) {
     super(view2DPane);
@@ -64,42 +64,55 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
   @Override
   public void paint(Graphics2D g2) {
     ImageElement image = view2DPane.getImage();
-    if (!visible || image == null) {
+    FontMetrics fontMetrics = g2.getFontMetrics();
+    final Rectangle bound = view2DPane.getJComponent().getBounds();
+    int minSize = fontMetrics.stringWidth(Messages.getString("InfoLayer.error_msg")) * 3;
+    if (!visible || image == null || minSize > bound.width || minSize > bound.height) {
       return;
     }
 
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2, true, false, true);
+
     OpManager disOp = view2DPane.getDisplayOpManager();
-    final Rectangle bound = view2DPane.getJComponent().getBounds();
-    float midx = bound.width / 2f;
-    float midy = bound.height / 2f;
+    float midX = bound.width / 2f;
+    float midY = bound.height / 2f;
+    final int fontHeight = fontMetrics.getHeight();
+    final int midFontHeight = fontHeight - fontMetrics.getDescent();
 
     g2.setPaint(color);
 
-    final float fontHeight = FontTools.getAccurateFontHeight(g2);
-    final float midfontHeight = fontHeight * FontTools.getMidFontHeightFactor();
-    float drawY = bound.height - border - 1.5f; // -1.5 for outline
+    float drawY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
 
     if (!image.isReadable()) {
       String message = Messages.getString("InfoLayer.error_msg");
-      float y = midy;
-      AbstractGraphicLabel.paintColorFontOutline(
-          g2, message, midx - g2.getFontMetrics().stringWidth(message) / 2.0F, y, Color.RED);
+      float y = midY;
+      FontTools.paintColorFontOutline(
+          g2,
+          message,
+          midX - g2.getFontMetrics().stringWidth(message) / 2.0F,
+          y,
+          IconColor.ACTIONS_RED.getColor());
       String[] desc = image.getMediaReader().getReaderDescription();
       if (desc != null) {
         for (String str : desc) {
           if (StringUtil.hasText(str)) {
             y += fontHeight;
-            AbstractGraphicLabel.paintColorFontOutline(
-                g2, str, midx - g2.getFontMetrics().stringWidth(str) / 2.0F, y, Color.RED);
+            FontTools.paintColorFontOutline(
+                g2,
+                str,
+                midX - g2.getFontMetrics().stringWidth(str) / 2.0F,
+                y,
+                IconColor.ACTIONS_RED.getColor());
           }
         }
       }
     }
+
     if (image.isReadable() && getDisplayPreferences(SCALE)) {
       drawScale(g2, bound, fontHeight);
     }
     if (image.isReadable() && getDisplayPreferences(LUT)) {
-      drawLUT(g2, bound, midfontHeight);
+      drawLUT(g2, bound, midFontHeight);
     }
 
     if (getDisplayPreferences(PIXEL)) {
@@ -111,14 +124,13 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         sb.append(pixelInfo.getPixelPositionText());
       }
       String str = sb.toString();
-      AbstractGraphicLabel.paintFontOutline(g2, str, border, drawY - 1);
-      drawY -= fontHeight + 2;
+      FontTools.paintFontOutline(g2, str, border, drawY);
+      drawY -= fontHeight;
       pixelInfoBound.setBounds(
-          border - 2,
-          (int) drawY + 3,
-          g2.getFontMetrics().stringWidth(str) + 4,
-          (int) fontHeight + 2);
-      // g2.draw(pixelInfoBound);
+          border,
+          (int) drawY + fontMetrics.getDescent(),
+          fontMetrics.stringWidth(str) + GuiUtils.getScaleLength(2),
+          fontHeight);
     }
     if (getDisplayPreferences(WINDOW_LEVEL)) {
       StringBuilder sb = new StringBuilder();
@@ -131,11 +143,11 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
         sb.append("/");
         sb.append(DecFormater.allNumber(level));
       }
-      AbstractGraphicLabel.paintFontOutline(g2, sb.toString(), border, drawY);
+      FontTools.paintFontOutline(g2, sb.toString(), border, drawY);
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ZOOM)) {
-      AbstractGraphicLabel.paintFontOutline(
+      FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
@@ -145,7 +157,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       drawY -= fontHeight;
     }
     if (getDisplayPreferences(ROTATION)) {
-      AbstractGraphicLabel.paintFontOutline(
+      FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
@@ -158,7 +170,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     }
 
     if (getDisplayPreferences(FRAME)) {
-      AbstractGraphicLabel.paintFontOutline(
+      FontTools.paintFontOutline(
           g2,
           Messages.getString("InfoLayer.frame")
               + StringUtil.COLON_AND_SPACE
@@ -184,5 +196,6 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     //
     // }
 
+    GuiUtils.resetRenderingHints(g2, oldRenderingHints);
   }
 }

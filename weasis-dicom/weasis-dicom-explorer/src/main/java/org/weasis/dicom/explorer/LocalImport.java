@@ -9,9 +9,8 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import com.formdev.flatlaf.FlatClientProperties;
+import java.awt.Dimension;
 import java.io.File;
 import java.net.URI;
 import javax.swing.JButton;
@@ -20,11 +19,12 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
-import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.internal.Activator;
 
@@ -41,70 +41,32 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     super(Messages.getString("LocalImport.local_dev"));
     setComponentPosition(0);
     initGUI();
-    initialize(true);
   }
 
   public void initGUI() {
-    GridBagLayout gridBagLayout = new GridBagLayout();
-    setLayout(gridBagLayout);
-    setBorder(
-        new TitledBorder(
-            null,
-            Messages.getString("LocalImport.imp_files") + StringUtil.COLON,
-            TitledBorder.LEADING,
-            TitledBorder.TOP,
-            null,
-            null));
-
-    JLabel lblImportAFolder = new JLabel(Messages.getString("LocalImport.path") + StringUtil.COLON);
-    GridBagConstraints gbc_lblImportAFolder = new GridBagConstraints();
-    gbc_lblImportAFolder.anchor = GridBagConstraints.WEST;
-    gbc_lblImportAFolder.insets = new Insets(5, 5, 0, 0);
-    gbc_lblImportAFolder.gridx = 0;
-    gbc_lblImportAFolder.gridy = 0;
-    add(lblImportAFolder, gbc_lblImportAFolder);
-
+    JLabel lblImportAFolder =
+        new JLabel(Messages.getString("LocalImport.imp_files") + StringUtil.COLON);
     textField = new JTextField();
-    GridBagConstraints gbc_textField = new GridBagConstraints();
-    gbc_textField.anchor = GridBagConstraints.WEST;
-    gbc_textField.insets = new Insets(5, 2, 0, 0);
-    gbc_textField.fill = GridBagConstraints.HORIZONTAL;
-    gbc_textField.gridx = 1;
-    gbc_textField.gridy = 0;
-    JMVUtils.setPreferredWidth(textField, 375, 325);
     textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDirKey, ""));
-    add(textField, gbc_textField);
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    Dimension dim = textField.getPreferredSize();
+    dim.width = 200;
+    textField.setPreferredSize(dim);
+    textField.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
 
-    JButton button = new JButton(" ... ");
-    button.addActionListener(e -> browseImgFile());
-    GridBagConstraints gbc_button = new GridBagConstraints();
-    gbc_button.anchor = GridBagConstraints.WEST;
-    gbc_button.insets = new Insets(5, 5, 0, 5);
-    gbc_button.gridx = 2;
-    gbc_button.gridy = 0;
-    add(button, gbc_button);
+    JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
+    btnSearch.addActionListener(e -> browseImgFile());
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
+
+    add(
+        GuiUtils.getHorizontalBoxLayoutPanel(
+            lblImportAFolder, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
 
     chckbxSearch = new JCheckBox(Messages.getString("LocalImport.recursive"));
     chckbxSearch.setSelected(true);
-    GridBagConstraints gbc_chckbxSearch = new GridBagConstraints();
-    gbc_chckbxSearch.gridwidth = 3;
-    gbc_chckbxSearch.insets = new Insets(5, 5, 0, 0);
-    gbc_chckbxSearch.anchor = GridBagConstraints.NORTHWEST;
-    gbc_chckbxSearch.gridx = 0;
-    gbc_chckbxSearch.gridy = 1;
-    add(chckbxSearch, gbc_chckbxSearch);
 
-    final JLabel label = new JLabel();
-    final GridBagConstraints gridBagConstraints_4 = new GridBagConstraints();
-    gridBagConstraints_4.weighty = 1.0;
-    gridBagConstraints_4.weightx = 1.0;
-    gridBagConstraints_4.gridy = 4;
-    gridBagConstraints_4.gridx = 2;
-    add(label, gridBagConstraints_4);
-  }
-
-  protected void initialize(boolean afirst) {
-    if (afirst) {}
+    add(GuiUtils.getFlowLayoutPanel(chckbxSearch));
+    add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
   public void browseImgFile() {
@@ -138,21 +100,15 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     }
   }
 
-  public void resetSettingsToDefault() {
-    initialize(false);
-  }
-
-  public void applyChange() {}
-
-  protected void updateChanges() {}
-
   @Override
   public void closeAdditionalWindow() {
-    applyChange();
+    // Do nothing
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {
+    // Do nothing
+  }
 
   private String getImportPath() {
     String path = textField.getText().trim();

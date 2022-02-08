@@ -494,7 +494,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   protected void writePreferences(PreferencesImpl prefs, XMLStreamWriter writer)
       throws XMLStreamException {
     for (Entry<String, String> stringStringEntry : prefs.getProperties().entrySet()) {
-      final Entry<?, ?> entry = (Entry<?, ?>) stringStringEntry;
+      final Entry<?, ?> entry = stringStringEntry;
       writer.writeStartElement(entry.getKey().toString());
       writer.writeCharacters(EscapeChars.forXML(entry.getValue().toString()));
       writer.writeEndElement();

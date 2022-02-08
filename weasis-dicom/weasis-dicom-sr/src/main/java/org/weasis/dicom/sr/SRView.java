@@ -10,7 +10,6 @@
 package org.weasis.dicom.sr;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.beans.PropertyChangeListener;
 import java.net.URL;
 import java.util.ArrayList;
@@ -20,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -31,13 +29,15 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -83,7 +83,6 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     panel.setLayout(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
-    htmlPanel.setEditorKit(JMVUtils.buildHTMLEditorKit(htmlPanel));
     htmlPanel.setContentType("text/html");
     htmlPanel.setEditable(false);
     htmlPanel.addHyperlinkListener(
@@ -103,7 +102,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
             }
           }
         });
-    setPreferredSize(new Dimension(1024, 1024));
+    setPreferredSize(GuiUtils.getDimension(1024, 1024));
     setSeries(series);
   }
 
@@ -231,9 +230,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
                 props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-                props.put(
-                    ViewerPluginBuilder.ICON,
-                    new ImageIcon(model.getClass().getResource("/icon/16x16/key-images.png")));
+                props.put(ViewerPluginBuilder.ICON, ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
                 props.put(ViewerPluginBuilder.UID, uid);
                 List<DicomSeries> seriesList = new ArrayList<>();
                 seriesList.add((DicomSeries) s);
@@ -352,7 +349,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     if (dcmElement != null) {
       DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
       if (dcm != null && dcm.getMediaReader() instanceof DcmMediaReader) {
-        Attributes dicomSourceAttribute = ((DcmMediaReader) dcm.getMediaReader()).getDicomObject();
+        Attributes dicomSourceAttribute = dcm.getMediaReader().getDicomObject();
         Attributes attributes =
             DicomMediaUtils.createDicomKeyObject(
                 dicomSourceAttribute, dcmElement.getShortLabel(), null);

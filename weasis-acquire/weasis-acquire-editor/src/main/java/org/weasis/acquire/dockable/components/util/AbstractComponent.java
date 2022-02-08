@@ -12,9 +12,9 @@ package org.weasis.acquire.dockable.components.util;
 import javax.swing.JPanel;
 import javax.swing.border.TitledBorder;
 import org.weasis.acquire.dockable.components.actions.AbstractAcquireActionPanel;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public abstract class AbstractComponent extends JPanel {
-  private static final long serialVersionUID = 5581699214603462715L;
 
   protected final String title;
   protected TitledBorder borderTitle;
@@ -22,7 +22,7 @@ public abstract class AbstractComponent extends JPanel {
 
   protected AbstractComponent(AbstractAcquireActionPanel panel, String title) {
     this.title = title;
-    this.borderTitle = new TitledBorder(getDisplayTitle());
+    this.borderTitle = GuiUtils.getTitledBorder(getDisplayTitle());
     this.panel = panel;
   }
 

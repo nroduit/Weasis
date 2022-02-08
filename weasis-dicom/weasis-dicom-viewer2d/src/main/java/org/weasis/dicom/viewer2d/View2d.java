@@ -34,7 +34,6 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JMenuItem;
@@ -45,6 +44,7 @@ import javax.swing.JSeparator;
 import javax.swing.KeyStroke;
 import javax.swing.TransferHandler;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Tuple3d;
 import org.jogamp.vecmath.Vector3d;
@@ -57,7 +57,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -121,7 +121,6 @@ import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.SortSeriesStack;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.OverlayOp;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
@@ -140,16 +139,11 @@ import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton;
 import org.weasis.dicom.viewer2d.KOComponentFactory.KOViewButton.eState;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.WlPresentation;
 
 public class View2d extends DefaultView2d<DicomImageElement> {
-  private static final long serialVersionUID = 8334123827855840782L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(View2d.class);
-
-  public static final ImageIcon KO_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-KO.png"));
-  public static final ImageIcon PR_ICON =
-      new ImageIcon(View2d.class.getResource("/icon/22x22/dcm-PR.png"));
 
   private final Dimension oldSize;
   private final ContextMenuHandler contextMenuHandler = new ContextMenuHandler();
@@ -275,8 +269,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         if (command.equals(ActionW.PRESET.cmd())) {
           actionsInView.put(ActionW.PRESET.cmd(), val);
 
-          if (val instanceof PresetWindowLevel) {
-            PresetWindowLevel preset = (PresetWindowLevel) val;
+          if (val instanceof PresetWindowLevel preset) {
             DicomImageElement img = getImage();
             ImageOpNode node = disOp.getNode(WindowOp.OP_NAME);
 
@@ -430,7 +423,6 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         val instanceof PRSpecialElement
             ? new PresentationStateReader((PRSpecialElement) val)
             : null;
-    actionsInView.put(PresentationStateReader.TAG_PR_READER, pr);
     boolean spatialTransformation = actionsInView.get(ActionW.PREPROCESSING.cmd()) != null;
     actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
 
@@ -497,6 +489,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     imageLayer.setPreprocessing(opManager);
     if (opManager != null || spatialTransformation) {
       // Reset preprocessing cache
+      if (opManager == null && m != null) {
+        m.resetImageAvailable();
+      }
       imageLayer.getDisplayOpManager().setFirstNode(imageLayer.getSourceRenderedImage());
     }
 
@@ -535,7 +530,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     boolean needToRepaint = false;
 
     for (ViewButton vb : getViewButtons()) {
-      if (vb != null && vb.getIcon() == View2d.KO_ICON) {
+      if (vb != null && ActionW.KO_SELECTION.getTitle().equals(vb.getName())) {
         if (vb.isVisible() != koElementExist) {
           vb.setVisible(koElementExist);
           // repaint(getExtendedActionsBound());
@@ -583,8 +578,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
       if (sopInstanceUID != null && seriesInstanceUID != null) {
         Integer frame = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
-        if (selectedKO instanceof KOSpecialElement) {
-          KOSpecialElement koElement = (KOSpecialElement) selectedKO;
+        if (selectedKO instanceof KOSpecialElement koElement) {
           if (koElement.containsSopInstanceUIDReference(seriesInstanceUID, sopInstanceUID, frame)) {
             newSelectionState = eState.SELECTED;
           }
@@ -681,7 +675,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   private synchronized void updatePrButtonState(DicomImageElement img) {
     Object oldPR = getActionValue(ActionW.PR_STATE.cmd());
     ViewButton prButton = PRManager.buildPrSelection(this, series, img);
-    getViewButtons().removeIf(b -> b == null || b.getIcon() == View2d.PR_ICON);
+    getViewButtons().removeIf(b -> b == null || ActionW.PR_STATE.getTitle().equals(b.getName()));
     if (prButton != null) {
       getViewButtons().add(prButton);
     } else if (oldPR instanceof PRSpecialElement) {
@@ -1005,8 +999,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   protected void resetMouseAdapter() {
     for (ActionState adapter : eventManager.getAllActionValues()) {
-      if (adapter instanceof MouseActionAdapter) {
-        ((MouseActionAdapter) adapter).setButtonMaskEx(0);
+      if (adapter instanceof MouseActionAdapter mouseActionAdapter) {
+        mouseActionAdapter.setButtonMaskEx(0);
       }
     }
     // reset context menu that is a field of this instance
@@ -1016,8 +1010,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   protected MouseActionAdapter getAction(ActionW action) {
     ActionState a = eventManager.getAction(action);
-    if (a instanceof MouseActionAdapter) {
-      return (MouseActionAdapter) a;
+    if (a instanceof MouseActionAdapter adapter) {
+      return adapter;
     }
     return null;
   }
@@ -1026,16 +1020,13 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected void fillPixelInfo(
       final PixelInfo pixelInfo, final DicomImageElement imageElement, final double[] c) {
     if (c != null && c.length >= 1) {
-      boolean pixelPadding =
-          LangUtil.getNULLtoTrue(
-              (Boolean)
-                  getDisplayOpManager()
-                      .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
-
-      PresentationStateReader prReader =
-          (PresentationStateReader) getActionValue(PresentationStateReader.TAG_PR_READER);
+      WlPresentation wlp = null;
+      WindowOp wlOp = (WindowOp) getDisplayOpManager().getNode(WindowOp.OP_NAME);
+      if (wlOp != null) {
+        wlp = wlOp.getWlPresentation();
+      }
       for (int i = 0; i < c.length; i++) {
-        c[i] = imageElement.pixelToRealValue(c[i], prReader, pixelPadding).doubleValue();
+        c[i] = imageElement.pixelToRealValue(c[i], wlp).doubleValue();
       }
       pixelInfo.setValues(c);
     }
@@ -1059,8 +1050,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
     if (selected != null) {
       final JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
       boolean graphicComplete = true;
@@ -1219,8 +1209,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   protected JPopupMenu buildContexMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = new JPopupMenu();
     TitleMenuItem itemTitle =
-        new TitleMenuItem(
-            Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets());
+        new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
     popupMenu.add(itemTitle);
     popupMenu.setLabel(MouseActions.T_LEFT);
     String action = eventManager.getMouseActions().getLeft();
@@ -1232,8 +1221,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       if (toolBar != null) {
         ActionListener leftButtonAction =
             event -> {
-              if (event.getSource() instanceof JRadioButtonMenuItem) {
-                JRadioButtonMenuItem item = (JRadioButtonMenuItem) event.getSource();
+              if (event.getSource() instanceof JRadioButtonMenuItem item) {
                 toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
               }
             };
@@ -1244,6 +1232,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
+              GuiUtils.applySelectedIconEffect(radio);
               radio.setActionCommand(b.cmd());
               radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
               // Trigger the selected mouse action
@@ -1274,29 +1263,28 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       count = popupMenu.getComponentCount();
     }
 
-    if (eventManager instanceof EventManager) {
-      EventManager manager = (EventManager) eventManager;
-      JMVUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
+    if (eventManager instanceof EventManager manager) {
+      GuiUtils.addItemToMenu(popupMenu, manager.getPresetMenu("weasis.contextmenu.presets"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutShapeMenu("weasis.contextmenu.lutShape"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
 
       if (count < popupMenu.getComponentCount()) {
         popupMenu.add(new JSeparator());
         count = popupMenu.getComponentCount();
       }
 
-      JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
-      JMVUtils.addItemToMenu(
+      GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
+      GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getSortStackMenu("weasis.contextmenu.sortstack"));
 
       if (count < popupMenu.getComponentCount()) {
         popupMenu.add(new JSeparator());
       }
 
-      JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
@@ -1344,8 +1332,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
     @Override
     public Transferable createTransferable(JComponent comp) {
-      if (comp instanceof SeriesThumbnail) {
-        MediaSeries<?> t = ((SeriesThumbnail) comp).getSeries();
+      if (comp instanceof SeriesThumbnail thumbnail) {
+        MediaSeries<?> t = thumbnail.getSeries();
         if (t instanceof Series) {
           return t;
         }
@@ -1408,7 +1396,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
                       p instanceof View2dContainer
                           && ((View2dContainer) p).isContainingView(View2d.this))
               .findFirst();
-      if (!pluginOp.isPresent()) {
+      if (pluginOp.isEmpty()) {
         return false;
       }
 

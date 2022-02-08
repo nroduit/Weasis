@@ -10,13 +10,11 @@
 package org.weasis.acquire.explorer;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -26,13 +24,13 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionListener;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
 import org.weasis.acquire.explorer.core.bean.DefaultTagable;
 import org.weasis.core.api.gui.util.GuiExecutor;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.util.SimpleTableModel;
@@ -70,21 +68,22 @@ public class WorklistDialog extends JDialog {
 
   private void initComponents() {
     final JPanel rootPane = new JPanel();
-    rootPane.setBorder(new EmptyBorder(10, 15, 10, 15));
+    rootPane.setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
     this.setContentPane(rootPane);
 
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     rootPane.setLayout(new BorderLayout(0, 0));
 
     jtable = new JTable();
-    jtable.setFont(FontTools.getFont10());
+    jtable.setFont(FontTools.getSmallFont());
     jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jtable.setRowSelectionAllowed(true);
+    jtable.setShowHorizontalLines(true);
+    jtable.setShowVerticalLines(true);
     jtable.getTableHeader().setReorderingAllowed(false);
 
     tableContainer = new JScrollPane();
-    tableContainer.setBorder(BorderFactory.createEtchedBorder());
-    tableContainer.setPreferredSize(new Dimension(920, 400));
+    tableContainer.setPreferredSize(GuiUtils.getDimension(920, 400));
 
     this.getContentPane().add(tableContainer, BorderLayout.CENTER);
 
@@ -182,7 +181,7 @@ public class WorklistDialog extends JDialog {
         throw new RuntimeException(state.getMessage());
       }
       jtable.setModel(new SimpleTableModel(new String[] {}, new Object[][] {}));
-      tableContainer.setPreferredSize(new Dimension(450, 50));
+      tableContainer.setPreferredSize(GuiUtils.getDimension(450, 50));
     }
     tableContainer.setViewportView(jtable);
   }

@@ -39,6 +39,8 @@ import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -68,7 +70,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public Icon getIcon() {
-    return MimeInspector.dicomIcon;
+    return ResourceUtil.getIcon(OtherIcon.XRAY);
   }
 
   @Override

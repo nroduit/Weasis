@@ -50,13 +50,13 @@ import org.weasis.base.explorer.list.DiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.TitleMenuItem;
 
-@SuppressWarnings("serial")
 public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private static final Logger LOGGER = LoggerFactory.getLogger(DefaultExplorer.class);
 
@@ -106,9 +106,9 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     JScrollPane treePane = new JScrollPane(tree);
     JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treePane, jilist);
     splitPane.setOneTouchExpandable(true);
-    splitPane.setDividerLocation(200);
+    splitPane.setDividerLocation(GuiUtils.getScaleLength(200));
     // Provide minimum sizes for the two components in the split pane
-    Dimension minimumSize = new Dimension(150, 150);
+    Dimension minimumSize = GuiUtils.getDimension(150, 150);
     treePane.setMinimumSize(minimumSize);
     treePane.setMinimumSize(minimumSize);
 
@@ -306,8 +306,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
 
     try {
       JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("DefaultExplorer.sel_path"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
 

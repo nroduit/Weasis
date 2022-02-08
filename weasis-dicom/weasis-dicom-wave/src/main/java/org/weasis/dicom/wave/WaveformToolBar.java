@@ -9,11 +9,11 @@
  */
 package org.weasis.dicom.wave;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class WaveformToolBar extends WtoolBar {
@@ -22,8 +22,7 @@ public class WaveformToolBar extends WtoolBar {
   public WaveformToolBar(int index) {
     super("Main Bar", index); // NON-NLS
 
-    final JButton printButton =
-        new JButton(new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/printer.png")));
+    final JButton printButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.PRINT));
     printButton.addActionListener(
         e -> {
           ImageViewerPlugin<?> container =
@@ -34,9 +33,7 @@ public class WaveformToolBar extends WtoolBar {
         });
     add(printButton);
 
-    final JButton metaButton =
-        new JButton(
-            new ImageIcon(ImageViewerPlugin.class.getResource("/icon/32x32/dcm-header.png")));
+    final JButton metaButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.METADATA));
     metaButton.setToolTipText(ActionW.SHOW_HEADER.getTitle());
     metaButton.addActionListener(
         e -> {
@@ -49,8 +46,7 @@ public class WaveformToolBar extends WtoolBar {
     add(metaButton);
 
     jButtondelete.setToolTipText(Messages.getString("WaveformToolBar.delete"));
-    jButtondelete.setIcon(
-        new ImageIcon(MouseActions.class.getResource("/icon/32x32/draw-delete.png")));
+    jButtondelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
     jButtondelete.addActionListener(
         e -> {
           ImageViewerPlugin<?> container =

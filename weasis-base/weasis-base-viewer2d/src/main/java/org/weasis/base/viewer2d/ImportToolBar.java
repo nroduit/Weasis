@@ -12,10 +12,10 @@ package org.weasis.base.viewer2d;
 import java.awt.event.ActionEvent;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.editor.SeriesViewerFactory;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ImportToolBar extends WtoolBar {
@@ -32,9 +32,7 @@ public class ImportToolBar extends WtoolBar {
               ViewerFactory.getOpenImageAction(e);
             }
           };
-      action.putValue(
-          Action.LARGE_ICON_KEY,
-          new ImageIcon(SeriesViewerFactory.class.getResource("/icon/32x32/img-import.png")));
+      action.putValue(Action.LARGE_ICON_KEY, ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_IMAGE));
       final JButton btnImport = new JButton(action);
       btnImport.setToolTipText(Messages.getString("ImportToolBar.open_img"));
       add(btnImport);

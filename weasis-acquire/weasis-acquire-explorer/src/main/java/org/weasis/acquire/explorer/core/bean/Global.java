@@ -27,7 +27,7 @@ public class Global extends DefaultTagable {
   protected boolean allowFullEdition = true;
 
   public Global() {
-    init((Tagable) null);
+    init(null);
   }
 
   public void init(Tagable tagable) {

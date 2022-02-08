@@ -9,20 +9,14 @@
  */
 package org.weasis.dicom.codec;
 
-import java.awt.image.DataBuffer;
 import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.lang.ref.Reference;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.ByteOrder;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -31,28 +25,23 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageInputStream;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
-import org.dcm4che3.data.Fragments;
 import org.dcm4che3.data.Implementation;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
-import org.dcm4che3.image.Overlays;
-import org.dcm4che3.image.PhotometricInterpretation;
-import org.dcm4che3.imageio.plugins.dcm.DicomMetaData;
-import org.dcm4che3.imageio.stream.ImageInputStreamAdapter;
-import org.dcm4che3.io.DicomInputStream;
-import org.dcm4che3.io.DicomInputStream.IncludeBulkData;
+import org.dcm4che3.img.DicomImageReader;
+import org.dcm4che3.img.DicomMetaData;
+import org.dcm4che3.img.ImageRendering;
+import org.dcm4che3.img.Transcoder;
+import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.stream.DicomFileInputStream;
+import org.dcm4che3.img.stream.ImageDescriptor;
 import org.dcm4che3.io.DicomOutputStream;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
-import org.opencv.core.MatOfDouble;
-import org.opencv.core.MatOfInt;
-import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
@@ -68,22 +57,15 @@ import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.util.FileUtil;
-import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.display.CornerDisplay;
 import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.utils.DicomImageUtils;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.utils.OverlayUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
-import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageConversion;
-import org.weasis.opencv.op.ImageProcessor;
 
 public class DicomMediaIO implements DcmMediaReader {
 
@@ -274,35 +256,14 @@ public class DicomMediaIO implements DcmMediaReader {
   // created within the application and is given to the ImageReader constructor
   private DicomMetaData dcmMetadata = null;
 
-  private BulkData pixeldata;
-  private final VR.Holder pixeldataVR = new VR.Holder();
-  private Fragments pixeldataFragments;
-  private PhotometricInterpretation pmi;
-
   private URI uri;
   private int numberOfFrame;
   private final Map<TagW, Object> tags;
   private MediaElement[] image = null;
   private String mimeType;
-  private final ArrayList<Integer> fragmentsPositions = new ArrayList<>();
-
-  private ImageInputStream iis;
-  private DicomInputStream dis;
-  private int dataType = 0;
   private boolean hasPixel = false;
-  private boolean banded = false;
-  private boolean bigendian = false;
-  private boolean compressedData = false;
-
-  private int bitsStored;
-  private int bitsAllocated;
-  /** Store the transfer syntax locally in case it gets modified to re-write the image */
-  private String tsuid;
   /** Used to indicate whether to skip large private dicom elements. */
   private boolean skipLargePrivate = true;
-
-  private volatile boolean readingHeader = false;
-  private volatile boolean readingImage = false;
 
   private final FileCache fileCache;
 
@@ -318,7 +279,7 @@ public class DicomMediaIO implements DcmMediaReader {
     this(Objects.requireNonNull(source).toURI());
   }
 
-  public DicomMediaIO(Path path) throws URISyntaxException {
+  public DicomMediaIO(Path path) {
     this(Objects.requireNonNull(path).toUri());
   }
 
@@ -326,7 +287,7 @@ public class DicomMediaIO implements DcmMediaReader {
     this(
         new URI(
             "data:" + Objects.requireNonNull(dcmItems).getString(Tag.SOPInstanceUID))); // NON-NLS
-    this.dcmMetadata = new DicomMetaData(null, Objects.requireNonNull(dcmItems));
+    this.dcmMetadata = new DicomMetaData(dcmItems, UID.ExplicitVRLittleEndian);
   }
 
   private static void readTagsInModalityView(TagView[] views) {
@@ -371,7 +332,7 @@ public class DicomMediaIO implements DcmMediaReader {
       try {
         DicomMetaData md = readMetaData();
         Attributes fmi = md.getFileMetaInformation();
-        Attributes header = md.getAttributes();
+        Attributes header = md.getDicomObject();
         // Exclude DICOMDIR
         String mediaStorageSOPClassUID =
             fmi == null ? null : fmi.getString(Tag.MediaStorageSOPClassUID);
@@ -401,7 +362,7 @@ public class DicomMediaIO implements DcmMediaReader {
           }
         }
 
-        writeInstanceTags(fmi, header);
+        writeInstanceTags(md);
 
       } catch (Exception | OutOfMemoryError e) {
         mimeType = UNREADABLE;
@@ -481,10 +442,12 @@ public class DicomMediaIO implements DcmMediaReader {
     }
   }
 
-  private void writeInstanceTags(Attributes fmi, Attributes header) {
-    if (tags.size() > 0 || header == null) {
+  private void writeInstanceTags(DicomMetaData md) {
+    if (tags.size() > 0 || md == null || md.getDicomObject() == null) {
       return;
     }
+    Attributes fmi = md.getFileMetaInformation();
+    Attributes header = md.getDicomObject();
 
     tagManager.readTags(Level.INSTANCE, header, this);
 
@@ -505,17 +468,15 @@ public class DicomMediaIO implements DcmMediaReader {
     }
     // -------- End of Mandatory Tags --------
 
-    writeImageValues(header);
+    writeImageValues(md);
     writeSharedFunctionalGroupsSequence(header);
     DicomMediaUtils.writePerFrameFunctionalGroupsSequence(this, header, 0);
 
     boolean pr = SERIES_PR_MIMETYPE.equals(mimeType);
     boolean ko = SERIES_KO_MIMETYPE.equals(mimeType);
     if (pr) {
-      // Set the series list for applying the PR
-      DicomMediaUtils.buildSeriesReferences(this, header);
-      DicomMediaUtils.readPRLUTsModule(header, this);
-      setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
+      PrDicomObject prDcm = new PrDicomObject(header, md.getImageDescriptor());
+      setTag(TagW.PrDicomObject, prDcm);
     }
     if (pr || ko) {
       // Set other required fields
@@ -539,8 +500,10 @@ public class DicomMediaIO implements DcmMediaReader {
     }
   }
 
-  private void writeImageValues(Attributes header) {
-    if (header != null && hasPixel) {
+  private void writeImageValues(DicomMetaData md) {
+    if (md != null && md.getDicomObject() != null && hasPixel) {
+      Attributes header = md.getDicomObject();
+      ImageDescriptor desc = md.getImageDescriptor();
       TagD.get(Tag.ImagePositionPatient).readValue(header, this);
       TagD.get(Tag.ImageOrientationPatient).readValue(header, this);
       setTagNoNull(
@@ -548,15 +511,10 @@ public class DicomMediaIO implements DcmMediaReader {
           ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
               TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class)));
 
-      bitsAllocated = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsAllocated, 8);
-      bitsStored =
-          DicomMediaUtils.getIntegerFromDicomElement(header, Tag.BitsStored, bitsAllocated);
-      int highBit = DicomMediaUtils.getIntegerFromDicomElement(header, Tag.HighBit, bitsStored - 1);
-      if (highBit >= bitsAllocated) {
-        highBit = bitsStored - 1;
-      }
-      int pixelRepresentation =
-          DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PixelRepresentation, 0);
+      Integer bitsAllocated = desc.getBitsAllocated();
+      Integer bitsStored = desc.getBitsStored();
+
+      int pixelRepresentation = desc.getPixelRepresentation();
       setTagNoNull(TagD.get(Tag.BitsAllocated), bitsAllocated);
       setTagNoNull(TagD.get(Tag.BitsStored), bitsStored);
       setTagNoNull(TagD.get(Tag.PixelRepresentation), pixelRepresentation);
@@ -567,38 +525,19 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.ImagerPixelSpacing).readValue(header, this);
       TagD.get(Tag.NominalScannedPixelSpacing).readValue(header, this);
 
-      DicomMediaUtils.applyModalityLutModule(header, this, null);
+      setTag(TagW.ModalityLUTData, desc.getModalityLUT());
 
       TagD.get(Tag.PixelIntensityRelationship).readValue(header, this);
-
-      DicomMediaUtils.applyVoiLutModule(header, header, this, null);
+      setTag(TagW.VOILUTsData, desc.getVoiLUT());
 
       TagD.get(Tag.Units).readValue(header, this);
       TagD.get(Tag.NumberOfFrames).readValue(header, this);
-      setTagNoNull(TagW.HasOverlay, DicomMediaUtils.hasOverlay(header));
 
       int samplesPerPixel =
           DicomMediaUtils.getIntegerFromDicomElement(header, Tag.SamplesPerPixel, 1);
       setTag(TagD.get(Tag.SamplesPerPixel), samplesPerPixel);
-      banded =
-          samplesPerPixel > 1
-              && DicomMediaUtils.getIntegerFromDicomElement(header, Tag.PlanarConfiguration, 0)
-                  != 0;
-      dataType =
-          bitsAllocated <= 8
-              ? DataBuffer.TYPE_BYTE
-              : pixelRepresentation != 0 ? DataBuffer.TYPE_SHORT : DataBuffer.TYPE_USHORT;
-      if (bitsAllocated == 32 && samplesPerPixel == 1) {
-        dataType =
-            header.getValue(Tag.FloatPixelData, pixeldataVR) == null
-                ? DataBuffer.TYPE_INT
-                : DataBuffer.TYPE_FLOAT;
-      } else if (bitsAllocated == 64 && samplesPerPixel == 1) {
-        dataType = DataBuffer.TYPE_DOUBLE;
-      }
       String photometricInterpretation =
           header.getString(Tag.PhotometricInterpretation, "MONOCHROME2");
-      pmi = PhotometricInterpretation.fromString(photometricInterpretation);
       TagD.get(Tag.PresentationLUTShape).readValue(header, this);
       setTag(TagD.get(Tag.PhotometricInterpretation), photometricInterpretation);
       setTag(
@@ -606,10 +545,8 @@ public class DicomMediaIO implements DcmMediaReader {
           samplesPerPixel == 1
               && !"PALETTE COLOR".equalsIgnoreCase(photometricInterpretation)); // NON-NLS
 
-      setTag(TagD.get(Tag.Rows), DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Rows, 0));
-      setTag(
-          TagD.get(Tag.Columns),
-          DicomMediaUtils.getIntegerFromDicomElement(header, Tag.Columns, 0));
+      setTag(TagD.get(Tag.Rows), desc.getRows());
+      setTag(TagD.get(Tag.Columns), desc.getColumns());
 
       setTagNoNull(
           TagD.get(Tag.PixelPaddingValue),
@@ -633,44 +570,7 @@ public class DicomMediaIO implements DcmMediaReader {
       TagD.get(Tag.LossyImageCompressionMethod).readValue(header, this);
       TagD.get(Tag.DerivationDescription).readValue(header, this);
 
-      /*
-       *
-       * For overlays encoded in Overlay Data Element (60xx,3000), Overlay Bits Allocated (60xx,0100) is always 1
-       * and Overlay Bit Position (60xx,0102) is always 0.
-       *
-       * @see - Dicom Standard 2011 - PS 3.5 § 8.1.2 Overlay data encoding of related data elements
-       */
-      if (bitsStored < bitsAllocated
-          && dataType >= DataBuffer.TYPE_BYTE
-          && dataType < DataBuffer.TYPE_INT
-          && Overlays.getEmbeddedOverlayGroupOffsets(header).length > 0) {
-        int high = highBit + 1;
-        int val = (1 << high) - 1;
-        if (high > bitsStored) {
-          val -= (1 << (high - bitsStored)) - 1;
-        }
-        /*
-         * Set to 0 all bits upper than highBit and if lower than high-bitsStored (=> all bits outside
-         * bitStored)
-         */
-        setTagNoNull(TagW.OverlayBitMask, val);
-
-        if (high > bitsStored) {
-          // Combine to the slope value
-          Double slopeVal = TagD.getTagValue(this, Tag.RescaleSlope, Double.class);
-          if (slopeVal == null) {
-            slopeVal = 1.0;
-            // Set valid modality LUT values
-            Double ri = TagD.getTagValue(this, Tag.RescaleIntercept, Double.class);
-            String rt = TagD.getTagValue(this, Tag.RescaleType, String.class);
-            setTag(TagD.get(Tag.RescaleIntercept), ri == null ? 0.0 : ri);
-            setTag(TagD.get(Tag.RescaleType), rt == null ? "US" : rt);
-          }
-          // Divide pixel value by (2 ^ rightBit) => remove right bits
-          slopeVal /= 1 << (high - bitsStored);
-          setTag(TagD.get(Tag.RescaleSlope), slopeVal);
-        }
-      }
+      setTagNoNull(TagW.ImageDescriptor, desc.getEmbeddedOverlay());
     }
   }
 
@@ -713,65 +613,34 @@ public class DicomMediaIO implements DcmMediaReader {
   @Override
   public PlanarImage getImageFragment(MediaElement media) throws Exception {
     if (Objects.requireNonNull(media).getKey() instanceof Integer) {
-      return getImageFragment(media, (Integer) media.getKey());
+      return getImageFragment(media, (Integer) media.getKey(), true);
     }
     return null;
   }
 
-  protected PlanarImage getImageFragment(MediaElement media, int frame) throws Exception {
-    if (isReadableDicom()) {
-      if (frame >= 0 && frame < numberOfFrame && hasPixel) {
+  public PlanarImage getImageFragment(MediaElement media, int frame, boolean noEmbeddedOverlay)
+      throws Exception {
+    if (isReadableDicom() && frame >= 0 && frame < numberOfFrame && hasPixel) {
+      FileCache cache = media.getFileCache();
+      Optional<File> original = cache.getOriginalFile();
+      if (original.isPresent()) {
         LOGGER.debug(
             "Start reading dicom image frame: {} sopUID: {}",
             frame,
             TagD.getTagValue(this, Tag.SOPInstanceUID));
-
-        PlanarImage img = getUncacheImage(media, frame);
-        if (pmi == PhotometricInterpretation.PALETTE_COLOR) {
-          img = DicomImageUtils.getRGBImageFromPaletteColorModel(img, getDicomObject());
-        }
-
-        /*
-         * Handle overlay in pixel data: extract the overlay, serialize it in a file and set all values to O in
-         * the pixel data.
-         */
-        Integer overlayBitMask = (Integer) getTagValue(TagW.OverlayBitMask);
-        if (overlayBitMask != null) {
-          if (media.getTagValue(TagW.OverlayBurninDataPath) == null) {
-            // Serialize overlay (from pixel data)
-            Attributes ds = getDicomObject();
-            int[] embeddedOverlayGroupOffsets = Overlays.getEmbeddedOverlayGroupOffsets(ds);
-            if (embeddedOverlayGroupOffsets.length > 0) {
-              FileOutputStream fileOut = null;
-              ObjectOutput objOut = null;
-              try {
-                byte[][] overlayData = new byte[embeddedOverlayGroupOffsets.length][];
-                for (int i = 0; i < embeddedOverlayGroupOffsets.length; i++) {
-                  overlayData[i] =
-                      OverlayUtils.extractOverlay(
-                          embeddedOverlayGroupOffsets[i],
-                          ImageConversion.toBufferedImage(img).getRaster(),
-                          ds);
-                }
-                File file =
-                    File.createTempFile("ovly_", "", AppProperties.FILE_CACHE_DIR); // NON-NLS
-                fileOut = new FileOutputStream(file);
-                objOut = new ObjectOutputStream(fileOut);
-                objOut.writeObject(overlayData);
-                media.setTag(TagW.OverlayBurninDataPath, file.getPath());
-              } catch (Exception e) {
-                LOGGER.error("Cannot serialize overlay", e);
-              } finally {
-                FileUtil.safeClose(objOut);
-                FileUtil.safeClose(fileOut);
-              }
+        DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
+        try (DicomFileInputStream inputStream = new DicomFileInputStream(original.get().toPath())) {
+          reader.setInput(inputStream);
+          ImageDescriptor desc = reader.getImageDescriptor();
+          PlanarImage img = reader.getPlanarImage(frame, null);
+          if (img.width() != desc.getColumns() || img.height() != desc.getRows()) {
+            LOGGER.error(
+                "The native image size ({}x{}) does not match with the DICOM attributes({}x{})", img.width(), img.height(), desc.getColumns(),  desc.getRows());
             }
-          }
-          // Set to 0 all bits outside bitStored
-          img = ImageProcessor.bitwiseAnd(img.toMat(), overlayBitMask);
+          return noEmbeddedOverlay ? ImageRendering.getImageWithoutEmbeddedOverlay(img, desc) : img;
+        } finally {
+          reader.dispose();
         }
-
-        return img;
       }
     }
     return null;
@@ -807,129 +676,6 @@ public class DicomMediaIO implements DcmMediaReader {
       LOGGER.error("Reading Waveform data");
     }
     return new Mat();
-  }
-
-  private PlanarImage getUncacheImage(MediaElement media, int frame) throws IOException {
-    FileCache cache = media.getFileCache();
-    Optional<File> cacheOriginalFile = cache.getOriginalFile();
-    if (cacheOriginalFile.isPresent()) {
-      readMetaData();
-      String syntax = tsuid;
-      boolean rawData = !compressedData || isRLELossless();
-      ExtendSegmentedInputImageStream extParams = buildSegmentedImageInputStream(frame);
-
-      if (extParams.getSegmentPositions() != null) {
-
-        // FileInputStream in = new FileInputStream(extParams.getFile());
-        // File outFile =
-        // new File(AppProperties.FILE_CACHE_DIR, fileCache.getFinalFile().getName() + "-" + frame +
-        // ".jp2");
-        // FileOutputStream out = new FileOutputStream(outFile);
-        // StreamUtils.skipFully(in, extParams.getSegmentPositions()[frame]);
-        // StreamUtils.copy(in, out, (int) extParams.getSegmentLengths()[frame]);
-
-        int dcmFlags =
-            dataType == DataBuffer.TYPE_SHORT
-                ? Imgcodecs.DICOM_FLAG_SIGNED
-                : Imgcodecs.DICOM_FLAG_UNSIGNED;
-
-        // Force JPEG Baseline (1.2.840.10008.1.2.4.50) to YBR_FULL_422 color model when RGB (error
-        // made by some constructors). RGB color model doesn't make sense for lossy jpeg.
-        // http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.html#sect_8.2.1
-        boolean ybr = false;
-        if (pmi.name().startsWith("YBR")
-            || ("RGB".equalsIgnoreCase(pmi.name()) // NON-NLS
-                && TransferSyntax.JPEG_LOSSY_8.getTransferSyntaxUID().equals(syntax))) {
-          ybr = true;
-          if ("RGB".equalsIgnoreCase(pmi.name())) {
-            String[] list =
-                BundleTools.SYSTEM_PREFERENCES
-                    .getProperty("jpeg.lossy.rgb.manufacturer.list", "")
-                    .split(","); // NON-NLS
-            String manufacturer = getDicomObject().getString(Tag.Manufacturer);
-            for (String s : list) {
-              if (StringUtil.hasText(s) && s.trim().equalsIgnoreCase(manufacturer)) {
-                ybr = false;
-                break;
-              }
-            }
-          }
-          if (ybr) {
-            dcmFlags |= Imgcodecs.DICOM_FLAG_YBR;
-          }
-        }
-        if (ybr
-            && (TransferSyntax.JPEGLS_LOSSLESS.getTransferSyntaxUID().equals(syntax)
-                || TransferSyntax.JPEGLS_NEAR_LOSSLESS.getTransferSyntaxUID().equals(syntax))) {
-          dcmFlags |= Imgcodecs.DICOM_FLAG_FORCE_RGB_CONVERSION;
-        }
-        if (bigendian) {
-          dcmFlags |= Imgcodecs.DICOM_FLAG_BIGENDIAN;
-        }
-        if (dataType == DataBuffer.TYPE_FLOAT || dataType == DataBuffer.TYPE_DOUBLE) {
-          dcmFlags |= Imgcodecs.DICOM_FLAG_FLOAT;
-        }
-        if (UID.RLELossless.equals(syntax)) {
-          dcmFlags |= Imgcodecs.DICOM_FLAG_RLE;
-        }
-
-        MatOfDouble positions =
-            new MatOfDouble(
-                Arrays.stream(extParams.getSegmentPositions()).asDoubleStream().toArray());
-        MatOfDouble lengths =
-            new MatOfDouble(
-                Arrays.stream(extParams.getSegmentLengths()).asDoubleStream().toArray());
-
-        if (rawData) {
-          int bits = bitsStored <= 8 && bitsAllocated > 8 ? 9 : bitsStored; // Fix #94
-          int streamVR = pixeldataVR.vr.numEndianBytes();
-          MatOfInt dicomparams =
-              new MatOfInt(
-                  Imgcodecs.IMREAD_UNCHANGED,
-                  dcmFlags,
-                  TagD.getTagValue(this, Tag.Columns, Integer.class),
-                  TagD.getTagValue(this, Tag.Rows, Integer.class),
-                  0,
-                  TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class),
-                  bits,
-                  banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE,
-                  streamVR);
-
-          if (UID.DeflatedExplicitVRLittleEndian.equals(syntax) && pixeldata != null) {
-            return ImageCV.toImageCV(
-                Imgcodecs.dicomRawMatRead(getRawData(pixeldata), dicomparams, pmi.name()));
-          }
-          return ImageCV.toImageCV(
-              Imgcodecs.dicomRawFileRead(
-                  cacheOriginalFile.get().getAbsolutePath(),
-                  positions,
-                  lengths,
-                  dicomparams,
-                  pmi.name()));
-        }
-        return ImageCV.toImageCV(
-            Imgcodecs.dicomJpgFileRead(
-                cacheOriginalFile.get().getAbsolutePath(),
-                positions,
-                lengths,
-                dcmFlags,
-                Imgcodecs.IMREAD_UNCHANGED));
-
-        // Mat buf = getMatBuffer(extParams);
-        // if (rawData) {
-        // MatOfInt dicomparams = new MatOfInt(Imgcodecs.IMREAD_UNCHANGED, dcmFlags,
-        // TagD.getTagValue(this, Tag.Columns, Integer.class),
-        // TagD.getTagValue(this, Tag.Rows, Integer.class),
-        // TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class), bitsStored,
-        // banded ? Imgcodecs.ILV_NONE : Imgcodecs.ILV_SAMPLE);
-        //
-        // return ImageCV.toImageCV(Imgcodecs.dicomRawRead(buf, dicomparams, pmi.name()));
-        // }
-        // return ImageCV.toImageCV(Imgcodecs.dicomJpgRead(buf, dcmFlags,
-        // Imgcodecs.IMREAD_UNCHANGED));
-      }
-    }
-    return null;
   }
 
   private MediaElement getSingleImage() {
@@ -1041,7 +787,8 @@ public class DicomMediaIO implements DcmMediaReader {
 
   @Override
   public void close() {
-    dispose();
+    HEADER_CACHE.remove(this);
+    reset();
   }
 
   @Override
@@ -1073,87 +820,6 @@ public class DicomMediaIO implements DcmMediaReader {
     return (Series<MediaElement>) series;
   }
 
-  private boolean isRLELossless() {
-    return dis != null && dis.getTransferSyntax().equals(UID.RLELossless);
-  }
-
-  private ExtendSegmentedInputImageStream buildSegmentedImageInputStream(int frameIndex)
-      throws IOException {
-    long[] offsets;
-    int[] length;
-
-    if (pixeldataFragments == null) {
-      readMetaData();
-      int width = TagD.getTagValue(this, Tag.Columns, Integer.class);
-      int height = TagD.getTagValue(this, Tag.Rows, Integer.class);
-      int samples = TagD.getTagValue(this, Tag.SamplesPerPixel, Integer.class);
-      int frameLength = pmi.frameLength(width, height, samples, bitsAllocated);
-
-      offsets = new long[1];
-      length = new int[offsets.length];
-      offsets[0] = pixeldata.offset() + (long) frameIndex * frameLength;
-      length[0] = frameLength;
-    } else {
-      int nbFragments = pixeldataFragments.size();
-
-      if (numberOfFrame >= nbFragments - 1) {
-        // nbFrames > nbFragments should never happen
-        offsets = new long[1];
-        length = new int[offsets.length];
-        int index = frameIndex < nbFragments - 1 ? frameIndex + 1 : nbFragments - 1;
-        BulkData bulkData = (BulkData) pixeldataFragments.get(index);
-        offsets[0] = bulkData.offset();
-        length[0] = bulkData.length();
-      } else {
-        if (numberOfFrame == 1) {
-          offsets = new long[nbFragments - 1];
-          length = new int[offsets.length];
-          for (int i = 0; i < length.length; i++) {
-            BulkData bulkData = (BulkData) pixeldataFragments.get(i + frameIndex + 1);
-            offsets[i] = bulkData.offset();
-            length[i] = bulkData.length();
-          }
-        } else {
-          // Multi-frames where each frames can have multiple fragments.
-          if (fragmentsPositions.isEmpty()) {
-            boolean jpeg2000 = tsuid.startsWith("1.2.840.10008.1.2.4.9");
-            try (ImageInputStream srcStream = ImageIO.createImageInputStream(new File(uri))) {
-              for (int i = 1; i < nbFragments; i++) {
-                BulkData bulkData = (BulkData) pixeldataFragments.get(i);
-                ImageInputStream stream =
-                    new org.dcm4che3.imageio.stream.SegmentedInputImageStream(
-                        srcStream, bulkData.offset(), bulkData.length(), false);
-                if (jpeg2000 ? decodeJpeg2000(stream) : decodeJpeg(stream)) {
-                  fragmentsPositions.add(i);
-                }
-              }
-            }
-          }
-
-          if (fragmentsPositions.size() == numberOfFrame) {
-            int start = fragmentsPositions.get(frameIndex);
-            int end =
-                (frameIndex + 1) >= fragmentsPositions.size()
-                    ? nbFragments
-                    : fragmentsPositions.get(frameIndex + 1);
-
-            offsets = new long[end - start];
-            length = new int[offsets.length];
-            for (int i = 0; i < offsets.length; i++) {
-              BulkData bulkData = (BulkData) pixeldataFragments.get(start + i);
-              offsets[i] = bulkData.offset();
-              length[i] = bulkData.length();
-            }
-          } else {
-            throw new IOException("Cannot match all the fragments to all the frames!");
-          }
-        }
-      }
-    }
-    return new ExtendSegmentedInputImageStream(
-        fileCache.getOriginalFile().orElse(null), offsets, length);
-  }
-
   public boolean isSkipLargePrivate() {
     return skipLargePrivate;
   }
@@ -1166,7 +832,7 @@ public class DicomMediaIO implements DcmMediaReader {
   public Attributes getDicomObject() {
     try {
       DicomMetaData md = readMetaData();
-      return md.getAttributes();
+      return md.getDicomObject();
     } catch (Exception e) {
       if (LOGGER.isDebugEnabled()) {
         LOGGER.error("Cannot read DICOM:", e);
@@ -1177,37 +843,22 @@ public class DicomMediaIO implements DcmMediaReader {
     return null;
   }
 
-  public void dispose() {
-    HEADER_CACHE.remove(this);
-    readingHeader = false;
-    readingImage = false;
-    reset();
+  @Override
+  public DicomMetaData getDicomMetaData() {
+    try {
+      return readMetaData();
+    } catch (Exception e) {
+      if (LOGGER.isDebugEnabled()) {
+        LOGGER.error("Cannot read DICOM:", e);
+      } else {
+        LOGGER.error(e.getMessage());
+      }
+    }
+    return null;
   }
 
   @Override
-  public void reset() {
-    /*
-     * readingHeader: prevent error when reading images from a large multiframe and the header is removed from the
-     * cache at the same time.
-     *
-     * readingImage: prevent closing stream when reading an image or for the RenderedImage which delays the image
-     * reading.
-     */
-    if (!readingHeader && !readingImage) {
-      resetInternalState();
-    }
-  }
-
-  private void resetInternalState() {
-    FileUtil.safeClose(iis);
-    iis = null;
-    dis = null;
-    tsuid = null;
-  }
-
-  public DicomMetaData getStreamMetadata() throws IOException {
-    return readMetaData();
-  }
+  public void reset() {}
 
   /**
    * Reads the DICOM header meta-data, up to, but not including pixel data.
@@ -1222,182 +873,38 @@ public class DicomMediaIO implements DcmMediaReader {
       return dcmMetadata;
     }
 
-    try {
-      readingHeader = true;
-      if (iis == null) {
-        Optional<File> file = fileCache.getOriginalFile();
-        if (file.isPresent()) {
-          resetInternalState();
-          this.iis = ImageIO.createImageInputStream(new File(uri));
-        }
-      }
+    Optional<File> file = fileCache.getOriginalFile();
+    if (file.isEmpty()) {
+      throw new IllegalArgumentException("No file found!");
+    }
+    Path path = file.get().toPath();
 
-      if (iis == null) {
-        throw new IllegalStateException("Input not set!");
-      }
-
-      iis.seek(0L);
-      dis = new DicomInputStream(new ImageInputStreamAdapter(iis));
-      dis.setIncludeBulkData(IncludeBulkData.URI);
-      dis.setBulkDataDescriptor(DicomCodec.BULKDATA_DESCRIPTOR);
-      // avoid a copy of pixeldata into temporary file
-      dis.setURI(uri.toString());
-      Attributes fmi = dis.readFileMetaInformation();
-      Attributes ds = dis.readDataset();
-      if (fmi == null) {
-        fmi = ds.createFileMetaInformation(dis.getTransferSyntax());
-      }
-      DicomMetaData metadata = new DicomMetaData(fmi, ds);
-      Object pixdata = ds.getValue(Tag.PixelData, pixeldataVR);
+    DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
+    try (DicomFileInputStream inputStream = new DicomFileInputStream(path)) {
+      reader.setInput(inputStream);
+      DicomMetaData dicomMetaData = reader.getStreamMetadata();
+      Attributes dcm = dicomMetaData.getDicomObject();
+      this.numberOfFrame = dcm.getInt(Tag.NumberOfFrames, 0);
+      VR.Holder pixeldataVR = new VR.Holder();
+      Object pixdata = dcm.getValue(Tag.PixelData, pixeldataVR);
       if (pixdata == null) {
-        pixdata = ds.getValue(Tag.FloatPixelData, pixeldataVR);
+        pixdata = dcm.getValue(Tag.FloatPixelData, pixeldataVR);
       }
       if (pixdata == null) {
-        pixdata = ds.getValue(Tag.DoubleFloatPixelData, pixeldataVR);
+        pixdata = dcm.getValue(Tag.DoubleFloatPixelData, pixeldataVR);
       }
 
       if (pixdata != null) {
-        tsuid = dis.getTransferSyntax();
-        numberOfFrame = ds.getInt(Tag.NumberOfFrames, 1);
-        hasPixel = ds.getInt(Tag.BitsStored, ds.getInt(Tag.BitsAllocated, 0)) > 0;
-
-        if (!tsuid.startsWith("1.2.840.10008.1.2.4.10") && hasPixel) {
-
-          if (pixdata instanceof BulkData) {
-            bigendian = ds.bigEndian();
-            iis.setByteOrder(ds.bigEndian() ? ByteOrder.BIG_ENDIAN : ByteOrder.LITTLE_ENDIAN);
-            this.pixeldata = (BulkData) pixdata;
-            // Handle JPIP
-          } else if (ds.getString(Tag.PixelDataProviderURL) != null) {
-            // always little endian:
-            // http://dicom.nema.org/medical/dicom/2017b/output/chtml/part05/sect_A.6.html
-            if (numberOfFrame == 0) {
-              numberOfFrame = 1;
-              // compressed = true;
-            }
-          } else if (pixdata instanceof Fragments) {
-            // ImageReaderFactory.ImageReaderItem readerItem =
-            // ImageReaderFactory.getImageReader(tsuid);
-            // if (readerItem == null) {
-            // throw new IOException("Unsupported Transfer Syntax: " + tsuid);
-            // }
-            this.compressedData = true;
-            this.pixeldataFragments = (Fragments) pixdata;
-            bigendian = pixeldataFragments.bigEndian();
-            if (bigendian) {
-              LOGGER.error("Big endian fragments?");
-            }
-          }
-        }
+        hasPixel = true;
       }
 
-      HEADER_CACHE.put(this, metadata);
-      return metadata;
+      if (numberOfFrame <= 0 && hasPixel) {
+        this.numberOfFrame = 1;
+      }
+      HEADER_CACHE.put(this, dicomMetaData);
+      return dicomMetaData;
     } finally {
-      readingHeader = false;
-      FileUtil.safeClose(iis);
-      iis = null;
-    }
-  }
-
-  private boolean decodeJpeg2000(ImageInputStream iis) throws IOException {
-    iis.mark();
-    try {
-      int marker = (iis.read() << 8) | iis.read();
-
-      if (marker == 0xFF4F) {
-        return true;
-      }
-
-      iis.reset();
-      iis.mark();
-      byte[] b = new byte[12];
-      iis.readFully(b);
-
-      // Verify the signature box
-      // The length of the signature box is 12
-      if (b[0] != 0 || b[1] != 0 || b[2] != 0 || b[3] != 12) {
-        return false;
-      }
-
-      // The signature box type is "jP "
-      if ((b[4] & 0xff) != 0x6A
-          || (b[5] & 0xFF) != 0x50
-          || (b[6] & 0xFF) != 0x20
-          || (b[7] & 0xFF) != 0x20) {
-        return false;
-      }
-
-      // The signature content is 0x0D0A870A
-      return (b[8] & 0xFF) == 0x0D
-          && (b[9] & 0xFF) == 0x0A
-          && (b[10] & 0xFF) == 0x87
-          && (b[11] & 0xFF) == 0x0A;
-    } finally {
-      iis.reset();
-    }
-  }
-
-  private boolean decodeJpeg(ImageInputStream iis) throws IOException {
-    // jpeg and jpeg-ls
-    iis.mark();
-    try {
-      int byte1 = iis.read();
-      int byte2 = iis.read();
-      // Magic numbers for JPEG (general jpeg marker)
-      if ((byte1 != 0xFF) || (byte2 != 0xD8)) {
-        return false;
-      }
-      do {
-        byte1 = iis.read();
-        byte2 = iis.read();
-        // Something wrong, but try to read it anyway
-        if (byte1 != 0xFF) {
-          break;
-        }
-        // Start of scan
-        if (byte2 == 0xDA) {
-          break;
-        }
-        // Start of Frame, also known as SOF55, indicates a JPEG-LS file.
-        if (byte2 == 0xF7) {
-          return true;
-        }
-        // 0xffc0: // SOF_0: JPEG baseline
-        // 0xffc1: // SOF_1: JPEG extended sequential DCT
-        // 0xffc2: // SOF_2: JPEG progressive DCT
-        // 0xffc3: // SOF_3: JPEG lossless sequential
-        if ((byte2 >= 0xC0) && (byte2 <= 0xC3)) {
-          return true;
-        }
-        // 0xffc5: // SOF_5: differential (hierarchical) extended sequential, Huffman
-        // 0xffc6: // SOF_6: differential (hierarchical) progressive, Huffman
-        // 0xffc7: // SOF_7: differential (hierarchical) lossless, Huffman
-        if ((byte2 >= 0xC5) && (byte2 <= 0xC7)) {
-          return true;
-        }
-        // 0xffc9: // SOF_9: extended sequential, arithmetic
-        // 0xffca: // SOF_10: progressive, arithmetic
-        // 0xffcb: // SOF_11: lossless, arithmetic
-        if ((byte2 >= 0xC9) && (byte2 <= 0xCB)) {
-          return true;
-        }
-        // 0xffcd: // SOF_13: differential (hierarchical) extended sequential, arithmetic
-        // 0xffce: // SOF_14: differential (hierarchical) progressive, arithmetic
-        // 0xffcf: // SOF_15: differential (hierarchical) lossless, arithmetic
-        if ((byte2 >= 0xCD) && (byte2 <= 0xCF)) {
-          return true;
-        }
-        int length = iis.read() << 8;
-        length += iis.read();
-        length -= 2;
-        while (length > 0) {
-          length -= iis.skipBytes(length);
-        }
-      } while (true);
-      return true;
-    } finally {
-      iis.reset();
+      reader.dispose();
     }
   }
 }

@@ -30,7 +30,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
-import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import org.apache.felix.service.command.CommandProcessor;
 import org.dcm4che3.data.Tag;
@@ -57,6 +56,8 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.GzipManager;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -386,7 +387,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         // Force to sort the new merged media list
         List sortedMedias = base.getSortedMedias(null);
         sortedMedias.sort(SortSeriesStack.instanceNumber);
-        // update observer
+        // filter observer
         this.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.REPLACE, DicomModel.this, base, base));
       }
@@ -615,15 +616,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   }
 
   public static List<PRSpecialElement> getPrSpecialElements(
-      MediaSeries<DicomImageElement> dicomSeries, String sopUID, Integer dicomFrameNumber) {
+      MediaSeries<DicomImageElement> dicomSeries, DicomImageElement img) {
     // Get all DicomSpecialElement at patient level
     List<DicomSpecialElement> specialElementList = getSpecialElements(dicomSeries);
-
     if (!specialElementList.isEmpty()) {
       String referencedSeriesInstanceUID =
           TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
-      return DicomSpecialElement.getPRSpecialElements(
-          specialElementList, referencedSeriesInstanceUID, sopUID, dicomFrameNumber);
+      String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
+      if (Objects.equals(seriesUID, referencedSeriesInstanceUID)) {
+        return DicomSpecialElement.getPRSpecialElements(specialElementList, img);
+      }
     }
     return Collections.emptyList();
   }
@@ -640,7 +642,6 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (model instanceof DicomModel) {
       MediaSeriesGroup patientGroup =
           ((DicomModel) model).getParent(dicomSeries, DicomModel.patient);
-
       if (patientGroup != null) {
         list = (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
       }
@@ -715,9 +716,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
           props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
           props.put(ViewerPluginBuilder.BEST_DEF_LAYOUT, false);
-          props.put(
-              ViewerPluginBuilder.ICON,
-              new ImageIcon(getClass().getResource("/icon/16x16/key-images.png")));
+          props.put(ViewerPluginBuilder.ICON, ResourceUtil.getIcon(OtherIcon.KEY_IMAGE));
           props.put(ViewerPluginBuilder.UID, uid);
           ViewerPluginBuilder builder = new ViewerPluginBuilder(plugin, seriesList, this, props);
           ViewerPluginBuilder.openSequenceInPlugin(builder);

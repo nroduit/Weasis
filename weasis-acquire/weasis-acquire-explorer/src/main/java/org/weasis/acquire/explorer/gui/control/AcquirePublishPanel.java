@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.explorer.gui.control;
 
-import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
@@ -37,11 +36,10 @@ import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -55,9 +53,8 @@ import org.weasis.dicom.param.DicomNode;
 import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.send.StowRS;
-import org.weasis.dicom.web.Multipart;
+import org.weasis.dicom.web.ContentType;
 
-@SuppressWarnings("serial")
 public class AcquirePublishPanel extends JPanel {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquirePublishPanel.class);
 
@@ -72,11 +69,10 @@ public class AcquirePublishPanel extends JPanel {
     publishBtn.addActionListener(
         e -> {
           final AcquirePublishDialog dialog = new AcquirePublishDialog(AcquirePublishPanel.this);
-          JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
+          GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(AcquirePublishPanel.this));
         });
 
-    publishBtn.setPreferredSize(new Dimension(150, 40));
-    publishBtn.setFont(FontTools.getFont12Bold());
+    publishBtn.setPreferredSize(GuiUtils.getDimension(150, 40));
 
     add(publishBtn);
     add(progressBar);
@@ -90,8 +86,7 @@ public class AcquirePublishPanel extends JPanel {
     if (destinationNode instanceof DefaultDicomNode) {
       DicomNode destNdde = ((DefaultDicomNode) destinationNode).getDicomNode();
       publishDicomTask = publishDicomDimse(exportDirDicom, destNdde);
-    } else if (destinationNode instanceof DicomWebNode) {
-      final DicomWebNode node = (DicomWebNode) destinationNode;
+    } else if (destinationNode instanceof final DicomWebNode node) {
       publishDicomTask = publishStow(exportDirDicom, node, toPublish);
     }
 
@@ -144,7 +139,7 @@ public class AcquirePublishPanel extends JPanel {
           try (StowRS stowRS =
               new StowRS(
                   node.getUrl().toString(),
-                  Multipart.ContentType.DICOM,
+                  ContentType.APPLICATION_DICOM,
                   AppProperties.WEASIS_NAME,
                   node.getHeaders())) {
 

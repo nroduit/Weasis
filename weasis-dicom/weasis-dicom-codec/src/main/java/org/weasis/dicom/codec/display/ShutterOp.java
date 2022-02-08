@@ -13,11 +13,13 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.awt.image.RenderedImage;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.OverlayData;
+import org.dcm4che3.img.data.PrDicomObject;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
@@ -25,11 +27,9 @@ import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.LangUtil;
-import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
-import org.weasis.dicom.codec.utils.OverlayUtils;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
@@ -74,7 +74,7 @@ public class ShutterOp extends AbstractOp {
       setParam(P_SHAPE, noMedia ? null : img.getTagValue(TagW.ShutterFinalShape));
       setParam(P_PS_VALUE, noMedia ? null : img.getTagValue(TagW.ShutterPSValue));
       setParam(P_RGB_COLOR, noMedia ? null : img.getTagValue(TagW.ShutterRGBColor));
-      setParam(P_PR_ELEMENT, null);
+      setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
       setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
     } else if (OpEvent.ApplyPR.equals(type)) {
       HashMap<String, Object> p = event.getParams();
@@ -87,7 +87,7 @@ public class ShutterOp extends AbstractOp {
         setParam(P_SHAPE, pr == null ? null : pr.getTagValue(TagW.ShutterFinalShape));
         setParam(P_PS_VALUE, pr == null ? null : pr.getTagValue(TagW.ShutterPSValue));
         setParam(P_RGB_COLOR, pr == null ? null : pr.getTagValue(TagW.ShutterRGBColor));
-        setParam(P_PR_ELEMENT, pr);
+        setParam(WindowAndPresetsOp.P_PR_ELEMENT, pr == null ? null : pr.getPrDicomObject());
         setParam(P_IMAGE_ELEMENT, event.getImage());
 
         Area shape = (Area) params.get(P_SHAPE);
@@ -110,31 +110,30 @@ public class ShutterOp extends AbstractOp {
 
     boolean shutter = LangUtil.getNULLtoFalse((Boolean) params.get(P_SHOW));
     Area area = (Area) params.get(P_SHAPE);
-    Object pr = params.get(P_PR_ELEMENT);
+    PrDicomObject pr = (PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT);
 
     if (shutter && area != null) {
       result = ImageProcessor.applyShutter(source.toMat(), area, getShutterColor());
     }
 
     // Potentially override the shutter in the original dicom
-    if (shutter && params.get(P_PS_VALUE) != null && (pr instanceof PRSpecialElement)) {
-      DicomMediaIO prReader = ((PRSpecialElement) pr).getMediaReader();
+    if (shutter && pr != null) {
       ImageCV imgOverlay = null;
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-      boolean overlays = LangUtil.getNULLtoFalse((Boolean) prReader.getTagValue(TagW.HasOverlay));
+      List<OverlayData> overlays = pr.getShutterOverlays();
 
-      if (overlays && image != null && image.getKey() instanceof Integer) {
+      if (!overlays.isEmpty() && image != null && image.getKey() instanceof Integer) {
         int frame = (Integer) image.getKey();
         Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
         Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
         if (height != null && width != null) {
-          Attributes attributes = ((PRSpecialElement) pr).getMediaReader().getDicomObject();
+          Attributes attributes = pr.getDicomObject();
           Integer shuttOverlayGroup =
               DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.ShutterOverlayGroup, null);
           if (shuttOverlayGroup != null) {
-            RenderedImage overlayImg =
-                OverlayUtils.getShutterOverlay(attributes, frame, width, height, shuttOverlayGroup);
-            imgOverlay = ImageProcessor.applyShutter(result.toMat(), overlayImg, getShutterColor());
+            PlanarImage overlayImg = OverlayData.getOverlayImage(result, overlays, frame);
+            imgOverlay =
+                ImageProcessor.overlay(result.toMat(), overlayImg.toMat(), getShutterColor());
           }
         }
       }

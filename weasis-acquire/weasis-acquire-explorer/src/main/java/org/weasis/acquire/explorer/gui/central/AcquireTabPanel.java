@@ -34,7 +34,6 @@ import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.dicom.codec.TagD;
 
-@SuppressWarnings("serial")
 public class AcquireTabPanel extends JPanel {
 
   private final Map<SeriesGroup, List<AcquireImageInfo>> btnMap = new HashMap<>();

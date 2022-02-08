@@ -9,20 +9,39 @@
  */
 package org.weasis.core.api.gui.util;
 
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
-@SuppressWarnings("serial")
-public abstract class AbstractItemDialogPage extends JPanel implements PageProps, Insertable {
+public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
+  public static final int LAST_FILLER_HEIGHT = 5;
+  public static final int BLOCK_SEPARATOR = 15;
+  public static final int ITEM_SEPARATOR_SMALL = 2;
+  public static final int ITEM_SEPARATOR = 5;
+  public static final int ITEM_SEPARATOR_LARGE = 10;
+
   private final String title;
-  private List<PageProps> subPageList;
+  private final List<PageItem> subPageList = new ArrayList<>();
   private int pagePosition;
 
-  public AbstractItemDialogPage(String title) {
+  private final Properties properties = new Properties();
+
+  protected AbstractItemDialogPage(String title) {
+    this(title, 1000);
+  }
+
+  protected AbstractItemDialogPage(String title, int pagePosition) {
     this.title = title == null ? "item" : title; // NON-NLS
-    this.pagePosition = 1000;
+    this.pagePosition = pagePosition;
+    setBorder(
+        GuiUtils.getEmptyBorder(BLOCK_SEPARATOR, ITEM_SEPARATOR_LARGE, 0, ITEM_SEPARATOR_LARGE));
+    setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
   }
 
   public void deselectPageAction() {}
@@ -34,37 +53,45 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
     return title;
   }
 
-  public void addSubPage(PageProps subPage) {
-    if (subPageList == null) {
-      subPageList = new ArrayList<>();
-    }
+  public void addSubPage(PageItem subPage) {
     subPageList.add(subPage);
   }
 
-  public void removeSubPage(PageProps subPage) {
-    if (subPageList == null) {
-      return;
+  public void addSubPage(PageItem subPage, ActionListener actionListener, JComponent menuPanel) {
+    subPageList.add(subPage);
+    if (actionListener != null && menuPanel != null) {
+      JButton button = new JButton();
+      button.setText(subPage.getTitle());
+      button.addActionListener(actionListener);
+      menuPanel.add(button);
     }
+  }
+
+  public void removeSubPage(PageItem subPage) {
     subPageList.remove(subPage);
   }
 
   @Override
-  public PageProps[] getSubPages() {
-    if (subPageList == null) {
-      return new PageProps[0];
-    }
-    final PageProps[] subPages = new PageProps[subPageList.size()];
-    subPageList.toArray(subPages);
-    return subPages;
+  public List<PageItem> getSubPages() {
+    return new ArrayList<>(subPageList);
   }
 
   public void resetAllSubPagesToDefaultValues() {
-    if (subPageList == null) {
-      return;
+    for (PageItem subPage : subPageList) {
+      subPage.resetToDefaultValues();
     }
-    for (PageProps subPage : subPageList) {
-      subPage.resetoDefaultValues();
-    }
+  }
+
+  public Properties getProperties() {
+    return properties;
+  }
+
+  public String getProperty(String key) {
+    return properties.getProperty(key);
+  }
+
+  public String getProperty(String key, String defaultValue) {
+    return properties.getProperty(key, defaultValue);
   }
 
   @Override
@@ -102,5 +129,9 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageProps
   @Override
   public void setComponentPosition(int position) {
     this.pagePosition = position;
+  }
+
+  public JComponent getMenuPanel() {
+    return null;
   }
 }

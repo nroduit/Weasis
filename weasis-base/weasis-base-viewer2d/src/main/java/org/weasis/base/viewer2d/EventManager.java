@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
@@ -34,6 +33,7 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.SliderCineListener.TIME;
@@ -55,9 +55,9 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
-import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
@@ -69,6 +69,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.PrintDialog;
 import org.weasis.core.util.LangUtil;
+import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
  * The event processing center for this application. This class responses for loading data sets,
@@ -150,7 +151,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   private ComboItemListener<KernelData> newFilterAction() {
-    return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
+    return new ComboItemListener<>(ActionW.FILTER, KernelData.getAllFilters()) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -172,7 +173,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     // Set default first as the list has been sorted
     luts.add(0, ByteLutCollection.Lut.IMAGE.getByteLut());
 
-    return new ComboItemListener<ByteLut>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
+    return new ComboItemListener<>(ActionW.LUT, luts.toArray(new ByteLut[0])) {
       @Override
       public void itemStateChanged(Object object) {
         if (object instanceof ByteLut) {
@@ -347,10 +348,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                         defaultView2d
                             .getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
+            DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
             getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultWindow(pixelPadding)));
+                .ifPresent(a -> a.setRealValue(img.getDefaultWindow(wlp)));
             getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultLevel(pixelPadding)));
+                .ifPresent(a -> a.setRealValue(img.getDefaultLevel(wlp)));
           }
         }
       }
@@ -547,7 +549,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
       menu = new JMenu(Messages.getString("ResetTools.reset"));
-      menu.setIcon(new ImageIcon(DefaultView2d.class.getResource("/icon/16x16/reset.png")));
+      menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
       menu.setEnabled(getSelectedSeries() != null);
 
       if (menu.isEnabled()) {
@@ -572,7 +574,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           getAction(ActionW.ZOOM, SliderChangeListener.class);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
-        menu.setIcon(ActionW.ZOOM.getSmallIcon());
+        menu.setIcon(ActionW.ZOOM.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(zoomAction.get().isActionEnabled());
 
         if (zoomAction.get().isActionEnabled()) {
@@ -592,7 +595,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           getAction(ActionW.ROTATION, SliderChangeListener.class);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
-        menu.setIcon(ActionW.ROTATION.getSmallIcon());
+        menu.setIcon(ActionW.ROTATION.getIcon());
+        GuiUtils.applySelectedIconEffect(menu);
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
@@ -600,6 +604,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
@@ -607,6 +612,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                       .get()
                       .setSliderValue((rotateAction.get().getSliderValue() - 90 + 360) % 360));
           menu.add(menuItem);
+          menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
           menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
@@ -630,8 +636,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             menuItem =
                 flipAction
                     .get()
-                    .createUnregiteredJCheckBoxMenuItem(
-                        Messages.getString("View2dContainer.flip_h"));
+                    .createUnregisteredJCCheckBoxMenuItem(
+                        Messages.getString("View2dContainer.flip_h"),
+                        ResourceUtil.getIcon(ActionIcon.FLIP));
             menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
             menu.add(menuItem);
           }
@@ -649,7 +656,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   //
   //
   // menu.add(new JSeparator());
-  // menu.add(inverseStackAction.createUnregiteredJCheckBoxMenuItem(Messages
+  // menu.add(inverseStackAction.createUnregisteredJCCheckBoxMenuItem(Messages
   // .getString("View2dContainer.inv_stack")));
   // }
   // return menu;
@@ -660,7 +667,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       Optional<ComboItemListener> lutAction = getAction(ActionW.LUT, ComboItemListener.class);
       if (lutAction.isPresent()) {
-        menu = lutAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.lut"));
+        menu =
+            lutAction
+                .get()
+                .createUnregisteredRadioMenu(
+                    Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
     return menu;
@@ -675,7 +686,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         menu =
             inverseLutAction
                 .get()
-                .createUnregiteredJCheckBoxMenuItem(ActionW.INVERT_LUT.getTitle());
+                .createUnregisteredJCCheckBoxMenuItem(
+                    ActionW.INVERT_LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.INVERSE_LUT));
       }
     }
     return menu;
@@ -687,7 +699,11 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       Optional<ComboItemListener> filterAction = getAction(ActionW.FILTER, ComboItemListener.class);
       if (filterAction.isPresent()) {
         menu =
-            filterAction.get().createUnregisteredRadioMenu(Messages.getString("ImageTool.filter"));
+            filterAction
+                .get()
+                .createUnregisteredRadioMenu(
+                    Messages.getString("ImageTool.filter"),
+                    ResourceUtil.getIcon(ActionIcon.FILTER));
       }
     }
     return menu;

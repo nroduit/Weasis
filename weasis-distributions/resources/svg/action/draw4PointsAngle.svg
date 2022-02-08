@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="22" height="22" version="1.1" viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+ <path d="m9.389 6.9921c0.53061 3.5838 1.695 4.9004 5.6471 5.6479" fill="none" stroke="#6e6e6e" stroke-linejoin="bevel" stroke-width="1.467"/>
+ <g transform="translate(1 1)" fill="none">
+  <path d="m11.331 18.76h5.7909" stroke="#6e6e6e" stroke-linejoin="bevel" stroke-width="1.467"/>
+  <rect transform="scale(-1,1)" x="-11.267" y="17.322" width="2.944" height="2.944" stroke="#389fd6" stroke-width="1.467" style="paint-order:stroke fill markers"/>
+  <rect transform="scale(-1,1)" x="-20.267" y="17.322" width="2.944" height="2.944" stroke="#389fd6" stroke-width="1.467" style="paint-order:stroke fill markers"/>
+ </g>
+ <g transform="rotate(90 8.4834 8.5071)" fill="none">
+  <path d="m3.7187 14.751h5.7909" stroke="#6e6e6e" stroke-linejoin="bevel" stroke-width="1.467"/>
+  <rect transform="scale(-1,1)" x="-3.6538" y="13.313" width="2.944" height="2.944" stroke="#389fd6" stroke-width="1.467" style="paint-order:stroke fill markers"/>
+  <rect transform="scale(-1,1)" x="-12.654" y="13.313" width="2.944" height="2.944" stroke="#389fd6" stroke-width="1.467" style="paint-order:stroke fill markers"/>
+ </g>
+ <rect x="2.4042" y="2.4042" width="17.192" height="17.192" display="none" fill="none" stroke="#389fd6" stroke-width="4.8083" style="paint-order:stroke fill markers"/>
+ <path d="m2.1933 6.801h13.117v13.031" fill="none" stroke="#6e6e6e" stroke-width="1.467"/>
+</svg>

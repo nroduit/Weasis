@@ -22,11 +22,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.gui.util.GeomUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
 import org.weasis.core.ui.model.utils.bean.AdvancedShape;
@@ -38,12 +39,10 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlType(name = "angle")
 @XmlRootElement(name = "angle")
 public class AngleToolGraphic extends AbstractDragGraphic {
-  private static final long serialVersionUID = 1228359066740628659L;
 
   public static final Integer POINTS_NUMBER = 3;
 
-  public static final Icon ICON =
-      new ImageIcon(AngleToolGraphic.class.getResource("/icon/22x22/draw-angle.png"));
+  public static final Icon ICON = ResourceUtil.getIcon(ActionIcon.DRAW_ANGLE);
 
   public static final Measurement ANGLE =
       new Measurement(Messages.getString("measure.angle"), 1, true);

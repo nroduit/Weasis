@@ -12,7 +12,6 @@ package org.weasis.core.api.gui.util;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JSlider;
 
-@SuppressWarnings("serial")
 public class JSliderW extends JSlider {
 
   private int labelDivision = 4;

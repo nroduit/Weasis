@@ -12,14 +12,11 @@ package org.weasis.core.ui.model.graphic;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
@@ -160,18 +157,13 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       reset();
     } else {
       this.labels = labels;
-      Font defaultFont = view2d == null ? FontTools.getFont12() : view2d.getFont();
+      Font defaultFont = view2d == null ? FontTools.getDefaultFont() : view2d.getFont();
       Graphics2D g2d = view2d == null ? null : (Graphics2D) view2d.getJComponent().getGraphics();
       FontRenderContext fontRenderContext =
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();
       updateBoundsSize(defaultFont, fontRenderContext);
 
-      labelBounds =
-          new Rectangle.Double(
-              xPos + GROWING_BOUND,
-              yPos + GROWING_BOUND,
-              labelWidth + GROWING_BOUND,
-              (labelHeight * labels.length) + GROWING_BOUND);
+      labelBounds = new Rectangle.Double(xPos, yPos, labelWidth, (labelHeight * labels.length));
       GeomUtil.growRectangle(labelBounds, GROWING_BOUND);
     }
   }
@@ -191,8 +183,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
         }
       }
       labelHeight =
-          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight() // NON-NLS
-              + 2;
+          new TextLayout("Tg", defaultFont, fontRenderContext).getBounds().getHeight(); // NON-NLS
       labelWidth = maxWidth;
     }
   }
@@ -216,12 +207,12 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       }
 
       float px = (float) pt.getX() + GROWING_BOUND;
-      float py = (float) pt.getY() + GROWING_BOUND;
+      float py = (float) pt.getY() + GROWING_BOUND - g2d.getFontMetrics().getDescent() + 1;
 
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
           py += labelHeight;
-          paintColorFontOutline(g2d, label, px, py, Color.WHITE);
+          FontTools.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }
 
@@ -266,39 +257,6 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
     g2d.draw(boundingRect);
 
     g2d.setPaint(oldPaint);
-  }
-
-  public static void paintColorFontOutline(
-      Graphics2D g2, String str, float x, float y, Color color) {
-    g2.setPaint(Color.BLACK);
-
-    if (RenderingHints.VALUE_TEXT_ANTIALIAS_ON.equals(
-        g2.getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING))) {
-      TextLayout layout = new TextLayout(str, g2.getFont(), g2.getFontRenderContext());
-      AffineTransform textAt = new AffineTransform();
-      textAt.translate(x, y);
-      Shape outline = layout.getOutline(textAt);
-      g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.draw(outline);
-      g2.setPaint(color);
-      g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND));
-      g2.fill(outline);
-    } else {
-      g2.drawString(str, x - 1f, y - 1f);
-      g2.drawString(str, x - 1f, y);
-      g2.drawString(str, x - 1f, y + 1f);
-      g2.drawString(str, x, y - 1f);
-      g2.drawString(str, x, y + 1f);
-      g2.drawString(str, x + 1f, y - 1f);
-      g2.drawString(str, x + 1f, y);
-      g2.drawString(str, x + 1f, y + 1f);
-      g2.setPaint(color);
-      g2.drawString(str, x, y);
-    }
-  }
-
-  public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
-    paintColorFontOutline(g2, str, x, y, Color.WHITE);
   }
 
   @Override

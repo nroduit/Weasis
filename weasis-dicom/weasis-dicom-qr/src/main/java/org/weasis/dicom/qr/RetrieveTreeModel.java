@@ -135,8 +135,6 @@ public class RetrieveTreeModel {
 
   static class ToolTipStudyNode extends DefaultMutableTreeNode {
 
-    private static final long serialVersionUID = -5332455270913061130L;
-
     public ToolTipStudyNode(TagReadable userObject, boolean allowsChildren) {
       super(Objects.requireNonNull(userObject), allowsChildren);
     }
@@ -162,8 +160,6 @@ public class RetrieveTreeModel {
   }
 
   static class ToolTipSeriesNode extends DefaultMutableTreeNode {
-
-    private static final long serialVersionUID = 6815757092280682077L;
 
     public ToolTipSeriesNode(TagReadable userObject, boolean allowsChildren) {
       super(Objects.requireNonNull(userObject), allowsChildren);

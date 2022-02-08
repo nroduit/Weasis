@@ -9,20 +9,20 @@
  */
 package org.weasis.dicom.qr;
 
+import com.formdev.flatlaf.FlatClientProperties;
 import com.github.lgooddatepicker.components.DatePicker;
-import com.github.lgooddatepicker.components.DatePickerSettings.DateArea;
+import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
@@ -31,7 +31,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
@@ -45,8 +44,8 @@ import javax.swing.JProgressBar;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
-import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListDataEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -63,18 +62,19 @@ import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.DropDownButton;
-import org.weasis.core.api.gui.util.DropDownLabel;
 import org.weasis.core.api.gui.util.GroupCheckBoxMenu;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.api.util.LocalUtil;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.ui.pref.PreferenceDialog;
+import org.weasis.core.ui.util.CalendarUtil;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
@@ -197,12 +197,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private final Border spaceY = BorderFactory.createEmptyBorder(10, 3, 0, 3);
 
-  private final JPanel basePanel = new JPanel();
-  private final JPanel panelGroup = new JPanel();
   private final JComboBox<AbstractDicomNode> comboDestinationNode = new JComboBox<>();
-  private final JTextField tfSearch = new JTextField();
+  private final JTextField tfSearch = new JTextField(25);
   private final RetrieveTree tree = new RetrieveTree();
-  private final DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode("rootNode", true);
 
   private final JComboBox<TagW> comboTags =
       new JComboBox<>(
@@ -220,7 +217,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton modButton =
       new DropDownButton(
           "search_mod", // NON-NLS
-          new DropDownLabel(Messages.getString("DicomQrView.modalities"), panelGroup),
+          Messages.getString("DicomQrView.modalities"),
+          GuiUtils.getDownArrowIcon(),
           groupMod) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -231,7 +229,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         }
       };
   private final GroupRadioMenu<Period> groupDate =
-      new GroupRadioMenu<Period>() {
+      new GroupRadioMenu<>() {
         @Override
         public void contentsChanged(ListDataEvent e) {
           super.contentsChanged(e);
@@ -249,7 +247,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private final DropDownButton dateButton =
       new DropDownButton(
           "search_date", // NON-NLS
-          new DropDownLabel(Messages.getString("DicomQrView.dates"), panelGroup),
+          Messages.getString("DicomQrView.dates"),
+          GuiUtils.getDownArrowIcon(),
           groupDate) {
         @Override
         protected JPopupMenu getPopupMenu() {
@@ -278,20 +277,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
-    JMVUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
-    JMVUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
+    GuiUtils.setNumberModel(limitSpinner, 10, 0, 999, 5);
+    GuiUtils.setNumberModel(pageSpinner, 1, 1, 99999, 1);
     initGUI();
-    tree.setBorder(
-        BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("DicomQrView.result"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
-    add(tree, BorderLayout.CENTER);
     initialize(true);
 
     DicomListener dcmListener = null;
@@ -304,118 +292,99 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public void initGUI() {
-    setLayout(new BorderLayout());
-    basePanel.setLayout(new BoxLayout(basePanel, BoxLayout.Y_AXIS));
-    basePanel.add(getArchivePanel());
-    basePanel.add(getCallingNodePanel());
-    basePanel.add(getSearchPanel());
-    basePanel.add(getCtrlSearchPanel());
-
-    add(basePanel, BorderLayout.NORTH);
+    add(getArchivePanel());
+    add(getCallingNodePanel());
+    add(getSearchPanel());
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
+    add(getCtrlSearchPanel());
+    tree.setBorder(UIManager.getBorder("ScrollPane.border"));
+    add(tree);
   }
 
   public JPanel getArchivePanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     JLabel lblDest = new JLabel(Messages.getString("DicomQrView.arc") + StringUtil.COLON);
-    sPanel.add(lblDest);
-    JMVUtils.setPreferredWidth(comboDestinationNode, 185, 185);
     AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
-    sPanel.add(comboDestinationNode);
+    GuiUtils.setPreferredWidth(comboDestinationNode, 250, 150);
 
-    sPanel.add(Box.createHorizontalStrut(10));
     JLabel lblTetrieve = new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
-    sPanel.add(lblTetrieve);
     comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
-    sPanel.add(comboDicomRetrieveType);
-    return sPanel;
+    return GuiUtils.getFlowLayoutPanel(
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        lblDest,
+        comboDestinationNode,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        lblTetrieve,
+        comboDicomRetrieveType);
   }
 
   public JPanel getCallingNodePanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
     final JLabel lblDest =
         new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
-    sPanel.add(lblDest);
-
-    JMVUtils.setPreferredWidth(comboCallingNode, 185, 185);
+    GuiUtils.setPreferredWidth(comboCallingNode, 230, 150);
     AbstractDicomNode.addTooltipToComboList(comboCallingNode);
-    sPanel.add(comboCallingNode);
 
-    sPanel.add(Box.createHorizontalStrut(10));
     final JButton btnGerenralOptions = new JButton(Messages.getString("DicomQrView.more_opt"));
-    btnGerenralOptions.setAlignmentX(Component.LEFT_ALIGNMENT);
-    sPanel.add(btnGerenralOptions);
     btnGerenralOptions.addActionListener(
         e -> {
           PreferenceDialog dialog = new PreferenceDialog(SwingUtilities.getWindowAncestor(this));
           dialog.showPage(
               org.weasis.dicom.explorer.Messages.getString("DicomNodeListView.node_list"));
-          JMVUtils.showCenterScreen(dialog);
+          GuiUtils.showCenterScreen(dialog);
           initNodeList();
         });
-    return sPanel;
+    return GuiUtils.getFlowLayoutPanel(
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        lblDest,
+        comboCallingNode,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        btnGerenralOptions);
   }
 
   public JPanel getCtrlSearchPanel() {
-    final JPanel panel5 = new JPanel();
-    panel5.setAlignmentY(Component.TOP_ALIGNMENT);
-    panel5.setAlignmentX(Component.LEFT_ALIGNMENT);
-    panel5.setLayout(new FlowLayout(FlowLayout.LEFT, 15, 10));
-
-    JPanel panel6 = new JPanel();
-    panel6.setLayout(new FlowLayout(FlowLayout.LEFT, 2, 0));
-    panel6.add(new JLabel(Messages.getString("limit") + StringUtil.COLON));
+    JLabel labelLimit = new JLabel(Messages.getString("limit") + StringUtil.COLON);
     limitSpinner.setToolTipText(Messages.getString("no.limit"));
-    panel6.add(limitSpinner);
-    panel6.add(Box.createHorizontalStrut(15));
-    panel6.add(new JLabel(Messages.getString("page") + StringUtil.COLON));
+
+    JLabel labelPage = new JLabel(Messages.getString("page") + StringUtil.COLON);
     pageSpinner.addChangeListener(queryListener);
-    panel6.add(pageSpinner);
-    panel5.add(panel6);
     progressBar.setEnabled(false);
-    panel5.add(progressBar);
-    panel5.add(Box.createHorizontalStrut(100));
+
     JButton clearBtn = new JButton(Messages.getString("DicomQrView.clear"));
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
-    panel5.add(clearBtn);
+
     JButton searchBtn = new JButton(Messages.getString("DicomQrView.search"));
     searchBtn.setToolTipText(Messages.getString("DicomQrView.tips_dcm_query"));
     searchBtn.addActionListener(e -> dicomQuery());
-    panel5.add(searchBtn);
-    return panel5;
+
+    return GuiUtils.getFlowLayoutPanel(
+        FlowLayout.TRAILING,
+        ITEM_SEPARATOR_SMALL,
+        ITEM_SEPARATOR,
+        labelLimit,
+        limitSpinner,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        labelPage,
+        pageSpinner,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        progressBar,
+        GuiUtils.boxHorizontalStrut(BLOCK_SEPARATOR),
+        clearBtn,
+        GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_LARGE),
+        searchBtn);
   }
 
   public JPanel getSearchPanel() {
-    final JPanel sPanel = new JPanel();
-    sPanel.setAlignmentY(Component.TOP_ALIGNMENT);
-    sPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    final JPanel sPanel = GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR);
     sPanel.setLayout(new BoxLayout(sPanel, BoxLayout.Y_AXIS));
     sPanel.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY,
-            new TitledBorder(
-                null,
-                Messages.getString("DicomQrView.search"),
-                TitledBorder.DEFAULT_JUSTIFICATION,
-                TitledBorder.DEFAULT_POSITION,
-                FontTools.getFont12Bold(),
-                Color.GRAY)));
-
-    panelGroup.setLayout(new FlowLayout(FlowLayout.LEFT, 7, 3));
-
+            spaceY, GuiUtils.getTitledBorder(Messages.getString("DicomQrView.search"))));
     List<Object> list = Stream.of(Modality.values()).collect(Collectors.toList());
     list.set(0, Messages.getString("DicomQrView.all_mod"));
     groupMod.setModel(list, true, true);
-
     modButton.setToolTipText(Messages.getString("DicomQrView.select_mod"));
-    panelGroup.add(modButton);
-    panelGroup.add(Box.createHorizontalStrut(10));
 
     Period[] listDate = {
       Period.ALL,
@@ -438,22 +407,25 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     ComboBoxModel<Period> dataModel = new DefaultComboBoxModel<>(listDate);
     groupDate.setModel(dataModel);
 
-    panelGroup.add(dateButton);
-    panelGroup.add(new JLabel(Messages.getString("DicomQrView.from")));
-    panelGroup.add(startDatePicker);
-    panelGroup.add(new JLabel(Messages.getString("DicomQrView.to")));
-    panelGroup.add(endDatePicker);
-    sPanel.add(panelGroup);
+    JLabel labelFrom = new JLabel(Messages.getString("DicomQrView.from"));
+    JLabel labetTo = new JLabel(Messages.getString("DicomQrView.to"));
 
-    final JPanel panel4 = new JPanel();
-    panel4.setLayout(new FlowLayout(FlowLayout.LEFT, 3, 3));
-    panel4.add(comboTags);
+    sPanel.add(
+        GuiUtils.getFlowLayoutPanel(
+            ITEM_SEPARATOR_SMALL,
+            ITEM_SEPARATOR,
+            modButton,
+            GuiUtils.boxXLastElement(BLOCK_SEPARATOR),
+            dateButton,
+            GuiUtils.boxXLastElement(ITEM_SEPARATOR_LARGE),
+            labelFrom,
+            startDatePicker.getComponentDateTextField(),
+            GuiUtils.boxXLastElement(ITEM_SEPARATOR),
+            labetTo,
+            endDatePicker.getComponentDateTextField()));
+
     comboTags.setMaximumRowCount(15);
-    // comboTags.setFont(FontTools.getFont11());
-    JMVUtils.setPreferredWidth(comboTags, 180, 180);
-    // Update UI before adding the Tooltip feature in the combobox list
-    comboTags.updateUI();
-    JMVUtils.addTooltipToComboList(comboTags);
+    GuiUtils.setPreferredWidth(comboTags, 230, 150);
 
     StringBuilder buf = new StringBuilder("<html>");
     buf.append(Messages.getString("DicomQrView.tips_wildcard"));
@@ -463,59 +435,35 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     buf.append(Messages.getString("DicomQrView.tips_question"));
     buf.append("</html>");
     tfSearch.setToolTipText(buf.toString());
-    JMVUtils.setPreferredWidth(tfSearch, 370, 100);
-    panel4.add(tfSearch);
-    sPanel.add(panel4);
-
+    tfSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    sPanel.add(
+        GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, comboTags, tfSearch));
     return sPanel;
   }
 
   private DatePicker buildDatePicker() {
-    DatePicker d = new DatePicker();
-    d.getSettings().setFontInvalidDate(FontTools.getFont11());
-    d.getSettings().setFontValidDate(FontTools.getFont11());
-    d.getSettings().setFontVetoedDate(FontTools.getFont11());
-    d.getSettings().setColor(DateArea.TextFieldBackgroundValidDate, tfSearch.getBackground());
-    d.getSettings().setColor(DateArea.DatePickerTextValidDate, tfSearch.getForeground());
-    d.getSettings()
-        .setColor(DateArea.TextFieldBackgroundDisallowedEmptyDate, tfSearch.getBackground());
+    DatePicker picker = new DatePicker();
+    DatePickerSettings settings = picker.getSettings();
+    CalendarUtil.adaptCalendarColors(settings);
 
-    d.getSettings().setColor(DateArea.TextFieldBackgroundInvalidDate, tfSearch.getBackground());
-    // d.getSettings().setColor(DateArea.DatePickerTextInvalidDate, tfSearch.getForeground());
+    JTextField textField = picker.getComponentDateTextField();
+    settings.setFormatForDatesCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    settings.setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter(FormatStyle.SHORT));
+    GuiUtils.setPreferredWidth(textField, 145);
+    picker.addDateChangeListener(dateChangeListener);
 
-    d.getSettings().setColor(DateArea.TextFieldBackgroundVetoedDate, tfSearch.getBackground());
-    // d.getSettings().setColor(DateArea.DatePickerTextVetoedDate, tfSearch.getForeground());
-
-    Color btnBack = d.getComponentToggleCalendarButton().getBackground();
-    d.getSettings().setColor(DateArea.BackgroundOverallCalendarPanel, tfSearch.getBackground());
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
-    d.getSettings().setColor(DateArea.CalendarBackgroundNormalDates, btnBack);
-
-    // d.getSettings().setColor(DateArea.CalendarDefaultBackgroundHighlightedDates,
-    // tfSearch.getForeground());
-    // d.getSettings().setColor(DateArea.CalendarDefaultTextHighlightedDates, Color.ORANGE);
-    // d.getSettings().setColor(DateArea.CalendarBackgroundVetoedDates, Color.MAGENTA);
-    d.getSettings().setColor(DateArea.BackgroundClearLabel, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearNavigationButtons, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundTodayLabel, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundTopLeftLabelAboveWeekNumbers, btnBack);
-    d.getSettings().setColor(DateArea.BackgroundMonthAndYearMenuLabels, btnBack);
-
-    d.getSettings().setColor(DateArea.CalendarTextNormalDates, tfSearch.getForeground());
-    d.getSettings().setColor(DateArea.CalendarTextWeekdays, tfSearch.getForeground());
-    d.getSettings().setColor(DateArea.CalendarTextWeekNumbers, tfSearch.getForeground());
-
-    // d.getSettings().setColorBackgroundWeekdayLabels(Color.ORANGE, true);
-    // d.getSettings().setColorBackgroundWeekNumberLabels(Color.ORANGE, true);
-
-    // d.getSettings().setVisibleNextMonthButton(false);
-    // d.getSettings().setVisibleNextYearButton(false);
-    d.getSettings().setFormatForDatesCommonEra(LocalUtil.getDateFormatter());
-    d.getSettings().setFormatForDatesBeforeCommonEra(LocalUtil.getDateFormatter());
-    // JMVUtils.setPreferredWidth(d.getComponentDateTextField(), 95);
-    JMVUtils.setPreferredWidth(d.getComponentToggleCalendarButton(), 35);
-    d.addDateChangeListener(dateChangeListener);
-    return d;
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
+    JButton calendarButton = picker.getComponentToggleCalendarButton();
+    calendarButton.setMargin(null);
+    calendarButton.setText(null);
+    calendarButton.setIcon(ResourceUtil.getIcon(OtherIcon.CALENDAR));
+    calendarButton.setFocusPainted(true);
+    calendarButton.setFocusable(true);
+    calendarButton.revalidate();
+    Arrays.stream(calendarButton.getMouseListeners()).forEach(calendarButton::removeMouseListener);
+    calendarButton.addActionListener(e -> picker.openPopup());
+    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, calendarButton);
+    return picker;
   }
 
   private void clearItems() {
@@ -555,8 +503,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     AtomicBoolean running = new AtomicBoolean(true);
 
     AbstractDicomNode selectedItem = (AbstractDicomNode) comboDestinationNode.getSelectedItem();
-    if (selectedItem instanceof DefaultDicomNode) {
-      final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
+    if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode = (DefaultDicomNode) comboCallingNode.getSelectedItem();
 
       // see http://dicom.nema.org/medical/dicom/current/output/html/part04.html#sect_C.6
@@ -612,15 +559,14 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                         } else {
                           LOGGER.error("Dicom cfind error: {}", state.getMessage());
                           JOptionPane.showMessageDialog(
-                              basePanel, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+                              this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE);
                         }
                       });
             }
           };
       process = new QueryProcess(runnable, "DICOM C-FIND", running); // $NON-NLS-1$
       process.start();
-    } else if (selectedItem instanceof DicomWebNode) {
-      final DicomWebNode node = (DicomWebNode) selectedItem;
+    } else if (selectedItem instanceof final DicomWebNode node) {
       AuthMethod auth = AuthenticationPersistence.getAuthMethod(node.getAuthMethodUid());
       if (!OAuth2ServiceFactory.noAuth.equals(auth)) {
         String oldCode = auth.getCode();
@@ -837,14 +783,13 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   @Override
-  public void resetoDefaultValues() {}
+  public void resetToDefaultValues() {}
 
   private List<String> getCheckedStudies(TreePath[] paths) {
     List<String> studies = new ArrayList<>();
     for (TreePath treePath : paths) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode) treePath.getLastPathComponent();
-      if (node.getUserObject() instanceof MediaSeriesGroup) {
-        MediaSeriesGroup study = (MediaSeriesGroup) node.getUserObject();
+      if (node.getUserObject() instanceof MediaSeriesGroup study) {
         String uid = TagD.getTagValue(study, Tag.StudyInstanceUID, String.class);
         if (StringUtil.hasText(uid)) {
           studies.add(uid);
@@ -889,10 +834,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   public DicomListener getDicomListener() {
     return dicomListener;
-  }
-
-  public JPanel getBasePanel() {
-    return basePanel;
   }
 
   public DicomModel getDicomModel() {

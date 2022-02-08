@@ -9,42 +9,37 @@
  */
 package org.weasis.base.explorer;
 
+import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListCellRenderer;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
-import org.weasis.base.explorer.list.ThumbnailList;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.LangUtil;
 
-@SuppressWarnings("serial")
 public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     implements ListCellRenderer<E> {
 
-  public static final Dimension ICON_DIM = new Dimension(150, 150);
-  public static final Icon ICON_CHECKED =
-      new ImageIcon(ThumbnailRenderer.class.getResource("/icon/24x24/tick.png"));
+  protected static final Dimension ICON_DIM = new Dimension(150, 150);
 
   private final JLabel iconLabel = new JLabel("", SwingConstants.CENTER);
   private final JLabel iconCheckedLabel = new JLabel((Icon) null);
   private final JLabel descriptionLabel = new JLabel("", SwingConstants.CENTER);
-  private static final Color back = new Color(242, 242, 242);
 
   public ThumbnailRenderer() {
     // Cannot pass a boxLayout directly to super because it has a reference
@@ -52,51 +47,54 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     JPanel panel = new JPanel();
     panel.setLayout(new OverlayLayout(panel));
-    panel.setPreferredSize(ICON_DIM);
-    panel.setMaximumSize(ICON_DIM);
+    Dimension dim = GuiUtils.getDimension(ICON_DIM.width, ICON_DIM.height);
+    panel.setPreferredSize(dim);
+    panel.setMaximumSize(dim);
 
-    iconCheckedLabel.setPreferredSize(ICON_DIM);
-    iconCheckedLabel.setMaximumSize(ICON_DIM);
+    iconCheckedLabel.setPreferredSize(dim);
+    iconCheckedLabel.setMaximumSize(dim);
     panel.add(iconCheckedLabel);
 
-    iconLabel.setPreferredSize(ICON_DIM);
-    iconLabel.setMaximumSize(ICON_DIM);
-    iconLabel.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
+    iconLabel.setPreferredSize(dim);
+    iconLabel.setMaximumSize(dim);
+    iconLabel.setBorder(GuiUtils.getEmptyBorder(2));
     panel.add(iconLabel);
     this.add(panel);
 
-    descriptionLabel.setFont(FontTools.getFont10());
-    Dimension dim = new Dimension(ICON_DIM.width, descriptionLabel.getFont().getSize() + 4);
-    descriptionLabel.setPreferredSize(dim);
-    descriptionLabel.setMaximumSize(dim);
+    descriptionLabel.setFont(FontTools.getMiniFont());
+    Dimension dimLabel =
+        new Dimension(
+            dim.width, descriptionLabel.getFontMetrics(descriptionLabel.getFont()).getHeight());
+    descriptionLabel.setPreferredSize(dimLabel);
+    descriptionLabel.setMaximumSize(dimLabel);
 
     this.add(descriptionLabel);
 
-    setBorder(new EmptyBorder(5, 5, 5, 5));
+    setBorder(GuiUtils.getEmptyBorder(5));
   }
 
   @Override
   public Component getListCellRendererComponent(
       JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     ThumbnailIcon icon = null;
-    if (value instanceof ImageElement) {
-      if (list instanceof AbstractThumbnailList) {
-        icon =
-            ((AbstractThumbnailList) list)
-                .getThumbCache()
-                .getThumbnailFor((ImageElement) value, (ThumbnailList<E>) list, index);
+    if (value instanceof ImageElement imageElement) {
+      if (list instanceof AbstractThumbnailList thumbnailList) {
+        icon = thumbnailList.getThumbCache().getThumbnailFor(imageElement, thumbnailList, index);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {
-        iconCheckedLabel.setIcon(ICON_CHECKED);
+        iconCheckedLabel.setIcon(ResourceUtil.getIcon(OtherIcon.TICK_ON));
       } else {
         iconCheckedLabel.setIcon(null);
       }
     }
     if (value != null) {
       this.iconLabel.setIcon(icon == null ? JIUtility.getSystemIcon(value) : icon);
+      Color foreground = FlatUIUtils.getUIColor("List.foreground", Color.DARK_GRAY);
+      this.descriptionLabel.setForeground(isSelected ? list.getSelectionForeground() : foreground);
       this.descriptionLabel.setText(value.getName());
     }
-    setBackground(isSelected ? list.getSelectionBackground() : back);
+    Color background = FlatUIUtils.getUIColor("List.background", Color.DARK_GRAY);
+    setBackground(isSelected ? list.getSelectionBackground() : background);
     return this;
   }
 

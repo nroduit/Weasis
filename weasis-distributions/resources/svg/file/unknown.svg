@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g fill-rule="evenodd">
+  <polygon transform="matrix(-1,0,0,1,16,0)" points="7 5 7 1 3 5" fill="#9aa7b0" fill-opacity=".8"/>
+  <path d="m11 15h-8v-14h5v5h5c-0.0083 1.85 0.00706-1.4833 3e-4 6.4e-5 -2.1986 0.012312-4 1.7984-4 3.9999 0 0.23155 0.04249 0.56676 0.12747 1.0056h1.8722z" fill="#9aa7b0" fill-opacity=".8"/>
+  <path d="m12.25 16h1.5v-1.5h-1.5v1.5zm0.75-9c-1.6575 0-3 1.3425-3 3h1.5c0-0.825 0.675-1.5 1.5-1.5s1.5 0.675 1.5 1.5c0 1.5-2.25 1.3125-2.25 3.75h1.5c0-1.6875 2.25-1.875 2.25-3.75 0-1.6575-1.3425-3-3-3z" fill="#40B6E0"/>
+ </g>
+</svg>

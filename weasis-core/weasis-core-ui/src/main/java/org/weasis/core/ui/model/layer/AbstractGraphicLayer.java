@@ -19,7 +19,6 @@ import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 
 @XmlAccessorType(XmlAccessType.NONE)
 public abstract class AbstractGraphicLayer extends DefaultUUID implements GraphicLayer {
-  private static final long serialVersionUID = 845033167886327915L;
 
   private String name;
   private LayerType type;

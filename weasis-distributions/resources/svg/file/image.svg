@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+ <g fill-rule="evenodd">
+  <polygon transform="matrix(-1,0,0,1,16,0)" points="3 5 7 5 7 1" fill="#9aa7b0" fill-opacity=".8"/>
+  <path d="m8 1v5h5v9h-10v-14zm-4 13h8v-7h-8z" fill="#9aa7b0" fill-opacity=".8"/>
+  <g transform="translate(5,8)" fill-opacity=".7">
+   <path d="m6 5h-6v-1.6667s1.7688-1.5797 2.5714-0.83333c0.99133 0.81116 2.1663 1.3823 3.4286 1.6667z" fill="#62b543"/>
+   <path d="m0 0h6v3.3333c-1.2623-0.28427-2.4373-0.85544-3.4286-1.6667-0.80273-0.74626-2.5714 0.83333-2.5714 0.83333zm4.5 2c0.27614 0 0.5-0.22386 0.5-0.5s-0.22386-0.5-0.5-0.5-0.5 0.22386-0.5 0.5 0.22386 0.5 0.5 0.5z" fill="#40b6e0"/>
+  </g>
+ </g>
+</svg>

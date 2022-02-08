@@ -9,29 +9,21 @@
  */
 package org.weasis.dicom.codec;
 
-import java.awt.Color;
-import java.awt.color.ICC_ColorSpace;
-import java.awt.color.ICC_Profile;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.img.data.PrDicomObject;
+import org.dcm4che3.img.util.DicomObjectUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Tagable;
-import org.weasis.dicom.codec.display.PresetWindowLevel;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class PresentationStateReader implements Tagable {
-
-  public static final String TAG_PR_READER = "pr.reader";
 
   public static final int PRIVATE_CREATOR_TAG = 0x71070070;
   public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;
@@ -40,21 +32,19 @@ public class PresentationStateReader implements Tagable {
   public static final String TAG_PR_ROTATION = "pr.rotation";
   public static final String TAG_PR_FLIP = "pr.flip";
 
-  private static final ICC_ColorSpace LAB =
-      new ICC_ColorSpace(ICC_Profile.getInstance(ICC_ColorSpace.CS_sRGB));
-
   private final PRSpecialElement prSpecialElement;
-  private final Attributes dcmobj;
+  private final Attributes dicomObject;
   private final HashMap<TagW, Object> tags = new HashMap<>();
+  private final PrDicomObject prDicomObject;
 
   public PresentationStateReader(PRSpecialElement dicom) {
     Objects.requireNonNull(dicom, "Dicom parameter cannot be null");
     this.prSpecialElement = dicom;
-    DicomMediaIO dicomImageLoader = dicom.getMediaReader();
-    this.dcmobj = dicomImageLoader.getDicomObject();
+    this.prDicomObject = dicom.getPrDicomObject();
+    this.dicomObject = prDicomObject.getDicomObject();
   }
 
-  public PRSpecialElement getDicom() {
+  public PRSpecialElement getPrSpecialElement() {
     return prSpecialElement;
   }
 
@@ -63,8 +53,12 @@ public class PresentationStateReader implements Tagable {
     return prSpecialElement.toString();
   }
 
-  public Attributes getDcmobj() {
-    return dcmobj;
+  public Attributes getDicomObject() {
+    return dicomObject;
+  }
+
+  public PrDicomObject getPrDicomObject() {
+    return prDicomObject;
   }
 
   @Override
@@ -94,73 +88,58 @@ public class PresentationStateReader implements Tagable {
     return tags.entrySet().iterator();
   }
 
-  private static Predicate<Attributes> isSequenceApplicable(DicomImageElement img) {
-    return attributes -> isModuleAppicable(attributes, img);
+  private static Predicate<Attributes> isSequenceApplicable(
+      DicomImageElement img, boolean sequenceRequired) {
+    return attributes -> isModuleAppicable(attributes, img, sequenceRequired);
   }
 
-  public static boolean isModuleAppicable(Attributes[] refSeriesSeqParent, DicomImageElement img) {
-    if (refSeriesSeqParent != null) {
-      for (Attributes refImgSeqParent : refSeriesSeqParent) {
+  public static boolean isImageApplicable(
+      PRSpecialElement prSpecialElement, DicomImageElement img) {
+    if (prSpecialElement != null && img != null) {
+      PrDicomObject prDcm = prSpecialElement.getPrDicomObject();
+      if (prDcm != null) {
         String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
-        if (seriesUID.equals(refImgSeqParent.getString(Tag.SeriesInstanceUID))) {
-          return isModuleAppicable(refImgSeqParent, img);
+        String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+        int dicomFrame = 1;
+        if (img.getKey() instanceof Integer) {
+          dicomFrame = (Integer) img.getKey() + 1;
         }
+        return prDcm.isImageFrameApplicable(seriesUID, imgSop, dicomFrame);
       }
     }
     return false;
   }
 
-  public static boolean isModuleAppicable(Attributes refImgSeqParent, DicomImageElement img) {
+  public static boolean isModuleAppicable(
+      Attributes refImgSeqParent, DicomImageElement img, boolean sequenceRequired) {
     Objects.requireNonNull(refImgSeqParent);
     Objects.requireNonNull(img);
 
-    Sequence sops = refImgSeqParent.getSequence(Tag.ReferencedImageSequence);
-    if (sops == null || sops.isEmpty()) {
-      return true;
-    }
     String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
-    if (imgSop != null) {
-      for (Attributes sop : sops) {
-        if (imgSop.equals(sop.getString(Tag.ReferencedSOPInstanceUID))) {
-          int[] frames =
-              DicomMediaUtils.getIntAyrrayFromDicomElement(sop, Tag.ReferencedFrameNumber, null);
-          if (frames == null || frames.length == 0) {
-            return true;
-          }
-          int dicomFrame = 1;
-          if (img.getKey() instanceof Integer) {
-            dicomFrame = (Integer) img.getKey() + 1;
-          }
-          for (int f : frames) {
-            if (f == dicomFrame) {
-              return true;
-            }
-          }
-          // if the frame has been excluded
-          return false;
-        }
-      }
+    int dicomFrame = 1;
+    if (img.getKey() instanceof Integer) {
+      dicomFrame = (Integer) img.getKey() + 1;
     }
-    return false;
-  }
-
-  public List<PresetWindowLevel> getPresetCollection(DicomImageElement img) {
-    return Optional.ofNullable(
-            PresetWindowLevel.getPresetCollection(img, prSpecialElement, true, "[PR]")) // NON-NLS
-        .orElseGet(ArrayList::new);
+    return DicomObjectUtil.isImageFrameApplicableToReferencedImageSequence(
+        DicomObjectUtil.getSequence(refImgSeqParent, Tag.ReferencedImageSequence),
+        Tag.ReferencedFrameNumber,
+        imgSop,
+        dicomFrame,
+        sequenceRequired);
   }
 
   public void applySpatialTransformationModule(Map<String, Object> actionsInView) {
-    if (dcmobj != null) {
+    if (dicomObject != null) {
       // Rotation and then Flip
-      actionsInView.put(TAG_PR_ROTATION, dcmobj.getInt(Tag.ImageRotation, 0));
+      actionsInView.put(TAG_PR_ROTATION, dicomObject.getInt(Tag.ImageRotation, 0));
       actionsInView.put(
-          TAG_PR_FLIP, "Y".equalsIgnoreCase(dcmobj.getString(Tag.ImageHorizontalFlip))); // NON-NLS
+          TAG_PR_FLIP,
+          "Y".equalsIgnoreCase(dicomObject.getString(Tag.ImageHorizontalFlip))); // NON-NLS
     }
   }
 
   public void readDisplayArea(DicomImageElement img) {
-    if (dcmobj != null) {
+    if (dicomObject != null) {
       TagW[] tagList =
           TagD.getTagFromIDs(
               Tag.PresentationPixelSpacing,
@@ -171,42 +150,8 @@ public class PresentationStateReader implements Tagable {
               Tag.DisplayedAreaBottomRightHandCorner,
               Tag.PresentationPixelMagnificationRatio);
       TagSeq.MacroSeqData data =
-          new TagSeq.MacroSeqData(dcmobj, tagList, isSequenceApplicable(img));
+          new TagSeq.MacroSeqData(dicomObject, tagList, isSequenceApplicable(img, false));
       TagD.get(Tag.DisplayedAreaSelectionSequence).readValue(data, this);
     }
-  }
-
-  public static Color getRGBColor(int pGray, int[] rgbColour) {
-    int r, g, b;
-    if (rgbColour != null) {
-      r = rgbColour[0];
-      g = rgbColour[1];
-      b = rgbColour[2];
-      if (r > 255) {
-        r >>= 8;
-      }
-      if (g > 255) {
-        g >>= 8;
-      }
-      if (b > 255) {
-        b >>= 8;
-      }
-    } else {
-      r = g = b = pGray > 255 ? pGray >> 8 : pGray;
-    }
-    r &= 0xFF;
-    g &= 0xFF;
-    b &= 0xFF;
-    int conv = (r << 16) | (g << 8) | b | 0x1000000;
-    return new Color(conv);
-  }
-
-  public static float[] colorToLAB(Color color) {
-    float[] rgb = new float[3];
-    rgb[0] = color.getRed() / 255.f;
-    rgb[1] = color.getGreen() / 255.f;
-    rgb[2] = color.getBlue() / 255.f;
-
-    return LAB.fromRGB(rgb);
   }
 }

@@ -38,7 +38,6 @@ import org.weasis.opencv.op.ImageConversion;
  * @author Nicolas Roduit
  */
 public class Dose extends HashMap<Integer, Dvh> {
-  private static final long serialVersionUID = -1659662753587452881L;
 
   private String sopInstanceUid;
   private double[] imagePositionPatient;

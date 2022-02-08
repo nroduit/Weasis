@@ -41,7 +41,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
@@ -130,10 +130,10 @@ public class View2d extends DefaultView2d<ImageElement> {
       if (w != 0 && h != 0) {
         Rectangle bound = lens.getBounds();
         if (oldSize.width != 0 && oldSize.height != 0) {
-          int centerx = bound.width / 2;
-          int centery = bound.height / 2;
-          bound.x = (bound.x + centerx) * w / oldSize.width - centerx;
-          bound.y = (bound.y + centery) * h / oldSize.height - centery;
+          int centerX = bound.width / 2;
+          int centerY = bound.height / 2;
+          bound.x = (bound.x + centerX) * w / oldSize.width - centerX;
+          bound.y = (bound.y + centerY) * h / oldSize.height - centerY;
           lens.setLocation(bound.x, bound.y);
         }
         oldSize.width = w;
@@ -195,8 +195,8 @@ public class View2d extends DefaultView2d<ImageElement> {
     adapter.setButtonMaskEx(adapter.getButtonMaskEx() | buttonMask);
     if (adapter == graphicMouseHandler) {
       this.addKeyListener(drawingsKeyListeners);
-    } else if (adapter instanceof PannerListener) {
-      ((PannerListener) adapter).reset();
+    } else if (adapter instanceof PannerListener pannerListener) {
+      pannerListener.reset();
       this.addKeyListener((PannerListener) adapter);
     }
 
@@ -228,7 +228,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     }
 
     Optional<ActionW> actionKey = eventManager.getActionKey(command);
-    if (!actionKey.isPresent()) {
+    if (actionKey.isEmpty()) {
       return null;
     }
 
@@ -251,8 +251,8 @@ public class View2d extends DefaultView2d<ImageElement> {
 
   protected MouseActionAdapter getAction(ActionW action) {
     ActionState a = eventManager.getAction(action);
-    if (a instanceof MouseActionAdapter) {
-      return (MouseActionAdapter) a;
+    if (a instanceof MouseActionAdapter actionAdapter) {
+      return actionAdapter;
     }
     return null;
   }
@@ -275,19 +275,17 @@ public class View2d extends DefaultView2d<ImageElement> {
   protected JPopupMenu buildGraphicContextMenu(final MouseEvent evt, final List<Graphic> selected) {
     if (selected != null) {
       final JPopupMenu popupMenu = new JPopupMenu();
-      TitleMenuItem itemTitle =
-          new TitleMenuItem(Messages.getString("View2d.selection"), popupMenu.getInsets());
+      TitleMenuItem itemTitle = new TitleMenuItem(Messages.getString("View2d.selection"));
       popupMenu.add(itemTitle);
       popupMenu.addSeparator();
       boolean graphicComplete = true;
       if (selected.size() == 1) {
         final Graphic graph = selected.get(0);
-        if (graph instanceof DragGraphic) {
-          final DragGraphic absgraph = (DragGraphic) graph;
-          if (!absgraph.isGraphicComplete()) {
+        if (graph instanceof final DragGraphic dragGraphic) {
+          if (!dragGraphic.isGraphicComplete()) {
             graphicComplete = false;
           }
-          if (absgraph.getVariablePointsNumber()) {
+          if (dragGraphic.getVariablePointsNumber()) {
             if (graphicComplete) {
               /*
                * Convert mouse event point to real image coordinate point (without geometric
@@ -308,16 +306,16 @@ public class View2d extends DefaultView2d<ImageElement> {
                       1);
               mouseEvt.setSource(View2d.this);
               mouseEvt.setImageCoordinates(getImageCoordinatesFromMouse(evt.getX(), evt.getY()));
-              final int ptIndex = absgraph.getHandlePointIndex(mouseEvt);
+              final int ptIndex = dragGraphic.getHandlePointIndex(mouseEvt);
               if (ptIndex >= 0) {
                 JMenuItem menuItem = new JMenuItem(Messages.getString("View2d.rem_point"));
-                menuItem.addActionListener(e -> absgraph.removeHandlePoint(ptIndex, mouseEvt));
+                menuItem.addActionListener(e -> dragGraphic.removeHandlePoint(ptIndex, mouseEvt));
                 popupMenu.add(menuItem);
 
                 menuItem = new JMenuItem(Messages.getString("View2d.add_point"));
                 menuItem.addActionListener(
                     e -> {
-                      absgraph.forceToAddPoints(ptIndex);
+                      dragGraphic.forceToAddPoints(ptIndex);
                       MouseEventDouble evt2 =
                           new MouseEventDouble(
                               View2d.this,
@@ -337,7 +335,7 @@ public class View2d extends DefaultView2d<ImageElement> {
                 popupMenu.add(new JSeparator());
               }
             } else if (graphicMouseHandler.getDragSequence() != null
-                && Objects.equals(absgraph.getPtsNumber(), Graphic.UNDEFINED)) {
+                && Objects.equals(dragGraphic.getPtsNumber(), Graphic.UNDEFINED)) {
               final JMenuItem item2 = new JMenuItem(Messages.getString("View2d.stop_draw"));
               item2.addActionListener(
                   e -> {
@@ -374,8 +372,8 @@ public class View2d extends DefaultView2d<ImageElement> {
 
       final ArrayList<DragGraphic> list = new ArrayList<>();
       for (Graphic graphic : selected) {
-        if (graphic instanceof DragGraphic) {
-          list.add((DragGraphic) graphic);
+        if (graphic instanceof DragGraphic dragGraphic) {
+          list.add(dragGraphic);
         }
       }
 
@@ -389,14 +387,14 @@ public class View2d extends DefaultView2d<ImageElement> {
         popupMenu.add(item);
         popupMenu.add(new JSeparator());
 
-        if (graphicComplete && graph instanceof LineGraphic) {
+        if (graphicComplete && graph instanceof LineGraphic lineGraphic) {
 
           final JMenuItem calibMenu = new JMenuItem(Messages.getString("View2d.calib"));
           calibMenu.addActionListener(
               e -> {
                 String title = Messages.getString("View2d.man_calib");
                 CalibrationView calibrationDialog =
-                    new CalibrationView((LineGraphic) graph, View2d.this, false);
+                    new CalibrationView(lineGraphic, View2d.this, false);
                 ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(View2d.this);
                 int res =
                     JOptionPane.showConfirmDialog(
@@ -434,8 +432,7 @@ public class View2d extends DefaultView2d<ImageElement> {
   protected JPopupMenu buildContexMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = new JPopupMenu();
     TitleMenuItem itemTitle =
-        new TitleMenuItem(
-            Messages.getString("View2d.left_mouse") + StringUtil.COLON, popupMenu.getInsets());
+        new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
     popupMenu.add(itemTitle);
     popupMenu.setLabel(MouseActions.T_LEFT);
     String action = eventManager.getMouseActions().getLeft();
@@ -448,8 +445,7 @@ public class View2d extends DefaultView2d<ImageElement> {
       if (toolBar != null) {
         ActionListener leftButtonAction =
             e -> {
-              if (e.getSource() instanceof JRadioButtonMenuItem) {
-                JRadioButtonMenuItem item = (JRadioButtonMenuItem) e.getSource();
+              if (e.getSource() instanceof JRadioButtonMenuItem item) {
                 toolBar.changeButtonState(MouseActions.T_LEFT, item.getActionCommand());
               }
             };
@@ -459,7 +455,7 @@ public class View2d extends DefaultView2d<ImageElement> {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
-
+              GuiUtils.applySelectedIconEffect(radio);
               radio.setActionCommand(b.cmd());
               radio.setAccelerator(KeyStroke.getKeyStroke(b.getKeyCode(), b.getModifier()));
               // Trigger the selected mouse action
@@ -492,24 +488,24 @@ public class View2d extends DefaultView2d<ImageElement> {
 
     if (eventManager instanceof EventManager) {
       EventManager manager = (EventManager) eventManager;
-      JMVUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
-      JMVUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));
 
       if (count < popupMenu.getComponentCount()) {
         popupMenu.add(new JSeparator());
         count = popupMenu.getComponentCount();
       }
 
-      JMVUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
-      JMVUtils.addItemToMenu(
+      GuiUtils.addItemToMenu(popupMenu, manager.getZoomMenu("weasis.contextmenu.zoom"));
+      GuiUtils.addItemToMenu(
           popupMenu, manager.getOrientationMenu("weasis.contextmenu.orientation"));
 
       if (count < popupMenu.getComponentCount()) {
         popupMenu.add(new JSeparator());
       }
 
-      JMVUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
+      GuiUtils.addItemToMenu(popupMenu, manager.getResetMenu("weasis.contextmenu.reset"));
     }
 
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.contextmenu.close", true)) {
@@ -607,18 +603,18 @@ public class View2d extends DefaultView2d<ImageElement> {
       try {
         seq = (Series) transferable.getTransferData(Series.sequenceDataFlavor);
         // Do not add series without medias. BUG WEA-100
-        if (seq == null || seq.size(null) == 0) {
+        if (seq.size(null) == 0) {
           return false;
         }
         DataExplorerModel model = (DataExplorerModel) seq.getTagValue(TagW.ExplorerModel);
-        if (seq.getMedia(0, null, null) instanceof ImageElement && model instanceof TreeModel) {
-          TreeModel treeModel = (TreeModel) model;
+        if (seq.getMedia(0, null, null) instanceof ImageElement
+            && model instanceof TreeModel treeModel) {
 
           MediaSeriesGroup p1 = treeModel.getParent(seq, model.getTreeModelNodeForNewPlugin());
           ViewerPlugin openPlugin = null;
           if (p1 != null) {
             if (selPlugin instanceof View2dContainer
-                && ((View2dContainer) selPlugin).isContainingView(View2d.this)
+                && selPlugin.isContainingView(View2d.this)
                 && p1.equals(selPlugin.getGroupID())) {
             } else {
               synchronized (UIManager.VIEWER_PLUGINS) {

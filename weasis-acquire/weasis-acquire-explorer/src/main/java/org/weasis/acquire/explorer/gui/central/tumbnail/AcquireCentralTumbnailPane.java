@@ -37,7 +37,6 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.UriListFlavor;
 
 public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbnailListPane<E> {
-  private static final long serialVersionUID = 5728507793866004078L;
 
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralTumbnailPane.class);
 
@@ -80,7 +79,6 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
   }
 
   private class SequenceHandler extends TransferHandler {
-    private static final long serialVersionUID = -9199885304640621515L;
 
     public SequenceHandler() {
       super("series"); // NON-NLS

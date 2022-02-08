@@ -21,13 +21,12 @@ import org.weasis.acquire.explorer.gui.dialog.AcquireImportDialog;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
-import org.weasis.core.api.gui.util.JMVUtils;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.ui.util.DefaultAction;
 
-@SuppressWarnings("serial")
 public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
   private AcquireThumbnailListPane<E> mainPanel;
@@ -62,7 +61,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
                   Messages.getString("AcquireThumbnailList.import_sel"),
                   event -> {
                     AcquireImportDialog dialog = new AcquireImportDialog(importPanel, medias);
-                    JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+                    GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
                   })));
 
       return popupMenu;
@@ -77,7 +76,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
       List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
       if (!medias.isEmpty() && !importPanel.isLoading()) {
         AcquireImportDialog dialog = new AcquireImportDialog(importPanel, medias);
-        JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+        GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
       }
     }
   }
@@ -99,7 +98,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
             AcquireManager.toImageElement(mainPanel.getSelectedValuesList());
         if (!selected.isEmpty() && !importPanel.isLoading()) {
           AcquireImportDialog dialog = new AcquireImportDialog(importPanel, selected);
-          JMVUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
+          GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
         }
         e.consume();
         break;

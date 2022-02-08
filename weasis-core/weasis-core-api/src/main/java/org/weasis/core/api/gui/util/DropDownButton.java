@@ -9,37 +9,34 @@
  */
 package org.weasis.core.api.gui.util;
 
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.Icon;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 
-@SuppressWarnings("serial")
 public abstract class DropDownButton extends JButton implements PopupMenuListener, ActionListener {
 
   private final String type;
   private final GroupPopup menuModel;
 
-  public DropDownButton(String type, Icon icon, GroupPopup model) {
+  protected DropDownButton(String type, Icon icon) {
+    this(type, icon, null);
+  }
+
+  protected DropDownButton(String type, Icon icon, GroupPopup model) {
     super(icon);
     this.menuModel = model;
     this.type = type;
     init();
   }
 
-  public DropDownButton(String type, Icon icon) {
-    this(type, icon, (GroupPopup) null);
-  }
-
-  public DropDownButton(String type, String text, JComponent parent) {
-    super(new DropDownLabel(text, parent));
+  protected DropDownButton(String type, String text, Icon icon, GroupPopup model) {
+    super(text, icon);
     this.type = type;
-    this.menuModel = null;
+    this.menuModel = model;
     init();
   }
 
@@ -49,19 +46,6 @@ public abstract class DropDownButton extends JButton implements PopupMenuListene
 
   public GroupPopup getMenuModel() {
     return menuModel;
-  }
-
-  @Override
-  public void setLabel(String label) {
-    Icon icon = this.getIcon();
-    if (icon instanceof DropDownLabel) {
-      DropDownLabel iconLabel = (DropDownLabel) icon;
-      iconLabel.setLabel(label, this);
-      Insets insets = getInsets();
-      iconLabel.paintIcon(this, getGraphics(), insets.left, insets.top);
-      revalidate();
-      repaint();
-    }
   }
 
   @Override

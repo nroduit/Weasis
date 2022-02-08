@@ -17,7 +17,7 @@
 
   <modules>
     <module>weasis-base-parent</module>
-    <module>weasis-base-ui-mr</module>
+    <module>weasis-base-ui</module>
     <module>weasis-base-explorer</module>
     <module>weasis-base-viewer2d</module>
   </modules>

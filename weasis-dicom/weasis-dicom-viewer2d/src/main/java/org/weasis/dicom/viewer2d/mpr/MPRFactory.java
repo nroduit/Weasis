@@ -12,11 +12,12 @@ package org.weasis.dicom.viewer2d.mpr;
 import java.awt.Component;
 import java.util.Map;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.MediaElement;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -30,12 +31,10 @@ import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 public class MPRFactory implements SeriesViewerFactory {
 
   public static final String NAME = Messages.getString("MPRFactory.title");
-  public static final Icon ICON =
-      new ImageIcon(MPRFactory.class.getResource("/icon/16x16/mpr.png"));
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return ResourceUtil.getIcon(OtherIcon.VIEW_3D);
   }
 
   @Override
@@ -54,41 +53,34 @@ public class MPRFactory implements SeriesViewerFactory {
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel) {
-        model = (GridBagLayoutModel) obj;
+      if (obj instanceof GridBagLayoutModel layoutModel) {
+        model = layoutModel;
       }
       // Set UID
       Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String) {
-        uid = (String) val;
+      if (val instanceof String str) {
+        uid = str;
       }
     }
 
     MPRContainer instance = new MPRContainer(model, uid);
     if (properties != null) {
       Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DicomModel) {
+      if (obj instanceof DicomModel m) {
         // Register the PropertyChangeListener
-        DicomModel m = (DicomModel) obj;
         m.addPropertyChangeListener(instance);
       }
     }
     int index = 0;
     for (Component val : model.getConstraints().values()) {
-      if (val instanceof MprView) {
-        SliceOrientation sliceOrientation;
-        switch (index) {
-          case 1:
-            sliceOrientation = SliceOrientation.CORONAL;
-            break;
-          case 2:
-            sliceOrientation = SliceOrientation.SAGITTAL;
-            break;
-          default:
-            sliceOrientation = SliceOrientation.AXIAL;
-            break;
-        }
-        ((MprView) val).setType(sliceOrientation);
+      if (val instanceof MprView mprView) {
+        SliceOrientation sliceOrientation =
+            switch (index) {
+              case 1 -> SliceOrientation.CORONAL;
+              case 2 -> SliceOrientation.SAGITTAL;
+              default -> SliceOrientation.AXIAL;
+            };
+        mprView.setType(sliceOrientation);
         index++;
       }
     }

@@ -20,7 +20,6 @@ import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
-  private static final long serialVersionUID = 7716040872158831560L;
 
   private static final DataFlavor[] flavors = {DataFlavor.imageFlavor};
   private SimpleOpManager disOp;

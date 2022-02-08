@@ -15,16 +15,17 @@ import javax.swing.UIManager;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.AcquireAction;
 import org.weasis.acquire.dockable.components.actions.AcquireAction.Cmd;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public class AcquireSubmitButtonsPanel extends JPanel {
-  private static final long serialVersionUID = 4890844708371941062L;
 
   private final AcquireActionButton cancelBtn;
   private final AcquireActionButton resetBtn;
 
   public AcquireSubmitButtonsPanel() {
     setBorder(UIManager.getBorder("TitledBorder.border"));
-    FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, 10, 10);
+    int size = GuiUtils.getScaleLength(10);
+    FlowLayout flowLayout = new FlowLayout(FlowLayout.CENTER, size, size);
     setLayout(flowLayout);
 
     cancelBtn =

@@ -15,6 +15,7 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
+import javax.swing.UIManager;
 import org.weasis.acquire.AcquireObject;
 import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.EditionTool;
@@ -26,11 +27,9 @@ import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationActio
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastAction;
 import org.weasis.acquire.dockable.components.actions.meta.MetadataAction;
 import org.weasis.acquire.dockable.components.actions.rectify.RectifyAction;
+import org.weasis.core.api.gui.util.GuiUtils;
 
 public class AcquireActionButtonsPanel extends JPanel {
-  private static final long serialVersionUID = -8768455915804608493L;
-
-  private static final int PADDING = 10;
 
   private final ButtonGroup btnGroup = new ButtonGroup();
 
@@ -38,8 +37,10 @@ public class AcquireActionButtonsPanel extends JPanel {
   private final EditionTool editionTool;
 
   public AcquireActionButtonsPanel(EditionTool editionTool) {
-    super(new GridLayout(2, 3, PADDING, PADDING));
-    setBorder(BorderFactory.createEmptyBorder(PADDING, PADDING, PADDING, PADDING));
+    super(new GridLayout(0, 2));
+    setBorder(
+        BorderFactory.createCompoundBorder(
+            GuiUtils.getEmptyBorder(5), UIManager.getBorder("TitledBorder.border")));
 
     this.editionTool = editionTool;
 

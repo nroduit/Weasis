@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="a" x1="8" x2="8" y1="2.062" y2="14.125" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#576a80" offset="0"/>
+   <stop stop-color="#2d3742" offset="1"/>
+  </linearGradient>
+  <linearGradient id="b" x1="8" x2="8" y1="3.94" y2="12.288" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#66b5ff" offset="0"/>
+   <stop stop-color="#69e3ff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="c" x1="8.007" x2="8.007" y1="8.833" y2="12.038" gradientUnits="userSpaceOnUse" xlink:href="#a">
+   <stop stop-color="#12b300" offset="0"/>
+   <stop stop-color="#579900" offset="1"/>
+  </linearGradient>
+ </defs>
+ <rect width="16" height="16" fill="#f0f" opacity="0"/>
+ <rect x="1" y="2" width="14" height="12" fill="url(#a)"/>
+ <rect x="2" y="3" width="12" height="10" fill="#fff" fill-opacity=".8"/>
+ <polygon points="13 11.141 13 4 3 4 3 8.453 5.535 6.967 8.402 10.242 10.58 8.915" fill="url(#b)"/>
+ <polygon points="3 12 13.014 12 10.42 10.834 8.345 11.422 5.365 8.833 3 9.66" fill="url(#c)"/>
+ <circle cx="9.5" cy="6.5" r="1.5" fill="#eda200"/>
+</svg>

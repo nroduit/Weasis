@@ -16,7 +16,6 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
 public class SerieButton extends JToggleButton
     implements ActionListener, SeriesDataListener, Comparable<SerieButton> {
-  private static final long serialVersionUID = -2587964095510462601L;
 
   private final SeriesGroup seriesGroup;
   private final AcquireTabPanel panel;

@@ -15,7 +15,7 @@
   <name>OpenCV - Mac amd64 [${project.artifactId}]</name>
   <version>${weasis.opencv.native.version}</version>
   <properties>
-    <native.configuration>libopencv_java.jnilib; processor=x86-64; osname=MacOSX
+    <native.configuration>libopencv_java.dylib; processor=x86-64; osname=MacOSX
     </native.configuration>
   </properties>
 
@@ -36,11 +36,11 @@
                   <groupId>org.weasis.thirdparty.org.opencv</groupId>
                   <artifactId>libopencv_java</artifactId>
                   <version>${weasis.opencv.native.version}</version>
-                  <type>jnilib</type>
+                  <type>dylib</type>
                   <classifier>macosx-x86-64</classifier>
                   <overWrite>true</overWrite>
                   <outputDirectory>target/classes</outputDirectory>
-                  <destFileName>libopencv_java.jnilib</destFileName>
+                  <destFileName>libopencv_java.dylib</destFileName>
                 </artifactItem>
               </artifactItems>
             </configuration>

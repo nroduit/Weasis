@@ -9,14 +9,9 @@
  */
 package org.weasis.dicom.viewer2d;
 
-import java.awt.Component;
-import java.awt.Graphics;
-import javax.swing.AbstractButton;
 import javax.swing.Icon;
-import javax.swing.ImageIcon;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
-import javax.swing.UIManager;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
@@ -24,6 +19,8 @@ import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -38,8 +35,8 @@ public class LutToolBar extends WtoolBar {
 
     GroupPopup menu = null;
     ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-    if (presetAction instanceof ComboItemListener) {
-      menu = ((ComboItemListener) presetAction).createGroupRadioMenu();
+    if (presetAction instanceof ComboItemListener<?> comboListener) {
+      menu = comboListener.createGroupRadioMenu();
     }
 
     final DropDownButton presetButton =
@@ -61,8 +58,8 @@ public class LutToolBar extends WtoolBar {
 
     GroupPopup menuLut = null;
     ActionState lutAction = eventManager.getAction(ActionW.LUT);
-    if (lutAction instanceof ComboItemListener) {
-      menuLut = ((ComboItemListener) lutAction).createGroupRadioMenu();
+    if (lutAction instanceof ComboItemListener<?> comboListener) {
+      menuLut = comboListener.createGroupRadioMenu();
     }
 
     final DropDownButton lutButton =
@@ -84,77 +81,20 @@ public class LutToolBar extends WtoolBar {
 
     final JToggleButton invertButton = new JToggleButton();
     invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
-    invertButton.setIcon(new ImageIcon(WtoolBar.class.getResource("/icon/32x32/invert.png")));
+    invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
     ActionState invlutAction = eventManager.getAction(ActionW.INVERT_LUT);
-    if (invlutAction instanceof ToggleButtonListener) {
-      ((ToggleButtonListener) invlutAction).registerActionState(invertButton);
+    if (invlutAction instanceof ToggleButtonListener comboListener) {
+      comboListener.registerActionState(invertButton);
     }
     add(invertButton);
   }
 
   private Icon buildLutIcon() {
-    final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/lut.png"));
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton) {
-              AbstractButton model = (AbstractButton) c;
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(ResourceUtil.getToolBarIcon(ActionIcon.LUT));
   }
 
   private Icon buildWLIcon() {
-    final Icon mouseIcon = new ImageIcon(WtoolBar.class.getResource("/icon/32x32/winLevel.png"));
-
-    return new DropButtonIcon(
-        new Icon() {
-
-          @Override
-          public void paintIcon(Component c, Graphics g, int x, int y) {
-            if (c instanceof AbstractButton) {
-              AbstractButton model = (AbstractButton) c;
-              Icon icon = null;
-              if (!model.isEnabled()) {
-                icon = UIManager.getLookAndFeel().getDisabledIcon(model, mouseIcon);
-              }
-              if (icon == null) {
-                icon = mouseIcon;
-              }
-              icon.paintIcon(c, g, x, y);
-            }
-          }
-
-          @Override
-          public int getIconWidth() {
-            return mouseIcon.getIconWidth();
-          }
-
-          @Override
-          public int getIconHeight() {
-            return mouseIcon.getIconHeight();
-          }
-        });
+    return DropButtonIcon.createDropButtonIcon(
+        ResourceUtil.getToolBarIcon(ActionIcon.WINDOW_LEVEL));
   }
 }

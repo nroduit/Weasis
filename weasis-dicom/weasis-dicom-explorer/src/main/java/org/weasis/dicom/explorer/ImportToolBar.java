@@ -13,7 +13,6 @@ import java.awt.Component;
 import java.awt.Window;
 import java.io.File;
 import java.util.List;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -22,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.WtoolBar;
@@ -38,17 +39,14 @@ public class ImportToolBar extends WtoolBar {
     final DicomModel model = (DicomModel) explorer.getDataExplorerModel();
 
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
-      final JButton btnImport =
-          new JButton(new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import.png")));
+      final JButton btnImport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_DICOM));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm"));
       btnImport.addActionListener(e -> showAction(ImportToolBar.this, model, null, false));
       add(btnImport);
     }
 
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
-      final JButton btnImport =
-          new JButton(
-              new ImageIcon(ImportToolBar.class.getResource("/icon/32x32/dcm-import-cd.png")));
+      final JButton btnImport = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.IMPORT_CD));
       btnImport.setToolTipText(Messages.getString("ImportToolBar.import_dcm_cd"));
       btnImport.addActionListener(
           e ->
@@ -92,8 +90,8 @@ public class ImportToolBar extends WtoolBar {
           AbstractWizardDialog dialog =
               showAction(parent, model, Messages.getString("LocalImport.local_dev"), false);
           AbstractItemDialogPage page = dialog.getCurrentPage();
-          if (page instanceof LocalImport) {
-            ((LocalImport) page).setImportPath(file.getParent());
+          if (page instanceof LocalImport localImport) {
+            localImport.setImportPath(file.getParent());
           }
         }
       }
@@ -117,7 +115,7 @@ public class ImportToolBar extends WtoolBar {
       Component parent, DicomModel model, String actionName) {
     return new DefaultAction(
         actionName,
-        new ImageIcon(ImportToolBar.class.getResource("/icon/16x16/dcm-import.png")),
+        ResourceUtil.getIcon(ActionIcon.IMPORT_DICOM),
         event -> {
           if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.import.dicom", true)) {
             showAction(parent, model, null, false);

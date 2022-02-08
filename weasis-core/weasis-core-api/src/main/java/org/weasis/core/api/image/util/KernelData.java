@@ -9,12 +9,10 @@
  */
 package org.weasis.core.api.image.util;
 
-import java.io.Serializable;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.gui.util.MathUtil;
 
-public class KernelData implements Serializable {
-  private static final long serialVersionUID = 5877650534432337573L;
+public class KernelData {
 
   public static final KernelData NONE =
       new KernelData(Messages.getString("KernelData.0"), false, 1, 1, new float[] {1.0F});

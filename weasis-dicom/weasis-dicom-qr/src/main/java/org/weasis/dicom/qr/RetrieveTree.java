@@ -11,8 +11,8 @@ package org.weasis.dicom.qr;
 
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
+import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.event.MouseEvent;
 import java.util.HashSet;
 import java.util.List;
@@ -20,12 +20,12 @@ import java.util.Objects;
 import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
+import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipSeriesNode;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipStudyNode;
 
-@SuppressWarnings("serial")
 public class RetrieveTree extends JPanel {
 
   private RetrieveTreeModel retrieveTreeModel;
@@ -39,7 +39,7 @@ public class RetrieveTree extends JPanel {
   }
 
   public RetrieveTree(RetrieveTreeModel retrieveTreeModel) {
-    this.setLayout(new FlowLayout(FlowLayout.LEFT));
+    this.setLayout(new BorderLayout());
     setRetrieveTreeModel(retrieveTreeModel);
   }
 
@@ -69,6 +69,7 @@ public class RetrieveTree extends JPanel {
           }
         };
 
+    checkboxTree.setCellRenderer(CheckBoxTreeBuilder.buildNoIconCheckboxTreeCellRenderer());
     // Register tooltips
     checkboxTree.setToolTipText("");
 
@@ -106,7 +107,7 @@ public class RetrieveTree extends JPanel {
     ExportTree.expandTree(
         checkboxTree, retrieveTreeModel.getRootNode(), 2); // 2 stands for Study Level
     removeAll();
-    add(checkboxTree);
+    add(checkboxTree, BorderLayout.CENTER);
   }
 
   public CheckboxTree getCheckboxTree() {
