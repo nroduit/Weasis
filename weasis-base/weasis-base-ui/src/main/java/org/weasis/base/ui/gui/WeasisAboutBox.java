@@ -98,7 +98,7 @@ public class WeasisAboutBox extends JDialog {
                 System.getProperty("os.name"),
                 System.getProperty("os.version"),
                 System.getProperty("os.arch"),
-                System.getProperty("java.vendor.version", ""));
+                System.getProperty("java.vendor.version", System.getProperty("java.vm.version")));
 
     jTextPane1.setText(html);
     JLabel jLabel1 = new JLabel();
