@@ -27,7 +27,7 @@ import bibliothek.gui.dock.station.screen.BoundaryRestriction;
 import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
-import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -41,6 +41,8 @@ import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
+import java.awt.Taskbar;
+import java.awt.Taskbar.Feature;
 import java.awt.Toolkit;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
@@ -215,7 +217,16 @@ public class WeasisWin {
     LogoIcon logoIcon =
         AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? LogoIcon.SMALL_DICOMIZER : LogoIcon.SMALL;
     // Get larger icon (displayed in system toolbar)
-    frame.setIconImage(ResourceUtil.getIcon(logoIcon, 128, 128).getImage());
+    FlatSVGIcon imageIcon = ResourceUtil.getIcon(logoIcon, 512, 512);
+    final Taskbar taskbar = Taskbar.getTaskbar();
+    if (taskbar.isSupported(Feature.ICON_IMAGE)) {
+      try {
+        taskbar.setIconImage(imageIcon.getImage());
+      } catch (Exception e) {
+        LOGGER.error("cannot set icon to taskbar", e);
+        frame.setIconImage(imageIcon.getImage());
+      }
+    } else frame.setIconImage(imageIcon.getImage());
 
     DesktopAdapter.buildDesktopMenu(this);
   }
@@ -686,8 +697,7 @@ public class WeasisWin {
                 webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")));
     helpMenuItem.add(webMenuItem);
 
-    final JMenuItem websiteMenuItem =
-        new JMenuItem(Messages.getString("WeasisWin.online"), new FlatHelpButtonIcon());
+    final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online"));
     GuiUtils.applySelectedIconEffect(websiteMenuItem);
     websiteMenuItem.addActionListener(
         e ->
