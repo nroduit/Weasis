@@ -218,15 +218,20 @@ public class WeasisWin {
         AppProperties.WEASIS_NAME.endsWith("Dicomizer") ? LogoIcon.SMALL_DICOMIZER : LogoIcon.SMALL;
     // Get larger icon (displayed in system toolbar)
     FlatSVGIcon imageIcon = ResourceUtil.getIcon(logoIcon, 512, 512);
-    final Taskbar taskbar = Taskbar.getTaskbar();
-    if (taskbar.isSupported(Feature.ICON_IMAGE)) {
-      try {
-        taskbar.setIconImage(imageIcon.getImage());
-      } catch (Exception e) {
-        LOGGER.error("cannot set icon to taskbar", e);
-        frame.setIconImage(imageIcon.getImage());
+    boolean taskBarIcon = false;
+    if (Taskbar.isTaskbarSupported()) {
+      final Taskbar taskbar = Taskbar.getTaskbar();
+      if (taskbar.isSupported(Feature.ICON_IMAGE)) {
+        try {
+          taskbar.setIconImage(imageIcon.getImage());
+          taskBarIcon = true;
+        } catch (Exception e) {
+          LOGGER.error("cannot set icon to taskbar", e);
+        }
       }
-    } else frame.setIconImage(imageIcon.getImage());
+    }
+
+    if (!taskBarIcon) frame.setIconImage(imageIcon.getImage());
 
     DesktopAdapter.buildDesktopMenu(this);
   }
