@@ -48,7 +48,7 @@ public class LabelHighlighted extends JLabel {
       String highlight = textToHighlight.trim();
       FontMetrics fm = getFontMetrics(getFont());
       float w = -1;
-      final float h = fm.getHeight() - 1;
+      final float h = fm.getHeight() - 1f;
       int i = 0;
       while (true) {
         i = labelText.indexOf(textToMatch, i);

@@ -150,7 +150,7 @@ public class CircularProgressBar extends JProgressBar {
         g2d.setPaint(gradient);
         g2d.draw(
             new Arc2D.Double(
-                shift, shift, w - arcSize, h - arcSize, animateAngle + 90, 360, Arc2D.OPEN));
+                shift, shift, w - arcSize, h - arcSize, animateAngle + 90.0, 360, Arc2D.OPEN));
       } else {
         g2d.draw(
             new Arc2D.Double(

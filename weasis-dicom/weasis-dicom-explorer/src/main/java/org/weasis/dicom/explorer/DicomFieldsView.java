@@ -15,6 +15,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import javax.swing.BorderFactory;
@@ -417,6 +418,32 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
           DicomMediaIO.tagManager.addTag(tag, level);
         }
       }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+      DicomData dicomData = (DicomData) o;
+      return Objects.equals(title, dicomData.title)
+          && Arrays.equals(infos, dicomData.infos)
+          && level == dicomData.level;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = Objects.hash(title, level);
+      result = 31 * result + Arrays.hashCode(infos);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return title;
     }
   }
 }

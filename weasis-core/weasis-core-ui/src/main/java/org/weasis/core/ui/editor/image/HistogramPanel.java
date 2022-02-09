@@ -233,7 +233,7 @@ public class HistogramPanel extends JPanel {
             g2d,
             label,
             plow - g2d.getFontMetrics().stringWidth(label) / 2.f,
-            SLIDER_Y + midFontHeight);
+            SLIDER_Y + (float) midFontHeight);
         drawWl = true;
       }
       if (high < windLevel.getLevelMax()) {
@@ -246,7 +246,7 @@ public class HistogramPanel extends JPanel {
             g2d,
             label,
             phigh - g2d.getFontMetrics().stringWidth(label) / 2.f,
-            SLIDER_Y + midFontHeight);
+            SLIDER_Y + (float) midFontHeight);
         drawWl = true;
       }
 

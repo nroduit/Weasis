@@ -335,7 +335,11 @@ public class SeriesThumbnail extends Thumbnail
         int w = g2d.getFontMetrics().stringWidth(nb);
         int sx = x + width - inset - w;
         FontTools.paintColorFontOutline(
-            g2d, nb, sx, y + inset + fontHeight - descent, IconColor.ACTIONS_BLUE.getColor());
+            g2d,
+            nb,
+            sx,
+            y + inset + fontHeight - (float) descent,
+            IconColor.ACTIONS_BLUE.getColor());
       }
 
       int number = series.size(null);
@@ -343,8 +347,8 @@ public class SeriesThumbnail extends Thumbnail
         FontTools.paintColorFontOutline(
             g2d,
             String.valueOf(number),
-            x + inset,
-            y + height - (inset + descent),
+            x + (float) inset,
+            y + height - (float) (inset + descent),
             IconColor.ACTIONS_BLUE.getColor());
       }
 
@@ -359,8 +363,8 @@ public class SeriesThumbnail extends Thumbnail
         }
         if (bar.isVisible()) {
           // Draw in the bottom right corner of thumbnail
-          double shiftx = thumbnailSize - bar.getWidth();
-          double shifty = thumbnailSize - bar.getHeight();
+          double shiftx = (double) thumbnailSize - bar.getWidth();
+          double shifty = (double) thumbnailSize - bar.getHeight();
           g2d.translate(shiftx, shifty);
           bar.paint(g2d);
 
@@ -370,8 +374,8 @@ public class SeriesThumbnail extends Thumbnail
             boolean stopped = seriesLoader.isStopped();
 
             g2d.translate(-shiftx, -shifty);
-            shiftx = thumbnailSize - stopButton.width;
-            shifty = fontHeight * 2;
+            shiftx = (double) thumbnailSize - stopButton.width;
+            shifty = fontHeight * 2.0;
             g2d.translate(shiftx, shifty);
             g2d.setColor(Color.RED);
             g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
