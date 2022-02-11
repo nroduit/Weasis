@@ -12,6 +12,7 @@ package org.weasis.launcher;
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
+import java.awt.Desktop.Action;
 import java.awt.EventQueue;
 import java.io.File;
 import java.io.FileDescriptor;
@@ -170,6 +171,16 @@ public class WeasisLauncher {
   public WeasisLauncher(ConfigData configData) {
     this.configData = Objects.requireNonNull(configData);
     this.modulesi18n = new Properties();
+
+    Desktop app = Desktop.getDesktop();
+    if (app.isSupported(Action.APP_OPEN_URI)) {
+      app.setOpenURIHandler(
+          e -> {
+            String uri = e.getURI().toString();
+            LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}}", uri);
+            executeCommands(List.of(uri), null);
+          });
+    }
   }
 
   public static void main(String[] argv) throws Exception {
