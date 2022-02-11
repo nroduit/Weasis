@@ -3,35 +3,43 @@
 
 Weasis is a free medical DICOM viewer used in healthcare by hospitals, health networks, multicenter research trials, and patients.
 
-![Weasis](weasis-distributions/resources/images/about.png)
+![Weasis](weasis-distributions/resources/svg/logo/WeasisAbout.svg)
 
 * [General information](https://nroduit.github.io)
-* [Download binary releases](https://nroduit.github.io/en/getting-started)
+* [Download binary releases](https://nroduit.github.io/en/getting-started/download)
 * [Live Demo with different datasets](https://nroduit.github.io/en/demo)
 * [Issues](https://github.com/nroduit/Weasis/issues) ([Old Issue Tracker](https://dcm4che.atlassian.net/projects/WEA))
-* [Google group](https://groups.google.com/forum/#!forum/dcm4che) and [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
+* Forum: [Google group](https://groups.google.com/forum/#!forum/dcm4che) or [GitHub Discussions](https://github.com/nroduit/Weasis/discussions)
 
 :warning: **Security**: Weasis is not affected by CVE-2021-44228 as it does not use log4j but a simple OSGI logger.
 
+# Release History
+See [CHANGELOG](CHANGELOG.md)
+
 # Build Weasis
 
-The master branch contains Weasis 3.x.x (requires Java 8+) and the old branches are 2.5.x, 2.0.x (Java 6+) and 1.2.x (Java 6+).
+The master branch contains Weasis 4.x.x which requires Java 17+.
 
 See [How to build Weasis](https://nroduit.github.io/en/getting-started/building-weasis)
 
-# [Release History](CHANGELOG.md)
+Old branches are:
+* 3.8.x (Java 8+)
+* 2.5.x (Java 8+)
+* 2.0.x (Java 6+) 
+* 1.2.x (Java 6+)
 
 # General Features
 * Flexible integration to HIS or PHR (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * Desktop distribution (Windows, Mac OS X, and Linux)
+* Responsive user interface and work well on high DPI screens
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
-* Embedded DICOM viewer (portable distribution) in CD/DVD or other portable media
 * [Multi-language support](https://nroduit.github.io/en/getting-started/translating/)
 * [Configuration of preferences](https://nroduit.github.io/en/basics/customize/preferences/) on server-side and client-side
 * [API for building custom plug-ins](https://nroduit.github.io/en/basics/customize/build-plugins/)
 * DICOM Send (storeSCU and STOW-RS)
 * DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI) and DICOMWeb (QUERY and RETRIEVE)
-* Dicomizer module (allow importing standard images and convert them in DICOM)
+* Dicomizer module to convert standard images into DICOM
+* Embedded DICOM viewer in CD/DVD or other portable media
 
 # Viewer Features
 ![screenshot](https://user-images.githubusercontent.com/993975/39397039-2180c178-4af9-11e8-9c72-2c1e9aa16eae.jpg)     
