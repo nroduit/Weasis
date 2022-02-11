@@ -11,20 +11,19 @@ package org.weasis.core.ui.model.imp.suite;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 
-public class ContructorNoArgumentsSuite extends ModelListHelper {
+class ConstructorNoArgumentsTest extends ModelListHelper {
 
   @Test
-  public void testXmlModelList() throws Exception {
+  void testXmlModelList() {
     GraphicModel actual = new XmlGraphicModel();
 
-    assertThat(actual).isNotNull();
     assertThat(actual)
         .isInstanceOfAny(
             DefaultUUID.class,
@@ -41,6 +40,6 @@ public class ContructorNoArgumentsSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getLayerCount()).isEqualTo(0);
+    assertThat(actual.getLayerCount()).isZero();
   }
 }

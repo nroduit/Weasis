@@ -65,10 +65,5 @@
       <artifactId>scribejava-java8</artifactId>
       <version>${scribejava.version}</version>
     </dependency>
-    <!-- FOR TESTS -->
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-    </dependency>
   </dependencies>
 </project>

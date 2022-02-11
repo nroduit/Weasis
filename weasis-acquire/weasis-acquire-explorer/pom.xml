@@ -38,7 +38,6 @@
         <configuration>
           <bnd>
             -includeresource.all: lib/=target/dependency/;lib:=true
-            Export-Package: org.weasis.acquire.explorer.*
           </bnd>
         </configuration>
       </plugin>
@@ -47,12 +46,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <argLine>
-            --add-opens java.base/java.time=ALL-UNNAMED
-            --add-opens java.base/java.time.format=ALL-UNNAMED
-            --add-opens java.base/java.lang=ALL-UNNAMED
-            --add-opens java.base/java.util=ALL-UNNAMED
-            --add-opens java.base/java.util.stream=ALL-UNNAMED
-            --add-exports java.desktop/sun.swing=ALL-UNNAMED
+            -Xshare:off
           </argLine>
         </configuration>
       </plugin>
@@ -130,20 +124,6 @@
       <groupId>net.samuelcampos</groupId>
       <artifactId>usbdrivedetector</artifactId>
       <version>2.1.1</version>
-    </dependency>
-
-    <!-- FOR TESTS -->
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-junit4</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito2</artifactId>
     </dependency>
   </dependencies>
 </project>

@@ -12,32 +12,30 @@ package org.weasis.acquire.explorer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.assertj.core.data.Percentage;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentMatchers;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.weasis.acquire.explorer.gui.dialog.AcquirePublishDialog.Resolution;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 
-@RunWith(PowerMockRunner.class)
-public class PublishDicomTaskTest {
+@ExtendWith(MockitoExtension.class)
+class PublishDicomTaskTest {
   @Mock AcquireImageInfo imgInfo;
   @Mock ImageElement imgElt;
 
   @Test
-  public void testCalculateRatio() {
-    PowerMockito.when(imgInfo.getImage()).thenReturn(imgElt);
-
-    double MAX = Resolution.ULTRA_HD.getMaxSize();
+  void testCalculateRatio() {
+    Mockito.when(imgInfo.getImage()).thenReturn(imgElt);
 
     assertThat(PublishDicomTask.calculateRatio(null, null)).isNull();
     assertThat(PublishDicomTask.calculateRatio(imgInfo, null)).isNull();
+    assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.ORIGINAL)).isNull();
 
-    PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageWidth))).thenReturn(4000);
-    PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageHeight))).thenReturn(2000);
+    Mockito.when(imgElt.getTagValue(TagW.ImageWidth)).thenReturn(4000);
+    Mockito.when(imgElt.getTagValue(TagW.ImageHeight)).thenReturn(2000);
     assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.ULTRA_HD))
         .isCloseTo(0.96, Percentage.withPercentage(1));
     assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.FULL_HD))
@@ -45,8 +43,8 @@ public class PublishDicomTaskTest {
     assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.HD_DVD))
         .isCloseTo(0.32, Percentage.withPercentage(1));
 
-    PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageWidth))).thenReturn(2000);
-    PowerMockito.when(imgElt.getTagValue(ArgumentMatchers.eq(TagW.ImageHeight))).thenReturn(4000);
+    Mockito.when(imgElt.getTagValue(TagW.ImageWidth)).thenReturn(2000);
+    Mockito.when(imgElt.getTagValue(TagW.ImageHeight)).thenReturn(4000);
     assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.ULTRA_HD))
         .isCloseTo(0.96, Percentage.withPercentage(1));
     assertThat(PublishDicomTask.calculateRatio(imgInfo, Resolution.FULL_HD))

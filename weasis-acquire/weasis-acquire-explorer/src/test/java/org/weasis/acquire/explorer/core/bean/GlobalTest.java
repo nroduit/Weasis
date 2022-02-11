@@ -11,65 +11,23 @@ package org.weasis.acquire.explorer.core.bean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collections;
 import org.assertj.core.api.Assertions;
 import org.assertj.core.data.MapEntry;
 import org.dcm4che3.data.Tag;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Tagable;
-import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.codec.TagD;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest({TagD.class, LocalUtil.class})
-@SuppressStaticInitializationFor("org.weasis.dicom.codec.TagD")
-public class GlobalTest extends GlobalHelper {
-  private Global global;
-
-  @Before
-  public void setUp() throws Exception {
-    global = null;
-
-    tagable = PowerMockito.mock(Tagable.class);
-    Map<TagW, Object> map = new HashMap<>();
-    Iterator<Entry<TagW, Object>> entrySet = map.entrySet().iterator();
-    PowerMockito.when(tagable.getTagEntrySetIterator()).thenReturn(entrySet);
-
-    PowerMockito.mockStatic(LocalUtil.class);
-    PowerMockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
-    PowerMockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
-
-    PowerMockito.mockStatic(TagD.class);
-    Arrays.stream(GlobalTag.values()).forEach(GlobalTag::prepareMock);
-  }
+class GlobalTest extends GlobalHelper {
 
   @Test
-  public void testGlobal() {
-    assertThat(global).isNull();
-    global = new Global();
+  void testInitWithEmptyTagable() {
+    Global global = new Global();
 
-    assertThat(global).isNotNull();
-  }
-
-  @Test
-  public void testInitWithEmptyTagable() throws Exception {
-    global = new Global();
-
+    Mockito.when(tagable.getTagEntrySetIterator())
+        .thenReturn(Collections.EMPTY_MAP.entrySet().iterator());
     // Method to test
     global.init(tagable);
 
@@ -79,8 +37,8 @@ public class GlobalTest extends GlobalHelper {
   }
 
   @Test
-  public void testInit() throws Exception {
-    global = new Global();
+  void testInit() {
+    Global global = new Global();
     // Method to test
     DefaultTagable tags = new DefaultTagable();
     tags.setTag(GlobalTag.patientId.tagW, GlobalTag.patientId.value);
@@ -93,17 +51,22 @@ public class GlobalTest extends GlobalHelper {
     global.init(tags);
 
     // Tests
-    assertThat(global.getTagEntrySet()).hasSize(8);
+    TagW studyTag = TagD.get(Tag.StudyInstanceUID);
+    assertThat(global.containTagKey(studyTag)).isTrue();
+    global.setTag(studyTag, studyInstanceUIDValue);
+    assertThat(global.getTagEntrySet())
+        .containsExactlyInAnyOrder(
+            Assertions.entry(studyTag, studyInstanceUIDValue),
+            entry(GlobalTag.patientId),
+            entry(GlobalTag.patientName),
+            entry(GlobalTag.issuerOfPatientId),
+            entry(GlobalTag.patientBirthDate),
+            entry(GlobalTag.patientSex),
+            entry(GlobalTag.studyDate),
+            entry(GlobalTag.modality));
   }
 
-  private MapEntry<TagW, Object> entry(GlobalTag tag) throws ParseException {
-    Object value;
-
-    if (tag.type.equals(TagType.DATE)) {
-      value = new SimpleDateFormat("yyyyMMdd", LocalUtil.getLocaleFormat()).parse(tag.value);
-    } else {
-      value = tag.value;
-    }
-    return Assertions.entry(tag.tagW, value);
+  private static MapEntry<TagW, Object> entry(GlobalTag tag) {
+    return Assertions.entry(tag.tagW, tag.value);
   }
 }

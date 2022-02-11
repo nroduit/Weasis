@@ -15,16 +15,6 @@
   <name>OpenCV plugins [${project.artifactId}]</name>
   <packaging>pom</packaging>
 
-  <modules>
-    <module>weasis-opencv-core-windows-x86</module>
-    <module>weasis-opencv-core-windows-x86-64</module>
-    <module>weasis-opencv-core-linux-x86</module>
-    <module>weasis-opencv-core-linux-x86-64</module>
-    <module>weasis-opencv-core-linux-armv7a</module>
-    <module>weasis-opencv-core-linux-aarch64</module>
-    <module>weasis-opencv-core-macosx-x86-64</module>
-    <module>weasis-opencv-core-macosx-aarch64</module>
-  </modules>
 
   <properties>
     <native.configuration>changeMeInChildModule</native.configuration>
@@ -45,7 +35,40 @@
     </plugins>
   </build>
 
-  <dependencies>
+  <profiles>
+    <profile>
+      <id>default</id>
+      <activation>
+        <property>
+          <name>!weasis.arch</name>
+        </property>
+      </activation>
+      <modules>
+        <module>weasis-opencv-core-windows-x86</module>
+        <module>weasis-opencv-core-windows-x86-64</module>
+        <module>weasis-opencv-core-linux-x86</module>
+        <module>weasis-opencv-core-linux-x86-64</module>
+        <module>weasis-opencv-core-linux-armv7a</module>
+        <module>weasis-opencv-core-linux-aarch64</module>
+        <module>weasis-opencv-core-macosx-x86-64</module>
+        <module>weasis-opencv-core-macosx-aarch64</module>
+      </modules>
+    </profile>
+  <profile>
+    <id>weasis-arch</id>
+    <activation>
+      <property>
+        <name>weasis.arch</name>
+      </property>
+    </activation>
+    <modules>
+      <module>weasis-opencv-core-${weasis.arch}</module>
+    </modules>
+  </profile>
+</profiles>
+
+
+<dependencies>
     <dependency>
       <groupId>org.weasis.core</groupId>
       <artifactId>weasis-core-img</artifactId>

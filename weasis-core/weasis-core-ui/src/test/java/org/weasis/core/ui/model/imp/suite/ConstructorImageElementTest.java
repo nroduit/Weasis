@@ -11,9 +11,7 @@ package org.weasis.core.ui.model.imp.suite;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.AbstractGraphicModel;
 import org.weasis.core.ui.model.GraphicModel;
@@ -23,15 +21,13 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 import org.weasis.core.ui.model.utils.imp.DefaultUUID;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 
-@RunWith(PowerMockRunner.class)
-public class ConstructorImageElementSuite extends ModelListHelper {
+class ConstructorImageElementTest extends ModelListHelper {
 
   @Test
-  public void test_image_with_uuid_and_series_uuid() throws Exception {
+  void test_image_with_uuid_and_series_uuid() {
     ImageElement img = mockImage(UUID_1, UUID_2);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual).isNotNull();
     assertThat(actual)
         .isInstanceOfAny(
             DefaultUUID.class,
@@ -52,15 +48,14 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getLayerCount()).isEqualTo(0);
+    assertThat(actual.getLayerCount()).isZero();
   }
 
   @Test
-  public void test_image_with_no_uuid_and_series_uuid() throws Exception {
+  void test_image_with_no_uuid_and_series_uuid() throws Exception {
     ImageElement img = mockImage(null, UUID_2);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual).isNotNull();
     assertThat(actual)
         .isInstanceOfAny(
             DefaultUUID.class,
@@ -70,12 +65,12 @@ public class ConstructorImageElementSuite extends ModelListHelper {
 
     assertThat(actual.getReferencedSeries()).hasSize(1);
 
-    ReferencedSeries referencedSerie = actual.getReferencedSeries().get(0);
-    assertThat(referencedSerie).isNotNull();
-    assertThat(referencedSerie.getUuid()).isEqualTo(UUID_2);
-    assertThat(referencedSerie.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
+    assertThat(referencedSeries).isNotNull();
+    assertThat(referencedSeries.getUuid()).isEqualTo(UUID_2);
+    assertThat(referencedSeries.getImages()).hasSize(1);
 
-    ReferencedImage referencedImage = referencedSerie.getImages().get(0);
+    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
     assertThat(referencedImage).isNotNull();
     assertThat(referencedImage.getUuid()).isNotNull().isNotEmpty();
 
@@ -87,15 +82,14 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getLayerCount()).isEqualTo(0);
+    assertThat(actual.getLayerCount()).isZero();
   }
 
   @Test
-  public void test_image_with_uuid_and_no_series_uuid() throws Exception {
+  void test_image_with_uuid_and_no_series_uuid() throws Exception {
     ImageElement img = mockImage(UUID_1, null);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual).isNotNull();
     assertThat(actual)
         .isInstanceOfAny(
             DefaultUUID.class,
@@ -120,15 +114,14 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getLayerCount()).isEqualTo(0);
+    assertThat(actual.getLayerCount()).isZero();
   }
 
   @Test
-  public void test_image_with_no_uuid_and_no_series_uuid() throws Exception {
+  void test_image_with_no_uuid_and_no_series_uuid() {
     ImageElement img = mockImage(null, null);
     GraphicModel actual = new XmlGraphicModel(img);
 
-    assertThat(actual).isNotNull();
     assertThat(actual)
         .isInstanceOfAny(
             DefaultUUID.class,
@@ -153,6 +146,6 @@ public class ConstructorImageElementSuite extends ModelListHelper {
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
-    assertThat(actual.getLayerCount()).isEqualTo(0);
+    assertThat(actual.getLayerCount()).isZero();
   }
 }

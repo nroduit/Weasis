@@ -196,14 +196,8 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.osgi</groupId>
-                  <artifactId>org.osgi.util.function</artifactId>
-                  <version>${osgi.function.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.osgi</groupId>
-                  <artifactId>org.osgi.util.promise</artifactId>
-                  <version>${osgi.promise.version}</version>
+                  <artifactId>osgi.promise</artifactId>
+                  <version>${osgi.cmpn.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>

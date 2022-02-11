@@ -1,0 +1,9 @@
+<root>
+  <item
+    name='org.assertj.core.api.Assertions org.assertj.core.api.AbstractStringAssert&lt;?&gt; assertThat(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='org.assertj.core.api.Fail'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+</root>

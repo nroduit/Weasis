@@ -10,10 +10,10 @@
 package org.weasis.core.ui.model.imp.suite;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
 
 import java.io.InputStream;
-import org.junit.Test;
+import org.assertj.core.api.Fail;
+import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.ReferencedImage;
 import org.weasis.core.ui.model.ReferencedSeries;
@@ -26,7 +26,7 @@ import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 import org.xml.sax.SAXParseException;
 
-public class DeserializationSuite extends ModelListHelper {
+class DeserializationTest extends ModelListHelper {
   public static final String XML_0 = "/presentation/presentation.0.xml"; // NON-NLS
   public static final String XML_1 = "/presentation/presentation.1.xml"; // NON-NLS
   public static final String XML_2 = "/presentation/presentation.2.xml"; // NON-NLS
@@ -35,12 +35,12 @@ public class DeserializationSuite extends ModelListHelper {
   public static final String XML_5 = "/presentation/presentation.5.xml"; // NON-NLS
 
   @Test
-  public void test_empty_xml() {
+  void test_empty_xml() {
     InputStream xml_0 = checkXml(XML_0);
 
     try {
       deserialize(xml_0, XmlGraphicModel.class);
-      fail("Must throws an exception");
+      Fail.fail("Must throws an exception");
     } catch (Exception e) {
       assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
     }
@@ -49,14 +49,14 @@ public class DeserializationSuite extends ModelListHelper {
 
     try {
       deserialize(xml_1, XmlGraphicModel.class);
-      fail("Must throws an exception");
+      Fail.fail("Must throws an exception");
     } catch (Exception e) {
       assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
     }
   }
 
   @Test
-  public void test_empty_presentation() throws Exception {
+  void test_empty_presentation() throws Exception {
     InputStream xml = checkXml(XML_2);
 
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
@@ -66,12 +66,12 @@ public class DeserializationSuite extends ModelListHelper {
     assertThat(result.getReferencedSeries()).isEmpty();
     assertThat(result.getModels()).isEmpty();
     assertThat(result.getLayers()).isEmpty();
-    assertThat(result.getLayerCount()).isEqualTo(0);
+    assertThat(result.getLayerCount()).isZero();
     assertThat(result.getAllGraphics()).isEmpty();
   }
 
   @Test
-  public void test_basic_presentation() throws Exception {
+  void test_basic_presentation() throws Exception {
     InputStream xml = checkXml(XML_3);
 
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
@@ -88,7 +88,7 @@ public class DeserializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_basic_presentation_with_image_reference() throws Exception {
+  void test_basic_presentation_with_image_reference() throws Exception {
     ImageElement img = mockImage(PRESENTATION_UUID_1, PRESENTATION_UUID_2);
     InputStream xml = checkXml(XML_4);
 
@@ -121,7 +121,7 @@ public class DeserializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_presentation_with_one_graphic() throws Exception {
+  void test_presentation_with_one_graphic() throws Exception {
     InputStream xml = checkXml(XML_5);
     XmlGraphicModel result = deserialize(xml, XmlGraphicModel.class);
 

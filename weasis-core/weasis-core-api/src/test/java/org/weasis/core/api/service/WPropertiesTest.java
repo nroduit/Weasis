@@ -9,145 +9,116 @@
  */
 package org.weasis.core.api.service;
 
-import java.awt.Color;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
 
-public class WPropertiesTest {
+import java.awt.Color;
+import org.junit.jupiter.api.Test;
+
+class WPropertiesTest {
   private static final String MAGENTA = "ff00ff"; // NON-NLS
   private static final String MAGENTA_ALPHA = "ffff00ff"; // NON-NLS
   private static final String GREY = "808080";
   private static final String GREY_ALPHA = "80808080";
   private static final Color COLOR_ALPHA = new Color(128, 128, 128, 128);
 
-  @Before
-  public void setUp() {}
-
   @Test
-  public void testSetPropertyString() {
+  void testSetPropertyString() {
+
     WProperties prop = new WProperties();
     prop.setProperty("string", "test!"); // NON-NLS
-    Assert.assertEquals("different string", "test!", prop.getProperty("string", null)); // NON-NLS
+    assertThat(prop.getProperty("string", null)).isEqualTo("test!");
     prop.setProperty("string", null); // NON-NLS
-    // Return the previous value
-    Assert.assertEquals("different string", "test!", prop.getProperty("string", null)); // NON-NLS
+    // Return the previous value, do not accept null value
+    assertThat(prop.getProperty("string", null)).isEqualTo("test!");
   }
 
   @Test
-  public void testPutIntProperty() {
+  void testPutIntProperty() {
     WProperties prop = new WProperties();
     prop.putIntProperty("int", Integer.MIN_VALUE);
-    Assert.assertEquals(
-        "different int", Integer.MIN_VALUE, prop.getIntProperty("int", 0), 0); // NON-NLS
+    assertThat(prop.getIntProperty("int", 0)).isEqualTo(Integer.MIN_VALUE);
     prop.putIntProperty("int", Integer.MAX_VALUE);
-    Assert.assertEquals(
-        "different int", Integer.MAX_VALUE, prop.getIntProperty("int", 0), 0); // NON-NLS
+    assertThat(prop.getIntProperty("int", 0)).isEqualTo(Integer.MAX_VALUE);
   }
 
   @Test
-  public void testPutLongProperty() {
+  void testPutLongProperty() {
     WProperties prop = new WProperties();
     prop.putLongProperty("long", Long.MIN_VALUE); // NON-NLS
-    Assert.assertEquals(
-        "different long", Long.MIN_VALUE, prop.getLongProperty("long", 0L), 0L); // NON-NLS
+    assertThat(prop.getLongProperty("long", 0L)).isEqualTo(Long.MIN_VALUE); // NON-NLS
     prop.putLongProperty("long", Long.MAX_VALUE); // NON-NLS
-    Assert.assertEquals(
-        "different long", Long.MAX_VALUE, prop.getLongProperty("long", 0L), 0L); // NON-NLS
+    assertThat(prop.getLongProperty("long", 0L)).isEqualTo(Long.MAX_VALUE); // NON-NLS
   }
 
   @Test
-  public void testPutBooleanProperty() {
+  void testPutBooleanProperty() {
     WProperties prop = new WProperties();
     prop.putBooleanProperty("boolean", true); // NON-NLS
-    Assert.assertTrue("different boolean", prop.getBooleanProperty("boolean", false)); // NON-NLS
+    assertThat(prop.getBooleanProperty("boolean", false)).isTrue(); // NON-NLS
     prop.putBooleanProperty("boolean", false); // NON-NLS
-    Assert.assertFalse("different boolean", prop.getBooleanProperty("boolean", true)); // NON-NLS
+    assertThat(prop.getBooleanProperty("boolean", true)).isFalse(); // NON-NLS
   }
 
   @Test
-  public void testPutFloatProperty() {
+  void testPutFloatProperty() {
     WProperties prop = new WProperties();
     prop.putFloatProperty("float", Float.MAX_VALUE); // NON-NLS
-    Assert.assertEquals(
-        "different float", Float.MAX_VALUE, prop.getFloatProperty("float", 0.0f), 0.0f); // NON-NLS
-    prop.putFloatProperty("float", Float.NaN); // NON-NLS
-    Assert.assertEquals(
-        "different float", Float.NaN, prop.getFloatProperty("float", 0.0f), 0.0f); // NON-NLS
+    assertThat(prop.getFloatProperty("float", 0.0f)).isEqualTo(Float.MAX_VALUE); // NON-NLS
+    prop.putFloatProperty("float", 0.0f); // NON-NLS
+    assertThat(prop.getFloatProperty("float", 0.0f)).isZero(); // NON-NLS
   }
 
   @Test
-  public void testPutDoubleProperty() {
+  void testPutDoubleProperty() {
     WProperties prop = new WProperties();
     prop.putDoubleProperty("double", Math.PI); // NON-NLS
-    Assert.assertEquals(
-        "different double", Math.PI, prop.getDoubleProperty("double", 0.0), 0.0); // NON-NLS
+    assertThat(prop.getDoubleProperty("double", 0.0)).isEqualTo(Math.PI); // NON-NLS
     prop.putDoubleProperty("double", Double.NEGATIVE_INFINITY); // NON-NLS
-    Assert.assertEquals(
-        "different double",
-        Double.NEGATIVE_INFINITY,
-        prop.getDoubleProperty("double", 0.0), // NON-NLS
-        0.0);
-    prop.putDoubleProperty("double", Double.NaN); // NON-NLS
-    Assert.assertEquals(
-        "different double", Double.NaN, prop.getDoubleProperty("double", 0.0), 0.0); // NON-NLS
+    assertThat(prop.getDoubleProperty("double", 0.0))
+        .isEqualTo(Double.NEGATIVE_INFINITY); // NON-NLS
+    prop.putDoubleProperty("double", 0.0f); // NON-NLS
+    assertThat(prop.getDoubleProperty("double", 0.0)).isZero(); // NON-NLS
   }
 
   @Test
-  public void testPutColorProperty() {
+  void testPutColorProperty() {
     WProperties prop = new WProperties();
     prop.putColorProperty("color", COLOR_ALPHA); // NON-NLS
-    Assert.assertEquals("different color", COLOR_ALPHA, prop.getColorProperty("color")); // NON-NLS
+    assertThat(prop.getColorProperty("color")).isEqualTo(COLOR_ALPHA); // NON-NLS
     prop.putColorProperty("color", Color.GREEN); // NON-NLS
-    Assert.assertEquals("different color", Color.GREEN, prop.getColorProperty("color")); // NON-NLS
+    assertThat(prop.getColorProperty("color")).isEqualTo(Color.GREEN); // NON-NLS
     prop.putColorProperty("color", null); // NON-NLS
-    // Return the previous value
-    Assert.assertEquals("different color", Color.GREEN, prop.getColorProperty("color")); // NON-NLS
+    // Return the previous value, null value not allow
+    assertThat(prop.getColorProperty("color")).isEqualTo(Color.GREEN); // NON-NLS
   }
 
   @Test
-  public void testPutByteArrayProperty() {
+  void testPutByteArrayProperty() {
     WProperties prop = new WProperties();
     byte[] data = new byte[] {0, 3, 43, 32, 34, 54, 127, 0, (byte) 255};
     prop.putByteArrayProperty("byte", data); // NON-NLS
-    Assert.assertArrayEquals(
-        "different byte data", data, prop.getByteArrayProperty("byte", null)); // NON-NLS
+    assertThat(data).isEqualTo(prop.getByteArrayProperty("byte", null)); // NON-NLS
     prop.putByteArrayProperty("byte", null); // NON-NLS
-    Assert.assertArrayEquals(
-        "different byte data", null, prop.getByteArrayProperty("byte", null)); // NON-NLS
+    assertThat(prop.getByteArrayProperty("byte", null)).isNull(); // NON-NLS
     prop.putByteArrayProperty("byte", new byte[] {}); // NON-NLS
-    Assert.assertArrayEquals(
-        "different byte data", null, prop.getByteArrayProperty("byte", null)); // NON-NLS
+    assertThat(prop.getByteArrayProperty("byte", null)).isNull(); // NON-NLS
   }
 
   @Test
-  public void testColor2Hexadecimal() {
-    Assert.assertEquals(
-        "magenta without alpha => " + MAGENTA,
-        MAGENTA,
-        WProperties.color2Hexadecimal(Color.MAGENTA, false));
-    Assert.assertEquals(
-        "magenta with alpha => " + MAGENTA_ALPHA,
-        MAGENTA_ALPHA,
-        WProperties.color2Hexadecimal(Color.MAGENTA, true));
-    Assert.assertEquals(
-        "grey with alpha => " + GREY_ALPHA,
-        GREY_ALPHA,
-        WProperties.color2Hexadecimal(COLOR_ALPHA, true));
-    Assert.assertEquals(
-        "grey withtout alpha => " + GREY, GREY, WProperties.color2Hexadecimal(COLOR_ALPHA, false));
+  void testColor2Hexadecimal() {
+    assertThat(WProperties.color2Hexadecimal(Color.MAGENTA, false)).isEqualTo(MAGENTA);
+    assertThat(WProperties.color2Hexadecimal(Color.MAGENTA, true)).isEqualTo(MAGENTA_ALPHA);
+    assertThat(WProperties.color2Hexadecimal(COLOR_ALPHA, true)).isEqualTo(GREY_ALPHA);
+    assertThat(WProperties.color2Hexadecimal(COLOR_ALPHA, false)).isEqualTo(GREY);
   }
 
   @Test
-  public void testHexadecimal2Color() {
-    Assert.assertEquals(
-        MAGENTA + " => magenta", Color.MAGENTA, WProperties.hexadecimal2Color(MAGENTA));
-    Assert.assertEquals(
-        MAGENTA_ALPHA + " => magenta", Color.MAGENTA, WProperties.hexadecimal2Color(MAGENTA_ALPHA));
-    Assert.assertEquals(
-        GREY_ALPHA + " => grey", COLOR_ALPHA, WProperties.hexadecimal2Color(GREY_ALPHA));
-    Assert.assertNotEquals(GREY + " => grey", COLOR_ALPHA, WProperties.hexadecimal2Color(GREY));
-    Assert.assertEquals("null => black", Color.BLACK, WProperties.hexadecimal2Color(null));
-    Assert.assertEquals("sf => black", Color.BLACK, WProperties.hexadecimal2Color("sf")); // NON-NLS
+  void testHexadecimal2Color() {
+    assertThat(WProperties.hexadecimal2Color(MAGENTA)).isEqualTo(Color.MAGENTA);
+    assertThat(WProperties.hexadecimal2Color(MAGENTA_ALPHA)).isEqualTo(Color.MAGENTA);
+    assertThat(WProperties.hexadecimal2Color(GREY_ALPHA)).isEqualTo(COLOR_ALPHA);
+    assertThat(WProperties.hexadecimal2Color(GREY)).isNotEqualTo(COLOR_ALPHA);
+    assertThat(WProperties.hexadecimal2Color(null)).isEqualTo(Color.BLACK);
+    assertThat(WProperties.hexadecimal2Color("sf")).isEqualTo(Color.BLACK); // NON-NLS
   }
 }

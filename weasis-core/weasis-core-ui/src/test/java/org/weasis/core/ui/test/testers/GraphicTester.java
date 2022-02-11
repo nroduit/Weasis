@@ -19,9 +19,9 @@ import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.assertj.core.api.Fail;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -57,12 +57,12 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
   public abstract E getExpectedDeserializeCompleteGraphic();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     pts = new ArrayList<>();
   }
 
-  protected void checkSerializetion(String expectedGraphic) {
+  protected void checkSerialization(String expectedGraphic) {
     assertThat(serializationGraphic).isEqualTo(TPL_XML_PREFIX + expectedGraphic);
   }
 
@@ -92,7 +92,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      Assert.fail("Cannot create instance");
+      Fail.fail("Cannot create instance");
     }
     return null;
   }
@@ -119,7 +119,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
 
     String expected = format(getTemplate(), getParameters());
 
-    checkSerializetion(expected);
+    checkSerialization(expected);
     checkDeserialization();
   }
 

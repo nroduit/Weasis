@@ -51,8 +51,7 @@ public class XmlSerialisationHelper implements XmlTemplate, UuidTemplate {
 
   protected String serializeWithoutHeader(Object object) throws JAXBException {
     String result = serialize(object);
-    String result2 = result.substring(TPL_XML_PREFIX.length());
-    return result2;
+    return result.substring(TPL_XML_PREFIX.length());
   }
 
   protected <T> T deserialize(String input, Class<T> clazz) throws Exception {

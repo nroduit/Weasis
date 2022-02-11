@@ -15,6 +15,7 @@ import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import net.samuelcampos.usbdrivedetector.USBDeviceDetectorManager;
 import net.samuelcampos.usbdrivedetector.USBStorageDevice;
+import net.samuelcampos.usbdrivedetector.events.DeviceEventType;
 import net.samuelcampos.usbdrivedetector.events.IUSBDriveListener;
 import net.samuelcampos.usbdrivedetector.events.USBStorageEvent;
 import org.slf4j.Logger;
@@ -87,20 +88,16 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
 
   @Override
   public void usbDriveEvent(USBStorageEvent event) {
-    LOGGER.debug(event.toString());
+    LOGGER.debug("USB event: {}", event);
 
     GuiExecutor.instance()
         .execute(
             () -> {
-              switch (event.getEventType()) {
-                case CONNECTED:
-                  addUsbDevice(event.getStorageDevice());
-                  break;
-                case REMOVED:
-                  removeUsbDevice(event.getStorageDevice());
-                  break;
-                default:
-                  break;
+              DeviceEventType eventType = event.getEventType();
+              if (eventType == DeviceEventType.CONNECTED) {
+                addUsbDevice(event.getStorageDevice());
+              } else if (eventType == DeviceEventType.REMOVED) {
+                removeUsbDevice(event.getStorageDevice());
               }
             });
   }

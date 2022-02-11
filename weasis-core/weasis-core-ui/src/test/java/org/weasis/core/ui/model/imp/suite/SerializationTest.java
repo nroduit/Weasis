@@ -11,7 +11,7 @@ package org.weasis.core.ui.model.imp.suite;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -30,9 +30,9 @@ import org.weasis.core.ui.model.layer.Layer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.test.utils.ModelListHelper;
 
-public class SerializationSuite extends ModelListHelper {
+class SerializationTest extends ModelListHelper {
   @Test
-  public void test_empty_model() throws Exception {
+  void test_empty_model() throws Exception {
     GraphicModel model = new XmlGraphicModel();
     model.setUuid(UUID_1);
 
@@ -46,7 +46,7 @@ public class SerializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_add_one_point_graphic() throws Exception {
+  void test_add_one_point_graphic() throws Exception {
     GraphicModel model = new XmlGraphicModel();
     model.setUuid(UUID_1);
 
@@ -84,7 +84,7 @@ public class SerializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_with_image_element() throws Exception {
+  void test_with_image_element() throws Exception {
     ImageElement img = mockImage(UUID_2, UUID_3);
     GraphicModel model = new XmlGraphicModel(img);
     model.setUuid(UUID_1);
@@ -110,7 +110,7 @@ public class SerializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_with_mulitiple_graphics_and_one_layer() throws Exception {
+  void test_with_multiple_graphics_and_one_layer() throws Exception {
     ImageElement img = mockImage(UUID_2, UUID_3);
     GraphicModel model = new XmlGraphicModel(img);
     model.setUuid(UUID_1);
@@ -184,7 +184,7 @@ public class SerializationSuite extends ModelListHelper {
   }
 
   @Test
-  public void test_with_mulitiple_graphics_and_multiple_layers() throws Exception {
+  void test_with_multiple_graphics_and_multiple_layers() throws Exception {
     ImageElement img = mockImage(UUID_2, UUID_3);
     GraphicModel model = new XmlGraphicModel(img);
     model.setUuid(UUID_1);

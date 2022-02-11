@@ -83,9 +83,8 @@ public class AcquirePublishPanel extends JPanel {
   public void publishDirDicom(
       File exportDirDicom, AbstractDicomNode destinationNode, List<AcquireImageInfo> toPublish) {
     SwingWorker<DicomState, File> publishDicomTask = null;
-    if (destinationNode instanceof DefaultDicomNode) {
-      DicomNode destNdde = ((DefaultDicomNode) destinationNode).getDicomNode();
-      publishDicomTask = publishDicomDimse(exportDirDicom, destNdde);
+    if (destinationNode instanceof DefaultDicomNode defaultDicomNode) {
+      publishDicomTask = publishDicomDimse(exportDirDicom, defaultDicomNode.getDicomNode());
     } else if (destinationNode instanceof final DicomWebNode node) {
       publishDicomTask = publishStow(exportDirDicom, node, toPublish);
     }

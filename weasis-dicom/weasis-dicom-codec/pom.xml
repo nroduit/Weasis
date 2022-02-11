@@ -84,19 +84,5 @@
       <groupId>org.jogamp.java3d</groupId>
       <artifactId>vecmath</artifactId>
     </dependency>
-
-    <!-- FOR TESTS -->
-    <dependency>
-      <groupId>org.assertj</groupId>
-      <artifactId>assertj-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-module-junit4</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.powermock</groupId>
-      <artifactId>powermock-api-mockito2</artifactId>
-    </dependency>
   </dependencies>
 </project>

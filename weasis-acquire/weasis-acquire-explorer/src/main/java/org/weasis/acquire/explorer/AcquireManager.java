@@ -550,7 +550,7 @@ public class AcquireManager {
 
   public void applyToGlobal(Tagable tagable) {
     if (tagable != null) {
-      if (GLOBAL.containsSameTagValues(tagable, Global.patientDicomGroupNumber)) {
+      if (GLOBAL.containsSameTagValues(tagable, Global.PATIENT_DICOM_GROUP_NUMBER)) {
         GLOBAL.updateAllButPatient(tagable);
         getBySeries().forEach(SeriesGroup::updateDicomTags);
         notifyPatientContextUpdated();

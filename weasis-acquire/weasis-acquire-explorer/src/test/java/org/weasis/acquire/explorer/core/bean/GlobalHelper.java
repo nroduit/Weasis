@@ -9,19 +9,24 @@
  */
 package org.weasis.acquire.explorer.core.bean;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
-
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Locale;
 import org.dcm4che3.data.Tag;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.weasis.acquire.test.utils.MockHelper;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.codec.TagD;
 
-public class GlobalHelper extends MockHelper {
+@ExtendWith(MockitoExtension.class)
+public class GlobalHelper {
+  public static final DateTimeFormatter dateformat = DateTimeFormatter.ofPattern("yyyy-MM-dd");
   protected static String patientIdValue = "12345";
   protected static String patientNameValue = "John DOE"; // NON-NLS
   protected static String issuerOfPatientIdValue = "6789";
@@ -50,7 +55,7 @@ public class GlobalHelper extends MockHelper {
     patientBirthDate(Tag.PatientBirthDate, patientBirthDateW, TagType.DATE, patientBirthDateValue),
     patientSex(Tag.PatientSex, patientSexW, TagType.DICOM_SEX, patientSexValue),
     studyDate(Tag.StudyDate, studyDateW, TagType.DATE, studyDateValue),
-    studyinstanceUID(
+    studyInstanceUID(
         Tag.StudyInstanceUID, studyInstanceUIDW, TagType.STRING, studyInstanceUIDValue),
     modality(Tag.Modality, modalityW, TagType.STRING, modalityValue);
 
@@ -67,11 +72,23 @@ public class GlobalHelper extends MockHelper {
     }
 
     public void prepareMock() {
-      tagW = mock(TagW.class);
-
-      when(TagD.get(eq(tagId))).thenReturn(tagW);
-      when(tagW.getType()).thenReturn(type);
-      when(tagW.getKeyword()).thenReturn(name());
+      tagW = Mockito.mock(TagW.class);
+      Mockito.when(TagD.get(tagId)).thenReturn(tagW);
+      Mockito.when(tagW.getType()).thenReturn(type);
+      Mockito.when(tagW.getKeyword()).thenReturn(name());
     }
+  }
+
+  @BeforeAll
+  static void setUp() {
+    tagable = Mockito.mock(Tagable.class);
+
+    Mockito.mockStatic(LocalUtil.class);
+    Mockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);
+    Mockito.when(LocalUtil.getDateTimeFormatter()).thenReturn(dateformat);
+    Mockito.when(LocalUtil.getLocaleFormat()).thenReturn(Locale.ENGLISH);
+
+    Mockito.mockStatic(TagD.class);
+    Arrays.stream(GlobalTag.values()).forEach(GlobalTag::prepareMock);
   }
 }

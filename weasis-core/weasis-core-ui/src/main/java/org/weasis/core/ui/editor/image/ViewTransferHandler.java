@@ -45,8 +45,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     // Clear
     image = null;
 
-    if (comp instanceof DefaultView2d) {
-      DefaultView2d view2DPane = (DefaultView2d) comp;
+    if (comp instanceof DefaultView2d view2DPane) {
       RenderedImage imgP = createComponentImage(view2DPane);
       image = ImageConversion.convertRenderedImage(imgP);
       return this;
