@@ -42,8 +42,8 @@ Old branches are:
 * Embedded DICOM viewer in CD/DVD or other portable media
 
 # Viewer Features
-![screenshot](https://user-images.githubusercontent.com/993975/39397039-2180c178-4af9-11e8-9c72-2c1e9aa16eae.jpg)     
-  
+![weasis-4](https://user-images.githubusercontent.com/993975/153709915-c352738e-3d51-4f12-bf12-7c3435c1b04a.PNG)
+
 * Display all kinds of DICOM files (including multi-frame, enhanced, MPEG-2, MPEG-4, MIME Encapsulation, SR, PR, KOS, AU, RT and ECG)
 * Viewer for common image formats (TIFF, BMP, GIF, JPEG, PNG, RAS, HDR, and PNM)
 * Image manipulation (pan, zoom, windowing, presets, rotation, flip, scroll, crosshair, filtering...)
