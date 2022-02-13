@@ -29,12 +29,8 @@ class SeriesGroupTest {
 
   private static SeriesGroup s1, s2, s3;
 
-  @Mock static TagW modality;
-
   @BeforeAll
   static void setUp() {
-    Mockito.when(TagD.get(Tag.Modality)).thenReturn(modality);
-
     s1 = new SeriesGroup();
     s2 = new SeriesGroup(today);
     s3 = new SeriesGroup(TEST_SERIES);
