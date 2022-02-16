@@ -112,10 +112,6 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     dump.setLayout(new BorderLayout());
     dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
-    this.tagSearchTablePanel = new TagSearchTablePanel(jtable);
-    dump.add(tagSearchTablePanel, BorderLayout.NORTH);
-    jtable.getTableHeader().setReorderingAllowed(false);
-    jtable.setShowVerticalLines(true);
     TableRowSorter<TableModel> sorter =
         new TableRowSorter<>(model) {
           @Override
@@ -124,6 +120,10 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
           }
         };
     jtable.setRowSorter(sorter);
+    this.tagSearchTablePanel = new TagSearchTablePanel(jtable);
+    dump.add(tagSearchTablePanel, BorderLayout.NORTH);
+    jtable.getTableHeader().setReorderingAllowed(false);
+    jtable.setShowVerticalLines(true);
     dump.add(allPane, BorderLayout.CENTER);
 
     setPreferredSize(GuiUtils.getDimension(400, 300));
