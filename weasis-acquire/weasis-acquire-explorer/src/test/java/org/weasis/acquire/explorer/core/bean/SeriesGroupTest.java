@@ -13,14 +13,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
-import org.dcm4che3.data.Tag;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.util.LocalUtil;
-import org.weasis.dicom.codec.TagD;
 
 class SeriesGroupTest {
 

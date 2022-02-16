@@ -75,8 +75,24 @@ public class FontTools {
     return UIManager.getFont("mini.font");
   }
 
+  public static Font getMicroFont() {
+    return UIManager.getFont("micro.font");
+  }
+
   public static Font getSemiBoldFont() {
     return UIManager.getFont("semibold.font");
+  }
+
+  public static Font getSemiBoldSmallFont() {
+    return UIManager.getFont("small.semibold.font");
+  }
+
+  public static Font getSemiBoldMiniFont() {
+    return UIManager.getFont("mini.semibold.font");
+  }
+
+  public static Font getSemiBoldMicroFont() {
+    return UIManager.getFont("micro.semibold.font");
   }
 
   public static Font getBoldFont() {

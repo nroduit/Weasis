@@ -25,6 +25,7 @@ import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -73,13 +74,14 @@ public class HistogramPanel extends JPanel {
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
-    if (!(g instanceof Graphics2D) || data.getHistValues() == null || data.getLut() == null) {
+    if (!(g instanceof Graphics2D g2d) || data.getHistValues() == null || data.getLut() == null) {
       return;
     }
-    Graphics2D g2d = (Graphics2D) g;
     Color oldColor = g2d.getColor();
     Stroke oldStroke = g2d.getStroke();
     Font oldFont = g2d.getFont();
+    Font font = FontTools.getSemiBoldFont();
+    g2d.setFont(font.deriveFont(font.getSize() - 3f));
     drawHistogramPane(g2d);
     g2d.setFont(oldFont);
     g2d.setColor(oldColor);
@@ -87,9 +89,6 @@ public class HistogramPanel extends JPanel {
   }
 
   private void drawHistogramPane(Graphics2D g2d) {
-    Font font = FontTools.getSemiBoldFont();
-    g2d.setFont(font.deriveFont(font.getSize() - 3f));
-
     float sum = 0.0f;
     float maxHistogramCounts = 1.0f;
     float[] histValues = data.getHistValues();
@@ -105,10 +104,13 @@ public class HistogramPanel extends JPanel {
     if (accumulate) {
       maxHistogramCounts = sum;
     }
-    int lutHeight = 45;
+    FontMetrics fontMetrics = g2d.getFontMetrics();
+    final int fontHeight = fontMetrics.getHeight();
+    final int midFontHeight = fontHeight + 3;
+
     float bCanvas = this.getHeight() - 1.0f;
-    float tLut = bCanvas - lutHeight;
-    float bLut = bCanvas - 20.0f;
+    float tLut = bCanvas - (SLIDER_Y + fontHeight + 15f);
+    float bLut = tLut + SLIDER_Y + 5f;
     float fj = (tLut - SLIDER_Y) * zoom / maxHistogramCounts;
     float lutLength = getWidth() - SLIDER_X * 2.0f;
     this.xAxisHistoRescaleRatio = lutLength / nbBins;
@@ -118,11 +120,10 @@ public class HistogramPanel extends JPanel {
     double max = data.getPixMax();
     double low = windLevel.getLevel() - windLevel.getWindow() / 2.0;
     double high = windLevel.getLevel() + windLevel.getWindow() / 2.0;
-    float firstlevel = (float) min;
+    float firstLevel = (float) min;
     float hRange = (float) (max - min);
     float spaceFactor = (lutLength - xAxisHistoRescaleRatio) / hRange;
     float x = SLIDER_X;
-    float y = bLut;
     int piLow = nbBins + 1;
     int piHigh = -1;
     double diffLow = Double.MAX_VALUE;
@@ -167,10 +168,6 @@ public class HistogramPanel extends JPanel {
 
     g2d.setStroke(new BasicStroke(1.0f));
 
-    FontMetrics fontMetrics = g2d.getFontMetrics();
-    final int fontHeight = fontMetrics.getHeight();
-    final int midFontHeight = fontHeight + 3;
-
     float offsetThick = (xAxisHistoRescaleRatio + 0.5f) / 2f;
 
     int separation =
@@ -181,9 +178,9 @@ public class HistogramPanel extends JPanel {
     g2d.setPaint(Color.BLACK);
     Rectangle2D.Float rect = new Rectangle2D.Float();
     for (int i = 0; i <= separation; i++) {
-      float val = firstlevel + i * stepWindow;
-      float posX = x + (val - firstlevel) * spaceFactor;
-      rect.setRect(posX - 2f, y - 1f, 2f, 7f);
+      float val = firstLevel + i * stepWindow;
+      float posX = x + (val - firstLevel) * spaceFactor;
+      rect.setRect(posX - 2f, bLut - 1f, 2f, 7f);
       g2d.draw(rect);
     }
     rect.setRect(x - 2f - offsetThick, tLut + 5f, lutLength + 3f, 20f);
@@ -194,18 +191,18 @@ public class HistogramPanel extends JPanel {
     Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
     Line2D.Float line = new Line2D.Float();
     for (int i = 0; i <= separation; i++) {
-      float val = firstlevel + i * stepWindow;
-      float posX = x + (val - firstlevel) * spaceFactor;
-      line.setLine(posX - 1f, y, posX - 1f, y + 5f);
+      float val = firstLevel + i * stepWindow;
+      float posX = x + (val - firstLevel) * spaceFactor;
+      line.setLine(posX - 1f, bLut, posX - 1f, bLut + 5f);
       g2d.draw(line);
       String str =
-          DecFormater.allNumber(data.getLayer().pixelToRealValue(firstlevel + i * stepWindow));
+          DecFormater.allNumber(data.getLayer().pixelToRealValue(firstLevel + i * stepWindow));
       float offsetLabel =
           i == separation
               ? g2d.getFontMetrics().stringWidth(str) - SLIDER_X / 2f
               : g2d.getFontMetrics().stringWidth(str) / 2f;
       float xlabel = i == 0 ? posX / 2f : posX - offsetLabel;
-      FontTools.paintFontOutline(g2d, str, xlabel, y + midFontHeight);
+      FontTools.paintFontOutline(g2d, str, xlabel, bLut + midFontHeight);
     }
 
     rect.setRect(x - 1f - offsetThick, tLut + 6f, lutLength + 1f, 18f);
@@ -335,7 +332,7 @@ public class HistogramPanel extends JPanel {
   }
 
   public void saveHistogramInCSV(File csvOutputFile) {
-    try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+    try (PrintWriter pw = new PrintWriter(csvOutputFile, StandardCharsets.UTF_8)) {
       pw.println("Class,Occurrences"); // NON-NLS
       float[] histValues = data.getHistValues();
       WlParams windLevel = data.getWindLevel();

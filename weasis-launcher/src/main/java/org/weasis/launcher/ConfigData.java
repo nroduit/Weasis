@@ -332,26 +332,12 @@ public class ConfigData {
     configParams.forEach(
         (k, v) -> {
           switch (k) {
-            case PARAM_CONFIG_URL:
-              addProperty(P_WEASIS_CONFIG_URL, v.get(0));
-              break;
-            case PARAM_CODEBASE:
-              addProperty(P_WEASIS_CODEBASE_URL, v.get(0));
-              break;
-            case PARAM_CODEBASE_EXT:
-              addProperty(P_WEASIS_CODEBASE_EXT_URL, v.get(0));
-              break;
-            case PARAM_AUTHORIZATION:
-              addProperty(P_HTTP_AUTHORIZATION, v.get(0));
-              break;
-            case PARAM_PROPERTY:
-              addProperties(v);
-              break;
-            case PARAM_ARGUMENT:
-              addArguments(v);
-              break;
-            default:
-              break;
+            case PARAM_CONFIG_URL -> addProperty(P_WEASIS_CONFIG_URL, v.get(0));
+            case PARAM_CODEBASE -> addProperty(P_WEASIS_CODEBASE_URL, v.get(0));
+            case PARAM_CODEBASE_EXT -> addProperty(P_WEASIS_CODEBASE_EXT_URL, v.get(0));
+            case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.get(0));
+            case PARAM_PROPERTY -> addProperties(v);
+            case PARAM_ARGUMENT -> addArguments(v);
           }
         });
   }
@@ -468,7 +454,7 @@ public class ConfigData {
           if (pwd != null) {
             pwd = Utils.decrypt(pwd, "proxy.auth");
             if (pwd != null && pwd.length > 0) {
-              authPassword = new String(pwd);
+              authPassword = new String(pwd, StandardCharsets.UTF_8);
               applyPasswordAuthentication(authUser, authPassword);
               applyProxyProperty("http.proxyUser", authUser, mproxy);
               applyProxyProperty("http.proxyPassword", authPassword, mproxy);
@@ -593,8 +579,7 @@ public class ConfigData {
         urlConnection.setReadTimeout(
             Integer.parseInt((System.getProperty("UrlReadTimeout", "2000")))); // NON-NLS
 
-        if (urlConnection instanceof HttpURLConnection) {
-          HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
+        if (urlConnection instanceof HttpURLConnection httpURLConnection) {
           if (httpURLConnection.getResponseCode() != HttpURLConnection.HTTP_OK) {
             throw new IOException(httpURLConnection.getResponseMessage());
             // TODO ## redirection stream is not handled
@@ -634,16 +619,14 @@ public class ConfigData {
 
     while (xmler.hasNext()) {
       if (xmler.next() == XMLStreamConstants.START_ELEMENT) {
-        switch (xmler.getLocalName()) {
-          case "property": // NON-NLS
-            String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-            String value = xmler.getAttributeValue(null, "value"); // NON-NLS
-            addConfigParam(
-                configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); // NON-NLS
-            break;
-          case "argument": // NON-NLS
-            addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
-            break;
+        String localName = xmler.getLocalName();
+        if ("property".equals(localName)) { // NON-NLS
+          String name = xmler.getAttributeValue(null, "name"); // NON-NLS
+          String value = xmler.getAttributeValue(null, "value"); // NON-NLS
+          addConfigParam(
+              configParams, PARAM_PROPERTY, String.format("%s %s", name, value)); // NON-NLS
+        } else if ("argument".equals(localName)) { // NON-NLS
+          addConfigParam(configParams, PARAM_ARGUMENT, xmler.getElementText());
         }
       }
     }

@@ -870,15 +870,18 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public Font getLayerFont() {
     Font font = FontTools.getSemiBoldFont();
-    float fontSize =
-        // Set font size according to the view size
-        (float)
-            Math.ceil(
-                1.7
-                    * getWidth()
-                    / this.getGraphics().getFontMetrics(font).stringWidth("0123456789"));
-    fontSize = Math.max(8, Math.min(fontSize, font.getSize()));
-    return font.deriveFont(fontSize);
+    int minSize = getFontMetrics(font).stringWidth("Cannot read this media!"); // NON-NLS
+    if (minSize * 6 > getWidth()) {
+      double ratio = (minSize * 6.0 - getWidth()) / minSize;
+      if (ratio < 1) {
+        return FontTools.getSemiBoldSmallFont();
+      } else if (ratio < 2) {
+        return FontTools.getSemiBoldMiniFont();
+      } else {
+        return FontTools.getSemiBoldMicroFont();
+      }
+    }
+    return font;
   }
 
   /** paint routine */

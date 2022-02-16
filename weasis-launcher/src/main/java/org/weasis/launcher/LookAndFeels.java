@@ -10,6 +10,7 @@
 package org.weasis.launcher;
 
 import com.formdev.flatlaf.FlatIconColors;
+import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
 import com.formdev.flatlaf.util.ColorFunctions;
 import java.awt.Color;
@@ -39,6 +40,7 @@ public final class LookAndFeels {
   };
 
   LookAndFeels() {
+    FlatLaf.registerCustomDefaultsSource("org.weasis.theme");
     defaultLightTheme =
         new ReadableLookAndFeelInfo(
             "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false);

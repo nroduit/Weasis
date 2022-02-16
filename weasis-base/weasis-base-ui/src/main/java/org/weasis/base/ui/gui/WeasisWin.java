@@ -285,7 +285,7 @@ public class WeasisWin {
     runOnClose(control::destroy);
   }
 
-  public void createMainPanel() throws Exception {
+  public void createMainPanel() {
 
     // Do not disable check when debugging
     if (System.getProperty("maven.localRepository") == null) {
@@ -609,7 +609,7 @@ public class WeasisWin {
     }
   }
 
-  public void showWindow() throws Exception {
+  public void showWindow() {
     GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
     Toolkit kit = Toolkit.getDefaultToolkit();
 

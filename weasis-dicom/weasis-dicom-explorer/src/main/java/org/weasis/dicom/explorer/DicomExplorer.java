@@ -565,7 +565,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   /** @return */
   protected JPanel getMainPanel() {
     if (panelMain == null) {
-      MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]", "[]10lp[]");
+      MigLayout layout = new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]");
       panelMain = new JPanel(layout);
 
       final JLabel label = new JLabel(ResourceUtil.getIcon(OtherIcon.PATIENT, 24, 24));
@@ -584,11 +584,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           e -> {
             final MediaSeriesGroup patient =
                 selectedPatient == null ? null : selectedPatient.patient;
-            if (patient != null && e.getSource() instanceof JButton) {
+            if (patient != null && e.getSource() instanceof JButton button) {
               List<KOSpecialElement> list =
                   DicomModel.getSpecialElements(patient, KOSpecialElement.class);
               if (!list.isEmpty()) {
-                JButton button = (JButton) e.getSource();
                 if (list.size() == 1) {
                   model.openrelatedSeries(list.get(0), patient);
                 } else {

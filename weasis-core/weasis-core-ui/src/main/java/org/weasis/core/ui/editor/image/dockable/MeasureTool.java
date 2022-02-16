@@ -241,7 +241,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowHorizontalLines(true);
     table.setShowVerticalLines(true);
-    table.getColumnModel().setColumnMargin(3);
+    table.getColumnModel().setColumnMargin(GuiUtils.getScaleLength(3));
     return table;
   }
 

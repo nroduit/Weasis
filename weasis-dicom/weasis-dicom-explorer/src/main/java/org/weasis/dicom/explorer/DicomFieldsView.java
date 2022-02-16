@@ -14,7 +14,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -27,6 +26,8 @@ import javax.swing.JTable;
 import javax.swing.JTextPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Style;
@@ -114,8 +115,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     this.tagSearchTablePanel = new TagSearchTablePanel(jtable);
     dump.add(tagSearchTablePanel, BorderLayout.NORTH);
     jtable.getTableHeader().setReorderingAllowed(false);
-    jtable.setShowHorizontalLines(true);
     jtable.setShowVerticalLines(true);
+    TableRowSorter<TableModel> sorter =
+        new TableRowSorter<>(model) {
+          @Override
+          public boolean isSortable(int column) {
+            return false;
+          }
+        };
+    jtable.setRowSorter(sorter);
     dump.add(allPane, BorderLayout.CENTER);
 
     setPreferredSize(GuiUtils.getDimension(400, 300));
@@ -157,10 +165,11 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     Style bold = doc.addStyle("bold", doc.getStyle(StyleContext.DEFAULT_STYLE));
     StyleConstants.setBold(bold, true);
     StyleConstants.setForeground(bold, color);
+    int fontSize = StyleConstants.getFontSize(bold.getResolveParent());
+    StyleConstants.setFontSize(bold, fontSize);
 
     bold = doc.addStyle("h3", bold);
-    Font font = javax.swing.UIManager.getFont("h3.font");
-    StyleConstants.setFontSize(bold, font == null ? 16 : font.getSize());
+    StyleConstants.setFontSize(bold, fontSize + 3);
   }
 
   private void displayAllDicomInfo(MediaSeries<?> series, MediaElement media) {
@@ -181,6 +190,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     jtable.getColumnModel().getColumn(1).setPreferredWidth(30);
     jtable.getColumnModel().getColumn(2).setPreferredWidth(250);
     jtable.getColumnModel().getColumn(3).setPreferredWidth(300);
+    jtable.getColumnModel().setColumnMargin(GuiUtils.getScaleLength(7));
     int height =
         (jtable.getRowHeight() + jtable.getRowMargin()) * jtable.getRowCount()
             + jtable.getTableHeader().getHeight()
@@ -387,14 +397,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
       SeriesViewer<?> container, MediaSeries<? extends MediaElement> series, MediaElement dcm) {
     if (container != null && series != null && dcm != null) {
       JFrame frame = new JFrame(Messages.getString("DicomExplorer.dcmInfo"));
-      frame.setSize(500, 630);
+      frame.setSize(GuiUtils.getDimension(650, 600));
       DicomFieldsView view = new DicomFieldsView(container);
       view.changingViewContentEvent(new SeriesViewerEvent(container, series, dcm, EVENT.SELECT));
       JPanel panel = new JPanel();
       panel.setLayout(new BorderLayout());
       panel.add(view);
       frame.getContentPane().add(panel);
-      frame.setAlwaysOnTop(true);
       frame.setIconImage(ResourceUtil.getIcon(ActionIcon.METADATA).derive(64, 64).getImage());
       Component c =
           container instanceof Component component ? component : UIManager.MAIN_AREA.getComponent();
