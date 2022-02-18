@@ -37,11 +37,11 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.StringUtil;
 
-public class AcquireCentralThumnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
+public class AcquireCentralThumbnailList<E extends MediaElement> extends AbstractThumbnailList<E> {
 
   private AcquireTabPanel acquireTabPanel;
 
-  public AcquireCentralThumnailList(JIThumbnailCache thumbCache) {
+  public AcquireCentralThumbnailList(JIThumbnailCache thumbCache) {
     super(thumbCache);
   }
 
@@ -132,18 +132,18 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
   }
 
   private void moveToExisting(JMenu moveToMenu, final List<E> medias) {
-    AcquireCentralThumnailList.this.acquireTabPanel.getSeries().stream()
+    AcquireCentralThumbnailList.this.acquireTabPanel.getSeries().stream()
         .forEach(
             s -> {
               if (!s.equals(
-                      AcquireCentralThumnailList.this.acquireTabPanel.getSelected().getSerie())
+                      AcquireCentralThumbnailList.this.acquireTabPanel.getSelected().getSerie())
                   && !SeriesGroup.Type.NONE.equals(s.getType())) {
                 moveToMenu.add(
                     new JMenuItem(
                         new DefaultAction(
                             s.getDisplayName(),
                             event -> {
-                              AcquireCentralThumnailList.this.acquireTabPanel.moveElements(
+                              AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(
                                   s, AcquireManager.toAcquireImageInfo(medias));
                               repaint();
                             })));
@@ -157,7 +157,7 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
             new DefaultAction(
                 SeriesGroup.DEFAULT_SERIE_NAME,
                 event -> {
-                  AcquireCentralThumnailList.this.acquireTabPanel.moveElements(
+                  AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(
                       AcquireManager.getDefaultSeries(), AcquireManager.toAcquireImageInfo(medias));
                   repaint();
                 })));
@@ -171,10 +171,10 @@ public class AcquireCentralThumnailList<E extends MediaElement> extends Abstract
                 event -> {
                   JDialog dialog =
                       new AcquireNewSerieDialog(
-                          AcquireCentralThumnailList.this.acquireTabPanel,
+                          AcquireCentralThumbnailList.this.acquireTabPanel,
                           AcquireManager.toImageElement(medias));
                   GuiUtils.showCenterScreen(
-                      dialog, AcquireCentralThumnailList.this.acquireTabPanel);
+                      dialog, AcquireCentralThumbnailList.this.acquireTabPanel);
                   repaint();
                 })));
   }

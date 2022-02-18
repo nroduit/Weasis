@@ -59,11 +59,9 @@ public class Thumbnail extends JLabel implements Thumbnailable {
   public static final ExecutorService THUMB_LOADER =
       ThreadUtil.buildNewSingleThreadExecutor("Thumbnail Loader"); // NON-NLS
 
-  public static final RenderingHints DownScaleQualityHints =
-      new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-
+  public static final String KEY_SIZE = "explorer.thumbnail.size";
   public static final int MIN_SIZE = 48;
-  public static final int DEFAULT_SIZE = 150;
+  public static final int DEFAULT_SIZE = 144;
   public static final int MAX_SIZE = 256;
 
   private static final NativeCache<Thumbnail, PlanarImage> mCache =

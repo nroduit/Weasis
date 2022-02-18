@@ -24,10 +24,9 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSpinner;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -44,19 +43,19 @@ import org.weasis.core.util.StringUtil;
 public class LabelsPrefView extends AbstractItemDialogPage {
   private final JPanel panelList = new JPanel();
   private final JComboBox<Graphic> comboBoxTool;
-  private final JSpinner spinner1 = new JSpinner();
+  private final JComboBox<FontItem> fontItemJComboBox;
   private final ViewSetting viewSetting;
-  private final Map<JCheckBox, Measurement> map =
-      new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
+  private final Map<JCheckBox, Measurement> map;
 
   public LabelsPrefView() {
     super(MeasureTool.LABEL_PREF_NAME, 510);
+    this.map = new HashMap<>(ImageStatistics.ALL_MEASUREMENTS.length);
     this.viewSetting = Objects.requireNonNull(MeasureTool.viewSetting);
 
     ArrayList<Graphic> tools = new ArrayList<>(MeasureToolBar.measureGraphicList);
     tools.remove(0);
     this.comboBoxTool = new JComboBox<>(tools.toArray(Graphic[]::new));
-    GuiUtils.setNumberModel(spinner1, 12, 6, 40, 1);
+    this.fontItemJComboBox = new JComboBox<>(FontItem.values());
 
     jbInit();
     initialize();
@@ -66,7 +65,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
     JLabel jLabelSize = new JLabel(Messages.getString("LabelPrefView.size") + StringUtil.COLON);
     JPanel panelFont =
         GuiUtils.getFlowLayoutPanel(
-            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, spinner1);
+            ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, jLabelSize, fontItemJComboBox);
     panelFont.setBorder(GuiUtils.getTitledBorder(Messages.getString("LabelPrefView.font")));
     add(panelFont);
 
@@ -144,14 +143,20 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   }
 
   private void initialize() {
-    spinner1.setValue(FontTools.getDefaultFont().getSize() + viewSetting.getFontSizeShift());
+    String key = viewSetting.getFontkey();
+    if (StringUtil.hasText(key)) {
+      fontItemJComboBox.setSelectedItem(FontItem.getFontItem(key));
+    } else {
+      fontItemJComboBox.setSelectedItem(FontItem.SMALL_SEMIBOLD);
+    }
+
     selectTool((Graphic) comboBoxTool.getSelectedItem());
   }
 
   @Override
   public void closeAdditionalWindow() {
-    viewSetting.setFontSizeShift(
-        (Integer) spinner1.getValue() - FontTools.getDefaultFont().getSize());
+    viewSetting.setFontkey(
+        ((FontItem) Objects.requireNonNull(fontItemJComboBox.getSelectedItem())).getKey());
     MeasureToolBar.measureGraphicList.forEach(
         g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
 
@@ -172,7 +177,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    viewSetting.setFontSizeShift(0);
+    viewSetting.setFontkey(FontItem.SMALL_SEMIBOLD.getKey());
     initialize();
     MeasureToolBar.measureGraphicList.forEach(
         g -> {

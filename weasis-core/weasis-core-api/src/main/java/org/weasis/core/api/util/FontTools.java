@@ -11,15 +11,14 @@ package org.weasis.core.api.util;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
-import javax.swing.UIManager;
 
 public class FontTools {
+
   private FontTools() {}
 
   public static void paintColorFontOutline(
@@ -53,73 +52,5 @@ public class FontTools {
 
   public static void paintFontOutline(Graphics2D g2, String str, float x, float y) {
     paintColorFontOutline(g2, str, x, y, Color.WHITE);
-  }
-
-  public static Font geLargeFont() {
-    return UIManager.getFont("large.font");
-  }
-
-  public static Font getMediumFont() {
-    return UIManager.getFont("medium.font");
-  }
-
-  public static Font getDefaultFont() {
-    return UIManager.getFont("defaultFont");
-  }
-
-  public static Font getSmallFont() {
-    return UIManager.getFont("small.font");
-  }
-
-  public static Font getMiniFont() {
-    return UIManager.getFont("mini.font");
-  }
-
-  public static Font getMicroFont() {
-    return UIManager.getFont("micro.font");
-  }
-
-  public static Font getSemiBoldFont() {
-    return UIManager.getFont("semibold.font");
-  }
-
-  public static Font getSemiBoldSmallFont() {
-    return UIManager.getFont("small.semibold.font");
-  }
-
-  public static Font getSemiBoldMiniFont() {
-    return UIManager.getFont("mini.semibold.font");
-  }
-
-  public static Font getSemiBoldMicroFont() {
-    return UIManager.getFont("micro.semibold.font");
-  }
-
-  public static Font getBoldFont() {
-    return UIManager.getFont("h4.font");
-  }
-
-  public static Font getH3Font() {
-    return UIManager.getFont("h3.regular.font");
-  }
-
-  public static Font getH3BoldFont() {
-    return UIManager.getFont("h3.font");
-  }
-
-  public static Font getH2Font() {
-    return UIManager.getFont("h2.regular.font");
-  }
-
-  public static Font getH2BoldFont() {
-    return UIManager.getFont("h2.font");
-  }
-
-  public static Font getH1Font() {
-    return UIManager.getFont("h1.regular.font");
-  }
-
-  public static Font getH1BoldFont() {
-    return UIManager.getFont("h1.font");
   }
 }

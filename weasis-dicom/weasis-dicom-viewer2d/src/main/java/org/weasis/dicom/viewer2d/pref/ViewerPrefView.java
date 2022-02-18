@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.pref;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ItemEvent;
 import java.util.HashMap;
@@ -17,11 +18,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -29,6 +33,9 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -36,6 +43,7 @@ import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.pref.PreferenceDialog;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.Messages;
 import org.weasis.dicom.viewer2d.PRManager;
@@ -53,9 +61,11 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   private JCheckBox checkBoxWLcolor;
   private JCheckBox checkBoxLevelInverse;
   private JCheckBox checkBoxApplyPR;
+  private final JButton overlayColor;
 
   public ViewerPrefView() {
     super(View2dFactory.NAME, 501);
+    this.overlayColor = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
     initGUI();
   }
 
@@ -89,6 +99,19 @@ public class ViewerPrefView extends AbstractItemDialogPage {
           Object item = comboBox.getSelectedItem();
           if (item instanceof ActionW a) {
             map.put(a, slider.getValue());
+          }
+        });
+
+    overlayColor.setToolTipText(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
+    overlayColor.addActionListener(
+        e -> {
+          Color newColor =
+              JColorChooser.showDialog(
+                  SwingUtilities.getWindowAncestor(this),
+                  org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
+                  getOverlayColor());
+          if (newColor != null) {
+            BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, newColor);
           }
         });
 
@@ -131,15 +154,20 @@ public class ViewerPrefView extends AbstractItemDialogPage {
             Messages.getString("ViewerPrefView.apply_pr"),
             eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
 
-    final JPanel winLevelPanel = GuiUtils.getVerticalBoxLayoutPanel();
-    winLevelPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
-    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxWLcolor));
-    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxLevelInverse));
-    winLevelPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxApplyPR));
-    add(winLevelPanel);
+    final JPanel otherPanel = GuiUtils.getVerticalBoxLayoutPanel();
+    otherPanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("ViewerPrefView.other")));
+    otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxWLcolor));
+    otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxLevelInverse));
+    otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxApplyPR));
+    otherPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel("Overlay color"), overlayColor));
+    add(otherPanel);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
+  }
+
+  private Color getOverlayColor() {
+    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(OverlayOp.OVERLAY_COLOR_KEY);
   }
 
   @Override
@@ -176,6 +204,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         }
       }
     }
+
+    BundleTools.saveSystemPreferences();
   }
 
   @Override
@@ -199,6 +229,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         eventManager.getOptions().getBooleanProperty(WindowOp.P_INVERSE_LEVEL, true));
     checkBoxApplyPR.setSelected(
         eventManager.getOptions().getBooleanProperty(PRManager.PR_APPLY, false));
+    BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
   }
 
   private void formatSlider(JSlider slider) {

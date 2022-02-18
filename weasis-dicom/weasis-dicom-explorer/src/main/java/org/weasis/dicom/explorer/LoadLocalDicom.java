@@ -28,6 +28,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -63,7 +64,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
   protected Boolean doInBackground() throws Exception {
     dicomModel.firePropertyChange(
         new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-    addSelectionAndnotify(files, true);
+    addSelectionAndNotify(files, true);
     return true;
   }
 
@@ -74,7 +75,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
     LOGGER.info("End of loading DICOM locally");
   }
 
-  public void addSelectionAndnotify(File[] file, boolean firstLevel) {
+  public void addSelectionAndNotify(File[] file, boolean firstLevel) {
     if (file == null || file.length < 1) {
       return;
     }
@@ -123,7 +124,7 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
       }
     }
     for (File folder : folders) {
-      addSelectionAndnotify(folder.listFiles(), false);
+      addSelectionAndNotify(folder.listFiles(), false);
     }
   }
 
@@ -179,7 +180,10 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
         // Load image and create thumbnail in this Thread
         SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
         if (t == null) {
-          t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
+          int thumbnailSize =
+              BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                  Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, thumbnailSize);
           dicomSeries.setTag(TagW.Thumbnail, t);
           Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
         }

@@ -56,7 +56,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -153,7 +153,7 @@ public class AcquirePublishDialog extends JDialog {
     contentPane.setLayout(new BorderLayout());
 
     JLabel questionLabel = new JLabel(Messages.getString("AcquirePublishDialog.select_pub"));
-    questionLabel.setFont(FontTools.getSemiBoldFont());
+    questionLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
 
     contentPane.add(questionLabel, BorderLayout.NORTH);
 

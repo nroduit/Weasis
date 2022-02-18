@@ -25,7 +25,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 
 public abstract class SliderChangeListener extends MouseActionAdapter
@@ -293,7 +293,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
             });
 
     slider.setLabelTable(table);
-    SliderChangeListener.setFont(slider, FontTools.getMiniFont());
+    SliderChangeListener.setFont(slider, FontItem.MINI.getFont());
     slider.setMajorTickSpacing(spacing);
   }
 
@@ -386,7 +386,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
             basicState.getActionW().getTitle(),
             TitledBorder.LEADING,
             TitledBorder.DEFAULT_POSITION,
-            FontTools.getMediumFont(),
+            FontItem.MEDIUM.getFont(),
             null);
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
     slider.setBorder(titledBorder);

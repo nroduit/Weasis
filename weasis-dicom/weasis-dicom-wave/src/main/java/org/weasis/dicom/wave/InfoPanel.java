@@ -22,7 +22,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
@@ -86,8 +86,8 @@ class InfoPanel extends JPanel {
 
     JPanel main = new JPanel();
     main.setLayout(new GridLayout(3, 2, 25, 0));
-    lead.setFont(FontTools.getSemiBoldFont());
-    currentLabel.setFont(FontTools.getSemiBoldFont());
+    lead.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
+    currentLabel.setFont(FontItem.DEFAULT_SEMIBOLD.getFont());
 
     main.add(lead);
     main.add(currentLabel);

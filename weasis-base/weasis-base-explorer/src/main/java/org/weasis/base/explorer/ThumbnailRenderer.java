@@ -27,7 +27,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.LangUtil;
@@ -61,7 +61,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
     panel.add(iconLabel);
     this.add(panel);
 
-    descriptionLabel.setFont(FontTools.getMiniFont());
+    descriptionLabel.setFont(FontItem.MINI.getFont());
     Dimension dimLabel =
         new Dimension(
             dim.width, descriptionLabel.getFontMetrics(descriptionLabel.getFont()).getHeight());

@@ -19,7 +19,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JPopupMenu;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 
 public class GroupCheckBoxMenu implements GroupPopup {
 
@@ -49,7 +49,7 @@ public class GroupCheckBoxMenu implements GroupPopup {
       CheckBoxModel item = itemList.get(0);
       item.setSelected(all);
       JCheckBox box = new JCheckBox(item.getObject().toString(), null, item.isSelected());
-      box.setFont(FontTools.getBoldFont());
+      box.setFont(FontItem.DEFAULT_BOLD.getFont());
       box.addActionListener(
           e -> {
             if (e.getSource() instanceof JCheckBox btn) {

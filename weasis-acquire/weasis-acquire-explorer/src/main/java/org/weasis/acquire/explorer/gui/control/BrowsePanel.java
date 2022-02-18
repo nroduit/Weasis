@@ -29,7 +29,7 @@ import org.weasis.acquire.explorer.media.FileSystemDrive;
 import org.weasis.acquire.explorer.media.MediaSource;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 
 public class BrowsePanel extends JPanel implements IUSBDriveListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(BrowsePanel.class);
@@ -57,7 +57,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     mediaSourceSelectionCombo.setRenderer(
         new MediaSourceListCellRenderer(mediaSourceSelectionCombo));
     mediaSourceSelectionCombo.setMaximumRowCount(15);
-    mediaSourceSelectionCombo.setFont(FontTools.getSmallFont());
+    mediaSourceSelectionCombo.setFont(FontItem.SMALL.getFont());
     mediaSourceSelectionCombo.addActionListener(
         e -> {
           acquisitionView.setSystemDrive(
@@ -67,7 +67,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
     add(mediaSourceSelectionCombo);
 
     final JButton pathSelectionBtn = new JButton(new ChangePathSelectionAction(acquisitionView));
-    pathSelectionBtn.setFont(FontTools.getSmallFont());
+    pathSelectionBtn.setFont(FontItem.SMALL.getFont());
     add(pathSelectionBtn);
 
     // Allow combo to limit the size with long path

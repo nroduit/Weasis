@@ -72,7 +72,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 
 public class GuiUtils {
@@ -109,7 +109,7 @@ public class GuiUtils {
   public static Dimension getComponentSizeFromText(JComponent c, String text) {
     Font font = c.getFont();
     if (font == null) {
-      font = FontTools.getDefaultFont();
+      font = FontItem.DEFAULT.getFont();
     }
     Insets insets = c.getInsets();
     int width = c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
@@ -120,7 +120,7 @@ public class GuiUtils {
   public static int getComponentWidthFromText(JComponent c, String text) {
     Font font = c.getFont();
     if (font == null) {
-      font = FontTools.getDefaultFont();
+      font = FontItem.DEFAULT.getFont();
     }
     Insets insets = c.getInsets();
     return c.getFontMetrics(font).stringWidth(text) + insets.left + insets.right;
@@ -189,7 +189,7 @@ public class GuiUtils {
         title,
         TitledBorder.DEFAULT_JUSTIFICATION,
         TitledBorder.DEFAULT_POSITION,
-        FontTools.getSemiBoldFont(),
+        FontItem.DEFAULT_SEMIBOLD.getFont(),
         null);
   }
 

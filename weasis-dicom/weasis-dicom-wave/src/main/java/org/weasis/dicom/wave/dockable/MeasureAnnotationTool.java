@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -95,7 +95,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.add(Box.createVerticalStrut(5));
     jtableTag =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableTag.setFont(FontTools.getSmallFont());
+    jtableTag.setFont(FontItem.SMALL.getFont());
 
     jtableTag.getTableHeader().setReorderingAllowed(false);
     tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
@@ -120,7 +120,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     transform.add(Box.createVerticalStrut(5));
     jtableMarker =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableMarker.setFont(FontTools.getSmallFont());
+    jtableMarker.setFont(FontItem.SMALL.getFont());
 
     jtableMarker.getTableHeader().setReorderingAllowed(false);
     tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
@@ -372,7 +372,7 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
   public static class TagRenderer extends DefaultTableCellRenderer {
 
     public TagRenderer() {
-      setFont(FontTools.getSmallFont());
+      setFont(FontItem.SMALL.getFont());
     }
 
     @Override

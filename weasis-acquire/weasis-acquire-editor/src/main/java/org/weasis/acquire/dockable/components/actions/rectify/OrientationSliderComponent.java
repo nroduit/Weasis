@@ -15,7 +15,7 @@ import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 
 public class OrientationSliderComponent extends AbstractSliderComponent {
 
@@ -44,7 +44,7 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
         RECTIFY_ORIENTATION_MAX,
         RECTIFY_ORIENTATION_DEFAULT);
     setLabelTable(labels);
-    SliderChangeListener.setFont(this, FontTools.getMiniFont());
+    SliderChangeListener.setFont(this, FontItem.MINI.getFont());
     listener = new RectifyOrientationChangeListener(panel.getRectifyAction());
     addChangeListener(listener);
   }

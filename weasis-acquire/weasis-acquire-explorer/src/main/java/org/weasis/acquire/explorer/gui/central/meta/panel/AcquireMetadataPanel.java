@@ -46,7 +46,7 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.ui.util.CalendarUtil;
@@ -61,7 +61,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
   protected final JTable table;
   protected AcquireImageInfo imageInfo;
   protected TitledBorder titleBorder;
-  protected static final Font SMALL_FONT = FontTools.getSmallFont();
+  protected static final Font SMALL_FONT = FontItem.SMALL.getFont();
 
   protected AcquireMetadataPanel(String title) {
     this.title = title;

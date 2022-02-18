@@ -51,6 +51,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.util.FileUtil;
 
@@ -325,7 +326,7 @@ public class SeriesThumbnail extends Thumbnail
         g2d.drawArc(x + inset, y + inset, size, size, 0, 360);
       }
 
-      g2d.setFont(width > DEFAULT_SIZE ? FontTools.getSmallFont() : FontTools.getMiniFont());
+      g2d.setFont(width > DEFAULT_SIZE ? FontItem.SMALL.getFont() : FontItem.MINI.getFont());
       FontMetrics fontMetrics = g2d.getFontMetrics();
       final int fontHeight = fontMetrics.getHeight();
       int descent = g2d.getFontMetrics().getDescent();

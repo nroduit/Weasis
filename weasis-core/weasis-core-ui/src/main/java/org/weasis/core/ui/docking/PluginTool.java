@@ -104,8 +104,14 @@ public abstract class PluginTool extends JPanel implements DockableTool {
     }
   }
 
-  public void setDockableWidth(int width) {
+  protected void setDockableWidth(int width) {
     this.dockableWidth = width;
+  }
+
+  protected void updateDockableWidth(int width) {
+    setDockableWidth(width);
+    this.dockable.setVisible(false);
+    showDockable();
   }
 
   @Override
@@ -141,27 +147,36 @@ public abstract class PluginTool extends JPanel implements DockableTool {
         ExtendedMode mode = defaultMode == null ? ExtendedMode.MINIMIZED : defaultMode;
         CBaseLocation base = CLocation.base(UIManager.BASE_AREA);
 
-        CLocation minimizeLocation =
-            pos == POSITION.EAST
-                ? base.minimalEast()
-                : pos == POSITION.WEST
-                    ? base.minimalWest()
-                    : pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
+        CLocation minimizeLocation;
+        if (pos == POSITION.EAST) {
+          minimizeLocation = base.minimalEast();
+        } else {
+          if (pos == POSITION.WEST) {
+            minimizeLocation = base.minimalWest();
+          } else {
+            minimizeLocation = pos == POSITION.NORTH ? base.minimalNorth() : base.minimalSouth();
+          }
+        }
         dockable.setDefaultLocation(ExtendedMode.MINIMIZED, minimizeLocation);
 
         double w = UIManager.BASE_AREA.getWidth();
         if (w > 0) {
-          double ratio = dockableWidth / w;
+          double ratio = GuiUtils.getScaleLength(dockableWidth) / w;
           if (ratio > 0.9) {
             ratio = 0.9;
           }
           // Set default size and position for NORMALIZED mode
-          CLocation normalizedLocation =
-              pos == POSITION.EAST
-                  ? base.normalEast(ratio)
-                  : pos == POSITION.WEST
-                      ? base.normalWest(ratio)
-                      : pos == POSITION.NORTH ? base.normalNorth(ratio) : base.normalSouth(ratio);
+          CLocation normalizedLocation;
+          if (pos == POSITION.EAST) {
+            normalizedLocation = base.normalEast(ratio);
+          } else {
+            if (pos == POSITION.WEST) {
+              normalizedLocation = base.normalWest(ratio);
+            } else {
+              normalizedLocation =
+                  pos == POSITION.NORTH ? base.normalNorth(ratio) : base.normalSouth(ratio);
+            }
+          }
           dockable.setDefaultLocation(ExtendedMode.NORMALIZED, normalizedLocation);
         }
         // Set default size for FlapLayout

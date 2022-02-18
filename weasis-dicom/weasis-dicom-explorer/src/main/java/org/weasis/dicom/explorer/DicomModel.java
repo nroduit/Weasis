@@ -832,7 +832,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     // Load image and create thumbnail in this Thread
     Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
     if (t == null) {
-      t = DicomExplorer.createThumbnail(dicomSeries, this, Thumbnail.DEFAULT_SIZE);
+      int thumbnailSize =
+          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+      t = DicomExplorer.createThumbnail(dicomSeries, this, thumbnailSize);
       dicomSeries.setTag(TagW.Thumbnail, t);
       Optional.ofNullable(t).ifPresent(Thumbnail::repaint);
     }

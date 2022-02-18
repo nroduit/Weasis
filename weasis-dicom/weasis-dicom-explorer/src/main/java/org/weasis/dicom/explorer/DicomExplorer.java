@@ -46,7 +46,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JViewport;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
@@ -67,7 +66,8 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -103,7 +103,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   private final HashMap<MediaSeriesGroup, List<StudyPane>> patient2study = new HashMap<>();
   private final HashMap<MediaSeriesGroup, List<SeriesPane>> study2series = new HashMap<>();
-  private final JScrollPane thumnailView = new JScrollPane();
+  private final JScrollPane thumbnailView = new JScrollPane();
   private final LoadingPanel loadingPanel = new LoadingPanel();
   private final SeriesSelectionModel selectionList;
 
@@ -134,8 +134,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           selectStudy();
         }
       };
-  private final JSlider slider =
-      new JSlider(Thumbnail.MIN_SIZE, Thumbnail.MAX_SIZE, Thumbnail.DEFAULT_SIZE);
   private JPanel panelMain = null;
   private final boolean verticalLayout = true;
 
@@ -152,7 +150,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     dockable.setMaximizable(true);
     this.model = model == null ? new DicomModel() : model;
     this.selectionList = new SeriesSelectionModel(selectedPatient);
-    setDockableWidth(Thumbnail.DEFAULT_SIZE + 42);
+    int thumbnailSize =
+        BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+    setDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
 
     patientCombobox.setMaximumRowCount(15);
     patientCombobox.addItemListener(patientChangeListener);
@@ -162,9 +162,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     modelStudy.setSelectedItem(ALL_STUDIES);
     studyCombobox.addItemListener(studyItemListener);
 
-    thumnailView.setBorder(BorderFactory.createEmptyBorder()); // remove default line
-    thumnailView.getVerticalScrollBar().setUnitIncrement(16);
-    thumnailView.setViewportView(selectedPatient);
+    thumbnailView.setBorder(BorderFactory.createEmptyBorder()); // remove default line
+    thumbnailView.getVerticalScrollBar().setUnitIncrement(16);
+    thumbnailView.setViewportView(selectedPatient);
     changeToolWindowAnchor(getDockable().getBaseLocation());
   }
 
@@ -279,8 +279,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     return studyPane;
   }
 
-  private void updateThumbnailSize() {
-    int thumbnailSize = slider.getValue();
+  public void updateThumbnailSize(int thumbnailSize) {
+    updateDockableWidth(Math.max(thumbnailSize, Thumbnail.DEFAULT_SIZE) + 42);
     for (StudyPane studyPane : selectedPatient.getStudyPaneList()) {
       for (SeriesPane series : studyPane.getSeriesPaneList()) {
         series.updateSize(thumbnailSize);
@@ -471,18 +471,20 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       super.removeAll();
       List<SeriesPane> seriesList = study2series.get(dicomStudy);
       if (seriesList != null) {
-        int thumbnailSize = slider.getValue();
+        int thumbnailSize =
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
         for (int i = 0; i < seriesList.size(); i++) {
           SeriesPane series = seriesList.get(i);
           series.updateSize(thumbnailSize);
-          addPane(series, i);
+          addPane(series, i, thumbnailSize);
         }
         this.revalidate();
       }
     }
 
-    public void addPane(SeriesPane seriesPane, int index) {
-      seriesPane.updateSize(slider.getValue());
+    public void addPane(SeriesPane seriesPane, int index, int thumbnailSize) {
+      seriesPane.updateSize(thumbnailSize);
       add(seriesPane, index);
       updateText();
     }
@@ -505,7 +507,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.sequence = Objects.requireNonNull(sequence);
       this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
       this.setBackground(FlatUIUtils.getUIColor(SeriesSelectionModel.BACKGROUND, Color.LIGHT_GRAY));
-      int thumbnailSize = slider.getValue();
+      int thumbnailSize =
+          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       if (sequence instanceof Series series) {
         Thumbnail thumb = (Thumbnail) series.getTagValue(TagW.Thumbnail);
         if (thumb == null) {
@@ -518,7 +521,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       this.setAlignmentY(TOP_ALIGNMENT);
       String desc = TagD.getTagValue(sequence, Tag.SeriesDescription, String.class);
       label = new JLabel(desc == null ? "" : desc, SwingConstants.CENTER);
-      label.setFont(FontTools.getMiniFont());
+      label.setFont(FontItem.MINI.getFont());
       label.setFocusable(false);
       this.setFocusable(false);
       updateSize(thumbnailSize);
@@ -730,10 +733,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       repaintStudy = true;
     }
     if (repaintStudy) {
+      int thumbnailSize =
+          BundleTools.SYSTEM_PREFERENCES.getIntProperty(Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
       studyPane.removeAll();
       for (int i = 0, k = 1; i < seriesList.size(); i++) {
         SeriesPane s = seriesList.get(i);
-        studyPane.addPane(s, i);
+        studyPane.addPane(s, i, thumbnailSize);
         if (list.contains(s.getSequence())) {
           s.getSequence().setTag(TagW.SplitSeriesNumber, k);
           k++;
@@ -827,9 +832,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
       }
       if (selectedPatient.isStudyVisible(study)) {
+        int thumbnailSize =
+            BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
         studyPane.removeAll();
         for (int i = 0; i < seriesList.size(); i++) {
-          studyPane.addPane(seriesList.get(i), i);
+          studyPane.addPane(seriesList.get(i), i, thumbnailSize);
         }
         studyPane.revalidate();
         studyPane.repaint();
@@ -848,7 +856,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           if (!getSelectionList().isOpenningSeries() && selectedPatient.isSeriesVisible(s)) {
             SeriesPane p = getSeriesPane(s);
             if (p != null) {
-              JViewport vp = thumnailView.getViewport();
+              JViewport vp = thumbnailView.getViewport();
               Rectangle bound = vp.getViewRect();
               Point ptmin = SwingUtilities.convertPoint(p, new Point(0, 0), selectedPatient);
               Point ptmax =
@@ -1006,12 +1014,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     if (verticalLayout) {
       setLayout(new MigLayout("fillx, ins 0", "[grow,fill]", "[]rel[grow,fill]unrel[]"));
       add(getMainPanel(), "");
-      add(thumnailView, "newline, top");
+      add(thumbnailView, "newline, top");
       add(loadingPanel, "newline,");
     } else {
       setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]"));
       add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel));
-      add(thumnailView);
+      add(thumbnailView);
     }
     selectedPatient.refreshLayout();
   }

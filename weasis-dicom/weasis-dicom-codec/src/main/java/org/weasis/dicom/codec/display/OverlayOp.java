@@ -16,24 +16,22 @@ import org.dcm4che3.img.DicomMetaData;
 import org.dcm4che3.img.data.OverlayData;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.stream.ImageDescriptor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.image.AbstractOp;
 import org.weasis.core.api.image.ImageOpEvent;
 import org.weasis.core.api.image.ImageOpEvent.OpEvent;
 import org.weasis.core.api.media.data.ImageElement;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.PRSpecialElement;
 import org.weasis.opencv.data.PlanarImage;
 
 public class OverlayOp extends AbstractOp {
-  private static final Logger LOGGER = LoggerFactory.getLogger(OverlayOp.class);
-
   public static final String OP_NAME = ActionW.IMAGE_OVERLAY.getTitle();
 
   public static final String P_SHOW = "overlay"; // NON-NLS
   public static final String P_IMAGE_ELEMENT = "img.element";
+  public static final String OVERLAY_COLOR_KEY = "overlay.color";
 
   public OverlayOp() {
     setName(OP_NAME);
@@ -76,22 +74,19 @@ public class OverlayOp extends AbstractOp {
 
     if (overlay != null && overlay) {
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
-      if (image != null) {
-        if (image.getMediaReader() instanceof DicomMediaIO) {
-          DicomMediaIO reader = (DicomMediaIO) image.getMediaReader();
-          DicomMetaData md = reader.getDicomMetaData();
-          if (md != null) {
-            ImageDescriptor desc = md.getImageDescriptor();
-            if (image.getKey() instanceof Integer) {
-              int frame = (Integer) image.getKey();
-              DicomImageReadParam p = new DicomImageReadParam();
-              p.setPresentationState((PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT));
-              PlanarImage original = source;
-              if (!desc.getEmbeddedOverlay().isEmpty()) {
-                original = reader.getImageFragment(image, (Integer) image.getKey(), false);
-              }
-              result = OverlayData.getOverlayImage(original, source, desc, p, frame);
+      if (image != null && image.getMediaReader() instanceof DicomMediaIO reader) {
+        DicomMetaData md = reader.getDicomMetaData();
+        if (md != null) {
+          ImageDescriptor desc = md.getImageDescriptor();
+          if (image.getKey() instanceof Integer frame) {
+            DicomImageReadParam p = new DicomImageReadParam();
+            p.setPresentationState((PrDicomObject) params.get(WindowAndPresetsOp.P_PR_ELEMENT));
+            PlanarImage original = source;
+            if (!desc.getEmbeddedOverlay().isEmpty()) {
+              original = reader.getImageFragment(image, (Integer) image.getKey(), false);
             }
+            p.setOverlayColor(BundleTools.SYSTEM_PREFERENCES.getColorProperty(OVERLAY_COLOR_KEY));
+            result = OverlayData.getOverlayImage(original, source, desc, p, frame);
           }
         }
       }

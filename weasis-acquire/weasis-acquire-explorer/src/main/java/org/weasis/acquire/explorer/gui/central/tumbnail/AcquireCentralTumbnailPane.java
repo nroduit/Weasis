@@ -41,13 +41,13 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralTumbnailPane.class);
 
   public AcquireCentralTumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
-    super(new AcquireCentralThumnailList<>(thumbCache));
+    super(new AcquireCentralThumbnailList<>(thumbCache));
     setList(list);
     setTransferHandler(new SequenceHandler());
   }
 
   public void setAcquireTabPanel(AcquireTabPanel acquireTabPanel) {
-    ((AcquireCentralThumnailList) this.thumbnailList).setAcquireTabPanel(acquireTabPanel);
+    ((AcquireCentralThumbnailList) this.thumbnailList).setAcquireTabPanel(acquireTabPanel);
   }
 
   public void addListSelectionListener(ListSelectionListener listener) {
@@ -73,8 +73,8 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
   public void repaintList() {
     // Repaint the scroll pane correctly (otherwise not all the elements of JList are repainted)
-    if (thumbnailList.asComponent() instanceof JComponent) {
-      ((JComponent) thumbnailList.asComponent()).updateUI();
+    if (thumbnailList.asComponent() instanceof JComponent component) {
+      component.updateUI();
     }
   }
 
@@ -136,23 +136,22 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
       try {
         Object object = transferable.getTransferData(Series.sequenceDataFlavor);
-        if (object instanceof Series) {
-
-          MediaElement media = ((Series) object).getMedia(0, null, null);
+        if (object instanceof Series series) {
+          MediaElement media = series.getMedia(0, null, null);
           addToSeries(media);
         }
       } catch (UnsupportedFlavorException | IOException e) {
-        LOGGER.error("Drop thumnail", e);
+        LOGGER.error("Drop thumbnail", e);
       }
 
       return true;
     }
 
     private void addToSeries(MediaElement media) {
-      if (media instanceof ImageElement) {
-        AcquireCentralThumnailList tumbList =
-            (AcquireCentralThumnailList) AcquireCentralTumbnailPane.this.thumbnailList;
-        AcquireImageInfo info = AcquireManager.findByImage((ImageElement) media);
+      if (media instanceof ImageElement imageElement) {
+        AcquireCentralThumbnailList tumbList =
+            (AcquireCentralThumbnailList) AcquireCentralTumbnailPane.this.thumbnailList;
+        AcquireImageInfo info = AcquireManager.findByImage(imageElement);
         if (info != null) {
           SeriesGroup seriesGroup =
               Optional.ofNullable(tumbList.getSelectedSeries())

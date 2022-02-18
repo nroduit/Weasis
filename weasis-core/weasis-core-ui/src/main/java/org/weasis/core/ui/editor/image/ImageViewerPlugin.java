@@ -146,11 +146,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   protected final JPanel grid;
   protected GridBagLayoutModel layoutModel;
 
-  public ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String pluginName) {
+  protected ImageViewerPlugin(ImageViewerEventManager<E> eventManager, String pluginName) {
     this(eventManager, VIEWS_1x1, pluginName, null, null, null);
   }
 
-  public ImageViewerPlugin(
+  protected ImageViewerPlugin(
       ImageViewerEventManager<E> eventManager,
       GridBagLayoutModel layoutModel,
       String uid,
@@ -291,8 +291,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public void changeLayoutModel(GridBagLayoutModel layoutModel) {
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener) {
-      ((ComboItemListener) layout).setSelectedItem(layoutModel);
+    if (layout instanceof ComboItemListener itemListener) {
+      itemListener.setSelectedItem(layoutModel);
     }
   }
 
@@ -756,8 +756,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       int diffNumber = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
       for (Object m : list) {
-        if (m instanceof GridBagLayoutModel) {
-          GridBagLayoutModel model = (GridBagLayoutModel) m;
+        if (m instanceof GridBagLayoutModel model) {
           int layoutSize = getViewTypeNumber(model);
           int dn = Math.abs(layoutSize - size);
           if (layoutSize >= size && dn <= diffNumber) {

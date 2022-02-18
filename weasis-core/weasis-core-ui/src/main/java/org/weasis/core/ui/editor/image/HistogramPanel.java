@@ -37,6 +37,7 @@ import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.image.util.WindLevelParameters;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.editor.image.HistogramData.Model;
@@ -80,7 +81,7 @@ public class HistogramPanel extends JPanel {
     Color oldColor = g2d.getColor();
     Stroke oldStroke = g2d.getStroke();
     Font oldFont = g2d.getFont();
-    Font font = FontTools.getSemiBoldFont();
+    Font font = FontItem.DEFAULT_SEMIBOLD.getFont();
     g2d.setFont(font.deriveFont(font.getSize() - 3f));
     drawHistogramPane(g2d);
     g2d.setFont(oldFont);

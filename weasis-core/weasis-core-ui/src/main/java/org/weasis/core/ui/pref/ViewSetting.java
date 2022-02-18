@@ -17,10 +17,10 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import javax.swing.UIManager;
 import org.osgi.service.prefs.Preferences;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.ImageStatistics;
@@ -28,7 +28,8 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 
 public class ViewSetting {
   public static final String PREFERENCE_NODE = "view2d.default";
-  private int fontSizeShift;
+
+  private String fontkey;
   private boolean drawOnlyOnce;
   private Color lineColor;
   private int lineWidth;
@@ -40,7 +41,7 @@ public class ViewSetting {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences font = p.node("font"); // NON-NLS
-      fontSizeShift = font.getInt("shift.size", 0); // NON-NLS
+      fontkey = font.get("key", "defaultFont"); // NON-NLS
       Preferences draw = p.node("drawing"); // NON-NLS
       drawOnlyOnce = draw.getBoolean("once", true); // NON-NLS
       lineWidth = draw.getInt("width", 1); // NON-NLS
@@ -156,7 +157,7 @@ public class ViewSetting {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences font = p.node("font"); // NON-NLS
-      BundlePreferences.putIntPreferences(font, "shift.size", fontSizeShift); // NON-NLS
+      BundlePreferences.putStringPreferences(font, "key", fontkey); // NON-NLS
 
       Preferences draw = p.node("drawing"); // NON-NLS
       BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); // NON-NLS
@@ -192,17 +193,16 @@ public class ViewSetting {
     }
   }
 
-  public int getFontSizeShift() {
-    return fontSizeShift;
+  public String getFontkey() {
+    return fontkey;
   }
 
-  public void setFontSizeShift(int fontSizeShift) {
-    this.fontSizeShift = fontSizeShift;
+  public void setFontkey(String fontkey) {
+    this.fontkey = fontkey;
   }
 
   public Font getFont() {
-    Font font = FontTools.getSemiBoldFont();
-    return font.deriveFont((float) Math.max(font.getSize() + fontSizeShift, 4));
+    return UIManager.getFont(fontkey);
   }
 
   public void setDrawOnlyOnce(boolean drawOnlyOnce) {

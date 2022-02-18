@@ -15,7 +15,7 @@ import org.weasis.acquire.Messages;
 import org.weasis.acquire.dockable.components.actions.contrast.ContrastPanel;
 import org.weasis.acquire.dockable.components.util.AbstractSliderComponent;
 import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 
 public class BrightnessComponent extends AbstractSliderComponent {
@@ -49,7 +49,7 @@ public class BrightnessComponent extends AbstractSliderComponent {
         BRIGHTNESS_MAX,
         BRIGHTNESS_VALUE);
     setLabelTable(labels);
-    SliderChangeListener.setFont(this, FontTools.getMiniFont());
+    SliderChangeListener.setFont(this, FontItem.MINI.getFont());
     addChangeListener(panel);
   }
 

@@ -101,7 +101,6 @@ public final class LookAndFeels {
       applyDefaultColor(FlatIconColors.ACTIONS_BLUE, dark);
       applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
       applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
-
     } catch (Exception e) {
       LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
     }

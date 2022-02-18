@@ -27,6 +27,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
@@ -157,7 +158,10 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
         // Load image and create thumbnail in this Thread
         SeriesThumbnail t = (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
         if (t == null) {
-          t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, Thumbnail.DEFAULT_SIZE);
+          int thumbnailSize =
+              BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                  Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+          t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, thumbnailSize);
           dicomSeries.setTag(TagW.Thumbnail, t);
           Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
         }

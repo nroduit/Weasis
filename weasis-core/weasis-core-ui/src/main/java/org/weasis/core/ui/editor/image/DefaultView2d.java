@@ -93,7 +93,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.AuditLog;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
@@ -869,16 +869,16 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public Font getLayerFont() {
-    Font font = FontTools.getSemiBoldFont();
+    Font font = FontItem.DEFAULT_SEMIBOLD.getFont();
     int minSize = getFontMetrics(font).stringWidth("Cannot read this media!"); // NON-NLS
     if (minSize * 6 > getWidth()) {
       double ratio = (minSize * 6.0 - getWidth()) / minSize;
       if (ratio < 1) {
-        return FontTools.getSemiBoldSmallFont();
+        return FontItem.SMALL_SEMIBOLD.getFont();
       } else if (ratio < 2) {
-        return FontTools.getSemiBoldMiniFont();
+        return FontItem.MINI_SEMIBOLD.getFont();
       } else {
-        return FontTools.getSemiBoldMicroFont();
+        return FontItem.MICRO_SEMIBOLD.getFont();
       }
     }
     return font;

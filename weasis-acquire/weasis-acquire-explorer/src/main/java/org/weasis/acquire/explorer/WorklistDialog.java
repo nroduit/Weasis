@@ -32,7 +32,7 @@ import org.weasis.acquire.explorer.core.bean.DefaultTagable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableColumnAdjuster;
 import org.weasis.dicom.codec.TagD;
@@ -75,7 +75,7 @@ public class WorklistDialog extends JDialog {
     rootPane.setLayout(new BorderLayout(0, 0));
 
     jtable = new JTable();
-    jtable.setFont(FontTools.getSmallFont());
+    jtable.setFont(FontItem.SMALL.getFont());
     jtable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     jtable.setRowSelectionAllowed(true);
     jtable.setShowHorizontalLines(true);

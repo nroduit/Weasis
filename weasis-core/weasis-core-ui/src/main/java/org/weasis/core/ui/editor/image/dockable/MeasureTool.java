@@ -45,7 +45,7 @@ import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
@@ -205,7 +205,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
 
   public JPanel getSelectedMeasurePanel() {
     jtable = createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtable.setFont(FontTools.getMiniFont());
+    jtable.setFont(FontItem.MINI.getFont());
 
     jtable.getTableHeader().setReorderingAllowed(false);
 

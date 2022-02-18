@@ -24,7 +24,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 
 public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
@@ -38,7 +38,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     this.view2d = view2d;
     // Remove OpEventListener to avoid reseting some parameters when setting the series
     this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
-    setFont(FontTools.getMiniFont());
+    setFont(FontItem.MINI.getFont());
     this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
     infoLayer.setVisible(view2d.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);

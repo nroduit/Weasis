@@ -128,6 +128,7 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
         Color foreground = FlatUIUtils.getUIColor("MenuItem.background", Color.WHITE);
         if (c instanceof RadioMenuItem menuItem && menuItem.isArmed()) {
           background = FlatUIUtils.getUIColor("MenuItem.selectionForeground", Color.DARK_GRAY);
+          foreground = FlatUIUtils.getUIColor("MenuItem.selectionBackground", Color.LIGHT_GRAY);
         } else if (c instanceof RadioMenuItem menuItem && menuItem.isSelected()) {
           foreground = FlatUIUtils.getUIColor("MenuItem.checkBackground", Color.BLUE);
         }
@@ -159,12 +160,12 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
 
       @Override
       public int getIconWidth() {
-        return ICON_SIZE;
+        return GuiUtils.getScaleLength(ICON_SIZE);
       }
 
       @Override
       public int getIconHeight() {
-        return ICON_SIZE;
+        return GuiUtils.getScaleLength(ICON_SIZE);
       }
     };
   }
@@ -225,8 +226,6 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
   }
 
   private final class SAXAdapter extends DefaultHandler {
-    /** Specifies the component position and size */
-
     /** @see java.awt.GridBagConstraints#gridx */
     private int x;
     /** @see java.awt.GridBagConstraints#gridy */

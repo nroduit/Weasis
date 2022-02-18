@@ -61,6 +61,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
     subPageList.add(subPage);
     if (actionListener != null && menuPanel != null) {
       JButton button = new JButton();
+      button.putClientProperty("JButton.buttonType", "roundRect");
       button.setText(subPage.getTitle());
       button.addActionListener(actionListener);
       menuPanel.add(button);

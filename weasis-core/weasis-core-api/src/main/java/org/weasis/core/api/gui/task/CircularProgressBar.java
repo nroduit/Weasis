@@ -24,7 +24,7 @@ import java.awt.geom.Arc2D;
 import javax.swing.JProgressBar;
 import javax.swing.Timer;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.util.FontTools;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.LocalUtil;
 
 public class CircularProgressBar extends JProgressBar {
@@ -52,8 +52,8 @@ public class CircularProgressBar extends JProgressBar {
     this.displayText = displayText;
     Font font =
         fontSize == null
-            ? FontTools.getMiniFont()
-            : FontTools.getDefaultFont().deriveFont(fontSize);
+            ? FontItem.MINI.getFont()
+            : FontItem.DEFAULT.getFont().deriveFont(fontSize);
     this.setFont(font.deriveFont((float) Math.max(font.getSize() - 1, 8)));
     init();
   }

@@ -26,6 +26,7 @@ import java.awt.geom.Rectangle2D;
 import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.api.gui.util.GeomUtil;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.FontTools;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.utils.imp.DefaultGraphicLabel;
@@ -157,7 +158,7 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
       reset();
     } else {
       this.labels = labels;
-      Font defaultFont = view2d == null ? FontTools.getDefaultFont() : view2d.getFont();
+      Font defaultFont = view2d == null ? FontItem.DEFAULT.getFont() : view2d.getFont();
       Graphics2D g2d = view2d == null ? null : (Graphics2D) view2d.getJComponent().getGraphics();
       FontRenderContext fontRenderContext =
           g2d == null ? new FontRenderContext(null, false, false) : g2d.getFontRenderContext();

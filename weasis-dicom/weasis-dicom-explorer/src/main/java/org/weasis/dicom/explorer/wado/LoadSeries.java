@@ -580,7 +580,10 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 SeriesThumbnail thumbnail =
                     (SeriesThumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
                 if (thumbnail == null) {
-                  thumbnail = new SeriesThumbnail(dicomSeries, Thumbnail.DEFAULT_SIZE);
+                  int thumbnailSize =
+                      BundleTools.SYSTEM_PREFERENCES.getIntProperty(
+                          Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
+                  thumbnail = new SeriesThumbnail(dicomSeries, thumbnailSize);
                 }
                 // In case series is downloaded or canceled
                 thumbnail.setProgressBar(LoadSeries.this.isDone() ? null : progressBar);
@@ -608,7 +611,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
       }
       try {
-        file = getJPEGThumnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
+        file = getJpegThumnbails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
       } catch (Exception e) {
         LOGGER.error("Downloading thumbnail", e);
       }
@@ -713,7 +716,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return dicomSeries;
   }
 
-  public File getJPEGThumnails(
+  public File getJpegThumnbails(
       WadoParameters wadoParameters, String studyUID, String seriesUID, String sopInstanceUID)
       throws Exception {
     String addParams = wadoParameters.getAdditionnalParameters();
