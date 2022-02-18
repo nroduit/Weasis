@@ -98,6 +98,10 @@ public class GuiUtils {
     public Color getColor() {
       return color;
     }
+
+    public String getHtmlCode() {
+      return String.format("rgb(%d,%d,%d)", color.getRed(), color.getGreen(), color.getBlue());
+    }
   }
 
   public static Dimension getBigIconButtonSize(JComponent c) {

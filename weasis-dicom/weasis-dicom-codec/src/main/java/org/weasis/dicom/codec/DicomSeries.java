@@ -94,21 +94,7 @@ public class DicomSeries extends Series<DicomImageElement> {
 
   @Override
   public String getToolTips() {
-    StringBuilder toolTips = new StringBuilder("<html>");
-    addToolTipsElement(toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName));
-    addToolTipsElement(toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality));
-    addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber));
-    addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription));
-    addToolTipsElement(
-        toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription));
-    addToolTipsElement(
-        toolTips,
-        Messages.getString("DicomSeries.date"),
-        TagD.get(Tag.SeriesDate),
-        TagD.get(Tag.SeriesTime));
-
+    StringBuilder toolTips = getToolTips(this);
     if (getFileSize() > 0.0) {
       toolTips.append(Messages.getString("DicomSeries.size"));
       toolTips.append(StringUtil.COLON_AND_SPACE);
@@ -117,6 +103,26 @@ public class DicomSeries extends Series<DicomImageElement> {
     }
     toolTips.append("</html>");
     return toolTips.toString();
+  }
+
+  public static StringBuilder getToolTips(Series<?> series) {
+    StringBuilder toolTips = new StringBuilder("<html>");
+    series.addToolTipsElement(
+        toolTips, Messages.getString("DicomSeries.pat"), TagD.get(Tag.PatientName));
+    series.addToolTipsElement(
+        toolTips, Messages.getString("DicomSeries.mod"), TagD.get(Tag.Modality));
+    series.addToolTipsElement(
+        toolTips, Messages.getString("DicomSeries.series_nb"), TagD.get(Tag.SeriesNumber));
+    series.addToolTipsElement(
+        toolTips, Messages.getString("DicomSeries.study"), TagD.get(Tag.StudyDescription));
+    series.addToolTipsElement(
+        toolTips, Messages.getString("DicomSeries.series"), TagD.get(Tag.SeriesDescription));
+    series.addToolTipsElement(
+        toolTips,
+        Messages.getString("DicomSeries.date"),
+        TagD.get(Tag.SeriesDate),
+        TagD.get(Tag.SeriesTime));
+    return toolTips;
   }
 
   @Override

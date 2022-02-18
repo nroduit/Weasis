@@ -63,7 +63,6 @@ import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.util.FileUtil;
-import org.weasis.core.util.StringUtil;
 
 public abstract class AbstractThumbnailList<E extends MediaElement> extends JList<E>
     implements ThumbnailList<E> {
@@ -229,22 +228,19 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       return null;
     }
 
-    StringBuilder toolTips = new StringBuilder();
-    toolTips.append("<html>");
-    toolTips.append(item.getName());
-    toolTips.append("<br>");
-    toolTips.append(Messages.getString("JIThumbnailList.size"));
-    toolTips.append(StringUtil.COLON_AND_SPACE);
-    toolTips.append(FileUtil.humanReadableByte(item.getLength(), false));
-    toolTips.append("<br>");
-
-    toolTips.append(Messages.getString("JIThumbnailList.date"));
-    toolTips.append(StringUtil.COLON_AND_SPACE);
-    toolTips.append(TagUtil.formatDateTime(Instant.ofEpochMilli(item.getLastModified())));
-    toolTips.append("<br>");
-    toolTips.append("</html>");
-
-    return toolTips.toString();
+    return """
+      <html>
+        %s<br>
+        %s: %s<br>
+        %s: %s<br>
+      </html>
+      """
+        .formatted(
+            item.getName(),
+            Messages.getString("JIThumbnailList.size"),
+            FileUtil.humanReadableByte(item.getLength(), false),
+            Messages.getString("JIThumbnailList.date"),
+            TagUtil.formatDateTime(Instant.ofEpochMilli(item.getLastModified())));
   }
 
   public void reset() {

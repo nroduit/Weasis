@@ -329,8 +329,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               (Boolean) val,
               frameIndex);
         } else if (command.equals(ActionW.CROSSHAIR.cmd())) {
-          if (series != null && val instanceof Point2D.Double) {
-            Point2D.Double p = (Point2D.Double) val;
+          if (series != null && val instanceof Point2D.Double p) {
             GeometryOfSlice sliceGeometry = this.getImage().getDispSliceGeometry();
             String fruid = TagD.getTagValue(series, Tag.FrameOfReferenceUID, String.class);
             if (sliceGeometry != null && fruid != null) {
@@ -878,7 +877,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
 
     Optional<ActionW> actionKey = eventManager.getActionKey(command);
-    if (!actionKey.isPresent()) {
+    if (actionKey.isEmpty()) {
       return null;
     }
 
@@ -1056,8 +1055,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       boolean graphicComplete = true;
       if (selected.size() == 1) {
         final Graphic graph = selected.get(0);
-        if (graph instanceof DragGraphic) {
-          final DragGraphic absgraph = (DragGraphic) graph;
+        if (graph instanceof final DragGraphic absgraph) {
           if (!absgraph.isGraphicComplete()) {
             graphicComplete = false;
           }

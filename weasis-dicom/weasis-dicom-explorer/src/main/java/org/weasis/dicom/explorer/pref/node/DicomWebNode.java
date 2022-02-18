@@ -65,15 +65,13 @@ public class DicomWebNode extends AbstractDicomNode {
 
   @Override
   public String getToolTips() {
-    StringBuilder toolTips = new StringBuilder();
-    toolTips.append("<html>");
-    toolTips.append(this);
-    toolTips.append("<br>");
-    toolTips.append(webType.toString());
-    toolTips.append(StringUtil.COLON_AND_SPACE);
-    toolTips.append(url);
-    toolTips.append("</html>");
-    return toolTips.toString();
+    return """
+    <html>
+      %s<br>
+      %s: <b>%s</b>
+    </html>
+    """
+        .formatted(this, webType.toString(), url);
   }
 
   public String getAuthMethodUid() {

@@ -333,25 +333,20 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
 
   @Override
   public String getToolTips() {
-    StringBuilder toolTips = new StringBuilder();
-    toolTips.append("<html>");
     E media = this.getMedia(MEDIA_POSITION.MIDDLE, null, null);
-    if (media instanceof ImageElement) {
-      ImageElement image = (ImageElement) media;
+    if (media instanceof ImageElement image) {
       PlanarImage img = image.getImage();
       if (img != null) {
-        toolTips.append(Messages.getString("Series.img_size"));
-        toolTips.append(StringUtil.COLON_AND_SPACE);
-        toolTips.append(img.width());
-        toolTips.append('x');
-        toolTips.append(img.height());
+        return """
+          <html>%s: %sx%s</html>
+          """
+            .formatted(Messages.getString("Series.img_size"), img.width(), img.height());
       }
     }
-    toolTips.append("</html>");
-    return toolTips.toString();
+    return StringUtil.EMPTY_STRING;
   }
 
-  protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag) {
+  public void addToolTipsElement(StringBuilder toolTips, String title, TagW tag) {
     toolTips.append(title);
     toolTips.append(StringUtil.COLON_AND_SPACE);
     if (tag != null) {
@@ -360,7 +355,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     toolTips.append("<br>");
   }
 
-  protected void addToolTipsElement(StringBuilder toolTips, String title, TagW tag1, TagW tag2) {
+  public void addToolTipsElement(StringBuilder toolTips, String title, TagW tag1, TagW tag2) {
     toolTips.append(title);
     toolTips.append(StringUtil.COLON_AND_SPACE);
     if (tag1 != null) {

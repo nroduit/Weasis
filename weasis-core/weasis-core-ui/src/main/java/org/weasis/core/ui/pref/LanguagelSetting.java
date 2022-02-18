@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.LocalUtil;
@@ -77,7 +78,6 @@ public class LanguagelSetting extends AbstractItemDialogPage {
             comboBoxFormat));
     textPane.setContentType("text/html");
     textPane.setEditable(false);
-    textPane.setText(getText());
     add(textPane);
 
     add(GuiUtils.boxYLastElement(5));
@@ -88,13 +88,32 @@ public class LanguagelSetting extends AbstractItemDialogPage {
 
   private static String getText() {
     ZonedDateTime now = ZonedDateTime.now();
-    return String.format(
-        Messages.getString("GeneralSetting.txtNote"),
-        LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
-        LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
-        LocalUtil.getNumberInstance().format(2543456.3465));
+    return """
+            <html>
+              <h3>%s</h3>
+              %s (%s): %s<BR>
+              %2$s (%s): %s<BR>
+              %2$s (%s): %s<BR>
+              %2$s (%s): %s<BR>
+              %s: %s
+              <p><font color="%s">%s</font></p>
+            </html>
+            """
+        .formatted(
+            Messages.getString("GeneralSetting.regionalTitle"),
+            Messages.getString("GeneralSetting.date"),
+            Messages.getString("GeneralSetting.short"),
+            LocalUtil.getDateTimeFormatter(FormatStyle.SHORT).format(now),
+            Messages.getString("GeneralSetting.medium"),
+            LocalUtil.getDateTimeFormatter(FormatStyle.MEDIUM).format(now),
+            Messages.getString("GeneralSetting.long"),
+            LocalUtil.getDateTimeFormatter(FormatStyle.LONG).format(now),
+            Messages.getString("GeneralSetting.full"),
+            LocalUtil.getDateTimeFormatter(FormatStyle.FULL).format(now),
+            Messages.getString("GeneralSetting.nb"),
+            LocalUtil.getNumberInstance().format(2543456.3465),
+            IconColor.ACTIONS_RED.getHtmlCode(),
+            Messages.getString("GeneralSetting.alertNote"));
   }
 
   protected void initialize() {

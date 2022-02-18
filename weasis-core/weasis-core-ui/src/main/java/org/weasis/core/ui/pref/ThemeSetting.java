@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
@@ -113,6 +114,15 @@ public class ThemeSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
+    add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
+    String alert =
+        """
+        <html><p><font color="%s">%s</font></p></html>
+        """
+            .formatted(
+                IconColor.ACTIONS_RED.getHtmlCode(),
+                Messages.getString("GeneralSetting.alertNote"));
+    add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");

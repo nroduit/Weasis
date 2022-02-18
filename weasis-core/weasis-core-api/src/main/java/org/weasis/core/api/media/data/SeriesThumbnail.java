@@ -313,7 +313,7 @@ public class SeriesThumbnail extends Thumbnail
   protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
     if (dragPressed == null) {
       Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
-      int inset = 2 * Math.max(width, height) / DEFAULT_SIZE;
+      int inset = GuiUtils.getScaleLength(2);
       if (series.isOpen()) {
         if (series.isSelected() && series.isFocused()) {
           g2d.setPaint(IconColor.ACTIONS_YELLOW.getColor());
@@ -326,7 +326,10 @@ public class SeriesThumbnail extends Thumbnail
         g2d.drawArc(x + inset, y + inset, size, size, 0, 360);
       }
 
-      g2d.setFont(width > DEFAULT_SIZE ? FontItem.SMALL.getFont() : FontItem.MINI.getFont());
+      g2d.setFont(
+          width > DEFAULT_SIZE
+              ? FontItem.MINI_SEMIBOLD.getFont()
+              : FontItem.MICRO_SEMIBOLD.getFont());
       FontMetrics fontMetrics = g2d.getFontMetrics();
       final int fontHeight = fontMetrics.getHeight();
       int descent = g2d.getFontMetrics().getDescent();

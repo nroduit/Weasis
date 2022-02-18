@@ -80,16 +80,6 @@ public class MouseActions {
     return left + "/" + right + "/" + wheel;
   }
 
-  public String getToolTips() {
-    return "<html>Left: " // NON-NLS
-        + left
-        + "<br>Right: " // NON-NLS
-        + right
-        + "<br>Wheel: " // NON-NLS
-        + wheel
-        + "</html>";
-  }
-
   public String getLeft() {
     return left;
   }

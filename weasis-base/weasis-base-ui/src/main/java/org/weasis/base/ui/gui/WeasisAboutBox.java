@@ -79,15 +79,15 @@ public class WeasisAboutBox extends JDialog {
     jTextPane1.addHyperlinkListener(GuiUtils.buildHyperlinkListener());
     String html =
         """
-      <div align="center">
-        <h2>%s %s</h2>
-        <a href="%s">%s</a><br>
-        %s<br>
-        %s includes other open source software
-        <p>%s %s, %s<br>
-        Java VM: %s</p><br>
-      </div>
-      """
+        <div align="center">
+          <h2>%s %s</h2>
+          <a href="%s">%s</a><br>
+          %s<br>
+          %s <a href="%s">%s</a><br>
+          <p>%s %s, %s<br>
+          Java VM: %s</p><br>
+        </div>
+        """
             .formatted(
                 AppProperties.WEASIS_NAME,
                 AppProperties.WEASIS_VERSION,
@@ -95,6 +95,8 @@ public class WeasisAboutBox extends JDialog {
                 Messages.getString("WeasisWin.release"),
                 BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.copyrights", ""),
                 AppProperties.WEASIS_NAME,
+                "https://github.com/nroduit/Weasis/blob/master/3rd-party-licenses.md",
+                Messages.getString("WeasisWin.otherSoft"),
                 System.getProperty("os.name"),
                 System.getProperty("os.version"),
                 System.getProperty("os.arch"),
