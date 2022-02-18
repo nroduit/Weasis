@@ -14,16 +14,16 @@ import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
 import com.formdev.flatlaf.util.ColorFunctions;
 import java.awt.Color;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public final class LookAndFeels {
-  private static final Logger LOGGER = Logger.getLogger(WeasisLauncher.class.getName());
+  private static final Logger LOGGER = System.getLogger(WeasisLauncher.class.getName());
 
   private final List<ReadableLookAndFeelInfo> lookAndFeels;
   private final ReadableLookAndFeelInfo defaultLightTheme;
@@ -102,7 +102,7 @@ public final class LookAndFeels {
       applyDefaultColor(FlatIconColors.ACTIONS_GREY, dark);
       applyDefaultColor(FlatIconColors.ACTIONS_GREYINLINE, dark);
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Unable to set the Look&Feel", e);
+      LOGGER.log(Level.ERROR, "Unable to set the Look&Feel", e);
     }
     return info.getClassName();
   }

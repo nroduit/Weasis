@@ -11,7 +11,8 @@ package org.weasis.launcher;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -20,8 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class RemotePrefService {
 
@@ -30,7 +29,7 @@ public class RemotePrefService {
 
   private static final String TEXT_X_JAVA_PROP = "text/x-java-properties"; // NON-NLS
 
-  private static final Logger LOGGER = Logger.getLogger(RemotePrefService.class.getName());
+  private static final Logger LOGGER = System.getLogger(RemotePrefService.class.getName());
 
   private final String remotePrefURL;
   private final String user;
@@ -60,11 +59,11 @@ public class RemotePrefService {
     return localSessionUser;
   }
 
-  private String getEncodedValue(String val) throws UnsupportedEncodingException {
+  private String getEncodedValue(String val) {
     return URLEncoder.encode(val, StandardCharsets.UTF_8);
   }
 
-  private String getRemoteLauncherUrl() throws UnsupportedEncodingException {
+  private String getRemoteLauncherUrl() {
     return String.format(
         "%s?%s=%s&%s=%s", // NON-NLS
         remotePrefURL,
@@ -89,12 +88,12 @@ public class RemotePrefService {
     prefSv.setConnectTimeout(7000);
     prefSv.setReadTimeout(10000);
     // Do not write if not content (HTTP_NO_CONTENT)
-    if (prefSv instanceof HttpURLConnection
-        && ((HttpURLConnection) prefSv).getResponseCode() == HttpURLConnection.HTTP_OK) {
-      try (InputStream is = prefSv.getInputStream()) {
+    if (prefSv instanceof HttpURLConnection httpURLConnection
+        && httpURLConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+      try (InputStream is = httpURLConnection.getInputStream()) {
         props.load(is);
       } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, e, () -> String.format("Loading %s", remoteURL)); // NON-NLS
+        LOGGER.log(Level.ERROR, () -> String.format("Loading %s", remoteURL), e); // NON-NLS
       }
     }
   }

@@ -18,13 +18,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -35,7 +35,7 @@ import org.apache.felix.framework.util.Util;
 
 public class FileUtil {
 
-  private static final Logger LOGGER = Logger.getLogger(FileUtil.class.getName());
+  private static final Logger LOGGER = System.getLogger(FileUtil.class.getName());
 
   public static final int FILE_BUFFER = 4096;
 
@@ -105,7 +105,7 @@ public class FileUtil {
     try {
       Files.delete(fileOrDirectory.toPath());
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Cannot delete", e);
+      LOGGER.log(Level.ERROR, "Cannot delete", e);
       return false;
     }
     return true;
@@ -139,7 +139,7 @@ public class FileUtil {
       }
       out.flush();
     } catch (IOException e) {
-      LOGGER.log(Level.SEVERE, "Error when writing stream", e);
+      LOGGER.log(Level.ERROR, "Error when writing stream", e);
     } finally {
       FileUtil.safeClose(inputStream);
       FileUtil.safeClose(out);
@@ -165,7 +165,7 @@ public class FileUtil {
         return true;
       } catch (Exception e) {
         LOGGER.log(
-            Level.SEVERE, e, () -> String.format("Loading %s", propsFile.getPath())); // NON-NLS
+            Level.ERROR, () -> String.format("Loading %s", propsFile.getPath()), e); // NON-NLS
       }
     }
     return false;
@@ -176,7 +176,7 @@ public class FileUtil {
       try (FileOutputStream fout = new FileOutputStream(propsFile)) {
         props.store(fout, comments);
       } catch (IOException e) {
-        LOGGER.log(Level.SEVERE, "Error when writing properties", e);
+        LOGGER.log(Level.ERROR, "Error when writing properties", e);
       }
     }
   }

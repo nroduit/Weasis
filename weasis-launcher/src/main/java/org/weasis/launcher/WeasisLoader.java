@@ -18,12 +18,12 @@ import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JButton;
@@ -37,7 +37,7 @@ import org.osgi.framework.BundleContext;
 
 public class WeasisLoader {
 
-  private static final Logger LOGGER = Logger.getLogger(WeasisLoader.class.getName());
+  private static final Logger LOGGER = System.getLogger(WeasisLoader.class.getName());
 
   public static final String LBL_LOADING = Messages.getString("WebStartLoader.load");
   public static final String LBL_DOWNLOADING = Messages.getString("WebStartLoader.download");
@@ -172,7 +172,7 @@ public class WeasisLoader {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     } catch (InvocationTargetException e) {
-      LOGGER.log(Level.SEVERE, "Display splashscreen", e);
+      LOGGER.log(Level.ERROR, "Display splashscreen", e);
     }
   }
 
@@ -209,7 +209,7 @@ public class WeasisLoader {
 
         container.setLocation(x, y);
       } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "Set splashscreen location", e);
+        LOGGER.log(Level.ERROR, "Set splashscreen location", e);
       }
       container.setVisible(true);
     }

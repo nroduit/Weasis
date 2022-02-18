@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.System.Logger;
+import java.lang.System.Logger.Level;
 import java.net.Authenticator;
 import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
@@ -50,8 +52,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -63,7 +63,7 @@ import org.osgi.framework.Version;
 import org.weasis.launcher.WeasisLauncher.Type;
 
 public class ConfigData {
-  private static final Logger LOGGER = Logger.getLogger(ConfigData.class.getName());
+  private static final Logger LOGGER = System.getLogger(ConfigData.class.getName());
 
   // Params, see
   // https://nroduit.github.io/en/getting-started/weasis-protocol/#modify-the-launch-parameters
@@ -93,7 +93,7 @@ public class ConfigData {
 
     if (args != null) {
       for (int i = 0; i < args.length; i++) {
-        LOGGER.log(Level.INFO, "Main arg {0} = {1}", new Object[] {Integer.toString(i), args[i]});
+        LOGGER.log(Level.INFO, "Main arg {0} = {1}", Integer.toString(i), args[i]);
       }
 
       int index = Utils.getWeasisProtocolIndex(args);
@@ -213,18 +213,18 @@ public class ConfigData {
     applyConfigToSystemProperties();
 
     filterConfigProperties(felixConfig);
-    if (LOGGER.isLoggable(Level.FINEST)) {
+    if (LOGGER.isLoggable(Level.TRACE)) {
       felixProps.forEach(
           (k, v) ->
               LOGGER.log(
-                  Level.FINEST, () -> String.format("Felix config: %s = %s", k, v))); // NON-NLS
+                  Level.TRACE, () -> String.format("Felix config: %s = %s", k, v))); // NON-NLS
     }
 
     File appFolder = new File(felixProps.get(Constants.FRAMEWORK_STORAGE)).getParentFile();
     appFolder.mkdirs();
     addProperty(P_WEASIS_PATH, appFolder.getPath());
     System.setProperty(P_WEASIS_PATH, appFolder.getPath());
-    LOGGER.log(Level.CONFIG, "Properties: {0}", properties);
+    LOGGER.log(Level.INFO, "Properties: {0}", properties);
   }
 
   private void filterConfigProperties(Properties felixConfig) {
@@ -319,7 +319,7 @@ public class ConfigData {
       addProperty("weasis.import.dicom", Boolean.TRUE.toString());
       addProperty("weasis.import.dicom.qr", Boolean.TRUE.toString());
     } catch (Exception e) {
-      LOGGER.log(Level.SEVERE, "Apply Codebase", e);
+      LOGGER.log(Level.ERROR, "Apply Codebase", e);
     }
     return baseURI;
   }
@@ -461,7 +461,7 @@ public class ConfigData {
             }
           }
         } catch (Exception e) {
-          LOGGER.log(Level.SEVERE, "Cannot store the proxy password", e);
+          LOGGER.log(Level.ERROR, "Cannot store the proxy password", e);
         }
       }
     }
@@ -509,7 +509,7 @@ public class ConfigData {
           try {
             val = new File(new URI(arg)).getPath();
           } catch (URISyntaxException e) {
-            LOGGER.log(Level.SEVERE, "Convert URI to file", e);
+            LOGGER.log(Level.ERROR, "Convert URI to file", e);
           }
         }
         arguments.add("dicom:get -l \"" + val + "\""); // NON-NLS
@@ -602,9 +602,9 @@ public class ConfigData {
 
     } catch (Exception e) {
       LOGGER.log(
-          Level.SEVERE,
-          e,
-          () -> String.format("Error Loading config service %s", configServicePath)); // NON-NLS
+          Level.ERROR,
+          () -> String.format("Error Loading config service %s", configServicePath), // NON-NLS
+          e);
     } finally {
       FileUtil.safeClose(stream);
     }
@@ -647,7 +647,7 @@ public class ConfigData {
       WeasisLauncher.readProperties(propURI, felixConfig);
 
     } else {
-      LOGGER.log(Level.SEVERE, "No config.properties path found, Weasis cannot start!");
+      LOGGER.log(Level.ERROR, "No config.properties path found, Weasis cannot start!");
     }
 
     propURI = getPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);
@@ -691,7 +691,7 @@ public class ConfigData {
           System.setProperty(WeasisLauncher.P_WEASIS_MIN_NATIVE_VERSION, val);
         }
       } catch (Exception e) {
-        LOGGER.log(Level.SEVERE, "Cannot check compatibility with remote package", e);
+        LOGGER.log(Level.ERROR, "Cannot check compatibility with remote package", e);
       }
     }
   }
@@ -708,7 +708,7 @@ public class ConfigData {
           propURL = new URI(custom);
         }
       } catch (URISyntaxException e) {
-        LOGGER.log(Level.SEVERE, configProp, e);
+        LOGGER.log(Level.ERROR, configProp, e);
         return null;
       }
     } else {
@@ -722,7 +722,7 @@ public class ConfigData {
     try {
       return new File(confDir, configFile).toURI();
     } catch (Exception ex) {
-      LOGGER.log(Level.SEVERE, configFile, ex);
+      LOGGER.log(Level.ERROR, configFile, ex);
       return null;
     }
   }

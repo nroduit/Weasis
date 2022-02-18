@@ -25,6 +25,6 @@ public class CustomFileHandler extends FileHandler {
   }
 
   public CustomFileHandler() throws IOException {
-    super("%h/.weasis/log/boot-%u.%g.log"); // NON-NLS
+    super("%h/.weasis/log/boot-%u.%g.log", 524288, 3); // NON-NLS
   }
 }
