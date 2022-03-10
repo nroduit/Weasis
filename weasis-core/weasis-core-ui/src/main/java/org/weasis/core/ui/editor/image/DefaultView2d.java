@@ -73,6 +73,7 @@ import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
+import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.AffineTransformOp;
@@ -925,11 +926,25 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected void drawOnTop(Graphics2D g2d) {}
 
+  public boolean requiredTextAntialiasing() {
+    Optional<SliderCineListener> cineAction =
+        eventManager.getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
+    if (cineAction.isPresent()
+        && cineAction.get().isActionEnabled()
+        && cineAction.get().isCining()) {
+      return false; // Otherwise, slow down cine
+    }
+    return true;
+  }
+
   @Override
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
     if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
+      Object[] oldRenderingHints =
+          GuiUtils.setRenderingHints(g2d, true, false, requiredTextAntialiasing());
       graphicManager.draw(g2d, transform, inverseTransform, null);
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     }
   }
 

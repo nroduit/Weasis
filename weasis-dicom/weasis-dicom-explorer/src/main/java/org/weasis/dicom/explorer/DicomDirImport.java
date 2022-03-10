@@ -116,11 +116,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
                 || f.getName().equalsIgnoreCase("dicomdir."); // NON-NLS
           }
         });
-    File selectedFile = null;
-    if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
-        || (selectedFile = fileChooser.getSelectedFile()) == null) {
-      return;
-    } else {
+    File selectedFile;
+    if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION
+        && (selectedFile = fileChooser.getSelectedFile()) != null) {
       String path = selectedFile.getPath();
       textField.setText(path);
       Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
@@ -167,6 +165,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
 
     if (loadSeries != null && !loadSeries.isEmpty()) {
+      if (file != null) {
+        Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, file.getPath());
+      }
       DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
     } else {
       LOGGER.error("Cannot import DICOM from {}", file);

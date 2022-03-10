@@ -163,7 +163,12 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
           } else {
             dataSet = dcm;
           }
-          out.writeDataset(dataSet.createFileMetaInformation(UID.ImplicitVRLittleEndian), dataSet);
+          String dstTsuid = reader.getDicomMetaData().getTransferSyntaxUID();
+          if (UID.ImplicitVRLittleEndian.equals(dstTsuid)
+              || UID.ExplicitVRBigEndian.equals(dstTsuid)) {
+            dstTsuid = UID.ImplicitVRLittleEndian;
+          }
+          out.writeDataset(dataSet.createFileMetaInformation(dstTsuid), dataSet);
           return dataSet;
         } catch (IOException e) {
           LOGGER.error(
@@ -172,6 +177,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
       }
     } else {
       MediaElement.saveToFile(reader, output);
+      return new Attributes();
     }
     return null;
   }

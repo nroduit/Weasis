@@ -457,7 +457,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     boolean hasTransformation = params.dicomEditors() != null && !params.dicomEditors().isEmpty();
     if (!hasTransformation && params.syntax() == null) {
       super.saveToFile(output);
-      return null;
+      return new Attributes();
     }
 
     DicomMetaData metaData = getMediaReader().getDicomMetaData();
@@ -483,8 +483,8 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       return attributes;
     } else {
       LOGGER.error("Cannot export DICOM file: {}", getFileCache().getOriginalFile().orElse(null));
+      return null;
     }
-    return null;
   }
 
   private static String getOutputTransferSyntax(

@@ -81,13 +81,11 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     // FileFormatFilter.setImageDecodeFilters(fileChooser);
     File[] selectedFiles;
     if (fileChooser.showOpenDialog(WinUtil.getParentWindow(this))
-            != JFileChooser.APPROVE_OPTION // Use parent because this has large size
-        || (selectedFiles = fileChooser.getSelectedFiles()) == null
-        || selectedFiles.length == 0) {
-      return;
-    } else {
+            == JFileChooser.APPROVE_OPTION // Use parent because this has large size
+        && (selectedFiles = fileChooser.getSelectedFiles()) != null
+        && selectedFiles.length > 0) {
       files = null;
-      String lastDir = null;
+      String lastDir;
       if (selectedFiles.length == 1) {
         lastDir = selectedFiles[0].getPath();
         textField.setText(lastDir);
@@ -145,6 +143,15 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
       }
     }
     if (files != null) {
+      String lastDir;
+      if (files.length == 1) {
+        lastDir = files[0].getPath();
+      } else {
+        lastDir = files[0].getParent();
+      }
+      if (StringUtil.hasText(lastDir)) {
+        Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDirKey, lastDir);
+      }
       LoadLocalDicom dicom = new LoadLocalDicom(files, chckbxSearch.isSelected(), dicomModel);
       DicomModel.LOADING_EXECUTOR.execute(dicom);
       files = null;

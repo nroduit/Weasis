@@ -115,7 +115,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       return;
     }
 
-    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2, true, false, true);
+    Object[] oldRenderingHints =
+        GuiUtils.setRenderingHints(g2, true, false, view2DPane.requiredTextAntialiasing());
 
     OpManager disOp = view2DPane.getDisplayOpManager();
     ModalityInfoData modality;

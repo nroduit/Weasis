@@ -549,14 +549,14 @@ public class SeriesBuilder {
     return new DicomImageElement(rawIO, 0) {
       @Override
       public Attributes saveToFile(File output, DicomExportParameters params) {
+        RawImageIO reader = (RawImageIO) getMediaReader();
         boolean hasTransformation =
             params.dicomEditors() != null && !params.dicomEditors().isEmpty();
         if (!hasTransformation && params.syntax() == null) {
-          RawImageIO reader = (RawImageIO) getMediaReader();
           FileUtil.nioCopyFile(reader.getDicomFile(), output);
-          return null;
+          return new Attributes();
         }
-        return saveToFile(output, params);
+        return super.saveToFile(output, params);
       }
     };
   }

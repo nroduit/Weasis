@@ -270,6 +270,14 @@ public class RawImageIO implements DcmMediaReader {
     dcm.setSpecificCharacterSet(cs.toCodes());
     DicomMediaUtils.fillAttributes(tags, dcm);
     dcm.addAll(attributes);
+    File file = imageCV.getFile();
+    BulkData bdl =
+        new BulkData(
+            file.toURI().toString(),
+            FileRawImage.HEADER_LENGTH,
+            (int) file.length() - FileRawImage.HEADER_LENGTH,
+            false);
+    dcm.setValue(Tag.PixelData, VR.OW, bdl);
     header = new DicomMetaData(dcm, UID.ImplicitVRLittleEndian);
     HEADER_CACHE.put(this, header);
     return header;

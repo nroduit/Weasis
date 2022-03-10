@@ -669,7 +669,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     boolean cdCompatible;
     File writeDir;
     int jpegQuality = StringUtil.getInt(pref.getProperty(IMG_QUALITY), 80);
-    int compressionRatio = (100 - jpegQuality) * 2; // Ratio from 0 to 198
+    int compressionRatio = 100 - jpegQuality; // Ratio from 0 to 99
     boolean newUID =
         Boolean.parseBoolean(pref.getProperty(DICOM_NEW_UID, Boolean.FALSE.toString()));
     boolean onlyRaw =
@@ -729,7 +729,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             File destinationDir = new File(writeDir, path);
             destinationDir.mkdirs();
 
-            List<AttributeEditor> dicomEditors = newUID ? List.of(editor) : Collections.emptyList();
+            List<AttributeEditor> dicomEditors = getAttributeEditors(editor);
             File destinationFile = new File(destinationDir, iuid);
 
             DicomExportParameters dicomExportParameters =
@@ -753,7 +753,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             File destinationFile = new File(destinationDir, iuid);
             DicomExportParameters dicomExportParameters =
                 new DicomExportParameters(
-                    null, onlyRaw, List.of(editor), jpegQuality, compressionRatio);
+                    null, onlyRaw, getAttributeEditors(editor), jpegQuality, compressionRatio);
             Attributes attributes = dcm.saveToFile(destinationFile, dicomExportParameters);
             if (attributes != null) {
               writeInDicomDir(writer, (MediaElement) dcm, node, iuid, destinationFile);
@@ -798,6 +798,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         FileUtil.recursiveDelete(writeDir);
       }
     }
+  }
+
+  private static List<AttributeEditor> getAttributeEditors(DefaultAttributeEditor editor) {
+    if (editor.isGenerateUIDs() || editor.getTagToOverride() != null) {
+      return List.of(editor);
+    }
+    return Collections.emptyList();
   }
 
   public static Attributes buildAndWritePR(
