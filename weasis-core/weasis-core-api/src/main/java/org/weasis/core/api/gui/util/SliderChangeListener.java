@@ -389,7 +389,6 @@ public abstract class SliderChangeListener extends MouseActionAdapter
             FontItem.MEDIUM.getFont(),
             null);
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
-    slider.setBorder(titledBorder);
     slider.setLabelDivision(labelDivision);
     slider.setdisplayValueInTitle(displayValueInTitle);
     slider.setPaintTicks(true);

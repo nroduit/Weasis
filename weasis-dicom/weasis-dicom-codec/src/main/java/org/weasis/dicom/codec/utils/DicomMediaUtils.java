@@ -479,8 +479,7 @@ public class DicomMediaUtils {
 
   public static void setTag(Map<TagW, Object> tags, TagW tag, Object value) {
     if (tag != null) {
-      if (value instanceof Sequence) {
-        Sequence seq = (Sequence) value;
+      if (value instanceof Sequence seq) {
         Attributes[] list = new Attributes[seq.size()];
         for (int i = 0; i < list.length; i++) {
           Attributes attributes = seq.get(i);

@@ -31,8 +31,9 @@ import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
+import org.weasis.dicom.param.AttributeEditor;
 
-public class DicomSpecialElement extends MediaElement {
+public class DicomSpecialElement extends MediaElement implements DicomElement {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
 
   public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
@@ -142,20 +143,37 @@ public class DicomSpecialElement extends MediaElement {
   }
 
   @Override
-  public boolean saveToFile(File output) {
+  public Attributes saveToFile(File output, DicomExportParameters params) {
+    return saveToFile(this, output, params.dicomEditors());
+  }
+
+  public static Attributes saveToFile(
+      DicomElement dicom, File output, List<AttributeEditor> dicomEditors) {
+    DcmMediaReader reader = dicom.getMediaReader();
+    boolean hasTransformation = dicomEditors != null && !dicomEditors.isEmpty();
     // When object is in memory, write it
-    if (getMediaReader().isEditableDicom()) {
-      Attributes dcm = getMediaReader().getDicomObject();
+    if (reader.isEditableDicom() || hasTransformation) {
+      Attributes dcm = reader.getDicomObject();
       if (dcm != null) {
         try (DicomOutputStream out = new DicomOutputStream(output)) {
-          out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
-          return true;
+          Attributes dataSet;
+          if (hasTransformation) {
+            dataSet = new Attributes(dcm);
+            dicomEditors.forEach(e -> e.apply(dataSet, null));
+          } else {
+            dataSet = dcm;
+          }
+          out.writeDataset(dataSet.createFileMetaInformation(UID.ImplicitVRLittleEndian), dataSet);
+          return dataSet;
         } catch (IOException e) {
-          LOGGER.error("Cannot write dicom ({}) into {}", getLabel(), output, e);
+          LOGGER.error(
+              "Cannot write dicom ({}) into {}", dcm.getString(Tag.SOPInstanceUID), output, e);
         }
       }
+    } else {
+      MediaElement.saveToFile(reader, output);
     }
-    return super.saveToFile(output);
+    return null;
   }
 
   public static boolean isSopuidInReferencedSeriesSequence(

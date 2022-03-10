@@ -10,12 +10,13 @@
 package org.weasis.dicom.codec;
 
 import java.io.File;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.AudioVideoElement;
 import org.weasis.core.util.FileUtil;
 
-public class DicomVideoElement extends AudioVideoElement implements FileExtractor {
+public class DicomVideoElement extends AudioVideoElement implements FileExtractor, DicomElement {
 
   public static final String MPEG_MIMETYPE = "video/mpeg";
 
@@ -61,5 +62,15 @@ public class DicomVideoElement extends AudioVideoElement implements FileExtracto
   @Override
   public File getExtractFile() {
     return videoFile;
+  }
+
+  @Override
+  public DcmMediaReader getMediaReader() {
+    return (DcmMediaReader) super.getMediaReader();
+  }
+
+  @Override
+  public Attributes saveToFile(File output, DicomExportParameters params) {
+    return DicomSpecialElement.saveToFile(this, output, params.dicomEditors());
   }
 }

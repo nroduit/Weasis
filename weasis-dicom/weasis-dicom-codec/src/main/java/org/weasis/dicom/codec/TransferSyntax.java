@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public enum TransferSyntax {
-  NONE(null, "None"), // NON-NLS
+  NONE(null, "Keep original transfer syntax"),
 
   IMPLICIT_VR("1.2.840.10008.1.2", "Implicit VR Endian (default)"), // NON-NLS
 
@@ -85,11 +85,11 @@ public enum TransferSyntax {
     return label + " [" + transferSyntaxUID + "]";
   }
 
-  public static TransferSyntax getTransferSyntax(String tsuid) {
+  public static TransferSyntax getTransferSyntax(String name) {
     try {
-      return TransferSyntax.valueOf(tsuid);
+      return TransferSyntax.valueOf(name);
     } catch (Exception e) {
-      LOGGER.error("Cannot get TransferSyntax from {}", tsuid, e);
+      LOGGER.error("Cannot get TransferSyntax from {}", name, e);
     }
     return NONE;
   }

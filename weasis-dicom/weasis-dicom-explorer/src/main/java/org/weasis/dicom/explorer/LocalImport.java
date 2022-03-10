@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.util.StringUtil;
@@ -78,8 +79,9 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
     fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
     fileChooser.setMultiSelectionEnabled(true);
     // FileFormatFilter.setImageDecodeFilters(fileChooser);
-    File[] selectedFiles = null;
-    if (fileChooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION
+    File[] selectedFiles;
+    if (fileChooser.showOpenDialog(WinUtil.getParentWindow(this))
+            != JFileChooser.APPROVE_OPTION // Use parent because this has large size
         || (selectedFiles = fileChooser.getSelectedFiles()) == null
         || selectedFiles.length == 0) {
       return;
@@ -112,9 +114,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
   private String getImportPath() {
     String path = textField.getText().trim();
-    if (path != null
-        && !path.equals("")
-        && !path.equals(Messages.getString("LocalImport.multi_dir"))) {
+    if (!path.equals("") && !path.equals(Messages.getString("LocalImport.multi_dir"))) {
       return path;
     }
     return null;

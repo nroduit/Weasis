@@ -234,7 +234,7 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
         g2d.setRenderingHint(
             RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
       }
-      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), 0, 0, null);
+      g2d.drawImage(ImageConversion.toBufferedImage(displayImage), null, null);
     } catch (Exception e) {
       LOGGER.error("Cannot draw the image", e);
       if ("java.io.IOException: closed".equals(e.getMessage())) { // NON-NLS
@@ -451,6 +451,10 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   @Override
   public void updateDisplayOperations() {
     if (isEnableDispOperations()) {
+      PlanarImage source = disOpManager.getFirstNodeInputImage();
+      if (source != null && source.width() < 1) {
+        disOpManager.setFirstNode(getSourceRenderedImage());
+      }
       displayImage = disOpManager.process();
       fireImageChanged();
     }

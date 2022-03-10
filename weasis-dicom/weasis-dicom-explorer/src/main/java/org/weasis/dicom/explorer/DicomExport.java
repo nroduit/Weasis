@@ -57,8 +57,8 @@ public class DicomExport extends AbstractWizardDialog {
     this.dicomModel = dicomModel;
     this.treeModel = new CheckTreeModel(dicomModel);
 
-    final JButton exportandClose = new JButton(Messages.getString("DicomExport.exp_close"));
-    exportandClose.addActionListener(
+    final JButton exportAndClose = new JButton(Messages.getString("DicomExport.exp_close"));
+    exportAndClose.addActionListener(
         e -> {
           exportSelection();
           cancel();
@@ -74,7 +74,7 @@ public class DicomExport extends AbstractWizardDialog {
             HORIZONTAL_GAP,
             VERTICAL_GAP,
             exportButton,
-            exportandClose,
+            exportAndClose,
             jButtonClose));
 
     initializePages();
@@ -120,8 +120,6 @@ public class DicomExport extends AbstractWizardDialog {
   /**
    * Set the checking Paths for the CheckTreeModel to the open Series for the current selected
    * Patient only <br>
-   *
-   * @return
    */
   private void initTreeCheckingModel() {
     TreeCheckingModel checkingModel = treeModel.getCheckingModel();

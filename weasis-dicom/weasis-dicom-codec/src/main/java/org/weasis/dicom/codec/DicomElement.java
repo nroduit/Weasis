@@ -9,18 +9,21 @@
  */
 package org.weasis.dicom.codec;
 
+import java.io.File;
+import java.util.List;
 import org.dcm4che3.data.Attributes;
-import org.dcm4che3.img.DicomMetaData;
-import org.weasis.core.api.media.data.MediaReader;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.dicom.param.AttributeEditor;
 
-public interface DcmMediaReader extends MediaReader {
+public interface DicomElement {
 
-  Attributes getDicomObject();
+  record DicomExportParameters(
+      TransferSyntax syntax,
+      boolean onlyRaw,
+      List<AttributeEditor> dicomEditors,
+      int compressionQuality,
+      int compressionRatioFactor) {}
 
-  void writeMetaData(MediaSeriesGroup group);
+  DcmMediaReader getMediaReader();
 
-  DicomMetaData getDicomMetaData();
-
-  boolean isEditableDicom();
+  Attributes saveToFile(File output, DicomExportParameters params);
 }

@@ -122,15 +122,14 @@ public class ShutterOp extends AbstractOp {
       ImageElement image = (ImageElement) params.get(P_IMAGE_ELEMENT);
       List<OverlayData> overlays = pr.getShutterOverlays();
 
-      if (!overlays.isEmpty() && image != null && image.getKey() instanceof Integer) {
-        int frame = (Integer) image.getKey();
+      if (!overlays.isEmpty() && image != null && image.getKey() instanceof Integer frame) {
         Integer height = TagD.getTagValue(image, Tag.Rows, Integer.class);
         Integer width = TagD.getTagValue(image, Tag.Columns, Integer.class);
         if (height != null && width != null) {
           Attributes attributes = pr.getDicomObject();
-          Integer shuttOverlayGroup =
+          Integer shutterOverlayGroup =
               DicomMediaUtils.getIntegerFromDicomElement(attributes, Tag.ShutterOverlayGroup, null);
-          if (shuttOverlayGroup != null) {
+          if (shutterOverlayGroup != null) {
             PlanarImage overlayImg = OverlayData.getOverlayImage(result, overlays, frame);
             imgOverlay =
                 ImageProcessor.overlay(result.toMat(), overlayImg.toMat(), getShutterColor());

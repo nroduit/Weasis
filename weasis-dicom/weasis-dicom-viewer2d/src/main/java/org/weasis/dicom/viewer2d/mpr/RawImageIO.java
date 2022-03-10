@@ -255,6 +255,11 @@ public class RawImageIO implements DcmMediaReader {
     return readMetaData();
   }
 
+  @Override
+  public boolean isEditableDicom() {
+    return false;
+  }
+
   private synchronized DicomMetaData readMetaData() {
     DicomMetaData header = HEADER_CACHE.get(this);
     if (header != null) {

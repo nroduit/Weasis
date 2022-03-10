@@ -200,38 +200,8 @@ public class SeriesBuilder {
           rawIO.setTag(TagD.get(Tag.SeriesInstanceUID), seriesUID);
 
           // Mandatory tags
-          TagW[] mtagList =
-              TagD.getTagFromIDs(
-                  Tag.PatientID,
-                  Tag.PatientName,
-                  Tag.PatientBirthDate,
-                  Tag.StudyInstanceUID,
-                  Tag.StudyID,
-                  Tag.SOPClassUID,
-                  Tag.StudyDate,
-                  Tag.StudyTime,
-                  Tag.AccessionNumber);
-          rawIO.copyTags(mtagList, img, true);
-          rawIO.setTag(TagW.PatientPseudoUID, img.getTagValue(TagW.PatientPseudoUID));
-
-          TagW[] tagList =
-              TagD.getTagFromIDs(
-                  Tag.PhotometricInterpretation,
-                  Tag.PixelRepresentation,
-                  Tag.Units,
-                  Tag.SamplesPerPixel,
-                  Tag.Modality);
-          rawIO.copyTags(tagList, img, true);
-          rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
-
-          TagW[] tagList2 = {
-            TagW.ModalityLUTData,
-            TagW.ModalityLUTType,
-            TagW.ModalityLUTExplanation,
-            TagW.VOILUTsData,
-            TagW.VOILUTsExplanation
-          };
-          rawIO.copyTags(tagList2, img, false);
+          org.weasis.dicom.viewer2d.mpr.SeriesBuilder.copyMandatoryTags(img, rawIO);
+          TagW[] tagList2;
 
           tagList2 =
               TagD.getTagFromIDs(
@@ -256,17 +226,7 @@ public class SeriesBuilder {
           // Image specific tags
           rawIO.setTag(TagD.get(Tag.SOPInstanceUID), UIDUtils.createUID());
           rawIO.setTag(TagD.get(Tag.InstanceNumber), index + 1);
-
-          dicom =
-              new DicomImageElement(rawIO, 0) {
-                @Override
-                public boolean saveToFile(File output) {
-                  RawImageIO reader = (RawImageIO) getMediaReader();
-                  return FileUtil.nioCopyFile(reader.getDicomFile(), output);
-                }
-              };
-
-          dicoms.add(dicom);
+          dicoms.add(org.weasis.dicom.viewer2d.mpr.SeriesBuilder.buildDicomImageElement(rawIO));
         }
       }
     }
