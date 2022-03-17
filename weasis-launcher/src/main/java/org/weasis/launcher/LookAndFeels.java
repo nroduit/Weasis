@@ -13,12 +13,15 @@ import com.formdev.flatlaf.FlatIconColors;
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.intellijthemes.FlatAllIJThemes;
 import com.formdev.flatlaf.util.ColorFunctions;
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Color;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
@@ -50,6 +53,11 @@ public final class LookAndFeels {
     lookAndFeels = buildFlatLookAndFeels();
     lookAndFeels.add(defaultLightTheme);
     lookAndFeels.add(defaultDarkTheme);
+    if (SystemInfo.isLinux) {
+      // enable custom window decorations
+      JFrame.setDefaultLookAndFeelDecorated(true);
+      JDialog.setDefaultLookAndFeelDecorated(true);
+    }
   }
 
   private static List<ReadableLookAndFeelInfo> buildFlatLookAndFeels() {
