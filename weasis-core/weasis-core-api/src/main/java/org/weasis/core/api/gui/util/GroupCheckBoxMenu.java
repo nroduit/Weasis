@@ -39,10 +39,10 @@ public class GroupCheckBoxMenu implements GroupPopup {
     final JPopupMenu popupMouseButtons = new JScrollPopupMenu();
 
     if (startBySelectAll) {
-      boolean all = false;
+      boolean all = true;
       for (int i = 1; i < itemList.size(); i++) {
-        if (itemList.get(i).isSelected()) {
-          all = true;
+        if (!itemList.get(i).isSelected()) {
+          all = false;
           break;
         }
       }
