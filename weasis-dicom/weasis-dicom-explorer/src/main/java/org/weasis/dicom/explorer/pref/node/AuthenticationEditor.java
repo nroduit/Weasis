@@ -24,7 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.WindowConstants;
@@ -60,7 +60,7 @@ public class AuthenticationEditor extends JDialog {
   private void jbInit() {
     this.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-    JRootPane panel = getRootPane();
+    JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.setBorder(GuiUtils.getEmptyBorder(10, 15, 5, 15));
 
@@ -90,6 +90,7 @@ public class AuthenticationEditor extends JDialog {
             10, GuiUtils.getVerticalBoxLayoutPanel(10, jButtonEdit, jButtonAdd, jButtonDelete)),
         BorderLayout.EAST);
     panel.add(jScrollPane1, BorderLayout.CENTER);
+    setContentPane(panel);
   }
 
   // Overridden so we can exit when window is closed

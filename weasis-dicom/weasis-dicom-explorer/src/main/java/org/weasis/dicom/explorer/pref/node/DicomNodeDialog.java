@@ -20,7 +20,7 @@ import javax.swing.JDialog;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import javax.swing.text.NumberFormatter;
@@ -76,27 +76,27 @@ public class DicomNodeDialog extends JDialog {
   private void initComponents() {
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-    JRootPane rootPane = getRootPane();
-    rootPane.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[grow,fill]"));
+    JPanel panel = new JPanel();
+    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[grow,fill]"));
 
     JLabel descriptionLabel =
         new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
-    rootPane.add(descriptionLabel, "newline");
-    rootPane.add(descriptionTf);
+    panel.add(descriptionLabel, "newline");
+    panel.add(descriptionTf);
 
     JLabel aeTitleLabel = new JLabel(Messages.getString("PrinterDialog.aet") + StringUtil.COLON);
     aeTitleTf = new JTextField();
     aeTitleTf.setColumns(15);
-    rootPane.add(aeTitleLabel, "newline");
-    rootPane.add(aeTitleTf);
+    panel.add(aeTitleLabel, "newline");
+    panel.add(aeTitleTf);
 
     JLabel hostnameLabel = new JLabel(Messages.getString("PrinterDialog.host") + StringUtil.COLON);
     hostnameTf = new JTextField();
     hostnameTf.setColumns(15);
-    rootPane.add(hostnameLabel, "newline");
-    rootPane.add(hostnameTf);
+    panel.add(hostnameLabel, "newline");
+    panel.add(hostnameTf);
 
     JLabel portLabel = new JLabel(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
     NumberFormat myFormat = LocalUtil.getNumberInstance();
@@ -107,12 +107,12 @@ public class DicomNodeDialog extends JDialog {
     portTf.setColumns(5);
     GuiUtils.setPreferredWidth(portTf, 60);
     GuiUtils.addCheckAction(portTf);
-    rootPane.add(portLabel, "newline");
-    rootPane.add(portTf, "grow 0");
+    panel.add(portLabel, "newline");
+    panel.add(portTf, "grow 0");
 
     if (typeNode == AbstractDicomNode.Type.PRINTER) {
       printOptionsPane = new DicomPrintOptionPane();
-      rootPane.add(printOptionsPane, "newline, gaptop 10, spanx");
+      panel.add(printOptionsPane, "newline, gaptop 10, spanx");
     } else {
       comboBox = new JComboBox<>(new DefaultComboBoxModel<>(AbstractDicomNode.UsageType.values()));
       comboBox.setSelectedItem(AbstractDicomNode.UsageType.RETRIEVE);
@@ -121,8 +121,8 @@ public class DicomNodeDialog extends JDialog {
         hostnameTf.setText("localhost"); // NON-NLS
       }
 
-      rootPane.add(new JLabel(Messages.getString("usage.type") + StringUtil.COLON), "newline");
-      rootPane.add(comboBox, "grow 0");
+      panel.add(new JLabel(Messages.getString("usage.type") + StringUtil.COLON), "newline");
+      panel.add(comboBox, "grow 0");
     }
 
     JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
@@ -130,10 +130,11 @@ public class DicomNodeDialog extends JDialog {
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
 
-    rootPane.add(
+    panel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, 0, 5, okButton, GuiUtils.boxHorizontalStrut(20), cancelButton),
         "newline, spanx, gaptop 10lp");
+    setContentPane(panel);
   }
 
   private void okButtonActionPerformed() {

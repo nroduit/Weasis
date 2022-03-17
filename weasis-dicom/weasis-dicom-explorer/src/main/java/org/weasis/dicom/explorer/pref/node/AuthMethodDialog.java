@@ -19,7 +19,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.JTextField;
 import javax.swing.border.Border;
 import net.miginfocom.swing.MigLayout;
@@ -72,29 +71,30 @@ public class AuthMethodDialog extends JDialog {
   }
 
   private void initComponents(boolean addAuth) {
-    JRootPane rootPane = getRootPane();
-    rootPane.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
+    JPanel panel = new JPanel();
+    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
 
     if (addAuth) {
-      buildHeader(rootPane);
+      buildHeader(panel);
     }
-    rootPane.add(
+    panel.add(
         new JLabel("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid()), "newline, spanx");
-    rootPane.add(getProvider(), "newline, spanx");
-    rootPane.add(getRegistration(), "newline, spanx");
-    buildFooter(rootPane);
+    panel.add(getProvider(), "newline, spanx");
+    panel.add(getRegistration(), "newline, spanx");
+    buildFooter(panel);
+    setContentPane(panel);
   }
 
-  private void buildFooter(JRootPane rootPane) {
+  private void buildFooter(JPanel panel) {
     JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
-    rootPane.add(okButton, "newline, skip, growx 0, alignx trailing");
-    rootPane.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
+    panel.add(okButton, "newline, skip, growx 0, alignx trailing");
+    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
   }
 
-  public void buildHeader(JRootPane rootPane) {
+  public void buildHeader(JPanel panel) {
     JLabel headersLabel = new JLabel(Messages.getString("template") + StringUtil.COLON);
     JButton buttonFill = new JButton(Messages.getString("fill"));
     buttonFill.addActionListener(
@@ -133,7 +133,7 @@ public class AuthMethodDialog extends JDialog {
           fill(m);
         });
 
-    rootPane.add(
+    panel.add(
         GuiUtils.getFlowLayoutPanel(
             0, 0, headersLabel, comboBoxAuth, GuiUtils.boxHorizontalStrut(15), buttonFill),
         "newline");

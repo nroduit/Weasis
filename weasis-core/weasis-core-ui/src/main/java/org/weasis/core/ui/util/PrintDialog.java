@@ -19,7 +19,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
+import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
@@ -53,7 +53,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
   }
 
   private void initComponents(boolean layout) {
-    JRootPane panel = getRootPane();
+    JPanel panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 
     panel.setBorder(GuiUtils.getEmptyBorder(10, 20, 10, 20));
@@ -91,6 +91,7 @@ public class PrintDialog<I extends ImageElement> extends javax.swing.JDialog {
     panel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, 2, 5, printButton, GuiUtils.boxHorizontalStrut(20), cancelButton));
+    setContentPane(panel);
     pack();
   }
 
