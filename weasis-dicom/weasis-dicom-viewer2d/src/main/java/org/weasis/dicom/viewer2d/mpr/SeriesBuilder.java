@@ -302,16 +302,7 @@ public class SeriesBuilder {
                    * of the original series stack
                    */
                   double sPixSize =
-                      writeBlock(
-                          secSeries,
-                          series,
-                          medias,
-                          viewParams,
-                          mprView,
-                          thread,
-                          abort,
-                          seriesID,
-                          size);
+                      writeBlock(secSeries, medias, viewParams, mprView, thread, abort, size);
 
                   if (thread.isInterrupted()) {
                     return;
@@ -441,7 +432,14 @@ public class SeriesBuilder {
       Tag.KVP,
       Tag.Laterality,
       Tag.BodyPartExamined,
+      Tag.RescaleSlope,
+      Tag.RescaleIntercept,
+      Tag.RescaleType,
       Tag.ModalityLUTSequence,
+      Tag.WindowCenter,
+      Tag.WindowWidth,
+      Tag.VOILUTFunction,
+      Tag.WindowCenterWidthExplanation,
       Tag.VOILUTSequence
     };
 
@@ -496,26 +494,10 @@ public class SeriesBuilder {
 
       tagList2 =
           TagD.getTagFromIDs(
-              Tag.RescaleSlope,
-              Tag.RescaleIntercept,
-              Tag.RescaleType,
               Tag.PixelPaddingValue,
               Tag.PixelPaddingRangeLimit,
-              Tag.WindowWidth,
-              Tag.WindowCenter,
-              Tag.WindowCenterWidthExplanation,
-              Tag.VOILUTFunction,
               Tag.PixelSpacingCalibrationDescription);
       rawIO.copyTags(tagList2, img, false);
-
-      // Clone array, because values are adapted according to the min and max pixel values.
-      TagW[] tagList3 = TagD.getTagFromIDs(Tag.WindowWidth, Tag.WindowCenter);
-      for (TagW tagW : tagList3) {
-        double[] val = (double[]) img.getTagValue(tagW);
-        if (val != null) {
-          img.setTag(tagW, Arrays.copyOf(val, val.length));
-        }
-      }
 
       // Image specific tags
       int index = i;
@@ -585,26 +567,15 @@ public class SeriesBuilder {
             Tag.Modality);
     rawIO.copyTags(tagList, img, true);
     rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
-
-    TagW[] tagList2 = {
-      TagW.ModalityLUTData,
-      TagW.ModalityLUTType,
-      TagW.ModalityLUTExplanation,
-      TagW.VOILUTsData,
-      TagW.VOILUTsExplanation
-    };
-    rawIO.copyTags(tagList2, img, false);
   }
 
   private static double writeBlock(
       FileRawImage[] newSeries,
-      MediaSeries<DicomImageElement> series,
       Iterable<DicomImageElement> medias,
       ViewParameter params,
       final MprView view,
       Thread thread,
       final boolean[] abort,
-      String seriesID,
       int dstHeight)
       throws IOException {
     ImageCV[] builImgs = new ImageCV[newSeries.length];

@@ -116,7 +116,14 @@ public class SeriesBuilder {
         Tag.Laterality,
         Tag.BodyPartExamined,
         Tag.FrameOfReferenceUID,
+        Tag.RescaleSlope,
+        Tag.RescaleIntercept,
+        Tag.RescaleType,
         Tag.ModalityLUTSequence,
+        Tag.WindowCenter,
+        Tag.WindowWidth,
+        Tag.VOILUTFunction,
+        Tag.WindowCenterWidthExplanation,
         Tag.VOILUTSequence
       };
 
@@ -188,9 +195,10 @@ public class SeriesBuilder {
           rawIO.setTag(TagD.get(Tag.BitsAllocated), imgRef.getBitsAllocated());
           rawIO.setTag(TagD.get(Tag.BitsStored), imgRef.getBitsStored());
 
+          int lastIndex = sources.size() - 1;
           rawIO.setTag(
               TagD.get(Tag.SliceThickness),
-              getThickness(sources.get(0), sources.get(sources.size() - 1)));
+              getThickness(sources.get(0), sources.get(lastIndex), lastIndex));
           double[] loc = (double[]) imgRef.getTagValue(TagW.SlicePosition);
           if (loc != null) {
             rawIO.setTag(TagW.SlicePosition, loc);
@@ -207,15 +215,8 @@ public class SeriesBuilder {
               TagD.getTagFromIDs(
                   Tag.ImageOrientationPatient,
                   Tag.ImagePositionPatient,
-                  Tag.RescaleSlope,
-                  Tag.RescaleIntercept,
-                  Tag.RescaleType,
                   Tag.PixelPaddingValue,
                   Tag.PixelPaddingRangeLimit,
-                  Tag.WindowWidth,
-                  Tag.WindowCenter,
-                  Tag.WindowCenterWidthExplanation,
-                  Tag.VOILUTFunction,
                   Tag.PixelSpacing,
                   Tag.ImagerPixelSpacing,
                   Tag.NominalScannedPixelSpacing,
@@ -232,7 +233,7 @@ public class SeriesBuilder {
     }
   }
 
-  static double getThickness(ImageElement firstDcm, ImageElement lastDcm) {
+  static double getThickness(ImageElement firstDcm, ImageElement lastDcm, int range) {
     double[] p1 = (double[]) firstDcm.getTagValue(TagW.SlicePosition);
     double[] p2 = (double[]) lastDcm.getTagValue(TagW.SlicePosition);
     if (p1 != null && p2 != null) {
@@ -250,7 +251,7 @@ public class SeriesBuilder {
 
       return diff;
     }
-    return 1.0;
+    return range;
   }
 
   public static PlanarImage addCollectionOperation(Type mipType, List<ImageElement> sources) {

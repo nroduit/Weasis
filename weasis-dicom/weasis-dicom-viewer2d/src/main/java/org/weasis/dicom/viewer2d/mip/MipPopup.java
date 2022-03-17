@@ -9,11 +9,10 @@
  */
 package org.weasis.dicom.viewer2d.mip;
 
-import java.awt.Container;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.Comparator;
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultBoundedRangeModel;
 import javax.swing.JButton;
@@ -24,6 +23,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormater;
@@ -34,6 +34,7 @@ import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesComparator;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.Messages;
@@ -48,26 +49,24 @@ public class MipPopup {
   }
 
   static JSliderW createSlider(String title, DefaultBoundedRangeModel model) {
-    final JPanel sliderPanel = new JPanel();
-    sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.Y_AXIS));
-    sliderPanel.setBorder(GuiUtils.getTitledBorder(title));
+    TitledBorder titledBorder =
+        new TitledBorder(
+            BorderFactory.createEmptyBorder(),
+            title + StringUtil.COLON_AND_SPACE + model.getValue(),
+            TitledBorder.LEADING,
+            TitledBorder.DEFAULT_POSITION,
+            FontItem.MEDIUM.getFont(),
+            null);
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum() / 2 + 1, 1);
     slider.setLabelDivision(4);
-    slider.setdisplayValueInTitle(true);
+    slider.setDisplayValueInTitle(true);
     slider.setPaintTicks(true);
-    sliderPanel.add(slider);
-    slider.setPaintLabels(true);
-    SliderChangeListener.setSliderLabelValues(slider, slider.getMinimum(), slider.getMaximum());
-    return slider;
-  }
-
-  static void updateSliderProperties(JSliderW slider, String title) {
-    if (slider.isdisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
-      titledBorder.setTitle(title);
-      slider.repaint();
-    } else {
-      slider.setToolTipText(title);
+    slider.setBorder(titledBorder);
+    if (slider.isShowLabels()) {
+      slider.setPaintLabels(true);
+      SliderChangeListener.setSliderLabelValues(slider, slider.getMinimum(), slider.getMaximum());
     }
+    return slider;
   }
 
   public static class MipDialog extends JDialog {
@@ -89,20 +88,18 @@ public class MipPopup {
     }
 
     private void init() {
-      final Container contentPane = getContentPane();
-      contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
-
-      final JPanel framePanel = new JPanel();
-      framePanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MipPopup.projection")));
       final ButtonGroup ratioGroup = new ButtonGroup();
-
       JRadioButton rdbtnMinProjection = new JRadioButton(Messages.getString("MipPopup.min"));
-      framePanel.add(rdbtnMinProjection);
       JRadioButton rdbtnMeanProjection = new JRadioButton(Messages.getString("MipPopup.mean"));
-      framePanel.add(rdbtnMeanProjection);
       JRadioButton rdbtnMaxProjection = new JRadioButton(Messages.getString("MipPopup.max"));
-      framePanel.add(rdbtnMaxProjection);
-      contentPane.add(framePanel);
+      final JPanel framePanel =
+          GuiUtils.getFlowLayoutPanel(
+              Insertable.BLOCK_SEPARATOR,
+              Insertable.ITEM_SEPARATOR,
+              rdbtnMinProjection,
+              rdbtnMeanProjection,
+              rdbtnMaxProjection);
+      framePanel.setBorder(GuiUtils.getTitledBorder(Messages.getString("MipPopup.projection")));
       ratioGroup.add(rdbtnMinProjection);
       ratioGroup.add(rdbtnMeanProjection);
       ratioGroup.add(rdbtnMaxProjection);
@@ -144,17 +141,23 @@ public class MipPopup {
 
       ActionListener close = e -> dispose();
 
+      JPanel contentPane = GuiUtils.getVerticalBoxLayoutPanel(framePanel);
+      contentPane.setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
+
       ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
       if (sequence instanceof SliderCineListener cineAction) {
         frameSlider = cineAction.createSlider(2, true);
+        contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
         contentPane.add(frameSlider);
         final JSliderW sliderThickness =
             createSlider(MipView.MIP_THICKNESS.getTitle(), cineAction.getSliderModel());
         thickness = sliderThickness;
+        contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
         contentPane.add(sliderThickness);
+        contentPane.add(GuiUtils.boxVerticalStrut(Insertable.ITEM_SEPARATOR_LARGE));
         Integer extend = (Integer) view.getActionValue(MipView.MIP_THICKNESS.cmd());
         sliderThickness.setValue(extend == null ? 2 : extend);
-        updateSliderProperties(
+        SliderChangeListener.updateSliderProperties(
             sliderThickness,
             MipView.MIP_THICKNESS.getTitle()
                 + StringUtil.COLON_AND_SPACE
@@ -193,6 +196,7 @@ public class MipPopup {
       panel.setBorder(GuiUtils.getEmptyBorder(20, 15, 10, 15));
       contentPane.add(panel);
       contentPane.add(GuiUtils.boxYLastElement(1));
+      setContentPane(contentPane);
     }
 
     private void getThickness(final JSliderW sliderThickness) {
@@ -216,13 +220,13 @@ public class MipPopup {
 
         if (fimg != null && limg != null) {
           buf.append(" (");
-          buf.append(DecFormater.allNumber(SeriesBuilder.getThickness(fimg, limg)));
+          buf.append(DecFormater.allNumber(SeriesBuilder.getThickness(fimg, limg, max - min)));
           buf.append(" ");
           buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
           buf.append(")");
         }
       }
-      updateSliderProperties(sliderThickness, buf.toString());
+      SliderChangeListener.updateSliderProperties(sliderThickness, buf.toString());
     }
 
     public void updateThickness() {
