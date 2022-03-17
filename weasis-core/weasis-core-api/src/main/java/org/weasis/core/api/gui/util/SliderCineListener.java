@@ -57,7 +57,7 @@ public abstract class SliderCineListener extends SliderChangeListener {
     buffer.append(StringUtil.COLON_AND_SPACE);
     buffer.append(getValueToDisplay());
 
-    if (slider.isdisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
+    if (slider.isDisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
       if (rate > 0) {
         buffer.append(" (");
         buffer.append(rate);

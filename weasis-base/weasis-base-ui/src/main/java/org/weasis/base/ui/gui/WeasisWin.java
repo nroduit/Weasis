@@ -28,6 +28,7 @@ import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -52,7 +53,6 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
@@ -702,7 +702,8 @@ public class WeasisWin {
                 webMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.shortcuts")));
     helpMenuItem.add(webMenuItem);
 
-    final JMenuItem websiteMenuItem = new JMenuItem(Messages.getString("WeasisWin.online"));
+    final JMenuItem websiteMenuItem =
+        new JMenuItem(Messages.getString("WeasisWin.online"), new FlatHelpButtonIcon());
     GuiUtils.applySelectedIconEffect(websiteMenuItem);
     websiteMenuItem.addActionListener(
         e ->
@@ -1156,7 +1157,7 @@ public class WeasisWin {
     }
   }
 
-  public void info(String[] argv) throws IOException {
+  public void info(String[] argv) {
     final String[] usage = {
       "Show information about Weasis", // NON-NLS
       "Usage: weasis:info (-v | -a)", // NON-NLS
@@ -1191,7 +1192,7 @@ public class WeasisWin {
     }
   }
 
-  public void ui(String[] argv) throws IOException {
+  public void ui(String[] argv) {
     final String[] usage = {
       "Manage user interface", // NON-NLS
       "Usage: weasis:ui (-q | -v)", // NON-NLS

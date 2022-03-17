@@ -16,7 +16,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -144,14 +143,13 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
   @Override
   protected Boolean doInBackground() throws Exception {
     try {
-      Iterator<String> iter = xmlFiles.iterator();
-      while (iter.hasNext()) {
-        downloadManifest(iter);
+      for (String xmlFile : xmlFiles) {
+        downloadManifest(xmlFile);
       }
     } catch (DownloadException e) {
       LOGGER.error("Download failed", e);
       if (tryDownloadingAgain(e)) {
-        LOGGER.info("Try donloaging again: {}", xmlFiles);
+        LOGGER.info("Try downloading again: {}", xmlFiles);
         LoadRemoteDicomManifest mf = new LoadRemoteDicomManifest(xmlFiles, dicomModel);
         mf.retryNb.set(retryNb.get());
         mf.execute();
@@ -164,11 +162,10 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     return true;
   }
 
-  private void downloadManifest(Iterator<String> iter) throws DownloadException {
+  private void downloadManifest(String path) throws DownloadException {
     try {
-      URI uri = NetworkUtil.getURI(iter.next());
+      URI uri = NetworkUtil.getURI(path);
       Collection<LoadSeries> wadoTasks = DownloadManager.buildDicomSeriesFromXml(uri, dicomModel);
-      iter.remove();
 
       loadSeriesList.addAll(wadoTasks);
       boolean downloadImmediately =

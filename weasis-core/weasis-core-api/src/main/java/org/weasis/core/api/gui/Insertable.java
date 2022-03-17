@@ -11,6 +11,12 @@ package org.weasis.core.api.gui;
 
 public interface Insertable {
 
+  int LAST_FILLER_HEIGHT = 5;
+  int BLOCK_SEPARATOR = 15;
+  int ITEM_SEPARATOR_SMALL = 2;
+  int ITEM_SEPARATOR = 5;
+  int ITEM_SEPARATOR_LARGE = 10;
+
   enum Type {
     EXPLORER,
     TOOL,

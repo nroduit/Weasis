@@ -162,33 +162,33 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         }
       }
     }
-    List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
+    if (file != null) {
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, file.getPath());
+      List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
 
-    if (loadSeries != null && !loadSeries.isEmpty()) {
-      if (file != null) {
-        Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, file.getPath());
-      }
-      DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
-    } else {
-      LOGGER.error("Cannot import DICOM from {}", file);
+      if (loadSeries != null && !loadSeries.isEmpty()) {
+        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
+      } else {
+        LOGGER.error("Cannot import DICOM from {}", file);
 
-      int response =
-          JOptionPane.showConfirmDialog(
-              this,
-              Messages.getString("DicomExplorer.mes_import_manual"),
-              this.getTitle(),
-              JOptionPane.YES_NO_OPTION,
-              JOptionPane.WARNING_MESSAGE);
+        int response =
+            JOptionPane.showConfirmDialog(
+                this,
+                Messages.getString("DicomExplorer.mes_import_manual"),
+                this.getTitle(),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
-      if (response == JOptionPane.YES_OPTION) {
-        Dialog dialog = WinUtil.getParentDialog(this);
-        if (dialog instanceof DicomImport dcmImport) {
-          dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
-          dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
-          if (file != null) {
-            AbstractItemDialogPage page = dcmImport.getCurrentPage();
-            if (page instanceof LocalImport localImport) {
-              localImport.setImportPath(file.getParent());
+        if (response == JOptionPane.YES_OPTION) {
+          Dialog dialog = WinUtil.getParentDialog(this);
+          if (dialog instanceof DicomImport dcmImport) {
+            dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
+            dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
+            if (file != null) {
+              AbstractItemDialogPage page = dcmImport.getCurrentPage();
+              if (page instanceof LocalImport localImport) {
+                localImport.setImportPath(file.getParent());
+              }
             }
           }
         }

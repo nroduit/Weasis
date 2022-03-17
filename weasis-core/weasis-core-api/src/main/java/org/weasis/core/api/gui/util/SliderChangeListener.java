@@ -309,11 +309,15 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   public void updateSliderProperties(JSliderW slider) {
     String result =
         basicState.getActionW().getTitle() + StringUtil.COLON_AND_SPACE + getValueToDisplay();
-    if (slider.isdisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
-      titledBorder.setTitle(result);
+    updateSliderProperties(slider, result);
+  }
+
+  public static void updateSliderProperties(JSliderW slider, String title) {
+    if (slider.isDisplayValueInTitle() && slider.getBorder() instanceof TitledBorder titledBorder) {
+      titledBorder.setTitle(title);
       slider.repaint();
     } else {
-      slider.setToolTipText(result);
+      slider.setToolTipText(title);
     }
   }
 
@@ -390,7 +394,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
             null);
     JSliderW slider = new JSliderW(model.getMinimum(), model.getMaximum(), model.getValue());
     slider.setLabelDivision(labelDivision);
-    slider.setdisplayValueInTitle(displayValueInTitle);
+    slider.setDisplayValueInTitle(displayValueInTitle);
     slider.setPaintTicks(true);
     slider.setShowLabels(labelDivision > 0);
     slider.setBorder(titledBorder);

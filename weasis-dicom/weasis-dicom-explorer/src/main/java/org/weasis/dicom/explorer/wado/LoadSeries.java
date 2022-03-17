@@ -439,8 +439,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
     if (study != null && uid != null) {
       for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
-        if (dicomSeries != group && group instanceof Series) {
-          Series s = (Series) group;
+        if (dicomSeries != group && group instanceof Series s) {
           if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))
               && s.hasMediaContains(sopTag, sopUID)) {
             return true;
@@ -472,7 +471,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     ExecutorService imageDownloader =
         ThreadUtil.buildNewFixedThreadExecutor(concurrentDownloads, "Image Downloader"); // NON-NLS
     ArrayList<Callable<Boolean>> tasks = new ArrayList<>(sopList.size());
-    int[] dindex = generateDownladOrder(sopList.size());
+    int[] dindex = generateDownloadOrder(sopList.size());
     GuiExecutor.instance()
         .execute(
             () -> {
@@ -611,7 +610,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         seriesUID = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
       }
       try {
-        file = getJpegThumnbails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
+        file = getJpegThumbnails(wadoParameters, studyUID, seriesUID, instance.getSopInstanceUID());
       } catch (Exception e) {
         LOGGER.error("Downloading thumbnail", e);
       }
@@ -644,7 +643,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         try (HttpResponse httpCon = NetworkUtil.getHttpResponse(thumURL, params, authMethod)) {
           int code = httpCon.getResponseCode();
           if (code >= HttpURLConnection.HTTP_OK && code < HttpURLConnection.HTTP_BAD_REQUEST) {
-            File outFile = File.createTempFile("tumb_", extension, Thumbnail.THUMBNAIL_CACHE_DIR);
+            File outFile = File.createTempFile("thumb_", extension, Thumbnail.THUMBNAIL_CACHE_DIR);
             FileUtil.writeStreamWithIOException(httpCon.getInputStream(), outFile);
             if (outFile.length() == 0) {
               FileUtil.delete(outFile);
@@ -674,29 +673,29 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     }
   }
 
-  public static void removeThumbnailMouseAndKeyAdapter(Thumbnail tumbnail) {
-    MouseListener[] listener = tumbnail.getMouseListeners();
-    MouseMotionListener[] motionListeners = tumbnail.getMouseMotionListeners();
-    KeyListener[] keyListeners = tumbnail.getKeyListeners();
-    MouseWheelListener[] wheelListeners = tumbnail.getMouseWheelListeners();
+  public static void removeThumbnailMouseAndKeyAdapter(Thumbnail thumbnail) {
+    MouseListener[] listener = thumbnail.getMouseListeners();
+    MouseMotionListener[] motionListeners = thumbnail.getMouseMotionListeners();
+    KeyListener[] keyListeners = thumbnail.getKeyListeners();
+    MouseWheelListener[] wheelListeners = thumbnail.getMouseWheelListeners();
     for (MouseListener mouseListener : listener) {
       if (mouseListener instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseListener(mouseListener);
+        thumbnail.removeMouseListener(mouseListener);
       }
     }
     for (MouseMotionListener motionListener : motionListeners) {
       if (motionListener instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseMotionListener(motionListener);
+        thumbnail.removeMouseMotionListener(motionListener);
       }
     }
     for (MouseWheelListener wheelListener : wheelListeners) {
       if (wheelListener instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeMouseWheelListener(wheelListener);
+        thumbnail.removeMouseWheelListener(wheelListener);
       }
     }
     for (KeyListener keyListener : keyListeners) {
       if (keyListener instanceof ThumbnailMouseAndKeyAdapter) {
-        tumbnail.removeKeyListener(keyListener);
+        thumbnail.removeKeyListener(keyListener);
       }
     }
   }
@@ -707,8 +706,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         new ThumbnailMouseAndKeyAdapter(loadSeries.getDicomSeries(), dicomModel, loadSeries);
     thumbnail.addMouseListener(thumbAdapter);
     thumbnail.addKeyListener(thumbAdapter);
-    if (thumbnail instanceof SeriesThumbnail) {
-      ((SeriesThumbnail) thumbnail).setProgressBar(loadSeries.getProgressBar());
+    if (thumbnail instanceof SeriesThumbnail seriesThumbnail) {
+      seriesThumbnail.setProgressBar(loadSeries.getProgressBar());
     }
   }
 
@@ -716,7 +715,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return dicomSeries;
   }
 
-  public File getJpegThumnbails(
+  public File getJpegThumbnails(
       WadoParameters wadoParameters, String studyUID, String seriesUID, String sopInstanceUID)
       throws Exception {
     String addParams = wadoParameters.getAdditionnalParameters();
@@ -743,8 +742,8 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                 + Thumbnail.MAX_SIZE
                 + addParams);
 
-    File outFile = File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR);
-    LOGGER.debug("Start to download JPEG thbumbnail {} to {}.", url, outFile.getName());
+    File outFile = File.createTempFile("thumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR);
+    LOGGER.debug("Start to download JPEG thumbnail {} to {}.", url, outFile.getName());
     try (HttpResponse httpCon =
         NetworkUtil.getHttpResponse(url.toString(), urlParams, authMethod)) {
       int code = httpCon.getResponseCode();
@@ -765,7 +764,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     return outFile;
   }
 
-  private int[] generateDownladOrder(final int size) {
+  private int[] generateDownloadOrder(final int size) {
     int[] dindex = new int[size];
     if (size < 4) {
       for (int i = 0; i < dindex.length; i++) {
@@ -854,7 +853,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     // Solves missing tmp folder problem (on Windows).
     private File getDicomTmpDir() {
       if (!DICOM_TMP_DIR.exists()) {
-        LOGGER.info("DICOM tmp dir not foud. Re-creating it!");
+        LOGGER.info("DICOM tmp dir not found. Re-creating it!");
         AppProperties.buildAccessibleTempDirectory("downloading"); // NON-NLS
       }
       return DICOM_TMP_DIR;
@@ -1047,7 +1046,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       DicomOutputStream dos = null;
 
       try {
-        String tsuid = null;
+        String tsuid;
         Attributes dataset;
         dis = new DicomInputStream(in);
         try {
@@ -1195,8 +1194,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       sop = seriesInstanceList.getSopInstance(sopUID);
     }
 
-    if (sop != null && sop.getGraphicModel() instanceof GraphicModel) {
-      GraphicModel model = (GraphicModel) sop.getGraphicModel();
+    if (sop != null && sop.getGraphicModel() instanceof GraphicModel model) {
       int frames = media.getMediaReader().getMediaElementNumber();
       if (frames > 1 && media.getKey() instanceof Integer) {
         String seriesUID = TagD.getTagValue(media, Tag.SeriesInstanceUID, String.class);
