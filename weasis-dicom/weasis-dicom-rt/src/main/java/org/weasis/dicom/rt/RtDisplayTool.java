@@ -65,6 +65,7 @@ import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
@@ -424,16 +425,22 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
   }
 
   public JSliderW createTransparencySlider(int labelDivision, boolean displayValueInTitle) {
-    final JPanel panelSlider1 = new JPanel();
-    panelSlider1.setLayout(new BoxLayout(panelSlider1, BoxLayout.Y_AXIS));
-    panelSlider1.setBorder(new TitledBorder(Messages.getString("graphic.opacity")));
+    String title = Messages.getString("graphic.opacity");
     DefaultBoundedRangeModel model = new DefaultBoundedRangeModel(50, 0, 0, 100);
+    TitledBorder titledBorder =
+        new TitledBorder(
+            BorderFactory.createEmptyBorder(),
+            title + StringUtil.COLON_AND_SPACE + model.getValue(),
+            TitledBorder.LEADING,
+            TitledBorder.DEFAULT_POSITION,
+            FontItem.MEDIUM.getFont(),
+            null);
     JSliderW s = new JSliderW(model);
     s.setLabelDivision(labelDivision);
-    s.setdisplayValueInTitle(displayValueInTitle);
+    s.setDisplayValueInTitle(displayValueInTitle);
     s.setPaintTicks(true);
     s.setShowLabels(labelDivision > 0);
-    panelSlider1.add(s);
+    s.setBorder(titledBorder);
     if (s.isShowLabels()) {
       s.setPaintLabels(true);
       SliderChangeListener.setSliderLabelValues(
@@ -441,25 +448,25 @@ public class RtDisplayTool extends PluginTool implements SeriesViewerListener {
     }
     s.addChangeListener(
         l -> {
-          if (!model.getValueIsAdjusting()) {
-            RtSet rt = rtSet;
-            if (rt != null) {
-              if (tabbedPane.getSelectedIndex() == 0) {
-                rt.setStructureFillTransparency(model.getValue() * 255 / 100);
-              } else if (tabbedPane.getSelectedIndex() == 1) {
-                rt.setIsoFillTransparency(model.getValue() * 255 / 100);
-              }
+          String result = title + StringUtil.COLON_AND_SPACE + model.getValue();
+          SliderChangeListener.updateSliderProperties(slider, result);
+          RtSet rt = rtSet;
+          if (rt != null) {
+            if (tabbedPane.getSelectedIndex() == 0) {
+              rt.setStructureFillTransparency(model.getValue() * 255 / 100);
+            } else if (tabbedPane.getSelectedIndex() == 1) {
+              rt.setIsoFillTransparency(model.getValue() * 255 / 100);
+            }
 
-              ImageViewerPlugin<DicomImageElement> container =
-                  EventManager.getInstance().getSelectedView2dContainer();
-              List<ViewCanvas<DicomImageElement>> views = null;
-              if (container != null) {
-                views = container.getImagePanels();
-              }
-              if (views != null) {
-                for (ViewCanvas<DicomImageElement> v : views) {
-                  showGraphic(rt, getStructureSelection(), getIsoDoseSelection(), v);
-                }
+            ImageViewerPlugin<DicomImageElement> container =
+                EventManager.getInstance().getSelectedView2dContainer();
+            List<ViewCanvas<DicomImageElement>> views = null;
+            if (container != null) {
+              views = container.getImagePanels();
+            }
+            if (views != null) {
+              for (ViewCanvas<DicomImageElement> v : views) {
+                showGraphic(rt, getStructureSelection(), getIsoDoseSelection(), v);
               }
             }
           }
