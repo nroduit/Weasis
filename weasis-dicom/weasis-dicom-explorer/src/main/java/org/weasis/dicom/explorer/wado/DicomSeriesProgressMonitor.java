@@ -12,6 +12,7 @@ package org.weasis.dicom.explorer.wado;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
+import java.nio.charset.StandardCharsets;
 import org.weasis.core.api.gui.task.SeriesProgressMonitor;
 import org.weasis.core.api.media.data.Series;
 
@@ -72,7 +73,7 @@ public class DicomSeriesProgressMonitor extends SeriesProgressMonitor {
       return;
     }
     int byteOffset;
-    if (b.length > 132 && "DICM".equals(new String(b, 128, 4))) {
+    if (b.length > 132 && "DICM".equals(new String(b, 128, 4, StandardCharsets.UTF_8))) {
       byteOffset = 132;
     } else {
       InterruptedIOException exc = new InterruptedIOException("Not a DICOM file");

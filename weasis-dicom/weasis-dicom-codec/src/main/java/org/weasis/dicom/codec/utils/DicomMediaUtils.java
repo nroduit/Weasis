@@ -479,8 +479,7 @@ public class DicomMediaUtils {
 
   public static void setTag(Map<TagW, Object> tags, TagW tag, Object value) {
     if (tag != null) {
-      if (value instanceof Sequence) {
-        Sequence seq = (Sequence) value;
+      if (value instanceof Sequence seq) {
         Attributes[] list = new Attributes[seq.size()];
         for (int i = 0; i < list.length; i++) {
           Attributes attributes = seq.get(i);
@@ -1254,39 +1253,38 @@ public class DicomMediaUtils {
       }
 
       if (tag.isStringFamilyType()) {
-        if (val instanceof String[]) {
-          dataset.setString(id, dic.vrOf(id), (String[]) val);
+        if (val instanceof String[] stringArray) {
+          dataset.setString(id, dic.vrOf(id), stringArray);
         } else {
           dataset.setString(id, dic.vrOf(id), val.toString());
         }
       } else if (TagType.DICOM_DATE.equals(type)
           || TagType.DICOM_TIME.equals(type)
           || TagType.DICOM_DATETIME.equals(type)) {
-        if (val instanceof TemporalAccessor) {
-          dataset.setDate(id, dic.vrOf(id), TagUtil.toLocalDate((TemporalAccessor) val));
+        if (val instanceof TemporalAccessor temporalAccessor) {
+          dataset.setDate(id, dic.vrOf(id), TagUtil.toLocalDate(temporalAccessor));
         } else if (val.getClass().isArray()) {
           dataset.setDate(id, dic.vrOf(id), TagUtil.toLocalDates(val));
         }
       } else if (TagType.INTEGER.equals(type)) {
-        if (val instanceof Integer) {
-          dataset.setInt(id, dic.vrOf(id), (Integer) val);
-        } else if (val instanceof int[]) {
-          dataset.setInt(id, dic.vrOf(id), (int[]) val);
+        if (val instanceof Integer integer) {
+          dataset.setInt(id, dic.vrOf(id), integer);
+        } else if (val instanceof int[] intArray) {
+          dataset.setInt(id, dic.vrOf(id), intArray);
         }
       } else if (TagType.FLOAT.equals(type)) {
-        if (val instanceof Float) {
-          dataset.setFloat(id, dic.vrOf(id), (Float) val);
-        } else if (val instanceof float[]) {
-          dataset.setFloat(id, dic.vrOf(id), (float[]) val);
+        if (val instanceof Float floatVal) {
+          dataset.setFloat(id, dic.vrOf(id), floatVal);
+        } else if (val instanceof float[] floatArray) {
+          dataset.setFloat(id, dic.vrOf(id), floatArray);
         }
       } else if (TagType.DOUBLE.equals(type)) {
-        if (val instanceof Double) {
-          dataset.setDouble(id, dic.vrOf(id), (Double) val);
-        } else if (val instanceof double[]) {
-          dataset.setDouble(id, dic.vrOf(id), (double[]) val);
+        if (val instanceof Double doubleVal) {
+          dataset.setDouble(id, dic.vrOf(id), doubleVal);
+        } else if (val instanceof double[] doubleArray) {
+          dataset.setDouble(id, dic.vrOf(id), doubleArray);
         }
-      } else if (TagType.DICOM_SEQUENCE.equals(type) && val instanceof Attributes[]) {
-        Attributes[] sIn = (Attributes[]) val;
+      } else if (TagType.DICOM_SEQUENCE.equals(type) && val instanceof Attributes[] sIn) {
         Sequence sOut = dataset.newSequence(id, sIn.length);
         for (Attributes attributes : sIn) {
           sOut.add(new Attributes(attributes));

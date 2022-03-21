@@ -134,4 +134,6 @@ public interface ViewCanvas<E extends ImageElement>
   void updateCanvas(boolean triggerViewModelChangeListeners);
 
   void updateGraphicSelectionListener(ImageViewerPlugin<E> viewerPlugin);
+
+  boolean requiredTextAntialiasing();
 }

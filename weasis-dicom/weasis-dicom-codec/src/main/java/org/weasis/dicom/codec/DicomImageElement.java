@@ -10,6 +10,7 @@
 package org.weasis.dicom.codec;
 
 import java.awt.image.RenderedImage;
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -17,17 +18,25 @@ import java.util.List;
 import java.util.Map;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
 import org.dcm4che3.img.DicomImageAdapter;
 import org.dcm4che3.img.DicomImageReadParam;
+import org.dcm4che3.img.DicomImageReader;
 import org.dcm4che3.img.DicomMetaData;
+import org.dcm4che3.img.DicomOutputData;
 import org.dcm4che3.img.ImageRendering;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
+import org.dcm4che3.img.stream.BytesWithImageDescriptor;
+import org.dcm4che3.img.stream.ImageAdapter;
+import org.dcm4che3.img.stream.ImageAdapter.AdaptTransferSyntax;
+import org.dcm4che3.img.util.DicomUtils;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -36,13 +45,14 @@ import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.Ultrasound;
+import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
 import org.weasis.opencv.op.lut.WlParams;
 import org.weasis.opencv.op.lut.WlPresentation;
 
-public class DicomImageElement extends ImageElement {
+public class DicomImageElement extends ImageElement implements DicomElement {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomImageElement.class);
 
@@ -248,11 +258,9 @@ public class DicomImageElement extends ImageElement {
     return TagD.getTagValue(this, Tag.PixelPaddingRangeLimit, Integer.class);
   }
 
-  public PlanarImage getModalityLutImage(DicomImageReadParam params) {
-    if (adapter == null) {
-      return null;
-    }
-    return ImageRendering.getModalityLutImage(adapter, params);
+  public PlanarImage getModalityLutImage(OpManager manager, DicomImageReadParam params) {
+    PlanarImage image = getImage(manager, adapter == null);
+    return ImageRendering.getModalityLutImage(image, adapter, params);
   }
 
   /**
@@ -360,7 +368,7 @@ public class DicomImageElement extends ImageElement {
   }
 
   @Override
-  public PlanarImage getRenderedImage(final PlanarImage imageSource, Map<String, Object> params) {
+  public PlanarImage getRenderedImage(PlanarImage imageSource, Map<String, Object> params) {
     if (imageSource == null) {
       return null;
     }
@@ -382,7 +390,7 @@ public class DicomImageElement extends ImageElement {
         readParams.setInverseLut((Boolean) params.get(WindowOp.P_INVERSE_LEVEL));
         readParams.setFillOutsideLutRange((Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT));
       }
-      return ImageRendering.getVoiLutImage(adapter, readParams);
+      return ImageRendering.getVoiLutImage(imageSource, adapter, readParams);
     }
     return null;
   }
@@ -442,5 +450,60 @@ public class DicomImageElement extends ImageElement {
       }
     }
     return null;
+  }
+
+  @Override
+  public Attributes saveToFile(File output, DicomExportParameters params) {
+    boolean hasTransformation = params.dicomEditors() != null && !params.dicomEditors().isEmpty();
+    if (!hasTransformation && params.syntax() == null) {
+      super.saveToFile(output);
+      return new Attributes();
+    }
+
+    DicomMetaData metaData = getMediaReader().getDicomMetaData();
+    String outputTsuid =
+        params.syntax() == null
+            ? metaData.getTransferSyntaxUID()
+            : params.syntax().getTransferSyntaxUID();
+    outputTsuid = getOutputTransferSyntax(true, metaData.getTransferSyntaxUID(), outputTsuid);
+    var adaptTransferSyntax = new AdaptTransferSyntax(metaData.getTransferSyntaxUID(), outputTsuid);
+    adaptTransferSyntax.setJpegQuality(params.compressionQuality());
+    adaptTransferSyntax.setCompressionRatioFactor(params.compressionRatioFactor());
+    Attributes attributes = new Attributes(metaData.getDicomObject());
+    AttributeEditorContext context =
+        new AttributeEditorContext(adaptTransferSyntax.getOriginal(), null, null);
+    if (hasTransformation) {
+      params.dicomEditors().forEach(e -> e.apply(attributes, context));
+    }
+
+    BytesWithImageDescriptor desc =
+        ImageAdapter.imageTranscode(attributes, adaptTransferSyntax, context);
+    if (ImageAdapter.writeDicomFile(
+        attributes, adaptTransferSyntax, context.getEditable(), desc, output)) {
+      return attributes;
+    } else {
+      LOGGER.error("Cannot export DICOM file: {}", getFileCache().getOriginalFile().orElse(null));
+      return null;
+    }
+  }
+
+  private static String getOutputTransferSyntax(
+      boolean onlyRaw, String originalTsuid, String outputTsuid) {
+    if (outputTsuid == null) {
+      return originalTsuid;
+    }
+    if (onlyRaw && !DicomUtils.isNative(originalTsuid) && !UID.RLELossless.equals(originalTsuid)) {
+      return originalTsuid;
+    }
+    if (DicomOutputData.isSupportedSyntax(outputTsuid)
+        && DicomImageReader.isSupportedSyntax(originalTsuid)) {
+      return outputTsuid;
+    }
+    if (UID.RLELossless.equals(originalTsuid)
+        || UID.ImplicitVRLittleEndian.equals(originalTsuid)
+        || UID.ExplicitVRBigEndian.equals(originalTsuid)) {
+      return UID.ExplicitVRLittleEndian;
+    }
+    return originalTsuid;
   }
 }

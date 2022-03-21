@@ -33,7 +33,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.Messages;
@@ -601,9 +600,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     Rectangle2D bound = area == null ? null : area.getBounds2D();
 
     g2d.translate(0.5, 0.5);
-    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g2d, true, false, true);
     models.forEach(g -> applyPaint(g, g2d, transform, bound));
-    GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     g2d.translate(-0.5, -0.5);
   }
 

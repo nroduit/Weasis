@@ -20,11 +20,6 @@ import javax.swing.JPanel;
 import org.weasis.core.api.gui.Insertable;
 
 public abstract class AbstractItemDialogPage extends JPanel implements PageItem, Insertable {
-  public static final int LAST_FILLER_HEIGHT = 5;
-  public static final int BLOCK_SEPARATOR = 15;
-  public static final int ITEM_SEPARATOR_SMALL = 2;
-  public static final int ITEM_SEPARATOR = 5;
-  public static final int ITEM_SEPARATOR_LARGE = 10;
 
   private final String title;
   private final List<PageItem> subPageList = new ArrayList<>();

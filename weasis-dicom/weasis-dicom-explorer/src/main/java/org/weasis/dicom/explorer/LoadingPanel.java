@@ -55,7 +55,8 @@ public class LoadingPanel extends JPanel {
         }
       } else {
         for (Component c : getComponents()) {
-          if (c instanceof LoadingTaskPanel && task.equals(((LoadingTaskPanel) c).getTask())) {
+          if (c instanceof LoadingTaskPanel loadingTaskPanel
+              && task.equals(loadingTaskPanel.getTask())) {
             remove(c);
             task.stopProgress();
             update = true;

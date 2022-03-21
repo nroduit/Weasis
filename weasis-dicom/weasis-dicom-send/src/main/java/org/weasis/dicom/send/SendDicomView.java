@@ -39,6 +39,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ThreadUtil;
@@ -47,6 +48,8 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.LangUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.core.util.StringUtil.Suffix;
+import org.weasis.dicom.codec.DicomElement;
+import org.weasis.dicom.codec.DicomElement.DicomExportParameters;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.CheckTreeModel;
@@ -282,23 +285,22 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
             continue;
           }
 
-          String path = LocalExport.buildPath(img, false, false, false, node);
+          String path = LocalExport.buildPath(img, false, false, node, null);
+          File destinationDir = new File(writeDir, path);
+          destinationDir.mkdirs();
+          DicomExportParameters dicomExportParameters =
+              new DicomExportParameters(null, true, null, 0, 0);
+          img.saveToFile(new File(destinationDir, iuid), dicomExportParameters);
+        } else if (node.getUserObject() instanceof DicomElement dcm) {
+          String iuid = TagD.getTagValue((TagReadable) dcm, Tag.SOPInstanceUID, String.class);
+
+          String path = LocalExport.buildPath((MediaElement) dcm, false, false, node, null);
           File destinationDir = new File(writeDir, path);
           destinationDir.mkdirs();
 
-          File destinationFile = new File(destinationDir, iuid);
-          if (!img.saveToFile(destinationFile)) {
-            LOGGER.error(
-                "Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null));
-          }
-        } else if (node.getUserObject() instanceof MediaElement dcm) {
-          String iuid = TagD.getTagValue(dcm, Tag.SOPInstanceUID, String.class);
-
-          String path = LocalExport.buildPath(dcm, false, false, false, node);
-          File destinationDir = new File(writeDir, path);
-          destinationDir.mkdirs();
-
-          dcm.saveToFile(new File(destinationDir, iuid));
+          DicomExportParameters dicomExportParameters =
+              new DicomExportParameters(null, true, null, 0, 0);
+          dcm.saveToFile(new File(destinationDir, iuid), dicomExportParameters);
         } else if (node.getUserObject() instanceof Series) {
           MediaSeries<?> s = (MediaSeries<?>) node.getUserObject();
           if (LangUtil.getNULLtoFalse((Boolean) s.getTagValue(TagW.ObjectToSave))) {
@@ -308,7 +310,7 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
               for (MediaElement dcm : series.getMedias(null, null)) {
                 GraphicModel grModel = (GraphicModel) dcm.getTagValue(TagW.PresentationModel);
                 if (grModel != null && grModel.hasSerializableGraphics()) {
-                  String path = LocalExport.buildPath(dcm, false, false, false, node);
+                  String path = LocalExport.buildPath(dcm, false, false, node, null);
                   LocalExport.buildAndWritePR(
                       dcm, false, new File(writeDir, path), null, node, seriesInstanceUID);
                 }

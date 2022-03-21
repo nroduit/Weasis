@@ -223,8 +223,11 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
   public void drawLayers(
       Graphics2D g2d, AffineTransform transform, AffineTransform inverseTransform) {
     if (LangUtil.getNULLtoTrue((Boolean) actionsInView.get(ActionW.DRAWINGS.cmd()))) {
+      Object[] oldRenderingHints =
+          GuiUtils.setRenderingHints(g2d, true, false, view2d.requiredTextAntialiasing());
       Rectangle2D b = new Rectangle2D.Double(0.0, 0.0, getWidth(), getHeight());
       view2d.getGraphicManager().draw(g2d, transform, inverseTransform, b);
+      GuiUtils.resetRenderingHints(g2d, oldRenderingHints);
     }
   }
 

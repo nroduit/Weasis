@@ -32,7 +32,7 @@
   <item name='org.slf4j.Logger void info(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
-  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object) 0'>
+  <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='org.slf4j.Logger void info(java.lang.String, java.lang.Object, java.lang.Object)'>

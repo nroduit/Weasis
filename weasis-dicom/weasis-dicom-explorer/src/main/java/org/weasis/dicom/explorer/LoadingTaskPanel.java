@@ -9,11 +9,6 @@
  */
 package org.weasis.dicom.explorer;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -42,64 +37,18 @@ public class LoadingTaskPanel extends JPanel {
 
   private void init() {
     if (globalLoadingManager) {
-      JButton globalResumeButton =
-          new JButton(
-              new Icon() {
-
-                @Override
-                public void paintIcon(Component c, Graphics g, int x, int y) {
-                  Graphics2D g2d = (Graphics2D) g;
-                  g2d.setColor(Color.GREEN);
-                  x += 3;
-                  y += 3;
-                  int[] xPoints = {x, x + 14, x};
-                  int[] yPoints = {y, y + 7, y + 14};
-                  g2d.fillPolygon(xPoints, yPoints, xPoints.length);
-                }
-
-                @Override
-                public int getIconWidth() {
-                  return 20;
-                }
-
-                @Override
-                public int getIconHeight() {
-                  return 20;
-                }
-              });
-
-      JButton globalStopButton =
-          new JButton(
-              new Icon() {
-
-                @Override
-                public void paintIcon(Component c, Graphics g, int x, int y) {
-                  Graphics2D g2d = (Graphics2D) g;
-                  g2d.setColor(Color.RED);
-                  x += 3;
-                  y += 3;
-                  g2d.fillRect(x, y, 14, 14);
-                }
-
-                @Override
-                public int getIconWidth() {
-                  return 20;
-                }
-
-                @Override
-                public int getIconHeight() {
-                  return 20;
-                }
-              });
-
+      JButton globalResumeButton = new JButton(ResourceUtil.getIcon(ActionIcon.EXECUTE));
       globalResumeButton.setToolTipText(Messages.getString("DicomExplorer.resume_all"));
       globalResumeButton.addActionListener(e -> DownloadManager.resume());
       this.add(globalResumeButton);
+
+      JButton globalStopButton = new JButton(ResourceUtil.getIcon(ActionIcon.SUSPEND));
       globalStopButton.setToolTipText(Messages.getString("DicomExplorer.stop_all"));
       globalStopButton.addActionListener(e -> DownloadManager.stop());
       this.add(globalStopButton);
     } else {
       JButton cancelButton = new JButton(ResourceUtil.getIcon(ActionIcon.SUSPEND));
+      cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process"));
       cancelButton.addActionListener(
           e -> {
             message.setText(Messages.getString("LoadingTaskPanel.abording"));
@@ -107,7 +56,6 @@ public class LoadingTaskPanel extends JPanel {
               task.cancel();
             }
           });
-      cancelButton.setToolTipText(Messages.getString("LoadingTaskPanel.stop_process"));
       this.add(cancelButton);
       if (task != null) {
         CircularProgressBar globalProgress = task.getBar();

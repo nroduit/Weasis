@@ -152,10 +152,8 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private void changeDicomInfo(MediaSeries<?> series, MediaElement media) {
     int index = getSelectedIndex();
     if (index == 0) {
-      jTextPaneLimited.requestFocusInWindow();
       displayLimitedDicomInfo(series, media);
     } else {
-      allPane.requestFocusInWindow();
       displayAllDicomInfo(series, media);
     }
   }

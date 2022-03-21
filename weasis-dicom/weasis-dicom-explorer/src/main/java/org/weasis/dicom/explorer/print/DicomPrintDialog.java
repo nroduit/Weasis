@@ -21,7 +21,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRootPane;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
@@ -124,13 +123,13 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
     this.eventManager = eventManager;
     initComponents();
-    applyOptionsfromSelected();
+    applyOptionsFromSelected();
     pack();
   }
 
   private void initComponents() {
-    JRootPane rootPane = getRootPane();
-    rootPane.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
+    JPanel panel = new JPanel();
+    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
 
     JPanel printersCfg = GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 5, 5);
     printersCfg.setBorder(
@@ -163,25 +162,25 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     deleteButton.addActionListener(
         evt -> {
           AbstractDicomNode.deleteNodeActionPerformed(printersComboBox);
-          applyOptionsfromSelected();
+          applyOptionsFromSelected();
         });
     editButton.addActionListener(
         evt -> {
           AbstractDicomNode.editNodeActionPerformed(printersComboBox);
-          applyOptionsfromSelected();
+          applyOptionsFromSelected();
         });
     addPrinterButton.addActionListener(
         evt -> {
           AbstractDicomNode.addNodeActionPerformed(
               printersComboBox, AbstractDicomNode.Type.PRINTER);
-          applyOptionsfromSelected();
+          applyOptionsFromSelected();
         });
-    printersComboBox.addActionListener(evt -> applyOptionsfromSelected());
+    printersComboBox.addActionListener(evt -> applyOptionsFromSelected());
 
-    rootPane.add(printersCfg, "newline, spanx");
+    panel.add(printersCfg, "newline, spanx");
 
     optionPane = new DicomPrintOptionPane();
-    rootPane.add(optionPane, "newline, gaptop 10, spanx");
+    panel.add(optionPane, "newline, gaptop 10, spanx");
 
     JButton printButton = new JButton(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);
@@ -189,8 +188,9 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
     cancelButton.addActionListener(evt -> doClose());
 
-    rootPane.add(printButton, "newline, skip, growx 0, alignx trailing");
-    rootPane.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
+    panel.add(printButton, "newline, skip, growx 0, alignx trailing");
+    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
+    setContentPane(panel);
   }
 
   private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -241,7 +241,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     dispose();
   }
 
-  private void applyOptionsfromSelected() {
+  private void applyOptionsFromSelected() {
     Object selectedItem = printersComboBox.getSelectedItem();
     if (selectedItem instanceof DicomPrintNode printNode) {
       optionPane.applyOptions(printNode.getPrintOptions());

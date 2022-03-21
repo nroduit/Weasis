@@ -451,6 +451,10 @@ public class RenderedImageLayer<E extends ImageElement> extends DefaultUUID
   @Override
   public void updateDisplayOperations() {
     if (isEnableDispOperations()) {
+      PlanarImage source = disOpManager.getFirstNodeInputImage();
+      if (source != null && source.width() < 1) {
+        disOpManager.setFirstNode(getSourceRenderedImage());
+      }
       displayImage = disOpManager.process();
       fireImageChanged();
     }

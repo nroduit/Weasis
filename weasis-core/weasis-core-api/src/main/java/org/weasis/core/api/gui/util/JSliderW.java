@@ -46,11 +46,11 @@ public class JSliderW extends JSlider {
     this.labelDivision = labelDivision;
   }
 
-  public boolean isdisplayValueInTitle() {
+  public boolean isDisplayValueInTitle() {
     return displayValueInTitle;
   }
 
-  public void setdisplayValueInTitle(boolean displayOnlyValue) {
+  public void setDisplayValueInTitle(boolean displayOnlyValue) {
     this.displayValueInTitle = displayOnlyValue;
   }
 

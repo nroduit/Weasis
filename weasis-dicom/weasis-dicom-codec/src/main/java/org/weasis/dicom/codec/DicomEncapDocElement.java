@@ -10,11 +10,12 @@
 package org.weasis.dicom.codec;
 
 import java.io.File;
+import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.util.FileUtil;
 
-public class DicomEncapDocElement extends MediaElement implements FileExtractor {
+public class DicomEncapDocElement extends MediaElement implements FileExtractor, DicomElement {
   private File document = null;
 
   public DicomEncapDocElement(DicomMediaIO mediaIO, Object key) {
@@ -35,5 +36,15 @@ public class DicomEncapDocElement extends MediaElement implements FileExtractor 
   @Override
   public File getExtractFile() {
     return document;
+  }
+
+  @Override
+  public DcmMediaReader getMediaReader() {
+    return (DcmMediaReader) super.getMediaReader();
+  }
+
+  @Override
+  public Attributes saveToFile(File output, DicomExportParameters params) {
+    return DicomSpecialElement.saveToFile(this, output, params.dicomEditors());
   }
 }

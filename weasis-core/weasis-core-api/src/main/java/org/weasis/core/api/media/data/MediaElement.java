@@ -115,6 +115,10 @@ public class MediaElement implements Tagable {
   }
 
   public boolean saveToFile(File output) {
+    return saveToFile(mediaIO, output);
+  }
+
+  public static boolean saveToFile(MediaReader mediaIO, File output) {
     if (mediaIO.getFileCache().isElementInMemory()) {
       return mediaIO.buildFile(output);
     }

@@ -83,6 +83,7 @@ public class DicomManager {
     TagView[] image = {
       new TagView(TagD.get(Tag.SOPInstanceUID)),
       new TagView(TagD.getTagFromIDs(Tag.FrameType, Tag.ImageType)),
+      new TagView(TagD.get(Tag.SOPClassUID)),
       new TagView(TagD.get(Tag.TransferSyntaxUID)),
       new TagView(TagD.get(Tag.InstanceNumber)),
       new TagView(TagD.get(Tag.ImageComments)),

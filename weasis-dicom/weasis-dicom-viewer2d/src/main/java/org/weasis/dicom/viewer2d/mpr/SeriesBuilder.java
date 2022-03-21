@@ -302,16 +302,7 @@ public class SeriesBuilder {
                    * of the original series stack
                    */
                   double sPixSize =
-                      writeBlock(
-                          secSeries,
-                          series,
-                          medias,
-                          viewParams,
-                          mprView,
-                          thread,
-                          abort,
-                          seriesID,
-                          size);
+                      writeBlock(secSeries, medias, viewParams, mprView, thread, abort, size);
 
                   if (thread.isInterrupted()) {
                     return;
@@ -337,8 +328,7 @@ public class SeriesBuilder {
                     if (study != null && treeModel != null) {
                       dicomSeries.setTag(TagW.ExplorerModel, model);
                       treeModel.addHierarchyNode(study, dicomSeries);
-                      if (treeModel instanceof DicomModel) {
-                        DicomModel dicomModel = (DicomModel) treeModel;
+                      if (treeModel instanceof DicomModel dicomModel) {
                         dicomModel.firePropertyChange(
                             new ObservableEvent(
                                 ObservableEvent.BasicAction.ADD, dicomModel, null, dicomSeries));
@@ -442,7 +432,14 @@ public class SeriesBuilder {
       Tag.KVP,
       Tag.Laterality,
       Tag.BodyPartExamined,
+      Tag.RescaleSlope,
+      Tag.RescaleIntercept,
+      Tag.RescaleType,
       Tag.ModalityLUTSequence,
+      Tag.WindowCenter,
+      Tag.WindowWidth,
+      Tag.VOILUTFunction,
+      Tag.WindowCenterWidthExplanation,
       Tag.VOILUTSequence
     };
 
@@ -492,61 +489,15 @@ public class SeriesBuilder {
       rawIO.setTag(TagD.get(Tag.BitsStored), bitsStored);
 
       // Mandatory tags
-      TagW[] mtagList =
-          TagD.getTagFromIDs(
-              Tag.PatientID,
-              Tag.PatientName,
-              Tag.PatientBirthDate,
-              Tag.StudyInstanceUID,
-              Tag.StudyID,
-              Tag.SOPClassUID,
-              Tag.StudyDate,
-              Tag.StudyTime,
-              Tag.AccessionNumber);
-      rawIO.copyTags(mtagList, img, true);
-      rawIO.setTag(TagW.PatientPseudoUID, img.getTagValue(TagW.PatientPseudoUID));
-
-      TagW[] tagList =
-          TagD.getTagFromIDs(
-              Tag.PhotometricInterpretation,
-              Tag.PixelRepresentation,
-              Tag.Units,
-              Tag.SamplesPerPixel,
-              Tag.Modality);
-      rawIO.copyTags(tagList, img, true);
-      rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
-
-      TagW[] tagList2 = {
-        TagW.ModalityLUTData,
-        TagW.ModalityLUTType,
-        TagW.ModalityLUTExplanation,
-        TagW.VOILUTsData,
-        TagW.VOILUTsExplanation
-      };
-      rawIO.copyTags(tagList2, img, false);
+      copyMandatoryTags(img, rawIO);
+      TagW[] tagList2;
 
       tagList2 =
           TagD.getTagFromIDs(
-              Tag.RescaleSlope,
-              Tag.RescaleIntercept,
-              Tag.RescaleType,
               Tag.PixelPaddingValue,
               Tag.PixelPaddingRangeLimit,
-              Tag.WindowWidth,
-              Tag.WindowCenter,
-              Tag.WindowCenterWidthExplanation,
-              Tag.VOILUTFunction,
               Tag.PixelSpacingCalibrationDescription);
       rawIO.copyTags(tagList2, img, false);
-
-      // Clone array, because values are adapted according to the min and max pixel values.
-      TagW[] tagList3 = TagD.getTagFromIDs(Tag.WindowWidth, Tag.WindowCenter);
-      for (TagW tagW : tagList3) {
-        double[] val = (double[]) img.getTagValue(tagW);
-        if (val != null) {
-          img.setTag(tagW, Arrays.copyOf(val, val.length));
-        }
-      }
 
       // Image specific tags
       int index = i;
@@ -555,12 +506,12 @@ public class SeriesBuilder {
           TagD.get(Tag.InstanceNumber), params.reverseIndexOrder ? last - index : index + 1);
 
       double x =
-          (params.imgPosition[0] instanceof Double)
-              ? (Double) params.imgPosition[0]
+          (params.imgPosition[0] instanceof Double doubleVal)
+              ? doubleVal
               : (Boolean) params.imgPosition[0] ? last - index - 1 : index;
       double y =
-          (params.imgPosition[1] instanceof Double)
-              ? (Double) params.imgPosition[1]
+          (params.imgPosition[1] instanceof Double doubleVal)
+              ? doubleVal
               : (Boolean) params.imgPosition[1] ? last - index - 1 : index;
       Point3d p = geometry.getPosition(new Point2D.Double(x, y));
       rawIO.setTag(TagD.get(Tag.ImagePositionPatient), new double[] {p.x, p.y, p.z});
@@ -571,28 +522,60 @@ public class SeriesBuilder {
       if (loc != null) {
         rawIO.setTag(TagD.get(Tag.SliceLocation), loc[0] + loc[1] + loc[2]);
       }
-      DicomImageElement dcm =
-          new DicomImageElement(rawIO, 0) {
-            @Override
-            public boolean saveToFile(File output) {
-              RawImageIO reader = (RawImageIO) getMediaReader();
-              return FileUtil.nioCopyFile(reader.getDicomFile(), output);
-            }
-          };
-      dcms.add(dcm);
+      dcms.add(buildDicomImageElement(rawIO));
     }
     return new DicomSeries(params.seriesUID, dcms, DicomModel.series.getTagView());
   }
 
+  public static DicomImageElement buildDicomImageElement(DcmMediaReader rawIO) {
+    return new DicomImageElement(rawIO, 0) {
+      @Override
+      public Attributes saveToFile(File output, DicomExportParameters params) {
+        RawImageIO reader = (RawImageIO) getMediaReader();
+        boolean hasTransformation =
+            params.dicomEditors() != null && !params.dicomEditors().isEmpty();
+        if (!hasTransformation && params.syntax() == null) {
+          FileUtil.nioCopyFile(reader.getDicomFile(), output);
+          return new Attributes();
+        }
+        return super.saveToFile(output, params);
+      }
+    };
+  }
+
+  public static void copyMandatoryTags(DicomImageElement img, RawImageIO rawIO) {
+    TagW[] mtagList =
+        TagD.getTagFromIDs(
+            Tag.PatientID,
+            Tag.PatientName,
+            Tag.PatientBirthDate,
+            Tag.StudyInstanceUID,
+            Tag.StudyID,
+            Tag.SOPClassUID,
+            Tag.StudyDate,
+            Tag.StudyTime,
+            Tag.AccessionNumber);
+    rawIO.copyTags(mtagList, img, true);
+    rawIO.setTag(TagW.PatientPseudoUID, img.getTagValue(TagW.PatientPseudoUID));
+
+    TagW[] tagList =
+        TagD.getTagFromIDs(
+            Tag.PhotometricInterpretation,
+            Tag.PixelRepresentation,
+            Tag.Units,
+            Tag.SamplesPerPixel,
+            Tag.Modality);
+    rawIO.copyTags(tagList, img, true);
+    rawIO.setTag(TagW.MonoChrome, img.getTagValue(TagW.MonoChrome));
+  }
+
   private static double writeBlock(
       FileRawImage[] newSeries,
-      MediaSeries<DicomImageElement> series,
       Iterable<DicomImageElement> medias,
       ViewParameter params,
       final MprView view,
       Thread thread,
       final boolean[] abort,
-      String seriesID,
       int dstHeight)
       throws IOException {
     ImageCV[] builImgs = new ImageCV[newSeries.length];

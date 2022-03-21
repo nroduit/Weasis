@@ -329,7 +329,7 @@ public class DownloadManager {
       } catch (SAXException e) {
         LOGGER.error("[Validate with XSD schema] wado_query is NOT valid", e);
       } catch (Exception e) {
-        LOGGER.error("Error when validate XSD schema. Try to filter JRE", e);
+        LOGGER.error("Error when validate XSD schema.", e);
       }
 
       ReaderParams params = new ReaderParams(model, seriesMap);
@@ -689,8 +689,7 @@ public class DownloadManager {
         AbstractDicomNode.loadDicomNodes(
             AbstractDicomNode.Type.WEB, AbstractDicomNode.UsageType.RETRIEVE, WebType.WADO);
     for (AbstractDicomNode n : webNodes) {
-      if (n instanceof DicomWebNode) {
-        DicomWebNode wn = (DicomWebNode) n;
+      if (n instanceof DicomWebNode wn) {
         URL wadoURL = wn.getUrl();
         if (wadoURL != null && wadoURL.toString().equals(url)) {
           return wn;
@@ -700,8 +699,7 @@ public class DownloadManager {
     return null;
   }
 
-  private static void readPresentation(XMLStreamReader xmler, ReaderParams params)
-      throws XMLStreamException {
+  private static void readPresentation(XMLStreamReader xmler, ReaderParams params) {
     GraphicModel model = XmlSerializer.readPresentation(xmler);
     if (model != null) {
       model.getLayers().forEach(l -> l.setSerializable(Boolean.TRUE));

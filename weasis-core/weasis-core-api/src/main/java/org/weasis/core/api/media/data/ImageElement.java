@@ -406,9 +406,9 @@ public class ImageElement extends MediaElement {
         // We don't need the result, so cancel the task too
         future.cancel(true);
       } catch (ExecutionException e) {
-        if (e.getCause() instanceof OutOfMemoryError) {
+        if (e.getCause() instanceof OutOfMemoryError memoryError) {
           setAsLoaded();
-          throw (OutOfMemoryError) e.getCause();
+          throw memoryError;
         } else {
           readable = false;
           LOGGER.error("Cannot read pixel data!: {}", this, e);

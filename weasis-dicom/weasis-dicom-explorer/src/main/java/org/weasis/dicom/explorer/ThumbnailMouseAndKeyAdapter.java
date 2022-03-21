@@ -259,12 +259,18 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
         if (selList.size() == 1 && loadSeries != null) {
           if (loadSeries.isStopped()) {
             popupMenu.add(new JSeparator());
-            JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.resume"));
+            JMenuItem item3 =
+                new JMenuItem(
+                    Messages.getString("LoadSeries.resume"),
+                    ResourceUtil.getIcon(ActionIcon.EXECUTE));
             item3.addActionListener(e -> loadSeries.resume());
             popupMenu.add(item3);
           } else if (!loadSeries.isDone()) {
             popupMenu.add(new JSeparator());
-            JMenuItem item3 = new JMenuItem(Messages.getString("LoadSeries.stop"));
+            JMenuItem item3 =
+                new JMenuItem(
+                    Messages.getString("LoadSeries.stop"),
+                    ResourceUtil.getIcon(ActionIcon.SUSPEND));
             item3.addActionListener(e -> loadSeries.stop());
             popupMenu.add(item3);
           }

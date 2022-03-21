@@ -19,7 +19,7 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JRootPane;
+import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
@@ -64,52 +64,53 @@ public class DicomWebNodeDialog extends JDialog {
   private void initComponents() {
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-    JRootPane rootPane = getRootPane();
-    rootPane.setLayout(
+    JPanel panel = new JPanel();
+    panel.setLayout(
         new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[left][grow,fill]", "[]10[]"));
 
     JLabel descriptionLabel =
         new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
-    rootPane.add(descriptionLabel, "newline");
-    rootPane.add(descriptionTf);
+    panel.add(descriptionLabel, "newline");
+    panel.add(descriptionTf);
 
     JLabel lblType =
         new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON);
     comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomWebNode.WebType.values()));
-    rootPane.add(lblType, "newline");
-    rootPane.add(comboBox);
+    panel.add(lblType, "newline");
+    panel.add(comboBox);
 
     JLabel urlLabel = new JLabel("URL" + StringUtil.COLON);
     urlTf = new JTextField(50);
-    rootPane.add(urlLabel, "newline");
-    rootPane.add(urlTf, "growx, spanx 3, alignx leading");
+    panel.add(urlLabel, "newline");
+    panel.add(urlTf, "growx, spanx 3, alignx leading");
 
     JLabel lblAuth = new JLabel(Messages.getString("authentication") + StringUtil.COLON);
     AuthenticationPersistence.loadMethods(comboBoxAuth);
     comboBoxAuth.setSelectedIndex(0);
     JButton btnAuth = new JButton(Messages.getString("manager"));
     btnAuth.addActionListener(e -> manageAuth());
-    rootPane.add(lblAuth, "newline");
-    rootPane.add(comboBoxAuth);
-    rootPane.add(btnAuth, "growx 0");
+    panel.add(lblAuth, "newline");
+    panel.add(comboBoxAuth);
+    panel.add(btnAuth, "growx 0");
 
     JLabel headersLabel = new JLabel(Messages.getString("http.optional") + StringUtil.COLON);
     JButton btnHttpHeaders = new JButton(Messages.getString("DicomWebNodeDialog.httpHeaders"));
     btnHttpHeaders.addActionListener(e -> manageHeader());
-    rootPane.add(headersLabel, "newline");
-    rootPane.add(btnHttpHeaders);
+    panel.add(headersLabel, "newline");
+    panel.add(btnHttpHeaders);
 
     JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
 
-    rootPane.add(
+    panel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, 0, 0, okButton, GuiUtils.boxHorizontalStrut(15), cancelButton),
         "newline, skip 3, gap 15lp 0lp 10lp 10lp, alignx trailing");
+    setContentPane(panel);
   }
 
   private void manageAuth() {

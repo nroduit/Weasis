@@ -16,7 +16,6 @@ import java.awt.Composite;
 import java.awt.Container;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
-import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
@@ -64,7 +63,7 @@ public class SeriesThumbnail extends Thumbnail
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesThumbnail.class);
 
-  private static final int BUTTON_SIZE_HALF = 7;
+  private static final int BUTTON_SIZE_HALF = GuiUtils.getScaleLength(7);
   private static final Polygon startButton =
       new Polygon(
           new int[] {0, 2 * BUTTON_SIZE_HALF, 0},
@@ -367,32 +366,30 @@ public class SeriesThumbnail extends Thumbnail
         }
         if (bar.isVisible()) {
           // Draw in the bottom right corner of thumbnail
-          double shiftx = (double) thumbnailSize - bar.getWidth();
-          double shifty = (double) thumbnailSize - bar.getHeight();
-          g2d.translate(shiftx, shifty);
+          double shiftX = (double) thumbnailSize - bar.getWidth();
+          double shiftY = (double) thumbnailSize - bar.getHeight();
+          g2d.translate(shiftX, shiftY);
           bar.paint(g2d);
+          g2d.translate(-shiftX, -shiftY);
 
           // Draw in the top right corner
           SeriesImporter seriesLoader = series.getSeriesLoader();
           if (seriesLoader != null) {
             boolean stopped = seriesLoader.isStopped();
-
-            g2d.translate(-shiftx, -shifty);
-            shiftx = (double) thumbnailSize - stopButton.width;
-            shifty = fontHeight * 2.0;
-            g2d.translate(shiftx, shifty);
-            g2d.setColor(Color.RED);
+            shiftX = (double) thumbnailSize - stopButton.width;
+            shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3.0;
+            g2d.translate(shiftX, shiftY);
+            g2d.setColor(IconColor.ACTIONS_RED.color);
             g2d.setComposite(stopped ? TRANSPARENT_COMPOSITE : SOLID_COMPOSITE);
             g2d.fill(stopButton);
+            g2d.translate(-shiftX, -shiftY);
 
-            g2d.translate(-shiftx, -shifty);
-            shiftx = shiftx - 3 * BUTTON_SIZE_HALF;
-            g2d.translate(shiftx, shifty);
-            g2d.setColor(Color.GREEN);
+            shiftX = shiftX - 3 * BUTTON_SIZE_HALF;
+            g2d.translate(shiftX, shiftY);
+            g2d.setColor(IconColor.ACTIONS_GREEN.color);
             g2d.setComposite(stopped ? SOLID_COMPOSITE : TRANSPARENT_COMPOSITE);
             g2d.fill(startButton);
-
-            g2d.translate(-shiftx, -shifty);
+            g2d.translate(-shiftX, -shiftY);
           }
         }
       }
@@ -417,10 +414,12 @@ public class SeriesThumbnail extends Thumbnail
       JProgressBar bar = progressBar;
       if (bar.isVisible()) {
         Point p = e.getPoint();
-        Insets bd = this.getInsets();
-        p.translate(-(thumbnailSize + bd.left - stopButton.width), -6 - bd.top);
+        int inset = GuiUtils.getScaleLength(2);
+        int shiftX = thumbnailSize - stopButton.width;
+        int shiftY = thumbnailSize - bar.getHeight() - stopButton.height - inset * 3;
+        p.translate(-shiftX, -shiftY);
         Rectangle rect = stopButton.getBounds();
-        rect.grow(2, 2);
+        rect.grow(inset, inset);
         if (rect.contains(p)) {
           SeriesImporter loader = series.getSeriesLoader();
           if (loader != null) {
