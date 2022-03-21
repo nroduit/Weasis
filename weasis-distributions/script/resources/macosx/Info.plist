@@ -1,11 +1,9 @@
 <?xml version="1.0" ?>
-<!DOCTYPE plist
-  PUBLIC '-//Apple//DTD PLIST 1.0//EN'
-  'https://www.apple.com/DTDs/PropertyList-1.0.dtd'>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
 		<key>LSMinimumSystemVersion</key>
-		<string>10.9</string>
+  <string>10.11</string>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>English</string>
 		<key>CFBundleAllowMixedLocalizations</key>
@@ -38,6 +36,8 @@
 		<string>DEPLOY_BUNDLE_COPYRIGHT</string>
 		<key>NSHighResolutionCapable</key>
 		<string>true</string>
+		<key>NSMicrophoneUsageDescription</key>
+    <string>The application DEPLOY_LAUNCHER_NAME is requesting access to the microphone.</string>
 		<key>UTImportedTypeDeclarations</key>
 		<array>
 			<dict>
