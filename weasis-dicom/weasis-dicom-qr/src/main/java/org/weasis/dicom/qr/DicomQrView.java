@@ -740,7 +740,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     if (items != null) {
       for (int i = 0; i < items.size(); i++) {
         Attributes item = items.get(i);
-        if(LOGGER.isTraceEnabled()) {
+        if (LOGGER.isTraceEnabled()) {
           LOGGER.trace("===========================================");
           LOGGER.trace("CFind Item {}", (i + 1));
           LOGGER.trace("===========================================");
