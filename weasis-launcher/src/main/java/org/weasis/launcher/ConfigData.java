@@ -407,9 +407,13 @@ public class ConfigData {
   }
 
   public void applyProxy(String dir) {
-    File file = new File(dir, "persitence.properties");
+    File file = new File(dir, "persistence.properties");
     if (!file.canRead()) {
-      return;
+      // Fix old name
+      File oldFile = new File(dir, "persitence.properties");
+      if (!oldFile.canRead() || !oldFile.renameTo(file)) {
+        return;
+      }
     }
     Properties p = new Properties();
     FileUtil.readProperties(file, p);

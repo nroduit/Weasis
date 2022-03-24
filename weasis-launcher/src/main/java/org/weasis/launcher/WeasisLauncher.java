@@ -697,7 +697,7 @@ public class WeasisLauncher {
       serverProp.put(key, value);
       serverProp.put("def." + key, defaultVal); // NON-NLS
     }
-    LOGGER.log(Level.INFO, "Config of {0} = {1}", new Object[] {key, value});
+    LOGGER.log(Level.INFO, "Config of {0} = {1}", key, value);
     return value;
   }
 

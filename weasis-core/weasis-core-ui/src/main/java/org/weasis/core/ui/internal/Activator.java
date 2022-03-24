@@ -45,10 +45,8 @@ public class Activator implements BundleActivator, ServiceListener {
   public void start(final BundleContext bundleContext) throws Exception {
     registerCommands(bundleContext);
     File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
-    if (dataFolder != null) {
-      FileUtil.readProperties(
-          new File(dataFolder, "persitence.properties"), BundleTools.LOCAL_UI_PERSISTENCE);
-    }
+    FileUtil.readProperties(
+        new File(dataFolder, "persistence.properties"), BundleTools.LOCAL_UI_PERSISTENCE);
     Preferences prefs = BundlePreferences.getDefaultPreferences(bundleContext);
     AbstractInfoLayer.applyPreferences(prefs);
     MeasureTool.viewSetting.initMonitors();
@@ -82,7 +80,7 @@ public class Activator implements BundleActivator, ServiceListener {
     MeasureTool.viewSetting.savePreferences(prefs);
     File dataFolder = AppProperties.getBundleDataFolder(bundleContext);
     if (dataFolder != null) {
-      File file = new File(dataFolder, "persitence.properties");
+      File file = new File(dataFolder, "persistence.properties");
       FileUtil.prepareToWriteFile(file);
       FileUtil.storeProperties(file, BundleTools.LOCAL_UI_PERSISTENCE, null);
     }

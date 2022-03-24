@@ -113,16 +113,15 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof RadioMenuItem item) {
-      if (item.isSelected()) {
-        dataModel.setSelectedItem(item.getUserObject());
-      }
+    if (e.getSource() instanceof RadioMenuItem item && item.isSelected()) {
+      dataModel.setSelectedItem(item.getUserObject());
     }
   }
 
   public void setSelected(Object selected) {
     if (selected == null) {
       group.clearSelection();
+      dataModel.setSelectedItem(null);
     } else {
       for (RadioMenuItem item : itemList) {
         if (item.getUserObject() == selected) {

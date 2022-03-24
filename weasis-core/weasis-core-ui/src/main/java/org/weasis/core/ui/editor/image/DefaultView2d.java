@@ -929,12 +929,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public boolean requiredTextAntialiasing() {
     Optional<SliderCineListener> cineAction =
         eventManager.getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
-    if (cineAction.isPresent()
-        && cineAction.get().isActionEnabled()
-        && cineAction.get().isCining()) {
-      return false; // Otherwise, slow down cine
-    }
-    return true;
+    // Prevent to slow down cine
+    return cineAction.isEmpty()
+        || !cineAction.get().isActionEnabled()
+        || !cineAction.get().isCining();
   }
 
   @Override

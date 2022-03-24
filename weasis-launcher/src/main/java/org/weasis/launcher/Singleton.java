@@ -156,7 +156,7 @@ public class Singleton {
 
   /** Returns true if we connect successfully to the server for the stringId */
   static boolean connectToServer(ConfigData configData) {
-    LOGGER.log(Level.INFO, "Connect to {0} on port {1}", new Object[] {stringId, currPort});
+    LOGGER.log(Level.INFO, "Connect to {0} on port {1}", stringId, currPort);
     if (randomNumberString == null) {
       // should not happen
       LOGGER.log(Level.ERROR, "MAGIC number is null, cannot connect.");

@@ -440,8 +440,7 @@ public abstract class AbstractDicomNode {
 
   public static void addTooltipToComboList(final JComboBox<? extends AbstractDicomNode> combo) {
     Object comp = combo.getUI().getAccessibleChild(combo, 0);
-    if (comp instanceof BasicComboPopup) {
-      final BasicComboPopup popup = (BasicComboPopup) comp;
+    if (comp instanceof final BasicComboPopup popup) {
       popup
           .getList()
           .getSelectionModel()
