@@ -65,7 +65,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
   protected Boolean doInBackground() throws Exception {
     dicomModel.firePropertyChange(
         new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
-    addSelectionAndnotify();
+    addSelectionAndNotify();
     return true;
   }
 
@@ -76,7 +76,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
     LOGGER.info("End of loading DICOM locally");
   }
 
-  public void addSelectionAndnotify() {
+  public void addSelectionAndNotify() {
 
     openPlugin = true;
 
@@ -262,8 +262,7 @@ public class LoadDicomObjects extends ExplorerTask<Boolean, String> {
       String uid = TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
       if (uid != null) {
         for (MediaSeriesGroup group : dicomModel.getChildren(study)) {
-          if (dicomSeries != group && group instanceof Series) {
-            Series s = (Series) group;
+          if (dicomSeries != group && group instanceof Series s) {
             if (uid.equals(TagD.getTagValue(group, Tag.SeriesInstanceUID))) {
               if (s.hasMediaContains(sopTag, sopUID)) {
                 return true;

@@ -774,7 +774,7 @@ public class DownloadManager {
 
       new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
       new LoadDicomObjects(model, attributes)
-          .addSelectionAndnotify(); // must be executed in the EDT
+          .addSelectionAndNotify(); // must be executed in the EDT
     }
   }
 

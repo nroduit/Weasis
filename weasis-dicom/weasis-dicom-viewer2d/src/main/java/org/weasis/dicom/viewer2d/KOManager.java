@@ -194,7 +194,7 @@ public final class KOManager {
     DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
     new LoadDicomObjects(dicomModel, newDicomKO)
-        .addSelectionAndnotify(); // must be executed in the EDT
+        .addSelectionAndNotify(); // must be executed in the EDT
 
     for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(dicomSeries)) {
       if (koElement.getMediaReader().getDicomObject().equals(newDicomKO)) {
