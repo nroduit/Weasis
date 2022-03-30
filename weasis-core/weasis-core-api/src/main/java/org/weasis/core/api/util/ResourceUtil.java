@@ -91,6 +91,7 @@ public class ResourceUtil {
     EXECUTE("svg/action/execute.svg"),
     EXPORT_CLIPBOARD("svg/action/exportClipboard.svg"),
     EXPORT_DICOM("svg/action/exportDicom.svg"),
+    EXPORT_IMAGE("svg/action/exportImage.svg"),
     FILTER("svg/action/filter.svg"),
     FLIP("svg/action/flip.svg"),
     IMPORT_CD("svg/action/importCd.svg"),

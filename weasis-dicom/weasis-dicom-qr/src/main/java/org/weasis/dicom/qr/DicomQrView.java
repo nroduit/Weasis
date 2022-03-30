@@ -294,6 +294,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private QueryProcess process;
   private AuthMethod authMethod;
   private final CircularProgressBar progressBar = new CircularProgressBar();
+  final JLabel lblDest =
+      new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
+  private final JLabel lblRetrieve =
+      new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
 
   public DicomQrView() {
     super(Messages.getString("DicomQrView.title"));
@@ -337,7 +341,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     AbstractDicomNode.addTooltipToComboList(comboDestinationNode);
     GuiUtils.setPreferredWidth(comboDestinationNode, 250, 150);
 
-    JLabel lblRetrieve = new JLabel(Messages.getString("DicomQrView.retrieve") + StringUtil.COLON);
     comboDicomRetrieveType.setToolTipText(Messages.getString("DicomQrView.msg_sel_type"));
     return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL,
@@ -350,8 +353,6 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   }
 
   public JPanel getCallingNodePanel() {
-    final JLabel lblDest =
-        new JLabel(Messages.getString("DicomQrView.calling_node") + StringUtil.COLON);
     GuiUtils.setPreferredWidth(comboCallingNode, 230, 150);
     AbstractDicomNode.addTooltipToComboList(comboCallingNode);
 
@@ -817,6 +818,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
   private void applySelectedArchive() {
     Object selectedItem = comboDestinationNode.getSelectedItem();
     boolean dcmOption = selectedItem instanceof DefaultDicomNode;
+    lblDest.setEnabled(dcmOption);
+    lblRetrieve.setEnabled(dcmOption);
     comboDicomRetrieveType.setEnabled(dcmOption);
     comboCallingNode.setEnabled(dcmOption);
     pageSpinner.setEnabled(!dcmOption);

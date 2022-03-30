@@ -32,20 +32,26 @@ import org.dcm4che3.img.stream.ImageAdapter;
 import org.dcm4che3.img.stream.ImageAdapter.AdaptTransferSyntax;
 import org.dcm4che3.img.util.DicomUtils;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.display.OverlayOp;
+import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.codec.geometry.GeometryOfSlice;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.Ultrasound;
 import org.weasis.dicom.param.AttributeEditorContext;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.LutShape;
@@ -485,6 +491,57 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       LOGGER.error("Cannot export DICOM file: {}", getFileCache().getOriginalFile().orElse(null));
       return null;
     }
+  }
+
+  @Override
+  public SimpleOpManager buildSimpleOpManager(
+      boolean img16, boolean padding, boolean shutter, boolean overlay, double ratio) {
+    SimpleOpManager manager = new SimpleOpManager();
+    PlanarImage image = getImage(null);
+    if (image != null) {
+      if (img16) {
+        DicomImageReadParam params = new DicomImageReadParam();
+        params.setApplyPixelPadding(padding);
+
+        image = getModalityLutImage(null, params);
+        if (CvType.depth(image.type()) == CvType.CV_16S) {
+          ImageCV dstImg = new ImageCV();
+          image.toImageCV().convertTo(dstImg, CvType.CV_16UC(image.channels()), 1.0, 32768);
+          image = dstImg;
+        }
+      } else {
+        manager.addImageOperationAction(new WindowAndPresetsOp());
+        manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_IMAGE_ELEMENT, this);
+        manager.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), padding);
+        manager.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), true);
+      }
+
+      if (shutter) {
+        manager.addImageOperationAction(new ShutterOp());
+        manager.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_IMAGE_ELEMENT, this);
+        manager.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_SHOW, true);
+        manager.setParamValue(
+            ShutterOp.OP_NAME, ShutterOp.P_SHAPE, getTagValue(TagW.ShutterFinalShape));
+        manager.setParamValue(
+            ShutterOp.OP_NAME, ShutterOp.P_PS_VALUE, getTagValue(TagW.ShutterPSValue));
+        manager.setParamValue(
+            ShutterOp.OP_NAME, ShutterOp.P_RGB_COLOR, getTagValue(TagW.ShutterRGBColor));
+      }
+      if (overlay) {
+        manager.addImageOperationAction(new OverlayOp());
+        manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_IMAGE_ELEMENT, this);
+        manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, true);
+      }
+
+      ZoomOp node = new ZoomOp();
+      node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
+      node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
+      node.setParam(ZoomOp.P_INTERPOLATION, 3);
+      manager.addImageOperationAction(node);
+
+      manager.setFirstNode(image);
+    }
+    return manager;
   }
 
   private static String getOutputTransferSyntax(

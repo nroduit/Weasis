@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <linearGradient id="a" x1="8" x2="8" y1="2.062" y2="14.125" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#576a80" offset="0"/>
+   <stop stop-color="#2d3742" offset="1"/>
+  </linearGradient>
+  <linearGradient id="b-7" x1="8" x2="8" y1="3.94" y2="12.288" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#66b5ff" offset="0"/>
+   <stop stop-color="#69e3ff" offset="1"/>
+  </linearGradient>
+  <linearGradient id="c-5" x1="8.007" x2="8.007" y1="8.833" y2="12.038" gradientUnits="userSpaceOnUse" xlink:href="#a">
+   <stop stop-color="#12b300" offset="0"/>
+   <stop stop-color="#579900" offset="1"/>
+  </linearGradient>
+  <linearGradient id="linearGradient878" x1="8" x2="8" y1="2.062" y2="14.125" gradientTransform="matrix(.71429 0 0 .71429 .28571 -.42857)" gradientUnits="userSpaceOnUse" xlink:href="#a"/>
+ </defs>
+ <rect width="16" height="16" fill="#f0f" opacity="0"/>
+ <path d="m1 1v8.5723h6.6777l3.3223-2.498v-6.0742h-10z" fill="url(#linearGradient878)" stroke-width=".71429"/>
+ <path d="m1.7148 1.7148v7.1426h6.9141l1.6562-1.2461v-5.8965h-8.5703z" fill="#fff" fill-opacity=".8" stroke-width=".71429"/>
+ <polygon transform="matrix(.71429 0 0 .71429 .28571 -.42857)" points="5.535 6.967 8.402 10.242 10.58 8.915 13 11.141 13 4 3 4 3 8.453" fill="url(#b-7)"/>
+ <polygon transform="matrix(.71429 0 0 .71429 .28571 -.42857)" points="3 9.66 3 12 13.014 12 10.42 10.834 8.345 11.422 5.365 8.833" fill="url(#c-5)"/>
+ <circle cx="7.0714" cy="4.2143" r="1.0714" fill="#eda200" stroke-width=".71429"/>
+ <path d="m11.902 7.5724-3.5001 2.6698h2.625v3.7472h1.75v-3.7472h2.625z" fill="#59a869" stroke-width="1.1464"/>
+ <path d="m8.4025 15.06h7" fill="#59a869" stroke="#59a869" stroke-width=".97747px"/>
+</svg>

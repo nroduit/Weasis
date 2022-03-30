@@ -65,6 +65,7 @@ import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.RotationToolBar;
+import org.weasis.core.ui.editor.image.ScreenshotToolBar;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.editor.image.ViewerToolBar;
@@ -166,6 +167,15 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
                 .filter(t -> t instanceof ImportToolBar)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
+      }
+      if (InsertableUtil.getBooleanProperty(
+          BundleTools.SYSTEM_PREFERENCES,
+          bundleName,
+          componentName,
+          InsertableUtil.getCName(ScreenshotToolBar.class),
+          key,
+          true)) {
+        TOOLBARS.add(new ScreenshotToolBar<>(evtMg, 9));
       }
       if (InsertableUtil.getBooleanProperty(
           BundleTools.SYSTEM_PREFERENCES,
@@ -453,7 +463,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   public List<Action> getExportActions() {
     return selectedImagePane == null
         ? super.getExportActions()
-        : selectedImagePane.getExportToClipboardAction();
+        : selectedImagePane.getExportActions();
   }
 
   @Override

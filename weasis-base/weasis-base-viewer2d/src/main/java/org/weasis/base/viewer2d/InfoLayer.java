@@ -35,7 +35,11 @@ import org.weasis.core.util.StringUtil;
 public class InfoLayer extends AbstractInfoLayer<ImageElement> {
 
   public InfoLayer(ViewCanvas<ImageElement> view2DPane) {
-    super(view2DPane);
+    this(view2DPane, true);
+  }
+
+  public InfoLayer(ViewCanvas<ImageElement> view2DPane, boolean useGlobalPreferences) {
+    super(view2DPane, useGlobalPreferences);
     displayPreferences.put(ANNOTATIONS, true);
     displayPreferences.put(IMAGE_ORIENTATION, true);
     displayPreferences.put(SCALE, true);
@@ -48,8 +52,8 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
   }
 
   @Override
-  public LayerAnnotation getLayerCopy(ViewCanvas view2dPane) {
-    InfoLayer layer = new InfoLayer(view2DPane);
+  public LayerAnnotation getLayerCopy(ViewCanvas view2dPane, boolean useGlobalPreferences) {
+    InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
     HashMap<String, Boolean> prefs = layer.displayPreferences;
     prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
     prefs.put(SCALE, getDisplayPreferences(SCALE));

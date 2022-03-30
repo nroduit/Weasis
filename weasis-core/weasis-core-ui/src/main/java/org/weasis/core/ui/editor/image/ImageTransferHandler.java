@@ -13,16 +13,17 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
-import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.SimpleOpManager;
-import org.weasis.core.api.image.ZoomOp;
-import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 
 public class ImageTransferHandler extends TransferHandler implements Transferable {
 
   private static final DataFlavor[] flavors = {DataFlavor.imageFlavor};
-  private SimpleOpManager disOp;
+  private final SimpleOpManager disOp;
+
+  public ImageTransferHandler(SimpleOpManager disOp) {
+    this.disOp = disOp;
+  }
 
   @Override
   public int getSourceActions(JComponent c) {
@@ -36,23 +37,7 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
 
   @Override
   public Transferable createTransferable(JComponent comp) {
-    // Clear
-    disOp = null;
-    // TODO make only one export function with a dialog to choose to disable zoom (real size), add
-    // graphics,
-    // anonymize and other default remove annotations
-    if (comp instanceof Image2DViewer) {
-      Image2DViewer<?> view2DPane = (Image2DViewer<?>) comp;
-      PlanarImage src = view2DPane.getSourceImage();
-      if (src != null) {
-        SimpleOpManager opManager = view2DPane.getImageLayer().getDisplayOpManager().copy();
-        opManager.removeImageOperationAction(opManager.getNode(ZoomOp.OP_NAME));
-        opManager.setFirstNode(src);
-        disOp = opManager;
-        return this;
-      }
-    }
-    return null;
+    return this;
   }
 
   @Override

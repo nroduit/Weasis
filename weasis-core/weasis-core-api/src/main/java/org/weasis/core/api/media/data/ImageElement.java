@@ -19,16 +19,20 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.opencv.core.Core.MinMaxLocResult;
+import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
@@ -325,6 +329,38 @@ public class ImageElement extends MediaElement {
     double yInt = 255.0 - slope * high;
 
     return ImageProcessor.rescaleToByte(source.toMat(), slope, yInt);
+  }
+
+  public SimpleOpManager buildSimpleOpManager(
+      boolean img16, boolean padding, boolean shutter, boolean overlay, double ratio) {
+    return buildSimpleOpManager(img16, padding, ratio);
+  }
+
+  public SimpleOpManager buildSimpleOpManager(boolean img16, boolean padding, double ratio) {
+    SimpleOpManager manager = new SimpleOpManager();
+    PlanarImage image = getImage(null);
+    if (image != null) {
+      if (img16) {
+        if (CvType.depth(image.type()) == CvType.CV_16S) {
+          ImageCV dstImg = new ImageCV();
+          image.toImageCV().convertTo(dstImg, CvType.CV_16UC(image.channels()), 1.0, 32768);
+          image = dstImg;
+        }
+      } else {
+        manager.addImageOperationAction(new WindowOp());
+        manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_IMAGE_ELEMENT, this);
+        manager.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), padding);
+      }
+
+      ZoomOp node = new ZoomOp();
+      node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
+      node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
+      node.setParam(ZoomOp.P_INTERPOLATION, 3);
+      manager.addImageOperationAction(node);
+
+      manager.setFirstNode(image);
+    }
+    return manager;
   }
 
   public static PlanarImage getDefaultRenderedImage(

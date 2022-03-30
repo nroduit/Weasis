@@ -117,7 +117,7 @@ public interface ViewCanvas<E extends ImageElement>
 
   void drawPointer(Graphics2D g, Double x, Double y);
 
-  List<Action> getExportToClipboardAction();
+  List<Action> getExportActions();
 
   void enableMouseAndKeyListener(MouseActions mouseActions);
 

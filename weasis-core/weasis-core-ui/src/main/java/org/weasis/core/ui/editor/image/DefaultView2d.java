@@ -24,10 +24,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
-import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -48,16 +46,13 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Optional;
-import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.TransferHandler;
 import javax.swing.border.Border;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -1279,15 +1274,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public void keyTyped(KeyEvent e) {}
 
   @Override
-  public void keyReleased(KeyEvent e) {
-    if (e.getKeyCode() == KeyEvent.VK_C && e.isControlDown()) {
-      final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-      imageTransferHandler.exportToClipboard(
-          DefaultView2d.this,
-          Toolkit.getDefaultToolkit().getSystemClipboard(),
-          TransferHandler.COPY);
-    }
-  }
+  public void keyReleased(KeyEvent e) {}
 
   @Override
   public void keyPressed(KeyEvent e) {
@@ -1311,9 +1298,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
       // Flip horizontal
       ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-      if (flipAction instanceof ToggleButtonListener) {
-        ((ToggleButtonListener) flipAction)
-            .setSelected(!((ToggleButtonListener) flipAction).isSelected());
+      if (flipAction instanceof ToggleButtonListener flip) {
+        flip.setSelected(!flip.isSelected());
       }
     } else {
       Optional<ActionW> action =
@@ -1477,43 +1463,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public List<Action> getExportToClipboardAction() {
+  public List<Action> getExportActions() {
     List<Action> list = new ArrayList<>();
-
-    AbstractAction exportToClipboardAction =
+    DefaultAction exportAction =
         new DefaultAction(
-            Messages.getString("DefaultView2d.clipboard"),
-            ResourceUtil.getIcon(ActionIcon.EXPORT_CLIPBOARD),
-            event -> {
-              final ViewTransferHandler imageTransferHandler = new ViewTransferHandler();
-              imageTransferHandler.exportToClipboard(
-                  DefaultView2d.this,
-                  Toolkit.getDefaultToolkit().getSystemClipboard(),
-                  TransferHandler.COPY);
-            });
-    exportToClipboardAction.putValue(
-        Action.ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK));
-    list.add(exportToClipboardAction);
-
-    // TODO exclude big images?
-    exportToClipboardAction =
-        new DefaultAction(
-            Messages.getString("DefaultView2d.clipboard_real"),
-            event -> {
-              final ImageTransferHandler imageTransferHandler = new ImageTransferHandler();
-              imageTransferHandler.exportToClipboard(
-                  DefaultView2d.this,
-                  Toolkit.getDefaultToolkit().getSystemClipboard(),
-                  TransferHandler.COPY);
-            });
-    list.add(exportToClipboardAction);
-
+            ActionW.EXPORT_VIEW.getTitle(),
+            ActionW.EXPORT_VIEW.getIcon(),
+            event -> ScreenshotDialog.showDialog(this));
+    list.add(exportAction);
     return list;
   }
 
   public static AffineTransform getAffineTransform(MouseEvent mouseevent) {
-    if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer) {
-      return ((Image2DViewer) mouseevent.getSource()).getAffineTransform();
+    if (mouseevent != null && mouseevent.getSource() instanceof Image2DViewer<?> viewer) {
+      return viewer.getAffineTransform();
     }
     return null;
   }

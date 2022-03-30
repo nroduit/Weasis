@@ -70,7 +70,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   private static final Color highlight = new Color(255, 153, 153);
 
   public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
-    super(view2DPane);
+    this(view2DPane, true);
+  }
+
+  public InfoLayer(ViewCanvas<DicomImageElement> view2DPane, boolean useGlobalPreferences) {
+    super(view2DPane, useGlobalPreferences);
     displayPreferences.put(ANNOTATIONS, true);
     displayPreferences.put(MIN_ANNOTATIONS, false);
     displayPreferences.put(ANONYM_ANNOTATIONS, false);
@@ -87,8 +91,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   }
 
   @Override
-  public LayerAnnotation getLayerCopy(ViewCanvas view2DPane) {
-    InfoLayer layer = new InfoLayer(view2DPane);
+  public LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences) {
+    InfoLayer layer = new InfoLayer(view2DPane, useGlobalPreferences);
     HashMap<String, Boolean> prefs = layer.displayPreferences;
     prefs.put(ANNOTATIONS, getDisplayPreferences(ANNOTATIONS));
     prefs.put(ANONYM_ANNOTATIONS, getDisplayPreferences(ANONYM_ANNOTATIONS));

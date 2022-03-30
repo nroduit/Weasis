@@ -91,11 +91,17 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
   protected double thickLength = 15.0;
   protected boolean showBottomScale = true;
   protected String name;
+  protected boolean useGlobalPreferences;
 
   protected AbstractInfoLayer(ViewCanvas<E> view2DPane) {
+    this(view2DPane, true);
+  }
+
+  protected AbstractInfoLayer(ViewCanvas<E> view2DPane, boolean useGlobalPreferences) {
     this.view2DPane = view2DPane;
     this.pixelInfoBound = new Rectangle();
     this.preloadingProgressBound = new Rectangle();
+    this.useGlobalPreferences = useGlobalPreferences;
   }
 
   public static void applyPreferences(Preferences prefs) {
@@ -202,7 +208,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
   @Override
   public boolean getDisplayPreferences(String item) {
-    if (applyToAllView.get()) {
+    if (useGlobalPreferences && applyToAllView.get()) {
       return Optional.ofNullable(defaultDisplayPreferences.get(item)).orElse(Boolean.FALSE);
     }
     return Optional.ofNullable(

@@ -46,14 +46,12 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.imageio.codec.TransferSyntaxType;
-import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomImageReader;
 import org.dcm4che3.img.DicomOutputData;
 import org.dcm4che3.img.util.DicomUtils;
 import org.dcm4che3.media.DicomDirWriter;
 import org.dcm4che3.media.RecordType;
 import org.dcm4che3.util.UIDUtils;
-import org.opencv.core.CvType;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.slf4j.Logger;
@@ -87,14 +85,11 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.FileExtractor;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TransferSyntax;
-import org.weasis.dicom.codec.display.OverlayOp;
-import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.pr.DicomPrSerializer;
 import org.weasis.dicom.param.AttributeEditor;
 import org.weasis.dicom.param.DefaultAttributeEditor;
-import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
@@ -532,50 +527,10 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             File destinationDir = new File(exportDir, path);
             destinationDir.mkdirs();
 
-            PlanarImage image = img.getImage(null);
+            SimpleOpManager manager =
+                img.buildSimpleOpManager(img16, padding, shutter, overlay, 1.0);
+            PlanarImage image = manager.getFirstNodeInputImage();
             if (image != null) {
-              SimpleOpManager manager = new SimpleOpManager();
-
-              if (img16) {
-                DicomImageReadParam params = new DicomImageReadParam();
-                params.setApplyPixelPadding(padding);
-
-                image = img.getModalityLutImage(null, params);
-                if (CvType.depth(image.type()) == CvType.CV_16S) {
-                  ImageCV dstImg = new ImageCV();
-                  image.toImageCV().convertTo(dstImg, CvType.CV_16UC(image.channels()), 1.0, 32768);
-                  image = dstImg;
-                }
-              } else {
-                manager.addImageOperationAction(new WindowAndPresetsOp());
-                manager.setParamValue(WindowOp.OP_NAME, WindowOp.P_IMAGE_ELEMENT, img);
-                manager.setParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd(), padding);
-                manager.setParamValue(WindowOp.OP_NAME, ActionW.DEFAULT_PRESET.cmd(), true);
-              }
-
-              if (shutter) {
-                manager.addImageOperationAction(new ShutterOp());
-                manager.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_IMAGE_ELEMENT, img);
-                manager.setParamValue(ShutterOp.OP_NAME, ShutterOp.P_SHOW, true);
-                manager.setParamValue(
-                    ShutterOp.OP_NAME, ShutterOp.P_SHAPE, img.getTagValue(TagW.ShutterFinalShape));
-                manager.setParamValue(
-                    ShutterOp.OP_NAME, ShutterOp.P_PS_VALUE, img.getTagValue(TagW.ShutterPSValue));
-                manager.setParamValue(
-                    ShutterOp.OP_NAME,
-                    ShutterOp.P_RGB_COLOR,
-                    img.getTagValue(TagW.ShutterRGBColor));
-              }
-              if (overlay) {
-                manager.addImageOperationAction(new OverlayOp());
-                manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_IMAGE_ELEMENT, img);
-                manager.setParamValue(OverlayOp.OP_NAME, OverlayOp.P_SHOW, true);
-              }
-              ZoomOp rectifyZoomOp = img.getRectifyAspectRatioZoomOp();
-              if (rectifyZoomOp != null) {
-                manager.addImageOperationAction(rectifyZoomOp);
-              }
-              manager.setFirstNode(image);
               PlanarImage rimage = manager.process();
               if (rimage == null) {
                 rimage = image;
@@ -914,30 +869,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     String value = FileUtil.getValidFileNameWithoutHTML(str);
     value = StringUtil.getTruncatedString(value, length, Suffix.UNDERSCORE).trim();
     return value.endsWith(".") ? value.substring(0, value.length() - 1) : value;
-  }
-
-  private static boolean writeInDicomDir(
-      DicomDirWriter writer,
-      MediaElement img,
-      DefaultMutableTreeNode node,
-      String iuid,
-      File destinationFile)
-      throws IOException {
-    if (writer != null) {
-      if (!(img.getMediaReader() instanceof DcmMediaReader reader)
-          || reader.getDicomObject() == null) {
-        LOGGER.error(
-            "Cannot export DICOM file: {}", img.getFileCache().getOriginalFile().orElse(null));
-        return false;
-      }
-      return writeInDicomDir(
-          writer,
-          ((DcmMediaReader) img.getMediaReader()).getDicomObject(),
-          node,
-          iuid,
-          destinationFile);
-    }
-    return false;
   }
 
   private static boolean writeInDicomDir(

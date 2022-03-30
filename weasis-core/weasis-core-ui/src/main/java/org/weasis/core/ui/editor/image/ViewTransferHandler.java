@@ -29,6 +29,11 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
 
   private static final DataFlavor[] flavors = {DataFlavor.imageFlavor};
   private Image image;
+  private final boolean anonymize;
+
+  public ViewTransferHandler(boolean anonymize) {
+    this.anonymize = anonymize;
+  }
 
   @Override
   public int getSourceActions(JComponent c) {
@@ -45,8 +50,8 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     // Clear
     image = null;
 
-    if (comp instanceof DefaultView2d view2DPane) {
-      RenderedImage imgP = createComponentImage(view2DPane);
+    if (comp instanceof DefaultView2d<?> view2DPane) {
+      RenderedImage imgP = createComponentImage(view2DPane, anonymize);
       image = ImageConversion.convertRenderedImage(imgP);
       return this;
     }
@@ -77,14 +82,15 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     return flavor.equals(DataFlavor.imageFlavor);
   }
 
-  private static RenderedImage createComponentImage(DefaultView2d canvas) {
+  public static <E extends ImageElement> RenderedImage createComponentImage(
+      DefaultView2d<E> canvas, boolean anonymize) {
     BufferedImage img =
         new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_BGR);
-    ExportImage<ImageElement> exportImage = new ExportImage<>(canvas);
+    ExportImage<E> exportImage = new ExportImage<>(canvas);
     try {
       exportImage
           .getInfoLayer()
-          .setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, true);
+          .setDisplayPreferencesValue(LayerAnnotation.ANONYM_ANNOTATIONS, anonymize);
       exportImage.getInfoLayer().setBorder(3);
       Graphics2D g = img.createGraphics();
       if (g != null) {

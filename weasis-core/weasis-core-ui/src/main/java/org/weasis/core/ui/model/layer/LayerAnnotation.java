@@ -49,7 +49,7 @@ public interface LayerAnnotation extends Layer {
 
   void paint(Graphics2D g2d);
 
-  LayerAnnotation getLayerCopy(ViewCanvas view2DPane);
+  LayerAnnotation getLayerCopy(ViewCanvas view2DPane, boolean useGlobalPreferences);
 
   boolean isShowBottomScale();
 

@@ -39,7 +39,7 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
     // Remove OpEventListener to avoid reseting some parameters when setting the series
     this.imageLayer.removeEventListener(imageLayer.getDisplayOpManager());
     setFont(FontItem.MINI.getFont());
-    this.infoLayer = view2d.getInfoLayer().getLayerCopy(this);
+    this.infoLayer = view2d.getInfoLayer().getLayerCopy(this, false);
     infoLayer.setVisible(view2d.getInfoLayer().getVisible());
     infoLayer.setShowBottomScale(false);
     // For exporting view, remove Pixel value, Preloading bar, Key Object
@@ -100,8 +100,8 @@ public class ExportImage<E extends ImageElement> extends DefaultView2d<E> {
 
   @Override
   public void paintComponent(Graphics g) {
-    if (g instanceof Graphics2D) {
-      draw((Graphics2D) g);
+    if (g instanceof Graphics2D graphics2D) {
+      draw(graphics2D);
     }
   }
 
