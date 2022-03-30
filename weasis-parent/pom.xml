@@ -50,7 +50,7 @@
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
     <org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
-    <jackson.version>2.13.1</jackson.version>
+    <jackson.version>2.13.2.1</jackson.version>
     <scribejava.version>8.3.1</scribejava.version>
 
     <assertj.version>3.22.0</assertj.version>
