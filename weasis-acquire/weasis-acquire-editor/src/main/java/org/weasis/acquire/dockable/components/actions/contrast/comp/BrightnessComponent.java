@@ -52,9 +52,4 @@ public class BrightnessComponent extends AbstractSliderComponent {
     SliderChangeListener.setFont(this, FontItem.MINI.getFont());
     addChangeListener(panel);
   }
-
-  @Override
-  public int getDefaultValue() {
-    return BRIGHTNESS_VALUE;
-  }
 }

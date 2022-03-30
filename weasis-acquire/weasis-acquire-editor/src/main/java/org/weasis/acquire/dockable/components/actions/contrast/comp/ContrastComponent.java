@@ -51,9 +51,4 @@ public class ContrastComponent extends AbstractSliderComponent {
         .add(Float.toString(getSliderValue() / 100f))
         .toString();
   }
-
-  @Override
-  public int getDefaultValue() {
-    return CONTRAST_VALUE;
-  }
 }

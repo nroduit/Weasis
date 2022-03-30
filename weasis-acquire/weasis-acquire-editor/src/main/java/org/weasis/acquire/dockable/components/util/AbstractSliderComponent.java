@@ -9,7 +9,6 @@
  */
 package org.weasis.acquire.dockable.components.util;
 
-import java.util.Optional;
 import java.util.StringJoiner;
 import javax.swing.JSlider;
 import javax.swing.border.TitledBorder;
@@ -39,12 +38,11 @@ public abstract class AbstractSliderComponent extends JSlider {
   }
 
   public int getSliderValue() {
-    return Optional.of(this).map(JSlider::getValue).orElse(getDefaultValue());
+    return getModel().getValue();
   }
-
-  public abstract int getDefaultValue();
 
   public void updatePanelTitle() {
     borderTitle.setTitle(getDisplayTitle());
+    repaint();
   }
 }

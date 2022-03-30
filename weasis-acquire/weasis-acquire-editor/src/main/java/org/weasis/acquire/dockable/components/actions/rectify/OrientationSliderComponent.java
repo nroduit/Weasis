@@ -54,11 +54,6 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
   }
 
   @Override
-  public int getDefaultValue() {
-    return RECTIFY_ORIENTATION_DEFAULT;
-  }
-
-  @Override
   public String getDisplayTitle() {
     return super.getDisplayTitle() + Messages.getString("OrientationSliderComponent.deg_symb");
   }
