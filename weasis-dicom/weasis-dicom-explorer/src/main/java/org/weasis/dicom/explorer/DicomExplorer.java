@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class DicomExplorer extends PluginTool implements DataExplorerView, SeriesViewerListener {
@@ -592,7 +593,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                   DicomModel.getSpecialElements(patient, KOSpecialElement.class);
               if (!list.isEmpty()) {
                 if (list.size() == 1) {
-                  model.openrelatedSeries(list.get(0), patient);
+                  model.openRelatedSeries(list.get(0), patient);
                 } else {
                   list.sort(DicomSpecialElement.ORDER_BY_DATE);
                   JPopupMenu popupMenu = new JPopupMenu();
@@ -603,7 +604,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                   for (final KOSpecialElement koSpecialElement : list) {
                     final JMenuItem item = new JMenuItem(koSpecialElement.getShortLabel());
                     item.addActionListener(
-                        e1 -> model.openrelatedSeries(koSpecialElement, patient));
+                        e1 -> model.openRelatedSeries(koSpecialElement, patient));
                     popupMenu.add(item);
                     group.add(item);
                   }
@@ -919,7 +920,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         }
         // Update patient and study infos from the series (when receiving the first downloaded
         // image)
-        else if (ObservableEvent.BasicAction.UDPATE_PARENT.equals(action)) {
+        else if (ObservableEvent.BasicAction.UPDATE_PARENT.equals(action)) {
           if (newVal instanceof Series dcm) {
             MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
             if (isSelectedPatient(patient)) {
@@ -1079,7 +1080,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   @Override
   public void importFiles(File[] files, boolean recursive) {
     if (files != null) {
-      DicomModel.LOADING_EXECUTOR.execute(new LoadLocalDicom(files, recursive, model));
+      DicomModel.LOADING_EXECUTOR.execute(
+          new LoadLocalDicom(files, recursive, model, OpeningViewer.ONE_PATIENT));
     }
   }
 

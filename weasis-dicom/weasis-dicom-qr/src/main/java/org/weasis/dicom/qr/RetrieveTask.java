@@ -46,6 +46,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -256,7 +257,10 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
 
         loadingTask =
             new LoadLocalDicom(
-                new File[] {new File(DicomQrView.tempDir.getPath())}, false, explorerDcmModel);
+                new File[] {new File(DicomQrView.tempDir.getPath())},
+                false,
+                explorerDcmModel,
+                OpeningViewer.ALL_PATIENTS);
       }
 
     } else if (selectedItem instanceof DicomWebNode) {

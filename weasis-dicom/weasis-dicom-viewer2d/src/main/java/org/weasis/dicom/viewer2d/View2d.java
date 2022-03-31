@@ -131,6 +131,7 @@ import org.weasis.dicom.codec.geometry.IntersectVolume;
 import org.weasis.dicom.codec.geometry.LocalizerPoster;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadLocalDicom;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
@@ -1473,8 +1474,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
         }
         DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
 
-        LoadLocalDicom dicom = new LoadLocalDicom(files.stream().toArray(File[]::new), true, model);
-        DicomModel.LOADING_EXECUTOR.execute(dicom);
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadLocalDicom(
+                files.toArray(File[]::new), true, model, OpeningViewer.ALL_PATIENTS));
         return true;
       }
       return false;

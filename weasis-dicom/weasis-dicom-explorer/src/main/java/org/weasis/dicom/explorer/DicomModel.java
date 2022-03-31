@@ -81,6 +81,8 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
+import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadManager;
@@ -697,7 +699,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return false;
   }
 
-  public void openrelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
+  public void openRelatedSeries(KOSpecialElement koSpecialElement, MediaSeriesGroup patient) {
     if (koSpecialElement != null && patient != null) {
       SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
       if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
@@ -844,15 +846,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   @Override
   public boolean applySplittingRules(Series original, MediaElement media) {
-    if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
-      DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
+    if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomReader) {
       String seriesUID = TagD.getTagValue(original, Tag.SeriesInstanceUID, String.class);
       if (!seriesUID.equals(TagD.getTagValue(dicomReader, Tag.SeriesInstanceUID))) {
         rebuildSeries(dicomReader, media);
         return true;
       }
-      if (original instanceof DicomSeries) {
-        DicomSeries initialSeries = (DicomSeries) original;
+      if (original instanceof DicomSeries initialSeries) {
         // Handle cases when the Series is created before getting the image (downloading)
         if (media instanceof DicomVideoElement || media instanceof DicomEncapDocElement) {
           if (original.size(null) > 0) {
@@ -863,7 +863,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           }
           return true;
         }
-        if (media instanceof DicomSpecialElement) {
+        if (media instanceof DicomSpecialElement specialElement) {
           List<DicomSpecialElement> specialElementList =
               (List<DicomSpecialElement>) initialSeries.getTagValue(TagW.DicomSpecialElementList);
           String rMime = dicomReader.getMimeType();
@@ -872,13 +872,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             initialSeries.setTag(TagW.DicomSpecialElementList, specialElementList);
           } else if ("sr/dicom".equals(rMime) || "wf/dicom".equals(rMime)) { // NON-NLS
             // Split SR series to have only one object by series
-            Series s = splitSeries(dicomReader, initialSeries);
+            Series<?> s = splitSeries(dicomReader, initialSeries);
             specialElementList = new CopyOnWriteArrayList<>();
-            specialElementList.add((DicomSpecialElement) media);
+            specialElementList.add(specialElement);
             s.setTag(TagW.DicomSpecialElementList, specialElementList);
             return false;
           }
-          specialElementList.add((DicomSpecialElement) media);
+          specialElementList.add((specialElement));
           return false;
         }
 
@@ -1061,7 +1061,11 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       for (int i = 0; i < files.length; i++) {
         files[i] = new File(largs.get(i));
       }
-      LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
+      OpeningViewer openingViewer =
+          OpeningViewer.getOpeningViewer(
+              Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LocalImport.LAST_OPEN_VIEWER_MODE),
+              OpeningViewer.ONE_PATIENT);
+      LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
     }
 
     if (opt.isSet("remote")) { // NON-NLS
@@ -1136,7 +1140,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         if (loadSeries != null && !loadSeries.isEmpty()) {
           LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this));
         } else {
-          LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this));
+          LOADING_EXECUTOR.execute(
+              new LoadLocalDicom(files, true, DicomModel.this, OpeningViewer.ONE_PATIENT));
         }
       }
     }

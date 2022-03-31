@@ -933,7 +933,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
                       }
                       dicomModel.firePropertyChange(
                           new ObservableEvent(
-                              ObservableEvent.BasicAction.UDPATE_PARENT,
+                              ObservableEvent.BasicAction.UPDATE_PARENT,
                               dicomModel,
                               null,
                               dicomSeries));

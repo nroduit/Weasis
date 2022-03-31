@@ -180,7 +180,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           true)) {
         Optional<Toolbar> b =
             UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
-                .filter(t -> t instanceof ImportToolBar)
+                .filter(ImportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
@@ -193,7 +193,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           true)) {
         Optional<Toolbar> b =
             UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
-                .filter(t -> t instanceof ExportToolBar)
+                .filter(ExportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
@@ -379,8 +379,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public void setSelectedImagePaneFromFocus(ViewCanvas<DicomImageElement> viewCanvas) {
     setSelectedImagePane(viewCanvas);
-    if (viewCanvas != null && viewCanvas.getSeries() instanceof DicomSeries) {
-      DicomSeries series = (DicomSeries) viewCanvas.getSeries();
+    if (viewCanvas != null && viewCanvas.getSeries() instanceof DicomSeries series) {
       DicomSeries.startPreloading(
           series,
           series.copyOfMedias(

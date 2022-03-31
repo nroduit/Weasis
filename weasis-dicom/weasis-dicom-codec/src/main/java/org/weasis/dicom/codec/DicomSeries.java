@@ -214,6 +214,32 @@ public class DicomSeries extends Series<DicomImageElement> {
     return (offset > 0) ? (bestIndex + offset) : bestIndex;
   }
 
+  public boolean hasMediaContains(TagW tag, Object val) {
+    if (val != null) {
+      synchronized (this) {
+        for (DicomImageElement media : medias) {
+          Object val2 = media.getTagValue(tag);
+          if (val.equals(val2)) {
+            return true;
+          }
+        }
+      }
+      if (medias.isEmpty()) {
+        List<DicomSpecialElement> seriesSpecialElementList =
+            (List<DicomSpecialElement>) getTagValue(TagW.DicomSpecialElementList);
+        if (seriesSpecialElementList != null) {
+          for (DicomSpecialElement seriesSpecialElement : seriesSpecialElementList) {
+            Object val2 = seriesSpecialElement.getTagValue(tag);
+            if (val.equals(val2)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
   @Override
   public DicomSpecialElement getFirstSpecialElement() {
     List<DicomSpecialElement> specialElements =

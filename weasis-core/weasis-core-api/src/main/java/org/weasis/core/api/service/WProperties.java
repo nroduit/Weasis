@@ -193,6 +193,14 @@ public class WProperties extends Properties {
     return hexadecimal2Color(this.getProperty(key));
   }
 
+  public Color getColorProperty(String key, Color defaultColor) {
+    String val = this.getProperty(key);
+    if (!StringUtil.hasText(val)) {
+      return defaultColor;
+    }
+    return hexadecimal2Color(val);
+  }
+
   public void putColorProperty(String key, Color color) {
     if (isValid(key, color)) {
       this.put(key, color2Hexadecimal(color, true));

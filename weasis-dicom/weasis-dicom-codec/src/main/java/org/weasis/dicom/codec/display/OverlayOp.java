@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.codec.display;
 
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Optional;
 import org.dcm4che3.img.DicomImageReadParam;
@@ -85,7 +86,8 @@ public class OverlayOp extends AbstractOp {
             if (!desc.getEmbeddedOverlay().isEmpty()) {
               original = reader.getImageFragment(image, (Integer) image.getKey(), false);
             }
-            p.setOverlayColor(BundleTools.SYSTEM_PREFERENCES.getColorProperty(OVERLAY_COLOR_KEY));
+            p.setOverlayColor(
+                BundleTools.SYSTEM_PREFERENCES.getColorProperty(OVERLAY_COLOR_KEY, Color.WHITE));
             result = OverlayData.getOverlayImage(original, source, desc, p, frame);
           }
         }

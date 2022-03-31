@@ -486,8 +486,7 @@ public class View2d extends DefaultView2d<ImageElement> {
       count = popupMenu.getComponentCount();
     }
 
-    if (eventManager instanceof EventManager) {
-      EventManager manager = (EventManager) eventManager;
+    if (eventManager instanceof EventManager manager) {
       GuiUtils.addItemToMenu(popupMenu, manager.getLutMenu("weasis.contextmenu.lut"));
       GuiUtils.addItemToMenu(popupMenu, manager.getLutInverseMenu("weasis.contextmenu.invertLut"));
       GuiUtils.addItemToMenu(popupMenu, manager.getFilterMenu("weasis.contextmenu.filter"));

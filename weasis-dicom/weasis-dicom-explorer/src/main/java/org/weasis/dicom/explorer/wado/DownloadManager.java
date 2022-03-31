@@ -86,6 +86,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.codec.utils.PatientComparator;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.DicomSorter;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
@@ -773,8 +774,8 @@ public class DownloadManager {
       hierachicalDicom.setReferencedSeries(referencedSeries);
 
       new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
-      new LoadDicomObjects(model, attributes)
-          .addSelectionAndNotify(); // must be executed in the EDT
+      DicomModel.LOADING_EXECUTOR.execute(
+          new LoadDicomObjects(model, OpeningViewer.NONE, attributes));
     }
   }
 

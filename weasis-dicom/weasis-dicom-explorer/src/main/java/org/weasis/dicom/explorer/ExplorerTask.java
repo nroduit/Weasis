@@ -22,11 +22,11 @@ public abstract class ExplorerTask<T, V> extends SwingWorker<T, V> {
   private final boolean subTask;
   private final List<CancelListener> cancelListeners;
 
-  public ExplorerTask(String message, boolean interruptible) {
+  protected ExplorerTask(String message, boolean interruptible) {
     this(message, interruptible, false);
   }
 
-  public ExplorerTask(String message, boolean globalLoadingManager, boolean subTask) {
+  protected ExplorerTask(String message, boolean globalLoadingManager, boolean subTask) {
     this.message = message;
     this.globalLoadingManager = globalLoadingManager;
     this.bar = new CircularProgressBar(0, 100);

@@ -9,9 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
-import com.formdev.flatlaf.FlatClientProperties;
 import java.awt.Dialog;
-import java.awt.Dimension;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
@@ -21,7 +19,6 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
@@ -42,10 +39,10 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomDirImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
 
-  private static final String lastDICOMDIR = "lastDicomDir";
+  private static final String LAST_DICOM_DIR = "lastDicomDir";
 
-  private JTextField textField;
-  private JCheckBox chckbxWriteInCache;
+  private final JTextField textField = new JTextField();
+  private JCheckBox checkboxWriteInCache;
 
   public DicomDirImport() {
     super(Messages.getString("DicomDirImport.dicomdir"), 5);
@@ -53,23 +50,11 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public void initGUI() {
-    JLabel lblImportAFolder =
-        new JLabel(Messages.getString("DicomDirImport.path") + StringUtil.COLON);
-    textField = new JTextField();
-    textField.setText(Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, ""));
-    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
-    Dimension dim = textField.getPreferredSize();
-    dim.width = 200;
-    textField.setPreferredSize(dim);
-    textField.setMaximumSize(new Dimension(Short.MAX_VALUE, dim.height));
-
     JButton btnSearch = new JButton(ResourceUtil.getIcon(ActionIcon.MORE_H));
-    btnSearch.addActionListener(e -> browseImgFile());
-    textField.putClientProperty(FlatClientProperties.TEXT_FIELD_TRAILING_COMPONENT, btnSearch);
-
+    btnSearch.addActionListener(e -> browseDicomDirFile());
     add(
-        GuiUtils.getHorizontalBoxLayoutPanel(
-            lblImportAFolder, GuiUtils.boxHorizontalStrut(ITEM_SEPARATOR_SMALL), textField));
+        LocalImport.buildSearchPanel(
+            textField, btnSearch, Messages.getString("DicomDirImport.path"), LAST_DICOM_DIR));
 
     JButton btncdrom =
         new JButton(
@@ -80,21 +65,21 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
           if (dcmdir != null) {
             String path = dcmdir.getPath();
             textField.setText(path);
-            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
+            Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, path);
           }
         });
-    chckbxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
+    checkboxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
 
-    add(GuiUtils.getFlowLayoutPanel(btncdrom));
-    add(GuiUtils.getFlowLayoutPanel(chckbxWriteInCache));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btncdrom));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxWriteInCache));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
-  public void browseImgFile() {
+  public void browseDicomDirFile() {
     String directory = getImportPath();
     if (directory == null) {
-      directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");
+      directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DICOM_DIR, "");
     }
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -121,7 +106,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         && (selectedFile = fileChooser.getSelectedFile()) != null) {
       String path = selectedFile.getPath();
       textField.setText(path);
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, path);
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, path);
     }
   }
 
@@ -163,8 +148,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
       }
     }
     if (file != null) {
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, file.getPath());
-      List<LoadSeries> loadSeries = loadDicomDir(file, dicomModel, chckbxWriteInCache.isSelected());
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_DIR, file.getPath());
+      List<LoadSeries> loadSeries =
+          loadDicomDir(file, dicomModel, checkboxWriteInCache.isSelected());
 
       if (loadSeries != null && !loadSeries.isEmpty()) {
         DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
@@ -184,11 +170,9 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
           if (dialog instanceof DicomImport dcmImport) {
             dcmImport.setCancelVeto(true); // Invalidate if closing the dialog
             dcmImport.showPage(Messages.getString("DicomImport.imp_dicom"));
-            if (file != null) {
-              AbstractItemDialogPage page = dcmImport.getCurrentPage();
-              if (page instanceof LocalImport localImport) {
-                localImport.setImportPath(file.getParent());
-              }
+            AbstractItemDialogPage page = dcmImport.getCurrentPage();
+            if (page instanceof LocalImport localImport) {
+              localImport.setImportPath(file.getParent());
             }
           }
         }
@@ -197,15 +181,22 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public static List<LoadSeries> loadDicomDir(
-      File file, DicomModel dicomModel, boolean writeIncache) {
+      File file, DicomModel dicomModel, boolean writeInCache) {
     List<LoadSeries> loadSeries = null;
-    if (file != null) {
-      if (file.canRead()) {
-        DicomDirLoader dirImport = new DicomDirLoader(file, dicomModel, writeIncache);
-        loadSeries = dirImport.readDicomDir();
-      }
+    if (file != null && file.canRead()) {
+      DicomDirLoader dirImport = new DicomDirLoader(file, dicomModel, writeInCache);
+      loadSeries = dirImport.readDicomDir();
     }
     return loadSeries;
+  }
+
+  private static void addFiles(List<File> dvs, File folder) {
+    if (folder.canRead()) {
+      File[] files = folder.listFiles();
+      if (files != null) {
+        Collections.addAll(dvs, files);
+      }
+    }
   }
 
   public static File getDcmDirFromMedia() {
@@ -214,14 +205,11 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
       if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
         dvs.addAll(Arrays.asList(File.listRoots()));
       } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { // NON-NLS
-        dvs.addAll(Arrays.asList(new File("/Volumes").listFiles()));
+        addFiles(dvs, new File("/Volumes"));
       } else {
-        dvs.addAll(Arrays.asList(new File("/media").listFiles()));
-        dvs.addAll(Arrays.asList(new File("/mnt").listFiles()));
-        File userDir = new File("/media/" + System.getProperty("user.name", "local")); // NON-NLS
-        if (userDir.exists()) {
-          dvs.addAll(Arrays.asList(userDir.listFiles()));
-        }
+        addFiles(dvs, new File("/media"));
+        addFiles(dvs, new File("/mnt"));
+        addFiles(dvs, new File("/media/" + System.getProperty("user.name", "local"))); // NON-NLS
       }
     } catch (Exception e) {
       LOGGER.error("Error when reading device directories: {}", e.getMessage());

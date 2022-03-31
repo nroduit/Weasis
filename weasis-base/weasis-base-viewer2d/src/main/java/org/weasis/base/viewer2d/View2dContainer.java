@@ -164,7 +164,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
           true)) {
         Optional<Toolbar> b =
             UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
-                .filter(t -> t instanceof ImportToolBar)
+                .filter(ImportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }

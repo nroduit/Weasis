@@ -40,6 +40,7 @@ import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 
 public final class KOManager {
@@ -192,9 +193,8 @@ public final class KOManager {
       MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
 
     DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
-
-    new LoadDicomObjects(dicomModel, newDicomKO)
-        .addSelectionAndNotify(); // must be executed in the EDT
+    DicomModel.LOADING_EXECUTOR.execute(
+        new LoadDicomObjects(dicomModel, OpeningViewer.NONE, newDicomKO));
 
     for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(dicomSeries)) {
       if (koElement.getMediaReader().getDicomObject().equals(newDicomKO)) {

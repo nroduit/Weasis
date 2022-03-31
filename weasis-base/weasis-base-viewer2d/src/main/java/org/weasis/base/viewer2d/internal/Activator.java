@@ -134,7 +134,7 @@ public class Activator implements BundleActivator, ServiceListener {
   private static void registerToolBar(Insertable instance) {
     if (instance instanceof Toolbar bar && !View2dContainer.TOOLBARS.contains(instance)) {
       View2dContainer.TOOLBARS.add(bar);
-      updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
+      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
       LOGGER.debug("Add Toolbar [{}] for {}", bar, View2dContainer.class.getName());
     }
   }
@@ -173,7 +173,7 @@ public class Activator implements BundleActivator, ServiceListener {
       }
     }
     if (updateGUI) {
-      updateViewerUI(ObservableEvent.BasicAction.UPDTATE_TOOLBARS);
+      updateViewerUI(ObservableEvent.BasicAction.UPDATE_TOOLBARS);
     }
   }
 

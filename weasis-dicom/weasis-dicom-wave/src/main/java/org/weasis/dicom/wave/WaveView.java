@@ -12,7 +12,6 @@ package org.weasis.dicom.wave;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -89,7 +88,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     this(null);
   }
 
-  public WaveView(Series series) {
+  public WaveView(Series<?> series) {
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     setPreferredSize(GuiUtils.getDimension(1024, 1024));
@@ -182,17 +181,17 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   }
 
   public synchronized void setSeries(Series newSeries) {
-    MediaSeries<?> oldsequence = this.series;
+    MediaSeries<?> oldSequence = this.series;
     this.series = newSeries;
 
-    if (oldsequence == null && newSeries == null) {
+    if (oldSequence == null && newSeries == null) {
       return;
     }
-    if (oldsequence != null && oldsequence.equals(newSeries)) {
+    if (oldSequence != null && oldSequence.equals(newSeries)) {
       return;
     }
 
-    closingSeries(oldsequence);
+    closingSeries(oldSequence);
 
     if (series != null) {
       try {
@@ -311,7 +310,6 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       // Panel which includes the Buttons for zooming
       ToolPanel tools = new ToolPanel(this);
       tools.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
-      tools.setPreferredSize(new Dimension(getWidth(), 30));
       // Panel with information about the channel the mouse cursor is over
       this.infoPanel = new InfoPanel(zoomRatio);
 

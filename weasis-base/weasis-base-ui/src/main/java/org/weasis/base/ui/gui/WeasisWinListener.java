@@ -165,9 +165,9 @@ public class WeasisWinListener implements MainWindowListener {
           }
         }
       } else if (event.getSource() instanceof ViewerPlugin) {
-        if (ObservableEvent.BasicAction.UPDTATE_TOOLBARS.equals(action)) {
-          List toolaBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
-          mainWindow.updateToolbars(toolaBars, toolaBars, true);
+        if (ObservableEvent.BasicAction.UPDATE_TOOLBARS.equals(action)) {
+          List toolBars = selectedPlugin == null ? null : selectedPlugin.getToolBar();
+          mainWindow.updateToolbars(toolBars, toolBars, true);
         } else if (ObservableEvent.BasicAction.NULL_SELECTION.equals(action)) {
           mainWindow.setSelectedPlugin(null);
         }

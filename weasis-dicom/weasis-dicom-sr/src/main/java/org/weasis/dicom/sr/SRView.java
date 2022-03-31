@@ -52,7 +52,6 @@ import org.weasis.core.ui.model.layer.GraphicLayer;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.dicom.codec.AbstractKOSpecialElement.Reference;
-import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSeries;
@@ -64,6 +63,7 @@ import org.weasis.dicom.codec.macro.SOPInstanceReference;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadDicomObjects;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 
@@ -348,13 +348,13 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
     if (dcmElement != null) {
       DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
-      if (dcm != null && dcm.getMediaReader() instanceof DcmMediaReader) {
+      if (dcm != null && dcm.getMediaReader() != null) {
         Attributes dicomSourceAttribute = dcm.getMediaReader().getDicomObject();
         Attributes attributes =
             DicomMediaUtils.createDicomKeyObject(
                 dicomSourceAttribute, dcmElement.getShortLabel(), null);
-        new LoadDicomObjects(model, attributes)
-            .addSelectionAndNotify(); // must be executed in the EDT
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadDicomObjects(model, OpeningViewer.NONE, attributes));
 
         for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(s)) {
           if (koElement.getMediaReader().getDicomObject().equals(attributes)) {

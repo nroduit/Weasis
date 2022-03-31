@@ -167,7 +167,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   }
 
   private Color getOverlayColor() {
-    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(OverlayOp.OVERLAY_COLOR_KEY);
+    return BundleTools.SYSTEM_PREFERENCES.getColorProperty(
+        OverlayOp.OVERLAY_COLOR_KEY, Color.WHITE);
   }
 
   @Override
