@@ -11,18 +11,19 @@ package org.weasis.acquire.explorer.gui.central;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Objects;
 import javax.swing.JToggleButton;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 
-public class SerieButton extends JToggleButton
-    implements ActionListener, SeriesDataListener, Comparable<SerieButton> {
+public class SeriesButton extends JToggleButton
+    implements ActionListener, SeriesDataListener, Comparable<SeriesButton> {
 
   private final SeriesGroup seriesGroup;
   private final AcquireTabPanel panel;
 
-  public SerieButton(SeriesGroup seriesGroup, AcquireTabPanel panel) {
+  public SeriesButton(SeriesGroup seriesGroup, AcquireTabPanel panel) {
     super(seriesGroup.getDisplayName());
-    this.seriesGroup = seriesGroup;
+    this.seriesGroup = Objects.requireNonNull(seriesGroup);
     seriesGroup.addLayerChangeListener(this);
     this.panel = panel;
     addActionListener(this);
@@ -35,7 +36,7 @@ public class SerieButton extends JToggleButton
     }
   }
 
-  public SeriesGroup getSerie() {
+  public SeriesGroup getSeries() {
     return seriesGroup;
   }
 
@@ -46,31 +47,25 @@ public class SerieButton extends JToggleButton
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + seriesGroup.hashCode();
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (obj == null) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    SerieButton other = (SerieButton) obj;
-    return seriesGroup.equals(other.seriesGroup);
+    SeriesButton that = (SeriesButton) o;
+    return seriesGroup.equals(that.seriesGroup);
   }
 
   @Override
-  public int compareTo(SerieButton o) {
-    return getSerie().compareTo(o.getSerie());
+  public int hashCode() {
+    return Objects.hash(seriesGroup);
+  }
+
+  @Override
+  public int compareTo(SeriesButton o) {
+    return getSeries().compareTo(o.getSeries());
   }
 
   @Override

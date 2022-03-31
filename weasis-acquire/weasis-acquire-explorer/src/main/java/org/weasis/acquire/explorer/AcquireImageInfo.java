@@ -59,8 +59,7 @@ import org.weasis.opencv.op.ImageConversion;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-11 - ylar - Creation
+ * @since 2.5.0
  */
 public class AcquireImageInfo {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireImageInfo.class);
@@ -182,7 +181,7 @@ public class AcquireImageInfo {
       postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_X, nextValues.getRatio());
       postProcessOpManager.setParamValue(ZoomOp.OP_NAME, ZoomOp.P_RATIO_Y, nextValues.getRatio());
       postProcessOpManager.setParamValue(
-          ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.INTERPOLATIONS[3]);
+          ZoomOp.OP_NAME, ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
     }
 
     // Reset preprocess cache
@@ -339,7 +338,7 @@ public class AcquireImageInfo {
    * Check if ImageElement has a SOPInstanceUID TAG value and if not create a new UUID. Read Exif
    * metaData from original file and populate relevant ImageElement TAGS. <br>
    *
-   * @param imageElement
+   * @param imageElement the ImageElement value
    */
   private static void readTags(ImageElement imageElement) {
     // Convert Exif TAG to DICOM attributes

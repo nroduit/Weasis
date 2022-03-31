@@ -719,22 +719,22 @@ public class TagD extends TagW {
     return key == null ? null : tags.get(key);
   }
 
-  public static Object getTagValue(TagReadable tagable, int tagID) {
-    if (tagable != null) {
+  public static Object getTagValue(TagReadable taggable, int tagID) {
+    if (taggable != null) {
       String key = getKeywordFromTag(tagID, null);
       if (key != null) {
-        return tagable.getTagValue(tags.get(key));
+        return taggable.getTagValue(tags.get(key));
       }
     }
     return null;
   }
 
-  public static <T> T getTagValue(TagReadable tagable, int tagID, Class<T> type) {
-    if (tagable != null) {
+  public static <T> T getTagValue(TagReadable taggable, int tagID, Class<T> type) {
+    if (taggable != null) {
       String key = getKeywordFromTag(tagID, null);
       if (key != null) {
         try {
-          return type.cast(tagable.getTagValue(tags.get(key)));
+          return type.cast(taggable.getTagValue(tags.get(key)));
         } catch (ClassCastException e) {
           LOGGER.error("Cannot cast the value of \"{}\" into {}", key, type, e);
         }
@@ -819,9 +819,9 @@ public class TagD extends TagW {
     return LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
   }
 
-  public static LocalDateTime dateTime(int dateID, int timeID, TagReadable tagable) {
-    LocalDate date = TagD.getTagValue(tagable, dateID, LocalDate.class);
-    LocalTime time = TagD.getTagValue(tagable, timeID, LocalTime.class);
+  public static LocalDateTime dateTime(int dateID, int timeID, TagReadable taggable) {
+    LocalDate date = TagD.getTagValue(taggable, dateID, LocalDate.class);
+    LocalTime time = TagD.getTagValue(taggable, timeID, LocalTime.class);
     if (date == null) {
       return null;
     }

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.model.ViewModelChangeListener;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 /**
  * The Class DefaultViewModel.

@@ -47,15 +47,16 @@ import org.dcm4che3.net.pdu.PresentationContext;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.LayoutConstraints;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.ExportImage;
 import org.weasis.core.ui.util.ExportLayout;
 import org.weasis.core.ui.util.ImagePrint;
 import org.weasis.core.ui.util.PrintOptions;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.explorer.pref.node.DicomPrintNode;
 import org.weasis.dicom.explorer.print.DicomPrintDialog.FilmSize;
 import org.weasis.opencv.data.PlanarImage;
@@ -65,7 +66,7 @@ public class DicomPrint {
 
   private final DicomPrintNode dcmNode;
   private final DicomPrintOptions printOptions;
-  private int interpolation;
+  private Interpolation interpolation;
   private double placeholderX;
   private double placeholderY;
 
@@ -169,12 +170,12 @@ public class DicomPrint {
     }
 
     String mType = printOptions.getMagnificationType();
-    interpolation = 1;
+    interpolation = Interpolation.BILINEAR;
 
     if ("REPLICATE".equals(mType)) {
-      interpolation = 0;
+      interpolation = Interpolation.NEAREST_NEIGHBOUR;
     } else if ("CUBIC".equals(mType)) {
-      interpolation = 2;
+      interpolation = Interpolation.BICUBIC;
     }
 
     // Printable size

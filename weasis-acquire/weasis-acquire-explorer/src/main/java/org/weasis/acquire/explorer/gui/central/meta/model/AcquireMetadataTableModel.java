@@ -20,7 +20,7 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
@@ -32,19 +32,19 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     Messages.getString("AcquireMetadataTableModel.tag"),
     Messages.getString("AcquireMetadataTableModel.val")
   };
-  protected Optional<Tagable> tagable;
+  protected Optional<Taggable> taggable;
   private final TagW[] tagsToDisplay;
   private final TagW[] tagsEditable;
   private final TagW[] tagsToPublish;
 
   protected AcquireMetadataTableModel(
-      Tagable tagable, TagW[] tagsToDisplay, TagW[] tagsEditable, TagW[] tagsToPublish) {
-    this.tagable = Optional.ofNullable(tagable);
+      Taggable taggable, TagW[] tagsToDisplay, TagW[] tagsEditable, TagW[] tagsToPublish) {
+    this.taggable = Optional.ofNullable(taggable);
     this.tagsToPublish = tagsToPublish == null ? new TagW[0] : tagsToPublish;
 
     List<TagW> addTags = new ArrayList<>();
     for (TagW tag : this.tagsToPublish) {
-      if (tagable == null || tagable.getTagValue(tag) == null) {
+      if (taggable == null || taggable.getTagValue(tag) == null) {
         if (tagsToDisplay == null || Arrays.stream(tagsToDisplay).noneMatch(t -> t.equals(tag))) {
           addTags.add(tag);
         }
@@ -109,7 +109,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
     TagW tag = tagsToDisplay()[rowIndex];
     return switch (columnIndex) {
       case 0 -> tag;
-      case 1 -> tagable.map(value -> value.getTagValue(tag)).orElse(null);
+      case 1 -> taggable.map(value -> value.getTagValue(tag)).orElse(null);
       default -> null;
     };
   }
@@ -132,7 +132,7 @@ public abstract class AcquireMetadataTableModel extends AbstractTableModel {
   public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
     if (columnIndex == 1) {
       TagW tag = tagsToDisplay()[rowIndex];
-      tagable.ifPresent(
+      taggable.ifPresent(
           t -> {
             t.setTag(tag, aValue);
             fireTableCellUpdated(rowIndex, columnIndex);

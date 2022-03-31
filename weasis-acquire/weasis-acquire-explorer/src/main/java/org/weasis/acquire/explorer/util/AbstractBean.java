@@ -22,7 +22,7 @@ public abstract class AbstractBean<E extends Enum<E>> {
 
   private final PropertyChangeSupport pcs;
 
-  public AbstractBean() {
+  protected AbstractBean() {
     pcs = new SwingPropertyChangeSupport(this, true);
   }
 

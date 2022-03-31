@@ -32,8 +32,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since v2.5.0 - 2016-04-08 - ylar - creation
+ * @since v2.5.0
  */
 public class CropRectangleGraphic extends RectangleGraphic {
 

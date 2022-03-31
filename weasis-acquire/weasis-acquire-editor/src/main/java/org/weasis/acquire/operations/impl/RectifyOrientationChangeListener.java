@@ -23,8 +23,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-12 - ylar - Creation
+ * @since 2.5.0
  */
 public class RectifyOrientationChangeListener extends AcquireObject
     implements ChangeListener, OpValueChanged {
@@ -35,7 +34,6 @@ public class RectifyOrientationChangeListener extends AcquireObject
     this.rectifyAction = rectifyAction;
   }
 
-  /** @since 2.5.0 */
   @Override
   public void stateChanged(ChangeEvent e) {
     JSlider s = (JSlider) e.getSource();

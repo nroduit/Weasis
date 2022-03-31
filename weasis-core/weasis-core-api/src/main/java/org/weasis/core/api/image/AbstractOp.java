@@ -17,11 +17,11 @@ public abstract class AbstractOp implements ImageOpNode {
 
   protected HashMap<String, Object> params;
 
-  public AbstractOp() {
+  protected AbstractOp() {
     params = new HashMap<>();
   }
 
-  public AbstractOp(AbstractOp op) {
+  protected AbstractOp(AbstractOp op) {
     params = new HashMap<>(op.params);
     clearIOCache();
   }

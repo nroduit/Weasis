@@ -16,38 +16,12 @@ package org.weasis.core.api.image.util;
  * <p>
  *
  * @author Nicolas Roduit
- * @see org.weasis.core.api.image.util.Unit
+ * @see Unit
  */
-public class AbbreviationUnit {
+public record AbbreviationUnit(Unit unit) {
 
-  private final Unit unit;
-
-  /**
-   * Create a new instance
-   *
-   * @param unit Unit
-   */
-  public AbbreviationUnit(Unit unit) {
-    this.unit = unit;
-  }
-
-  /**
-   * Returns the abbreviation of the unit.
-   *
-   * @return the abbreviation of the unit
-   */
   @Override
   public String toString() {
     return unit.getAbbreviation();
-  }
-
-  /**
-   * Returns the unit.
-   *
-   * @return Unit
-   * @see org.weasis.core.api.image.util.Unit
-   */
-  public Unit getUnit() {
-    return unit;
   }
 }

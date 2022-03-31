@@ -21,13 +21,13 @@ import javax.swing.Icon;
 import javax.swing.JToggleButton;
 import javax.swing.event.ListDataEvent;
 
-public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapter<T> {
+public class JToggleButtonGroup<T> implements ActionListener, ComboBoxModelAdapter<T> {
 
   protected final List<JToggleButton> itemList;
   protected final HashMap<JToggleButton, Object> map = new HashMap<>();
   protected ComboBoxModel<T> dataModel;
 
-  public JToogleButtonGroup() {
+  public JToggleButtonGroup() {
     this.itemList = new ArrayList<>();
   }
 
@@ -86,10 +86,8 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof JToggleButton item) {
-      if (item.isSelected()) {
-        dataModel.setSelectedItem(map.get(item));
-      }
+    if (e.getSource() instanceof JToggleButton item && item.isSelected()) {
+      dataModel.setSelectedItem(map.get(item));
     }
   }
 
@@ -108,7 +106,8 @@ public class JToogleButtonGroup<T> implements ActionListener, ComboBoxModelAdapt
 
   public int getSelectedIndex() {
     Object sObject = dataModel.getSelectedItem();
-    int i, c;
+    int i;
+    int c;
     Object obj;
 
     for (i = 0, c = dataModel.getSize(); i < c; i++) {

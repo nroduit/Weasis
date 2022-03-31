@@ -36,7 +36,6 @@ import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -44,6 +43,7 @@ import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.display.OverlayOp;
 import org.weasis.dicom.codec.display.ShutterOp;
 import org.weasis.dicom.codec.display.WindowAndPresetsOp;
@@ -536,7 +536,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
       ZoomOp node = new ZoomOp();
       node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
       node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
-      node.setParam(ZoomOp.P_INTERPOLATION, 3);
+      node.setParam(ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
       manager.addImageOperationAction(node);
 
       manager.setFirstNode(image);

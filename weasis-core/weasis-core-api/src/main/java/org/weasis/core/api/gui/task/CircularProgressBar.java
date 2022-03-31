@@ -29,7 +29,7 @@ import org.weasis.core.api.util.LocalUtil;
 
 public class CircularProgressBar extends JProgressBar {
 
-  private final int TEXT_GAP = 2;
+  private static final int TEXT_GAP = 2;
 
   private Timer timer;
   private int animateAngle;

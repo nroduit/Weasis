@@ -10,7 +10,6 @@
 package org.weasis.acquire.explorer.core.bean;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -24,7 +23,7 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 
-public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGroup> {
+public class SeriesGroup extends DefaultTaggable implements Comparable<SeriesGroup> {
   public enum Type {
     NONE,
     DATE,
@@ -35,18 +34,18 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
   private String name;
   private LocalDateTime date;
   private final List<SeriesDataListener> listenerList = new ArrayList<>();
-  private boolean needUpateFromGlobaTags = false;
+  private boolean needUpdateFromGlobalTags = false;
 
-  public static final SeriesGroup DATE_SERIE = new SeriesGroup(LocalDateTime.now());
+  public static final SeriesGroup DATE_SERIES = new SeriesGroup(LocalDateTime.now());
 
-  public static final String DEFAULT_SERIE_NAME = Messages.getString("Serie.other");
+  public static final String DEFAULT_SERIES_NAME = Messages.getString("Series.other");
 
   public SeriesGroup() {
     this(Type.NONE);
   }
 
   private SeriesGroup(Type type) {
-    this.type = type;
+    this.type = Objects.requireNonNull(type);
     init();
   }
 
@@ -68,12 +67,12 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
     updateDicomTags();
   }
 
-  public boolean isNeedUpateFromGlobaTags() {
-    return needUpateFromGlobaTags;
+  public boolean isNeedUpdateFromGlobalTags() {
+    return needUpdateFromGlobalTags;
   }
 
-  public void setNeedUpateFromGlobaTags(boolean needUpateFromGlobaTags) {
-    this.needUpateFromGlobaTags = needUpateFromGlobaTags;
+  public void setNeedUpdateFromGlobalTags(boolean needUpdateFromGlobalTags) {
+    this.needUpdateFromGlobalTags = needUpdateFromGlobalTags;
   }
 
   private void setIfnotInGlobal(TagW tag, Object value) {
@@ -109,62 +108,28 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
     if (StringUtil.hasText(desc)) {
       return desc;
     }
-    switch (type) {
-      case NAME:
-        return name;
-      case DATE:
-        return TagUtil.formatDateTime(date);
-      case NONE:
-      default:
-        return DEFAULT_SERIE_NAME;
+    return switch (type) {
+      case NAME -> name;
+      case DATE -> TagUtil.formatDateTime(date);
+      case NONE -> DEFAULT_SERIES_NAME;
+    };
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    SeriesGroup that = (SeriesGroup) o;
+    return type == that.type && Objects.equals(name, that.name) && Objects.equals(date, that.date);
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + ((date == null) ? 0 : date.hashCode());
-    result = prime * result + ((name == null) ? 0 : name.hashCode());
-    result = prime * result + ((type == null) ? 0 : type.hashCode());
-    return result;
-  }
-
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    SeriesGroup other = (SeriesGroup) obj;
-    if (date == null) {
-      if (other.date != null) {
-        return false;
-      }
-    } else {
-      if (other.date == null) {
-        return false;
-      } else {
-        if (!date.atZone(ZoneId.systemDefault())
-            .equals(other.date.atZone(ZoneId.systemDefault()))) {
-          return false;
-        }
-      }
-    }
-
-    if (name == null) {
-      if (other.name != null) {
-        return false;
-      }
-    } else if (!name.equals(other.name)) {
-      return false;
-    }
-    return type == other.type;
+    return Objects.hash(type, name, date);
   }
 
   @Override
@@ -202,7 +167,7 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
     if (this.date == null && that.date != null) {
       return AFTER;
     }
-    if (this.date != null && that.date != null) {
+    if (this.date != null) {
       int comp = this.date.compareTo(that.date);
       if (comp != EQUAL) {
         return comp;
@@ -216,7 +181,7 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
     if (this.name == null && that.name != null) {
       return AFTER;
     }
-    if (this.name != null && that.name != null) {
+    if (this.name != null) {
       int comp = this.name.compareTo(that.name);
       if (comp != EQUAL) {
         return comp;
@@ -224,8 +189,9 @@ public class SeriesGroup extends DefaultTagable implements Comparable<SeriesGrou
     }
 
     // Check equals
-    assert this.equals(that) : "compareTo inconsistent with equals.";
-
+    if (!this.equals(that)) {
+      throw new IllegalStateException("compareTo inconsistent with equals.");
+    }
     return EQUAL;
   }
 

@@ -24,8 +24,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-08 - ylar - Creation
+ * @since 2.5.0
  */
 public abstract class AbstractAcquireAction extends AcquireObject implements AcquireAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(AbstractAcquireAction.class);
@@ -34,7 +33,7 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
 
   protected final AcquireActionButtonsPanel panel;
 
-  public AbstractAcquireAction(AcquireActionButtonsPanel panel) {
+  protected AbstractAcquireAction(AcquireActionButtonsPanel panel) {
     this.panel = panel;
     this.centralPanel = newCentralPanel();
   }
@@ -43,21 +42,11 @@ public abstract class AbstractAcquireAction extends AcquireObject implements Acq
   public void actionPerformed(ActionEvent e) {
     Cmd cmd = Cmd.valueOf(e.getActionCommand());
     switch (cmd) {
-      case INIT:
-        panel.setSelected((AcquireActionButton) e.getSource());
-        break;
-      case VALIDATE:
-        validate();
-        break;
-      case CANCEL:
-        cancel();
-        break;
-      case RESET:
-        reset(e);
-        break;
-      default:
-        LOGGER.warn("Unknown command : {}", e.getActionCommand());
-        break;
+      case INIT -> panel.setSelected((AcquireActionButton) e.getSource());
+      case VALIDATE -> validate();
+      case CANCEL -> cancel();
+      case RESET -> reset(e);
+      default -> LOGGER.warn("Unknown command : {}", e.getActionCommand());
     }
   }
 

@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import org.weasis.core.util.FileUtil;
 
-public class MediaElement implements Tagable {
+public class MediaElement implements Taggable {
 
   // Metadata of the media
   protected final Map<TagW, Object> tags;

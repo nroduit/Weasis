@@ -53,7 +53,7 @@ public class MprView extends View2d {
      * Get the radiologist way to see stack (means in axial, the first image is from feet and last image is in the
      * head direction) This option may not be changed. Sorting stack must be disabled from menu in UI.
      */
-    actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.slicePosition);
+    actionsInView.put(ActionW.SORT_STACK.cmd(), SortSeriesStack.slicePosition);
 
     // Propagate the preset
     OpManager disOp = getDisplayOpManager();
@@ -77,7 +77,7 @@ public class MprView extends View2d {
 
   @Override
   protected JPopupMenu buildContexMenu(final MouseEvent evt) {
-    ActionState action = eventManager.getAction(ActionW.SORTSTACK);
+    ActionState action = eventManager.getAction(ActionW.SORT_STACK);
     if (action != null && action.isActionEnabled()) {
       // Force to disable sort stack menu
       action.enableAction(false);

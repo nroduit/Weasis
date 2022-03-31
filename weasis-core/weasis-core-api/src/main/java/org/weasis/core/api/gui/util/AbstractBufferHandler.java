@@ -34,7 +34,7 @@ public abstract class AbstractBufferHandler {
   private String addOpenMessage = "";
   private FileFilter fileFilter;
 
-  public AbstractBufferHandler(Component component) {
+  protected AbstractBufferHandler(Component component) {
     parent = component;
   }
 
@@ -208,7 +208,7 @@ public abstract class AbstractBufferHandler {
   protected abstract void handleNewDocument();
 
   protected boolean handleOpenDocument(String s) {
-    boolean flag = true;
+    boolean flag;
     try (FileInputStream fileInputstream = new FileInputStream(s)) {
       flag = handleOpenDocument(fileInputstream);
     } catch (IOException e) {
@@ -219,7 +219,7 @@ public abstract class AbstractBufferHandler {
   }
 
   protected boolean handleSaveDocument(String s) {
-    boolean flag = true;
+    boolean flag;
     try (FileOutputStream fileoutputstream = new FileOutputStream(s)) {
       flag = handleSaveDocument(fileoutputstream);
     } catch (IOException e) {

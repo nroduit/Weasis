@@ -32,7 +32,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 /**
  * @author Yannick LARVOR
  * @author Nicolas Roduit
- * @since v2.5.0 - 2016-04-06 - ylar - creation
+ * @since v2.5.0
  */
 @org.osgi.service.component.annotations.Component(
     service = InsertableFactory.class,
@@ -40,7 +40,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 public class EditionToolFactory implements InsertableFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
-  public static final ActionW EDITON =
+  public static final ActionW EDITION =
       new ActionW(Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
         @Override
         public boolean isDrawingAction() {
@@ -48,8 +48,8 @@ public class EditionToolFactory implements InsertableFactory {
         }
       };
   // Starting cmd by "draw.sub." defines a drawing action with a derivative action
-  public static final ActionW DRAW_EDITON =
-      new ActionW("", ActionW.DRAW_CMD_PREFIX + EDITON.cmd(), 0, 0, null);
+  public static final ActionW DRAW_EDITION =
+      new ActionW("", ActionW.DRAW_CMD_PREFIX + EDITION.cmd(), 0, 0, null);
 
   private EditionTool toolPane = null;
 
@@ -71,7 +71,7 @@ public class EditionToolFactory implements InsertableFactory {
       eventManager.removeAction(ActionW.ROTATION);
       eventManager.removeAction(ActionW.FLIP);
       eventManager.removeAction(ActionW.FILTER);
-      eventManager.removeAction(ActionW.INVERSESTACK);
+      eventManager.removeAction(ActionW.INVERSE_STACK);
       eventManager.removeAction(ActionW.INVERT_LUT);
       eventManager.removeAction(ActionW.LUT);
       eventManager.removeAction(ActionW.LAYOUT);
@@ -79,10 +79,10 @@ public class EditionToolFactory implements InsertableFactory {
       BundleTools.SYSTEM_PREFERENCES.setProperty(
           "weasis.contextmenu.close", Boolean.FALSE.toString());
 
-      eventManager.setAction(new BasicActionState(EDITON));
+      eventManager.setAction(new BasicActionState(EDITION));
       eventManager.setAction(
-          new ComboItemListener<Graphic>(
-              DRAW_EDITON,
+          new ComboItemListener<>(
+              DRAW_EDITION,
               new Graphic[] {
                 MeasureToolBar.selectionGraphic, CalibrationPanel.CALIBRATION_LINE_GRAPHIC
               }) {

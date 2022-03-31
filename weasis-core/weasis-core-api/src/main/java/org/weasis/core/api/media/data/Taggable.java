@@ -7,14 +7,11 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.core.api.gui.util;
+package org.weasis.core.api.media.data;
 
-import java.awt.Rectangle;
+public interface Taggable extends TagReadable {
 
-/** The Interface PickerOwner. */
-@FunctionalInterface
-public interface PickerOwner {
+  void setTag(TagW tag, Object value);
 
-  /** setPickerValues */
-  void setPickerValues(int[][] values, Rectangle area);
+  void setTagNoNull(TagW tag, Object value);
 }

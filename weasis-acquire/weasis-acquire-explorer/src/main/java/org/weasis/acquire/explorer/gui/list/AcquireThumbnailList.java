@@ -49,7 +49,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
   }
 
   @Override
-  public JPopupMenu buidContexMenu(MouseEvent e) {
+  public JPopupMenu buildContextMenu(MouseEvent e) {
     ImportPanel importPanel = AcquireManager.getInstance().getAcquireExplorer().getImportPanel();
     List<ImageElement> medias = AcquireManager.toImageElement(getSelected(e));
     if (!medias.isEmpty() && !importPanel.isLoading()) {
@@ -85,13 +85,9 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
   public void jiThumbnailKeyPressed(KeyEvent e) {
 
     switch (e.getKeyCode()) {
-      case KeyEvent.VK_PAGE_DOWN:
-        nextPage(e);
-        break;
-      case KeyEvent.VK_PAGE_UP:
-        lastPage(e);
-        break;
-      case KeyEvent.VK_ENTER:
+      case KeyEvent.VK_PAGE_DOWN -> nextPage(e);
+      case KeyEvent.VK_PAGE_UP -> lastPage(e);
+      case KeyEvent.VK_ENTER -> {
         ImportPanel importPanel =
             AcquireManager.getInstance().getAcquireExplorer().getImportPanel();
         final List<ImageElement> selected =
@@ -101,7 +97,7 @@ public class AcquireThumbnailList<E extends MediaElement> extends AbstractThumbn
           GuiUtils.showCenterScreen(dialog, WinUtil.getParentWindow(mainPanel));
         }
         e.consume();
-        break;
+      }
     }
   }
 }

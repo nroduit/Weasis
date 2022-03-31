@@ -12,26 +12,26 @@ package org.weasis.acquire.explorer.gui.central.meta.panel.imp;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
-import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSeriesMeta;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.core.util.StringUtil;
 
-public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
+public class AcquireSeriesMetaPanel extends AcquireMetadataPanel {
 
-  private static final String NO_SERIE = Messages.getString("AcquireSerieMetaPanel.no_series");
-  private static final String SERIE_PREFIX =
+  private static final String NO_SERIES = Messages.getString("AcquireSerieMetaPanel.no_series");
+  private static final String SERIES_PREFIX =
       Messages.getString("AcquireSerieMetaPanel.series") + StringUtil.COLON_AND_SPACE;
 
   protected SeriesGroup seriesGroup;
 
-  public AcquireSerieMetaPanel(SeriesGroup seriesGroup) {
+  public AcquireSeriesMetaPanel(SeriesGroup seriesGroup) {
     super("");
     this.seriesGroup = seriesGroup;
   }
 
   @Override
   public AcquireMetadataTableModel newTableModel() {
-    AcquireSerieMeta model = new AcquireSerieMeta(seriesGroup);
+    AcquireSeriesMeta model = new AcquireSeriesMeta(seriesGroup);
     model.addTableModelListener(
         e -> {
           this.titleBorder.setTitle(getDisplayText());
@@ -42,16 +42,14 @@ public class AcquireSerieMetaPanel extends AcquireMetadataPanel {
 
   @Override
   public String getDisplayText() {
-    return (seriesGroup == null)
-        ? NO_SERIE
-        : new StringBuilder(SERIE_PREFIX).append(seriesGroup.getDisplayName()).toString();
+    return (seriesGroup == null) ? NO_SERIES : SERIES_PREFIX + seriesGroup.getDisplayName();
   }
 
-  public SeriesGroup getSerie() {
+  public SeriesGroup getSeries() {
     return seriesGroup;
   }
 
-  public void setSerie(SeriesGroup seriesGroup) {
+  public void setSeries(SeriesGroup seriesGroup) {
     this.seriesGroup = seriesGroup;
     this.titleBorder.setTitle(getDisplayText());
     update();

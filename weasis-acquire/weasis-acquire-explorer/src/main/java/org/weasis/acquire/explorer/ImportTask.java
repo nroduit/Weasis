@@ -46,7 +46,7 @@ public class ImportTask extends SwingWorker<List<AcquireImageInfo>, AcquireImage
   }
 
   @Override
-  protected List<AcquireImageInfo> doInBackground() throws Exception {
+  protected List<AcquireImageInfo> doInBackground() {
 
     final int nbImageToProcess = imagesToImport.size();
     int nbImageProcessed = 0;

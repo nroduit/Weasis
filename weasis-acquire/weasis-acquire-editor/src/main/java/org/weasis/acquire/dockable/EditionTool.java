@@ -28,6 +28,7 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.gui.central.ImageGroupPane;
 import org.weasis.base.viewer2d.View2dContainer;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -39,8 +40,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-06 - ylar - Creation
+ * @since 2.5.0
  */
 public class EditionTool extends PluginTool implements SeriesViewerListener {
 
@@ -67,7 +67,7 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
     JViewport viewPort = rootPane.getViewport();
     rootPane.setViewport(Optional.ofNullable(viewPort).orElseGet(JViewport::new));
 
-    if (viewPort.getView() != this) {
+    if (viewPort != null && viewPort.getView() != this) {
       viewPort.setView(this);
     }
     return rootPane;
@@ -86,12 +86,11 @@ public class EditionTool extends PluginTool implements SeriesViewerListener {
       AcquireImageInfo old = AcquireManager.getCurrentAcquireImageInfo();
       ViewCanvas<ImageElement> oldView = AcquireManager.getCurrentView();
 
-      if (event.getSeriesViewer() instanceof View2dContainer) {
-        ViewCanvas<ImageElement> view =
-            ((View2dContainer) event.getSeriesViewer()).getSelectedImagePane();
+      if (event.getSeriesViewer() instanceof View2dContainer view2dContainer) {
+        ViewCanvas<ImageElement> view = view2dContainer.getSelectedImagePane();
         if (view != null) {
           // For better performance use nearest neighbor scaling
-          view.changeZoomInterpolation(0);
+          view.changeZoomInterpolation(Interpolation.BILINEAR);
           AcquireImageInfo info = AcquireManager.findByImage(view.getImage());
           AcquireManager.setCurrentAcquireImageInfo(info);
           AcquireManager.setCurrentView(view);

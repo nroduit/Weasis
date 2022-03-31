@@ -310,7 +310,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
         menuRoot.add(new JSeparator());
         GuiUtils.addItemToMenu(menuRoot, manager.getZoomMenu(null));
         GuiUtils.addItemToMenu(menuRoot, manager.getOrientationMenu(null));
-        // JMVUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
+        // GuiUtils.addItemToMenu(menuRoot, manager.getSortStackMenu(null));
         menuRoot.add(new JSeparator());
         menuRoot.add(manager.getResetMenu(null));
       }

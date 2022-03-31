@@ -39,7 +39,7 @@ public class DicomizeTask extends SwingWorker<File, AcquireImageInfo> {
   }
 
   @Override
-  protected File doInBackground() throws Exception {
+  protected File doInBackground() {
 
     File exportDirDicom =
         FileUtil.createTempDir(

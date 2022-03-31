@@ -18,7 +18,7 @@ import org.osgi.service.prefs.PreferencesService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 public class BundlePreferences {
   private static final Logger LOGGER = LoggerFactory.getLogger(BundlePreferences.class);

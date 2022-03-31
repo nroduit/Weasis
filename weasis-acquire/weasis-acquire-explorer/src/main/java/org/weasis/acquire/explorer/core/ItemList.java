@@ -73,7 +73,7 @@ public class ItemList<T> extends AbstractBean<ItemList.eProperty> {
 
   public void insertItem(int index, T item) {
     if (item != null && !itemList.contains(item)) {
-      int insert = index < 0 ? 0 : index >= itemList.size() ? itemList.size() : index;
+      int insert = index < 0 ? 0 : Math.min(index, itemList.size());
       itemList.add(insert, item);
       firePropertyChange(eProperty.INTERVAL_ADDED, null, new Interval(insert, insert));
     }

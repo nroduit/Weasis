@@ -370,13 +370,13 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
 
     double scale = image.getPixelSize() / zoomFactor;
     double scaleSizex =
-        ajustShowScale(
+        adjustShowScale(
             scale,
             (int) Math.min(zoomFactor * source.width() * image.getRescaleX(), bound.width / 2.0));
 
     if (showBottomScale && scaleSizex > 50.0d) {
       Unit[] unit = {image.getPixelSpacingUnit()};
-      String str = ajustLengthDisplay(scaleSizex * scale, unit);
+      String str = adjustLengthDisplay(scaleSizex * scale, unit);
       g2d.setStroke(new BasicStroke(1.0F));
       g2d.setPaint(Color.BLACK);
 
@@ -439,13 +439,13 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     }
 
     double scaleSizeY =
-        ajustShowScale(
+        adjustShowScale(
             scale,
             (int) Math.min(zoomFactor * source.height() * image.getRescaleY(), bound.height / 2.0));
 
     if (scaleSizeY > 30.0d) {
       Unit[] unit = {image.getPixelSpacingUnit()};
-      String str = ajustLengthDisplay(scaleSizeY * scale, unit);
+      String str = adjustLengthDisplay(scaleSizeY * scale, unit);
 
       float strokeWidth = g2d.getFont().getSize() / 15.0f;
       strokeWidth = Math.max(strokeWidth, 1.0f);
@@ -506,7 +506,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     }
   }
 
-  private double ajustShowScale(double ratio, int maxLength) {
+  public static double adjustShowScale(double ratio, int maxLength) {
     int digits = (int) ((Math.log(maxLength * ratio) / Math.log(10)) + 1);
     double scaleLength = Math.pow(10, digits);
     double scaleSize = scaleLength / ratio;
@@ -523,7 +523,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return scaleSize;
   }
 
-  public double findGeometricSuite(double length) {
+  public static double findGeometricSuite(double length) {
     int shift = (int) ((Math.log(length) / Math.log(10)) + 0.1);
     int firstDigit = (int) (length / Math.pow(10, shift) + 0.5);
     if (firstDigit == 5) {
@@ -532,41 +532,41 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     return 2.0;
   }
 
-  public String ajustLengthDisplay(double scaleLength, Unit[] unit) {
-    double ajustScaleLength = scaleLength;
+  public static String adjustLengthDisplay(double scaleLength, Unit[] unit) {
+    double adjustScaleLength = scaleLength;
 
-    Unit ajustUnit = unit[0];
+    Unit adjustUnit = unit[0];
 
     if (scaleLength < 1.0) {
-      Unit down = ajustUnit;
+      Unit down = adjustUnit;
       while ((down = down.getDownUnit()) != null) {
         double length = scaleLength * down.getConversionRatio(unit[0].getConvFactor());
         if (length > 1) {
-          ajustUnit = down;
-          ajustScaleLength = length;
+          adjustUnit = down;
+          adjustScaleLength = length;
           break;
         }
       }
     } else if (scaleLength > 10.0) {
-      Unit up = ajustUnit;
+      Unit up = adjustUnit;
       while ((up = up.getUpUnit()) != null) {
         double length = scaleLength * up.getConversionRatio(unit[0].getConvFactor());
         if (length < 1) {
           break;
         }
-        ajustUnit = up;
-        ajustScaleLength = length;
+        adjustUnit = up;
+        adjustScaleLength = length;
       }
     }
     // Trick to keep the value as a return parameter
-    unit[0] = ajustUnit;
-    if (ajustScaleLength < 1.0) {
-      return ajustScaleLength < 0.001
-          ? DecFormater.scientificFormat(ajustScaleLength)
-          : DecFormater.fourDecimal(ajustScaleLength);
+    unit[0] = adjustUnit;
+    if (adjustScaleLength < 1.0) {
+      return adjustScaleLength < 0.001
+          ? DecFormater.scientificFormat(adjustScaleLength)
+          : DecFormater.fourDecimal(adjustScaleLength);
     }
-    return ajustScaleLength > 50000.0
-        ? DecFormater.scientificFormat(ajustScaleLength)
-        : DecFormater.twoDecimal(ajustScaleLength);
+    return adjustScaleLength > 50000.0
+        ? DecFormater.scientificFormat(adjustScaleLength)
+        : DecFormater.twoDecimal(adjustScaleLength);
   }
 }

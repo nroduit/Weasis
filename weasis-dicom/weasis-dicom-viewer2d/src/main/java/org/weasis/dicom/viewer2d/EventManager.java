@@ -245,7 +245,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       int speed, TIME time, double mouseSensivity) {
     return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
 
-      protected CineThread currentCine;
+      private CineThread currentCine;
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -257,7 +257,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         Optional<ToggleButtonListener> defaultPresetAction =
             getAction(ActionW.DEFAULT_PRESET, ToggleButtonListener.class);
         boolean isDefaultPresetSelected =
-            !defaultPresetAction.isPresent() || defaultPresetAction.get().isSelected();
+            defaultPresetAction.isEmpty() || defaultPresetAction.get().isSelected();
 
         if (selectedView2dContainer != null) {
           view2d = selectedView2dContainer.getSelectedImagePane();
@@ -576,8 +576,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     String command = cmd;
     boolean isDefaultPresetSelected = false;
     Optional<ComboItemListener> presetAction = getAction(ActionW.PRESET, ComboItemListener.class);
-    if (ActionW.PRESET.cmd().equals(command) && object instanceof PresetWindowLevel) {
-      PresetWindowLevel preset = (PresetWindowLevel) object;
+    if (ActionW.PRESET.cmd().equals(command) && object instanceof PresetWindowLevel preset) {
       getAction(ActionW.WINDOW, SliderChangeListener.class)
           .ifPresent(a -> a.setSliderValue(a.toSliderValue(preset.getWindow()), false));
       getAction(ActionW.LEVEL, SliderChangeListener.class)
@@ -587,7 +586,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
       PresetWindowLevel defaultPreset =
           presetAction.isPresent() ? (PresetWindowLevel) presetAction.get().getFirstItem() : null;
-      isDefaultPresetSelected = defaultPreset != null && preset.equals(defaultPreset);
+      isDefaultPresetSelected = preset.equals(defaultPreset);
     } else {
       presetAction.ifPresent(
           a ->
@@ -648,7 +647,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ToggleButtonListener newKOToggleAction() {
-    return new ToggleButtonListener(ActionW.KO_TOOGLE_STATE, false) {
+    return new ToggleButtonListener(ActionW.KO_TOGGLE_STATE, false) {
       @Override
       public void actionPerformed(boolean newSelectedState) {
 
@@ -660,7 +659,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           // that is the
           // current view's actionValue
           this.setSelectedWithoutTriggerAction(
-              (Boolean) getSelectedViewPane().getActionValue(ActionW.KO_TOOGLE_STATE.cmd()));
+              (Boolean) getSelectedViewPane().getActionValue(ActionW.KO_TOGGLE_STATE.cmd()));
         }
       }
     };
@@ -688,13 +687,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   private void koAction(ActionW action, Object selected) {
     Optional<ComboItemListener> synchAction = getAction(ActionW.SYNCH, ComboItemListener.class);
     SynchView synchView =
-        synchAction.isPresent() ? (SynchView) synchAction.get().getSelectedItem() : null;
+        synchAction
+            .map(comboItemListener -> (SynchView) comboItemListener.getSelectedItem())
+            .orElse(null);
     boolean tileMode =
         synchView != null && SynchData.Mode.TILE.equals(synchView.getSynchData().getMode());
     ViewCanvas<DicomImageElement> selectedView = getSelectedViewPane();
     if (tileMode) {
-      if (selectedView2dContainer instanceof View2dContainer && selectedView != null) {
-        View2dContainer container = (View2dContainer) selectedView2dContainer;
+      if (selectedView2dContainer instanceof View2dContainer container && selectedView != null) {
         boolean filterSelection = selected instanceof Boolean;
         Object selectedKO =
             filterSelection ? selectedView.getActionValue(ActionW.KO_SELECTION.cmd()) : selected;
@@ -766,7 +766,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<SeriesComparator<DicomImageElement>> newSortStackAction() {
-    return new ComboItemListener<>(ActionW.SORTSTACK, SortSeriesStack.getValues()) {
+    return new ComboItemListener<>(ActionW.SORT_STACK, SortSeriesStack.getValues()) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -777,10 +777,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+  public Optional<ActionW> getLeftMouseActionFromKeyEvent(int keyEvent, int modifier) {
 
-    Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
-    if (!action.isPresent()) {
+    Optional<ActionW> action = super.getLeftMouseActionFromKeyEvent(keyEvent, modifier);
+    if (action.isEmpty()) {
       return action;
     }
     // Only return the action if it is enabled
@@ -788,10 +788,10 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         .filter(ActionState::isActionEnabled)
         .isPresent()) {
       return action;
-    } else if (ActionW.KO_TOOGLE_STATE.equals(action.get())
-        && keyEvent == ActionW.KO_TOOGLE_STATE.getKeyCode()) {
+    } else if (ActionW.KO_TOGGLE_STATE.equals(action.get())
+        && keyEvent == ActionW.KO_TOGGLE_STATE.getKeyCode()) {
       Optional<ToggleButtonListener> koToggleAction =
-          getAction(ActionW.KO_TOOGLE_STATE, ToggleButtonListener.class);
+          getAction(ActionW.KO_TOGGLE_STATE, ToggleButtonListener.class);
       if (koToggleAction.isPresent()) {
         koToggleAction.get().setSelected(!koToggleAction.get().isSelected());
       }
@@ -1037,7 +1037,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                     (Boolean) view2d.getActionValue(ActionW.LENS.cmd())));
     Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
     if (lensZoom != null) {
-      getAction(ActionW.LENSZOOM, SliderChangeListener.class)
+      getAction(ActionW.LENS_ZOOM, SliderChangeListener.class)
           .ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
     }
 
@@ -1060,16 +1060,16 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       cineAction.ifPresent(a -> a.setSpeed(speed));
     }
 
-    getAction(ActionW.SORTSTACK, ComboItemListener.class)
+    getAction(ActionW.SORT_STACK, ComboItemListener.class)
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
-                    view2d.getActionValue(ActionW.SORTSTACK.cmd())));
-    getAction(ActionW.INVERSESTACK, ToggleButtonListener.class)
+                    view2d.getActionValue(ActionW.SORT_STACK.cmd())));
+    getAction(ActionW.INVERSE_STACK, ToggleButtonListener.class)
         .ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
-                    (Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd())));
+                    (Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
 
     updateKeyObjectComponentsListener(view2d);
 
@@ -1089,7 +1089,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
       Optional<ComboItemListener> koSelectionAction =
           getAction(ActionW.KO_SELECTION, ComboItemListener.class);
       Optional<ToggleButtonListener> koToggleAction =
-          getAction(ActionW.KO_TOOGLE_STATE, ToggleButtonListener.class);
+          getAction(ActionW.KO_TOGGLE_STATE, ToggleButtonListener.class);
       Optional<ToggleButtonListener> koFilterAction =
           getAction(ActionW.KO_FILTER, ToggleButtonListener.class);
       if (LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue("no.ko"))) {
@@ -1100,7 +1100,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         koToggleAction.ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
-                    (Boolean) view2d.getActionValue(ActionW.KO_TOOGLE_STATE.cmd())));
+                    (Boolean) view2d.getActionValue(ActionW.KO_TOGGLE_STATE.cmd())));
         koFilterAction.ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
@@ -1447,14 +1447,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
     if (sliderAction.isPresent()) {
       BundlePreferences.putDoublePreferences(
-          prefNode, action.cmd(), sliderAction.get().getMouseSensivity());
+          prefNode, action.cmd(), sliderAction.get().getMouseSensitivity());
     }
   }
 
   private void getSliderPreference(Preferences prefNode, ActionW action, double defVal) {
     Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
     if (sliderAction.isPresent()) {
-      sliderAction.get().setMouseSensivity(prefNode.getDouble(action.cmd(), defVal));
+      sliderAction.get().setMouseSensitivity(prefNode.getDouble(action.cmd(), defVal));
     }
   }
 
@@ -1613,14 +1613,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       Optional<ComboItemListener> sortStackAction =
-          getAction(ActionW.SORTSTACK, ComboItemListener.class);
+          getAction(ActionW.SORT_STACK, ComboItemListener.class);
       if (sortStackAction.isPresent()) {
         menu =
             sortStackAction
                 .get()
                 .createUnregisteredRadioMenu(Messages.getString("View2dContainer.sort_stack"));
         Optional<ToggleButtonListener> inverseStackAction =
-            getAction(ActionW.INVERSESTACK, ToggleButtonListener.class);
+            getAction(ActionW.INVERSE_STACK, ToggleButtonListener.class);
         if (inverseStackAction.isPresent()) {
           menu.add(new JSeparator());
           menu.add(

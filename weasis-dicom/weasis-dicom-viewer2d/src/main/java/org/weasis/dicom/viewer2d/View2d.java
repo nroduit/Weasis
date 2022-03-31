@@ -58,7 +58,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
@@ -110,6 +109,7 @@ import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.ui.util.UriListFlavor;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomEncapDocSeries;
 import org.weasis.dicom.codec.DicomImageElement;
@@ -222,7 +222,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   @Override
   protected void initActionWState() {
     super.initActionWState();
-    actionsInView.put(ActionW.SORTSTACK.cmd(), SortSeriesStack.instanceNumber);
+    actionsInView.put(ActionW.SORT_STACK.cmd(), SortSeriesStack.instanceNumber);
 
     // Preprocessing
     actionsInView.put(ActionW.CROP.cmd(), null);
@@ -239,7 +239,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
 
   protected void initKOActionWState() {
     actionsInView.put(ActionW.KO_FILTER.cmd(), false);
-    actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), false);
+    actionsInView.put(ActionW.KO_TOGGLE_STATE.cmd(), false);
     actionsInView.put(ActionW.KO_SELECTION.cmd(), ActionState.NoneLabel.NONE);
   }
 
@@ -298,11 +298,11 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             node.setParam(ActionW.LUT_SHAPE.cmd(), val);
           }
           imageLayer.updateDisplayOperations();
-        } else if (command.equals(ActionW.SORTSTACK.cmd())) {
-          actionsInView.put(ActionW.SORTSTACK.cmd(), val);
+        } else if (command.equals(ActionW.SORT_STACK.cmd())) {
+          actionsInView.put(ActionW.SORT_STACK.cmd(), val);
           sortStack(getCurrentSortComparator());
-        } else if (command.equals(ActionW.INVERSESTACK.cmd())) {
-          actionsInView.put(ActionW.INVERSESTACK.cmd(), val);
+        } else if (command.equals(ActionW.INVERSE_STACK.cmd())) {
+          actionsInView.put(ActionW.INVERSE_STACK.cmd(), val);
           sortStack(getCurrentSortComparator());
         } else if (command.equals(ActionW.KO_SELECTION.cmd())) {
           int frameIndex =
@@ -601,7 +601,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     koStarButton.setState(newSelectionState);
 
     Boolean selected = koStarButton.getState().equals(eState.SELECTED);
-    actionsInView.put(ActionW.KO_TOOGLE_STATE.cmd(), selected);
+    actionsInView.put(ActionW.KO_TOGGLE_STATE.cmd(), selected);
 
     return previousState != newSelectionState;
   }

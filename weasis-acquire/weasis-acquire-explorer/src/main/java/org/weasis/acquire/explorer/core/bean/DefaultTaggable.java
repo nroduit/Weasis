@@ -15,9 +15,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 
-public class DefaultTagable implements Tagable {
+public class DefaultTaggable implements Taggable {
   protected final Map<TagW, Object> tags = new HashMap<>();
 
   @Override

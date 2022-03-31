@@ -78,10 +78,10 @@ public class KeyObjectToolBar extends WtoolBar {
 
     final EventManager evtMgr = EventManager.getInstance();
     final ToggleButtonListener koToggleAction =
-        (ToggleButtonListener) evtMgr.getAction(ActionW.KO_TOOGLE_STATE);
+        (ToggleButtonListener) evtMgr.getAction(ActionW.KO_TOGGLE_STATE);
     final JToggleButton toggleKOSelectionBtn = new JToggleButton();
 
-    toggleKOSelectionBtn.setToolTipText(ActionW.KO_TOOGLE_STATE.getTitle());
+    toggleKOSelectionBtn.setToolTipText(ActionW.KO_TOGGLE_STATE.getTitle());
     toggleKOSelectionBtn.setIcon(KO_STAR_ICON);
     toggleKOSelectionBtn.setSelectedIcon(KO_STAR_ICON_SELECTED);
 

@@ -28,7 +28,7 @@ import javax.swing.event.ListSelectionListener;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.net.Status;
-import org.weasis.acquire.explorer.core.bean.DefaultTagable;
+import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.TagW;
@@ -178,7 +178,7 @@ public class WorklistDialog extends JDialog {
                     JOptionPane.showMessageDialog(
                         this, state.getMessage(), null, JOptionPane.ERROR_MESSAGE));
         dispose();
-        throw new RuntimeException(state.getMessage());
+        throw new IllegalStateException(state.getMessage());
       }
       jtable.setModel(new SimpleTableModel(new String[] {}, new Object[][] {}));
       tableContainer.setPreferredSize(GuiUtils.getDimension(450, 50));
@@ -188,7 +188,7 @@ public class WorklistDialog extends JDialog {
 
   private boolean applySelection() {
     if (selectedItem != null) {
-      DefaultTagable tagable = new DefaultTagable();
+      DefaultTaggable taggable = new DefaultTaggable();
 
       TagW[] addTags =
           TagD.getTagFromIDs(
@@ -215,19 +215,19 @@ public class WorklistDialog extends JDialog {
               Tag.CurrentPatientLocation,
               Tag.PatientState);
       for (TagW t : addTags) {
-        t.readValue(selectedItem, tagable);
+        t.readValue(selectedItem, taggable);
       }
 
       Attributes seq = selectedItem.getNestedDataset(Tag.ScheduledProcedureStepSequence);
-      tagable.setTagNoNull(
+      taggable.setTagNoNull(
           TagD.get(Tag.StudyDescription),
           TagD.get(Tag.ScheduledProcedureStepDescription).getValue(seq));
       TagW tModality = TagD.get(Tag.Modality);
-      tagable.setTagNoNull(tModality, tModality.getValue(seq));
-      tagable.setTagNoNull(
+      taggable.setTagNoNull(tModality, tModality.getValue(seq));
+      taggable.setTagNoNull(
           TagD.get(Tag.StationName), TagD.get(Tag.ScheduledStationName).getValue(seq));
 
-      AcquireManager.getInstance().applyToGlobal(tagable);
+      AcquireManager.getInstance().applyToGlobal(taggable);
       selectedItem = null;
       selection.setText("");
       jtable.getSelectionModel().clearSelection();

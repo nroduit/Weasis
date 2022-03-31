@@ -40,7 +40,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.JToogleButtonGroup;
+import org.weasis.core.api.gui.util.JToggleButtonGroup;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -378,7 +378,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
             GuiUtils.getEmptyBorder(10, 5, 0, 5),
             GuiUtils.getTitledBorder(graphicAction.getTitle())));
 
-    JToogleButtonGroup<?> measures = actionState.get().createButtonGroup();
+    JToggleButtonGroup<?> measures = actionState.get().createButtonGroup();
     JToggleButton[] items = measures.getJToggleButtonList();
 
     pIcons.setLayout(new GridLayout(0, lineLength));

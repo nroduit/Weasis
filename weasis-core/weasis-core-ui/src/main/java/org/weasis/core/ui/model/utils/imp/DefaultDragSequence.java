@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.swing.JDialog;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.ui.dialog.MeasureDialog;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.graphic.AbstractDragGraphic;
@@ -24,6 +23,7 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.util.MathUtil;
 
 public class DefaultDragSequence implements Draggable {
   protected final DragGraphic graphic;

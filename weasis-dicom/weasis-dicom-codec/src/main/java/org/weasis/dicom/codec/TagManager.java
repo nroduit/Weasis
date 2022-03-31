@@ -14,7 +14,7 @@ import java.util.EnumMap;
 import java.util.List;
 import org.dcm4che3.data.Attributes;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.dicom.codec.TagD.Level;
 
 public class TagManager {
@@ -53,7 +53,7 @@ public class TagManager {
     return list != null && list.contains(tag);
   }
 
-  public void readTags(Level level, Attributes header, Tagable tags) {
+  public void readTags(Level level, Attributes header, Taggable tags) {
     if (level == null || header == null || tags == null) {
       return;
     }

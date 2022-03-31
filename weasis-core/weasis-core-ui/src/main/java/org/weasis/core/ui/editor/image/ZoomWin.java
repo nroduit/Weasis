@@ -44,6 +44,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.ImageOpNode.Param;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.SynchData.Mode;
@@ -93,7 +94,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     SimpleOpManager operations = imageLayer.getDisplayOpManager();
     operations.addImageOperationAction(new AffineTransformOp());
 
-    ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
+    ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
     if (zoomAction instanceof SliderChangeListener) {
       actionsInView.put(ActionW.ZOOM.cmd(), ((SliderChangeListener) zoomAction).getRealValue());
     }
@@ -106,7 +107,9 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     OpManager disOp = getDisplayOpManager();
 
     disOp.setParamValue(
-        AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION, z.getInterpolation());
+        AffineTransformOp.OP_NAME,
+        AffineTransformOp.P_INTERPOLATION,
+        Interpolation.getInterpolation(z.getInterpolation()));
     disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, null);
 
     actionsInView.put(SYNCH_CMD, z.isLensSynchronize());
@@ -377,7 +380,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
         popup.show(mouseevent.getComponent(), mouseevent.getX(), mouseevent.getY());
       } else if (mouseevent.getClickCount() == 2) {
         ImageViewerEventManager<E> manager = view2d.getEventManager();
-        ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
+        ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
         if (zoomAction instanceof SliderChangeListener) {
           ((SliderChangeListener) zoomAction).setRealValue(view2d.getViewModel().getViewScale());
         }
@@ -435,7 +438,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     this.removeMouseListener(mouseHandler);
     this.removeMouseMotionListener(mouseHandler);
     this.removeMouseWheelListener(
-        (MouseActionAdapter) view2d.getEventManager().getAction(ActionW.LENSZOOM));
+        (MouseActionAdapter) view2d.getEventManager().getAction(ActionW.LENS_ZOOM));
   }
 
   public void enableMouseListener() {
@@ -443,7 +446,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     this.addMouseListener(mouseHandler);
     this.addMouseMotionListener(mouseHandler);
     this.addMouseWheelListener(
-        (MouseActionAdapter) view2d.getEventManager().getAction(ActionW.LENSZOOM));
+        (MouseActionAdapter) view2d.getEventManager().getAction(ActionW.LENS_ZOOM));
   }
 
   public ViewCanvas<E> getView2d() {

@@ -33,6 +33,7 @@ import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -57,7 +58,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   private final Map<ActionW, Integer> map = new HashMap<>();
   private final JComboBox<ActionW> comboBox = new JComboBox<>();
   private final JSlider slider = new JSlider(-100, 100, 0);
-  private JComboBox<String> comboBoxInterpolation;
+  private JComboBox<ZoomOp.Interpolation> comboBoxInterpolation;
   private JCheckBox checkBoxWLcolor;
   private JCheckBox checkBoxLevelInverse;
   private JCheckBox checkBoxApplyPR;
@@ -79,7 +80,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     for (ActionW a : actions) {
       if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
-        map.put(a, realValueToSlider(action.getMouseSensivity()));
+        map.put(a, realValueToSlider(action.getMouseSensitivity()));
       }
     }
 
@@ -125,7 +126,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
 
     JLabel lblInterpolation =
         new JLabel(Messages.getString("ViewerPrefView.interp") + StringUtil.COLON);
-    comboBoxInterpolation = new JComboBox<>(ZoomOp.INTERPOLATIONS);
+    comboBoxInterpolation = new JComboBox<>(ZoomOp.Interpolation.values());
     comboBoxInterpolation.setSelectedIndex(eventManager.getZoomSetting().getInterpolation());
 
     int shiftX = ITEM_SEPARATOR - ITEM_SEPARATOR_SMALL;
@@ -176,12 +177,12 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     EventManager eventManager = EventManager.getInstance();
     for (ActionW a : actions) {
       if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
-        action.setMouseSensivity(sliderToRealValue(map.get(a)));
+        action.setMouseSensitivity(sliderToRealValue(map.get(a)));
       }
     }
 
-    int interpolation = comboBoxInterpolation.getSelectedIndex();
-    eventManager.getZoomSetting().setInterpolation(interpolation);
+    int interpolationPosition = comboBoxInterpolation.getSelectedIndex();
+    eventManager.getZoomSetting().setInterpolation(interpolationPosition);
     boolean applyWLcolor = checkBoxWLcolor.isSelected();
     eventManager.getOptions().putBooleanProperty(WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
 
@@ -194,13 +195,14 @@ public class ViewerPrefView extends AbstractItemDialogPage {
       view.setMouseActions(eventManager.getMouseActions());
     }
 
+    Interpolation inter = Interpolation.getInterpolation(interpolationPosition);
     synchronized (UIManager.VIEWER_PLUGINS) {
       for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
         if (p instanceof View2dContainer viewer) {
           for (ViewCanvas<DicomImageElement> v : viewer.getImagePanels()) {
             OpManager disOp = v.getDisplayOpManager();
             disOp.setParamValue(WindowOp.OP_NAME, WindowOp.P_APPLY_WL_COLOR, applyWLcolor);
-            v.changeZoomInterpolation(interpolation);
+            v.changeZoomInterpolation(inter);
           }
         }
       }
@@ -218,7 +220,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     map.put(ActionW.ZOOM, realValueToSlider(0.1));
     slider.setValue(map.get(comboBox.getSelectedItem()));
 
-    comboBoxInterpolation.setSelectedIndex(1);
+    comboBoxInterpolation.setSelectedItem(Interpolation.BILINEAR);
 
     // Get the default server configuration and if no value take the default value in parameter.
     EventManager eventManager = EventManager.getInstance();

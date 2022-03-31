@@ -152,7 +152,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
       for (int i = 0; i < jRadioButtonMenuItemMagnify.length; i++) {
         if (item.equals(jRadioButtonMenuItemMagnify[i])) {
           ImageViewerEventManager<?> manager = zoomWin.getView2d().getEventManager();
-          ActionState zoomAction = manager.getAction(ActionW.LENSZOOM);
+          ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
           if (zoomAction instanceof SliderChangeListener sliderChangeListener) {
             sliderChangeListener.setRealValue(magnify[i]);
           }

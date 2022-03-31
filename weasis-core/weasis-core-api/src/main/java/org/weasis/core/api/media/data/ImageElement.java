@@ -23,7 +23,6 @@ import org.opencv.core.CvType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.WindowOp;
@@ -32,6 +31,7 @@ import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.ThreadUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
@@ -355,7 +355,7 @@ public class ImageElement extends MediaElement {
       ZoomOp node = new ZoomOp();
       node.setParam(ZoomOp.P_RATIO_X, getRescaleX() * ratio);
       node.setParam(ZoomOp.P_RATIO_Y, getRescaleY() * ratio);
-      node.setParam(ZoomOp.P_INTERPOLATION, 3);
+      node.setParam(ZoomOp.P_INTERPOLATION, ZoomOp.Interpolation.BICUBIC);
       manager.addImageOperationAction(node);
 
       manager.setFirstNode(image);

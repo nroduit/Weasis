@@ -23,8 +23,8 @@ import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.SerieButton;
-import org.weasis.acquire.explorer.gui.dialog.AcquireNewSerieDialog;
+import org.weasis.acquire.explorer.gui.central.SeriesButton;
+import org.weasis.acquire.explorer.gui.dialog.AcquireNewSeriesDialog;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AbstractThumbnailList;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -54,7 +54,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
     this.acquireTabPanel = acquireTabPanel;
   }
 
-  public SerieButton getSelectedSeries() {
+  public SeriesButton getSelectedSeries() {
     if (acquireTabPanel != null) {
       return acquireTabPanel.getSelected();
     }
@@ -74,7 +74,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
   }
 
   @Override
-  public JPopupMenu buidContexMenu(final MouseEvent e) {
+  public JPopupMenu buildContextMenu(final MouseEvent e) {
     final List<E> medias = getSelected(e);
 
     if (!medias.isEmpty()) {
@@ -136,7 +136,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
         .forEach(
             s -> {
               if (!s.equals(
-                      AcquireCentralThumbnailList.this.acquireTabPanel.getSelected().getSerie())
+                      AcquireCentralThumbnailList.this.acquireTabPanel.getSelected().getSeries())
                   && !SeriesGroup.Type.NONE.equals(s.getType())) {
                 moveToMenu.add(
                     new JMenuItem(
@@ -155,7 +155,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
     moveToMenu.add(
         new JMenuItem(
             new DefaultAction(
-                SeriesGroup.DEFAULT_SERIE_NAME,
+                SeriesGroup.DEFAULT_SERIES_NAME,
                 event -> {
                   AcquireCentralThumbnailList.this.acquireTabPanel.moveElements(
                       AcquireManager.getDefaultSeries(), AcquireManager.toAcquireImageInfo(medias));
@@ -170,7 +170,7 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
                 Messages.getString("AcquireCentralThumnailList.new_series"),
                 event -> {
                   JDialog dialog =
-                      new AcquireNewSerieDialog(
+                      new AcquireNewSeriesDialog(
                           AcquireCentralThumbnailList.this.acquireTabPanel,
                           AcquireManager.toImageElement(medias));
                   GuiUtils.showCenterScreen(
@@ -237,26 +237,21 @@ public class AcquireCentralThumbnailList<E extends MediaElement> extends Abstrac
 
   @Override
   public void jiThumbnailKeyPressed(KeyEvent e) {
-
     switch (e.getKeyCode()) {
-      case KeyEvent.VK_PAGE_DOWN:
-        nextPage(e);
-        break;
-      case KeyEvent.VK_PAGE_UP:
-        lastPage(e);
-        break;
-      case KeyEvent.VK_ENTER:
+      case KeyEvent.VK_PAGE_DOWN -> nextPage(e);
+      case KeyEvent.VK_PAGE_UP -> lastPage(e);
+      case KeyEvent.VK_ENTER -> {
         openSelection();
         e.consume();
-        break;
-      case KeyEvent.VK_DELETE:
+      }
+      case KeyEvent.VK_DELETE -> {
         List<E> selected = getSelectedValuesList();
         if (!selected.isEmpty()) {
           List<AcquireImageInfo> list = AcquireManager.toAcquireImageInfo(selected);
           clearSelection();
           AcquireManager.getInstance().removeImages(list);
         }
-        break;
+      }
     }
   }
 }

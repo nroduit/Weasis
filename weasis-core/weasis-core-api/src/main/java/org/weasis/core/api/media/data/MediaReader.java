@@ -15,7 +15,7 @@ import java.util.Map;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.opencv.data.PlanarImage;
 
-public interface MediaReader extends Tagable {
+public interface MediaReader extends Taggable {
 
   URI getUri();
 

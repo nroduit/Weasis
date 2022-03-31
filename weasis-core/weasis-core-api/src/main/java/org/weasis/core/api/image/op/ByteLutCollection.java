@@ -173,17 +173,19 @@ public class ByteLutCollection {
   public static void readLutFilesFromResourcesDir(List<ByteLut> luts, File lutFolder) {
     if (luts != null && lutFolder != null && lutFolder.exists() && lutFolder.isDirectory()) {
       File[] files = lutFolder.listFiles();
-      for (File file : files) {
-        if (file.isFile() && file.canRead()) {
-          try (Scanner scan = new Scanner(file, StandardCharsets.UTF_8)) {
-            byte[][] lut = readLutFile(scan);
-            luts.add(new ByteLut(FileUtil.nameWithoutExtension(file.getName()), lut));
-          } catch (Exception e) {
-            LOGGER.error("Reading LUT file {}", file, e);
+      if (files != null) {
+        for (File file : files) {
+          if (file.isFile() && file.canRead()) {
+            try (Scanner scan = new Scanner(file, StandardCharsets.UTF_8)) {
+              byte[][] lut = readLutFile(scan);
+              luts.add(new ByteLut(FileUtil.nameWithoutExtension(file.getName()), lut));
+            } catch (Exception e) {
+              LOGGER.error("Reading LUT file {}", file, e);
+            }
           }
         }
+        luts.sort(Comparator.comparing(ByteLut::getName));
       }
-      luts.sort(Comparator.comparing(ByteLut::getName));
     }
   }
 

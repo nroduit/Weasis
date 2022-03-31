@@ -21,10 +21,10 @@ import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 
 public class SeriesProgressMonitor extends FilterInputStream {
-  private static final String INTERUPTION_LABEL = "progress"; // NON-NLS
+  private static final String INTERRUPTION_LABEL = "progress"; // NON-NLS
   protected final Series<?> series;
   protected int nread = 0;
-  protected int size = 0;
+  protected int size;
 
   public SeriesProgressMonitor(final Series<?> series, InputStream in) {
     super(in);
@@ -56,7 +56,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
   @Override
   public int read() throws IOException {
     if (isLoadingSeriesCanceled()) {
-      InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
+      InterruptedIOException exc = new InterruptedIOException(INTERRUPTION_LABEL);
       exc.bytesTransferred = nread;
       series.setFileSize(series.getFileSize() - nread);
       nread = 0;
@@ -74,7 +74,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
   @Override
   public int read(byte[] b) throws IOException {
     if (isLoadingSeriesCanceled()) {
-      InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
+      InterruptedIOException exc = new InterruptedIOException(INTERRUPTION_LABEL);
       exc.bytesTransferred = nread;
       series.setFileSize(series.getFileSize() - nread);
       nread = 0;
@@ -91,7 +91,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
   @Override
   public int read(byte[] b, int off, int len) throws IOException {
     if (isLoadingSeriesCanceled()) {
-      InterruptedIOException exc = new InterruptedIOException(INTERUPTION_LABEL);
+      InterruptedIOException exc = new InterruptedIOException(INTERRUPTION_LABEL);
       exc.bytesTransferred = nread;
       series.setFileSize(series.getFileSize() - nread);
       nread = 0;

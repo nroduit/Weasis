@@ -111,15 +111,13 @@ public abstract class AbstractWizardDialog extends JDialog {
         Object child = children.nextElement();
         if (child instanceof DefaultMutableTreeNode dtm) {
           Object object = dtm.getUserObject();
-          if (object instanceof PageItem page) {
-            if (page.getTitle().equals(title)) {
-              TreePath tp = new TreePath(dtm.getPath());
-              if (!dtm.isLeaf()) {
-                tree.expandPath(tp);
-              }
-              tree.setSelectionPath(tp);
-              return true;
+          if (object instanceof PageItem page && page.getTitle().equals(title)) {
+            TreePath tp = new TreePath(dtm.getPath());
+            if (!dtm.isLeaf()) {
+              tree.expandPath(tp);
             }
+            tree.setSelectionPath(tp);
+            return true;
           }
           if (dtm.getChildCount() > 0 && selectPage(title, dtm)) {
             return true;
@@ -227,13 +225,11 @@ public abstract class AbstractWizardDialog extends JDialog {
       Enumeration<?> children = start.children();
       while (children.hasMoreElements()) {
         Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode dtm) {
-          if (!dtm.isLeaf()) {
-            TreePath tp = new TreePath(dtm.getPath());
-            tree.expandPath(tp);
+        if (child instanceof DefaultMutableTreeNode dtm && !dtm.isLeaf()) {
+          TreePath tp = new TreePath(dtm.getPath());
+          tree.expandPath(tp);
 
-            expandTree(tree, dtm, maxDeep - 1);
-          }
+          expandTree(tree, dtm, maxDeep - 1);
         }
       }
     }

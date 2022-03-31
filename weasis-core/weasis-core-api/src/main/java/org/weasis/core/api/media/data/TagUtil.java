@@ -386,8 +386,8 @@ public final class TagUtil {
     }
   }
 
-  public static Object getTagValue(TagW tag, TagReadable... tagable) {
-    for (TagReadable t : tagable) {
+  public static Object getTagValue(TagW tag, TagReadable... taggable) {
+    for (TagReadable t : taggable) {
       if (t != null) {
         Object val = t.getTagValue(tag);
         if (val != null) {

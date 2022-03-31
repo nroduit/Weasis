@@ -16,6 +16,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
+import org.weasis.core.util.MathUtil;
 
 public final class GeomUtil {
 
@@ -58,9 +59,7 @@ public final class GeomUtil {
    *     0 is returned if any argument is invalid
    */
   public static double getAngleRad(Point2D ptA, Point2D ptB) {
-    return (ptA != null && ptB != null)
-        ? Math.atan2(ptA.getY() - ptB.getY(), ptB.getX() - ptA.getX())
-        : null;
+    return Math.atan2(ptA.getY() - ptB.getY(), ptB.getX() - ptA.getX());
   }
 
   /**
@@ -68,7 +67,7 @@ public final class GeomUtil {
    *     0 is returned if any argument is invalid
    */
   public static double getAngleDeg(Point2D ptA, Point2D ptB) {
-    return (ptA != null && ptB != null) ? Math.toDegrees(getAngleRad(ptA, ptB)) : null;
+    return Math.toDegrees(getAngleRad(ptA, ptB));
   }
 
   /**
@@ -294,9 +293,12 @@ public final class GeomUtil {
       return null;
     }
 
-    double ax = ptA.getX(), ay = ptA.getY();
-    double bx = ptB.getX(), by = ptB.getY();
-    double cx = ptC.getX(), cy = ptC.getY();
+    double ax = ptA.getX();
+    double ay = ptA.getY();
+    double bx = ptB.getX();
+    double by = ptB.getY();
+    double cx = ptC.getX();
+    double cy = ptC.getY();
 
     double r = ((ay - cy) * (ay - by) + (ax - cx) * (ax - bx)) / Point2D.distanceSq(ax, ay, bx, by);
 
@@ -354,12 +356,10 @@ public final class GeomUtil {
     double abX = ptB.getX() - ptA.getX();
     double abY = ptB.getY() - ptA.getY();
 
-    double perpX = -abY;
-    double perpY = abX;
     double perpSize = Math.sqrt(abX * abX + abY * abY);
 
-    double sideVectorX = dist * perpX / perpSize;
-    double sideVectorY = dist * perpY / perpSize;
+    double sideVectorX = dist * -abY / perpSize;
+    double sideVectorY = dist * abX / perpSize;
 
     Point2D ptC = new Point2D.Double(ptA.getX() + sideVectorX, ptA.getY() + sideVectorY);
     Point2D ptD = new Point2D.Double(ptB.getX() + sideVectorX, ptB.getY() + sideVectorY);
@@ -376,16 +376,13 @@ public final class GeomUtil {
       return null;
     }
 
-    switch (ptList.size()) {
-      case 3:
-        return getCircleCenter(ptList.get(0), ptList.get(1), ptList.get(2));
-      case 2:
-        return new Point2D.Double(
-            (ptList.get(0).getX() + ptList.get(1).getX()) / 2.0,
-            (ptList.get(0).getY() + ptList.get(1).getY()) / 2.0);
-      default:
-        return null;
-    }
+    return switch (ptList.size()) {
+      case 3 -> getCircleCenter(ptList.get(0), ptList.get(1), ptList.get(2));
+      case 2 -> new Point2D.Double(
+          (ptList.get(0).getX() + ptList.get(1).getX()) / 2.0,
+          (ptList.get(0).getY() + ptList.get(1).getY()) / 2.0);
+      default -> null;
+    };
   }
 
   public static Point2D getCircleCenter(Point2D ptA, Point2D ptB, Point2D ptC) {

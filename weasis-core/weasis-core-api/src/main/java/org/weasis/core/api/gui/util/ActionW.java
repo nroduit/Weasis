@@ -123,11 +123,11 @@ public class ActionW implements KeyActionValue {
       new ActionW(Messages.getString("ActionW.draw"), DRAW_CMD_PREFIX + DRAW.cmd(), 0, 0, null);
   public static final ActionW SPATIAL_UNIT =
       new ActionW(Messages.getString("ActionW.spatial_unit"), "spunit", 0, 0, null); // NON-NLS
-  public static final ActionW SORTSTACK = new ActionW("", "sortStack", 0, 0, null); // NON-NLS
+  public static final ActionW SORT_STACK = new ActionW("", "sortStack", 0, 0, null); // NON-NLS
   public static final ActionW CONTEXTMENU =
       new ActionW(
           Messages.getString("ActionW.context_menu"), "contextMenu", KeyEvent.VK_Q, 0, null);
-  public static final ActionW VIEWINGPROTOCOL =
+  public static final ActionW VIEWING_PROTOCOL =
       new ActionW("", "viewingProtocol", 0, 0, null); // NON-NLS
   public static final ActionW LAYOUT =
       new ActionW(Messages.getString("ActionW.layout"), "layout", 0, 0, null); // NON-NLS
@@ -137,7 +137,7 @@ public class ActionW implements KeyActionValue {
       new ActionW(Messages.getString("ActionW.overlay"), "overlay", 0, 0, null); // NON-NLS
   public static final ActionW PR_STATE =
       new ActionW(Messages.getString("ActionW.PR"), "pr_state", 0, 0, null); // NON-NLS
-  public static final ActionW KO_TOOGLE_STATE =
+  public static final ActionW KO_TOGGLE_STATE =
       new ActionW(
           Messages.getString("ActionW.toggle_ko"),
           "ko_toogle_state", // NON-NLS
@@ -152,7 +152,8 @@ public class ActionW implements KeyActionValue {
       new ActionW(Messages.getString("ActionW.pixpad"), "pixel_padding", 0, 0, null); // NON-NLS
   public static final ActionW IMAGE_SHUTTER =
       new ActionW(Messages.getString("ActionW.shutter"), "shutter", 0, 0, null); // NON-NLS
-  public static final ActionW INVERSESTACK = new ActionW("", "inverseStack", 0, 0, null); // NON-NLS
+  public static final ActionW INVERSE_STACK =
+      new ActionW("", "inverseStack", 0, 0, null); // NON-NLS
   public static final ActionW STACK_OFFSET = new ActionW("", "stackOffset", 0, 0, null); // NON-NLS
   public static final ActionW SYNCH_LINK = new ActionW("", "synchLink", 0, 0, null); // NON-NLS
   public static final ActionW SYNCH_CROSSLINE =
@@ -162,8 +163,8 @@ public class ActionW implements KeyActionValue {
   public static final ActionW CROP = new ActionW("", "crop", 0, 0, null); // NON-NLS
   public static final ActionW PREPROCESSING =
       new ActionW("", "preprocessing", 0, 0, null); // NON-NLS
-  public static final ActionW LENSZOOM = new ActionW("", "lensZoom", 0, 0, null); // NON-NLS
-  public static final ActionW LENSPAN = new ActionW("", "lensPan", 0, 0, null); // NON-NLS
+  public static final ActionW LENS_ZOOM = new ActionW("", "lensZoom", 0, 0, null); // NON-NLS
+  public static final ActionW LENS_PAN = new ActionW("", "lensPan", 0, 0, null); // NON-NLS
   public static final ActionW DRAW_ONLY_ONCE =
       new ActionW(Messages.getString("ActionW.draw_once"), "drawOnce", 0, 0, null);
   public static final ActionW PROGRESSION = new ActionW("", "img_progress", 0, 0, null); // NON-NLS
@@ -238,12 +239,12 @@ public class ActionW implements KeyActionValue {
 
   public static Cursor getSvgCursor(
       String filename, String cursorName, float hotSpotX, float hotSpotY) {
-    return getCursor("svg/cursor/" + filename, cursorName, hotSpotX, hotSpotY);
+    return getCursor("svg/cursor/" + filename, cursorName, hotSpotX, hotSpotY); // NON-NLS
   }
 
   public static Cursor getImageCursor(
       String filename, String cursorName, float hotSpotX, float hotSpotY) {
-    return getCursor("images/cursor/" + filename, cursorName, hotSpotX, hotSpotY);
+    return getCursor("images/cursor/" + filename, cursorName, hotSpotX, hotSpotY); // NON-NLS
   }
 
   private static Cursor getCursor(String path, String cursorName, float hotSpotX, float hotSpotY) {

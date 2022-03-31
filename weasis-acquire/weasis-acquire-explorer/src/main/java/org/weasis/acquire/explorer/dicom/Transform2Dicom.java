@@ -32,7 +32,7 @@ import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
@@ -58,11 +58,11 @@ public final class Transform2Dicom {
    * AcquireImageInfo. This Dicom is written in the exportDirDicom with its sopInstanceUID as
    * filename.
    *
-   * @param imageInfo
-   * @param exportDirDicom
-   * @param exportDirImage
+   * @param imageInfo the AcquireImageInfo value
+   * @param exportDirDicom the folder to save DICOM files
+   * @param exportDirImage the folder to save image files
    * @param seriesInstanceUID Global series for all PR
-   * @return
+   * @return true when the operation is successful
    */
   public static boolean dicomize(
       AcquireImageInfo imageInfo,
@@ -127,7 +127,7 @@ public final class Transform2Dicom {
             (Rectangle)
                 imageInfo.getPostProcessOpManager().getParamValue(CropOp.OP_NAME, CropOp.P_AREA);
         if (crop != null) {
-          Integer rotationAngle =
+          int rotationAngle =
               Optional.ofNullable(
                       (Integer)
                           imageInfo
@@ -157,14 +157,14 @@ public final class Transform2Dicom {
 
   /**
    * Populates Date and Time for all Attributes in the imageInfo Collection with respect to the
-   * youngest. That is : the first image content Date and Time would define the SerieDate and
-   * SerieTime within the current Serie, and so on within the current Study
+   * youngest. That is : the first image content Date and Time would define the SeriesDate and
+   * SeriesTime within the current Series, and so on within the current Study
    *
-   * @param collection
-   * @param dicomTags
+   * @param collection the AcquireImageInfo list
+   * @param dicomTags the Taggable value
    */
   public static void buildStudySeriesDate(
-      Collection<AcquireImageInfo> collection, final Tagable dicomTags) {
+      Collection<AcquireImageInfo> collection, final Taggable dicomTags) {
 
     TagW seriesDate = TagD.get(Tag.SeriesDate);
     TagW seriesTime = TagD.get(Tag.SeriesTime);

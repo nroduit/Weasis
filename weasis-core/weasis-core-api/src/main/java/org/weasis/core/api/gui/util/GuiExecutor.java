@@ -63,7 +63,7 @@ public class GuiExecutor extends AbstractExecutorService {
   }
 
   @Override
-  public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
+  public boolean awaitTermination(long timeout, TimeUnit unit) {
     throw new UnsupportedOperationException();
   }
 

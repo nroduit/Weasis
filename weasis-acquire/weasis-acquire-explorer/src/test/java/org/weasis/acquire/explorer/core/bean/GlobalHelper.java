@@ -20,7 +20,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.dicom.codec.TagD;
 
@@ -36,7 +36,7 @@ public class GlobalHelper {
   protected static String studyInstanceUIDValue = "2.25.35.13108031698769009477890994130583367923";
   protected static String modalityValue = "CR";
 
-  @Mock protected static Tagable tagable;
+  @Mock protected static Taggable taggable;
 
   @Mock protected static TagW patientIdW;
   @Mock protected static TagW patientNameW;
@@ -81,7 +81,7 @@ public class GlobalHelper {
 
   @BeforeAll
   static void setUp() {
-    tagable = Mockito.mock(Tagable.class);
+    taggable = Mockito.mock(Taggable.class);
 
     Mockito.mockStatic(LocalUtil.class);
     Mockito.when(LocalUtil.getDateFormatter()).thenReturn(dateformat);

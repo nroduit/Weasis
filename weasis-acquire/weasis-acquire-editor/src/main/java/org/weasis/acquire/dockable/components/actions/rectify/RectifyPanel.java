@@ -32,8 +32,6 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 public class RectifyPanel extends AbstractAcquireActionPanel {
 
   private final OrientationSliderComponent orientationPanel;
-  private final JButton rotate90btn;
-  private final JButton rotate270btn;
 
   private final RectifyAction rectifyAction;
 
@@ -42,9 +40,9 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
     this.rectifyAction = Objects.requireNonNull(rectifyAction);
     orientationPanel = new OrientationSliderComponent(this);
-    rotate90btn = new Rotate90Button(rectifyAction);
+    JButton rotate90btn = new Rotate90Button(rectifyAction);
     rotate90btn.setPreferredSize(GuiUtils.getBigIconButtonSize(rotate90btn));
-    rotate270btn = new Rotate270Button(rectifyAction);
+    JButton rotate270btn = new Rotate270Button(rectifyAction);
     rotate270btn.setPreferredSize(GuiUtils.getBigIconButtonSize(rotate270btn));
 
     add(orientationPanel);
@@ -83,7 +81,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     info.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
 
     view.getEventManager()
-        .getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
+        .getAction(EditionToolFactory.DRAW_EDITION, ComboItemListener.class)
         .ifPresent(a -> a.setSelectedItem(MeasureToolBar.selectionGraphic));
     ImageViewerPlugin<?> container =
         WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);
@@ -99,7 +97,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     if (container != null) {
       final ViewerToolBar<?> toolBar = container.getViewerToolBar();
       if (toolBar != null) {
-        String cmd = EditionToolFactory.EDITON.cmd();
+        String cmd = EditionToolFactory.EDITION.cmd();
         MouseActions mouseActions = EventManager.getInstance().getMouseActions();
         if (!cmd.equals(mouseActions.getLeft())) {
           panel.setLastActionCommand(mouseActions.getLeft());

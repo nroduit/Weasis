@@ -41,10 +41,10 @@ public class TagView {
     return false;
   }
 
-  public String getFormattedText(boolean anonymize, TagReadable... tagable) {
+  public String getFormattedText(boolean anonymize, TagReadable... taggable) {
     for (TagW t : this.tag) {
       if (!anonymize || t.getAnonymizationType() != 1) {
-        String str = t.getFormattedTagValue(TagUtil.getTagValue(t, tagable), format);
+        String str = t.getFormattedTagValue(TagUtil.getTagValue(t, taggable), format);
         if (StringUtil.hasText(str)) {
           return str;
         }

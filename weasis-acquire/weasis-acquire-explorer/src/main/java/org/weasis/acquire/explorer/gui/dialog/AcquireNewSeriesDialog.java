@@ -24,14 +24,14 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
 import org.weasis.core.api.media.data.ImageElement;
 
-public class AcquireNewSerieDialog extends JDialog implements PropertyChangeListener {
-  private final JTextField serieName = new JTextField();
+public class AcquireNewSeriesDialog extends JDialog implements PropertyChangeListener {
+  private final JTextField seriesName = new JTextField();
   private final JOptionPane optionPane;
 
   private final AcquireTabPanel acquireTabPanel;
   private final List<ImageElement> medias;
 
-  public AcquireNewSerieDialog(AcquireTabPanel acquireTabPanel, final List<ImageElement> medias) {
+  public AcquireNewSeriesDialog(AcquireTabPanel acquireTabPanel, final List<ImageElement> medias) {
     this.acquireTabPanel = acquireTabPanel;
     this.medias = medias;
     optionPane =
@@ -56,7 +56,7 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
     JLabel question = new JLabel(Messages.getString("AcquireNewSerieDialog.enter_name"));
     panel.add(question, BorderLayout.NORTH);
 
-    panel.add(serieName, BorderLayout.CENTER);
+    panel.add(seriesName, BorderLayout.CENTER);
 
     return panel;
   }
@@ -67,9 +67,9 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
     boolean close = true;
     if (action != null) {
       if (AcquireImportDialog.OPTIONS[0].equals(action)) {
-        if (serieName.getText() != null && !serieName.getText().isEmpty()) {
+        if (seriesName.getText() != null && !seriesName.getText().isEmpty()) {
           acquireTabPanel.moveElements(
-              new SeriesGroup(serieName.getText()), AcquireManager.toAcquireImageInfo(medias));
+              new SeriesGroup(seriesName.getText()), AcquireManager.toAcquireImageInfo(medias));
         } else {
           JOptionPane.showMessageDialog(
               this,
@@ -89,7 +89,7 @@ public class AcquireNewSerieDialog extends JDialog implements PropertyChangeList
   }
 
   public void clearAndHide() {
-    serieName.setText(null);
+    seriesName.setText(null);
     setVisible(false);
   }
 }

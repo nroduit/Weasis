@@ -10,7 +10,7 @@
 package org.weasis.core.api.image.util;
 
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 public class KernelData {
 

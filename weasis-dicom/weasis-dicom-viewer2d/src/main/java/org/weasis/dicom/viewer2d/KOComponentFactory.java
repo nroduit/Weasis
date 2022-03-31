@@ -79,7 +79,7 @@ public final class KOComponentFactory {
 
           if (evtMgr.getSelectedViewPane() == view2d) {
             ActionState koToggleAction =
-                view2d.getEventManager().getAction(ActionW.KO_TOOGLE_STATE);
+                view2d.getEventManager().getAction(ActionW.KO_TOGGLE_STATE);
             if (koToggleAction instanceof ToggleButtonListener) {
               // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState)
               // {

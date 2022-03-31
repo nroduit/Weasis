@@ -82,9 +82,9 @@ public class MipView extends View2d {
 
   public void initMIPSeries(ViewCanvas<?> selView) {
     if (selView != null) {
-      actionsInView.put(ActionW.SORTSTACK.cmd(), selView.getActionValue(ActionW.SORTSTACK.cmd()));
+      actionsInView.put(ActionW.SORT_STACK.cmd(), selView.getActionValue(ActionW.SORT_STACK.cmd()));
       actionsInView.put(
-          ActionW.INVERSESTACK.cmd(), selView.getActionValue(ActionW.INVERSESTACK.cmd()));
+          ActionW.INVERSE_STACK.cmd(), selView.getActionValue(ActionW.INVERSE_STACK.cmd()));
       actionsInView.put(
           ActionW.FILTERED_SERIES.cmd(), selView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
       MediaSeries s = selView.getSeries();

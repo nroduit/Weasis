@@ -23,13 +23,13 @@ import org.weasis.dicom.codec.TagD;
 class GlobalTest extends GlobalHelper {
 
   @Test
-  void testInitWithEmptyTagable() {
+  void testInitWithEmptyTaggable() {
     Global global = new Global();
 
-    Mockito.when(tagable.getTagEntrySetIterator())
+    Mockito.when(taggable.getTagEntrySetIterator())
         .thenReturn(Collections.EMPTY_MAP.entrySet().iterator());
     // Method to test
-    global.init(tagable);
+    global.init(taggable);
 
     // Tests
     assertThat(global.containTagKey(TagD.get(Tag.StudyInstanceUID))).isTrue();
@@ -40,7 +40,7 @@ class GlobalTest extends GlobalHelper {
   void testInit() {
     Global global = new Global();
     // Method to test
-    DefaultTagable tags = new DefaultTagable();
+    DefaultTaggable tags = new DefaultTaggable();
     tags.setTag(GlobalTag.patientId.tagW, GlobalTag.patientId.value);
     tags.setTag(GlobalTag.patientName.tagW, GlobalTag.patientName.value);
     tags.setTag(GlobalTag.issuerOfPatientId.tagW, GlobalTag.issuerOfPatientId.value);

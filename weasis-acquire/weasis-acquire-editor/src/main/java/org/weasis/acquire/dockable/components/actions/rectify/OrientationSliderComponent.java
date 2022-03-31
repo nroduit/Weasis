@@ -55,6 +55,6 @@ public class OrientationSliderComponent extends AbstractSliderComponent {
 
   @Override
   public String getDisplayTitle() {
-    return super.getDisplayTitle() + Messages.getString("OrientationSliderComponent.deg_symb");
+    return super.getDisplayTitle() + " °";
   }
 }

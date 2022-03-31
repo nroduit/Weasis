@@ -14,7 +14,7 @@ import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableMo
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagW;
 
-public class AcquireSerieMeta extends AcquireMetadataTableModel {
+public class AcquireSeriesMeta extends AcquireMetadataTableModel {
 
   private static final TagW[] TAGS_TO_DISPLAY =
       getTags(
@@ -27,7 +27,7 @@ public class AcquireSerieMeta extends AcquireMetadataTableModel {
   private static final TagW[] TAGS_TO_PUBLISH =
       getTags("weasis.acquire.meta.series.required", "Modality,SeriesDescription"); // NON-NLS
 
-  public AcquireSerieMeta(SeriesGroup seriesGroup) {
+  public AcquireSeriesMeta(SeriesGroup seriesGroup) {
     super(seriesGroup, TAGS_TO_DISPLAY, TAGS_EDITABLE, TAGS_TO_PUBLISH);
   }
 

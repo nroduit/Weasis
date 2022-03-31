@@ -9,6 +9,9 @@
  */
 package org.weasis.core.api.image.cv;
 
+import java.awt.image.BandedSampleModel;
+import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
 import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
@@ -40,8 +43,6 @@ import org.weasis.core.api.explorer.model.AbstractFileModel;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
-import org.weasis.core.api.gui.util.MathUtil;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.internal.cv.NativeOpenCVCodec;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.Codec;
@@ -55,6 +56,7 @@ import org.weasis.core.api.media.data.SeriesEvent;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.PlanarImage;
@@ -64,6 +66,7 @@ import org.weasis.opencv.op.ImageProcessor;
 public class ImageCVIO implements MediaReader {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageCVIO.class);
 
+  public static final int TILE_SIZE = 512;
   public static final File CACHE_UNCOMPRESSED_DIR =
       AppProperties.buildAccessibleTempDirectory(
           AppProperties.FILE_CACHE_DIR.getName(), "uncompressed"); // NON-NLS
@@ -185,7 +188,7 @@ public class ImageCVIO implements MediaReader {
     }
 
     // to avoid problem with alpha channel and png encoded in 24 and 32 bits
-    bi = ImageFiler.getReadableImage(bi);
+    bi = getReadableImage(bi);
     return ImageConversion.toMat(bi);
   }
 
@@ -356,7 +359,7 @@ public class ImageCVIO implements MediaReader {
      * Make an image cache with its thumbnail when the image size is larger than a tile size and if not DICOM file
      */
     if (img != null
-        && (img.width() > ImageFiler.TILESIZE || img.height() > ImageFiler.TILESIZE)
+        && (img.width() > TILE_SIZE || img.height() > TILE_SIZE)
         && !mimeType.contains("dicom")) { // NON-NLS
       File outFile = imgCachePath.toFile();
       try {
@@ -387,9 +390,7 @@ public class ImageCVIO implements MediaReader {
           img8 = imgElement.getRenderedImage(img, params);
         }
         ImageProcessor.writeThumbnail(
-            img8.toMat(),
-            new File(ImageFiler.changeExtension(outFile.getPath(), ".jpg")),
-            Thumbnail.MAX_SIZE);
+            img8.toMat(), new File(changeExtension(outFile.getPath(), ".jpg")), Thumbnail.MAX_SIZE);
         return outFile;
       } catch (Exception e) {
         FileUtil.delete(outFile);
@@ -402,5 +403,35 @@ public class ImageCVIO implements MediaReader {
   @Override
   public boolean buildFile(File output) {
     return false;
+  }
+
+  public static RenderedImage getReadableImage(RenderedImage source) {
+    if (source != null && source.getSampleModel() != null) {
+      int numBands = source.getSampleModel().getNumBands();
+      if (ImageConversion.isBinary(source.getSampleModel())) {
+        return ImageConversion.convertTo(source, BufferedImage.TYPE_BYTE_GRAY);
+      }
+
+      if (source.getColorModel() instanceof IndexColorModel
+          || numBands == 2
+          || numBands > 3
+          || (source.getSampleModel() instanceof BandedSampleModel && numBands > 1)) {
+        int imageType = numBands >= 3 ? BufferedImage.TYPE_3BYTE_BGR : BufferedImage.TYPE_BYTE_GRAY;
+        return ImageConversion.convertTo(source, imageType);
+      }
+    }
+    return source;
+  }
+
+  public static String changeExtension(String filename, String ext) {
+    if (filename == null) {
+      return "";
+    }
+    // replace extension after the last point
+    int pointPos = filename.lastIndexOf('.');
+    if (pointPos == -1) {
+      pointPos = filename.length();
+    }
+    return filename.substring(0, pointPos) + ext;
   }
 }

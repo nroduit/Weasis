@@ -62,18 +62,14 @@ public class ItemListModel<T> extends AbstractListModel<T> {
 
   protected PropertyChangeListener getPropertyChangeListener() {
     return evt -> {
-      if (evt.getNewValue() instanceof Interval) {
-        Interval interval = (Interval) evt.getNewValue();
+      if (evt.getNewValue() instanceof Interval interval) {
         switch (ItemList.eProperty.valueOf(evt.getPropertyName())) {
-          case INTERVAL_ADDED:
-            fireIntervalAdded(ItemListModel.this, interval.getMin(), interval.getMax());
-            break;
-          case INTERVAL_REMOVED:
-            fireIntervalRemoved(ItemListModel.this, interval.getMin(), interval.getMax());
-            break;
-          case CONTENT_CHANGED:
-            fireContentsChanged(ItemListModel.this, interval.getMin(), interval.getMax());
-            break;
+          case INTERVAL_ADDED -> fireIntervalAdded(
+              ItemListModel.this, interval.getMin(), interval.getMax());
+          case INTERVAL_REMOVED -> fireIntervalRemoved(
+              ItemListModel.this, interval.getMin(), interval.getMax());
+          case CONTENT_CHANGED -> fireContentsChanged(
+              ItemListModel.this, interval.getMin(), interval.getMax());
         }
       }
     };

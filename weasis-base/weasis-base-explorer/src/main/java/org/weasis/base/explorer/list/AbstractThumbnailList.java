@@ -557,7 +557,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
     private void showPopup(final MouseEvent evt) {
       // Context menu
       if (SwingUtilities.isRightMouseButton(evt)) {
-        JPopupMenu popupMenu = AbstractThumbnailList.this.buidContexMenu(evt);
+        JPopupMenu popupMenu = AbstractThumbnailList.this.buildContextMenu(evt);
         if (popupMenu != null) {
           popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
@@ -693,7 +693,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
 
   public abstract IThumbnailModel<E> newModel();
 
-  public abstract JPopupMenu buidContexMenu(final MouseEvent e);
+  public abstract JPopupMenu buildContextMenu(final MouseEvent e);
 
   public abstract void mouseClickedEvent(MouseEvent e);
 }

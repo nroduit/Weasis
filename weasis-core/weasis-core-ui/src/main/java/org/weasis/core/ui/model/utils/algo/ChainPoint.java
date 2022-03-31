@@ -10,7 +10,7 @@
 package org.weasis.core.ui.model.utils.algo;
 
 import java.util.List;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 /**
  * The Class ChainPoint.

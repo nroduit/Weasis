@@ -69,9 +69,9 @@ public class ImportPanel extends JPanel {
   public void importImageList(
       Collection<ImageElement> toImport, SeriesGroup searchedSeries, int maxRangeInMinutes) {
 
-    ImportTask imporTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
+    ImportTask importTask = new ImportTask(toImport, searchedSeries, maxRangeInMinutes);
 
-    imporTask.addPropertyChangeListener(
+    importTask.addPropertyChangeListener(
         evt -> {
           if ("progress".equals(evt.getPropertyName())) {
             int progress = (Integer) evt.getNewValue();
@@ -91,7 +91,7 @@ public class ImportPanel extends JPanel {
           }
         });
 
-    IMPORT_IMAGES.execute(imporTask);
+    IMPORT_IMAGES.execute(importTask);
   }
 
   public boolean isLoading() {

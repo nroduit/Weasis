@@ -24,7 +24,7 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
 
   protected ButtonModel model;
 
-  public ToggleButtonListener(ActionW action, boolean selected) {
+  protected ToggleButtonListener(ActionW action, boolean selected) {
     super(action);
     model = new ToggleButtonModel();
     model.setSelected(selected);
@@ -76,8 +76,8 @@ public abstract class ToggleButtonListener extends BasicActionState implements A
   @Override
   public boolean registerActionState(Object c) {
     if (super.registerActionState(c)) {
-      if (c instanceof AbstractButton) {
-        ((AbstractButton) c).setModel(model);
+      if (c instanceof AbstractButton button) {
+        button.setModel(model);
       }
       return true;
     }

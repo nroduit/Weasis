@@ -15,7 +15,6 @@ import java.awt.event.FocusListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -35,7 +34,6 @@ import org.weasis.acquire.explorer.gui.control.ImportPanel;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
-import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.util.StringUtil;
 
 public class AcquireImportDialog extends JDialog implements PropertyChangeListener {
@@ -44,16 +42,13 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
 
   private final ImportPanel importPanel;
 
-  public static final ExecutorService IMPORT_IMAGES =
-      ThreadUtil.buildNewSingleThreadExecutor("ImportImage");
-
   static final Object[] OPTIONS = {
     Messages.getString("AcquireImportDialog.validate"),
     Messages.getString("AcquireImportDialog.cancel")
   };
   static final String REVALIDATE = "ReValidate";
 
-  private final JTextField serieName = new JTextField(20);
+  private final JTextField seriesName = new JTextField(20);
   private final ButtonGroup btnGrp = new ButtonGroup();
 
   private final JRadioButton btn1 =
@@ -109,12 +104,12 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     panel.add(GuiUtils.boxVerticalStrut(15));
     panel.add(GuiUtils.getFlowLayoutPanel(btn1));
     panel.add(GuiUtils.getFlowLayoutPanel(btn2, spinner, maxRange));
-    panel.add(GuiUtils.getFlowLayoutPanel(btn3, serieName));
+    panel.add(GuiUtils.getFlowLayoutPanel(btn3, seriesName));
 
     installFocusListener(spinner);
 
-    GuiUtils.setPreferredWidth(serieName, 150);
-    serieName.addFocusListener(
+    GuiUtils.setPreferredWidth(seriesName, 150);
+    seriesName.addFocusListener(
         new FocusListener() {
 
           @Override
@@ -164,16 +159,17 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
     if (action != null) {
       boolean close = true;
       if (action.equals(OPTIONS[0])) {
-        SeriesGroup serieType = null;
+        SeriesGroup seriesType;
         if (btnGrp.getSelection().equals(btn1.getModel())) {
-          serieType = null;
+          seriesType = null;
         } else if (btnGrp.getSelection().equals(btn2.getModel())) {
-          serieType = SeriesGroup.DATE_SERIE;
+          seriesType = SeriesGroup.DATE_SERIES;
         } else {
-          if (serieName.getText() != null && !serieName.getText().isEmpty()) {
-            serieType = new SeriesGroup(serieName.getText());
-            serieType.setNeedUpateFromGlobaTags(true);
+          if (seriesName.getText() != null && !seriesName.getText().isEmpty()) {
+            seriesType = new SeriesGroup(seriesName.getText());
+            seriesType.setNeedUpdateFromGlobalTags(true);
           } else {
+            seriesType = null;
             JOptionPane.showMessageDialog(
                 this,
                 Messages.getString("AcquireImportDialog.add_name_msg"),
@@ -196,7 +192,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
             BundlePreferences.putIntPreferences(p, P_MAX_RANGE, maxRangeInMinutes);
           }
 
-          importPanel.importImageList(mediaList, serieType, maxRangeInMinutes);
+          importPanel.importImageList(mediaList, seriesType, maxRangeInMinutes);
         }
       } else if (action.equals(REVALIDATE)) {
         close = false;
@@ -209,7 +205,7 @@ public class AcquireImportDialog extends JDialog implements PropertyChangeListen
   }
 
   public void clearAndHide() {
-    serieName.setText(null);
+    seriesName.setText(null);
     setVisible(false);
   }
 }

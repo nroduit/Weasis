@@ -17,7 +17,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import java.util.TreeSet;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 public class ConvexHull {
   public static final int COUNTERCLOCKWISE = 1;

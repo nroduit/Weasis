@@ -33,7 +33,7 @@ public class AcquireImageMetaPanel extends AcquireMetadataPanel {
   @Override
   public String getDisplayText() {
     if (imageInfo != null) {
-      return new StringBuilder(IMAGE_PREFIX).append(imageInfo.getImage().getName()).toString();
+      return IMAGE_PREFIX + imageInfo.getImage().getName();
     } else {
       return NO_IMAGE;
     }

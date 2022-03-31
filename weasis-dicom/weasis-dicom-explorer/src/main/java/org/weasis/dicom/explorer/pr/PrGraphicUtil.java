@@ -25,7 +25,6 @@ import org.dcm4che3.img.data.CIELab;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.ui.model.GraphicModel;
@@ -37,6 +36,7 @@ import org.weasis.core.ui.model.graphic.imp.area.PolygonGraphic;
 import org.weasis.core.ui.model.graphic.imp.line.PolylineGraphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.serialize.XmlSerializer;
+import org.weasis.core.util.MathUtil;
 import org.weasis.dicom.codec.PresentationStateReader;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 

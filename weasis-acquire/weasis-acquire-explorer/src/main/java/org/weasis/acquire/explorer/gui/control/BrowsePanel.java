@@ -54,8 +54,7 @@ public class BrowsePanel extends JPanel implements IUSBDriveListener {
         new ItemListComboBoxModel<>(mediaSourceList);
 
     mediaSourceSelectionCombo.setModel(mediaSourceListComboModel);
-    mediaSourceSelectionCombo.setRenderer(
-        new MediaSourceListCellRenderer(mediaSourceSelectionCombo));
+    mediaSourceSelectionCombo.setRenderer(new MediaSourceListCellRenderer());
     mediaSourceSelectionCombo.setMaximumRowCount(15);
     mediaSourceSelectionCombo.setFont(FontItem.SMALL.getFont());
     mediaSourceSelectionCombo.addActionListener(

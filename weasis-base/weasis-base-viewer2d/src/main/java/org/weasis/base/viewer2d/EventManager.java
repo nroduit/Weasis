@@ -191,8 +191,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   @Override
-  public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
-    Optional<ActionW> action = super.getLeftMouseActionFromkeyEvent(keyEvent, modifier);
+  public Optional<ActionW> getLeftMouseActionFromKeyEvent(int keyEvent, int modifier) {
+    Optional<ActionW> action = super.getLeftMouseActionFromKeyEvent(keyEvent, modifier);
     // Only return the action if it is enabled
     if (action.isPresent()
         && Optional.ofNullable(getAction(action.get()))
@@ -470,12 +470,13 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.LENS.cmd())));
-    getAction(ActionW.INVERSESTACK, ToggleButtonListener.class)
-        .ifPresent(a -> a.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSESTACK.cmd())));
+    getAction(ActionW.INVERSE_STACK, ToggleButtonListener.class)
+        .ifPresent(
+            a -> a.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
 
     Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
     if (lensZoom != null) {
-      getAction(ActionW.LENSZOOM, SliderChangeListener.class)
+      getAction(ActionW.LENS_ZOOM, SliderChangeListener.class)
           .ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
     }
     cineAction.ifPresent(
@@ -525,14 +526,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
     if (sliderAction.isPresent()) {
       BundlePreferences.putDoublePreferences(
-          prefNode, action.cmd(), sliderAction.get().getMouseSensivity());
+          prefNode, action.cmd(), sliderAction.get().getMouseSensitivity());
     }
   }
 
   private void getSliderPreference(Preferences prefNode, ActionW action, double defVal) {
     Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
     if (sliderAction.isPresent()) {
-      sliderAction.get().setMouseSensivity(prefNode.getDouble(action.cmd(), defVal));
+      sliderAction.get().setMouseSensitivity(prefNode.getDouble(action.cmd(), defVal));
     }
   }
 

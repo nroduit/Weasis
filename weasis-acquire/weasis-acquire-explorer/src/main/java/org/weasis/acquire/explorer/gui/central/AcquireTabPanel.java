@@ -23,7 +23,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import org.dcm4che3.data.Tag;
@@ -38,27 +37,27 @@ public class AcquireTabPanel extends JPanel {
 
   private final Map<SeriesGroup, List<AcquireImageInfo>> btnMap = new HashMap<>();
 
-  private final SerieButtonList serieList;
+  private final SerieButtonList seriesList;
   private final ButtonGroup btnGrp;
   private final AcquireCentralImagePanel imageList;
 
-  private SerieButton selected;
+  private SeriesButton selected;
 
   public AcquireTabPanel(JIThumbnailCache thumbCache) {
     setLayout(new BorderLayout());
     btnGrp = new ButtonGroup();
 
-    serieList = new SerieButtonList();
+    seriesList = new SerieButtonList();
     imageList = new AcquireCentralImagePanel(this, thumbCache);
     JPanel seriesPanel = new JPanel(new BorderLayout());
-    seriesPanel.add(serieList, BorderLayout.CENTER);
+    seriesPanel.add(seriesList, BorderLayout.CENTER);
     seriesPanel.add(new AcquirePublishPanel(), BorderLayout.SOUTH);
 
     add(seriesPanel, BorderLayout.WEST);
     add(imageList, BorderLayout.CENTER);
   }
 
-  public void setSelected(SerieButton btn) {
+  public void setSelected(SeriesButton btn) {
     selected = btn;
     SeriesGroup seriesGroup = getSeriesGroup();
     imageList.setSeriesGroup(seriesGroup, seriesGroup == null ? null : btnMap.get(seriesGroup));
@@ -80,9 +79,9 @@ public class AcquireTabPanel extends JPanel {
       // Create series list
       btnMap.put(seriesGroup, imageInfos);
 
-      SerieButton btn = new SerieButton(seriesGroup, this);
+      SeriesButton btn = new SeriesButton(seriesGroup, this);
       btnGrp.add(btn);
-      serieList.addButton(btn);
+      seriesList.addButton(btn);
 
       if (selected == null) {
         btnGrp.setSelected(btn.getModel(), true);
@@ -105,9 +104,9 @@ public class AcquireTabPanel extends JPanel {
       // Create series list
       btnMap.put(seriesGroup, imageInfos);
 
-      SerieButton btn = new SerieButton(seriesGroup, this);
+      SeriesButton btn = new SeriesButton(seriesGroup, this);
       btnGrp.add(btn);
-      serieList.addButton(btn);
+      seriesList.addButton(btn);
 
       if (selected == null) {
         btnGrp.setSelected(btn.getModel(), true);
@@ -121,16 +120,16 @@ public class AcquireTabPanel extends JPanel {
   }
 
   private SeriesGroup getSeriesGroup() {
-    return selected == null ? null : selected.getSerie();
+    return selected == null ? null : selected.getSeries();
   }
 
   private void removeSeries(SeriesGroup seriesGroup) {
 
     btnMap.remove(seriesGroup);
 
-    serieList.getButton(seriesGroup).ifPresent(btnGrp::remove);
-    serieList.removeBySerie(seriesGroup);
-    Optional<SerieButton> nextBtn = serieList.getFirstSerieButton();
+    seriesList.getButton(seriesGroup).ifPresent(btnGrp::remove);
+    seriesList.removeBySerie(seriesGroup);
+    Optional<SeriesButton> nextBtn = seriesList.getFirstSerieButton();
 
     if (nextBtn.isPresent()) {
       btnGrp.setSelected(nextBtn.get().getModel(), true);
@@ -140,7 +139,7 @@ public class AcquireTabPanel extends JPanel {
     }
   }
 
-  public SerieButton getSelected() {
+  public SeriesButton getSelected() {
     return selected;
   }
 
@@ -182,7 +181,7 @@ public class AcquireTabPanel extends JPanel {
 
       if (imageInfos.isEmpty()) {
         removeSeries(seriesGroup);
-        serieList.refreshGUI();
+        seriesList.refreshGUI();
       } else if (seriesGroup.equals(getSeriesGroup())) {
         setSelected(selected);
       }
@@ -199,7 +198,7 @@ public class AcquireTabPanel extends JPanel {
 
       if (imagePane.isEmpty()) {
         removeSeries(seriesGroup);
-        serieList.refreshGUI();
+        seriesList.refreshGUI();
       } else if (seriesGroup.equals(getSeriesGroup())) {
         setSelected(selected);
       }
@@ -208,15 +207,15 @@ public class AcquireTabPanel extends JPanel {
 
   public void clearUnusedSeries(List<SeriesGroup> usedSeries) {
     List<SeriesGroup> seriesToRemove =
-        btnMap.keySet().stream().filter(s -> !usedSeries.contains(s)).collect(Collectors.toList());
+        btnMap.keySet().stream().filter(s -> !usedSeries.contains(s)).toList();
     seriesToRemove.forEach(this::removeSeries);
-    serieList.refreshGUI();
+    seriesList.refreshGUI();
   }
 
   public void clearAll() {
     for (SeriesGroup seriesGroup : btnMap.keySet()) {
-      serieList.getButton(seriesGroup).ifPresent(btnGrp::remove);
-      serieList.removeBySerie(seriesGroup);
+      seriesList.getButton(seriesGroup).ifPresent(btnGrp::remove);
+      seriesList.removeBySerie(seriesGroup);
     }
     btnMap.clear();
 
@@ -226,7 +225,7 @@ public class AcquireTabPanel extends JPanel {
 
   public void refreshGUI() {
     imageList.refreshGUI();
-    serieList.refreshGUI();
+    seriesList.refreshGUI();
   }
 
   public void refreshInfoGUI() {
@@ -234,18 +233,18 @@ public class AcquireTabPanel extends JPanel {
   }
 
   public void moveElements(SeriesGroup seriesGroup, List<AcquireImageInfo> medias) {
-    removeImages(selected.getSerie(), medias);
+    removeImages(selected.getSeries(), medias);
 
     medias.forEach(m -> m.setSeries(seriesGroup));
     updateSeries(seriesGroup, AcquireManager.findbySeries(seriesGroup));
   }
 
-  public void updateSeriesFromGlobaTags() {
+  public void updateSeriesFromGlobalTags() {
     btnMap.keySet().forEach(SeriesGroup::updateDicomTags);
   }
 
   public void moveElementsByDate(List<AcquireImageInfo> medias) {
-    removeImages(selected.getSerie(), medias);
+    removeImages(selected.getSeries(), medias);
 
     Set<SeriesGroup> seriesGroups = new HashSet<>();
     medias.forEach(

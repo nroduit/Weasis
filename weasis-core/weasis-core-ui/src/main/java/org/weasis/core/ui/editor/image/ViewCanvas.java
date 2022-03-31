@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.Action;
 import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.image.OpManager;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -95,7 +96,7 @@ public interface ViewCanvas<E extends ImageElement>
 
   Object getLensActionValue(String action);
 
-  void changeZoomInterpolation(Integer interpolation);
+  void changeZoomInterpolation(Interpolation interpolation);
 
   OpManager getDisplayOpManager();
 

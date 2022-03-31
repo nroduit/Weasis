@@ -20,9 +20,9 @@ import java.util.Objects;
 import java.util.Set;
 import javax.swing.JPanel;
 import javax.swing.tree.TreePath;
+import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.dicom.explorer.DicomModel;
-import org.weasis.dicom.explorer.ExportTree;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipSeriesNode;
 import org.weasis.dicom.qr.RetrieveTreeModel.ToolTipStudyNode;
 
@@ -104,7 +104,7 @@ public class RetrieveTree extends JPanel {
       }
     }
 
-    ExportTree.expandTree(
+    AbstractWizardDialog.expandTree(
         checkboxTree, retrieveTreeModel.getRootNode(), 2); // 2 stands for Study Level
     removeAll();
     add(checkboxTree, BorderLayout.CENTER);
@@ -113,8 +113,8 @@ public class RetrieveTree extends JPanel {
   public CheckboxTree getCheckboxTree() {
     for (int i = 0; i < getComponentCount(); i++) {
       Component c = getComponent(i);
-      if (c instanceof CheckboxTree) {
-        return (CheckboxTree) c;
+      if (c instanceof CheckboxTree tree) {
+        return tree;
       }
     }
     throw new IllegalStateException("CheckboxTree cannot be null");

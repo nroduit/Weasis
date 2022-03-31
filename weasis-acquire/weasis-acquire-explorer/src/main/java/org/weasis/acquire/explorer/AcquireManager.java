@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.weasis.acquire.explorer.core.bean.DefaultTagable;
+import org.weasis.acquire.explorer.core.bean.DefaultTaggable;
 import org.weasis.acquire.explorer.core.bean.Global;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.core.api.command.Option;
@@ -60,7 +60,7 @@ import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.GzipManager;
@@ -79,8 +79,7 @@ import org.xml.sax.SAXException;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-13 - ylar - Creation
+ * @since 2.5.0
  */
 public class AcquireManager {
   private static final Logger LOGGER = LoggerFactory.getLogger(AcquireManager.class);
@@ -91,11 +90,11 @@ public class AcquireManager {
   private static final int OPT_NONE = 0;
   private static final int OPT_B64 = 1;
   private static final int OPT_ZIP = 2;
-  private static final int OPT_URLSAFE = 4;
+  private static final int OPT_URL_SAFE = 4;
 
   private static final int OPT_B64ZIP = 3;
-  private static final int OPT_B64URLSAFE = 5;
-  private static final int OPT_B64URLSAFEZIP = 7;
+  private static final int OPT_B64URL_SAFE = 5;
+  private static final int OPT_B64URL_SAFE_ZIP = 7;
 
   private static final AcquireManager instance = new AcquireManager();
   private static final Map<String, AcquireImageInfo> imagesInfoByUID = new HashMap<>();
@@ -148,16 +147,16 @@ public class AcquireManager {
   public static List<AcquireImageInfo> findbySeries(SeriesGroup seriesGroup) {
     return getAcquireImageInfoList().stream()
         .filter(i -> i.getSeries() != null && i.getSeries().equals(seriesGroup))
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public static List<SeriesGroup> getBySeries() {
-    return imagesInfoByURI.entrySet().stream()
-        .map(e -> e.getValue().getSeries())
+    return imagesInfoByURI.values().stream()
+        .map(AcquireImageInfo::getSeries)
         .filter(Objects::nonNull)
         .distinct()
         .sorted()
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public static Map<SeriesGroup, List<AcquireImageInfo>> groupBySeries() {
@@ -237,8 +236,8 @@ public class AcquireManager {
           isSearchSeriesByDate
               ? findSeries(searchedSeries, newImageInfo, maxRangeInMinutes)
               : commonSeries;
-      if (group.isNeedUpateFromGlobaTags()) {
-        group.setNeedUpateFromGlobaTags(false);
+      if (group.isNeedUpdateFromGlobalTags()) {
+        group.setNeedUpdateFromGlobalTags(false);
         group.updateDicomTags();
       }
       newImageInfo.setSeries(group);
@@ -256,8 +255,7 @@ public class AcquireManager {
     getInstance().notifyImagesAdded(imageImportedList);
   }
 
-  public static void importImage(
-      AcquireImageInfo newImageInfo, SeriesGroup searchedSeries, int maxRangeInMinutes) {
+  public static void importImage(AcquireImageInfo newImageInfo, SeriesGroup searchedSeries) {
     Objects.requireNonNull(newImageInfo);
     if (imagesInfoByURI.isEmpty() || GLOBAL.isAllowFullEdition()) {
       AcquireManager.showWorklist();
@@ -269,8 +267,8 @@ public class AcquireManager {
       addImageToDataMapping(newImageInfo);
     }
     SeriesGroup group = searchedSeries == null ? getDefaultSeries() : searchedSeries;
-    if (group.isNeedUpateFromGlobaTags()) {
-      group.setNeedUpateFromGlobaTags(false);
+    if (group.isNeedUpdateFromGlobalTags()) {
+      group.setNeedUpdateFromGlobalTags(false);
       group.updateDicomTags();
     }
     newImageInfo.setSeries(group);
@@ -316,8 +314,15 @@ public class AcquireManager {
         imageInfoList.stream()
             .sorted(
                 Comparator.comparing(
-                    i -> TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage())))
-            .collect(Collectors.toList());
+                    i -> {
+                      LocalDateTime val =
+                          TagD.dateTime(Tag.ContentDate, Tag.ContentTime, i.getImage());
+                      if (val == null) {
+                        val = LocalDateTime.now();
+                      }
+                      return val;
+                    }))
+            .toList();
 
     AcquireImageInfo info = sortedList.get(sortedList.size() / 2);
     info.getSeries().setDate(TagD.dateTime(Tag.ContentDate, Tag.ContentTime, info.getImage()));
@@ -327,7 +332,7 @@ public class AcquireManager {
     return medias.stream()
         .filter(ImageElement.class::isInstance)
         .map(ImageElement.class::cast)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public static List<AcquireImageInfo> toAcquireImageInfo(List<? extends MediaElement> medias) {
@@ -335,7 +340,7 @@ public class AcquireManager {
         .filter(ImageElement.class::isInstance)
         .map(ImageElement.class::cast)
         .map(AcquireManager::findByImage)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   public static String getPatientContextName() {
@@ -455,10 +460,9 @@ public class AcquireManager {
    * Set a new Patient Context and in case current state job is not finished ask user if cleaning
    * unpublished images should be done or canceled.
    *
-   * @param argv
-   * @throws IOException
+   * @param argv the main arguments
    */
-  public void patient(String[] argv) throws IOException {
+  public void patient(String[] argv) {
     final String[] usage = {
       "Load Patient Context from the first argument", // NON-NLS
       "Usage: acquire:patient (-x | -i | -s | -u) arg", // NON-NLS
@@ -490,7 +494,7 @@ public class AcquireManager {
     } else if (opt.isSet("inbound")) { // NON-NLS
       newPatientContext = getPatientContext(arg, OPT_B64ZIP);
     } else if (opt.isSet("iurlsafe")) { // NON-NLS
-      newPatientContext = getPatientContext(arg, OPT_B64URLSAFEZIP);
+      newPatientContext = getPatientContext(arg, OPT_B64URL_SAFE_ZIP);
     } else if (opt.isSet("url")) { // NON-NLS
       newPatientContext = getPatientContextFromUrl(arg);
     } else {
@@ -502,27 +506,25 @@ public class AcquireManager {
     }
   }
 
-  private DefaultTagable convert(Document xml) {
-    DefaultTagable def = new DefaultTagable();
+  private DefaultTaggable convert(Document xml) {
+    DefaultTaggable def = new DefaultTaggable();
     Optional.ofNullable(xml)
         .map(Document::getDocumentElement)
         .ifPresent(
             element -> {
               NodeList nodeList = element.getChildNodes();
-              if (nodeList != null) {
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                  Node node = nodeList.item(i);
-                  if (node != null) {
-                    Optional.ofNullable(TagD.get(node.getNodeName()))
-                        .ifPresent(t -> readXmlTag(t, node, def));
-                  }
+              for (int i = 0; i < nodeList.getLength(); i++) {
+                Node node = nodeList.item(i);
+                if (node != null) {
+                  Optional.ofNullable(TagD.get(node.getNodeName()))
+                      .ifPresent(t -> readXmlTag(t, node, def));
                 }
               }
             });
     return def;
   }
 
-  private void readXmlTag(TagW tag, Node node, DefaultTagable def) {
+  private void readXmlTag(TagW tag, Node node, DefaultTaggable def) {
     // TODO implement DICOM XML :
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part19/chapter_A.html
     if (tag instanceof TagSeq && node.hasChildNodes()) {
@@ -548,34 +550,33 @@ public class AcquireManager {
     }
   }
 
-  public void applyToGlobal(Tagable tagable) {
-    if (tagable != null) {
-      if (GLOBAL.containsSameTagValues(tagable, Global.PATIENT_DICOM_GROUP_NUMBER)) {
-        GLOBAL.updateAllButPatient(tagable);
+  public void applyToGlobal(Taggable taggable) {
+    if (taggable != null) {
+      if (GLOBAL.containsSameTagValues(taggable, Global.PATIENT_DICOM_GROUP_NUMBER)) {
+        GLOBAL.updateAllButPatient(taggable);
         getBySeries().forEach(SeriesGroup::updateDicomTags);
         notifyPatientContextUpdated();
       } else {
-        if (!isAcquireImagesAllPublished()) {
-          if (JOptionPane.showConfirmDialog(
-                  getExplorerViewComponent(),
-                  Messages.getString("AcquireManager.new_patient_load_warn"),
-                  Messages.getString("AcquireManager.new_patient_load_title"),
-                  JOptionPane.OK_CANCEL_OPTION,
-                  JOptionPane.QUESTION_MESSAGE)
-              != JOptionPane.OK_OPTION) {
-            return;
-          }
+        if (!isAcquireImagesAllPublished()
+            && JOptionPane.showConfirmDialog(
+                    getExplorerViewComponent(),
+                    Messages.getString("AcquireManager.new_patient_load_warn"),
+                    Messages.getString("AcquireManager.new_patient_load_title"),
+                    JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.QUESTION_MESSAGE)
+                != JOptionPane.OK_OPTION) {
+          return;
         }
 
         imagesInfoByURI.clear();
         imagesInfoByUID.clear();
-        GLOBAL.init(tagable);
+        GLOBAL.init(taggable);
         // Ensure to update all the existing SeriesGroup
         AcquireManager.getInstance()
             .getAcquireExplorer()
             .getCentralPane()
             .tabbedPane
-            .updateSeriesFromGlobaTags();
+            .updateSeriesFromGlobalTags();
         notifyPatientContextChanged();
       }
     }
@@ -593,30 +594,20 @@ public class AcquireManager {
   }
 
   /**
-   * Evaluate if all imported acquired images habe been published without any work in progress
+   * Evaluate if all imported acquired images have been published without any work in progress
    * state.
    *
-   * @return
+   * @return true when all images have been published
    */
   private static boolean isAcquireImagesAllPublished() {
     return getAllAcquireImageInfo().stream()
         .allMatch(i -> i.getStatus() == AcquireImageStatus.PUBLISHED);
   }
 
-  /**
-   * @param inputString
-   * @param codeOption
-   * @return
-   */
   private static Document getPatientContext(String inputString, int codeOption) {
     return getPatientContext(inputString.getBytes(StandardCharsets.UTF_8), codeOption);
   }
 
-  /**
-   * @param byteArray
-   * @param codeOption
-   * @return
-   */
   private static Document getPatientContext(byte[] byteArray, int codeOption) {
     if (byteArray == null || byteArray.length == 0) {
       throw new IllegalArgumentException("empty byteArray parameter");
@@ -625,7 +616,7 @@ public class AcquireManager {
     if (codeOption != OPT_NONE) {
       try {
         if ((codeOption & OPT_B64) == OPT_B64) {
-          if ((codeOption & OPT_URLSAFE) == OPT_URLSAFE) {
+          if ((codeOption & OPT_URL_SAFE) == OPT_URL_SAFE) {
             byteArray = Base64.getUrlDecoder().decode(byteArray);
           } else {
             byteArray = Base64.getDecoder().decode(byteArray);
@@ -654,10 +645,6 @@ public class AcquireManager {
     return null;
   }
 
-  /**
-   * @param uri
-   * @return
-   */
   private static Document getPatientContextFromUri(URI uri) {
     byte[] byteArray = getURIContent(Objects.requireNonNull(uri));
     String uriPath = uri.getPath();
@@ -672,18 +659,10 @@ public class AcquireManager {
     }
   }
 
-  /**
-   * @param url
-   * @return
-   */
   private static Document getPatientContextFromUrl(String url) {
     return getPatientContextFromUri(getURIFromURL(url));
   }
 
-  /**
-   * @param urlStr
-   * @return
-   */
   private static URI getURIFromURL(String urlStr) {
     if (!StringUtil.hasText(urlStr)) {
       throw new IllegalArgumentException("empty urlString parameter");
@@ -713,10 +692,6 @@ public class AcquireManager {
     return uri;
   }
 
-  /**
-   * @param uri
-   * @return
-   */
   private static byte[] getURIContent(URI uri) {
     try {
       URL url = Objects.requireNonNull(uri).toURL();
@@ -767,10 +742,10 @@ public class AcquireManager {
   /**
    * Get AcquireImageInfo from the data model and create lazily the JAI.PlanarImage if not yet
    * available<br>
+   * All the AcquireImageInfo value objects are unique according to the imageElement URI
    *
-   * @note All the AcquireImageInfo value objects are unique according to the imageElement URI
-   * @param image
-   * @return
+   * @param image the ImageElement
+   * @return the AcquireImageInfo based on the image
    */
 
   // TODO be careful not to execute this method on the EDT

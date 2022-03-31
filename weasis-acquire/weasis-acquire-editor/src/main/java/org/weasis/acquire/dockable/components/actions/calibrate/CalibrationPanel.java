@@ -33,7 +33,7 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
   @Override
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     EventManager.getInstance()
-        .getAction(EditionToolFactory.DRAW_EDITON, ComboItemListener.class)
+        .getAction(EditionToolFactory.DRAW_EDITION, ComboItemListener.class)
         .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
     ImageViewerPlugin<ImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();

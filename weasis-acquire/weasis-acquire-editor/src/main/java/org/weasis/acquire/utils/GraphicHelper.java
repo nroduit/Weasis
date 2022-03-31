@@ -24,8 +24,7 @@ import org.weasis.opencv.data.PlanarImage;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-12 - ylar - Creation
+ * @since 2.5.0
  */
 public class GraphicHelper {
 
@@ -38,7 +37,6 @@ public class GraphicHelper {
    * grid is a little bigger in case of rotation occurs.
    *
    * @param view Image view (will retrieve width and height)
-   * @since 2.5.0
    */
   public static void newGridLayer(ViewCanvas<ImageElement> view) {
     PlanarImage sourceImage = view.getSourceImage();
@@ -77,7 +75,6 @@ public class GraphicHelper {
    * @param p1 Start point
    * @param p2 End point
    * @return New Stroke line
-   * @since 2.5.0
    */
   private static Graphic newLine(Point2D.Double p1, Point2D.Double p2) {
     Line2D line = new Line2D.Double(p1, p2);

@@ -18,28 +18,28 @@ import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.meta.panel.AcquireMetadataPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireGlobalMetaPanel;
 import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireImageMetaPanel;
-import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSerieMetaPanel;
+import org.weasis.acquire.explorer.gui.central.meta.panel.imp.AcquireSeriesMetaPanel;
 import org.weasis.core.api.media.data.ImageElement;
 
 public class AcquireCentralInfoPanel extends JPanel {
 
   private final AcquireMetadataPanel globalInfoPanel =
       new AcquireGlobalMetaPanel(Messages.getString("AcquireCentralInfoPanel.global"));
-  private final AcquireSerieMetaPanel serieInfoPanel = new AcquireSerieMetaPanel(null);
+  private final AcquireSeriesMetaPanel seriesInfoPanel = new AcquireSeriesMetaPanel(null);
   private final AcquireMetadataPanel imageInfoPanel =
       new AcquireImageMetaPanel(Messages.getString("AcquireCentralInfoPanel.image"));
 
   public AcquireCentralInfoPanel(SeriesGroup seriesGroup) {
     setLayout(new GridLayout(1, 3));
-    setSerie(seriesGroup);
+    setSeries(seriesGroup);
 
     add(globalInfoPanel);
-    add(serieInfoPanel);
+    add(seriesInfoPanel);
     add(imageInfoPanel);
   }
 
-  public void setSerie(SeriesGroup newSerie) {
-    serieInfoPanel.setSerie(newSerie);
+  public void setSeries(SeriesGroup newSeries) {
+    seriesInfoPanel.setSeries(newSeries);
   }
 
   public void setImage(ImageElement newImage) {
@@ -54,11 +54,9 @@ public class AcquireCentralInfoPanel extends JPanel {
     repaint();
   }
 
-  public void activate() {}
-
   protected void refreshGUI() {
     globalInfoPanel.update();
-    serieInfoPanel.update();
+    seriesInfoPanel.update();
     imageInfoPanel.update();
 
     revalidate();

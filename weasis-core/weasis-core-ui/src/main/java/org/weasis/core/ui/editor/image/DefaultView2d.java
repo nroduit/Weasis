@@ -14,6 +14,7 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -21,7 +22,6 @@ import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Window;
@@ -65,7 +65,6 @@ import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
@@ -78,8 +77,9 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
+import org.weasis.core.api.image.cv.ImageCVIO;
 import org.weasis.core.api.image.op.ByteLutCollection;
-import org.weasis.core.api.image.util.ImageFiler;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
@@ -118,6 +118,7 @@ import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.MouseEventDouble;
 import org.weasis.core.ui.util.TitleMenuItem;
 import org.weasis.core.util.LangUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
 
@@ -151,9 +152,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public static final String PROP_LAYER_OFFSET = "layer.offset";
 
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
-
-  public static final Object antialiasingOff = RenderingHints.VALUE_ANTIALIAS_OFF;
-  public static final Object antialiasingOn = RenderingHints.VALUE_ANTIALIAS_ON;
 
   public static final Cursor EDIT_CURSOR =
       ActionW.getImageCursor("editPoint.png", "Edit Point", 0.5f, 0.5f); // NON-NLS
@@ -236,7 +234,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
     actionsInView.put(ActionW.DRAWINGS.cmd(), true);
     actionsInView.put(LayerType.CROSSLINES.name(), true);
-    actionsInView.put(ActionW.INVERSESTACK.cmd(), false);
+    actionsInView.put(ActionW.INVERSE_STACK.cmd(), false);
     actionsInView.put(ActionW.FILTERED_SERIES.cmd(), null);
     actionsInView.put(ActionW.FLIP.cmd(), false);
     actionsInView.put(ActionW.ROTATION.cmd(), 0);
@@ -250,7 +248,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     disOp.setParamValue(
         AffineTransformOp.OP_NAME,
         AffineTransformOp.P_INTERPOLATION,
-        eventManager.getZoomSetting().getInterpolation());
+        Interpolation.getInterpolation(eventManager.getZoomSetting().getInterpolation()));
     disOp.setParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_AFFINE_MATRIX, null);
     disOp.setParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA, KernelData.NONE);
     disOp.setParamValue(
@@ -522,7 +520,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (size == null) {
       size = (Integer) img.getTagValue(tag2);
     }
-    return (size == null) ? ImageFiler.TILESIZE : size;
+    return (size == null) ? ImageCVIO.TILE_SIZE : size;
   }
 
   protected Rectangle getImageBounds(E img) {
@@ -812,8 +810,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public Comparator<E> getCurrentSortComparator() {
-    SeriesComparator<E> sort = (SeriesComparator<E>) actionsInView.get(ActionW.SORTSTACK.cmd());
-    Boolean reverse = (Boolean) actionsInView.get(ActionW.INVERSESTACK.cmd());
+    SeriesComparator<E> sort = (SeriesComparator<E>) actionsInView.get(ActionW.SORT_STACK.cmd());
+    Boolean reverse = (Boolean) actionsInView.get(ActionW.INVERSE_STACK.cmd());
     return (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
   }
 
@@ -866,9 +864,13 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public Font getLayerFont() {
     Font font = FontItem.DEFAULT_SEMIBOLD.getFont();
-    int minSize = getFontMetrics(font).stringWidth("Cannot read this media!"); // NON-NLS
-    if (minSize * 6 > getWidth()) {
-      double ratio = (minSize * 6.0 - getWidth()) / minSize;
+    return getLayerFont(getFontMetrics(font), getWidth());
+  }
+
+  public static Font getLayerFont(FontMetrics fontMetrics, int width) {
+    int minSize = fontMetrics.stringWidth("Cannot read this media!"); // NON-NLS
+    if (minSize * 6 > width) {
+      double ratio = (minSize * 6.0 - width) / minSize;
       if (ratio < 1) {
         return FontItem.SMALL_SEMIBOLD.getFont();
       } else if (ratio < 2) {
@@ -877,7 +879,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return FontItem.MICRO_SEMIBOLD.getFont();
       }
     }
-    return font;
+    return fontMetrics.getFont();
   }
 
   /** paint routine */
@@ -995,9 +997,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public void changeZoomInterpolation(Integer interpolation) {
-    Integer val =
-        (Integer)
+  public void changeZoomInterpolation(Interpolation interpolation) {
+    Interpolation val =
+        (Interpolation)
             getDisplayOpManager()
                 .getParamValue(AffineTransformOp.OP_NAME, AffineTransformOp.P_INTERPOLATION);
     boolean update = !Objects.equals(val, interpolation);
@@ -1156,7 +1158,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
           zoom(0.0);
           actionsInView.put(ViewCanvas.ZOOM_TYPE_CMD, zoomType);
         }
-      } else if (command.equals(ActionW.LENSZOOM.cmd())) {
+      } else if (command.equals(ActionW.LENS_ZOOM.cmd())) {
         if (lens != null) {
           lens.setActionInView(ActionW.ZOOM.cmd(), entry.getValue());
           lens.updateZoom();
@@ -1303,7 +1305,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       }
     } else {
       Optional<ActionW> action =
-          eventManager.getLeftMouseActionFromkeyEvent(e.getKeyCode(), e.getModifiers());
+          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
       if (action.isPresent()) {
         eventManager.changeLeftMouseAction(action.get().cmd());
       } else {

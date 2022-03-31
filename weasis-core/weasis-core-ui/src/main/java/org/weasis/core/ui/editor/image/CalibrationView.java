@@ -27,13 +27,13 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormater;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.model.graphic.imp.line.LineGraphic;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 
 public class CalibrationView extends JPanel {

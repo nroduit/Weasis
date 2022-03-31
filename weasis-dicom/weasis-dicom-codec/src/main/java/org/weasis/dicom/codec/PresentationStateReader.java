@@ -20,10 +20,10 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.util.DicomObjectUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
-public class PresentationStateReader implements Tagable {
+public class PresentationStateReader implements Taggable {
 
   public static final int PRIVATE_CREATOR_TAG = 0x71070070;
   public static final int PR_MODEL_PRIVATE_TAG = 0x71077001;

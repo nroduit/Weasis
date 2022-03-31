@@ -43,7 +43,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setBorder(GuiUtils.getEmptyBorder(10, 5, 2, 5));
 
-    autoLevelListener = new AutoLevelListener();
+    this.autoLevelListener = new AutoLevelListener();
     autoLevelBtn.addActionListener(autoLevelListener);
     contrastSlider = new ContrastComponent(this);
     brightnessSlider = new BrightnessComponent(this);

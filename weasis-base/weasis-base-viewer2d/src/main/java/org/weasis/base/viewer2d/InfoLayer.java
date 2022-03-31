@@ -167,8 +167,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
               + view2DPane.getActionValue(ActionW.ROTATION.cmd())
-              + " "
-              + Messages.getString("InfoLayer.angle_symb"),
+              + " °",
           border,
           drawY);
       drawY -= fontHeight;

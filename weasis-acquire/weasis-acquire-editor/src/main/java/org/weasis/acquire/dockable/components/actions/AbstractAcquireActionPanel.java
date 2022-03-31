@@ -15,7 +15,7 @@ public abstract class AbstractAcquireActionPanel extends JPanel implements Acqui
 
   private String lastActionCommand;
 
-  public AbstractAcquireActionPanel() {
+  protected AbstractAcquireActionPanel() {
     super();
   }
 

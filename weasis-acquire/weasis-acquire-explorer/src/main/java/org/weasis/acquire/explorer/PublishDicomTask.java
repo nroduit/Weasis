@@ -29,9 +29,9 @@ import org.weasis.dicom.param.DicomState;
 
 /**
  * Do the process of publish DICOM files from the given temporary folder. Operation is a CSTORE to a
- * DICOM node destination. All the job is done outside of the EDT instead of setting
- * AcquireImageStatus change and removing related Acquired Images from the dataModel. But, full
- * process progression can still be listened with propertyChange notification of this workerTask.
+ * DICOM node destination. All the job is done outside the EDT instead of setting AcquireImageStatus
+ * change and removing related Acquired Images from the dataModel. But, full process progression can
+ * still be listened with propertyChange notification of this workerTask.
  *
  * @version $Rev$ $Date$
  */
@@ -61,7 +61,7 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
   }
 
   @Override
-  protected DicomState doInBackground() throws Exception {
+  protected DicomState doInBackground() {
     return publish.get();
   }
 
@@ -91,9 +91,9 @@ public class PublishDicomTask extends SwingWorker<DicomState, File> {
   /**
    * Calculate the ratio between the image and the given resolution
    *
-   * @param imgInfo
-   * @param resolution
-   * @return
+   * @param imgInfo the AcquireImageInfo value
+   * @param resolution the Resolution value
+   * @return the ratio or null when cannot calculate it
    */
   public static Double calculateRatio(AcquireImageInfo imgInfo, Resolution resolution) {
     try {

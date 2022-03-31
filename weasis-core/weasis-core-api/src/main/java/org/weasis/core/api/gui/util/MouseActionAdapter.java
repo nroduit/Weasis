@@ -27,7 +27,7 @@ public abstract class MouseActionAdapter
   protected int lastPosition = 0;
   private boolean inverse = false;
   private boolean moveOnX = false;
-  private double mouseSensivity = 1.0;
+  private double mouseSensitivity = 1.0;
   protected double dragAccumulator = Double.MAX_VALUE;
 
   @Override
@@ -54,12 +54,12 @@ public abstract class MouseActionAdapter
   @Override
   public void mouseMoved(MouseEvent e) {}
 
-  public double getMouseSensivity() {
-    return mouseSensivity;
+  public double getMouseSensitivity() {
+    return mouseSensitivity;
   }
 
-  public void setMouseSensivity(double mouseSensivity) {
-    this.mouseSensivity = mouseSensivity;
+  public void setMouseSensitivity(double mouseSensitivity) {
+    this.mouseSensitivity = mouseSensitivity;
   }
 
   public int getButtonMaskEx() {

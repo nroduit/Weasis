@@ -47,7 +47,7 @@ import org.weasis.acquire.explorer.Messages;
 import org.weasis.acquire.explorer.PublishDicomTask;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireGlobalMeta;
 import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireImageMeta;
-import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSerieMeta;
+import org.weasis.acquire.explorer.gui.central.meta.model.imp.AcquireSeriesMeta;
 import org.weasis.acquire.explorer.gui.control.AcquirePublishPanel;
 import org.weasis.acquire.explorer.gui.model.publish.PublishTree;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -283,7 +283,7 @@ public class AcquirePublishDialog extends JDialog {
     boolean publishable = AcquireGlobalMeta.isPublishable(AcquireManager.GLOBAL);
     if (publishable) {
       for (AcquireImageInfo info : toPublish) {
-        publishable = AcquireSerieMeta.isPublishable(info.getSeries());
+        publishable = AcquireSeriesMeta.isPublishable(info.getSeries());
         if (!publishable) {
           break;
         }

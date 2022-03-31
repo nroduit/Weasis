@@ -226,27 +226,27 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
       } else if (tagID == Tag.SeriesDescription) {
         cellEditor = getCellEditor(seriesDescCombo);
       } else if (date) {
-        DateTableEditor editor = buildDatePicker();
-        JTextField picker = editor.getDatePicker().getComponentDateTextField();
+        DateTableEditor datePicker = buildDatePicker();
+        JTextField picker = datePicker.getDatePicker().getComponentDateTextField();
         Insets margin = picker.getMargin();
         int height = table.getRowHeight(row) - margin.top - margin.bottom;
         GuiUtils.setPreferredHeight(picker, height);
         GuiUtils.setPreferredHeight(
-            editor.getDatePicker().getComponentToggleCalendarButton(), height);
-        cellEditor = editor;
+            datePicker.getDatePicker().getComponentToggleCalendarButton(), height);
+        cellEditor = datePicker;
       } else if (time) {
-        TimeTableEditor editor = new TimeTableEditor(false, true, true);
-        editor.getTimePickerSettings().fontInvalidTime = SMALL_FONT;
-        editor.getTimePickerSettings().fontValidTime = SMALL_FONT;
-        editor.getTimePickerSettings().fontVetoedTime = SMALL_FONT;
-        JButton button = editor.getTimePicker().getComponentToggleTimeMenuButton();
+        TimeTableEditor tableEditor = new TimeTableEditor(false, true, true);
+        tableEditor.getTimePickerSettings().fontInvalidTime = SMALL_FONT;
+        tableEditor.getTimePickerSettings().fontValidTime = SMALL_FONT;
+        tableEditor.getTimePickerSettings().fontVetoedTime = SMALL_FONT;
+        JButton button = tableEditor.getTimePicker().getComponentToggleTimeMenuButton();
         Insets margin = button.getMargin();
         int height = table.getRowHeight(row) - margin.top - margin.bottom;
         GuiUtils.setPreferredHeight(button, height, height);
-        GuiUtils.setPreferredHeight(editor.getTimePicker(), height, height);
+        GuiUtils.setPreferredHeight(tableEditor.getTimePicker(), height, height);
         GuiUtils.setPreferredHeight(
-            editor.getTimePicker().getComponentTimeTextField(), height, height);
-        cellEditor = editor;
+            tableEditor.getTimePicker().getComponentTimeTextField(), height, height);
+        cellEditor = tableEditor;
       } else {
         cellEditor = new DefaultCellEditor(new JTextField());
       }

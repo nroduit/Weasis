@@ -41,12 +41,12 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.layer.imp.DefaultLayer;
 import org.weasis.core.ui.model.layer.imp.RenderedImageLayer;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
+import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
 
 /**
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-08 - ylar - Creation
+ * @since 2.5.0
  */
 public class RectifyAction extends AbstractAcquireAction {
   private static final Logger LOGGER = LoggerFactory.getLogger(RectifyAction.class);
@@ -75,7 +75,7 @@ public class RectifyAction extends AbstractAcquireAction {
             });
 
     for (GraphicLayer layer : new ArrayList<>(model.getLayers())) {
-      if (layer.getSerializable()) {
+      if (LangUtil.getNULLtoFalse(layer.getSerializable())) {
         model.deleteByLayer(layer);
       }
     }

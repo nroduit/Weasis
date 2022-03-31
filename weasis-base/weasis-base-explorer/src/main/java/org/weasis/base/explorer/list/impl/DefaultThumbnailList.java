@@ -39,7 +39,7 @@ public final class DefaultThumbnailList<E extends MediaElement> extends Abstract
   }
 
   @Override
-  public JPopupMenu buidContexMenu(final MouseEvent e) {
+  public JPopupMenu buildContextMenu(final MouseEvent e) {
 
     try {
       final List<E> selMedias = getSelected(e);

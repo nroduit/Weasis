@@ -175,8 +175,8 @@ public abstract class ComboItemListener<T> extends BasicActionState
     return model;
   }
 
-  public JToogleButtonGroup<T> createButtonGroup() {
-    final JToogleButtonGroup<T> group = new JToogleButtonGroup<>();
+  public JToggleButtonGroup<T> createButtonGroup() {
+    final JToggleButtonGroup<T> group = new JToggleButtonGroup<>();
     registerActionState(group);
     return group;
   }

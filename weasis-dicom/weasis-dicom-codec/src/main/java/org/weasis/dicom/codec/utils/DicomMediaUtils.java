@@ -44,13 +44,13 @@ import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.TagW.TagType;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.core.util.FileUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.TagD;
@@ -531,19 +531,19 @@ public class DicomMediaUtils {
     }
   }
 
-  public static void computeSlicePositionVector(Tagable tagable) {
-    if (tagable != null) {
-      double[] patientPos = TagD.getTagValue(tagable, Tag.ImagePositionPatient, double[].class);
+  public static void computeSlicePositionVector(Taggable taggable) {
+    if (taggable != null) {
+      double[] patientPos = TagD.getTagValue(taggable, Tag.ImagePositionPatient, double[].class);
       if (patientPos != null && patientPos.length == 3) {
         double[] imgOrientation =
             ImageOrientation.computeNormalVectorOfPlan(
-                TagD.getTagValue(tagable, Tag.ImageOrientationPatient, double[].class));
+                TagD.getTagValue(taggable, Tag.ImageOrientationPatient, double[].class));
         if (imgOrientation != null) {
           double[] slicePosition = new double[3];
           slicePosition[0] = imgOrientation[0] * patientPos[0];
           slicePosition[1] = imgOrientation[1] * patientPos[1];
           slicePosition[2] = imgOrientation[2] * patientPos[2];
-          tagable.setTag(TagW.SlicePosition, slicePosition);
+          taggable.setTag(TagW.SlicePosition, slicePosition);
         }
       }
     }
@@ -559,19 +559,19 @@ public class DicomMediaUtils {
    *     href="http://dicom.nema.org/MEDICAL/DICOM/current/output/chtml/part03/sect_C.7.6.15.html">C.7.6.15
    *     Bitmap Display Shutter Module</a>
    */
-  public static void setShutter(Tagable tagable, Attributes dcmObject) {
-    tagable.setTagNoNull(TagW.ShutterFinalShape, DicomObjectUtil.getShutterShape(dcmObject));
+  public static void setShutter(Taggable taggable, Attributes dcmObject) {
+    taggable.setTagNoNull(TagW.ShutterFinalShape, DicomObjectUtil.getShutterShape(dcmObject));
 
     // Set color also for BITMAP shape (bitmap is extracted in overlay class)
-    tagable.setTagNoNull(TagW.ShutterRGBColor, DicomObjectUtil.getShutterColor(dcmObject));
+    taggable.setTagNoNull(TagW.ShutterRGBColor, DicomObjectUtil.getShutterColor(dcmObject));
   }
 
-  public static void writeFunctionalGroupsSequence(Tagable tagable, Attributes dcm) {
-    if (dcm != null && tagable != null) {
+  public static void writeFunctionalGroupsSequence(Taggable taggable, Attributes dcm) {
+    if (dcm != null && taggable != null) {
       /** @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.1 Pixel Measures Macro */
       TagSeq.MacroSeqData data =
           new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.PixelSpacing, Tag.SliceThickness));
-      TagD.get(Tag.PixelMeasuresSequence).readValue(data, tagable);
+      TagD.get(Tag.PixelMeasuresSequence).readValue(data, taggable);
 
       /** @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.2 Frame Content Macro */
       data =
@@ -582,27 +582,27 @@ public class DicomMediaUtils {
                   Tag.StackID,
                   Tag.InStackPositionNumber,
                   Tag.TemporalPositionIndex));
-      TagD.get(Tag.FrameContentSequence).readValue(data, tagable);
+      TagD.get(Tag.FrameContentSequence).readValue(data, taggable);
       // If not null override instance number for a better image sorting.
-      tagable.setTagNoNull(
-          TagD.get(Tag.InstanceNumber), tagable.getTagValue(TagD.get(Tag.InStackPositionNumber)));
+      taggable.setTagNoNull(
+          TagD.get(Tag.InstanceNumber), taggable.getTagValue(TagD.get(Tag.InStackPositionNumber)));
 
       /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.3 Plane Position (Patient) Macro */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImagePositionPatient));
-      TagD.get(Tag.PlanePositionSequence).readValue(data, tagable);
+      TagD.get(Tag.PlanePositionSequence).readValue(data, taggable);
 
       /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.4 Plane Orientation (Patient) Macro */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImageOrientationPatient));
-      TagD.get(Tag.PlaneOrientationSequence).readValue(data, tagable);
+      TagD.get(Tag.PlaneOrientationSequence).readValue(data, taggable);
       // If not null add ImageOrientationPlane for getting a orientation label.
-      tagable.setTagNoNull(
+      taggable.setTagNoNull(
           TagW.ImageOrientationPlane,
           ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-              TagD.getTagValue(tagable, Tag.ImageOrientationPatient, double[].class)));
+              TagD.getTagValue(taggable, Tag.ImageOrientationPatient, double[].class)));
 
       /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.8 Frame Anatomy Macro */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.FrameLaterality));
-      TagD.get(Tag.FrameAnatomySequence).readValue(data, tagable);
+      TagD.get(Tag.FrameAnatomySequence).readValue(data, taggable);
 
       /**
        * Specifies the attributes of the Pixel Value Transformation Functional Group. This is
@@ -615,7 +615,7 @@ public class DicomMediaUtils {
       Attributes mLutItems = dcm.getNestedDataset(Tag.PixelValueTransformationSequence);
       if (mLutItems != null) {
         ModalityLutModule mlut = new ModalityLutModule(mLutItems);
-        tagable.setTag(TagW.ModalityLUTData, mlut);
+        taggable.setTag(TagW.ModalityLUTData, mlut);
       }
 
       /**
@@ -627,7 +627,7 @@ public class DicomMediaUtils {
       Attributes vLutItems = dcm.getNestedDataset(Tag.FrameVOILUTSequence);
       if (vLutItems != null) {
         VoiLutModule vlut = new VoiLutModule(vLutItems);
-        tagable.setTag(TagW.VOILUTsData, vlut);
+        taggable.setTag(TagW.VOILUTsData, vlut);
       }
 
       // TODO implement: Frame Pixel Shift, Pixel Intensity Relationship LUT (C.7.6.16-14),
@@ -643,7 +643,7 @@ public class DicomMediaUtils {
        */
       Attributes macroFrameDisplayShutter = dcm.getNestedDataset(Tag.FrameDisplayShutterSequence);
       if (macroFrameDisplayShutter != null) {
-        setShutter(tagable, macroFrameDisplayShutter);
+        setShutter(taggable, macroFrameDisplayShutter);
       }
 
       /** @see - Dicom Standard 2011 - PS 3.3 §C.8 Frame Type Macro */
@@ -654,35 +654,35 @@ public class DicomMediaUtils {
       // C.8.13.3.1.1.
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.FrameType));
       // C.8.13.5.1 MR Image Frame Type Macro
-      TagD.get(Tag.MRImageFrameTypeSequence).readValue(data, tagable);
+      TagD.get(Tag.MRImageFrameTypeSequence).readValue(data, taggable);
       // // C.8.15.3.1 CT Image Frame Type Macro
-      TagD.get(Tag.CTImageFrameTypeSequence).readValue(data, tagable);
+      TagD.get(Tag.CTImageFrameTypeSequence).readValue(data, taggable);
       // C.8.14.3.1 MR Spectroscopy Frame Type Macro
-      TagD.get(Tag.MRSpectroscopyFrameTypeSequence).readValue(data, tagable);
+      TagD.get(Tag.MRSpectroscopyFrameTypeSequence).readValue(data, taggable);
       // C.8.22.5.1 PET Frame Type Macro
-      TagD.get(Tag.PETFrameTypeSequence).readValue(data, tagable);
+      TagD.get(Tag.PETFrameTypeSequence).readValue(data, taggable);
     }
   }
 
   public static boolean writePerFrameFunctionalGroupsSequence(
-      Tagable tagable, Attributes header, int index) {
-    if (header != null && tagable != null) {
+      Taggable taggable, Attributes header, int index) {
+    if (header != null && taggable != null) {
       /*
        * C.7.6.16 The number of Items shall be the same as the number of frames in the Multi-frame image.
        */
       Attributes a = header.getNestedDataset(Tag.PerFrameFunctionalGroupsSequence, index);
       if (a != null) {
-        DicomMediaUtils.writeFunctionalGroupsSequence(tagable, a);
+        DicomMediaUtils.writeFunctionalGroupsSequence(taggable, a);
         return true;
       }
     }
     return false;
   }
 
-  public static void computeSUVFactor(Attributes dicomObject, Tagable tagable, int index) {
+  public static void computeSUVFactor(Attributes dicomObject, Taggable taggable, int index) {
     // From vendor neutral code at
     // http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
-    String modlality = TagD.getTagValue(tagable, Tag.Modality, String.class);
+    String modlality = TagD.getTagValue(taggable, Tag.Modality, String.class);
     if ("PT".equals(modlality)) {
       String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
       if (correctedImage != null
@@ -781,7 +781,7 @@ public class DicomMediaUtils {
           suvFactor = 1.0;
         }
         if (MathUtil.isDifferentFromZero(suvFactor)) {
-          tagable.setTag(TagW.SuvFactor, suvFactor);
+          taggable.setTag(TagW.SuvFactor, suvFactor);
         }
       }
     }

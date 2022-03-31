@@ -15,20 +15,13 @@ import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class AffineTransformOp extends AbstractOp {
 
   public static final String OP_NAME = Messages.getString("AffineTransformOp.affine_op");
-
-  public static final String[] INTERPOLATIONS = {
-    Messages.getString("ZoomOperation.nearest"),
-    Messages.getString("ZoomOperation.bilinear"),
-    Messages.getString("ZoomOperation.bicubic"),
-    Messages.getString("ZoomOperation.lanczos")
-  };
 
   public static final double[] identityMatrix = new double[] {1.0, 0.0, 0.0, 0.0, 1.0, 0.0};
   /**
@@ -75,13 +68,14 @@ public class AffineTransformOp extends AbstractOp {
       if (bound.getWidth() > 0 && bound.getHeight() > 0) {
         Mat mat = new Mat(2, 3, CvType.CV_64FC1);
         mat.put(0, 0, matrix);
-        Integer interpolation = (Integer) params.get(P_INTERPOLATION);
-        if (interpolation != null && interpolation == 3) {
-          interpolation = 4;
+        ZoomOp.Interpolation interpolation = (ZoomOp.Interpolation) params.get(P_INTERPOLATION);
+        Integer inter = null;
+        if (interpolation != null) {
+          inter = interpolation.getOpencvValue();
         }
         result =
             ImageProcessor.warpAffine(
-                source.toMat(), mat, new Size(bound.getWidth(), bound.getHeight()), interpolation);
+                source.toMat(), mat, new Size(bound.getWidth(), bound.getHeight()), inter);
       } else {
         result = null;
       }

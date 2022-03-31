@@ -28,8 +28,8 @@ import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GeomUtil;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.ui.model.graphic.Graphic;
+import org.weasis.core.util.MathUtil;
 
 public class AdvancedShape implements Shape {
   private static final Logger LOGGER = LoggerFactory.getLogger(AdvancedShape.class);

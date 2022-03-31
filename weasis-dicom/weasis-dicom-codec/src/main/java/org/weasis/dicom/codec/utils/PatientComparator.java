@@ -47,13 +47,14 @@ public class PatientComparator {
     setBirthdate(TagUtil.getTagAttribute(xmler, TagD.get(Tag.PatientBirthDate).getKeyword(), null));
   }
 
-  public PatientComparator(TagReadable tagable) {
-    setPatientId(TagD.getTagValue(tagable, Tag.PatientID, String.class));
-    setIssuerOfPatientID(TagD.getTagValue(tagable, Tag.IssuerOfPatientID, String.class));
-    setName(TagD.getTagValue(tagable, Tag.PatientName, String.class));
-    setSex(TagD.getTagValue(tagable, Tag.PatientSex, String.class));
+  public PatientComparator(TagReadable taggable) {
+    setPatientId(TagD.getTagValue(taggable, Tag.PatientID, String.class));
+    setIssuerOfPatientID(TagD.getTagValue(taggable, Tag.IssuerOfPatientID, String.class));
+    setName(TagD.getTagValue(taggable, Tag.PatientName, String.class));
+    setSex(TagD.getTagValue(taggable, Tag.PatientSex, String.class));
     setBirthdate(
-        DateUtil.formatDicomDate(TagD.getTagValue(tagable, Tag.PatientBirthDate, LocalDate.class)));
+        DateUtil.formatDicomDate(
+            TagD.getTagValue(taggable, Tag.PatientBirthDate, LocalDate.class)));
   }
 
   public String buildPatientPseudoUID() {

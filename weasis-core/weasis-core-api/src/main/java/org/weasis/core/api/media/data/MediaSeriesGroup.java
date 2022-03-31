@@ -9,7 +9,7 @@
  */
 package org.weasis.core.api.media.data;
 
-public interface MediaSeriesGroup extends Tagable {
+public interface MediaSeriesGroup extends Taggable {
 
   TagW getTagID();
 

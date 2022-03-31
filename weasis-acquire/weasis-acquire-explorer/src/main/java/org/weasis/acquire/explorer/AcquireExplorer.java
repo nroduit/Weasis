@@ -34,6 +34,7 @@ import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
@@ -47,7 +48,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   public static final String P_LAST_DIR = "acquire.explorer.last.dir";
   public static final String PREFERENCE_NODE = "importer"; // NON-NLS
 
-  public static final int MEDIASOURCELIST_MAX = 5;
+  public static final int MEDIA_SOURCE_LIST_MAX = 5;
 
   private MediaSource systemDrive;
 
@@ -63,7 +64,7 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
         TOOL_NAME,
         POSITION.WEST,
         ExtendedMode.NORMALIZED,
-        PluginTool.Type.EXPLORER,
+        Insertable.Type.EXPLORER,
         20);
     setDockableWidth(400);
 
@@ -114,10 +115,9 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
   @SuppressWarnings("unchecked")
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent) {
+    if (evt instanceof ObservableEvent observableEvent) {
       if (evt.getSource() instanceof AcquireManager) {
-        if (ObservableEvent.BasicAction.REPLACE.equals(
-            ((ObservableEvent) evt).getActionCommand())) {
+        if (ObservableEvent.BasicAction.REPLACE.equals(observableEvent.getActionCommand())) {
 
           String newPatientName =
               Optional.ofNullable(evt.getNewValue())
@@ -133,25 +133,22 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
           centralPane.tabbedPane.clearAll();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.REMOVE.equals(
-            ((ObservableEvent) evt).getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.REMOVE.equals(observableEvent.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
             centralPane.tabbedPane.removeImages((Collection<AcquireImageInfo>) evt.getNewValue());
             centralPane.tabbedPane.repaint();
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo) {
-            centralPane.tabbedPane.removeImage((AcquireImageInfo) evt.getNewValue());
+          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+            centralPane.tabbedPane.removeImage(info);
             centralPane.tabbedPane.repaint();
           }
 
-        } else if (ObservableEvent.BasicAction.UPDATE.equals(
-            ((ObservableEvent) evt).getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.UPDATE.equals(observableEvent.getActionCommand())) {
           centralPane.tabbedPane.refreshGUI();
           centralPane.tabbedPane.repaint();
 
-        } else if (ObservableEvent.BasicAction.ADD.equals(
-            ((ObservableEvent) evt).getActionCommand())) {
+        } else if (ObservableEvent.BasicAction.ADD.equals(observableEvent.getActionCommand())) {
 
           if (evt.getNewValue() instanceof Collection<?>) {
             ((Collection<AcquireImageInfo>) evt.getNewValue())
@@ -159,10 +156,10 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
                     .collect(Collectors.groupingBy(AcquireImageInfo::getSeries))
                     .forEach(centralPane.tabbedPane::addSeriesElement);
 
-          } else if (evt.getNewValue() instanceof AcquireImageInfo) {
-            SeriesGroup series = ((AcquireImageInfo) evt.getNewValue()).getSeries();
+          } else if (evt.getNewValue() instanceof AcquireImageInfo info) {
+            SeriesGroup series = info.getSeries();
             ArrayList<AcquireImageInfo> infos = new ArrayList<>();
-            infos.add((AcquireImageInfo) evt.getNewValue());
+            infos.add(info);
             centralPane.tabbedPane.addSeriesElement(series, infos);
           }
 
@@ -243,8 +240,8 @@ public class AcquireExplorer extends PluginTool implements DataExplorerView {
     setSystemDrive(new FileSystemDrive(newRootPath));
 
     browsePanel.getMediaSourceList().insertItem(0, systemDrive);
-    if (browsePanel.getMediaSourceList().getSize() >= MEDIASOURCELIST_MAX) {
-      browsePanel.getMediaSourceList().removeItem(MEDIASOURCELIST_MAX - 1);
+    if (browsePanel.getMediaSourceList().getSize() >= MEDIA_SOURCE_LIST_MAX) {
+      browsePanel.getMediaSourceList().removeItem(MEDIA_SOURCE_LIST_MAX - 1);
     }
     browsePanel.getMediaSourceSelectionCombo().setSelectedItem(systemDrive);
     loadSystemDrive();

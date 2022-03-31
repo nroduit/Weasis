@@ -24,7 +24,7 @@ public abstract class MediaSource {
   protected String description;
   protected Icon icon;
 
-  public MediaSource(String path) {
+  protected MediaSource(String path) {
     this.path = Objects.requireNonNull(path);
   }
 

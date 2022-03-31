@@ -16,7 +16,7 @@ import org.jogamp.vecmath.Matrix3d;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Tuple3d;
 import org.jogamp.vecmath.Vector3d;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 /**
  * An abstract class that provides the basis for posting the position of specified slices and

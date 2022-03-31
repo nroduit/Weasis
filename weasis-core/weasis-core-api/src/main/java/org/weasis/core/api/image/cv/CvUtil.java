@@ -94,7 +94,7 @@ public class CvUtil {
         if (type == null) {
           type = image.type();
         }
-        if (image instanceof Mat) {
+        if (image instanceof Mat mat) {
           // Accumulate not supported 16-bit signed:
           // https://docs.opencv.org/3.3.0/d7/df3/group__imgproc__motion.html#ga1a567a79901513811ff3b9976923b199
           if (CvType.depth(image.type()) == CvType.CV_16S) {
@@ -102,14 +102,16 @@ public class CvUtil {
             image.toMat().convertTo(floatImage, CvType.CV_32F);
             Imgproc.accumulate(floatImage, mean);
           } else {
-            Imgproc.accumulate((Mat) image, mean);
+            Imgproc.accumulate(mat, mean);
           }
         }
       }
-      ImageCV dstImg = new ImageCV();
-      Core.divide(mean, new Scalar(numbSrc), mean);
-      mean.convertTo(dstImg, type);
-      return dstImg;
+      if (type != null) {
+        ImageCV dstImg = new ImageCV();
+        Core.divide(mean, new Scalar(numbSrc), mean);
+        mean.convertTo(dstImg, type);
+        return dstImg;
+      }
     }
     return null;
   }
@@ -128,8 +130,8 @@ public class CvUtil {
         if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
           continue;
         }
-        if (image instanceof Mat) {
-          Core.min(dstImg, (Mat) image, dstImg);
+        if (image instanceof Mat mat) {
+          Core.min(dstImg, mat, dstImg);
         }
       }
       return dstImg;
@@ -151,8 +153,8 @@ public class CvUtil {
         if (image.width() != dstImg.width() && image.height() != dstImg.height()) {
           continue;
         }
-        if (image instanceof Mat) {
-          Core.max(dstImg, (Mat) image, dstImg);
+        if (image instanceof Mat mat) {
+          Core.max(dstImg, mat, dstImg);
         }
       }
       return dstImg;

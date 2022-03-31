@@ -13,15 +13,13 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.CheckboxTree;
 import it.cnr.imaa.essi.lablib.gui.checkboxtree.TreeCheckingModel;
 import java.awt.BorderLayout;
 import java.awt.event.MouseEvent;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.swing.JPanel;
-import javax.swing.JTree;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
+import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.ui.util.CheckBoxTreeBuilder;
 import org.weasis.dicom.explorer.CheckTreeModel.ToolTipTreeNode;
 
@@ -94,23 +92,8 @@ public class ExportTree extends JPanel {
       }
     }
 
-    expandTree(checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
+    AbstractWizardDialog.expandTree(
+        checkboxTree, checkTreeModel.getRootNode(), 2); // 2 stands for Study Level
     add(checkboxTree, BorderLayout.CENTER);
-  }
-
-  public static void expandTree(JTree tree, DefaultMutableTreeNode start, int maxDeep) {
-    if (maxDeep > 1) {
-      Enumeration<?> children = start.children();
-      while (children.hasMoreElements()) {
-        Object child = children.nextElement();
-        if (child instanceof DefaultMutableTreeNode dtm) {
-          if (!dtm.isLeaf()) {
-            TreePath tp = new TreePath(dtm.getPath());
-            tree.expandPath(tp);
-            expandTree(tree, dtm, maxDeep - 1);
-          }
-        }
-      }
-    }
   }
 }

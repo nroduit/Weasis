@@ -17,11 +17,10 @@ import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.util.Copyable;
 
 /**
- * Store all modifiables values. Enable to compare two objects for dirty check.
+ * Store all modifiable values. Enable to compare two objects for dirty check.
  *
  * @author Yannick LARVOR
- * @version 2.5.0
- * @since 2.5.0 - 2016-04-18 - ylar - Creation
+ * @since 2.5.0
  */
 public class AcquireImageValues implements Copyable<AcquireImageValues> {
   private Rectangle cropZone = null;

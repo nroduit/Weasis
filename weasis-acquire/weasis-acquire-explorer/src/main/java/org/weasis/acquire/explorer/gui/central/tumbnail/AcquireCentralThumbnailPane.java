@@ -25,7 +25,7 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
 import org.weasis.acquire.explorer.core.bean.SeriesGroup;
 import org.weasis.acquire.explorer.gui.central.AcquireTabPanel;
-import org.weasis.acquire.explorer.gui.central.SerieButton;
+import org.weasis.acquire.explorer.gui.central.SeriesButton;
 import org.weasis.base.explorer.JIThumbnailCache;
 import org.weasis.base.explorer.list.AThumbnailListPane;
 import org.weasis.base.explorer.list.IThumbnailModel;
@@ -36,18 +36,18 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.util.UriListFlavor;
 
-public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbnailListPane<E> {
+public class AcquireCentralThumbnailPane<E extends MediaElement> extends AThumbnailListPane<E> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralTumbnailPane.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(AcquireCentralThumbnailPane.class);
 
-  public AcquireCentralTumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
+  public AcquireCentralThumbnailPane(List<E> list, JIThumbnailCache thumbCache) {
     super(new AcquireCentralThumbnailList<>(thumbCache));
     setList(list);
     setTransferHandler(new SequenceHandler());
   }
 
   public void setAcquireTabPanel(AcquireTabPanel acquireTabPanel) {
-    ((AcquireCentralThumbnailList) this.thumbnailList).setAcquireTabPanel(acquireTabPanel);
+    ((AcquireCentralThumbnailList<?>) this.thumbnailList).setAcquireTabPanel(acquireTabPanel);
   }
 
   public void addListSelectionListener(ListSelectionListener listener) {
@@ -136,7 +136,7 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
       try {
         Object object = transferable.getTransferData(Series.sequenceDataFlavor);
-        if (object instanceof Series series) {
+        if (object instanceof Series<?> series) {
           MediaElement media = series.getMedia(0, null, null);
           addToSeries(media);
         }
@@ -149,15 +149,15 @@ public class AcquireCentralTumbnailPane<E extends MediaElement> extends AThumbna
 
     private void addToSeries(MediaElement media) {
       if (media instanceof ImageElement imageElement) {
-        AcquireCentralThumbnailList tumbList =
-            (AcquireCentralThumbnailList) AcquireCentralTumbnailPane.this.thumbnailList;
+        AcquireCentralThumbnailList<?> thumbnailList =
+            (AcquireCentralThumbnailList<?>) AcquireCentralThumbnailPane.this.thumbnailList;
         AcquireImageInfo info = AcquireManager.findByImage(imageElement);
         if (info != null) {
           SeriesGroup seriesGroup =
-              Optional.ofNullable(tumbList.getSelectedSeries())
-                  .map(SerieButton::getSerie)
+              Optional.ofNullable(thumbnailList.getSelectedSeries())
+                  .map(SeriesButton::getSeries)
                   .orElse(null);
-          AcquireManager.importImage(info, seriesGroup, 0);
+          AcquireManager.importImage(info, seriesGroup);
         }
       }
     }

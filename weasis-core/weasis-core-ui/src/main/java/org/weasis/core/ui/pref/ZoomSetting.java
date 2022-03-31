@@ -11,6 +11,7 @@ package org.weasis.core.ui.pref;
 
 import java.awt.Color;
 import org.osgi.service.prefs.Preferences;
+import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.service.BundlePreferences;
 
 public class ZoomSetting {
@@ -32,7 +33,7 @@ public class ZoomSetting {
   public void applyPreferences(Preferences prefs) {
     if (prefs != null) {
       Preferences p = prefs.node(ZoomSetting.PREFERENCE_NODE);
-      interpolation = p.getInt("interpolation", 1); // NON-NLS
+      setInterpolation(p.getInt("interpolation", Interpolation.BILINEAR.ordinal())); // NON-NLS
     }
   }
 
@@ -75,13 +76,22 @@ public class ZoomSetting {
     this.lensHeight = lensHeight;
   }
 
+  /** @return ordinal value of ZoomOp.Interpolation */
   public int getInterpolation() {
-    // 0 : nearest neighbors, 1: bilinear, 2 : bicubic, 3 : bicubic2
     return interpolation;
   }
 
+  /**
+   * Set the zoom interpolation
+   *
+   * @param interpolation ordinal value of ZoomOp.Interpolation
+   */
   public void setInterpolation(int interpolation) {
-    this.interpolation = interpolation;
+    if (interpolation < 0 || interpolation >= Interpolation.values().length) {
+      this.interpolation = Interpolation.BILINEAR.ordinal();
+    } else {
+      this.interpolation = interpolation;
+    }
   }
 
   public boolean isLensRound() {

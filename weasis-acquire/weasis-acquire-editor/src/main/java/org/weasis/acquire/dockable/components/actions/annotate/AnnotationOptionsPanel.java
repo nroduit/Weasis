@@ -11,7 +11,6 @@ package org.weasis.acquire.dockable.components.actions.annotate;
 
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -23,7 +22,6 @@ import javax.swing.JPanel;
 import javax.swing.JSpinner;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
-import javax.swing.event.ChangeListener;
 import org.weasis.acquire.Messages;
 import org.weasis.base.viewer2d.EventManager;
 import org.weasis.core.api.gui.util.ActionState;
@@ -39,30 +37,6 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.util.StringUtil;
 
 public class AnnotationOptionsPanel extends JPanel {
-
-  private final ActionListener pickColorAction =
-      e -> {
-        JButton button = (JButton) e.getSource();
-        Color newColor =
-            JColorChooser.showDialog(
-                SwingUtilities.getWindowAncestor(AnnotationOptionsPanel.this),
-                org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
-                button.getBackground());
-        if (newColor != null) {
-          button.setBackground(newColor);
-          MeasureTool.viewSetting.setLineColor(newColor);
-          updateMeasureProperties();
-        }
-      };
-
-  private final ChangeListener changeLineWidth =
-      e -> {
-        Object val = ((JSpinner) e.getSource()).getValue();
-        if (val instanceof Integer intVal) {
-          MeasureTool.viewSetting.setLineWidth(intVal);
-          updateMeasureProperties();
-        }
-      };
 
   public AnnotationOptionsPanel() {
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -97,11 +71,31 @@ public class AnnotationOptionsPanel extends JPanel {
         new JLabel(org.weasis.core.ui.Messages.getString("MeasureToolBar.line") + StringUtil.COLON);
     JButton button = new JButton(ResourceUtil.getIcon(ActionIcon.PIPETTE));
     button.setToolTipText(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
-    button.addActionListener(pickColorAction);
+    button.addActionListener(
+        e -> {
+          JButton b = (JButton) e.getSource();
+          Color newColor =
+              JColorChooser.showDialog(
+                  SwingUtilities.getWindowAncestor(AnnotationOptionsPanel.this),
+                  org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
+                  b.getBackground());
+          if (newColor != null) {
+            b.setBackground(newColor);
+            MeasureTool.viewSetting.setLineColor(newColor);
+            updateMeasureProperties();
+          }
+        });
 
     JSpinner spinner = new JSpinner();
     GuiUtils.setNumberModel(spinner, MeasureTool.viewSetting.getLineWidth(), 1, 8, 1);
-    spinner.addChangeListener(changeLineWidth);
+    spinner.addChangeListener(
+        e -> {
+          Object val = ((JSpinner) e.getSource()).getValue();
+          if (val instanceof Integer intVal) {
+            MeasureTool.viewSetting.setLineWidth(intVal);
+            updateMeasureProperties();
+          }
+        });
 
     return GuiUtils.getFlowLayoutPanel(label, button, spinner);
   }

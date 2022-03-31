@@ -411,7 +411,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
   protected SliderChangeListener newLensZoomAction() {
     return new SliderChangeListener(
-        ActionW.LENSZOOM,
+        ActionW.LENS_ZOOM,
         DefaultViewModel.SCALE_MIN,
         DefaultViewModel.SCALE_MAX,
         2.0,
@@ -489,7 +489,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected ToggleButtonListener newInverseStackAction() {
-    return new ToggleButtonListener(ActionW.INVERSESTACK, false) {
+    return new ToggleButtonListener(ActionW.INVERSE_STACK, false) {
 
       @Override
       public void actionPerformed(boolean selected) {
@@ -656,7 +656,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         .map(type::cast);
   }
 
-  public Optional<ActionW> getLeftMouseActionFromkeyEvent(int keyEvent, int modifier) {
+  public Optional<ActionW> getLeftMouseActionFromKeyEvent(int keyEvent, int modifier) {
     if (keyEvent == 0) {
       return Optional.empty();
     }

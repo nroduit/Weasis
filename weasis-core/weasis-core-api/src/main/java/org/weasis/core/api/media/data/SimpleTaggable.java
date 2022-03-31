@@ -14,14 +14,14 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class SimpleTagable implements Tagable {
+public class SimpleTaggable implements Taggable {
   private final Map<TagW, Object> tags;
 
-  public SimpleTagable() {
+  public SimpleTaggable() {
     this.tags = new HashMap<>();
   }
 
-  public SimpleTagable(Map<TagW, Object> tags) {
+  public SimpleTaggable(Map<TagW, Object> tags) {
     this.tags = tags;
   }
 

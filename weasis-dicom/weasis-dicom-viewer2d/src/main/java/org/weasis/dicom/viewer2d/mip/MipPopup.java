@@ -207,8 +207,8 @@ public class MipPopup {
       MediaSeries<DicomImageElement> series = view.getSeries();
       if (series != null) {
         int slice = frameSlider.getValue() - 1;
-        SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORTSTACK.cmd());
-        Boolean reverse = (Boolean) view.getActionValue(ActionW.INVERSESTACK.cmd());
+        SeriesComparator sort = (SeriesComparator) view.getActionValue(ActionW.SORT_STACK.cmd());
+        Boolean reverse = (Boolean) view.getActionValue(ActionW.INVERSE_STACK.cmd());
         Comparator sortFilter =
             (reverse != null && reverse) ? sort.getReversOrderComparator() : sort;
         Filter filter = (Filter) view.getActionValue(ActionW.FILTERED_SERIES.cmd());

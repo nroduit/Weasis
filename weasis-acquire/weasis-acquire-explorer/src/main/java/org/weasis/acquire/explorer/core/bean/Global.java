@@ -17,10 +17,10 @@ import org.dcm4che3.util.UIDUtils;
 import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.core.api.media.data.TagUtil;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.api.media.data.Tagable;
+import org.weasis.core.api.media.data.Taggable;
 import org.weasis.dicom.codec.TagD;
 
-public class Global extends DefaultTagable {
+public class Global extends DefaultTaggable {
 
   public static final Integer PATIENT_DICOM_GROUP_NUMBER = Integer.parseInt("0010", 16);
 
@@ -30,12 +30,12 @@ public class Global extends DefaultTagable {
     init(null);
   }
 
-  public void init(Tagable tagable) {
+  public void init(Taggable taggable) {
     clear();
     tags.put(TagD.get(Tag.StudyInstanceUID), UIDUtils.createUID());
 
-    if (tagable != null) {
-      tagable
+    if (taggable != null) {
+      taggable
           .getTagEntrySetIterator()
           .forEachRemaining(
               i -> {
@@ -71,9 +71,9 @@ public class Global extends DefaultTagable {
     }
   }
 
-  public boolean containsSameTagValues(Tagable tagable, Integer dicomGroupNumber) {
-    if (tagable != null) {
-      Iterator<Entry<TagW, Object>> iter = tagable.getTagEntrySetIterator();
+  public boolean containsSameTagValues(Taggable taggable, Integer dicomGroupNumber) {
+    if (taggable != null) {
+      Iterator<Entry<TagW, Object>> iter = taggable.getTagEntrySetIterator();
       while (iter.hasNext()) {
         Entry<TagW, Object> entry = iter.next();
         TagW tag = entry.getKey();

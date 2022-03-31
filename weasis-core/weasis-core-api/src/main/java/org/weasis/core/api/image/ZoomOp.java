@@ -12,7 +12,7 @@ package org.weasis.core.api.image;
 import java.awt.Dimension;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.Messages;
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
@@ -20,12 +20,42 @@ public class ZoomOp extends AbstractOp {
 
   public static final String OP_NAME = Messages.getString("ZoomOperation.title");
 
-  public static final String[] INTERPOLATIONS = {
-    Messages.getString("ZoomOperation.nearest"),
-    Messages.getString("ZoomOperation.bilinear"),
-    Messages.getString("ZoomOperation.bicubic"),
-    Messages.getString("ZoomOperation.lanczos")
-  };
+  public enum Interpolation {
+    NEAREST_NEIGHBOUR(Messages.getString("ZoomOperation.nearest"), Imgproc.INTER_NEAREST),
+    BILINEAR(Messages.getString("ZoomOperation.bilinear"), Imgproc.INTER_LINEAR),
+    BICUBIC(Messages.getString("ZoomOperation.bicubic"), Imgproc.INTER_CUBIC),
+    LANCZOS(Messages.getString("ZoomOperation.lanczos"), Imgproc.INTER_LANCZOS4);
+
+    private final String title;
+    private final int opencvValue;
+
+    Interpolation(String title, int opencvValue) {
+      this.title = title;
+      this.opencvValue = opencvValue;
+    }
+
+    public int getOpencvValue() {
+      return opencvValue;
+    }
+
+    @Override
+    public String toString() {
+      return title;
+    }
+
+    public String getTitle() {
+      return title;
+    }
+
+    public static Interpolation getInterpolation(int position) {
+      for (Interpolation v : Interpolation.values()) {
+        if (v.ordinal() == position) {
+          return v;
+        }
+      }
+      return BILINEAR;
+    }
+  }
 
   /**
    * Set a zoom factor in x-axis (Required parameter).
@@ -75,13 +105,14 @@ public class ZoomOp extends AbstractOp {
           new Dimension(
               (int) (Math.abs(zoomFactorX) * source.width()),
               (int) (Math.abs(zoomFactorY) * source.height()));
-      Integer interpolation = (Integer) params.get(P_INTERPOLATION);
-      if (Math.abs(zoomFactorX) < 0.1) {
-        interpolation = Imgproc.INTER_AREA;
-      } else if (interpolation != null && interpolation == 3) {
-        interpolation = 4;
+      ZoomOp.Interpolation interpolation = (ZoomOp.Interpolation) params.get(P_INTERPOLATION);
+      Integer inter = null;
+      if (Math.abs(zoomFactorX) < 0.1 || Math.abs(zoomFactorY) < 0.1) {
+        inter = Imgproc.INTER_AREA;
+      } else if (interpolation != null) {
+        inter = interpolation.getOpencvValue();
       }
-      result = ImageProcessor.scale(source.toMat(), dim, interpolation);
+      result = ImageProcessor.scale(source.toMat(), dim, inter);
     }
 
     params.put(Param.OUTPUT_IMG, result);

@@ -404,10 +404,8 @@ public class GuiUtils {
 
   public static Number getFormattedValue(JFormattedTextField textField) {
     AbstractFormatterFactory formatter = textField.getFormatterFactory();
-    if (formatter instanceof DefaultFormatterFactory
-        && textField
-            .getFormatter()
-            .equals(((DefaultFormatterFactory) formatter).getEditFormatter())) {
+    if (formatter instanceof DefaultFormatterFactory factory
+        && textField.getFormatter().equals(factory.getEditFormatter())) {
       try {
         // to be sure that the value is commit (by default it is when the JFormattedTextField losing
         // the focus)
@@ -458,10 +456,7 @@ public class GuiUtils {
   }
 
   public static int getMaxLength(Rectangle bounds) {
-    if (bounds.width < bounds.height) {
-      return bounds.height;
-    }
-    return bounds.width;
+    return Math.max(bounds.width, bounds.height);
   }
 
   public static void openInDefaultBrowser(Component parent, URL url) {
@@ -500,7 +495,7 @@ public class GuiUtils {
       } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
         pane.setToolTipText(null);
       } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-        Component parent = e.getSource() instanceof Component ? (Component) e.getSource() : null;
+        Component parent = e.getSource() instanceof Component c ? c : null;
         openInDefaultBrowser(parent, e.getURL());
       }
     };

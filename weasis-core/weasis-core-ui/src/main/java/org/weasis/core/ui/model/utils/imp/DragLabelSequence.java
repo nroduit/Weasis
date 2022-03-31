@@ -11,10 +11,10 @@ package org.weasis.core.ui.model.utils.imp;
 
 import java.awt.geom.Point2D;
 import java.util.Objects;
-import org.weasis.core.api.gui.util.MathUtil;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.utils.Draggable;
 import org.weasis.core.ui.util.MouseEventDouble;
+import org.weasis.core.util.MathUtil;
 
 public class DragLabelSequence implements Draggable {
   private final Point2D lastPoint;

@@ -386,8 +386,8 @@ public class TagW {
     return result;
   }
 
-  public void readValue(Object data, Tagable tagable) {
-    tagable.setTagNoNull(this, getValue(data));
+  public void readValue(Object data, Taggable taggable) {
+    taggable.setTagNoNull(this, getValue(data));
   }
 
   public Object getValue(Object data) {
@@ -557,10 +557,10 @@ public class TagW {
     return tags.get(keyword);
   }
 
-  public static <T> T getTagValue(TagReadable tagable, TagW tag, Class<T> type) {
-    if (tagable != null && tag != null) {
+  public static <T> T getTagValue(TagReadable taggable, TagW tag, Class<T> type) {
+    if (taggable != null && tag != null) {
       try {
-        return type.cast(tagable.getTagValue(tag));
+        return type.cast(taggable.getTagValue(tag));
       } catch (ClassCastException e) {
         LOGGER.error("Cannot cast the value of \"{}\" into {}", tag.getKeyword(), type, e);
       }

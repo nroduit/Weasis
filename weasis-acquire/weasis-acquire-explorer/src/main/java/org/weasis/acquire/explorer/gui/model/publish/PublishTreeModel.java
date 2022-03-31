@@ -30,7 +30,8 @@ public class PublishTreeModel {
   private final List<SeriesGroup> seriesGroups;
   private final Map<SeriesGroup, List<AcquireImageInfo>> dictionary;
 
-  DefaultMutableTreeNode rootNode, serieNode;
+  DefaultMutableTreeNode rootNode;
+  DefaultMutableTreeNode seriesNode;
 
   public PublishTreeModel() {
     this.seriesGroups = AcquireManager.getBySeries();
@@ -46,9 +47,9 @@ public class PublishTreeModel {
     seriesGroups.stream()
         .forEach(
             s -> {
-              serieNode = new DefaultMutableTreeNode(s);
-              rootNode.add(serieNode);
-              dictionary.get(s).forEach(image -> serieNode.add(new DefaultMutableTreeNode(image)));
+              seriesNode = new DefaultMutableTreeNode(s);
+              rootNode.add(seriesNode);
+              dictionary.get(s).forEach(image -> seriesNode.add(new DefaultMutableTreeNode(image)));
             });
     return new DefaultTreeModel(rootNode, false);
   }

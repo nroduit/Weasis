@@ -26,6 +26,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.FontItem;
+import org.weasis.core.util.MathUtil;
 import org.weasis.core.util.StringUtil;
 
 public abstract class SliderChangeListener extends MouseActionAdapter
@@ -50,7 +51,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       boolean valueIsAdjusting,
       double mouseSensitivity) {
     this(action, min, max, value, valueIsAdjusting);
-    setMouseSensivity(mouseSensitivity);
+    setMouseSensitivity(mouseSensitivity);
   }
 
   protected SliderChangeListener(
@@ -72,7 +73,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       int sliderRange) {
     this.basicState = new BasicActionState(action);
     this.valueIsAdjusting = valueIsAdjusting;
-    setMouseSensivity(mouseSensitivity);
+    setMouseSensitivity(mouseSensitivity);
     model = new DefaultBoundedRangeModel(0, 0, 0, sliderRange);
     setRealMinMaxValue(min, max, value, false);
     model.addChangeListener(this);
@@ -219,8 +220,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter
 
   @Override
   public void stateChanged(ChangeEvent evt) {
-    boolean ajusting = valueIsAdjusting || !model.getValueIsAdjusting();
-    if (triggerAction && ajusting) {
+    boolean adjusting = valueIsAdjusting || !model.getValueIsAdjusting();
+    if (triggerAction && adjusting) {
       stateChanged(model);
       AuditLog.LOGGER.info(
           "action:{} val:{} min:{} max:{}",
@@ -350,7 +351,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
         // Accelerate the action if ctrl or shift is down
         double acceleratorKey =
             (modifier & mask) == 0 ? 1.0 : (modifier & mask) == mask ? 5.0 : 2.5;
-        double val = (position - lastPosition) * getMouseSensivity() * acceleratorKey;
+        double val = (position - lastPosition) * getMouseSensitivity() * acceleratorKey;
         if (MathUtil.isEqualToZero(val)) {
           return;
         }

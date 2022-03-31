@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.rt;
 
-import org.weasis.core.api.gui.util.MathUtil;
+import org.weasis.core.util.MathUtil;
 
 /** @author Tomas Skripcak */
 public class KeyDouble implements Comparable<KeyDouble> {

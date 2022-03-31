@@ -303,8 +303,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           Messages.getString("InfoLayer.angle")
               + StringUtil.COLON_AND_SPACE
               + view2DPane.getActionValue(ActionW.ROTATION.cmd())
-              + " "
-              + Messages.getString("InfoLayer.angle_symb"),
+              + " °",
           border,
           drawY);
       drawY -= fontHeight;
@@ -313,13 +312,11 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     if (getDisplayPreferences(FRAME) && hideMin) {
       StringBuilder buf = new StringBuilder(Messages.getString("InfoLayer.frame"));
       buf.append(StringUtil.COLON_AND_SPACE);
-      if (image != null) {
-        Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
-        if (inst != null) {
-          buf.append("[");
-          buf.append(inst);
-          buf.append("] ");
-        }
+      Integer inst = TagD.getTagValue(image, Tag.InstanceNumber, Integer.class);
+      if (inst != null) {
+        buf.append("[");
+        buf.append(inst);
+        buf.append("] ");
       }
       buf.append(view2DPane.getFrameIndex() + 1);
       buf.append(" / ");
@@ -505,13 +502,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           } else {
             StringBuilder buf = new StringBuilder();
             for (char c : po[0].toCharArray()) {
-              buf.append(ImageOrientation.getImageOrientationOposite(c));
+              buf.append(ImageOrientation.getImageOrientationOpposite(c));
             }
             colLeft = buf.toString();
           }
           StringBuilder buf = new StringBuilder();
           for (char c : po[1].toCharArray()) {
-            buf.append(ImageOrientation.getImageOrientationOposite(c));
+            buf.append(ImageOrientation.getImageOrientationOpposite(c));
           }
           rowTop = buf.toString();
         }

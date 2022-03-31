@@ -51,7 +51,7 @@ import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.Series;
-import org.weasis.core.api.media.data.SimpleTagable;
+import org.weasis.core.api.media.data.SimpleTaggable;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
@@ -755,9 +755,9 @@ public class DicomMediaIO implements DcmMediaReader {
     if (key instanceof Integer val && val > 0) {
       // Clone the shared tag
       Map<TagW, Object> tagList = new HashMap<>(tags);
-      SimpleTagable tagable = new SimpleTagable(tagList);
-      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tagable, getDicomObject(), val)) {
-        DicomMediaUtils.computeSlicePositionVector(tagable);
+      SimpleTaggable taggable = new SimpleTaggable(tagList);
+      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(taggable, getDicomObject(), val)) {
+        DicomMediaUtils.computeSlicePositionVector(taggable);
       }
       return tagList;
     }
