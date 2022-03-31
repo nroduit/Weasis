@@ -244,7 +244,6 @@ public class DicomMediaIO implements DcmMediaReader {
           DicomMediaIO key = reverseLookup.remove(soft);
           if (key != null) {
             hash.remove(key);
-            key.reset();
           }
         }
       };
@@ -310,7 +309,6 @@ public class DicomMediaIO implements DcmMediaReader {
   public synchronized void replaceURI(URI uri) {
     if (!Objects.equals(this.uri, Objects.requireNonNull(uri))) {
       this.uri = uri;
-      reset();
     }
   }
 
@@ -792,7 +790,6 @@ public class DicomMediaIO implements DcmMediaReader {
   @Override
   public void close() {
     HEADER_CACHE.remove(this);
-    reset();
   }
 
   @Override
@@ -860,9 +857,6 @@ public class DicomMediaIO implements DcmMediaReader {
     }
     return null;
   }
-
-  @Override
-  public void reset() {}
 
   /**
    * Reads the DICOM header meta-data, up to, but not including pixel data.

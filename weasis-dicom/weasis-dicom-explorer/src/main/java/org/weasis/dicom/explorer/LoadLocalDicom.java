@@ -273,8 +273,6 @@ public class LoadLocalDicom extends ExplorerTask<Boolean, String> {
       }
     } catch (Exception e) {
       LOGGER.error("Build DicomModel", e);
-    } finally {
-      // dicomReader.reset();
     }
     return thumb;
   }

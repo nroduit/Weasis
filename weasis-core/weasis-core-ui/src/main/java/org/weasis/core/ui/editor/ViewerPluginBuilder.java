@@ -284,8 +284,7 @@ public class ViewerPluginBuilder {
       } else {
         // Test if SOPInstanceUID already exists
         TagW sopTag = TagW.get("SOPInstanceUID");
-        if (series instanceof Series
-            && ((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
+        if (((Series<?>) series).hasMediaContains(sopTag, reader.getTagValue(sopTag))) {
           return series;
         }
 
@@ -310,8 +309,6 @@ public class ViewerPluginBuilder {
 
     } catch (Exception e) {
       LOGGER.error("Build series error", e);
-    } finally {
-      reader.reset();
     }
     return series;
   }

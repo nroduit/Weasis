@@ -56,11 +56,6 @@ public class DefaultMimeIO implements MediaReader {
   }
 
   @Override
-  public void reset() {
-    // Do nothing
-  }
-
-  @Override
   public MediaElement getPreview() {
     return getSingleImage();
   }

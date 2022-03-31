@@ -301,8 +301,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       DicomQrView dicomQrView, String host, List<AbstractDicomNode> webNodes, String message1) {
     List<DicomWebNode> wadoURLs = new ArrayList<>();
     for (AbstractDicomNode n : webNodes) {
-      if (n instanceof DicomWebNode) {
-        DicomWebNode wn = (DicomWebNode) n;
+      if (n instanceof DicomWebNode wn) {
         URL url = wn.getUrl();
         if (WebType.WADO.equals(wn.getWebType())
             && url != null

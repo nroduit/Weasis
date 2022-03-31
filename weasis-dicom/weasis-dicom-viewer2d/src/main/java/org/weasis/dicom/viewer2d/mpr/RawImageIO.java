@@ -57,7 +57,6 @@ public class RawImageIO implements DcmMediaReader {
           RawImageIO key = reverseLookup.remove(soft);
           if (key != null) {
             hash.remove(key);
-            key.reset();
           }
         }
       };
@@ -136,11 +135,6 @@ public class RawImageIO implements DcmMediaReader {
   }
 
   @Override
-  public void reset() {
-    // unlock file to be deleted on exit
-  }
-
-  @Override
   public MediaElement getPreview() {
     return null;
   }
@@ -178,7 +172,6 @@ public class RawImageIO implements DcmMediaReader {
   @Override
   public void close() {
     HEADER_CACHE.remove(this);
-    reset();
   }
 
   @Override
@@ -246,7 +239,7 @@ public class RawImageIO implements DcmMediaReader {
   }
 
   @Override
-  public boolean buildFile(File ouptut) {
+  public boolean buildFile(File output) {
     return false;
   }
 

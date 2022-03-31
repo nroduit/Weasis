@@ -17,8 +17,6 @@ import org.weasis.opencv.data.PlanarImage;
 
 public interface MediaReader extends Tagable {
 
-  void reset();
-
   URI getUri();
 
   FileCache getFileCache();
