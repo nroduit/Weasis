@@ -50,7 +50,6 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SimpleTagable;
 import org.weasis.core.api.media.data.SoftHashMap;
@@ -139,8 +138,7 @@ public class DicomMediaIO implements DcmMediaReader {
     // required
     tagManager.addTag(Tag.PerformedProcedureStepStartTime, Level.SERIES); // not
     // required
-    // Should be in image
-    // C.7.6.5 Cine Module
+    // Should be in image C.7.6.5 Cine Module
     // http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.5.html
     tagManager.addTag(Tag.PreferredPlaybackSequencing, Level.SERIES);
     tagManager.addTag(Tag.CineRate, Level.SERIES);
@@ -237,7 +235,7 @@ public class DicomMediaIO implements DcmMediaReader {
   }
 
   private static final SoftHashMap<DicomMediaIO, DicomMetaData> HEADER_CACHE =
-      new SoftHashMap<DicomMediaIO, DicomMetaData>() {
+      new SoftHashMap<>() {
 
         @Override
         public void removeElement(Reference<? extends DicomMetaData> soft) {
@@ -293,12 +291,11 @@ public class DicomMediaIO implements DcmMediaReader {
     for (TagView tagView : views) {
       if (tagView != null) {
         for (TagW tag : tagView.getTag()) {
-          if (tag != null) {
-            if (!DicomMediaIO.tagManager.contains(tag, Level.PATIENT)
-                && !DicomMediaIO.tagManager.contains(tag, Level.STUDY)
-                && !DicomMediaIO.tagManager.contains(tag, Level.SERIES)) {
-              DicomMediaIO.tagManager.addTag(tag, Level.INSTANCE);
-            }
+          if (tag != null
+              && !DicomMediaIO.tagManager.contains(tag, Level.PATIENT)
+              && !DicomMediaIO.tagManager.contains(tag, Level.STUDY)
+              && !DicomMediaIO.tagManager.contains(tag, Level.SERIES)) {
+            DicomMediaIO.tagManager.addTag(tag, Level.INSTANCE);
           }
         }
       }
@@ -423,23 +420,6 @@ public class DicomMediaIO implements DcmMediaReader {
     return tags.entrySet().iterator();
   }
 
-  @Override
-  public void writeMetaData(MediaSeriesGroup group) {
-    if (group == null) {
-      return;
-    }
-    // Get the dicom header
-    Attributes header = getDicomObject();
-    DicomMediaUtils.writeMetaData(group, header);
-
-    // Series Group
-    if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
-      // Information for series ToolTips
-      group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
-      group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
-    }
-  }
-
   private void writeInstanceTags(DicomMetaData md) {
     if (tags.size() > 0 || md == null || md.getDicomObject() == null) {
       return;
@@ -509,8 +489,8 @@ public class DicomMediaIO implements DcmMediaReader {
           ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
               TagD.getTagValue(this, Tag.ImageOrientationPatient, double[].class)));
 
-      Integer bitsAllocated = desc.getBitsAllocated();
-      Integer bitsStored = desc.getBitsStored();
+      int bitsAllocated = desc.getBitsAllocated();
+      int bitsStored = desc.getBitsStored();
 
       int pixelRepresentation = desc.getPixelRepresentation();
       setTagNoNull(TagD.get(Tag.BitsAllocated), bitsAllocated);
@@ -717,7 +697,7 @@ public class DicomMediaIO implements DcmMediaReader {
           }
           if (numberOfFrame > 1) {
             // IF enhanced DICOM, instance number can be overridden later
-            // IF simple Multiframe instance number is necessary
+            // IF simple multiframe instance number is necessary
             for (int i = 0; i < image.length; i++) {
               image[i].setTag(TagD.get(Tag.InstanceNumber), i + 1);
             }
@@ -767,22 +747,19 @@ public class DicomMediaIO implements DcmMediaReader {
 
   @Override
   public String getMediaFragmentMimeType() {
-    return mimeType;
+    return getMimeType();
   }
 
   @Override
   public Map<TagW, Object> getMediaFragmentTags(Object key) {
-    if (key instanceof Integer) {
-      if ((Integer) key > 0) {
-        // Clone the shared tag
-        Map<TagW, Object> tagList = new HashMap<>(tags);
-        SimpleTagable tagable = new SimpleTagable(tagList);
-        if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(
-            tagable, getDicomObject(), (Integer) key)) {
-          DicomMediaUtils.computeSlicePositionVector(tagable);
-        }
-        return tagList;
+    if (key instanceof Integer val && val > 0) {
+      // Clone the shared tag
+      Map<TagW, Object> tagList = new HashMap<>(tags);
+      SimpleTagable tagable = new SimpleTagable(tagList);
+      if (DicomMediaUtils.writePerFrameFunctionalGroupsSequence(tagable, getDicomObject(), val)) {
+        DicomMediaUtils.computeSlicePositionVector(tagable);
       }
+      return tagList;
     }
     return tags;
   }
@@ -858,11 +835,7 @@ public class DicomMediaIO implements DcmMediaReader {
     return null;
   }
 
-  /**
-   * Reads the DICOM header meta-data, up to, but not including pixel data.
-   *
-   * @throws Exception
-   */
+  /** Reads the DICOM header meta-data, up to, but not including pixel data. */
   private synchronized DicomMetaData readMetaData() throws IOException {
     DicomMetaData header = HEADER_CACHE.get(this);
     if (header != null) {

@@ -10,15 +10,32 @@
 package org.weasis.dicom.codec;
 
 import org.dcm4che3.data.Attributes;
+import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.DicomMetaData;
 import org.weasis.core.api.media.data.MediaReader;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
+import org.weasis.core.api.media.data.TagW;
+import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public interface DcmMediaReader extends MediaReader {
 
   Attributes getDicomObject();
 
-  void writeMetaData(MediaSeriesGroup group);
+  default void writeMetaData(MediaSeriesGroup group) {
+    if (group == null) {
+      return;
+    }
+    // Get the dicom header
+    Attributes header = getDicomObject();
+    DicomMediaUtils.writeMetaData(group, header);
+
+    // Series Group
+    if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
+      // Information for series ToolTips
+      group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
+      group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
+    }
+  }
 
   DicomMetaData getDicomMetaData();
 

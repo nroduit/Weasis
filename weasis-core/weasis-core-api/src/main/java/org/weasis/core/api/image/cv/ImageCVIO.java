@@ -78,11 +78,7 @@ public class ImageCVIO implements MediaReader {
   public ImageCVIO(URI media, String mimeType, Codec codec) {
     this.uri = Objects.requireNonNull(media);
     this.fileCache = new FileCache(this);
-    if (mimeType == null) {
-      this.mimeType = MimeInspector.UNKNOWN_MIME_TYPE;
-    } else {
-      this.mimeType = mimeType;
-    }
+    this.mimeType = Objects.requireNonNullElse(mimeType, MimeInspector.UNKNOWN_MIME_TYPE);
     this.codec = codec;
   }
 
@@ -222,8 +218,7 @@ public class ImageCVIO implements MediaReader {
       sUID = uri.toString();
     }
     MediaSeries<MediaElement> series =
-        new Series<MediaElement>(
-            TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) {
+        new Series<>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) {
 
           @Override
           public String getMimeType() {
@@ -367,12 +362,10 @@ public class ImageCVIO implements MediaReader {
       try {
         new FileRawImage(outFile).write(img);
         PlanarImage img8 = img;
-        if (CvType.depth(img.type()) > CvType.CV_8S && media instanceof ImageElement) {
-          ImageElement imgElement = ((ImageElement) media);
+        if (CvType.depth(img.type()) > CvType.CV_8S && media instanceof ImageElement imgElement) {
           Map<String, Object> params = null;
           if (!imgElement.isImageAvailable()) {
-            // Ensure to load image before calling the default preset that requires pixel min and
-            // max
+            // Ensure to load image before calling the preset that requires pixel min and max
             params = new HashMap<>(2);
             double min = 0;
             double max = 65536;
@@ -407,7 +400,7 @@ public class ImageCVIO implements MediaReader {
   }
 
   @Override
-  public boolean buildFile(File ouptut) {
+  public boolean buildFile(File output) {
     return false;
   }
 }

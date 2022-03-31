@@ -67,11 +67,7 @@ public class DefaultMimeIO implements MediaReader {
 
   @Override
   public MediaElement[] getMediaElement() {
-    MediaElement element = getSingleImage();
-    if (element != null) {
-      return new MediaElement[] {element};
-    }
-    return null;
+    return new MediaElement[] {getSingleImage()};
   }
 
   @Override
@@ -192,7 +188,7 @@ public class DefaultMimeIO implements MediaReader {
   }
 
   @Override
-  public boolean buildFile(File ouptut) {
+  public boolean buildFile(File output) {
     return false;
   }
 }

@@ -33,13 +33,10 @@ import org.weasis.core.api.media.data.Codec;
 import org.weasis.core.api.media.data.FileCache;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
-import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.SoftHashMap;
 import org.weasis.core.api.media.data.TagW;
-import org.weasis.core.util.FileUtil;
 import org.weasis.dicom.codec.DcmMediaReader;
 import org.weasis.dicom.codec.DicomMediaIO;
-import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.opencv.data.FileRawImage;
 import org.weasis.opencv.data.PlanarImage;
@@ -50,7 +47,7 @@ public class RawImageIO implements DcmMediaReader {
   private static final String MIME_TYPE = "image/raw"; // NON-NLS
 
   private static final SoftHashMap<RawImageIO, DicomMetaData> HEADER_CACHE =
-      new SoftHashMap<RawImageIO, DicomMetaData>() {
+      new SoftHashMap<>() {
 
         @Override
         public void removeElement(Reference<? extends DicomMetaData> soft) {
@@ -82,43 +79,22 @@ public class RawImageIO implements DcmMediaReader {
   public File getDicomFile() {
     Attributes dcm = getDicomObject();
 
-    DicomOutputStream out = null;
-    try {
-      File file = imageCV.getFile();
-      BulkData bdl =
-          new BulkData(
-              file.toURI().toString(),
-              FileRawImage.HEADER_LENGTH,
-              (int) file.length() - FileRawImage.HEADER_LENGTH,
-              false);
-      dcm.setValue(Tag.PixelData, VR.OW, bdl);
-      File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
-      out = new DicomOutputStream(tmpFile);
+    File file = imageCV.getFile();
+    BulkData bdl =
+        new BulkData(
+            file.toURI().toString(),
+            FileRawImage.HEADER_LENGTH,
+            (int) file.length() - FileRawImage.HEADER_LENGTH,
+            false);
+    dcm.setValue(Tag.PixelData, VR.OW, bdl);
+    File tmpFile = new File(DicomMediaIO.DICOM_EXPORT_DIR, dcm.getString(Tag.SOPInstanceUID));
+    try (DicomOutputStream out = new DicomOutputStream(tmpFile)) {
       out.writeDataset(dcm.createFileMetaInformation(UID.ImplicitVRLittleEndian), dcm);
-      return tmpFile;
     } catch (IOException e) {
       LOGGER.error("Cannot write dicom file", e);
-    } finally {
-      FileUtil.safeClose(out);
+      return null;
     }
-    return null;
-  }
-
-  @Override
-  public void writeMetaData(MediaSeriesGroup group) {
-    if (group == null) {
-      return;
-    }
-    // Get the dicom header
-    Attributes header = getDicomObject();
-    DicomMediaUtils.writeMetaData(group, header);
-
-    // Series Group
-    if (TagW.SubseriesInstanceUID.equals(group.getTagID())) {
-      // Information for series ToolTips
-      group.setTagNoNull(TagD.get(Tag.PatientName), getTagValue(TagD.get(Tag.PatientName)));
-      group.setTagNoNull(TagD.get(Tag.StudyDescription), header.getString(Tag.StudyDescription));
-    }
+    return tmpFile;
   }
 
   @Override
