@@ -15,7 +15,6 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -99,7 +98,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
 
   // Unmodifiable list of the default synchronization elements
   public static final List<SynchView> DEFAULT_SYNCH_LIST =
-      Arrays.asList(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
+      List.of(SynchView.NONE, SynchView.DEFAULT_STACK, SynchView.DEFAULT_TILE);
 
   public static final GridBagLayoutModel VIEWS_2x1_r1xc2_dump =
       new GridBagLayoutModel(
@@ -113,7 +112,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
           Messages.getString("View2dContainer.histogram"));
   // Unmodifiable list of the default layout elements
   public static final List<GridBagLayoutModel> DEFAULT_LAYOUT_LIST =
-      Arrays.asList(
+      List.of(
           VIEWS_1x1,
           VIEWS_1x2,
           VIEWS_1x3,

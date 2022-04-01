@@ -15,14 +15,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.image.DataBuffer;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -387,19 +382,19 @@ public class HistogramView extends JComponent
   }
 
   // TODO remove
-  private void exportcsv(PlanarImage imageSource) {
-    File csvOutputFile = new File("/tmp/" + "image" + ".csv"); // NON-NLS
-    try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
-      short[] pix = new short[imageSource.width()];
-      for (int i = 0; i < imageSource.height(); i++) {
-        imageSource.get(i, 0, pix);
-        IntStream is = IntStream.range(0, pix.length).map(k -> pix[k]);
-        pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(",")));
-      }
-    } catch (FileNotFoundException e) {
-      LOGGER.error("", e);
-    }
-  }
+  //  private void exportcsv(PlanarImage imageSource) {
+  //    File csvOutputFile = new File("/tmp/" + "image" + ".csv"); // NON-NLS
+  //    try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+  //      short[] pix = new short[imageSource.width()];
+  //      for (int i = 0; i < imageSource.height(); i++) {
+  //        imageSource.get(i, 0, pix);
+  //        IntStream is = IntStream.range(0, pix.length).map(k -> pix[k]);
+  //        pw.println(is.mapToObj(String::valueOf).collect(Collectors.joining(",")));
+  //      }
+  //    } catch (FileNotFoundException e) {
+  //      LOGGER.error("", e);
+  //    }
+  //  }
 
   @Override
   public void handle(List<Graphic> selectedGraphicList, MeasurableLayer layer) {

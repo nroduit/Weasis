@@ -66,15 +66,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
-  public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
-
-  static {
-    SYNCH_LIST.add(SynchView.NONE);
-  }
-
-  public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<>());
-
   public static final GridBagLayoutModel VIEWS_1x1 =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
@@ -83,9 +74,9 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
           1,
           SRView.class.getName());
 
-  static {
-    LAYOUT_LIST.add(VIEWS_1x1);
-  }
+  public static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(VIEWS_1x1);
+
+  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
   // is selected

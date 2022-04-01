@@ -105,8 +105,10 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
 
     this.variablePointsNumber = Objects.isNull(graphic.pointNumber) || graphic.pointNumber < 0;
     List<Point2D> ptsList =
-        graphic.pts.stream().filter(Objects::nonNull).map(g -> (Point2D) g.clone()).collect(
-            Collectors.toList());
+        graphic.pts.stream()
+            .filter(Objects::nonNull)
+            .map(g -> (Point2D) g.clone())
+            .collect(Collectors.toList());
     try {
       initCopy(graphic);
       buildGraphic(ptsList);

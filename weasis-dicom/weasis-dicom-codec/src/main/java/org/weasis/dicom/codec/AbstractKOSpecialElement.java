@@ -64,8 +64,9 @@ public class AbstractKOSpecialElement extends DicomSpecialElement {
       this.sopInstanceUID = sopInstanceUID;
       this.sopClassUID = sopClassUID;
       this.frameList =
-          frames == null ? Collections.emptyList() : Arrays.stream(frames).boxed().collect(
-              Collectors.toList());
+          frames == null
+              ? Collections.emptyList()
+              : Arrays.stream(frames).boxed().collect(Collectors.toList());
     }
 
     public String getStudyInstanceUID() {

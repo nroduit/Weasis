@@ -254,16 +254,18 @@ public class WeasisWin {
       if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) {
         int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
         if (option == JOptionPane.YES_OPTION) {
-          return closeAllRunnable();
+          closeAllRunnable();
+          return true;
         }
       } else {
-        return closeAllRunnable();
+        closeAllRunnable();
+        return true;
       }
     }
     return false;
   }
 
-  private boolean closeAllRunnable() {
+  private void closeAllRunnable() {
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.state", frame.getExtendedState());
     Rectangle rect = frame.getBounds();
     BundleTools.LOCAL_UI_PERSISTENCE.putIntProperty("last.window.x", rect.x);
@@ -274,7 +276,6 @@ public class WeasisWin {
       onClose.run();
     }
     System.exit(0);
-    return true;
   }
 
   public void runOnClose(Runnable run) {
@@ -861,42 +862,6 @@ public class WeasisWin {
         };
     explorerMenu.addPopupMenuListener();
     menuView.add(explorerMenu);
-
-    // TODO add save workspace layout
-    // final AbstractAction saveAction = new AbstractAction("Save workspace layout") {
-    //
-    // @Override
-    // public void actionPerformed(ActionEvent e) {
-    // // Handle workspace ui persistence
-    // try {
-    // UIManager.DOCKING_CONTROL.save("lastLayout", false);
-    // final BundleContext context = FrameworkUtil.getBundle(WeasisWin.class).getBundleContext();
-    // File file = new File(BundlePreferences.getDataFolder(context), "lastLayout.xml");
-    // UIManager.DOCKING_CONTROL.writeXML(file);
-    // } catch (IOException e1) {
-    // e1.printStackTrace();
-    // }
-    // }
-    // };
-    // menuView.add(saveAction);
-    //
-    // final AbstractAction loadAction = new AbstractAction("Restore last workspace layout") {
-    //
-    // @Override
-    // public void actionPerformed(ActionEvent e) {
-    // try {
-    // final BundleContext context = FrameworkUtil.getBundle(WeasisWin.class).getBundleContext();
-    // File file = new File(BundlePreferences.getDataFolder(context), "lastLayout.xml");
-    // if (file.canRead()) {
-    // UIManager.DOCKING_CONTROL.readXML(file);
-    // UIManager.DOCKING_CONTROL.load("lastLayout", false);
-    // }
-    // } catch (IOException e1) {
-    // e1.printStackTrace();
-    // }
-    // }
-    // };
-    // menuView.add(loadAction);
   }
 
   private void buildMenuFile() {

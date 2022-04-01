@@ -94,13 +94,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
 
-  public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
-
   static SynchView defaultMpr;
 
   static {
-    SYNCH_LIST.add(SynchView.NONE);
-
     HashMap<String, Boolean> actions = new HashMap<>();
     actions.put(ActionW.SCROLL_SERIES.cmd(), true);
     actions.put(ActionW.RESET.cmd(), true);
@@ -119,9 +115,9 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
             SynchData.Mode.STACK,
             ActionIcon.TILE,
             actions);
-
-    SYNCH_LIST.add(defaultMpr);
   }
+
+  public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
   public static final GridBagLayoutModel VIEWS_2x1_mpr =
       new GridBagLayoutModel(
@@ -171,14 +167,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<>());
-
-  static {
-    LAYOUT_LIST.add(VIEWS_2x1_mpr);
-    LAYOUT_LIST.add(VIEWS_2x2_f2);
-    LAYOUT_LIST.add(VIEWS_2_f1x2);
-    LAYOUT_LIST.add(VIEWS_1x3);
-  }
+      List.of(VIEWS_2x1_mpr, VIEWS_2x2_f2, VIEWS_2_f1x2, VIEWS_1x3);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
   // is selected

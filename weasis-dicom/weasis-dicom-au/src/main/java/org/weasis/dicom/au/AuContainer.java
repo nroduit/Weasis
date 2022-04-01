@@ -52,10 +52,6 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
     implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
-  private static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
-  private static final List<GridBagLayoutModel> LAYOUT_LIST =
-      Collections.synchronizedList(new ArrayList<>());
-
   static final GridBagLayoutModel DEFAULT_VIEW =
       new GridBagLayoutModel(
           "1x1", // NON-NLS
@@ -63,11 +59,9 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
           1,
           1,
           AuView.class.getName());
+  private static final List<GridBagLayoutModel> LAYOUT_LIST = List.of(DEFAULT_VIEW);
 
-  static {
-    SYNCH_LIST.add(SynchView.NONE);
-    LAYOUT_LIST.add(DEFAULT_VIEW);
-  }
+  private static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE);
 
   // Static tools shared by all the View2dContainer instances, tools are registered when a container
   // is selected

@@ -655,7 +655,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       SynchData synchData = (SynchData) view2DPane.getActionValue(ActionW.SYNCH_LINK.cmd());
       boolean tile = synchData != null && SynchData.Mode.TILE.equals(synchData.getMode());
       for (ViewButton b : view2DPane.getViewButtons()) {
-        if (b.isVisible() && !(tile & ActionW.KO_SELECTION.getTitle().equals(b.getName()))) {
+        if (b.isVisible() && !(tile && ActionW.KO_SELECTION.getTitle().equals(b.getName()))) {
           Icon icon = b.getIcon();
           int p = b.getPosition();
 

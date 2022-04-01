@@ -250,8 +250,7 @@ public class FileUtil {
     try (BufferedInputStream bufInStream = new BufferedInputStream(inputStream);
         ZipInputStream zis = new ZipInputStream(bufInStream)) {
       ZipEntry entry;
-      while ((entry = zis.getNextEntry())
-          != null) { // NOSONAR cannot write outside the target directory
+      while ((entry = zis.getNextEntry()) != null) { // NOSONAR cannot write outside the folder
         File file = new File(directory, entry.getName());
         if (!file.getCanonicalPath()
             .startsWith(canonicalDirPath + File.separator)) { // Security check

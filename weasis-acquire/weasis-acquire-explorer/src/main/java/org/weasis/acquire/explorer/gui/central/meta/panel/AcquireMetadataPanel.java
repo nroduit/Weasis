@@ -39,6 +39,8 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import org.dcm4che3.data.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.gui.central.meta.model.AcquireMetadataTableModel;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -56,6 +58,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
 
 public abstract class AcquireMetadataPanel extends JPanel implements TableModelListener {
+  private static final Logger LOGGER = LoggerFactory.getLogger(AcquireMetadataPanel.class);
+
   protected final String title;
   protected final JLabel label = new JLabel();
   protected final JTable table;
@@ -300,7 +304,7 @@ public abstract class AcquireMetadataPanel extends JPanel implements TableModelL
           }
         }
       } catch (IOException ex) {
-        ex.printStackTrace();
+        LOGGER.error("Cannot read body part values", ex);
       }
       return list.toArray(new String[0]);
     }
