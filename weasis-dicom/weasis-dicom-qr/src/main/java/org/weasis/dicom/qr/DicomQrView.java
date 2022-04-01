@@ -781,8 +781,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     tree.repaint();
   }
 
-  protected void initialize(boolean afirst) {
-    if (afirst) {
+  protected void initialize(boolean firstTime) {
+    if (firstTime) {
       initNodeList();
     }
     clearItems();
@@ -877,10 +877,10 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     DicomQrFactory.IMPORT_PERSISTENCE.setProperty(
         LAST_RETRIEVE_LIMIT, String.valueOf(limitSpinner.getValue()));
 
-    saveDicomNodes(templateComboBox);
+    saveTemplates(templateComboBox);
   }
 
-  public void saveDicomNodes(JComboBox<? extends SearchParameters> comboBox) {
+  public void saveTemplates(JComboBox<? extends SearchParameters> comboBox) {
     XMLStreamWriter writer = null;
     XMLOutputFactory factory = XMLOutputFactory.newInstance();
     final BundleContext context = FrameworkUtil.getBundle(this.getClass()).getBundleContext();

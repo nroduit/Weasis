@@ -136,7 +136,7 @@ public class WaveLayoutManager implements LayoutManager {
     for (int i = 0; i < ordered.size(); i++) {
       LeadPanel p = ordered.get(i);
       if (p != null) {
-        int mWidth = p.getChannels().getLead().equals(Lead.RYTHM) ? maxWidth : w;
+        int mWidth = p.getChannels().getLead().equals(Lead.RHYTHM) ? maxWidth : w;
         p.setPreferredSize(new Dimension(mWidth, h));
         p.setBounds(offsetX, offsetY, mWidth, h);
       }

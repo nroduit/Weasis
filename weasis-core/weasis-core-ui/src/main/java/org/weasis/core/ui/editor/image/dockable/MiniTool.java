@@ -20,6 +20,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.SwingConstants;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
@@ -35,8 +36,8 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
   private final JSliderW slider;
   private boolean vertical = true;
 
-  public MiniTool(String pluginName) {
-    super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 5);
+  protected MiniTool(String pluginName) {
+    super(BUTTON_NAME, pluginName, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 5);
     // TODO display a button to minimize or do not display the tab
     dockable.setTitleShown(false);
     setDockableWidth(32);
@@ -157,6 +158,7 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
         return actions[index];
       }
     } catch (NumberFormatException e) {
+      // Do nothing
     }
     return null;
   }

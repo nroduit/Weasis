@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public enum TransferSyntax {
-  NONE(null, "Keep original transfer syntax"),
+  NONE(null, Messages.getString("keep.original.tsuid")),
 
   IMPLICIT_VR("1.2.840.10008.1.2", "Implicit VR Endian (default)"), // NON-NLS
 

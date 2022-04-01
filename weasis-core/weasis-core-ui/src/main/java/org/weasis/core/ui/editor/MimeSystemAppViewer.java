@@ -12,6 +12,7 @@ package org.weasis.core.ui.editor;
 import java.awt.Desktop;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import javax.swing.JMenu;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
 
   @Override
   public List<MediaSeries<MediaElement>> getOpenSeries() {
-    return null;
+    return Collections.emptyList();
   }
 
   public static void startAssociatedProgramFromLinux(File file) {

@@ -30,10 +30,10 @@ public class ConsoleFormatter extends Formatter {
   }
 
   @Override
-  public String format(LogRecord record) {
-    String format = record.getMessage();
+  public String format(LogRecord logRecord) {
+    String format = logRecord.getMessage();
 
-    java.util.ResourceBundle catalog = record.getResourceBundle();
+    java.util.ResourceBundle catalog = logRecord.getResourceBundle();
     if (catalog != null) {
       try {
         format = catalog.getString(format);
@@ -44,10 +44,10 @@ public class ConsoleFormatter extends Formatter {
 
     // Do the formatting.
     try {
-      Object[] parameters = record.getParameters();
+      Object[] parameters = logRecord.getParameters();
       if (parameters == null || parameters.length == 0) {
         // No parameters.  Just return format string.
-        return getFinalFormat(record, format);
+        return getFinalFormat(logRecord, format);
       }
       // Is it a java.text style format?
       // Ideally we could match with
@@ -60,30 +60,30 @@ public class ConsoleFormatter extends Formatter {
         if (index >= fence) break;
         char digit = format.charAt(index + 1);
         if (digit >= '0' && digit <= '9') {
-          return getFinalFormat(record, MessageFormat.format(format, parameters));
+          return getFinalFormat(logRecord, MessageFormat.format(format, parameters));
         }
       }
-      return getFinalFormat(record, format);
+      return getFinalFormat(logRecord, format);
 
     } catch (Exception ex) {
       // Formatting failed: use localized format string.
-      return getFinalFormat(record, format);
+      return getFinalFormat(logRecord, format);
     }
   }
 
-  private static String getFinalFormat(LogRecord record, String message) {
+  private static String getFinalFormat(LogRecord logRecord, String message) {
     Object[] arguments = new Object[6];
-    arguments[0] = new Date(record.getMillis());
+    arguments[0] = new Date(logRecord.getMillis());
     arguments[2] = Thread.currentThread().getName();
-    arguments[3] = record.getLoggerName();
-    arguments[4] = record.getLevel();
+    arguments[3] = logRecord.getLoggerName();
+    arguments[4] = logRecord.getLevel();
     arguments[5] = message;
 
-    if (record.getThrown() != null) {
+    if (logRecord.getThrown() != null) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
       pw.print(messageFormat.format(arguments));
-      record.getThrown().printStackTrace(pw);
+      logRecord.getThrown().printStackTrace(pw);
       pw.close();
       return sw.toString();
     }

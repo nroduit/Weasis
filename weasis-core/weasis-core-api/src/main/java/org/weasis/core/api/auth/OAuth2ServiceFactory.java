@@ -28,6 +28,7 @@ public class OAuth2ServiceFactory {
           NO,
           new AuthProvider(Messages.getString("no.authentication"), null, null, null, false),
           new AuthRegistration(null, null, null)) {
+        @Override
         public OAuth2AccessToken getToken() {
           return null;
         }

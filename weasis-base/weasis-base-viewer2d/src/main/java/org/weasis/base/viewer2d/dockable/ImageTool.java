@@ -79,7 +79,7 @@ public class ImageTool extends PluginTool {
   }
 
   public JPanel getResetPanel() {
-    JComboBox resetComboBox = new JComboBox(ResetTools.values());
+    JComboBox<ResetTools> resetComboBox = new JComboBox<>(ResetTools.values());
     JButton resetButton = new JButton(Messages.getString("ImageTool.reset"));
     resetButton.addActionListener(
         e -> EventManager.getInstance().reset((ResetTools) resetComboBox.getSelectedItem()));
@@ -100,7 +100,7 @@ public class ImageTool extends PluginTool {
       JSliderW frameSlider = sliderItem.createSlider(2, true);
 
       JLabel speedLabel = new JLabel();
-      speedLabel.setText("Speed (fps)" + StringUtil.COLON);
+      speedLabel.setText(Messages.getString("speed.fps") + StringUtil.COLON);
 
       JSpinner speedSpinner = new JSpinner(sliderItem.getSpeedModel());
       GuiUtils.formatCheckAction(speedSpinner);
@@ -124,7 +124,8 @@ public class ImageTool extends PluginTool {
 
       JPanel framePanel = GuiUtils.getVerticalBoxLayoutPanel(frameSlider, panel);
       framePanel.setBorder(
-          BorderFactory.createCompoundBorder(spaceY, GuiUtils.getTitledBorder("Cine")));
+          BorderFactory.createCompoundBorder(
+              spaceY, GuiUtils.getTitledBorder(Messages.getString("cine"))));
       return framePanel;
     }
     return new JPanel();

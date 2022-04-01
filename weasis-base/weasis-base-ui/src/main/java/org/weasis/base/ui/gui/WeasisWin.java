@@ -347,7 +347,7 @@ public class WeasisWin {
           LangUtil.getNULLtoTrue((Boolean) props.get(ViewerPluginBuilder.BEST_DEF_LAYOUT));
       synchronized (UIManager.VIEWER_PLUGINS) {
         for (int i = UIManager.VIEWER_PLUGINS.size() - 1; i >= 0; i--) {
-          final ViewerPlugin p = UIManager.VIEWER_PLUGINS.get(i);
+          final ViewerPlugin<?> p = UIManager.VIEWER_PLUGINS.get(i);
           // Remove the views not attached to any window (Fix bugs with external window)
           if (WinUtil.getParentWindow(p) == null) {
             UIManager.VIEWER_PLUGINS.remove(i);
@@ -372,12 +372,12 @@ public class WeasisWin {
     if (seriesList.size() > 1) {
       props.put(ViewCanvas.class.getName(), seriesList.size());
     }
-    SeriesViewer seriesViewer = factory.createSeriesViewer(props);
+    SeriesViewer<?> seriesViewer = factory.createSeriesViewer(props);
     if (seriesViewer instanceof MimeSystemAppViewer) {
       for (MediaSeries m : seriesList) {
         seriesViewer.addSeries(m);
       }
-    } else if (seriesViewer instanceof ViewerPlugin viewer) {
+    } else if (seriesViewer instanceof ViewerPlugin<?> viewer) {
       String title;
       if (factory.canExternalizeSeries()) {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -1001,7 +1001,7 @@ public class WeasisWin {
         try {
           files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
         } catch (Exception e) {
-          LOGGER.error("Get dragable files", e);
+          LOGGER.error("Get draggable files", e);
         }
         return dropFiles(files, support.getDropLocation());
       }
@@ -1014,7 +1014,7 @@ public class WeasisWin {
           String val = (String) transferable.getTransferData(UriListFlavor.flavor);
           files = UriListFlavor.textURIListToFileList(val);
         } catch (Exception e) {
-          LOGGER.error("Get dragable URIs", e);
+          LOGGER.error("Get draggable URIs", e);
         }
         return dropFiles(files, support.getDropLocation());
       }

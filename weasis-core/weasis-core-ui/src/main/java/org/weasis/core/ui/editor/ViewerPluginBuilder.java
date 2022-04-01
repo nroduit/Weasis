@@ -266,7 +266,7 @@ public class ViewerPluginBuilder {
     MediaSeriesGroup group1 =
         DefaultDataModel.getHierarchyNode(MediaSeriesGroupNode.rootNode, gUID);
     if (group1 == null) {
-      group1 = new MediaSeriesGroupNode(TagW.Group, gUID, AbstractFileModel.group.getTagView());
+      group1 = new MediaSeriesGroupNode(TagW.Group, gUID, AbstractFileModel.group.tagView());
       group1.setTagNoNull(groupName, groupValue);
       DefaultDataModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, group1);
     }

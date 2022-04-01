@@ -107,7 +107,7 @@ public class SoftHashMap<K, V> extends AbstractMap<K, V> {
       final V value = entry.getValue().get();
       if (value != null) {
         result.add(
-            new Entry<K, V>() {
+            new Entry<>() {
 
               @Override
               public K getKey() {

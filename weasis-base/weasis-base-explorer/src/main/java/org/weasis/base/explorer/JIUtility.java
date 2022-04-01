@@ -35,10 +35,10 @@ public final class JIUtility {
   public static FileTreeModel createTreeModel() {
     Path rootPath;
     if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
-      final File winRootFoler = new File(ROOT_FOLDER);
-      winRootFoler.mkdirs();
-      winRootFoler.deleteOnExit();
-      rootPath = winRootFoler.toPath();
+      final File winRootFolder = new File(ROOT_FOLDER);
+      winRootFolder.mkdirs();
+      winRootFolder.deleteOnExit();
+      rootPath = winRootFolder.toPath();
     } else {
       rootPath = Paths.get(ROOT_FOLDER);
     }

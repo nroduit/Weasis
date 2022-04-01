@@ -21,7 +21,7 @@ public interface UUIDable {
   /**
    * Set a Universally Unique IDentifier (UUID)
    *
-   * @param uuid
+   * @param uuid the Universally Unique IDentifier (UUID)
    */
   void setUuid(String uuid);
 }

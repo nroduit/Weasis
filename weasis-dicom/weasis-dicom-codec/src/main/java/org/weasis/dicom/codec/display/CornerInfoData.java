@@ -22,9 +22,9 @@ public class CornerInfoData {
     this.corner = corner;
     TagView[] extInfos = null;
     if (extendModality != null) {
-      ModalityInfoData mdata = ModalityView.MODALITY_VIEW_MAP.get(extendModality);
-      if (mdata != null) {
-        extInfos = mdata.getCornerInfo(corner).getInfos();
+      ModalityInfoData modalityInfoData = ModalityView.MODALITY_VIEW_MAP.get(extendModality);
+      if (modalityInfoData != null) {
+        extInfos = modalityInfoData.getCornerInfo(corner).getInfos();
       }
     }
     this.infos =

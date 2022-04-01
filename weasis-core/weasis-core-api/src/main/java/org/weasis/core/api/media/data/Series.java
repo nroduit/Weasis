@@ -13,7 +13,6 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,19 +54,19 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   protected SeriesImporter seriesLoader;
   private long fileSize;
 
-  public Series(TagW tagID, Object identifier, TagView displayTag) {
+  protected Series(TagW tagID, Object identifier, TagView displayTag) {
     this(tagID, identifier, displayTag, null);
   }
 
-  public Series(TagW tagID, Object identifier, TagView displayTag, int initialCapacity) {
+  protected Series(TagW tagID, Object identifier, TagView displayTag, int initialCapacity) {
     this(tagID, identifier, displayTag, new ArrayList<>(initialCapacity));
   }
 
-  public Series(TagW tagID, Object identifier, TagView displayTag, List<E> list) {
+  protected Series(TagW tagID, Object identifier, TagView displayTag, List<E> list) {
     this(tagID, identifier, displayTag, list, null);
   }
 
-  public Series(
+  protected Series(
       TagW tagID, Object identifier, TagView displayTag, List<E> list, Comparator<E> mediaOrder) {
     super(tagID, identifier, displayTag);
     this.mediaOrder = mediaOrder;
@@ -246,9 +245,9 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
     // forEach implement synchronized
     medias.forEach(
         m -> {
-          if (m instanceof ImageElement) {
+          if (m instanceof ImageElement imageElement) {
             // Removing from cache will close the image stream
-            ((ImageElement) m).removeImageFromCache();
+            imageElement.removeImageFromCache();
           }
           m.dispose();
         });
@@ -285,7 +284,7 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   }
 
   @Override
-  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
     if (sequenceDataFlavor.equals(flavor)) {
       return this;
     }
@@ -451,6 +450,6 @@ public abstract class Series<E extends MediaElement> extends MediaSeriesGroupNod
   @Override
   public String getSeriesNumber() {
     Integer val = (Integer) getTagValue(TagW.get("SeriesNumber"));
-    return Optional.ofNullable(val).map(String::valueOf).orElseGet(() -> "");
+    return Optional.ofNullable(val).map(String::valueOf).orElse("");
   }
 }

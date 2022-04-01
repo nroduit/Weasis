@@ -297,13 +297,6 @@ public class ImageElement extends MediaElement {
   /**
    * Apply window/level to the image source. Note: this method cannot be used with a
    * DicomImageElement as image parameter.
-   *
-   * @param image
-   * @param source
-   * @param window
-   * @param level
-   * @param pixelPadding
-   * @return
    */
   public static PlanarImage getDefaultRenderedImage(
       ImageElement image, PlanarImage source, double window, double level, boolean pixelPadding) {
@@ -369,11 +362,7 @@ public class ImageElement extends MediaElement {
         image, source, image.getDefaultWindow(wl), image.getDefaultLevel(wl), true);
   }
 
-  /**
-   * Returns the full size, original image. Returns null if the image is not loaded.
-   *
-   * @return
-   */
+  /** Returns the full size, original image. Returns null if the image is not loaded. */
   public PlanarImage getImage(OpManager manager) {
     return getImage(manager, true);
   }
@@ -465,12 +454,6 @@ public class ImageElement extends MediaElement {
 
   public boolean isReadable() {
     return readable;
-  }
-
-  @Override
-  public void dispose() {
-    // Let the soft reference mechanism dispose the display image
-    super.dispose();
   }
 
   class Load implements Callable<PlanarImage> {

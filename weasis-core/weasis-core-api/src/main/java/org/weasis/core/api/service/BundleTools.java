@@ -13,7 +13,6 @@ import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -180,7 +179,7 @@ public class BundleTools {
         "weasis.pref.store.local.session", false);
   }
 
-  public static String getEncodedValue(String val) throws UnsupportedEncodingException {
+  public static String getEncodedValue(String val) {
     return URLEncoder.encode(val, StandardCharsets.UTF_8);
   }
 
@@ -197,9 +196,8 @@ public class BundleTools {
       try (OutputStream out = http.getOutputStream()) {
         props.store(new DataOutputStream(out), null);
       }
-      if (http.getUrlConnection() instanceof HttpURLConnection) {
-        NetworkUtil.readResponse(
-            (HttpURLConnection) http.getUrlConnection(), urlParameters.getUnmodifiableHeaders());
+      if (http.getUrlConnection() instanceof HttpURLConnection httpURLConnection) {
+        NetworkUtil.readResponse(httpURLConnection, urlParameters.getUnmodifiableHeaders());
       }
     }
   }

@@ -27,7 +27,7 @@ public class Lead {
   public static final Lead V4 = new Lead("V4"); // NON-NLS
   public static final Lead V5 = new Lead("V5"); // NON-NLS
   public static final Lead V6 = new Lead("V6"); // NON-NLS
-  public static final Lead RYTHM = new Lead("II (Rythm)"); // NON-NLS
+  public static final Lead RHYTHM = new Lead("II (Rhythm)"); // NON-NLS
 
   static final Lead[] DEFAULT_12LEAD = {I, II, III, AVR, AVL, AVF, V1, V2, V3, V4, V5, V6};
 
@@ -94,65 +94,39 @@ public class Lead {
   }
 
   private static Lead mdc2Lead(String codeValue) {
-    switch (codeValue) {
-      case "2:1":
-        return I;
-      case "2:2":
-        return II;
-      case "2:61":
-        return III;
-      case "2:62":
-        return AVR;
-      case "2:63":
-        return AVL;
-      case "2:64":
-        return AVF;
-      case "2:3":
-        return V1;
-      case "2:4":
-        return V2;
-      case "2:5":
-        return V3;
-      case "2:6":
-        return V4;
-      case "2:7":
-        return V5;
-      case "2:8":
-        return V6;
-      default:
-        return null;
-    }
+    return switch (codeValue) {
+      case "2:1" -> I;
+      case "2:2" -> II;
+      case "2:61" -> III;
+      case "2:62" -> AVR;
+      case "2:63" -> AVL;
+      case "2:64" -> AVF;
+      case "2:3" -> V1;
+      case "2:4" -> V2;
+      case "2:5" -> V3;
+      case "2:6" -> V4;
+      case "2:7" -> V5;
+      case "2:8" -> V6;
+      default -> null;
+    };
   }
 
   private static Lead scpecg2Lead(String codeValue) {
     // http://dicom.nema.org/medical/Dicom/current/output/chtml/part16/sect_CID_3001.html
-    switch (codeValue) {
-      case "5.6.3-9-1":
-        return I;
-      case "5.6.3-9-2":
-        return II;
-      case "5.6.3-9-61":
-        return III;
-      case "5.6.3-9-62":
-        return AVR;
-      case "5.6.3-9-63":
-        return AVL;
-      case "5.6.3-9-64":
-        return AVF;
-      case "5.6.3-9-3":
-        return V1;
-      case "5.6.3-9-4":
-        return V2;
-      case "5.6.3-9-5":
-        return V3;
-      case "5.6.3-9-6":
-        return V4;
-      case "5.6.3-9-7":
-        return V5;
-      case "5.6.3-9-8":
-        return V6;
-      default:
-        return null;
-    }
+    return switch (codeValue) {
+      case "5.6.3-9-1" -> I;
+      case "5.6.3-9-2" -> II;
+      case "5.6.3-9-61" -> III;
+      case "5.6.3-9-62" -> AVR;
+      case "5.6.3-9-63" -> AVL;
+      case "5.6.3-9-64" -> AVF;
+      case "5.6.3-9-3" -> V1;
+      case "5.6.3-9-4" -> V2;
+      case "5.6.3-9-5" -> V3;
+      case "5.6.3-9-6" -> V4;
+      case "5.6.3-9-7" -> V5;
+      case "5.6.3-9-8" -> V6;
+      default -> null;
+    };
   }
 }

@@ -155,7 +155,7 @@ public class KernelData {
   private int divisor;
 
   /** The kernel data. */
-  private float[] data = null;
+  private float[] data;
 
   public KernelData(
       String name,

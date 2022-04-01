@@ -10,14 +10,11 @@
 package org.weasis.core.api.image;
 
 import java.awt.Rectangle;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class CropOp extends AbstractOp {
-  private static final Logger LOGGER = LoggerFactory.getLogger(CropOp.class);
 
   public static final String OP_NAME = Messages.getString("CropOperation.name");
 

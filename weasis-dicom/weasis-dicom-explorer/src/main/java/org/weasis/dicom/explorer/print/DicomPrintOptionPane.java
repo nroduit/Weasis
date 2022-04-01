@@ -43,7 +43,7 @@ public class DicomPrintOptionPane extends JPanel {
   JComboBox<String> smoothingTypeComboBox;
   JComboBox<String> trimComboBox;
   DefaultComboBoxModel<String> portraitDisplayFormatsModel;
-  JCheckBox chckbxSelctedView;
+  JCheckBox checkboxSelectedView;
   JComboBox<PrintOptions.DotPerInches> comboBoxDPI;
   JComboBox<String> comboBoxEmpty;
 
@@ -170,8 +170,8 @@ public class DicomPrintOptionPane extends JPanel {
     printAnnotationsCheckBox.setSelected(true);
     add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2");
 
-    chckbxSelctedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
-    add(chckbxSelctedView, "newline, alignx leading, spanx 2");
+    checkboxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
+    add(checkboxSelectedView, "newline, alignx leading, spanx 2");
 
     add(new JLabel(Messages.getString("DicomPrintDialog.dpi") + StringUtil.COLON));
 
@@ -198,7 +198,7 @@ public class DicomPrintOptionPane extends JPanel {
       // minDensitySpinner.setValue(options.getMinDensity());
       // maxDensitySpinner.setValue(options.getMaxDensity());
       printAnnotationsCheckBox.setSelected(options.isShowingAnnotations());
-      chckbxSelctedView.setSelected(options.isPrintOnlySelectedView());
+      checkboxSelectedView.setSelected(options.isPrintOnlySelectedView());
       comboBoxDPI.setSelectedItem(options.getDpi());
     }
   }
@@ -221,7 +221,7 @@ public class DicomPrintOptionPane extends JPanel {
     // options.setMinDensity((Integer) minDensitySpinner.getValue());
     // options.setMaxDensity((Integer) maxDensitySpinner.getValue());
     options.setShowingAnnotations(printAnnotationsCheckBox.isSelected());
-    options.setPrintOnlySelectedView(chckbxSelctedView.isSelected());
+    options.setPrintOnlySelectedView(checkboxSelectedView.isSelected());
     options.setDpi((PrintOptions.DotPerInches) comboBoxDPI.getSelectedItem());
   }
 }

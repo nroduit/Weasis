@@ -48,7 +48,7 @@ public class SignalMarker {
     this.type = type;
   }
 
-  public int getPostion() {
+  public int getPosition() {
     return position;
   }
 

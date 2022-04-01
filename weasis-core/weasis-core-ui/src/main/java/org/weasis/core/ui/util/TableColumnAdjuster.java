@@ -16,9 +16,6 @@ import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 
 public class TableColumnAdjuster {
-  public static final int VISIBLE_ROWS = 0;
-  public static final int ALL_ROWS = 1;
-  public static final int NO_ROWS = 2;
 
   private TableColumnAdjuster() {}
 
@@ -40,7 +37,7 @@ public class TableColumnAdjuster {
       int to = table.rowAtPoint(new Point((int) rect.getMaxX(), (int) rect.getMaxY())) + 1;
 
       for (int row = from; row < to; row++) {
-        int preferedWidth =
+        int preferredWidth =
             (int)
                 table
                     .getCellRenderer(row, col)
@@ -48,7 +45,7 @@ public class TableColumnAdjuster {
                         table, table.getValueAt(row, col), false, false, row, col)
                     .getPreferredSize()
                     .getWidth();
-        width = Math.max(width, preferedWidth);
+        width = Math.max(width, preferredWidth);
       }
     }
     return width + table.getIntercellSpacing().width;

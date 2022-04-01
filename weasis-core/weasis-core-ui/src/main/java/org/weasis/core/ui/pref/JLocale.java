@@ -16,8 +16,7 @@ public class JLocale {
   private final Locale locale;
 
   JLocale(Locale l) {
-    Objects.nonNull(l);
-    locale = l;
+    this.locale = Objects.requireNonNull(l);
   }
 
   @Override

@@ -44,7 +44,7 @@ class ConstructorImageElementTest extends ModelListHelper {
     assertThat(actual.getModels()).isEmpty();
     assertThat(actual.getAllGraphics()).isEmpty();
     assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDragableGraphics()).isEmpty();
+    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
@@ -52,7 +52,7 @@ class ConstructorImageElementTest extends ModelListHelper {
   }
 
   @Test
-  void test_image_with_no_uuid_and_series_uuid() throws Exception {
+  void test_image_with_no_uuid_and_series_uuid() {
     ImageElement img = mockImage(null, UUID_2);
     GraphicModel actual = new XmlGraphicModel(img);
 
@@ -78,7 +78,7 @@ class ConstructorImageElementTest extends ModelListHelper {
     assertThat(actual.getModels()).isEmpty();
     assertThat(actual.getAllGraphics()).isEmpty();
     assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDragableGraphics()).isEmpty();
+    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
@@ -97,12 +97,12 @@ class ConstructorImageElementTest extends ModelListHelper {
             AbstractGraphicModel.class,
             XmlGraphicModel.class);
 
-    ReferencedSeries referencedSerie = actual.getReferencedSeries().get(0);
-    assertThat(referencedSerie).isNotNull();
-    assertThat(referencedSerie.getUuid()).isNotNull().isNotEmpty();
-    assertThat(referencedSerie.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
+    assertThat(referencedSeries).isNotNull();
+    assertThat(referencedSeries.getUuid()).isNotNull().isNotEmpty();
+    assertThat(referencedSeries.getImages()).hasSize(1);
 
-    ReferencedImage referencedImage = referencedSerie.getImages().get(0);
+    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
     assertThat(referencedImage).isNotNull();
     assertThat(referencedImage.getUuid()).isEqualTo(UUID_1);
 
@@ -110,7 +110,7 @@ class ConstructorImageElementTest extends ModelListHelper {
     assertThat(actual.getModels()).isEmpty();
     assertThat(actual.getAllGraphics()).isEmpty();
     assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDragableGraphics()).isEmpty();
+    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 
@@ -129,12 +129,12 @@ class ConstructorImageElementTest extends ModelListHelper {
             AbstractGraphicModel.class,
             XmlGraphicModel.class);
 
-    ReferencedSeries referencedSerie = actual.getReferencedSeries().get(0);
-    assertThat(referencedSerie).isNotNull();
-    assertThat(referencedSerie.getUuid()).isNotNull().isNotEmpty();
-    assertThat(referencedSerie.getImages()).hasSize(1);
+    ReferencedSeries referencedSeries = actual.getReferencedSeries().get(0);
+    assertThat(referencedSeries).isNotNull();
+    assertThat(referencedSeries.getUuid()).isNotNull().isNotEmpty();
+    assertThat(referencedSeries.getImages()).hasSize(1);
 
-    ReferencedImage referencedImage = referencedSerie.getImages().get(0);
+    ReferencedImage referencedImage = referencedSeries.getImages().get(0);
     assertThat(referencedImage).isNotNull();
     assertThat(referencedImage.getUuid()).isNotNull().isNotEmpty();
 
@@ -142,7 +142,7 @@ class ConstructorImageElementTest extends ModelListHelper {
     assertThat(actual.getModels()).isEmpty();
     assertThat(actual.getAllGraphics()).isEmpty();
     assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDragableGraphics()).isEmpty();
+    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 

@@ -36,7 +36,7 @@ class ConstructorNoArgumentsTest extends ModelListHelper {
     assertThat(actual.getModels()).isEmpty();
     assertThat(actual.getAllGraphics()).isEmpty();
     assertThat(actual.groupLayerByType()).isEmpty();
-    assertThat(actual.getSelectedDragableGraphics()).isEmpty();
+    assertThat(actual.getSelectedDraggableGraphics()).isEmpty();
     assertThat(actual.getSelectedGraphics()).isEmpty();
     assertThat(actual.getGraphicSelectionListeners()).isEmpty();
 

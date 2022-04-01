@@ -32,7 +32,7 @@ public abstract class PannerListener extends MouseActionAdapter
 
   private Point2D point;
 
-  public PannerListener(ActionW action, Point2D point) {
+  protected PannerListener(ActionW action, Point2D point) {
     this.basicState = new BasicActionState(action);
     this.point = point == null ? new Point2D.Double() : point;
   }
@@ -121,16 +121,14 @@ public abstract class PannerListener extends MouseActionAdapter
     int buttonMask = getButtonMaskEx();
     if (!e.isConsumed() && (e.getModifiersEx() & buttonMask) != 0) {
       ViewCanvas<?> panner = getViewCanvas(e);
-      if (panner != null) {
-        if (pickPoint != null && panner.getViewModel() != null) {
-          double scale = panner.getViewModel().getViewScale();
-          setPoint(
-              new PanPoint(
-                  PanPoint.State.DRAGGING,
-                  -((e.getX() - pickPoint.getX()) / scale),
-                  -((e.getY() - pickPoint.getY()) / scale)));
-          panner.addPointerType(ViewCanvas.CENTER_POINTER);
-        }
+      if (panner != null && pickPoint != null && panner.getViewModel() != null) {
+        double scale = panner.getViewModel().getViewScale();
+        setPoint(
+            new PanPoint(
+                PanPoint.State.DRAGGING,
+                -((e.getX() - pickPoint.getX()) / scale),
+                -((e.getY() - pickPoint.getY()) / scale)));
+        panner.addPointerType(ViewCanvas.CENTER_POINTER);
       }
     }
   }

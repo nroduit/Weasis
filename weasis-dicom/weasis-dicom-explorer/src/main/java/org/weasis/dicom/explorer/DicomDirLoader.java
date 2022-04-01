@@ -76,7 +76,7 @@ public class DicomDirLoader {
   }
 
   public List<LoadSeries> readDicomDir() {
-    Attributes dcmPatient = null;
+    Attributes dcmPatient;
     MediaSeriesGroup patient = null;
 
     try (DicomDirReader reader = new DicomDirReader(dcmDirFile)) {
@@ -128,7 +128,7 @@ public class DicomDirLoader {
       if (patient == null) {
         patient =
             new MediaSeriesGroupNode(
-                TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
+                TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.tagView());
         DicomMediaUtils.writeMetaData(patient, dcmPatient);
         dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
       }
@@ -148,7 +148,7 @@ public class DicomDirLoader {
         if (study == null) {
           study =
               new MediaSeriesGroupNode(
-                  TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+                  TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
           DicomMediaUtils.writeMetaData(study, dcmStudy);
           dicomModel.addHierarchyNode(patient, study);
         }
@@ -255,21 +255,21 @@ public class DicomDirLoader {
       DicomImageReader reader = new DicomImageReader(Transcoder.dicomImageReaderSpi);
       try {
         VR.Holder holder = new VR.Holder();
-        Object pixdata = iconInstance.getValue(Tag.PixelData, holder);
-        if (pixdata != null) {
+        Object pixelData = iconInstance.getValue(Tag.PixelData, holder);
+        if (pixelData != null) {
           ImageDescriptor imdDesc = new ImageDescriptor(iconInstance);
           File thumbnailPath =
-              File.createTempFile("tumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); // NON-NLS
+              File.createTempFile("thumb_", ".jpg", Thumbnail.THUMBNAIL_CACHE_DIR); // NON-NLS
 
           BytesWithImageDescriptor bytesWithImageDescriptor =
               new BytesWithImageDescriptor() {
                 @Override
                 public ByteBuffer getBytes(int frame) throws IOException {
-                  if (pixdata instanceof byte[] data) {
+                  if (pixelData instanceof byte[] data) {
                     return ByteBuffer.wrap(data);
-                  } else if (pixdata instanceof BulkData bulkData) {
+                  } else if (pixelData instanceof BulkData bulkData) {
                     return ByteBuffer.wrap(bulkData.toBytes(holder.vr, bigEndian()));
-                  } else if (pixdata instanceof Fragments fragments) {
+                  } else if (pixelData instanceof Fragments fragments) {
                     return ByteBuffer.wrap(fragments.toBytes(holder.vr, bigEndian()));
                   }
                   return null;
@@ -282,9 +282,9 @@ public class DicomDirLoader {
 
                 @Override
                 public boolean bigEndian() {
-                  if (pixdata instanceof BulkData bulkData) {
+                  if (pixelData instanceof BulkData bulkData) {
                     return bulkData.bigEndian();
-                  } else if (pixdata instanceof Fragments fragments) {
+                  } else if (pixelData instanceof Fragments fragments) {
                     return fragments.bigEndian();
                   }
                   return false;

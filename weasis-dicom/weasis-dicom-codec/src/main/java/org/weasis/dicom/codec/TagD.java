@@ -17,6 +17,7 @@ import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
 import static java.time.temporal.ChronoField.YEAR;
 
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -225,7 +226,7 @@ public class TagD extends TagW {
     this.retired = false;
   }
 
-  public VR getValueRerpesentation() {
+  public VR getValueRepresentation() {
     return vr;
   }
 
@@ -236,7 +237,7 @@ public class TagD extends TagW {
     try {
       return vr.vmOf(value);
     } catch (Exception e) {
-      LOGGER.error("Cannot evaluate mulitplicity from DICOM VR", e);
+      LOGGER.error("Cannot evaluate multiplicity from DICOM VR", e);
     }
     return getValueMultiplicity(value);
   }
@@ -275,12 +276,12 @@ public class TagD extends TagW {
   @Override
   public Object getValue(Object data) {
     Object value = null;
-    if (data instanceof Attributes) {
-      value = readValue((Attributes) data);
-    } else if (data instanceof XMLStreamReader) {
-      value = readValue((XMLStreamReader) data);
-    } else if (data instanceof String) {
-      value = readValue((String) data);
+    if (data instanceof Attributes attributes) {
+      value = readValue(attributes);
+    } else if (data instanceof XMLStreamReader xmlStreamReader) {
+      value = readValue(xmlStreamReader);
+    } else if (data instanceof String s) {
+      value = readValue(s);
     }
     return value;
   }
@@ -455,7 +456,7 @@ public class TagD extends TagW {
     } else if (TagType.DICOM_SEQUENCE.equals(type)) {
       value = data;
     } else {
-      value = data.getBytes();
+      value = data.getBytes(StandardCharsets.UTF_8);
     }
 
     return value;
@@ -482,8 +483,8 @@ public class TagD extends TagW {
     }
 
     if (TagType.DICOM_PERSON_NAME.equals(type)) {
-      if (value instanceof String[]) {
-        return Arrays.asList((String[]) value).stream()
+      if (value instanceof String[] strings) {
+        return Arrays.stream(strings)
             .map(TagD::getDicomPersonName)
             .collect(Collectors.joining(", "));
       }
@@ -923,15 +924,11 @@ public class TagD extends TagW {
     }
 
     // Remove the last character and leading 0
-    StringBuilder builder =
-        new StringBuilder(value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", ""));
-    builder.append(" ");
-    builder.append(unit);
-    return builder.toString();
+    return value.substring(0, value.length() - 1).replaceFirst("^0+(?!$)", "") + " " + unit;
   }
 
   /**
-   * @param name
+   * @param name the person name
    * @return return the name (e.g. Smith, John), representing the "lexical name order"
    */
   public static String getDicomPersonName(String name) {

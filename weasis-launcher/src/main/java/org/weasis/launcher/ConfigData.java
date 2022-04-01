@@ -80,8 +80,6 @@ public class ConfigData {
   private final StringBuilder configOutput = new StringBuilder();
   private final Map<String, String> felixProps = new HashMap<>();
 
-  protected ConfigData() {}
-
   public ConfigData(String[] args) {
     init(args);
   }
@@ -266,7 +264,7 @@ public class ConfigData {
    * be set.<br>
    * Local path is considered when codebaseUrl is not defined.
    *
-   * @note Any command launch argument takes priority over serviceConfig parameters. <br>
+   * <p>Any command launch argument takes priority over serviceConfig parameters. <br>
    */
   private void applyConfigFromArguments() {
     List<String> configArgs = extractWeasisConfigArguments();

@@ -120,8 +120,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
     DicomParam[] dcmParams = {new DicomParam(Tag.StudyInstanceUID, studies.toArray(new String[0]))};
 
     Object selectedItem = dicomQrView.getComboDestinationNode().getSelectedItem();
-    if (selectedItem instanceof DefaultDicomNode) {
-      final DefaultDicomNode node = (DefaultDicomNode) selectedItem;
+    if (selectedItem instanceof final DefaultDicomNode node) {
       DefaultDicomNode callingNode =
           (DefaultDicomNode) dicomQrView.getComboCallingNode().getSelectedItem();
       if (callingNode == null) {
@@ -438,7 +437,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           if (patient == null) {
             MediaSeriesGroupNode p =
                 new MediaSeriesGroupNode(
-                    pt.getTagID(), pt.getTagValue(pt.getTagID()), DicomModel.patient.getTagView());
+                    pt.getTagID(), pt.getTagValue(pt.getTagID()), DicomModel.patient.tagView());
             pt.getTagEntrySetIterator().forEachRemaining(e -> p.setTag(e.getKey(), e.getValue()));
             explorerDcmModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, p);
             patient = p;
@@ -447,7 +446,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
           if (study == null) {
             MediaSeriesGroupNode s =
                 new MediaSeriesGroupNode(
-                    st.getTagID(), st.getTagValue(st.getTagID()), DicomModel.study.getTagView());
+                    st.getTagID(), st.getTagValue(st.getTagID()), DicomModel.study.tagView());
             st.getTagEntrySetIterator().forEachRemaining(e -> s.setTag(e.getKey(), e.getValue()));
             explorerDcmModel.addHierarchyNode(patient, s);
             study = s;

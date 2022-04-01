@@ -100,7 +100,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     spinner1.setEnabled(rolling);
   }
 
-  private static int getIntPreferences(String key, int defaultvalue, String removedSuffix) {
+  private static int getIntPreferences(String key, int defaultValue, String removedSuffix) {
     if (key != null) {
       String s = BundleTools.SYSTEM_PREFERENCES.getProperty(key);
       if (s != null) {
@@ -113,16 +113,17 @@ public class LoggingPrefView extends AbstractItemDialogPage {
         try {
           return Integer.parseInt(s);
         } catch (NumberFormatException ignore) {
+          // Do nothing
         }
       }
     }
-    return defaultvalue;
+    return defaultValue;
   }
 
   protected void initialize() {
-    WProperties prfs = BundleTools.SYSTEM_PREFERENCES;
+    WProperties prefs = BundleTools.SYSTEM_PREFERENCES;
 
-    comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prfs.getProperty(AuditLog.LOG_LEVEL, "INFO")));
+    comboBoxLogLevel.setSelectedItem(LEVEL.getLevel(prefs.getProperty(AuditLog.LOG_LEVEL, "INFO")));
     int limit = getIntPreferences(AuditLog.LOG_STACKTRACE_LIMIT, 3, null);
     if (limit > 0
         && limit != 1
@@ -136,7 +137,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     }
     comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");
 
-    checkboxFileLog.setSelected(StringUtil.hasText(prfs.getProperty(AuditLog.LOG_FILE, "")));
+    checkboxFileLog.setSelected(StringUtil.hasText(prefs.getProperty(AuditLog.LOG_FILE, "")));
     spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRollingLog();
@@ -149,6 +150,9 @@ public class LoggingPrefView extends AbstractItemDialogPage {
         AuditLog.LOG_STACKTRACE_LIMIT, StringUtil.hasText(limit) ? limit : "-1");
 
     LEVEL level = (LEVEL) comboBoxLogLevel.getSelectedItem();
+    if (level == null) {
+      level = LEVEL.INFO;
+    }
     BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
     BundleTools.SYSTEM_PREFERENCES.setProperty(
         AuditLog.LOG_FILE_ACTIVATION, String.valueOf(checkboxFileLog.isSelected()));

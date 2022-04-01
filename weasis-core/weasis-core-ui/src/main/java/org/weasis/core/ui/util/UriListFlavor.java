@@ -20,17 +20,17 @@ import org.slf4j.LoggerFactory;
 public class UriListFlavor {
   private static final Logger LOGGER = LoggerFactory.getLogger(UriListFlavor.class);
 
-  public static final DataFlavor flavor =
-      createConstant("text/uri-list;class=java.lang.String", null); // NON-NLS
+  public static final DataFlavor flavor = createDataFlavor();
 
   private static final DataFlavor[] flavors =
       new DataFlavor[] {DataFlavor.javaFileListFlavor, flavor};
 
   private UriListFlavor() {}
 
-  private static DataFlavor createConstant(String mt, String prn) {
+  private static DataFlavor createDataFlavor() {
     try {
-      return new DataFlavor(mt, prn, UriListFlavor.class.getClassLoader());
+      return new DataFlavor(
+          "text/uri-list;class=java.lang.String", null, UriListFlavor.class.getClassLoader());
     } catch (Exception e) {
       LOGGER.error("Build uri flavor", e);
       return null;
@@ -59,6 +59,6 @@ public class UriListFlavor {
   }
 
   public static boolean isDataFlavorSupported(DataFlavor flavor) {
-    return Arrays.asList(flavors).stream().anyMatch(flavor::equals);
+    return Arrays.stream(flavors).anyMatch(flavor::equals);
   }
 }

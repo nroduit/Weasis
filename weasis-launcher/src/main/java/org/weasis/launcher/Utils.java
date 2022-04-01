@@ -11,6 +11,7 @@ package org.weasis.launcher;
 
 import java.io.IOException;
 import java.lang.System.Logger.Level;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -105,7 +106,7 @@ public class Utils {
     List<String> matchList = new ArrayList<>();
     Pattern patternSpaceExceptQuotes = Pattern.compile("'[^']*'|\"[^\"]*\"|( )");
     Matcher m = patternSpaceExceptQuotes.matcher(s);
-    StringBuffer b = new StringBuffer();
+    StringBuilder b = new StringBuilder();
     while (m.find()) {
       if (m.group(1) == null) {
         m.appendReplacement(b, m.group(0));
@@ -131,7 +132,9 @@ public class Utils {
       String value = prop.getProperty(key);
       if (Utils.hasText(value)) {
         try {
-          result = FileUtil.gzipUncompressToByte(Base64.getDecoder().decode(value.getBytes()));
+          result =
+              FileUtil.gzipUncompressToByte(
+                  Base64.getDecoder().decode(value.getBytes(StandardCharsets.UTF_8)));
         } catch (IOException e) {
           System.getLogger(Utils.class.getName()).log(Level.ERROR, "Get byte property", e);
         }
@@ -142,7 +145,8 @@ public class Utils {
 
   public static byte[] decrypt(byte[] input, String strKey) throws GeneralSecurityException {
     SecretKeySpec skeyspec =
-        new SecretKeySpec(Objects.requireNonNull(strKey).getBytes(), "Blowfish"); // NON-NLS
+        new SecretKeySpec(
+            Objects.requireNonNull(strKey).getBytes(StandardCharsets.UTF_8), "Blowfish"); // NON-NLS
     Cipher cipher = Cipher.getInstance("Blowfish"); // NON-NLS
     cipher.init(Cipher.DECRYPT_MODE, skeyspec);
     return cipher.doFinal(input);

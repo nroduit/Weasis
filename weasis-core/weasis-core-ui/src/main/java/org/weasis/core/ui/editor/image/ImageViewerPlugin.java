@@ -181,10 +181,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   /**
    * Returns true if type is instance of defaultClass. This operation is delegated in each bundle to
    * be sure all classes are visible.
-   *
-   * @param defaultClass
-   * @param type
-   * @return
    */
   public abstract boolean isViewType(Class<?> defaultClass, String type);
 
@@ -192,7 +188,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public abstract ViewCanvas<E> createDefaultView(String classType);
 
-  public abstract Component createUIcomponent(String clazz);
+  public abstract Component createComponent(String clazz);
 
   public ViewCanvas<E> getSelectedImagePane() {
     return selectedImagePane;
@@ -291,15 +287,15 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public void changeLayoutModel(GridBagLayoutModel layoutModel) {
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener itemListener) {
+    if (layout instanceof ComboItemListener<?> itemListener) {
       itemListener.setSelectedItem(layoutModel);
     }
   }
 
   protected void removeComponents() {
     for (Component c : components) {
-      if (c instanceof SeriesViewerListener) {
-        eventManager.removeSeriesViewerListener((SeriesViewerListener) c);
+      if (c instanceof SeriesViewerListener viewerListener) {
+        eventManager.removeSeriesViewerListener(viewerListener);
       }
     }
     components.clear();
@@ -313,8 +309,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       component = (JComponent) cl.newInstance();
     }
 
-    if (component instanceof SeriesViewerListener) {
-      eventManager.addSeriesViewerListener((SeriesViewerListener) component);
+    if (component instanceof SeriesViewerListener viewerListener) {
+      eventManager.addSeriesViewerListener(viewerListener);
     }
     return component;
   }
@@ -373,13 +369,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
           oldView.getSeries().setOpen(true);
         }
       } else {
-        Component component = createUIcomponent(e.getType());
+        Component component = createComponent(e.getType());
         if (component != null) {
-          if (component instanceof JComponent) {
-            ((JComponent) component).setOpaque(true);
+          if (component instanceof JComponent jComponent) {
+            jComponent.setOpaque(true);
           }
-          if (component instanceof HistogramView) {
-            glistener = (HistogramView) component;
+          if (component instanceof HistogramView histogramView) {
+            glistener = histogramView;
           }
           components.add(component);
           elements.put(e, component);
@@ -513,7 +509,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     final Map<LayoutConstraints, Component> elements = layoutModel.getConstraints();
     // Prevent conflict with double click for stopping to draw a graphic (like polyline)
 
-    List<DragGraphic> selGraphics = defaultView2d.getGraphicManager().getSelectedDragableGraphics();
+    List<DragGraphic> selGraphics =
+        defaultView2d.getGraphicManager().getSelectedDraggableGraphics();
 
     // Check if there is at least one graphic not complete (numer of pts == UNDEFINED)
     if (selGraphics.stream().anyMatch(g -> Objects.equals(g.getPtsNumber(), Graphic.UNDEFINED))) {
@@ -660,7 +657,6 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     eventManager.updateAllListeners(this, synchView);
   }
 
-  @SuppressWarnings("unchecked")
   public void updateTileOffset() {
     if (SynchData.Mode.TILE.equals(synchView.getSynchData().getMode())
         && selectedImagePane != null) {
@@ -678,6 +674,7 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
         }
       }
       if (series != null) {
+        @SuppressWarnings("unchecked")
         int limit =
             series.size((Filter<E>) selectedView.getActionValue(ActionW.FILTERED_SERIES.cmd()));
         for (int i = 0; i < view2ds.size(); i++) {
@@ -716,14 +713,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
       return VIEWS_1x1;
     }
     ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener) {
-      Object[] list = ((ComboItemListener) layout).getAllItem();
+    if (layout instanceof ComboItemListener<?> comboItemListener) {
+      Object[] list = comboItemListener.getAllItem();
       GridBagLayoutModel bestModel = VIEWS_2x2;
       int diff = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
       for (Object m : list) {
-        if (m instanceof GridBagLayoutModel) {
-          GridBagLayoutModel model = (GridBagLayoutModel) m;
+        if (m instanceof GridBagLayoutModel model) {
           int layoutSize = getViewTypeNumber(model, view2dClass);
           int layoutDiff = Math.abs(layoutSize - size);
           if (layoutSize >= size && layoutDiff <= diff) {
@@ -750,8 +746,8 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (size <= 1) {
       return VIEWS_1x1;
     }
-    if (layout instanceof ComboItemListener) {
-      Object[] list = ((ComboItemListener) layout).getAllItem();
+    if (layout instanceof ComboItemListener<?> comboItemListener) {
+      Object[] list = comboItemListener.getAllItem();
       GridBagLayoutModel bestModel = VIEWS_2x2;
       int diffNumber = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
@@ -796,11 +792,11 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   public GridBagLayoutModel getViewLayout(String title) {
     if (title != null) {
       ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-      if (layout instanceof ComboItemListener) {
-        Object[] list = ((ComboItemListener) layout).getAllItem();
+      if (layout instanceof ComboItemListener<?> comboItemListener) {
+        Object[] list = comboItemListener.getAllItem();
         for (Object m : list) {
-          if (m instanceof GridBagLayoutModel && title.equals(((GridBagLayoutModel) m).getId())) {
-            return (GridBagLayoutModel) m;
+          if (m instanceof GridBagLayoutModel layoutModel && title.equals(layoutModel.getId())) {
+            return layoutModel;
           }
         }
       }

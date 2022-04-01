@@ -31,7 +31,7 @@ import org.weasis.core.ui.test.utils.XmlSerialisationHelper;
 /**
  * Graphic helper for general testing. Test serialization/deserialization of basic and complete
  * objects Test copy() of objects It is possible to add more test with methods <code>
- * additionnalTestsFor<<b>name of the test</b>></code>
+ * additionalTestsFor<<b>name of the test</b>></code>
  *
  * @author ylar - Yannick LARVOR (ylarvor@smarwavesa.com)
  * @param <E> Class implementing {@link Graphic}
@@ -42,7 +42,6 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   protected E graphic;
   protected E deserializedGraphic;
 
-  String tpl;
   String serializationGraphic;
 
   protected List<Point2D> pts;
@@ -245,11 +244,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     checkDefaultValues(result);
   }
 
-  /**
-   * Check values that never change during serialization
-   *
-   * @param result
-   */
+  /** Check values that never change during serialization */
   protected void checkDefaultValues(Graphic result) {
     assertThat(result.getSelected()).isNotNull().isEqualTo(Graphic.DEFAULT_SELECTED);
   }

@@ -26,7 +26,7 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 
 public final class LookAndFeels {
-  private static final Logger LOGGER = System.getLogger(WeasisLauncher.class.getName());
+  private static final Logger LOGGER = System.getLogger(LookAndFeels.class.getName());
 
   private final List<ReadableLookAndFeelInfo> lookAndFeels;
   private final ReadableLookAndFeelInfo defaultLightTheme;

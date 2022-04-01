@@ -115,10 +115,9 @@ public class UIManager {
   public static SeriesViewerFactory getViewerFactory(String[] mimeTypeList) {
     if (mimeTypeList != null && mimeTypeList.length > 0) {
       synchronized (UIManager.SERIES_VIEWER_FACTORIES) {
-        List<SeriesViewerFactory> plugins = UIManager.SERIES_VIEWER_FACTORIES;
         int level = Integer.MAX_VALUE;
         SeriesViewerFactory best = null;
-        for (final SeriesViewerFactory f : plugins) {
+        for (final SeriesViewerFactory f : UIManager.SERIES_VIEWER_FACTORIES) {
           if (f != null) {
             for (String mime : mimeTypeList) {
               if (f.canReadMimeType(mime) && f.getLevel() < level) {

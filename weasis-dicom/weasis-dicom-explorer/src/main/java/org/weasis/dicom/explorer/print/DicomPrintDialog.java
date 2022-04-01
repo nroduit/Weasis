@@ -217,7 +217,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     doClose();
 
     ExportLayout<I> layout;
-    if (optionPane.chckbxSelctedView.isSelected()) {
+    if (optionPane.checkboxSelectedView.isSelected()) {
       layout = new ExportLayout<>(eventManager.getSelectedViewPane());
     } else {
       layout = new ExportLayout<>(container.getLayoutModel());

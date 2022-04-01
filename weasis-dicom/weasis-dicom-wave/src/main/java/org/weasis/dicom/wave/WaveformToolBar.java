@@ -17,7 +17,7 @@ import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class WaveformToolBar extends WtoolBar {
-  protected final JButton jButtondelete = new JButton();
+  protected final JButton jButtonDelete = new JButton();
 
   public WaveformToolBar(int index) {
     super("Main Bar", index); // NON-NLS
@@ -27,8 +27,8 @@ public class WaveformToolBar extends WtoolBar {
         e -> {
           ImageViewerPlugin<?> container =
               WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof WaveContainer) {
-            ((WaveContainer) container).printCurrentView();
+          if (container instanceof WaveContainer waveContainer) {
+            waveContainer.printCurrentView();
           }
         });
     add(printButton);
@@ -39,22 +39,22 @@ public class WaveformToolBar extends WtoolBar {
         e -> {
           ImageViewerPlugin<?> container =
               WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof WaveContainer) {
-            ((WaveContainer) container).displayHeader();
+          if (container instanceof WaveContainer waveContainer) {
+            waveContainer.displayHeader();
           }
         });
     add(metaButton);
 
-    jButtondelete.setToolTipText(Messages.getString("WaveformToolBar.delete"));
-    jButtondelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
-    jButtondelete.addActionListener(
+    jButtonDelete.setToolTipText(Messages.getString("WaveformToolBar.delete"));
+    jButtonDelete.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SELECTION_DELETE));
+    jButtonDelete.addActionListener(
         e -> {
           ImageViewerPlugin<?> container =
               WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof WaveContainer) {
-            ((WaveContainer) container).clearMeasurements();
+          if (container instanceof WaveContainer waveContainer) {
+            waveContainer.clearMeasurements();
           }
         });
-    add(jButtondelete);
+    add(jButtonDelete);
   }
 }

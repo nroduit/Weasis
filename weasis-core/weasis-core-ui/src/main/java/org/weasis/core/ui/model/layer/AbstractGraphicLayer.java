@@ -28,7 +28,7 @@ public abstract class AbstractGraphicLayer extends DefaultUUID implements Graphi
   private Boolean serializable;
   private Boolean selectable;
 
-  public AbstractGraphicLayer(LayerType type) {
+  protected AbstractGraphicLayer(LayerType type) {
     setType(type);
     this.level = type.getLevel();
     this.visible = type.getVisible();

@@ -97,10 +97,9 @@ public class DicomModelQueryResult extends AbstractQueryResult {
                   TagD.getTagValue(series, Tag.SeriesInstanceUID, String.class);
               for (DicomSpecialElement spel : dcmSpecElements) {
                 String seriesUID = TagD.getTagValue(spel, Tag.SeriesInstanceUID, String.class);
-                if (seriesInstanceUID.equals(seriesUID)) {
-                  if (!spel.getMediaReader().isEditableDicom()) {
-                    buildInstance(spel, s);
-                  }
+                if (seriesInstanceUID.equals(seriesUID)
+                    && !spel.getMediaReader().isEditableDicom()) {
+                  buildInstance(spel, s);
                 }
               }
             } else {
@@ -192,10 +191,10 @@ public class DicomModelQueryResult extends AbstractQueryResult {
         s.addSopInstance(sop);
       }
 
-      if (media instanceof DicomImageElement) {
+      if (media instanceof DicomImageElement imageElement) {
         GraphicModel model = (GraphicModel) media.getTagValue(TagW.PresentationModel);
         if (model != null && model.hasSerializableGraphics()) {
-          images.add((DicomImageElement) media);
+          images.add(imageElement);
         }
       }
     }

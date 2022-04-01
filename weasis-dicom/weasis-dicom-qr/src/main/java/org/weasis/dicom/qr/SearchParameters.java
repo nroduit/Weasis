@@ -174,17 +174,15 @@ public class SearchParameters {
                 eventType = xmler.next();
                 if (eventType == XMLStreamConstants.START_ELEMENT) {
                   buildDicomParams(xmler, node);
-                } else if (eventType == XMLStreamConstants.END_ELEMENT) {
-                  if (T_PARAMS.equals(xmler.getName().getLocalPart())) { // NON-NLS
-                    stateParams = false;
-                  }
+                } else if (eventType == XMLStreamConstants.END_ELEMENT
+                    && T_PARAMS.equals(xmler.getName().getLocalPart())) {
+                  stateParams = false;
                 }
               }
             }
-          } else if (eventType == XMLStreamConstants.END_ELEMENT) {
-            if (T_NODE.equals(xmler.getName().getLocalPart())) { // NON-NLS
-              stateNode = false;
-            }
+          } else if (eventType == XMLStreamConstants.END_ELEMENT
+              && T_NODE.equals(xmler.getName().getLocalPart())) {
+            stateNode = false;
           }
         }
         list.add(node);
@@ -213,19 +211,17 @@ public class SearchParameters {
               eventType = xmler.next();
               if (eventType == XMLStreamConstants.START_ELEMENT) {
                 buildDicomParam(xmler, values);
-              } else if (eventType == XMLStreamConstants.END_ELEMENT) {
-                if (T_VALUES.equals(xmler.getName().getLocalPart())) { // NON-NLS
-                  stateValues = false;
-                }
+              } else if (eventType == XMLStreamConstants.END_ELEMENT
+                  && T_VALUES.equals(xmler.getName().getLocalPart())) { // NON-NLS
+                stateValues = false;
               }
             }
           }
           DicomParam param = new DicomParam(parentSeq, tag, values.toArray(new String[0]));
           node.getParameters().add(param);
-        } else if (eventType == XMLStreamConstants.END_ELEMENT) {
-          if (T_PARAM.equals(xmler.getName().getLocalPart())) { // NON-NLS
-            state = false;
-          }
+        } else if (eventType == XMLStreamConstants.END_ELEMENT
+            && T_PARAM.equals(xmler.getName().getLocalPart())) { // NON-NLS
+          state = false;
         }
       }
     }

@@ -78,8 +78,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
   @Override
   protected void initCopy(Graphic graphic) {
     super.initCopy(graphic);
-    if (graphic instanceof AnnotationGraphic) {
-      AnnotationGraphic annotationGraphic = (AnnotationGraphic) graphic;
+    if (graphic instanceof AnnotationGraphic annotationGraphic) {
       labels = Optional.ofNullable(annotationGraphic.labels).map(String[]::clone).orElse(null);
       labelBounds =
           Optional.ofNullable(annotationGraphic.labelBounds)
@@ -271,8 +270,7 @@ public class AnnotationGraphic extends AbstractDragGraphic {
     if (shape == null) {
       return new Area();
     }
-    if (shape instanceof AdvancedShape) {
-      AdvancedShape s = (AdvancedShape) shape;
+    if (shape instanceof AdvancedShape s) {
       Area area = s.getArea(transform);
       List<BasicShape> list = s.getShapeList();
       if (!list.isEmpty()) {

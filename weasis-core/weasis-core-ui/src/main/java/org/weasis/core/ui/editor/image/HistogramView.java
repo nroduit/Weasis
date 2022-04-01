@@ -316,8 +316,8 @@ public class HistogramView extends JComponent
       ChannelHistogramPanel[] old = new ChannelHistogramPanel[histView.getComponentCount()];
       for (int i = 0; i < old.length; i++) {
         Component c = histView.getComponent(i);
-        if (c instanceof ChannelHistogramPanel) {
-          old[i] = (ChannelHistogramPanel) c;
+        if (c instanceof ChannelHistogramPanel channelHistogramPanel) {
+          old[i] = channelHistogramPanel;
         }
       }
       histView.removeAll();
@@ -407,8 +407,7 @@ public class HistogramView extends JComponent
 
     if (selectedGraphicList != null
         && selectedGraphicList.size() == 1
-        && selectedGraphicList.get(0) instanceof AbstractDragGraphicArea) {
-      AbstractDragGraphicArea sel = (AbstractDragGraphicArea) selectedGraphicList.get(0);
+        && selectedGraphicList.get(0) instanceof AbstractDragGraphicArea sel) {
       if (!(sel instanceof SelectGraphic)) {
         g = sel;
       }

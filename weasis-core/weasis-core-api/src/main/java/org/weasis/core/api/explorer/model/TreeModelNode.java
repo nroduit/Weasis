@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.explorer.model;
 
+import java.util.Objects;
 import org.weasis.core.api.media.data.TagView;
 import org.weasis.core.api.media.data.TagW;
 
@@ -16,37 +17,14 @@ import org.weasis.core.api.media.data.TagW;
  * A tree model node defines the type and the position of the node in TreeModelNode. An instance of
  * TreeModelNode must have only one position in TreeModel.
  */
-public class TreeModelNode {
+public record TreeModelNode(int depth, int nodePosition, TagW tagElement, TagView tagView) {
+
   public static final TreeModelNode ROOT = new TreeModelNode(0, 0, TagW.RootElement, null);
 
-  private final int depth;
-  private final int nodePosition;
-  private final TagW tagElement;
-  private final TagView tagView;
-
   public TreeModelNode(int depth, int nodePosition, TagW tagElement, TagView tagView) {
-    if (tagElement == null) {
-      throw new IllegalArgumentException("TagW is null");
-    }
     this.depth = depth;
     this.nodePosition = nodePosition;
-    this.tagElement = tagElement;
+    this.tagElement = Objects.requireNonNull(tagElement);
     this.tagView = tagView;
-  }
-
-  public int getDepth() {
-    return depth;
-  }
-
-  public int getNodePosition() {
-    return nodePosition;
-  }
-
-  public TagW getTagElement() {
-    return tagElement;
-  }
-
-  public TagView getTagView() {
-    return tagView;
   }
 }

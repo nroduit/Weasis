@@ -48,7 +48,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
 
     List<AbstractItemDialogPage> childPages =
         List.of(
-            new LanguagelSetting(),
+            new LanguageSetting(),
             new ThemeSetting(),
             new ScreenPrefView(),
             new ProxyPrefView(),

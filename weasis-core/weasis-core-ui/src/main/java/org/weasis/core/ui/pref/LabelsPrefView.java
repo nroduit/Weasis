@@ -143,7 +143,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
   }
 
   private void initialize() {
-    String key = viewSetting.getFontkey();
+    String key = viewSetting.getFontKey();
     if (StringUtil.hasText(key)) {
       fontItemJComboBox.setSelectedItem(FontItem.getFontItem(key));
     } else {
@@ -155,7 +155,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
   @Override
   public void closeAdditionalWindow() {
-    viewSetting.setFontkey(
+    viewSetting.setFontKey(
         ((FontItem) Objects.requireNonNull(fontItemJComboBox.getSelectedItem())).getKey());
     MeasureToolBar.measureGraphicList.forEach(
         g -> MeasureToolBar.applyDefaultSetting(viewSetting, g));
@@ -177,7 +177,7 @@ public class LabelsPrefView extends AbstractItemDialogPage {
 
   @Override
   public void resetToDefaultValues() {
-    viewSetting.setFontkey(FontItem.SMALL_SEMIBOLD.getKey());
+    viewSetting.setFontKey(FontItem.SMALL_SEMIBOLD.getKey());
     initialize();
     MeasureToolBar.measureGraphicList.forEach(
         g -> {

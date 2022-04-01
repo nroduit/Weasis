@@ -37,7 +37,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomSpecialElement.class);
 
   public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DESCRIPTION =
-      new SeriesComparator<DicomSpecialElement>() {
+      new SeriesComparator<>() {
         @Override
         public int compare(DicomSpecialElement arg0, DicomSpecialElement arg1) {
           return String.CASE_INSENSITIVE_ORDER.compare(arg0.getLabel(), arg1.getLabel());
@@ -45,7 +45,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
       };
 
   public static final SeriesComparator<DicomSpecialElement> ORDER_BY_DATE =
-      new SeriesComparator<DicomSpecialElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomSpecialElement m1, DicomSpecialElement m2) {
@@ -206,8 +206,8 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
   }
 
   /**
-   * @param seriesUID
-   * @param specialElements
+   * @param seriesUID the Series Instance UID
+   * @param specialElements the list of DicomSpecialElement
    * @return the KOSpecialElement collection for the given parameters, if the referenced seriesUID
    *     is null all the KOSpecialElement from specialElements collection are returned. In any case
    *     all the KOSpecialElement that are writable will be added to the returned collection
@@ -225,9 +225,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
 
     for (DicomSpecialElement element : specialElements) {
 
-      if (element instanceof KOSpecialElement) {
-        KOSpecialElement koElement = (KOSpecialElement) element;
-
+      if (element instanceof KOSpecialElement koElement) {
         Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
 
         if (seriesUID == null
@@ -255,9 +253,7 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
 
     for (DicomSpecialElement element : specialElements) {
 
-      if (element instanceof RejectedKOSpecialElement) {
-        RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
-
+      if (element instanceof RejectedKOSpecialElement koElement) {
         Set<String> referencedSeriesInstanceUIDSet = koElement.getReferencedSeriesInstanceUIDSet();
 
         if (seriesUID == null
@@ -286,15 +282,13 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
     List<RejectedKOSpecialElement> koList = null;
 
     for (DicomSpecialElement element : specialElements) {
-      if (element instanceof RejectedKOSpecialElement) {
-        RejectedKOSpecialElement koElement = (RejectedKOSpecialElement) element;
-        if (isSopuidInReferencedSeriesSequence(
-            koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, dicomFrameNumber)) {
-          if (koList == null) {
-            koList = new ArrayList<>();
-          }
-          koList.add(koElement);
+      if (element instanceof RejectedKOSpecialElement koElement
+          && isSopuidInReferencedSeriesSequence(
+              koElement.getReferencedSOPInstanceUIDObject(seriesUID), sopUID, dicomFrameNumber)) {
+        if (koList == null) {
+          koList = new ArrayList<>();
         }
+        koList.add(koElement);
       }
     }
 
@@ -315,14 +309,12 @@ public class DicomSpecialElement extends MediaElement implements DicomElement {
     List<PRSpecialElement> prList = null;
 
     for (DicomSpecialElement element : specialElements) {
-      if (element instanceof PRSpecialElement) {
-        PRSpecialElement prElement = (PRSpecialElement) element;
-        if (PresentationStateReader.isImageApplicable(prElement, img)) {
-          if (prList == null) {
-            prList = new ArrayList<>();
-          }
-          prList.add(prElement);
+      if (element instanceof PRSpecialElement prElement
+          && PresentationStateReader.isImageApplicable(prElement, img)) {
+        if (prList == null) {
+          prList = new ArrayList<>();
         }
+        prList.add(prElement);
       }
     }
     if (prList != null) {

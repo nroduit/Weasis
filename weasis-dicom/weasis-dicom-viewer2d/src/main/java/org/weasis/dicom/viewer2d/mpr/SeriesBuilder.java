@@ -60,7 +60,7 @@ import org.weasis.opencv.op.ImageProcessor;
 
 public class SeriesBuilder {
 
-  static TagW SeriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
+  static TagW seriesReferences = new TagW("series.builder.refs", TagType.STRING, 2, 2);
   public static final File MPR_CACHE_DIR =
       AppProperties.buildAccessibleTempDirectory(
           AppProperties.FILE_CACHE_DIR.getName(), "mpr"); // NON-NLS
@@ -90,7 +90,7 @@ public class SeriesBuilder {
           if (geometry != null) {
             int width = TagD.getTagValue(img, Tag.Columns, Integer.class);
             int height = TagD.getTagValue(img, Tag.Rows, Integer.class);
-            // abort needs to be final array to be changed on "invoqueAndWhait()" block.
+            // abort needs to be final array to be changed on "invokeAndWait()" block.
             final boolean[] abort = new boolean[] {false, false};
 
             if (MathUtil.isDifferent(img.getRescaleX(), img.getRescaleY())) {
@@ -122,14 +122,14 @@ public class SeriesBuilder {
 
               final String uid1;
               final String uid2;
-              String[] uidsRef = TagW.getTagValue(series, SeriesReferences, String[].class);
+              String[] uidsRef = TagW.getTagValue(series, seriesReferences, String[].class);
               if (uidsRef != null && uidsRef.length == 2) {
                 uid1 = uidsRef[0];
                 uid2 = uidsRef[1];
               } else {
                 uid1 = UIDUtils.createUID();
                 uid2 = UIDUtils.createUID();
-                series.setTag(SeriesReferences, new String[] {uid1, uid2});
+                series.setTag(seriesReferences, new String[] {uid1, uid2});
               }
 
               if (SliceOrientation.SAGITTAL.equals(type1)) {
@@ -227,8 +227,8 @@ public class SeriesBuilder {
               MediaSeriesGroup study = null;
               DataExplorerModel model = (DataExplorerModel) series.getTagValue(TagW.ExplorerModel);
               TreeModel treeModel = null;
-              if (model instanceof TreeModel) {
-                treeModel = (TreeModel) model;
+              if (model instanceof TreeModel treeModel1) {
+                treeModel = treeModel1;
                 study = treeModel.getParent(series, DicomModel.study);
                 if (study != null) {
                   for (int i = 0; i < 2; i++) {
@@ -243,7 +243,7 @@ public class SeriesBuilder {
                                 mprView.setSeries((MediaSeries<DicomImageElement>) group);
                                 // Copy the synch values from the main view
                                 for (String action :
-                                    MPRContainer.DEFAULT_MPR.getSynchData().getActions().keySet()) {
+                                    MPRContainer.defaultMpr.getSynchData().getActions().keySet()) {
                                   mprView.setActionsInView(action, view.getActionValue(action));
                                 }
                                 mprView.zoom(mainView.getViewModel().getViewScale());
@@ -323,9 +323,9 @@ public class SeriesBuilder {
                           mprView,
                           attributes);
 
-                  if (dicomSeries != null && dicomSeries.size(null) > 0) {
+                  if (dicomSeries.size(null) > 0) {
                     dicomSeries.getMedia(0, null, null).getMediaReader().writeMetaData(dicomSeries);
-                    if (study != null && treeModel != null) {
+                    if (study != null) {
                       dicomSeries.setTag(TagW.ExplorerModel, model);
                       treeModel.addHierarchyNode(study, dicomSeries);
                       if (treeModel instanceof DicomModel dicomModel) {
@@ -342,7 +342,7 @@ public class SeriesBuilder {
                               mprView.setSeries(dicomSeries);
                               // Copy the synch values from the main view
                               for (String action :
-                                  MPRContainer.DEFAULT_MPR.getSynchData().getActions().keySet()) {
+                                  MPRContainer.defaultMpr.getSynchData().getActions().keySet()) {
                                 mprView.setActionsInView(action, view.getActionValue(action));
                               }
                               mprView.zoom(mainView.getViewModel().getViewScale());
@@ -524,7 +524,7 @@ public class SeriesBuilder {
       }
       dcms.add(buildDicomImageElement(rawIO));
     }
-    return new DicomSeries(params.seriesUID, dcms, DicomModel.series.getTagView());
+    return new DicomSeries(params.seriesUID, dcms, DicomModel.series.tagView());
   }
 
   public static DicomImageElement buildDicomImageElement(DcmMediaReader rawIO) {
@@ -656,7 +656,7 @@ public class SeriesBuilder {
   private static void writeRasterInRaw(
       PlanarImage image,
       FileRawImage[] newSeries,
-      ImageCV[] builImgs,
+      ImageCV[] buildImg,
       ViewParameter params,
       int dstHeight,
       int imgIndex)
@@ -668,12 +668,12 @@ public class SeriesBuilder {
         dir.mkdirs();
         for (int i = 0; i < newSeries.length; i++) {
           newSeries[i] = new FileRawImage(new File(dir, "mpr_" + (i + 1) + ".wcv")); // NON-NLS
-          builImgs[i] = new ImageCV(dstHeight, img.width(), img.type());
+          buildImg[i] = new ImageCV(dstHeight, img.width(), img.type());
         }
       }
 
       for (int j = 0; j < newSeries.length; j++) {
-        img.row(j).copyTo(builImgs[j].row(imgIndex - 1));
+        img.row(j).copyTo(buildImg[j].row(imgIndex - 1));
       }
       if (!img.equals(image)) {
         img.release();

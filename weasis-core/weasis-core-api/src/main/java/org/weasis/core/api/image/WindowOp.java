@@ -45,9 +45,9 @@ public class WindowOp extends AbstractOp {
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.getEventType();
-    if (OpEvent.ImageChange.equals(type)) {
+    if (OpEvent.IMAGE_CHANGE.equals(type)) {
       setParam(P_IMAGE_ELEMENT, event.getImage());
-    } else if (OpEvent.ResetDisplay.equals(type) || OpEvent.SeriesChange.equals(type)) {
+    } else if (OpEvent.RESET_DISPLAY.equals(type) || OpEvent.SERIES_CHANGE.equals(type)) {
       ImageElement img = event.getImage();
       setParam(P_IMAGE_ELEMENT, img);
       if (img != null) {

@@ -42,7 +42,7 @@ public class CircularProgressBar extends JProgressBar {
   }
 
   public CircularProgressBar(int min, int max) {
-    this(0, 100, 5f, true, null);
+    this(min, max, 5f, true, null);
   }
 
   public CircularProgressBar(

@@ -166,13 +166,16 @@ public final class GeomUtil {
       return null;
     }
 
-    Point2D ptA = line1.getP1(), ptB = line1.getP2();
-    Point2D ptC = line2.getP1(), ptD = line2.getP2();
+    Point2D ptA = line1.getP1();
+    Point2D ptB = line1.getP2();
+    Point2D ptC = line2.getP1();
+    Point2D ptD = line2.getP2();
 
     Line2D line3 = new Line2D.Double(ptA, ptC);
     Line2D line4 = new Line2D.Double(ptB, ptD);
 
-    Point2D ptM, ptN;
+    Point2D ptM;
+    Point2D ptN;
 
     if (line3.intersectsLine(line4)) {
       ptM = new Point2D.Double((ptA.getX() + ptD.getX()) / 2, (ptA.getY() + ptD.getY()) / 2);
@@ -368,7 +371,7 @@ public final class GeomUtil {
   }
 
   /**
-   * @param ptList
+   * @param ptList the list of Point2D
    * @return center point
    */
   public static Point2D getCircleCenter(List<Point2D> ptList) {
@@ -442,7 +445,7 @@ public final class GeomUtil {
    * This function handle cases of mirror image flip about some axis. This changes right-handed
    * coordinate system into a left-handed system. Hence, returned angle has an opposite value.
    *
-   * @param transform
+   * @param transform the AffineTransform value
    * @return angle in the range of [ -PI ; PI ]
    */
   public static double extractAngleRad(AffineTransform transform) {
@@ -465,8 +468,8 @@ public final class GeomUtil {
   /**
    * Do a scaling transformation around the anchor point
    *
-   * @param shape
-   * @param scalingFactor
+   * @param shape the Shape value
+   * @param scalingFactor the scaling factor
    * @param anchorPoint can be null
    * @return null if either shape is null or scaling factor is zero
    */

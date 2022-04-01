@@ -56,16 +56,16 @@ public class ManifestBuilder {
     return params;
   }
 
-  public static void writeExtendedManifest(ArcQuery arquery, File outFile) throws IOException {
-    if (arquery == null || outFile == null) {
+  public static void writeExtendedManifest(ArcQuery arcQuery, File outFile) throws IOException {
+    if (arcQuery == null || outFile == null) {
       throw new IllegalArgumentException("ArcQuery and File cannot be null");
     }
 
     try (BufferedWriter buf =
         new BufferedWriter(
-            new OutputStreamWriter(new FileOutputStream(outFile), arquery.getCharsetEncoding()))) {
+            new OutputStreamWriter(new FileOutputStream(outFile), arcQuery.getCharsetEncoding()))) {
 
-      writeExtendedManifest(arquery, buf);
+      writeExtendedManifest(arcQuery, buf);
       buf.flush();
     } catch (IOException e) {
       FileUtil.delete(outFile);
@@ -73,20 +73,20 @@ public class ManifestBuilder {
     }
   }
 
-  private static void writeExtendedManifest(ArcQuery arquery, Writer buf) throws IOException {
-    arquery.writeHeader(buf);
-    arquery.writeArcQueries(buf);
+  private static void writeExtendedManifest(ArcQuery arcQuery, Writer buf) throws IOException {
+    arcQuery.writeHeader(buf);
+    arcQuery.writeArcQueries(buf);
 
     List<KOSpecialElement> koEditable = new ArrayList<>();
     List<DicomImageElement> images = new ArrayList<>();
 
-    for (QueryResult query : arquery.getQueryList()) {
-      if (query instanceof DicomModelQueryResult) {
-        Set<KOSpecialElement> kos = ((DicomModelQueryResult) query).getKoEditable();
+    for (QueryResult query : arcQuery.getQueryList()) {
+      if (query instanceof DicomModelQueryResult modelQueryResult) {
+        Set<KOSpecialElement> kos = modelQueryResult.getKoEditable();
         if (!kos.isEmpty()) {
           koEditable.addAll(kos);
         }
-        Set<DicomImageElement> imgs = ((DicomModelQueryResult) query).getImages();
+        Set<DicomImageElement> imgs = modelQueryResult.getImages();
         if (!imgs.isEmpty()) {
           images.addAll(imgs);
         }
@@ -114,6 +114,6 @@ public class ManifestBuilder {
 
     KOSpecialElement.writeSelection(koEditable, buf);
 
-    arquery.writeEndOfDocument(buf);
+    arcQuery.writeEndOfDocument(buf);
   }
 }

@@ -299,7 +299,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
         while (en.hasMoreElements()) {
           Object node = en.nextElement();
           if (node instanceof TreeNode checkNode) {
-            Boolean sel =
+            boolean sel =
                 applyAllViews.isSelected()
                     ? AbstractInfoLayer.defaultDisplayPreferences.getOrDefault(
                         node.toString(), Boolean.FALSE)
@@ -351,7 +351,7 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     EVENT e = event.getEventType();
     if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
       iniTreeValues(((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane());
-    } else if (EVENT.TOOGLE_INFO.equals(e)) {
+    } else if (EVENT.TOGGLE_INFO.equals(e)) {
       TreeCheckingModel model = tree.getCheckingModel();
       TreePath path = new TreePath(dicomInfo.getPath());
 

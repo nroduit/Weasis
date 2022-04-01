@@ -46,5 +46,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   }
 
   @Override
-  public void resetToDefaultValues() {}
+  public void resetToDefaultValues() {
+    // Do nothing
+  }
 }

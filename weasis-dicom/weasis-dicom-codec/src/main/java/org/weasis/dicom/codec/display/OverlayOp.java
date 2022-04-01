@@ -10,7 +10,7 @@
 package org.weasis.dicom.codec.display;
 
 import java.awt.Color;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomMetaData;
@@ -50,11 +50,11 @@ public class OverlayOp extends AbstractOp {
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.getEventType();
-    if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
+    if (OpEvent.IMAGE_CHANGE.equals(type) || OpEvent.RESET_DISPLAY.equals(type)) {
       setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
       setParam(P_IMAGE_ELEMENT, event.getImage());
-    } else if (OpEvent.ApplyPR.equals(type)) {
-      HashMap<String, Object> p = event.getParams();
+    } else if (OpEvent.APPLY_PR.equals(type)) {
+      Map<String, Object> p = event.getParams();
       if (p != null) {
         PRSpecialElement pr =
             Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))

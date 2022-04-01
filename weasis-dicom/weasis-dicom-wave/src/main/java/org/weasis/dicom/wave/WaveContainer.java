@@ -103,7 +103,7 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
   public static final List<DockableTool> TOOLS = Collections.synchronizedList(new ArrayList<>(1));
   private static volatile boolean initComponents = false;
   static final ImageViewerEventManager<DicomImageElement> ECG_EVENT_MANAGER =
-      new ImageViewerEventManager<DicomImageElement>() {
+      new ImageViewerEventManager<>() {
 
         @Override
         public boolean updateComponentsListener(ViewCanvas<DicomImageElement> defaultView2d) {
@@ -340,15 +340,15 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     try {
       Class<?> cl = Class.forName(clazz);
       JComponent component = (JComponent) cl.newInstance();
-      if (component instanceof SeriesViewerListener) {
-        eventManager.addSeriesViewerListener((SeriesViewerListener) component);
+      if (component instanceof SeriesViewerListener viewerListener) {
+        eventManager.addSeriesViewerListener(viewerListener);
       }
-      if (component instanceof WaveView) {
-        ecgView = (WaveView) component;
+      if (component instanceof WaveView waveView) {
+        ecgView = waveView;
       }
       return component;
     } catch (Exception e) {

@@ -50,7 +50,7 @@ public class PointGraphicTest extends GraphicTester<PointGraphic> {
     return new Object[] {
       PointGraphic.DEFAULT_POINT_SIZE,
       Graphic.DEFAULT_FILLED,
-      Graphic.DEFAULT_LABEL_VISISIBLE,
+      Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)

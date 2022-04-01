@@ -95,8 +95,9 @@ public class RtSet {
     // First initialise all RTSTRUCT
     for (MediaElement rt : this.rtElements) {
       String sopUID = TagD.getTagValue(rt, Tag.SOPClassUID, String.class);
-      if (UID.RTStructureSetStorage.equals(sopUID) && rt instanceof RtSpecialElement) {
-        initStructures((RtSpecialElement) rt);
+      if (UID.RTStructureSetStorage.equals(sopUID)
+          && rt instanceof RtSpecialElement rtSpecialElement) {
+        initStructures(rtSpecialElement);
       }
     }
 
@@ -175,42 +176,39 @@ public class RtSet {
               // Display volume
               double volume = structure.getVolume();
               String source = structure.getVolumeSource().toString();
-              LOGGER.debug(
-                  String.format(
-                      "Structure: " + structure.getRoiName() + ", " + source + " Volume: %.4f cm^3",
-                      volume));
+              if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(
+                    "Structure: {}, {} Volume: {} cm^3",
+                    structure.getRoiName(),
+                    source,
+                    String.format("%.4f", volume));
 
-              // If plan is loaded with prescribed treatment dose calculate DVH statistics
-              String relativeMinDose =
-                  String.format(
-                      "Structure: "
-                          + structure.getRoiName()
-                          + ", "
-                          + structureDvh.getDvhSource().toString()
-                          + " Min Dose: %.3f %%",
-                      RtSet.calculateRelativeDose(
-                          structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
-              String relativeMaxDose =
-                  String.format(
-                      "Structure: "
-                          + structure.getRoiName()
-                          + ", "
-                          + structureDvh.getDvhSource().toString()
-                          + " Max Dose: %.3f %%",
-                      RtSet.calculateRelativeDose(
-                          structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
-              String relativeMeanDose =
-                  String.format(
-                      "Structure: "
-                          + structure.getRoiName()
-                          + ", "
-                          + structureDvh.getDvhSource().toString()
-                          + " Mean Dose: %.3f %%",
-                      RtSet.calculateRelativeDose(
-                          structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
-              LOGGER.debug(relativeMinDose);
-              LOGGER.debug(relativeMaxDose);
-              LOGGER.debug(relativeMeanDose);
+                // If plan is loaded with prescribed treatment dose calculate DVH statistics
+                String relativeMinDose =
+                    String.format(
+                        "Structure: %s, %s Min Dose: %.3f %%",
+                        structure.getRoiName(),
+                        structureDvh.getDvhSource(),
+                        RtSet.calculateRelativeDose(
+                            structureDvh.getDvhMinimumDoseCGy(), plan.getRxDose()));
+                String relativeMaxDose =
+                    String.format(
+                        "Structure: %s, %s Max Dose: %.3f %%",
+                        structure.getRoiName(),
+                        structureDvh.getDvhSource(),
+                        RtSet.calculateRelativeDose(
+                            structureDvh.getDvhMaximumDoseCGy(), plan.getRxDose()));
+                String relativeMeanDose =
+                    String.format(
+                        "Structure:  %s,  %s Mean Dose: %.3f %%",
+                        structure.getRoiName(),
+                        structureDvh.getDvhSource(),
+                        RtSet.calculateRelativeDose(
+                            structureDvh.getDvhMeanDoseCGy(), plan.getRxDose()));
+                LOGGER.debug(relativeMinDose);
+                LOGGER.debug(relativeMaxDose);
+                LOGGER.debug(relativeMeanDose);
+              }
             }
           }
         }
@@ -326,8 +324,8 @@ public class RtSet {
 
             // Each plane which coincides with an image slice will have a unique ID
             // take the first one
-            for (Attributes images : contour.getSequence(Tag.ContourImageSequence)) {
-              String sopUID = images.getString(Tag.ReferencedSOPInstanceUID);
+            for (Attributes attributes : contour.getSequence(Tag.ContourImageSequence)) {
+              String sopUID = attributes.getString(Tag.ReferencedSOPInstanceUID);
               if (StringUtil.hasText(sopUID)) {
                 ArrayList<Contour> pls = contourMap.computeIfAbsent(sopUID, k -> new ArrayList<>());
                 pls.add(plane);
@@ -383,12 +381,10 @@ public class RtSet {
                   .filter(p -> p.getValue().getSopInstanceUid().equals(planSopInstanceUid))
                   .findFirst();
 
-          if (opPlan.isPresent()) {
-            if (opPlan.get().getKey() == null) {
-              plan = opPlan.get().getValue();
-              // Remove the dummy from the set
-              plans.remove(null, plan);
-            }
+          if (opPlan.isPresent() && opPlan.get().getKey() == null) {
+            plan = opPlan.get().getValue();
+            // Remove the dummy from the set
+            plans.remove(null, plan);
           }
         }
       }
@@ -554,7 +550,7 @@ public class RtSet {
                 rtDvh.setReferencedRoiNumber(
                     dvhRefRoiAttributes.getInt(Tag.ReferencedROINumber, -1));
 
-                LOGGER.debug("Found DVH for ROI: " + rtDvh.getReferencedRoiNumber());
+                LOGGER.debug("Found DVH for ROI: {}", rtDvh.getReferencedRoiNumber());
               }
 
               if (rtDvh != null) {
@@ -776,14 +772,13 @@ public class RtSet {
                 isoDoseLayer.getIsoDose().getPlanes().computeIfAbsent(z, k -> new ArrayList<>());
 
                 // For each iso contour create a new contour
-                MatOfPoint contour = matOfPoint;
                 Contour isoContour = new Contour(isoDoseLayer);
 
                 // Populate point coordinates
-                double[] newContour = new double[contour.toArray().length * 3];
+                double[] newContour = new double[matOfPoint.toArray().length * 3];
                 int k = 0;
 
-                for (Point point : contour.toList()) {
+                for (Point point : matOfPoint.toList()) {
                   double[] coordinates = new double[2];
 
                   coordinates[0] = dose.getDoseMmLUT().getFirst()[(int) point.x];
@@ -900,7 +895,8 @@ public class RtSet {
         .flatMap(p -> p.getDoses().stream())
         .forEach(
             d ->
-                d.getIsoDoseSet().values().stream()
+                d.getIsoDoseSet()
+                    .values()
                     .forEach(
                         l -> {
                           Color c = l.getIsoDose().getColor();

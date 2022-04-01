@@ -10,7 +10,7 @@
 package org.weasis.core.ui.editor.image;
 
 import java.awt.Point;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.ui.Messages;
 
@@ -52,7 +52,7 @@ public class PixelInfo {
     if (values != null) {
       if (values.length == 1) {
         StringBuilder text = new StringBuilder();
-        text.append(DecFormater.allNumber(values[0]));
+        text.append(DecFormatter.allNumber(values[0]));
         if (pixelValueUnit != null) {
           text.append(" ");
           text.append(pixelValueUnit);
@@ -78,7 +78,7 @@ public class PixelInfo {
                   ? Messages.getString("PixelInfo.unknown")
                   : channelNames[i].substring(0, 1));
           text.append("=");
-          text.append(DecFormater.twoDecimal(values[i]));
+          text.append(DecFormatter.twoDecimal(values[i]));
         }
         return text.toString();
       }
@@ -114,12 +114,7 @@ public class PixelInfo {
     if (position == null) {
       return Messages.getString("DefaultView2d.out");
     }
-    StringBuilder text = new StringBuilder("(");
-    text.append(position.x);
-    text.append(",");
-    text.append(position.y);
-    text.append(")");
-    return text.toString();
+    return "(" + position.x + "," + position.y + ")";
   }
 
   public String getRealPositionText() {
@@ -128,10 +123,10 @@ public class PixelInfo {
     }
 
     StringBuilder text = new StringBuilder("(");
-    text.append(DecFormater.twoDecimal(pixelSize * position.x));
+    text.append(DecFormatter.twoDecimal(pixelSize * position.x));
     text.append(pixelSpacingUnit.getAbbreviation());
     text.append(",");
-    text.append(DecFormater.twoDecimal(pixelSize * position.y));
+    text.append(DecFormatter.twoDecimal(pixelSize * position.y));
     text.append(pixelSpacingUnit.getAbbreviation());
     text.append(")");
     return text.toString();

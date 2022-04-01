@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.MediaSizeName;
@@ -64,16 +65,13 @@ public class ImagePrint implements Printable {
   }
 
   private static OrientationRequested mapOrientation(final int orientation) {
-    switch (orientation) {
-      case PageFormat.LANDSCAPE:
-        return OrientationRequested.LANDSCAPE;
-      case PageFormat.REVERSE_LANDSCAPE:
-        return OrientationRequested.REVERSE_LANDSCAPE;
-      case PageFormat.PORTRAIT:
-        return OrientationRequested.PORTRAIT;
-      default:
-        throw new IllegalArgumentException("The given value is no valid PageFormat orientation.");
-    }
+    return switch (orientation) {
+      case PageFormat.LANDSCAPE -> OrientationRequested.LANDSCAPE;
+      case PageFormat.REVERSE_LANDSCAPE -> OrientationRequested.REVERSE_LANDSCAPE;
+      case PageFormat.PORTRAIT -> OrientationRequested.PORTRAIT;
+      default -> throw new IllegalArgumentException(
+          "The given value is no valid PageFormat orientation.");
+    };
   }
 
   public void print() {
@@ -95,8 +93,8 @@ public class ImagePrint implements Printable {
         new MediaPrintableArea(
             0.25f,
             0.25f,
-            mediaSize.getX(MediaSize.INCH) - 0.5f,
-            mediaSize.getY(MediaSize.INCH) - 0.5f,
+            mediaSize.getX(Size2DSyntax.INCH) - 0.5f,
+            mediaSize.getY(Size2DSyntax.INCH) - 0.5f,
             MediaPrintableArea.INCH);
     aset.add(printableArea);
     aset.add(mapOrientation(pf.getOrientation()));

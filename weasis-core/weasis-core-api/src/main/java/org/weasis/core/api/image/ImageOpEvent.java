@@ -9,26 +9,26 @@
  */
 package org.weasis.core.api.image;
 
-import java.util.HashMap;
+import java.util.Map;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
 
 public class ImageOpEvent {
 
   public enum OpEvent {
-    ResetDisplay,
-    SeriesChange,
-    ImageChange,
-    ApplyPR
+    RESET_DISPLAY,
+    SERIES_CHANGE,
+    IMAGE_CHANGE,
+    APPLY_PR
   }
 
   private final OpEvent eventType;
   private final MediaSeries series;
   private final ImageElement image;
-  private final HashMap<String, Object> params;
+  private final Map<String, Object> params;
 
   public ImageOpEvent(
-      OpEvent eventType, MediaSeries series, ImageElement image, HashMap<String, Object> params) {
+      OpEvent eventType, MediaSeries series, ImageElement image, Map<String, Object> params) {
     if (eventType == null) {
       throw new IllegalArgumentException();
     }
@@ -50,7 +50,7 @@ public class ImageOpEvent {
     return image;
   }
 
-  public HashMap<String, Object> getParams() {
+  public Map<String, Object> getParams() {
     return params;
   }
 }

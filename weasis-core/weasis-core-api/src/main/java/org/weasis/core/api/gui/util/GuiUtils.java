@@ -78,6 +78,10 @@ import org.weasis.core.util.StringUtil;
 public class GuiUtils {
   private static final Logger LOGGER = LoggerFactory.getLogger(GuiUtils.class);
 
+  public static final String HTML_START = "<html>";
+  public static final String HTML_END = "</html>";
+  public static final String HTML_BR = "<br>";
+
   private GuiUtils() {}
 
   public enum IconColor {
@@ -100,7 +104,8 @@ public class GuiUtils {
     }
 
     public String getHtmlCode() {
-      return String.format("rgb(%d,%d,%d)", color.getRed(), color.getGreen(), color.getBlue());
+      return String.format(
+          "rgb(%d,%d,%d)", color.getRed(), color.getGreen(), color.getBlue()); // NON-NLS
     }
   }
 

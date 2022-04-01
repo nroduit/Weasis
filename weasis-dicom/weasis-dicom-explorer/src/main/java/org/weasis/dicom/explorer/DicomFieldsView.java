@@ -84,14 +84,15 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private final SeriesViewer<?> viewer;
 
   public static final String[] columns = {"Tag ID", "VR", "Tag Name", "Value"};
-  private final DefaultTableModel model =
+  private final DefaultTableModel tableModel =
       new DefaultTableModel(columns, 0) {
+        @Override
         public boolean isCellEditable(int row, int column) {
           return false;
         }
       };
 
-  private final JTable jtable = new JTable(model);
+  private final JTable jtable = new JTable(tableModel);
   private final TagSearchTablePanel tagSearchTablePanel;
   private final TagSearchDocumentPanel tagSearchDocumentPanel;
 
@@ -113,7 +114,7 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
     dump.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     addTab(Messages.getString("DicomFieldsView.all"), null, dump, null);
     TableRowSorter<TableModel> sorter =
-        new TableRowSorter<>(model) {
+        new TableRowSorter<>(tableModel) {
           @Override
           public boolean isSortable(int column) {
             return false;
@@ -171,17 +172,17 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   }
 
   private void displayAllDicomInfo(MediaSeries<?> series, MediaElement media) {
-    model.setRowCount(0);
+    tableModel.setRowCount(0);
     if (media != null) {
       MediaReader loader = media.getMediaReader();
       if (loader instanceof DicomMediaIO dicomMediaIO) {
         DicomMetaData metaData = dicomMediaIO.getDicomMetaData();
         if (metaData != null) {
-          printAttribute(model, metaData.getFileMetaInformation());
-          printAttribute(model, metaData.getDicomObject());
+          printAttribute(tableModel, metaData.getFileMetaInformation());
+          printAttribute(tableModel, metaData.getDicomObject());
         }
       } else if (loader instanceof DcmMediaReader reader) {
-        printAttribute(model, reader.getDicomObject());
+        printAttribute(tableModel, reader.getDicomObject());
       }
     }
     jtable.getColumnModel().getColumn(0).setPreferredWidth(100);

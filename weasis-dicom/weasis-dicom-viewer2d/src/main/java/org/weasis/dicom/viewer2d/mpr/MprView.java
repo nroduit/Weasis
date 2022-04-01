@@ -71,22 +71,17 @@ public class MprView extends View2d {
   }
 
   @Override
-  protected void setImage(DicomImageElement img) {
-    super.setImage(img);
-  }
-
-  @Override
-  protected JPopupMenu buildContexMenu(final MouseEvent evt) {
+  protected JPopupMenu buildContextMenu(final MouseEvent evt) {
     ActionState action = eventManager.getAction(ActionW.SORT_STACK);
     if (action != null && action.isActionEnabled()) {
       // Force to disable sort stack menu
       action.enableAction(false);
-      JPopupMenu ctx = super.buildContexMenu(evt);
+      JPopupMenu ctx = super.buildContextMenu(evt);
       action.enableAction(true);
       return ctx;
     }
 
-    return super.buildContexMenu(evt);
+    return super.buildContextMenu(evt);
   }
 
   @Override

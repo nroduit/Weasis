@@ -34,6 +34,7 @@ import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.BulkData;
 import org.dcm4che3.data.Sequence;
@@ -68,7 +69,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private Series<?> series;
 
   private InfoPanel infoPanel;
-  private JPanel cpane;
+  private JPanel pane;
 
   private int mvCells;
   private double seconds;
@@ -115,7 +116,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
               new Object[] {
                 leadName,
                 Messages.getString("WaveView.start_val"),
-                MarkerAnnotation.mVFormatter.format(m.getStartMiliVolt())
+                MarkerAnnotation.mVFormatter.format(m.getStartMilliVolt())
               });
 
           if (m.getStopSeconds() != null) {
@@ -129,7 +130,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
                 new Object[] {
                   leadName,
                   Messages.getString("WaveView.stop_val"),
-                  MarkerAnnotation.mVFormatter.format(m.getStopMiliVolt())
+                  MarkerAnnotation.mVFormatter.format(m.getStopMilliVolt())
                 });
           }
           if (m.getDuration() != null) {
@@ -285,8 +286,8 @@ public class WaveView extends JPanel implements SeriesViewerListener {
       getMinMax(channels);
 
       JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-      scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+      scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 
       double speed =
           waveLayoutManager == null ? WaveLayoutManager.AUTO_SPEED : waveLayoutManager.getSpeed();
@@ -296,10 +297,10 @@ public class WaveView extends JPanel implements SeriesViewerListener {
               : waveLayoutManager.getAmplitude();
 
       this.waveLayoutManager = new WaveLayoutManager(this, currentFormat, speed, amplitude);
-      this.cpane = new JPanel(waveLayoutManager);
-      JPanel channelwrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-      channelwrap.add(cpane);
-      scrollPane.setViewportView(channelwrap);
+      this.pane = new JPanel(waveLayoutManager);
+      JPanel channelWrap = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+      channelWrap.add(pane);
+      scrollPane.setViewportView(channelWrap);
 
       addChannelPanels();
       if (getChannelNumber() < 12) {
@@ -323,7 +324,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
           new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-              cpane.revalidate();
+              pane.revalidate();
             }
           });
     }
@@ -334,8 +335,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private void readWaveformData(Attributes dcm) throws IOException {
     Object wdata = dcm.getValue(Tag.WaveformData);
     ByteArrayOutputStream array;
-    if (wdata instanceof BulkData) {
-      BulkData bulkData = (BulkData) wdata;
+    if (wdata instanceof BulkData bulkData) {
       try (BufferedInputStream input = new BufferedInputStream(bulkData.openStream())) {
         array = new ByteArrayOutputStream(bulkData.length());
         StreamUtils.copy(input, array);
@@ -375,12 +375,12 @@ public class WaveView extends JPanel implements SeriesViewerListener {
   private void addChannelPanels() {
     for (ChannelDefinition channel : channels) {
       LeadPanel panel = new LeadPanel(this, waveData, channel);
-      cpane.add(channel.getTitle(), panel);
+      pane.add(channel.getTitle(), panel);
 
       if (Lead.II == channel.getLead()) {
         LeadPanel rhythm =
-            new LeadPanel(this, waveData, new ChannelDefinition(channel, Lead.RYTHM.toString()));
-        cpane.add("rythm", rhythm); // NON-NLS
+            new LeadPanel(this, waveData, new ChannelDefinition(channel, Lead.RHYTHM.toString()));
+        pane.add("rhythm", rhythm); // NON-NLS
       }
     }
   }
@@ -422,12 +422,12 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   public void setSpeed(double mmPerSecond) {
     this.waveLayoutManager.setSpeed(mmPerSecond);
-    this.cpane.revalidate();
+    this.pane.revalidate();
   }
 
-  public void setAmplitude(int mmPerMillivolt) {
-    this.waveLayoutManager.setAmplitude(mmPerMillivolt);
-    this.cpane.revalidate();
+  public void setAmplitude(int mmPerMilliVolt) {
+    this.waveLayoutManager.setAmplitude(mmPerMilliVolt);
+    this.pane.revalidate();
   }
 
   public void setFormat(Format format) {
@@ -436,10 +436,10 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     if (currentFormat == Format.TWO) {
       List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
       for (int i = 0; i < channelNumber; i++) {
-        double startTime = i != 0 && (i % 2) != 0 ? 5.0 : 0;
+        double startTime = (i % 2) != 0 ? 5.0 : 0;
         ordered.get(i).setTime(startTime, 5);
       }
-    } else if (currentFormat == Format.FOUR || currentFormat == Format.FOUR_RYTHM) {
+    } else if (currentFormat == Format.FOUR || currentFormat == Format.FOUR_RHYTHM) {
       List<LeadPanel> ordered = waveLayoutManager.getSortedComponents();
       for (int i = 0; i < channelNumber; i++) {
         int index = i % 4;
@@ -456,11 +456,11 @@ public class WaveView extends JPanel implements SeriesViewerListener {
         ordered.get(i).setTime(startTime, 2.5);
       }
     } else {
-      for (Component c : cpane.getComponents()) {
+      for (Component c : pane.getComponents()) {
         ((LeadPanel) c).setTime(0, Integer.MAX_VALUE);
       }
     }
-    this.cpane.revalidate();
+    this.pane.revalidate();
   }
 
   public int getChannelNumber() {
@@ -508,18 +508,18 @@ public class WaveView extends JPanel implements SeriesViewerListener {
     Point2D.Double placeholder = new Point2D.Double(f.getImageableWidth(), f.getImageableHeight());
 
     double textOffset = 50.0;
-    double canvasWidth = cpane.getWidth();
-    double canvasHeight = cpane.getHeight() - textOffset;
+    double canvasWidth = pane.getWidth();
+    double canvasHeight = pane.getHeight() - textOffset;
     double scaleCanvas = Math.min(placeholder.x / canvasWidth, placeholder.y / canvasHeight);
 
     AffineTransform originalTransform = g2d.getTransform();
-    boolean wasBuffered = ImagePrint.disableDoubleBuffering(cpane);
+    boolean wasBuffered = ImagePrint.disableDoubleBuffering(pane);
     g2d.translate(f.getImageableX(), f.getImageableY());
     printHeader(g2d, (int) (f.getImageableWidth() / 2));
     g2d.translate(0, textOffset);
     g2d.scale(scaleCanvas, scaleCanvas);
-    cpane.paint(g2d);
-    ImagePrint.restoreDoubleBuffering(cpane, wasBuffered);
+    pane.paint(g2d);
+    ImagePrint.restoreDoubleBuffering(pane, wasBuffered);
     g2d.setTransform(originalTransform);
   }
 

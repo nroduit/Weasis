@@ -52,7 +52,7 @@ public interface GraphicModel extends UUIDable {
 
   Optional<Graphic> getFirstGraphicIntersecting(MouseEventDouble mouseevent);
 
-  List<DragGraphic> getSelectedDragableGraphics();
+  List<DragGraphic> getSelectedDraggableGraphics();
 
   List<Graphic> getSelectedGraphics();
 
@@ -68,14 +68,7 @@ public interface GraphicModel extends UUIDable {
 
   void fireGraphicsSelectionChanged(MeasurableLayer layer);
 
-  /**
-   * Draws all visible layers of this model.
-   *
-   * @param g2d the 2D graphics context
-   * @param transform
-   * @param inverseTransform
-   * @param viewClip
-   */
+  /** Draws all visible layers of this model. */
   void draw(
       Graphics2D g2d,
       AffineTransform transform,
@@ -105,9 +98,9 @@ public interface GraphicModel extends UUIDable {
 
   void fireChanged();
 
-  Boolean isChangeFireingSuspended();
+  Boolean isChangeFiringSuspended();
 
-  void setChangeFireingSuspended(Boolean change);
+  void setChangeFiringSuspended(Boolean change);
 
   int getLayerCount();
 

@@ -152,7 +152,7 @@ public class MipView extends View2d {
             LOGGER.info(e.getMessage());
           } catch (Throwable t) {
             dicoms.clear();
-            AuditLog.logError(LOGGER, t, "Mip renderding error"); // NON-NLS
+            AuditLog.logError(LOGGER, t, "Mip rendering error"); // NON-NLS
           } finally {
             // Following actions need to be executed in EDT thread
             GuiExecutor.instance()

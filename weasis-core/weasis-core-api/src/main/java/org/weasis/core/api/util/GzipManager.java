@@ -110,10 +110,10 @@ public class GzipManager {
   }
 
   /**
-   * @param bytes
+   * @param bytes the bytes to compress
    * @param requiredByteNumber for applying gzip. On network the safe value is 1400 (as MTU is 1500)
-   * @return
-   * @throws IOException
+   * @return the compressed bytes
+   * @throws IOException the IOException during the compression
    */
   public static byte[] gzipCompressToByte(byte[] bytes, int requiredByteNumber) throws IOException {
     if (bytes.length >= requiredByteNumber) {

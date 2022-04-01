@@ -115,17 +115,17 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
   }
 
   public synchronized void setSeries(Series<?> newSeries) {
-    MediaSeries<?> oldsequence = this.series;
+    MediaSeries<?> oldSequence = this.series;
     this.series = newSeries;
 
-    if (oldsequence == null && newSeries == null) {
+    if (oldSequence == null && newSeries == null) {
       return;
     }
-    if (oldsequence != null && oldsequence.equals(newSeries)) {
+    if (oldSequence != null && oldSequence.equals(newSeries)) {
       return;
     }
 
-    closingSeries(oldsequence);
+    closingSeries(oldSequence);
 
     if (series != null) {
       // Should have only one object by series (if more, they are split in several subseries in
@@ -209,9 +209,9 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
 
           Series<?> s =
               findSOPInstanceReference(model, patient, study, ref.getReferencedSOPInstanceUID());
-          if (s instanceof DicomSeries) {
+          if (s instanceof DicomSeries dicomSeries) {
             if (keyReferences == null) {
-              keyReferences = buildKO(model, (DicomSeries) s);
+              keyReferences = buildKO(model, dicomSeries);
             }
 
             if (keyReferences != null) {
@@ -225,7 +225,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
               keyReferences.addKeyObject(koRef);
               SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
               if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                addGraphicstoView(s.getMedia(0, null, null), imgRef);
+                addGraphicsToView(s.getMedia(0, null, null), imgRef);
                 String uid = UUID.randomUUID().toString();
                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
@@ -255,15 +255,15 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     }
   }
 
-  private void addGraphicstoView(MediaElement mediaElement, SRImageReference imgRef) {
-    if (mediaElement instanceof ImageElement
+  private void addGraphicsToView(MediaElement mediaElement, SRImageReference imgRef) {
+    if (mediaElement instanceof ImageElement imageElement
         && imgRef.getGraphics() != null
         && !imgRef.getGraphics().isEmpty()) {
 
       GraphicModel modelList = (GraphicModel) mediaElement.getTagValue(TagW.PresentationModel);
       // After getting a new image iterator, update the measurements
       if (modelList == null) {
-        modelList = new XmlGraphicModel((ImageElement) mediaElement);
+        modelList = new XmlGraphicModel(imageElement);
         mediaElement.setTag(TagW.PresentationModel, modelList);
       }
 
@@ -372,8 +372,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       TagW sopTag = TagD.getUID(Level.INSTANCE);
       synchronized (model) { // NOSONAR lock object is the list for iterating its elements safely
         for (MediaSeriesGroup seq : model.getChildren(study)) {
-          if (seq instanceof Series) {
-            Series<?> s = (Series<?>) seq;
+          if (seq instanceof Series<?> s) {
             if (s.hasMediaContains(sopTag, sopUID)) {
               return s;
             }

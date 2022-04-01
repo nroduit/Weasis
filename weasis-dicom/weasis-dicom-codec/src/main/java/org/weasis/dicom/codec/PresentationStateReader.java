@@ -90,7 +90,7 @@ public class PresentationStateReader implements Taggable {
 
   private static Predicate<Attributes> isSequenceApplicable(
       DicomImageElement img, boolean sequenceRequired) {
-    return attributes -> isModuleAppicable(attributes, img, sequenceRequired);
+    return attributes -> isModuleApplicable(attributes, img, sequenceRequired);
   }
 
   public static boolean isImageApplicable(
@@ -101,8 +101,8 @@ public class PresentationStateReader implements Taggable {
         String seriesUID = TagD.getTagValue(img, Tag.SeriesInstanceUID, String.class);
         String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
         int dicomFrame = 1;
-        if (img.getKey() instanceof Integer) {
-          dicomFrame = (Integer) img.getKey() + 1;
+        if (img.getKey() instanceof Integer intVal) {
+          dicomFrame = intVal + 1;
         }
         return prDcm.isImageFrameApplicable(seriesUID, imgSop, dicomFrame);
       }
@@ -110,15 +110,15 @@ public class PresentationStateReader implements Taggable {
     return false;
   }
 
-  public static boolean isModuleAppicable(
+  public static boolean isModuleApplicable(
       Attributes refImgSeqParent, DicomImageElement img, boolean sequenceRequired) {
     Objects.requireNonNull(refImgSeqParent);
     Objects.requireNonNull(img);
 
     String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
     int dicomFrame = 1;
-    if (img.getKey() instanceof Integer) {
-      dicomFrame = (Integer) img.getKey() + 1;
+    if (img.getKey() instanceof Integer intVal) {
+      dicomFrame = intVal + 1;
     }
     return DicomObjectUtil.isImageFrameApplicableToReferencedImageSequence(
         DicomObjectUtil.getSequence(refImgSeqParent, Tag.ReferencedImageSequence),

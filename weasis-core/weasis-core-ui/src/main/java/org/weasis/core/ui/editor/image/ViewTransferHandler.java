@@ -14,6 +14,7 @@ import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import javax.swing.JComponent;
@@ -63,13 +64,12 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
     return false;
   }
 
-  // Transferable
   @Override
-  public Object getTransferData(DataFlavor flavor) {
+  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
     if (isDataFlavorSupported(flavor)) {
       return image;
     }
-    return null;
+    throw new UnsupportedFlavorException(flavor);
   }
 
   @Override

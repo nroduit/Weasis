@@ -182,7 +182,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (pt2 == null) {
       pt2 =
           new MediaSeriesGroupNode(
-              TagD.getUID(Level.PATIENT), newPatientUID, DicomModel.patient.getTagView());
+              TagD.getUID(Level.PATIENT), newPatientUID, DicomModel.patient.tagView());
       Iterator<Entry<TagW, Object>> iter = pt.getTagEntrySetIterator();
       while (iter.hasNext()) {
         Entry<TagW, Object> e = iter.next();
@@ -216,17 +216,16 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       return;
     }
 
-    MediaSeriesGroup patient = getParent(studyGroup, DicomModel.patient);
+    MediaSeriesGroup patientGroup = getParent(studyGroup, DicomModel.patient);
     if (studyGroup2 == null) {
       studyGroup2 =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
       Iterator<Entry<TagW, Object>> iter = studyGroup.getTagEntrySetIterator();
       while (iter.hasNext()) {
         Entry<TagW, Object> e = iter.next();
         studyGroup2.setTag(e.getKey(), e.getValue());
       }
-      addHierarchyNode(patient, studyGroup2);
+      addHierarchyNode(patientGroup, studyGroup2);
     }
 
     Collection<MediaSeriesGroup> seriesGroups = getChildren(studyGroup);
@@ -235,7 +234,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       addHierarchyNode(studyGroup2, s);
       firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
     }
-    removeHierarchyNode(patient, studyGroup);
+    removeHierarchyNode(patientGroup, studyGroup);
   }
 
   public MediaSeriesGroup getStudyNode(String studyUID) {
@@ -280,7 +279,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
   @Override
   public MediaSeriesGroup getParent(MediaSeriesGroup node, TreeModelNode modelNode) {
     if (node != null && modelNode != null) {
-      TagW matchTagID = modelNode.getTagElement();
+      TagW matchTagID = modelNode.tagElement();
       if (node.getTagID().equals(matchTagID)) {
         return node;
       }
@@ -459,20 +458,20 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     }
   }
 
-  public void removeSeries(MediaSeriesGroup dicomSeries) {
-    if (dicomSeries != null) {
-      if (!DownloadManager.TASKS.isEmpty() && dicomSeries instanceof DicomSeries) {
-        DownloadManager.stopDownloading((DicomSeries) dicomSeries, this);
+  public void removeSeries(MediaSeriesGroup seriesGroup) {
+    if (seriesGroup != null) {
+      if (!DownloadManager.TASKS.isEmpty() && seriesGroup instanceof DicomSeries dicomSeries) {
+        DownloadManager.stopDownloading(dicomSeries, this);
       }
       // remove first series in UI (Dicom Explorer, Viewer using this series)
       firePropertyChange(
           new ObservableEvent(
-              ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, dicomSeries));
+              ObservableEvent.BasicAction.REMOVE, DicomModel.this, null, seriesGroup));
       // remove in the data model
-      MediaSeriesGroup studyGroup = getParent(dicomSeries, DicomModel.study);
-      removeHierarchyNode(studyGroup, dicomSeries);
-      dicomSeries.dispose();
-      LOGGER.info("Remove Series: {}", dicomSeries);
+      MediaSeriesGroup studyGroup = getParent(seriesGroup, DicomModel.study);
+      removeHierarchyNode(studyGroup, seriesGroup);
+      seriesGroup.dispose();
+      LOGGER.info("Remove Series: {}", seriesGroup);
     }
   }
 
@@ -480,8 +479,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (studyGroup != null) {
       if (!DownloadManager.TASKS.isEmpty()) {
         for (MediaSeriesGroup group : getChildren(studyGroup)) {
-          if (group instanceof DicomSeries) {
-            DownloadManager.stopDownloading((DicomSeries) group, this);
+          if (group instanceof DicomSeries dicomSeries) {
+            DownloadManager.stopDownloading(dicomSeries, this);
           }
         }
       }
@@ -502,8 +501,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       if (!DownloadManager.TASKS.isEmpty()) {
         for (MediaSeriesGroup studyGroup : getChildren(patientGroup)) {
           for (MediaSeriesGroup group : getChildren(studyGroup)) {
-            if (group instanceof DicomSeries) {
-              DownloadManager.stopDownloading((DicomSeries) group, this);
+            if (group instanceof DicomSeries dicomSeries) {
+              DownloadManager.stopDownloading(dicomSeries, this);
             }
           }
         }
@@ -534,7 +533,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
    * are not relevant with the CurrentRequestedProcedureEvidenceSequence which can reference any
    * SOPInstance of any Study and Series of the Patient
    *
-   * @param series
+   * @param series the series value
    */
   public void addSpecialModality(Series series) {
 
@@ -572,7 +571,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
 
   public static Collection<KOSpecialElement> getEditableKoSpecialElements(MediaSeriesGroup group) {
     List<KOSpecialElement> list = getSpecialElements(group, KOSpecialElement.class);
-    if (list != null && !list.isEmpty()) {
+    if (!list.isEmpty()) {
       for (int i = list.size() - 1; i >= 0; i--) {
         KOSpecialElement koElement = list.get(i);
         if (!koElement.getMediaReader().isEditableDicom()) {
@@ -641,9 +640,8 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     List<DicomSpecialElement> list = null;
     DataExplorerModel model = (DataExplorerModel) dicomSeries.getTagValue(TagW.ExplorerModel);
 
-    if (model instanceof DicomModel) {
-      MediaSeriesGroup patientGroup =
-          ((DicomModel) model).getParent(dicomSeries, DicomModel.patient);
+    if (model instanceof DicomModel dicomModel) {
+      MediaSeriesGroup patientGroup = dicomModel.getParent(dicomSeries, DicomModel.patient);
       if (patientGroup != null) {
         list = (List<DicomSpecialElement>) patientGroup.getTagValue(TagW.DicomSpecialElementList);
       }
@@ -799,7 +797,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       if (st == null) {
         pt =
             new MediaSeriesGroupNode(
-                TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
+                TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.tagView());
         dicomReader.writeMetaData(pt);
         addHierarchyNode(MediaSeriesGroupNode.rootNode, pt);
         LOGGER.info("Adding patient: {}", pt);
@@ -814,7 +812,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     if (st == null) {
       st =
           new MediaSeriesGroupNode(
-              TagD.get(Tag.StudyInstanceUID), studyUID, DicomModel.study.getTagView());
+              TagD.get(Tag.StudyInstanceUID), studyUID, DicomModel.study.tagView());
       dicomReader.writeMetaData(st);
       addHierarchyNode(pt, st);
     }
@@ -909,9 +907,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           while (true) {
             String uid = "#" + k + "." + seriesUID;
             MediaSeriesGroup group = getHierarchyNode(study, uid);
-            if (group instanceof DicomSeries) {
-              if (isSimilar(rules, (DicomSeries) group, media)) {
-                ((DicomSeries) group).addMedia((DicomImageElement) media);
+            if (group instanceof DicomSeries dicomSeries) {
+              if (isSimilar(rules, dicomSeries, media)) {
+                dicomSeries.addMedia((DicomImageElement) media);
                 return false;
               }
             } else {
@@ -930,7 +928,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
             splitSeries(dicomReader, original, media);
             return true;
           } else {
-            findMatchingSeriesOrsplit(original, media);
+            findMatchingSeriesOrSplit(original, media);
           }
         } else {
           original.addMedia(media);
@@ -940,7 +938,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     return false;
   }
 
-  private boolean findMatchingSeriesOrsplit(Series original, MediaElement media) {
+  private boolean findMatchingSeriesOrSplit(Series original, MediaElement media) {
     DicomMediaIO dicomReader = (DicomMediaIO) media.getMediaReader();
     int frames = dicomReader.getMediaElementNumber();
     if (frames < 1) {
@@ -965,14 +963,14 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       }
 
       // else try to find a similar previous split series
-      MediaSeriesGroup study = getParent(original, DicomModel.study);
+      MediaSeriesGroup studyGroup = getParent(original, DicomModel.study);
       int k = 1;
       while (true) {
         String uid = "#" + k + "." + seriesUID;
-        MediaSeriesGroup group = getHierarchyNode(study, uid);
-        if (group instanceof Series) {
-          if (isSimilar(rules, (Series) group, media)) {
-            ((Series) group).addMedia(media);
+        MediaSeriesGroup group = getHierarchyNode(studyGroup, uid);
+        if (group instanceof Series series) {
+          if (isSimilar(rules, series, media)) {
+            series.addMedia(media);
             return false;
           }
         } else {
@@ -1156,9 +1154,9 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       "  -H --header=HEADER         Pass custom header(s) to all the requests", // NON-NLS
       "  --query-header=HEADER      Pass custom header(s) to the query requests (QIDO)", // NON-NLS
       "  --retrieve-header=HEADER   Pass custom header(s) to the retrieve requests (WADO)", // NON-NLS
-      "  --query-ext=EXT            Additionnal parameters for Query URL (QIDO)", // NON-NLS
-      "  --retrieve-ext=EXT         Additionnal parameters for Retrieve URL (WADO)", // NON-NLS
-      "  --accept-ext=EXT           Additionnal parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
+      "  --query-ext=EXT            Additional parameters for Query URL (QIDO)", // NON-NLS
+      "  --retrieve-ext=EXT         Additional parameters for Retrieve URL (WADO)", // NON-NLS
+      "  --accept-ext=EXT           Additional parameters for DICOM multipart/related Accept header of the retrieve URL (WADO). Default value is: transfer-syntax=*", // NON-NLS
       "  --auth-uid=UID             UID of the Weasis authentication method", // NON-NLS
       "  --oidc-iss=UID             Issuer Identifier for OpenID Connect Authentication Request", // NON-NLS
       "  --oidc-login=UID           Identifier the End-User might use to log in (OpenID Connect)", // NON-NLS

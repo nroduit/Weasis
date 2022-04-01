@@ -36,8 +36,6 @@ import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
 import org.opencv.core.MatOfInt;
 import org.opencv.imgcodecs.Imgcodecs;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.FileFormatFilter;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -51,8 +49,8 @@ import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class ScreenshotDialog<I extends ImageElement> extends JDialog {
-  private static final Logger LOGGER = LoggerFactory.getLogger(ScreenshotDialog.class);
   public static final String P_LAST_DIR = "screenshot.last.dir";
+  static final String DICOM = "DICOM"; // NON-NLS
 
   public enum Format {
     JPEG("JPEG Lossy", "jpg"), // NON-NLS
@@ -87,11 +85,11 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
   private final JRadioButton viewRadio = new JRadioButton("Current view");
   private final JRadioButton imageRadio = new JRadioButton("Original image");
   private final JCheckBox paddingCheckBox =
-      new JCheckBox("DICOM " + ActionW.IMAGE_PIX_PADDING.getTitle(), true);
+      new JCheckBox(DICOM + StringUtil.SPACE + ActionW.IMAGE_PIX_PADDING.getTitle(), true);
   private final JCheckBox overlayCheckBox =
-      new JCheckBox("DICOM " + ActionW.IMAGE_OVERLAY.getTitle(), true);
+      new JCheckBox(DICOM + StringUtil.SPACE + ActionW.IMAGE_OVERLAY.getTitle(), true);
   private final JCheckBox shutterCheckBox =
-      new JCheckBox("DICOM " + ActionW.IMAGE_SHUTTER.getTitle(), true);
+      new JCheckBox(DICOM + StringUtil.SPACE + ActionW.IMAGE_SHUTTER.getTitle(), true);
   private final JCheckBox preservePixelCheckBox =
       new JCheckBox(
           "Preserve 16-bit per channel"
@@ -125,8 +123,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       float ratio = val / 100f;
       labelSizePix.setText(
           String.format(
-              "(%dx%d)",
-              Math.round(image.width() * ratio), Math.round(image.height() * ratio))); // NON-NLS
+              "(%dx%d)", // NON-NLS
+              Math.round(image.width() * ratio), Math.round(image.height() * ratio)));
     }
   }
 
@@ -284,7 +282,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private JPanel buildViewPanel(boolean dicom) {
     JPanel dataPanel = new JPanel();
-    dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]"));
+    dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
     if (dicom) {
       dataPanel.add(anonymize, "newline");
     }
@@ -293,7 +291,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private JPanel buildImagePanel(boolean dicom) {
     JPanel dataPanel = new JPanel();
-    dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]"));
+    dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
 
     dataPanel.add(GuiUtils.getFlowLayoutPanel(labelSize, spinner, labelSizePix), "newline");
     dataPanel.add(preservePixelCheckBox, "newline");

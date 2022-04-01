@@ -161,7 +161,7 @@ public class RsQuery implements Callable<Boolean> {
     if (patient == null) {
       patient =
           new MediaSeriesGroupNode(
-              TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView()) {
+              TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.tagView()) {
             @Override
             public String toString() {
               StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.PatientName));
@@ -182,8 +182,7 @@ public class RsQuery implements Callable<Boolean> {
     MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
     if (study == null) {
       study =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView()) {
+          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView()) {
             @Override
             public String toString() {
               StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.StudyDescription));

@@ -42,7 +42,7 @@ public class DicomNodeDialog extends JDialog {
 
   private DefaultDicomNode dicomNode;
   private final JComboBox<DefaultDicomNode> nodesComboBox;
-  private final DefaultDicomNode.Type typeNode;
+  private final AbstractDicomNode.Type typeNode;
   private JComboBox<AbstractDicomNode.UsageType> comboBox;
 
   public DicomNodeDialog(
@@ -50,7 +50,7 @@ public class DicomNodeDialog extends JDialog {
       String title,
       DefaultDicomNode dicomNode,
       JComboBox<DefaultDicomNode> nodeComboBox,
-      DefaultDicomNode.Type typeNode) {
+      AbstractDicomNode.Type typeNode) {
     super(parent, title, ModalityType.APPLICATION_MODAL);
     this.typeNode =
         dicomNode == null
@@ -183,8 +183,8 @@ public class DicomNodeDialog extends JDialog {
     }
     dicomNode.setType(typeNode);
 
-    if (dicomNode instanceof DicomPrintNode) {
-      printOptionsPane.saveOptions(((DicomPrintNode) dicomNode).getPrintOptions());
+    if (dicomNode instanceof DicomPrintNode printNode) {
+      printOptionsPane.saveOptions(printNode.getPrintOptions());
     }
     if (addNode) {
       nodesComboBox.setSelectedItem(dicomNode);

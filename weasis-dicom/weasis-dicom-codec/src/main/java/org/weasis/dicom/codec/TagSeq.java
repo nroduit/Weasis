@@ -35,10 +35,8 @@ public class TagSeq extends TagD {
   public void readValue(Object data, Taggable taggable) {
     if (data instanceof MacroSeqData macro) {
       Object val = getValue(macro.getAttributes());
-      if (val instanceof Sequence seq) {
-        if (!seq.isEmpty()) {
-          val = seq.get(0);
-        }
+      if (val instanceof Sequence seq && !seq.isEmpty()) {
+        val = seq.get(0);
       }
 
       if (val instanceof Attributes dataset) {

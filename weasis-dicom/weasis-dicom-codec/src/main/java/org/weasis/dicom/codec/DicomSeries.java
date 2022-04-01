@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.SeriesEvent;
@@ -64,7 +65,7 @@ public class DicomSeries extends Series<DicomImageElement> {
 
   @Override
   public void addMedia(DicomImageElement media) {
-    if (media != null && media.getMediaReader() instanceof DcmMediaReader) {
+    if (media != null && media.getMediaReader() != null) {
       int insertIndex;
       synchronized (this) {
         // add image or multi-frame sorted by Instance Number (0020,0013) order
@@ -101,7 +102,7 @@ public class DicomSeries extends Series<DicomImageElement> {
       toolTips.append(FileUtil.humanReadableByte(getFileSize(), false));
       toolTips.append("<br>");
     }
-    toolTips.append("</html>");
+    toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
   }
 
@@ -214,6 +215,7 @@ public class DicomSeries extends Series<DicomImageElement> {
     return (offset > 0) ? (bestIndex + offset) : bestIndex;
   }
 
+  @Override
   public boolean hasMediaContains(TagW tag, Object val) {
     if (val != null) {
       synchronized (this) {
@@ -268,10 +270,8 @@ public class DicomSeries extends Series<DicomImageElement> {
     if (preloadingTask != null && preloadingTask.getSeries() == series) {
       PreloadingTask moribund = preloadingTask;
       preloadingTask = null;
-      if (moribund != null) {
-        moribund.setPreloading(false);
-        moribund.interrupt();
-      }
+      moribund.setPreloading(false);
+      moribund.interrupt();
     }
   }
 
@@ -357,16 +357,16 @@ public class DicomSeries extends Series<DicomImageElement> {
             CvUtil.runGarbageCollectorAndWait(50);
           }
           double val = (double) heapFreeSize / imgSize;
-          int ajustSize = (int) (size * val) / 2;
-          int start = index - ajustSize;
+          int adjustSize = (int) (size * val) / 2;
+          int start = index - adjustSize;
           if (start < 0) {
-            ajustSize -= start;
+            adjustSize -= start;
             start = 0;
           }
-          if (ajustSize > size) {
-            ajustSize = size;
+          if (adjustSize > size) {
+            adjustSize = size;
           }
-          for (int i = start; i < ajustSize; i++) {
+          for (int i = start; i < adjustSize; i++) {
             loadArrays(imageList.get(i), model);
           }
         } else {

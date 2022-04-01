@@ -92,7 +92,7 @@ public abstract class AbstractItemDialogPage extends JPanel implements PageItem,
 
   @Override
   public String toString() {
-    return getComponentName();
+    return title;
   }
 
   @Override

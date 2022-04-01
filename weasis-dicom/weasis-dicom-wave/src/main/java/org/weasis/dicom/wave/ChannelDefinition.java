@@ -25,8 +25,6 @@ public class ChannelDefinition {
   private Double maxValue;
 
   /**
-   * @param dcm
-   * @param position
    * @see <a
    *     href="http://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.10.9.html">Waveform
    *     Module</a>
@@ -106,7 +104,7 @@ public class ChannelDefinition {
   }
 
   public double getAmplitudeUnitScalingFactor() {
-    return amplitudeUnit.getScalingFactor();
+    return amplitudeUnit.scalingFactor();
   }
 
   public int getPosition() {

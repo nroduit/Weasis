@@ -168,7 +168,7 @@ public class AcquireImageInfo {
         || nextValues.getContrast() != currentValues.getContrast()) {
       postProcessOpManager.setParamValue(
           BrightnessOp.OP_NAME,
-          BrightnessOp.P_BRIGTNESS_VALUE,
+          BrightnessOp.P_BRIGHTNESS_VALUE,
           (double) nextValues.getBrightness());
       postProcessOpManager.setParamValue(
           BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) nextValues.getContrast());
@@ -254,7 +254,7 @@ public class AcquireImageInfo {
 
     postProcessOpManager.setParamValue(
         BrightnessOp.OP_NAME,
-        BrightnessOp.P_BRIGTNESS_VALUE,
+        BrightnessOp.P_BRIGHTNESS_VALUE,
         (double) defaultValues.getBrightness());
     postProcessOpManager.setParamValue(
         BrightnessOp.OP_NAME, BrightnessOp.P_CONTRAST_VALUE, (double) defaultValues.getContrast());

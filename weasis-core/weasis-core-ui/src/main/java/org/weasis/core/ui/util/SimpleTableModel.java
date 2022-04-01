@@ -11,13 +11,10 @@ package org.weasis.core.ui.util;
 
 import java.util.Objects;
 import javax.swing.table.AbstractTableModel;
-import org.weasis.core.ui.Messages;
 
 public class SimpleTableModel extends AbstractTableModel {
 
-  private String[] columnNames = {
-    Messages.getString("SimpleTableModel.param"), Messages.getString("SimpleTableModel.val")
-  };
+  private final String[] columnNames;
   private final Object[][] data;
   private final boolean editable;
 

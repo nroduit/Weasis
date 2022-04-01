@@ -43,13 +43,13 @@ public class SOPInstanceReference extends Module {
   }
 
   public int[] getReferencedFrameNumber() {
-    return DicomMediaUtils.getIntAyrrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
+    return DicomMediaUtils.getIntArrayFromDicomElement(dcmItems, Tag.ReferencedFrameNumber, null);
   }
 
   /**
    * Add frame number references (1 to n). Note: no frame means the entire series.
    *
-   * @param dicomFrameNumber
+   * @param dicomFrameNumber the list of frame number
    */
   public void setReferencedFrameNumber(int... dicomFrameNumber) {
     dcmItems.setInt(Tag.ReferencedFrameNumber, VR.IS, dicomFrameNumber);

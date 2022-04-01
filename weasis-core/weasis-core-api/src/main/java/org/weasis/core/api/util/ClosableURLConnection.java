@@ -30,8 +30,8 @@ public class ClosableURLConnection implements HttpResponse {
 
   @Override
   public void close() {
-    if (urlConnection instanceof HttpURLConnection) {
-      ((HttpURLConnection) urlConnection).disconnect();
+    if (urlConnection instanceof HttpURLConnection httpURLConnection) {
+      httpURLConnection.disconnect();
     }
   }
 
@@ -42,9 +42,9 @@ public class ClosableURLConnection implements HttpResponse {
 
   @Override
   public int getResponseCode() {
-    if (urlConnection instanceof HttpURLConnection) {
+    if (urlConnection instanceof HttpURLConnection httpURLConnection) {
       try {
-        return ((HttpURLConnection) urlConnection).getResponseCode();
+        return httpURLConnection.getResponseCode();
       } catch (IOException e) {
         LOGGER.error("Get code", e);
       }
@@ -54,9 +54,9 @@ public class ClosableURLConnection implements HttpResponse {
 
   @Override
   public String getResponseMessage() {
-    if (urlConnection instanceof HttpURLConnection) {
+    if (urlConnection instanceof HttpURLConnection httpURLConnection) {
       try {
-        return ((HttpURLConnection) urlConnection).getResponseMessage();
+        return httpURLConnection.getResponseMessage();
       } catch (IOException e) {
         LOGGER.error("Get message", e);
       }

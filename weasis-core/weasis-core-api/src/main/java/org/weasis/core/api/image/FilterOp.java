@@ -9,15 +9,12 @@
  */
 package org.weasis.core.api.image;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.api.image.cv.CvUtil;
 import org.weasis.core.api.image.util.KernelData;
 import org.weasis.opencv.data.PlanarImage;
 
 public class FilterOp extends AbstractOp {
-  private static final Logger LOGGER = LoggerFactory.getLogger(FilterOp.class);
 
   public static final String OP_NAME = Messages.getString("FilterOperation.title");
 

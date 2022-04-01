@@ -304,7 +304,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
       return Integer.toString(sliderValue);
     }
     double realVal = toModelValue(sliderValue, sliderMax, modelMin, modelMax);
-    return DecFormater.twoDecimal(realVal);
+    return DecFormatter.twoDecimal(realVal);
   }
 
   public void updateSliderProperties(JSliderW slider) {
@@ -429,7 +429,8 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   }
 
   public static void setFont(JSlider jslider, Font font) {
-    Dictionary<?, ?> labelTable = jslider.getLabelTable();
+    @SuppressWarnings("rawtypes")
+    Dictionary labelTable = jslider.getLabelTable();
     if (labelTable == null) {
       return;
     }

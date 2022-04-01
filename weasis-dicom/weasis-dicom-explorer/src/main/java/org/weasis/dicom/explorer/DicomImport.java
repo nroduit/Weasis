@@ -43,8 +43,8 @@ public class DicomImport extends AbstractWizardDialog {
         new Dimension(650, 500));
     this.dicomModel = dicomModel;
 
-    final JButton importandClose = new JButton(Messages.getString("DicomImport.impAndClose0"));
-    importandClose.addActionListener(
+    final JButton importAndClose = new JButton(Messages.getString("DicomImport.impAndClose0"));
+    importAndClose.addActionListener(
         e -> {
           importSelection();
           cancel();
@@ -60,7 +60,7 @@ public class DicomImport extends AbstractWizardDialog {
             HORIZONTAL_GAP,
             VERTICAL_GAP,
             importButton,
-            importandClose,
+            importAndClose,
             jButtonClose));
 
     initializePages();

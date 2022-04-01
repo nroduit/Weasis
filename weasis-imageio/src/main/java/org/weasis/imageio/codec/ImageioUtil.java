@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 public final class ImageioUtil {
   private static final Logger LOGGER = LoggerFactory.getLogger(ImageioUtil.class);
 
+  private ImageioUtil() {}
+
   public static void registerServiceProvider(IIOServiceProvider serviceProvider) {
     try {
       IIORegistry.getDefaultInstance().registerServiceProvider(serviceProvider);

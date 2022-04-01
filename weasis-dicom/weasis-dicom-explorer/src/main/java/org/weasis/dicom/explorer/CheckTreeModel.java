@@ -26,6 +26,7 @@ import org.dcm4che3.data.Tag;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -106,7 +107,7 @@ public class CheckTreeModel {
                 }
                 buf.append(d.getShortLabel());
                 if (newElement) {
-                  buf.append("</html>");
+                  buf.append(GuiUtils.HTML_END);
                 }
                 return buf.toString();
               }
@@ -227,7 +228,7 @@ public class CheckTreeModel {
       }
       buf.append(" -- ").append(child).append(" instance(s)"); // NON-NLS
       if (newElement) {
-        buf.append("</html>");
+        buf.append(GuiUtils.HTML_END);
       }
       return buf.toString();
     }
@@ -241,7 +242,7 @@ public class CheckTreeModel {
         if (path != null) {
           URL url = path.toURI().toURL();
           StringBuilder buf = new StringBuilder();
-          buf.append("<html>");
+          buf.append(GuiUtils.HTML_START);
           buf.append("<img src=\""); // NON-NLS
           buf.append(url);
           buf.append("\"><br>"); // NON-NLS
@@ -249,7 +250,7 @@ public class CheckTreeModel {
           if (date != null) {
             buf.append(TagUtil.formatDateTime(date));
           }
-          buf.append("</html>");
+          buf.append(GuiUtils.HTML_END);
           return buf.toString();
         }
       } catch (Exception e) {

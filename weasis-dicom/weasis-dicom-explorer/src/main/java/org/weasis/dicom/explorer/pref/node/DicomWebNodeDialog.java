@@ -23,8 +23,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 import net.miginfocom.swing.MigLayout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.util.StringUtil;
@@ -32,7 +30,6 @@ import org.weasis.dicom.explorer.Messages;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
 
 public class DicomWebNodeDialog extends JDialog {
-  private static final Logger LOGGER = LoggerFactory.getLogger(DicomWebNodeDialog.class);
 
   private JTextField urlTf;
   private JTextField descriptionTf;

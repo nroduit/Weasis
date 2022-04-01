@@ -30,7 +30,7 @@ public enum Format {
         Lead.V3, Lead.V6
       }),
 
-  FOUR_RYTHM(
+  FOUR_RHYTHM(
       Messages.getString("Format.rhythm"),
       4,
       4,
@@ -47,7 +47,7 @@ public enum Format {
         Lead.AVF,
         Lead.V3,
         Lead.V6,
-        Lead.RYTHM
+        Lead.RHYTHM
       });
 
   private final String value;

@@ -48,10 +48,8 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
   public void selectLocale() {
     Locale sLoc = LocalUtil.getLocaleFormat();
     Object item = getSelectedItem();
-    if (item instanceof JLocale) {
-      if (sLoc.equals(((JLocale) item).getLocale())) {
-        return;
-      }
+    if (item instanceof JLocale jLocale && sLoc.equals(jLocale.getLocale())) {
+      return;
     }
 
     for (int i = 0; i < getItemCount(); i++) {
@@ -67,8 +65,8 @@ public class JLocaleFormat extends JComboBox<JLocale> implements ItemListener, R
   public void itemStateChanged(ItemEvent e) {
     if (e.getStateChange() == ItemEvent.SELECTED) {
       Object item = e.getItem();
-      if (item instanceof JLocale) {
-        setLocalUtil(((JLocale) item).getLocale());
+      if (item instanceof JLocale jLocale) {
+        setLocalUtil(jLocale.getLocale());
         valueHasChanged();
       }
     }

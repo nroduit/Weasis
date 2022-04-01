@@ -566,7 +566,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
   }
 
-  /** @return */
   protected JPanel getMainPanel() {
     if (panelMain == null) {
       MigLayout layout = new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]");
@@ -691,10 +690,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     String uid = TagD.getTagValue(dcm, Tag.SeriesInstanceUID, String.class);
     if (uid != null) {
       for (MediaSeriesGroup group : model.getChildren(study)) {
-        if (group instanceof Series<?> s) {
-          if (uid.equals(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
-            list.add(s);
-          }
+        if (group instanceof Series<?> s
+            && uid.equals(TagD.getTagValue(s, Tag.SeriesInstanceUID))) {
+          list.add(s);
         }
       }
     }
@@ -852,31 +850,30 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     if (EVENT.SELECT_VIEW.equals(type) && event.getSeriesViewer() instanceof ImageViewerPlugin) {
       ViewCanvas<?> pane = ((ImageViewerPlugin<?>) event.getSeriesViewer()).getSelectedImagePane();
       if (pane != null) {
-        MediaSeries s = pane.getSeries();
-        if (s != null) {
-          if (!getSelectionList().isOpenningSeries() && selectedPatient.isSeriesVisible(s)) {
-            SeriesPane p = getSeriesPane(s);
-            if (p != null) {
-              JViewport vp = thumbnailView.getViewport();
-              Rectangle bound = vp.getViewRect();
-              Point ptmin = SwingUtilities.convertPoint(p, new Point(0, 0), selectedPatient);
-              Point ptmax =
-                  SwingUtilities.convertPoint(p, new Point(0, p.getHeight()), selectedPatient);
-              if (!bound.contains(ptmin.x, ptmin.y) || !bound.contains(ptmax.x, ptmax.y)) {
-                Point pt = vp.getViewPosition();
-                pt.y = ptmin.y + (ptmax.y - ptmin.y) / 2;
-                pt.y -= vp.getHeight() / 2;
-                int maxHeight =
-                    (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
-                if (pt.y < 0) {
-                  pt.y = 0;
-                } else if (pt.y > maxHeight) {
-                  pt.y = maxHeight;
-                }
-                vp.setViewPosition(pt);
-                // Clear the selection when another view is selected
-                getSelectionList().clear();
+        MediaSeries<?> s = pane.getSeries();
+        if (s != null
+            && !getSelectionList().isOpeningSeries()
+            && selectedPatient.isSeriesVisible(s)) {
+          SeriesPane p = getSeriesPane(s);
+          if (p != null) {
+            JViewport vp = thumbnailView.getViewport();
+            Rectangle bound = vp.getViewRect();
+            Point ptmin = SwingUtilities.convertPoint(p, new Point(0, 0), selectedPatient);
+            Point ptmax =
+                SwingUtilities.convertPoint(p, new Point(0, p.getHeight()), selectedPatient);
+            if (!bound.contains(ptmin.x, ptmin.y) || !bound.contains(ptmax.x, ptmax.y)) {
+              Point pt = vp.getViewPosition();
+              pt.y = ptmin.y + (ptmax.y - ptmin.y) / 2;
+              pt.y -= vp.getHeight() / 2;
+              int maxHeight = (int) (vp.getViewSize().getHeight() - vp.getExtentSize().getHeight());
+              if (pt.y < 0) {
+                pt.y = 0;
+              } else if (pt.y > maxHeight) {
+                pt.y = maxHeight;
               }
+              vp.setViewPosition(pt);
+              // Clear the selection when another view is selected
+              getSelectionList().clear();
             }
           }
         }
@@ -967,17 +964,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
                 DicomModel.hasSpecialElements((MediaSeriesGroup) item, KOSpecialElement.class));
           }
         }
-      } else if (evt.getSource() instanceof SeriesViewer) {
-        if (ObservableEvent.BasicAction.SELECT.equals(action)) {
-          if (newVal instanceof MediaSeriesGroup patient) {
-            if (!isSelectedPatient(patient)) {
-              modelPatient.setSelectedItem(patient);
-              // focus get back to viewer
-              if (evt.getSource() instanceof ViewerPlugin viewerPlugin) {
-                viewerPlugin.requestFocusInWindow();
-              }
-            }
-          }
+      } else if (evt.getSource() instanceof SeriesViewer
+          && ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof MediaSeriesGroup patient
+          && !isSelectedPatient(patient)) {
+        modelPatient.setSelectedItem(patient);
+        // focus get back to viewer
+        if (evt.getSource() instanceof ViewerPlugin viewerPlugin) {
+          viewerPlugin.requestFocusInWindow();
         }
       }
     }

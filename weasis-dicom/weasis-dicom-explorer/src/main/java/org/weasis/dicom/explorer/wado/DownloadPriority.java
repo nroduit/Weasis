@@ -15,7 +15,9 @@ import org.weasis.core.api.media.data.MediaSeriesGroup;
 public class DownloadPriority {
 
   public static final AtomicInteger COUNTER = new AtomicInteger(Integer.MAX_VALUE - 1);
-  private final MediaSeriesGroup patient, study, series;
+  private final MediaSeriesGroup patient;
+  private final MediaSeriesGroup study;
+  private final MediaSeriesGroup series;
   private final boolean concurrentDownload;
   private Integer priority;
 

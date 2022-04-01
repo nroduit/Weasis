@@ -23,7 +23,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.osgi.service.prefs.Preferences;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.PseudoColorOp;
 import org.weasis.core.api.image.WindowOp;
@@ -301,7 +301,7 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
         line.setLine(x - 5f, posY, x - 1f, posY);
         g2.draw(line);
         double level = data.getLayer().pixelToRealValue((separation - i) * stepWindow + pixMin);
-        String str = DecFormater.allNumber(level);
+        String str = DecFormatter.allNumber(level);
         FontTools.paintFontOutline(
             g2, str, x - g2.getFontMetrics().stringWidth(str) - 7, posY + shiftY);
       }
@@ -562,11 +562,11 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     unit[0] = adjustUnit;
     if (adjustScaleLength < 1.0) {
       return adjustScaleLength < 0.001
-          ? DecFormater.scientificFormat(adjustScaleLength)
-          : DecFormater.fourDecimal(adjustScaleLength);
+          ? DecFormatter.scientificFormat(adjustScaleLength)
+          : DecFormatter.fourDecimal(adjustScaleLength);
     }
     return adjustScaleLength > 50000.0
-        ? DecFormater.scientificFormat(adjustScaleLength)
-        : DecFormater.twoDecimal(adjustScaleLength);
+        ? DecFormatter.scientificFormat(adjustScaleLength)
+        : DecFormatter.twoDecimal(adjustScaleLength);
   }
 }

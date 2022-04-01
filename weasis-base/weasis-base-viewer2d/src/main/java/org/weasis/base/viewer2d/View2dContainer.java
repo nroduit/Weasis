@@ -440,7 +440,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     if (DefaultView2d.class.getName().equals(clazz) || View2d.class.getName().equals(clazz)) {
       return createDefaultView(clazz);
     }

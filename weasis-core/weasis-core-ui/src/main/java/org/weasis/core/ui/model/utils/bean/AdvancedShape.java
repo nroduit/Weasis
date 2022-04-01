@@ -375,19 +375,18 @@ public class AdvancedShape implements Shape {
       return shape;
     }
 
-    public void changelineThickness(float width) {
-      if (!fixedLineWidth && stroke instanceof BasicStroke) {
-        BasicStroke s = (BasicStroke) stroke;
-        if (MathUtil.isDifferent(s.getLineWidth(), width)) {
-          stroke =
-              new BasicStroke(
-                  width,
-                  s.getEndCap(),
-                  s.getLineJoin(),
-                  s.getMiterLimit(),
-                  s.getDashArray(),
-                  s.getDashPhase());
-        }
+    public void changeLineThickness(float width) {
+      if (!fixedLineWidth
+          && stroke instanceof BasicStroke s
+          && MathUtil.isDifferent(s.getLineWidth(), width)) {
+        stroke =
+            new BasicStroke(
+                width,
+                s.getEndCap(),
+                s.getLineJoin(),
+                s.getMiterLimit(),
+                s.getDashArray(),
+                s.getDashPhase());
       }
     }
 
@@ -453,7 +452,7 @@ public class AdvancedShape implements Shape {
     @Override
     public Shape getRealShape() {
       double scalingFactor = GeomUtil.extractScalingFactor(transform);
-      double scale = (scalingFactor < scalingMin) ? scalingMin : scalingFactor;
+      double scale = Math.max(scalingFactor, scalingMin);
       return MathUtil.isDifferentFromZero(scale)
           ? GeomUtil.getScaledShape(shape, 1 / scale, anchorPoint)
           : null;
@@ -548,7 +547,7 @@ public class AdvancedShape implements Shape {
       invTransform.translate(-anchorPoint.getX(), -anchorPoint.getY());
 
       Point2D p = null;
-      if (invShape instanceof Rectangle2D) {
+      if (invShape instanceof Rectangle2D rectangle2D) {
         // Find the intersection between the line and the text box
         AffineTransform tr = new AffineTransform();
         tr.translate(anchorPoint.getX(), anchorPoint.getY());
@@ -562,7 +561,7 @@ public class AdvancedShape implements Shape {
 
         Point2D p2 = line.getP2();
         tr.transform(p2, p2);
-        p = GeomUtil.getIntersectPoint(new Line2D.Double(anchorPoint, p2), (Rectangle2D) invShape);
+        p = GeomUtil.getIntersectPoint(new Line2D.Double(anchorPoint, p2), rectangle2D);
       }
       Point2D invpt = invTransform.transform(p == null ? line.getP1() : p, null);
       return new Line2D.Double(invpt, line.getP2());

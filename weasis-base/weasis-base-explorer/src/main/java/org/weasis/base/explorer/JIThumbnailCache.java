@@ -52,7 +52,7 @@ public final class JIThumbnailCache {
   public JIThumbnailCache() {
     this.cachedThumbnails =
         Collections.synchronizedMap(
-            new LinkedHashMap<URI, ThumbnailIcon>(80) {
+            new LinkedHashMap<>(80) {
 
               private static final int MAX_ENTRIES = 100;
 

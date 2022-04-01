@@ -236,7 +236,7 @@ public class AcquireTabPanel extends JPanel {
     removeImages(selected.getSeries(), medias);
 
     medias.forEach(m -> m.setSeries(seriesGroup));
-    updateSeries(seriesGroup, AcquireManager.findbySeries(seriesGroup));
+    updateSeries(seriesGroup, AcquireManager.findBySeries(seriesGroup));
   }
 
   public void updateSeriesFromGlobalTags() {

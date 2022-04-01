@@ -12,14 +12,14 @@ package org.weasis.dicom.wave;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.util.StringUtil;
 
 class ToolPanel extends JPanel {
 
   public enum Speed {
     AUTO(WaveLayoutManager.AUTO_SPEED),
-    TWELWE(12.5),
+    TWELVE(12.5),
     TWENTY_FIVE(25.0),
     FIFTY(50.0),
     CENT(100.0);
@@ -39,7 +39,7 @@ class ToolPanel extends JPanel {
       if (this == AUTO) {
         return "auto mm/s"; // NON-NLS
       }
-      return DecFormater.allNumber(value) + " mm/s"; // NON-NLS
+      return DecFormatter.allNumber(value) + " mm/s"; // NON-NLS
     }
 
     public static Speed fromValue(double value) {

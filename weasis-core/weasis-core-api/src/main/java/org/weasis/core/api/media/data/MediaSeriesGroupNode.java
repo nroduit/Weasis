@@ -70,27 +70,21 @@ public class MediaSeriesGroupNode implements MediaSeriesGroup {
 
   @Override
   public void setTag(TagW tag, Object value) {
-    if (tag != null) {
-      if (!tag.equals(tagID)) {
-        tags.put(tag, value);
-      }
+    if (tag != null && !tag.equals(tagID)) {
+      tags.put(tag, value);
     }
   }
 
   public void removeTag(TagW tag) {
-    if (tag != null) {
-      if (!tag.equals(tagID)) {
-        tags.remove(tag);
-      }
+    if (tag != null && !tag.equals(tagID)) {
+      tags.remove(tag);
     }
   }
 
   @Override
   public void setTagNoNull(TagW tag, Object value) {
-    if (tag != null && value != null) {
-      if (!tag.equals(tagID)) {
-        tags.put(tag, value);
-      }
+    if (tag != null && value != null && !tag.equals(tagID)) {
+      tags.put(tag, value);
     }
   }
 

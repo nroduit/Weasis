@@ -25,6 +25,7 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -58,20 +59,17 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
 
   @Override
   public void addMedia(DicomVideoElement media) {
-    if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
-      DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+    if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomImageLoader) {
       width = TagD.getTagValue(dicomImageLoader, Tag.Columns, Integer.class);
       height = TagD.getTagValue(dicomImageLoader, Tag.Rows, Integer.class);
       VR.Holder holder = new VR.Holder();
-      Object pixdata = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
-      if (pixdata instanceof Fragments) {
-        Fragments fragments = (Fragments) pixdata;
+      Object pixelData = dicomImageLoader.getDicomObject().getValue(Tag.PixelData, holder);
+      if (pixelData instanceof Fragments fragments) {
         // Should have only 2 fragments: 1) compression marker 2) video stream
         // One fragment shall contain the whole video stream.
         // see http://dicom.nema.org/medical/dicom/current/output/chtml/part05/sect_8.2.5.html
         for (Object data : fragments) {
-          if (data instanceof BulkData) {
-            BulkData bulkData = (BulkData) data;
+          if (data instanceof BulkData bulkData) {
             InputStream in = null;
             FileOutputStream out = null;
             try {
@@ -82,7 +80,6 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
               StreamUtils.copy(in, out, bulkData.length());
               media.setVideoFile(videoFile);
               this.add(media);
-              return;
             } catch (Exception e) {
               LOGGER.error("Cannot extract video stream", e);
             } finally {
@@ -124,9 +121,9 @@ public class DicomVideoSeries extends Series<DicomVideoElement> implements Files
     if (frames != null) {
       toolTips.append(convertSecondsInTime(frames / speed));
     }
-    toolTips.append("<br>");
+    toolTips.append(GuiUtils.HTML_BR);
 
-    toolTips.append("</html>");
+    toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
   }
 

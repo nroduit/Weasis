@@ -71,11 +71,12 @@ public class SelectGraphic extends RectangleGraphic {
     float[] dash = {5f};
     Shape transformedShape = transform == null ? shape : transform.createTransformedShape(shape);
 
-    g2d.setStroke(new BasicStroke(1.0F, 0, 0, 5F, dash, 0));
+    g2d.setStroke(new BasicStroke(1.0F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5F, dash, 0));
     g2d.draw(transformedShape);
 
     g2d.setColor(Color.black);
-    g2d.setStroke(new BasicStroke(1.0F, 0, 0, 5F, dash, 5F));
+    g2d.setStroke(
+        new BasicStroke(1.0F, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5F, dash, 5F));
     g2d.draw(transformedShape);
 
     g2d.setColor(oldColor);

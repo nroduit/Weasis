@@ -25,7 +25,7 @@ public abstract class NativeCache<K, V extends PlanarImage> extends AbstractMap<
   private final long maxNativeMemory;
   private final AtomicLong useNativeMemory;
 
-  public NativeCache(long maxNativeMemory) {
+  protected NativeCache(long maxNativeMemory) {
     this.maxNativeMemory = maxNativeMemory;
     this.useNativeMemory = new AtomicLong(0);
     this.hash = Collections.synchronizedMap(new LinkedHashMap<>(64, 0.75f, true));

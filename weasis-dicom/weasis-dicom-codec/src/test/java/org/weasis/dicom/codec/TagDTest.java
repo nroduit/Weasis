@@ -123,7 +123,7 @@ class TagDTest {
    *     Value Representation (VR)</a>
    */
   @Test
-  public void testGetDicomDateTime() {
+  void testGetDicomDateTime() {
 
     Date date = DateUtils.parseDA(null, "1993:08:22");
     LocalDateTime datetime = LocalDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault());
@@ -172,7 +172,7 @@ class TagDTest {
   }
 
   @Test
-  public void testGetDicomPersonName() {
+  void testGetDicomPersonName() {
     String name = TagD.getDicomPersonName(null);
     assertThat(name).isEmpty();
 

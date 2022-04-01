@@ -32,6 +32,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
@@ -59,14 +60,14 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
   private final JScrollPane rootPane;
   private final JPanel tableMarkerContainer = new JPanel();
-  private JTable jtableMarker;
+  private JTable tableMarker;
 
   private final JPanel tableTagContainer = new JPanel();
-  private JTable jtableTag;
+  private JTable tableTag;
 
   public MeasureAnnotationTool() {
     super(
-        BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, PluginTool.Type.TOOL, 30);
+        BUTTON_NAME, BUTTON_NAME, POSITION.EAST, ExtendedMode.NORMALIZED, Insertable.Type.TOOL, 30);
     this.rootPane = new JScrollPane();
     dockable.setTitleIcon(ResourceUtil.getIcon(ActionIcon.MEASURE));
     rootPane.setBorder(BorderFactory.createEmptyBorder()); // remove default line
@@ -93,11 +94,11 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);
     transform.add(Box.createVerticalStrut(5));
-    jtableTag =
+    tableTag =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableTag.setFont(FontItem.SMALL.getFont());
+    tableTag.setFont(FontItem.SMALL.getFont());
 
-    jtableTag.getTableHeader().setReorderingAllowed(false);
+    tableTag.getTableHeader().setReorderingAllowed(false);
     tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableTagContainer.setLayout(new BorderLayout());
     transform.add(tableTagContainer);
@@ -118,11 +119,11 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
     JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
     transform.add(panel1);
     transform.add(Box.createVerticalStrut(5));
-    jtableMarker =
+    tableMarker =
         createMultipleRenderingTable(new SimpleTableModel(new String[] {}, new Object[][] {}));
-    jtableMarker.setFont(FontItem.SMALL.getFont());
+    tableMarker.setFont(FontItem.SMALL.getFont());
 
-    jtableMarker.getTableHeader().setReorderingAllowed(false);
+    tableMarker.getTableHeader().setReorderingAllowed(false);
     tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 80));
     tableMarkerContainer.setLayout(new BorderLayout());
     transform.add(tableMarkerContainer);
@@ -175,17 +176,17 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
         Messages.getString("MeasureAnnotationTool.tag"),
         Messages.getString("MeasureAnnotationTool.value")
       };
-      jtableTag.setModel(new SimpleTableModel(headers, labels));
-      jtableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
+      tableTag.setModel(new SimpleTableModel(headers, labels));
+      tableTag.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
       int height =
-          (jtableTag.getRowHeight() + jtableTag.getRowMargin()) * jtableTag.getRowCount()
-              + jtableTag.getTableHeader().getHeight()
+          (tableTag.getRowHeight() + tableTag.getRowMargin()) * tableTag.getRowCount()
+              + tableTag.getTableHeader().getHeight()
               + 5;
       tableTagContainer.setPreferredSize(
-          new Dimension(jtableTag.getColumnModel().getTotalColumnWidth(), height));
-      tableTagContainer.add(jtableTag.getTableHeader(), BorderLayout.PAGE_START);
-      tableTagContainer.add(jtableTag, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(jtableTag);
+          new Dimension(tableTag.getColumnModel().getTotalColumnWidth(), height));
+      tableTagContainer.add(tableTag.getTableHeader(), BorderLayout.PAGE_START);
+      tableTagContainer.add(tableTag, BorderLayout.CENTER);
+      TableColumnAdjuster.pack(tableTag);
     } else {
       tableTagContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
@@ -206,17 +207,17 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
         Messages.getString("MeasureAnnotationTool.tag"),
         Messages.getString("MeasureAnnotationTool.value")
       };
-      jtableMarker.setModel(new SimpleTableModel(headers, labels));
-      jtableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
+      tableMarker.setModel(new SimpleTableModel(headers, labels));
+      tableMarker.getColumnModel().getColumn(1).setCellRenderer(new TagRenderer());
       int height =
-          (jtableMarker.getRowHeight() + jtableMarker.getRowMargin()) * jtableMarker.getRowCount()
-              + jtableMarker.getTableHeader().getHeight()
+          (tableMarker.getRowHeight() + tableMarker.getRowMargin()) * tableMarker.getRowCount()
+              + tableMarker.getTableHeader().getHeight()
               + 5;
       tableMarkerContainer.setPreferredSize(
-          new Dimension(jtableMarker.getColumnModel().getTotalColumnWidth(), height));
-      tableMarkerContainer.add(jtableMarker.getTableHeader(), BorderLayout.PAGE_START);
-      tableMarkerContainer.add(jtableMarker, BorderLayout.CENTER);
-      TableColumnAdjuster.pack(jtableMarker);
+          new Dimension(tableMarker.getColumnModel().getTotalColumnWidth(), height));
+      tableMarkerContainer.add(tableMarker.getTableHeader(), BorderLayout.PAGE_START);
+      tableMarkerContainer.add(tableMarker, BorderLayout.CENTER);
+      TableColumnAdjuster.pack(tableMarker);
     } else {
       tableMarkerContainer.setPreferredSize(GuiUtils.getDimension(50, 50));
     }
@@ -383,8 +384,8 @@ public class MeasureAnnotationTool extends PluginTool implements SeriesViewerLis
 
       TableModel model = table.getModel();
       Object tag = model.getValueAt(row, 0);
-      if (tag instanceof TagW) {
-        setValue(((TagW) tag).getFormattedTagValue(value, null));
+      if (tag instanceof TagW tagW) {
+        setValue(tagW.getFormattedTagValue(value, null));
       }
       return val;
     }

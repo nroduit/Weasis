@@ -47,7 +47,7 @@ public class Activator implements BundleActivator, ServiceListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
   @Override
-  public void start(final BundleContext bundleContext) throws Exception {
+  public void start(final BundleContext bundleContext) {
     registerExistingComponents(bundleContext);
 
     // Instantiate UI components in EDT
@@ -65,12 +65,12 @@ public class Activator implements BundleActivator, ServiceListener {
   }
 
   @Override
-  public void stop(BundleContext bundleContext) throws Exception {
+  public void stop(BundleContext bundleContext) {
     // Save preferences only if EventManager has been initialized
     if (EventManager.hasBeenInitialized()) {
       EventManager.getInstance().savePreferences(bundleContext);
     }
-    UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(b -> b instanceof ImportToolBar);
+    UIManager.EXPLORER_PLUGIN_TOOLBARS.removeIf(ImportToolBar.class::isInstance);
     UIManager.closeSeriesViewerType(View2dContainer.class);
   }
 

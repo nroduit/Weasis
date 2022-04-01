@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d.dockable;
 import bibliothek.gui.dock.common.CLocation;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.awt.Component;
+import java.text.MessageFormat;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -101,7 +102,7 @@ public class ImageTool extends PluginTool {
       JSliderW frameSlider = sliderItem.createSlider(2, true);
 
       JLabel speedLabel = new JLabel();
-      speedLabel.setText("Speed (fps)" + StringUtil.COLON);
+      speedLabel.setText(MessageFormat.format(Messages.getString("speed.fps"), StringUtil.COLON));
 
       JSpinner speedSpinner = new JSpinner(sliderItem.getSpeedModel());
       GuiUtils.formatCheckAction(speedSpinner);
@@ -125,7 +126,8 @@ public class ImageTool extends PluginTool {
 
       JPanel framePanel = GuiUtils.getVerticalBoxLayoutPanel(frameSlider, panel);
       framePanel.setBorder(
-          BorderFactory.createCompoundBorder(spaceY, GuiUtils.getTitledBorder("Cine")));
+          BorderFactory.createCompoundBorder(
+              spaceY, GuiUtils.getTitledBorder(Messages.getString("cine"))));
       return framePanel;
     }
     return new JPanel();

@@ -46,10 +46,10 @@ public class DropButtonIcon implements Icon {
       g2d.setPaint(color);
     }
     int midSize = GuiUtils.getScaleLength(3);
-    int shiftx = x + leftIcon.getIconWidth() + GuiUtils.getScaleLength(1);
-    int shifty = y + leftIcon.getIconHeight() - GuiUtils.getScaleLength(5);
-    int[] xPoints = {shiftx, shiftx + 2 * midSize, shiftx + midSize};
-    int[] yPoints = {shifty, shifty, shifty + midSize};
+    int shiftX = x + leftIcon.getIconWidth() + GuiUtils.getScaleLength(1);
+    int shiftY = y + leftIcon.getIconHeight() - GuiUtils.getScaleLength(5);
+    int[] xPoints = {shiftX, shiftX + 2 * midSize, shiftX + midSize};
+    int[] yPoints = {shiftY, shiftY, shiftY + midSize};
     g2d.fillPolygon(xPoints, yPoints, xPoints.length);
   }
 

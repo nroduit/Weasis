@@ -128,7 +128,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");
   }
 
-  protected void initialize(boolean afirst) {
+  protected void initialize(boolean firstTime) {
     WProperties preferences = BundleTools.SYSTEM_PREFERENCES;
 
     String className = preferences.getProperty("weasis.theme");
@@ -154,7 +154,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     } else {
       comboBoxTheme.setSelectedItem(oldLaf);
     }
-    if (afirst) {
+    if (firstTime) {
       oldUILook = oldLaf;
     }
 
@@ -223,8 +223,8 @@ public class ThemeSetting extends AbstractItemDialogPage {
     }
 
     String scale = "-1";
-    if (userScaleRadio.isSelected()) {
-      if (spinner1.getValue() instanceof Integer val) scale = String.valueOf(val / 100.f);
+    if (userScaleRadio.isSelected() && spinner1.getValue() instanceof Integer val) {
+      scale = String.valueOf(val / 100.f);
     }
     BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, scale);
   }

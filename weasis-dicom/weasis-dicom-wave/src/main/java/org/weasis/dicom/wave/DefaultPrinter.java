@@ -19,10 +19,10 @@ import javax.swing.JPanel;
 
 public class DefaultPrinter extends JPanel implements Printable {
 
-  private final WaveView ecgview;
+  private final WaveView ecgView;
 
-  public DefaultPrinter(WaveView ecgview, PageFormat pageFormat) {
-    this.ecgview = ecgview;
+  public DefaultPrinter(WaveView ecgView, PageFormat pageFormat) {
+    this.ecgView = ecgView;
     Paper paper = pageFormat.getPaper();
     double margin = 18;
     paper.setImageableArea(
@@ -40,7 +40,7 @@ public class DefaultPrinter extends JPanel implements Printable {
     if (pageIndex >= 1) {
       return Printable.NO_SUCH_PAGE;
     }
-    ecgview.printWave((Graphics2D) g, f);
+    ecgView.printWave((Graphics2D) g, f);
     return Printable.PAGE_EXISTS;
   }
 }

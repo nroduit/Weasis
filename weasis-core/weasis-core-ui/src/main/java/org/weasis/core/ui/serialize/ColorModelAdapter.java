@@ -13,9 +13,12 @@ import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import java.awt.Color;
 import java.awt.Paint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.weasis.core.api.service.WProperties;
 
 public class ColorModelAdapter {
+  private static final Logger LOGGER = LoggerFactory.getLogger(ColorModelAdapter.class);
 
   private ColorModelAdapter() {}
 
@@ -42,10 +45,12 @@ public class ColorModelAdapter {
   public static class PaintAdapter extends XmlAdapter<ColorModel, Paint> {
 
     @Override
-    public ColorModel marshal(Paint color) throws Exception {
+    public ColorModel marshal(Paint paint) throws Exception {
       ColorModel m = new ColorModel();
-      if (color instanceof Color) {
-        m.rgb = WProperties.color2Hexadecimal((Color) color, true);
+      if (paint instanceof Color color) {
+        m.rgb = WProperties.color2Hexadecimal(color, true);
+      } else {
+        LOGGER.warn("The serialization of {} is not supported.", paint.getClass());
       }
       return m;
     }

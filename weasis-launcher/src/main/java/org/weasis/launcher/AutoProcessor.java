@@ -36,7 +36,7 @@ import org.tukaani.xz.XZInputStream;
  */
 public class AutoProcessor {
 
-  private static final Logger LOGGER = System.getLogger(FileUtil.class.getName());
+  private static final Logger LOGGER = System.getLogger(AutoProcessor.class.getName());
 
   /** The property name used for the bundle directory. */
   public static final String AUTO_DEPLOY_DIR_PROPERTY = "felix.auto.deploy.dir";
@@ -69,7 +69,7 @@ public class AutoProcessor {
    *
    * @param configMap Map of configuration properties.
    * @param context The system bundle context.
-   * @param weasisLoader
+   * @param weasisLoader the WeasisLoader value
    */
   public static void process(
       Map<String, String> configMap,
@@ -259,9 +259,9 @@ public class AutoProcessor {
     // level is assumed.
     Map<String, BundleElement> bundleList = new HashMap<>();
 
-    Set set = configMap.keySet();
-    for (Object o : set) {
-      String key = ((String) o).toLowerCase();
+    Set<String> set = configMap.keySet();
+    for (String o : set) {
+      String key = o.toLowerCase();
 
       // Ignore all keys that are not an auto property.
       if (!key.startsWith(AUTO_INSTALL_PROP) && !key.startsWith(AUTO_START_PROP)) {

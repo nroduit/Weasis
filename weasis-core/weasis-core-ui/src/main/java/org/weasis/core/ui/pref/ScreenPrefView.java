@@ -34,7 +34,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.util.Unit;
@@ -192,13 +192,13 @@ public class ScreenPrefView extends AbstractItemDialogPage {
 
       if (monitor.getRealScaleFactor() > 0) {
         String hlength =
-            DecFormater.allNumber(
+            DecFormatter.allNumber(
                     Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
                         * horizontalLength)
                 + " "
                 + Unit.MILLIMETER.getAbbreviation();
         String vlength =
-            DecFormater.allNumber(
+            DecFormatter.allNumber(
                     Unit.MILLIMETER.getConversionRatio(monitor.getRealScaleFactor())
                         * verticalLength)
                 + " "

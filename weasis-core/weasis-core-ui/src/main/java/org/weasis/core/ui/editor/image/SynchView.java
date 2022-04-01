@@ -74,7 +74,6 @@ public class SynchView implements GUIEntry {
   private final String name;
   private final String command;
   private final FlatSVGIcon svgIcon;
-  private final ActionIcon icon;
   private final SynchData synchData;
 
   public SynchView(
@@ -85,7 +84,6 @@ public class SynchView implements GUIEntry {
     this.synchData = new SynchData(mode, actions);
     this.name = name;
     this.command = command;
-    this.icon = icon;
     this.svgIcon = ResourceUtil.getIcon(icon);
   }
 

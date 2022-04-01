@@ -20,7 +20,7 @@ public class SeriesViewerEvent {
     LAYOUT,
     SELECT_VIEW,
     ANONYM,
-    TOOGLE_INFO,
+    TOGGLE_INFO,
     WIN_LEVEL,
     LUT
   }

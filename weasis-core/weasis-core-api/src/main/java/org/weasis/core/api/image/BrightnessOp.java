@@ -9,17 +9,14 @@
  */
 package org.weasis.core.api.image;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class BrightnessOp extends AbstractOp {
-  private static final Logger LOGGER = LoggerFactory.getLogger(BrightnessOp.class);
 
   public static final String OP_NAME = "rescale"; // NON-NLS
 
-  public static final String P_BRIGTNESS_VALUE = "rescale.brightness";
+  public static final String P_BRIGHTNESS_VALUE = "rescale.brightness";
   public static final String P_CONTRAST_VALUE = "rescale.contrast";
 
   public BrightnessOp() {
@@ -41,10 +38,10 @@ public class BrightnessOp extends AbstractOp {
     PlanarImage result = source;
 
     Double contrast = (Double) params.get(P_CONTRAST_VALUE);
-    Double brigtness = (Double) params.get(P_BRIGTNESS_VALUE);
+    Double brightness = (Double) params.get(P_BRIGHTNESS_VALUE);
 
-    if (contrast != null && brigtness != null) {
-      result = ImageProcessor.rescaleToByte(source.toImageCV(), contrast / 100.0, brigtness);
+    if (contrast != null && brightness != null) {
+      result = ImageProcessor.rescaleToByte(source.toImageCV(), contrast / 100.0, brightness);
     }
 
     params.put(Param.OUTPUT_IMG, result);

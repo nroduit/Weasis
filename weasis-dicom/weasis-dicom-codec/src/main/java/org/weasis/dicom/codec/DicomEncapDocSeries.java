@@ -23,6 +23,7 @@ import org.dcm4che3.util.StreamUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Series;
@@ -53,8 +54,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
 
   @Override
   public void addMedia(DicomEncapDocElement media) {
-    if (media != null && media.getMediaReader() instanceof DicomMediaIO) {
-      DicomMediaIO dicomImageLoader = (DicomMediaIO) media.getMediaReader();
+    if (media != null && media.getMediaReader() instanceof DicomMediaIO dicomImageLoader) {
       String extension = ".tmp";
       Attributes ds = dicomImageLoader.getDicomObject();
       String mime = ds.getString(Tag.MIMETypeOfEncapsulatedDocument);
@@ -64,8 +64,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
       }
       // see http://dicom.nema.org/MEDICAL/Dicom/current/output/chtml/part03/sect_C.24.2.html
       Object data = dicomImageLoader.getDicomObject().getValue(Tag.EncapsulatedDocument);
-      if (data instanceof BulkData) {
-        BulkData bulkData = (BulkData) data;
+      if (data instanceof BulkData bulkData) {
         BufferedInputStream in = null;
         FileOutputStream out = null;
         try {
@@ -93,7 +92,7 @@ public class DicomEncapDocSeries extends Series<DicomEncapDocElement> implements
   @Override
   public String getToolTips() {
     StringBuilder toolTips = DicomSeries.getToolTips(this);
-    toolTips.append("</html>");
+    toolTips.append(GuiUtils.HTML_END);
     return toolTips.toString();
   }
 

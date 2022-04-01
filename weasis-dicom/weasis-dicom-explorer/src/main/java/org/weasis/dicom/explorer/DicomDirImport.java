@@ -56,10 +56,10 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         LocalImport.buildSearchPanel(
             textField, btnSearch, Messages.getString("DicomDirImport.path"), LAST_DICOM_DIR));
 
-    JButton btncdrom =
+    JButton btnCdrom =
         new JButton(
             Messages.getString("DicomDirImport.detect"), ResourceUtil.getIcon(OtherIcon.CDROM));
-    btncdrom.addActionListener(
+    btnCdrom.addActionListener(
         e -> {
           File dcmdir = getDcmDirFromMedia();
           if (dcmdir != null) {
@@ -70,7 +70,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         });
     checkboxWriteInCache = new JCheckBox(Messages.getString("DicomDirImport.cache"));
 
-    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btncdrom));
+    add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btnCdrom));
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxWriteInCache));
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));

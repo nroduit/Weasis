@@ -33,7 +33,6 @@ import java.util.UUID;
 import javax.swing.Icon;
 import javax.swing.JPanel;
 import org.weasis.core.api.explorer.ObservableEvent;
-import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -53,11 +52,11 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
   private final String tooltips;
   private final DefaultSingleCDockable dockable;
 
-  public ViewerPlugin(String pluginName) {
+  protected ViewerPlugin(String pluginName) {
     this(null, pluginName, null, null);
   }
 
-  public ViewerPlugin(String uid, String pluginName, Icon icon, String tooltips) {
+  protected ViewerPlugin(String uid, String pluginName, Icon icon, String tooltips) {
     setLayout(new BorderLayout());
     setName(pluginName);
     this.pluginName = pluginName;
@@ -78,7 +77,7 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
           @Override
           public void close(CDockable dockable) {
             super.close(dockable);
-            if (dockable.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+            if (dockable.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
               seriesViewer.close();
             }
             Dockable prevDockable =
@@ -89,11 +88,10 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
             if (prevDockable == null) {
               handleFocusAfterClosing();
             } else {
-              if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable) {
-                if (defaultCommonDockable.getDockable()
-                    instanceof AbstractCDockable abstractCDockable) {
-                  abstractCDockable.toFront();
-                }
+              if (prevDockable instanceof DefaultCommonDockable defaultCommonDockable
+                  && defaultCommonDockable.getDockable()
+                      instanceof AbstractCDockable abstractCDockable) {
+                abstractCDockable.toFront();
               }
             }
           }
@@ -197,9 +195,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
     List<Toolbar> bars = getToolBar();
     if (bars != null) {
       synchronized (bars) {
-        for (Insertable t : bars) {
-          if (t instanceof ViewerToolBar) {
-            return (ViewerToolBar) t;
+        for (Toolbar t : bars) {
+          if (t instanceof ViewerToolBar viewerToolBar) {
+            return viewerToolBar;
           }
         }
       }
@@ -243,9 +241,9 @@ public abstract class ViewerPlugin<E extends MediaElement> extends JPanel
         if (child instanceof CommonDockable commonDockable) {
           CDockable cChild = commonDockable.getDockable();
           if (cChild.isCloseable() && (closeAll || cChild != dockable)) {
-            if (cChild.getFocusComponent() instanceof SeriesViewer seriesViewer) {
+            if (cChild.getFocusComponent() instanceof SeriesViewer<?> seriesViewer) {
               seriesViewer.close();
-              if (cChild.getFocusComponent() instanceof ViewerPlugin viewerPlugin) {
+              if (cChild.getFocusComponent() instanceof ViewerPlugin<?> viewerPlugin) {
                 viewerPlugin.handleFocusAfterClosing();
               }
             } else {

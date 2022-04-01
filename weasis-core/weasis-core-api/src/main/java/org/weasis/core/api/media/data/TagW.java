@@ -16,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -135,8 +134,6 @@ public class TagW {
   public static final TagW ShutterRGBColor = new TagW("ShutterRGBColor", TagType.COLOR);
   public static final TagW ShutterPSValue = new TagW("ShutterPSValue", TagType.INTEGER);
   public static final TagW ImageDescriptor = new TagW("ImageDescriptor", TagType.OBJECT);
-  public static final TagW OverlayBurninDataPath =
-      new TagW("OverlayBurninDataPath", TagType.STRING);
   public static final TagW ObjectToSave = new TagW("ObjectToSave", TagType.BOOLEAN);
 
   public static final TagW WadoCompressionRate = new TagW("WadoCompressionRate", TagType.INTEGER);
@@ -249,8 +246,8 @@ public class TagW {
     this.type = type == null ? TagType.STRING : type;
     this.anonymizationType = 0;
     this.defaultValue = defaultValue;
-    this.vmMax = vmMax < 1 ? 1 : vmMax;
-    this.vmMin = vmMin < 1 ? 1 : vmMin;
+    this.vmMax = Math.max(vmMax, 1);
+    this.vmMin = Math.max(vmMin, 1);
 
     if (!isTypeCompliant(defaultValue)) {
       throw new IllegalArgumentException("defaultValue is not compliant to the tag type");
@@ -392,9 +389,7 @@ public class TagW {
 
   public Object getValue(Object data) {
     Object value = null;
-    if (data instanceof XMLStreamReader) {
-      XMLStreamReader xmler = (XMLStreamReader) data;
-
+    if (data instanceof XMLStreamReader xmler) {
       if (isStringFamilyType()) {
         value =
             vmMax > 1
@@ -456,30 +451,23 @@ public class TagW {
 
     String str;
 
-    if (value instanceof String) {
-      str = (String) value;
-    } else if (value instanceof String[]) {
-      str = Arrays.asList((String[]) value).stream().collect(Collectors.joining("\\"));
-    } else if (value instanceof TemporalAccessor) {
-      str = TagUtil.formatDateTime((TemporalAccessor) value);
-    } else if (value instanceof TemporalAccessor[]) {
+    if (value instanceof String val) {
+      str = val;
+    } else if (value instanceof String[] stringArray) {
+      str = String.join("\\", stringArray);
+    } else if (value instanceof TemporalAccessor temporalAccessor) {
+      str = TagUtil.formatDateTime(temporalAccessor);
+    } else if (value instanceof TemporalAccessor[] temporalArray) {
+      str = Stream.of(temporalArray).map(TagUtil::formatDateTime).collect(Collectors.joining(", "));
+    } else if (value instanceof float[] floats) {
       str =
-          Stream.of((TemporalAccessor[]) value)
-              .map(TagUtil::formatDateTime)
+          IntStream.range(0, floats.length)
+              .mapToObj(i -> String.valueOf(floats[i]))
               .collect(Collectors.joining(", "));
-    } else if (value instanceof float[]) {
-      float[] array = (float[]) value;
-      str =
-          IntStream.range(0, array.length)
-              .mapToObj(i -> String.valueOf(array[i]))
-              .collect(Collectors.joining(", "));
-    } else if (value instanceof double[]) {
-      str =
-          DoubleStream.of((double[]) value)
-              .mapToObj(String::valueOf)
-              .collect(Collectors.joining(", "));
-    } else if (value instanceof int[]) {
-      str = IntStream.of((int[]) value).mapToObj(String::valueOf).collect(Collectors.joining(", "));
+    } else if (value instanceof double[] doubles) {
+      str = DoubleStream.of(doubles).mapToObj(String::valueOf).collect(Collectors.joining(", "));
+    } else if (value instanceof int[] ints) {
+      str = IntStream.of(ints).mapToObj(String::valueOf).collect(Collectors.joining(", "));
     } else {
       str = value.toString();
     }

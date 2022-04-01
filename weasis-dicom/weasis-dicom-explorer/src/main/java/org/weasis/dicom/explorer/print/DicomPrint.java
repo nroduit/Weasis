@@ -108,8 +108,8 @@ public class DicomPrint {
         ExportImage<? extends ImageElement> image = null;
         Point2D.Double pad = new Point2D.Double(0.0, 0.0);
 
-        if (value instanceof ExportImage) {
-          image = (ExportImage) value;
+        if (value instanceof ExportImage<?> exportImage) {
+          image = exportImage;
           formatImage(image, key, pad);
         }
 
@@ -441,21 +441,24 @@ public class DicomPrint {
         dataBuffer = convertRGBImageToMonochrome(image).getRaster().getDataBuffer();
       }
 
-      if (dataBuffer instanceof DataBufferByte) {
-        bytesOut = ((DataBufferByte) dataBuffer).getData();
-      } else if (dataBuffer instanceof DataBufferShort || dataBuffer instanceof DataBufferUShort) {
-        short[] data =
-            dataBuffer instanceof DataBufferShort
-                ? ((DataBufferShort) dataBuffer).getData()
-                : ((DataBufferUShort) dataBuffer).getData();
-        bytesOut = new byte[data.length * 2];
-        for (int i = 0; i < data.length; i++) {
-          bytesOut[i * 2] = (byte) (data[i] & 0xFF);
-          bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
-        }
+      if (dataBuffer instanceof DataBufferByte dataBufferByte) {
+        bytesOut = dataBufferByte.getData();
+      } else if (dataBuffer instanceof DataBufferShort dataBufferShort) {
+        bytesOut = fillShortArray(dataBufferShort.getData());
+      } else if (dataBuffer instanceof DataBufferUShort dataBufferUShort) {
+        bytesOut = fillShortArray(dataBufferUShort.getData());
       }
       dcmObj.setBytes(Tag.PixelData, VR.OW, bytesOut);
     }
+  }
+
+  private static byte[] fillShortArray(short[] data) {
+    byte[] bytesOut = new byte[data.length * 2];
+    for (int i = 0; i < data.length; i++) {
+      bytesOut[i * 2] = (byte) (data[i] & 0xFF);
+      bytesOut[i * 2 + 1] = (byte) ((data[i] >>> 8) & 0xFF);
+    }
+    return bytesOut;
   }
 
   private static BufferedImage convertRGBImageToMonochrome(BufferedImage colorImage) {

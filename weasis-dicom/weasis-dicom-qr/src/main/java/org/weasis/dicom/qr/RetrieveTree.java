@@ -59,10 +59,10 @@ public class RetrieveTree extends JPanel {
             TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
             if (curPath != null) {
               Object object = curPath.getLastPathComponent();
-              if (object instanceof ToolTipStudyNode) {
-                return ((ToolTipStudyNode) object).getToolTipText();
-              } else if (object instanceof ToolTipSeriesNode) {
-                return ((ToolTipSeriesNode) object).getToolTipText();
+              if (object instanceof ToolTipStudyNode tipStudyNode) {
+                return tipStudyNode.getToolTipText();
+              } else if (object instanceof ToolTipSeriesNode tipSeriesNode) {
+                return tipSeriesNode.getToolTipText();
               }
             }
             return null;

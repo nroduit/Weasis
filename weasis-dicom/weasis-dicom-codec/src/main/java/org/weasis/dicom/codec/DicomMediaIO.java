@@ -259,8 +259,6 @@ public class DicomMediaIO implements DcmMediaReader {
   private MediaElement[] image = null;
   private String mimeType;
   private boolean hasPixel = false;
-  /** Used to indicate whether to skip large private dicom elements. */
-  private boolean skipLargePrivate = true;
 
   private final FileCache fileCache;
 
@@ -798,14 +796,6 @@ public class DicomMediaIO implements DcmMediaReader {
     return (Series<MediaElement>) series;
   }
 
-  public boolean isSkipLargePrivate() {
-    return skipLargePrivate;
-  }
-
-  public void setSkipLargePrivate(boolean skipLargePrivate) {
-    this.skipLargePrivate = skipLargePrivate;
-  }
-
   @Override
   public Attributes getDicomObject() {
     try {
@@ -856,16 +846,16 @@ public class DicomMediaIO implements DcmMediaReader {
       DicomMetaData dicomMetaData = reader.getStreamMetadata();
       Attributes dcm = dicomMetaData.getDicomObject();
       this.numberOfFrame = dcm.getInt(Tag.NumberOfFrames, 0);
-      VR.Holder pixeldataVR = new VR.Holder();
-      Object pixdata = dcm.getValue(Tag.PixelData, pixeldataVR);
-      if (pixdata == null) {
-        pixdata = dcm.getValue(Tag.FloatPixelData, pixeldataVR);
+      VR.Holder pixelatedVR = new VR.Holder();
+      Object pixelData = dcm.getValue(Tag.PixelData, pixelatedVR);
+      if (pixelData == null) {
+        pixelData = dcm.getValue(Tag.FloatPixelData, pixelatedVR);
       }
-      if (pixdata == null) {
-        pixdata = dcm.getValue(Tag.DoubleFloatPixelData, pixeldataVR);
+      if (pixelData == null) {
+        pixelData = dcm.getValue(Tag.DoubleFloatPixelData, pixelatedVR);
       }
 
-      if (pixdata != null) {
+      if (pixelData != null) {
         hasPixel = true;
       }
 

@@ -92,8 +92,8 @@ public class GraphicsPane extends JComponent implements Canvas {
       graphicManagerOld.deleteNonSerializableGraphics();
       this.graphicManager = graphicManager;
       this.graphicManager.addGraphicChangeHandler(graphicsChangeHandler);
-      if (this instanceof ViewCanvas) {
-        this.graphicManager.updateLabels(Boolean.TRUE, (ViewCanvas) this);
+      if (this instanceof ViewCanvas<?> viewCanvas) {
+        this.graphicManager.updateLabels(Boolean.TRUE, viewCanvas);
       }
       this.graphicManager.addChangeListener(layerModelHandler);
       firePropertyChange("graphicManager", graphicManagerOld, this.graphicManager);
@@ -458,8 +458,7 @@ public class GraphicsPane extends JComponent implements Canvas {
     public void propertyChange(PropertyChangeEvent propertychangeevent) {
       Object obj = propertychangeevent.getSource();
       String s = propertychangeevent.getPropertyName();
-      if (obj instanceof Graphic) {
-        Graphic graph = (Graphic) obj;
+      if (obj instanceof Graphic graph) {
         if ("bounds".equals(s)) {
           graphicBoundsChanged(
               graph,

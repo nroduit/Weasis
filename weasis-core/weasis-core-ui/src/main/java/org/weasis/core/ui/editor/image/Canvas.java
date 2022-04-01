@@ -57,7 +57,7 @@ public interface Canvas {
   /**
    * Get the image scale factor witch matches to the dimension of the view
    *
-   * @return
+   * @return the best fit ratio
    */
   double getBestFitViewScale();
 

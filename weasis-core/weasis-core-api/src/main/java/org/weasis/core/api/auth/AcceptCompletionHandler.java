@@ -41,7 +41,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
     channel.read(
         byteBuffer,
         byteBuffer,
-        new CompletionHandler<Integer, ByteBuffer>() {
+        new CompletionHandler<>() {
           @Override
           public void completed(Integer result, ByteBuffer attachment) {
             byteBuffer.flip();
@@ -53,8 +53,7 @@ public class AcceptCompletionHandler implements AcceptCallbackHandler {
                     + "\r\n\r\n"
                     + Messages.getString("code.has.failed")
                     + "\n";
-            try {
-              BufferedReader reader = new BufferedReader(new StringReader(req));
+            try (BufferedReader reader = new BufferedReader(new StringReader(req))) {
               String line = reader.readLine();
               while (StringUtil.hasText(line)) {
                 int idx = line.indexOf("code="); // NON-NLS

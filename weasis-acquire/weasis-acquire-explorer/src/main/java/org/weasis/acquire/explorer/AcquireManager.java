@@ -144,10 +144,10 @@ public class AcquireManager {
     return getAcquireImageInfo(image);
   }
 
-  public static List<AcquireImageInfo> findbySeries(SeriesGroup seriesGroup) {
+  public static List<AcquireImageInfo> findBySeries(SeriesGroup seriesGroup) {
     return getAcquireImageInfoList().stream()
         .filter(i -> i.getSeries() != null && i.getSeries().equals(seriesGroup))
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public static List<SeriesGroup> getBySeries() {
@@ -156,7 +156,7 @@ public class AcquireManager {
         .filter(Objects::nonNull)
         .distinct()
         .sorted()
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public static Map<SeriesGroup, List<AcquireImageInfo>> groupBySeries() {
@@ -244,7 +244,7 @@ public class AcquireManager {
 
       if (isSearchSeriesByDate) {
         List<AcquireImageInfo> imageInfoList =
-            AcquireManager.findbySeries(newImageInfo.getSeries());
+            AcquireManager.findBySeries(newImageInfo.getSeries());
         if (imageInfoList.size() > 2) {
           recalculateCentralTime(imageInfoList);
         }
@@ -332,7 +332,7 @@ public class AcquireManager {
     return medias.stream()
         .filter(ImageElement.class::isInstance)
         .map(ImageElement.class::cast)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public static List<AcquireImageInfo> toAcquireImageInfo(List<? extends MediaElement> medias) {
@@ -340,7 +340,7 @@ public class AcquireManager {
         .filter(ImageElement.class::isInstance)
         .map(ImageElement.class::cast)
         .map(AcquireManager::findByImage)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   public static String getPatientContextName() {

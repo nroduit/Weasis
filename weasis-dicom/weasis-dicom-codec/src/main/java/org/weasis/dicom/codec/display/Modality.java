@@ -110,10 +110,7 @@ public enum Modality {
 
   @Override
   public String toString() {
-    StringBuilder buf = new StringBuilder(this.name());
-    buf.append(" - ");
-    buf.append(description);
-    return buf.toString();
+    return this.name() + " - " + description;
   }
 
   public static Modality getModality(String modality) {

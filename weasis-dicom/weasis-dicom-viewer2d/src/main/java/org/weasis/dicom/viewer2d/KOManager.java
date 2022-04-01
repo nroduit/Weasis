@@ -13,6 +13,7 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JOptionPane;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -36,7 +37,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
-import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
+import org.weasis.dicom.codec.macro.HierarchicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
@@ -177,8 +178,8 @@ public final class KOManager {
     if (newDicomKO != null) {
       // Deactivate filter for new KO
       ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-      if (koFilterAction instanceof ToggleButtonListener) {
-        ((ToggleButtonListener) koFilterAction).setSelected(false);
+      if (koFilterAction instanceof ToggleButtonListener buttonListener) {
+        buttonListener.setSelected(false);
       }
 
       newKOSelection = loadDicomKeyObject(view2d.getSeries(), newDicomKO);
@@ -210,12 +211,12 @@ public final class KOManager {
   public static Attributes createNewDicomKeyObject(
       MediaElement dicomMediaElement, Component parentComponent) {
 
-    if (dicomMediaElement != null && dicomMediaElement.getMediaReader() instanceof DcmMediaReader) {
-      Attributes dicomSourceAttribute =
-          ((DcmMediaReader) dicomMediaElement.getMediaReader()).getDicomObject();
+    if (dicomMediaElement != null
+        && dicomMediaElement.getMediaReader() instanceof DcmMediaReader reader) {
+      Attributes dicomSourceAttribute = reader.getDicomObject();
 
       String message = Messages.getString("KOManager.ko_desc");
-      String defautDescription = Messages.getString("KOManager.ko_name");
+      String defaultDescription = Messages.getString("KOManager.ko_name");
 
       String description =
           (String)
@@ -226,7 +227,7 @@ public final class KOManager {
                   JOptionPane.INFORMATION_MESSAGE,
                   null,
                   null,
-                  defautDescription);
+                  defaultDescription);
 
       // description==null means the user canceled the input
       if (StringUtil.hasText(description)) {
@@ -234,7 +235,7 @@ public final class KOManager {
             DicomMediaUtils.createDicomKeyObject(dicomSourceAttribute, description, null);
 
         if (dicomMediaElement instanceof KOSpecialElement) {
-          Collection<HierachicalSOPInstanceReference> referencedStudySequence =
+          Collection<HierarchicalSOPInstanceReference> referencedStudySequence =
               new KODocumentModule(dicomSourceAttribute).getCurrentRequestedProcedureEvidences();
 
           new KODocumentModule(ko).setCurrentRequestedProcedureEvidences(referencedStudySequence);
@@ -289,8 +290,8 @@ public final class KOManager {
   public static KOSpecialElement getCurrentKOSelection(final ViewCanvas<DicomImageElement> view2d) {
 
     Object actionValue = view2d.getActionValue(ActionW.KO_SELECTION.cmd());
-    if (actionValue instanceof KOSpecialElement) {
-      return (KOSpecialElement) actionValue;
+    if (actionValue instanceof KOSpecialElement koSpecialElement) {
+      return koSpecialElement;
     }
 
     return null;
@@ -309,15 +310,15 @@ public final class KOManager {
 
     if (validKOSelection != currentSelectedKO) {
       ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
-      if (koSelection instanceof ComboItemListener) {
-        ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+      if (koSelection instanceof ComboItemListener itemListener) {
+        itemListener.setSelectedItem(validKOSelection);
       }
     }
 
     boolean hasKeyObjectReferenceChanged = false;
 
     if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
-      // KO Toogle State is changed only if KO Selection remains the same,
+      // KO Toggle State is changed only if KO Selection remains the same,
       // or if there was no previous KO Selection
 
       DicomImageElement currentImage = view2d.getImage();
@@ -339,9 +340,9 @@ public final class KOManager {
         if (filter && (view2d.getEventManager().getSelectedViewPane() == view2d)) {
           // When unchecking an image, force to call the filter action to resize the views
           ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-          if (koFilterAction instanceof ToggleButtonListener) {
-            ((ToggleButtonListener) koFilterAction).setSelectedWithoutTriggerAction(false);
-            ((ToggleButtonListener) koFilterAction).setSelected(true);
+          if (koFilterAction instanceof ToggleButtonListener buttonListener) {
+            buttonListener.setSelectedWithoutTriggerAction(false);
+            buttonListener.setSelected(true);
           }
         }
       }
@@ -363,15 +364,15 @@ public final class KOManager {
 
     if (validKOSelection != currentSelectedKO) {
       ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
-      if (koSelection instanceof ComboItemListener) {
-        ((ComboItemListener) koSelection).setSelectedItem(validKOSelection);
+      if (koSelection instanceof ComboItemListener itemListener) {
+        itemListener.setSelectedItem(validKOSelection);
       }
     }
 
     boolean hasKeyObjectReferenceChanged = false;
 
     if (validKOSelection == currentSelectedKO || currentSelectedKO == null) {
-      // KO Toogle State is changed only if KO Selection remains the same,
+      // KO Toggle State is changed only if KO Selection remains the same,
       // or if there was no previous KO Selection
       hasKeyObjectReferenceChanged =
           validKOSelection.setKeyObjectReference(selectedState, view2d.getSeries());
@@ -411,14 +412,14 @@ public final class KOManager {
       int imgSelectionIndex,
       boolean updateImage) {
 
-    if (view2D instanceof View2d) {
+    if (view2D instanceof View2d view2d) {
       boolean tiledMode = imgSelectionIndex >= 0;
       boolean koFilter;
       KOSpecialElement selectedKO = null;
       if (newSelectedKO == null) {
         Object actionValue = view2D.getActionValue(ActionW.KO_SELECTION.cmd());
-        if (actionValue instanceof KOSpecialElement) {
-          selectedKO = (KOSpecialElement) actionValue;
+        if (actionValue instanceof KOSpecialElement koSpecialElement) {
+          selectedKO = koSpecialElement;
 
           // test if current ko_selection action in view do still exist
           Collection<KOSpecialElement> koElements =
@@ -432,18 +433,18 @@ public final class KOManager {
           }
         }
       } else {
-        if (newSelectedKO instanceof KOSpecialElement) {
-          selectedKO = (KOSpecialElement) newSelectedKO;
+        if (newSelectedKO instanceof KOSpecialElement koSpecialElement) {
+          selectedKO = koSpecialElement;
         }
         view2D.setActionsInView(ActionW.KO_SELECTION.cmd(), newSelectedKO);
       }
 
-      if (enableFilter == null) {
-        koFilter =
-            LangUtil.getNULLtoFalse((Boolean) view2D.getActionValue(ActionW.KO_FILTER.cmd()));
-      } else {
-        koFilter = enableFilter;
-      }
+      koFilter =
+          Objects.requireNonNullElseGet(
+              enableFilter,
+              () ->
+                  LangUtil.getNULLtoFalse(
+                      (Boolean) view2D.getActionValue(ActionW.KO_FILTER.cmd())));
 
       if (tiledMode && selectedKO == null) {
         // Unselect the filter with the None KO selection
@@ -461,7 +462,7 @@ public final class KOManager {
             updateImage(view2D, null, view2D.getFrameIndex());
           }
           // Update the None KO selection
-          ((View2d) view2D).updateKOButtonVisibleState();
+          view2d.updateKOButtonVisibleState();
         }
         return;
       }
@@ -507,14 +508,14 @@ public final class KOManager {
             // If there is no more image in KO series filtered then disable the KO_FILTER
             sopInstanceUIDFilter = null;
             view2D.setActionsInView(ActionW.KO_FILTER.cmd(), false);
-            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), sopInstanceUIDFilter);
+            view2D.setActionsInView(ActionW.FILTERED_SERIES.cmd(), null);
             newImageIndex = view2D.getFrameIndex();
           }
         }
 
         updateImage(view2D, sopInstanceUIDFilter, newImageIndex);
       }
-      ((View2d) view2D).updateKOButtonVisibleState();
+      view2d.updateKOButtonVisibleState();
     }
   }
 
@@ -522,7 +523,7 @@ public final class KOManager {
       ViewCanvas<DicomImageElement> view2D,
       Filter<DicomImageElement> sopInstanceUIDFilter,
       int newImageIndex) {
-    int imgIndex = newImageIndex < 0 ? 0 : newImageIndex;
+    int imgIndex = Math.max(newImageIndex, 0);
     if (view2D == view2D.getEventManager().getSelectedViewPane()) {
       /*
        * Update the sliceAction action according to the nearest image when the filter hides the image of the previous

@@ -50,6 +50,7 @@ import org.weasis.base.explorer.list.DiskFileList;
 import org.weasis.base.explorer.list.impl.JIThumbnailListPane;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.PluginTool;
@@ -65,7 +66,6 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   public static final String BUTTON_NAME = "Explorer"; // NON-NLS
   public static final String NAME = Messages.getString("DefaultExplorer.name");
   public static final String P_LAST_DIR = "default.explorer.last.dir";
-  private static final String PREFERENCE_NODE = "view"; // NON-NLS
 
   protected FileTreeModel model;
   protected TreePath clickedPath;
@@ -76,7 +76,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
   private final JPanel jRootPanel = new JPanel();
 
   public DefaultExplorer(final FileTreeModel model, JIThumbnailCache thumbCache) {
-    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, PluginTool.Type.EXPLORER, 10);
+    super(BUTTON_NAME, NAME, POSITION.WEST, ExtendedMode.NORMALIZED, Insertable.Type.EXPLORER, 10);
     if (model == null) {
       throw new IllegalArgumentException();
     }
@@ -275,7 +275,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     private void showPopup(final MouseEvent evt) {
       // Context menu
       if (SwingUtilities.isRightMouseButton(evt)) {
-        JPopupMenu popupMenu = DefaultExplorer.this.buidContexMenu(evt);
+        JPopupMenu popupMenu = DefaultExplorer.this.buildContextMenu(evt);
         if (popupMenu != null) {
           popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
         }
@@ -302,7 +302,7 @@ public class DefaultExplorer extends PluginTool implements DataExplorerView {
     }
   }
 
-  public JPopupMenu buidContexMenu(final MouseEvent e) {
+  public JPopupMenu buildContextMenu(final MouseEvent e) {
 
     try {
       JPopupMenu popupMenu = new JPopupMenu();

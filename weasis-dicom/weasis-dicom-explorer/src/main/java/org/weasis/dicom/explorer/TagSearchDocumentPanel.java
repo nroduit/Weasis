@@ -76,7 +76,7 @@ public class TagSearchDocumentPanel extends AbstractTagSearchPanel {
           pos += patternUp.length();
         }
       } catch (BadLocationException e) {
-        LOGGER.error("Highight result of search", e);
+        LOGGER.error("Highlight result of search", e);
       }
     }
   }
@@ -110,7 +110,7 @@ public class TagSearchDocumentPanel extends AbstractTagSearchPanel {
         }
         textComponent.scrollRectToVisible(textComponent.modelToView(curPos));
       } catch (BadLocationException e) {
-        LOGGER.error("Highight result of search", e);
+        LOGGER.error("Highlight result of search", e);
       }
     }
   }

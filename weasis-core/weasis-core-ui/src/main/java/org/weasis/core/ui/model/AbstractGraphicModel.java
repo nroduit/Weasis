@@ -78,7 +78,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   private final List<GraphicSelectionListener> selectedGraphicsListeners = new ArrayList<>();
   private final List<GraphicModelChangeListener> modelListeners = new ArrayList<>();
   private final List<PropertyChangeListener> graphicsListeners = new ArrayList<>();
-  private Boolean changeFireingSuspended = Boolean.FALSE;
+  private Boolean changeFiringSuspended = Boolean.FALSE;
 
   private final Function<Graphic, GraphicLayer> getLayer = Graphic::getLayer;
   private final Function<Graphic, DragGraphic> castToDragGraphic = DragGraphic.class::cast;
@@ -86,11 +86,11 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   private final Predicate<Graphic> isLayerVisible = g -> g.getLayer().getVisible();
   private final Predicate<Graphic> isGraphicSelected = Graphic::getSelected;
 
-  public AbstractGraphicModel() {
+  protected AbstractGraphicModel() {
     this(null);
   }
 
-  public AbstractGraphicModel(List<ReferencedSeries> referencedSeries) {
+  protected AbstractGraphicModel(List<ReferencedSeries> referencedSeries) {
     setReferencedSeries(referencedSeries);
     this.layers = Collections.synchronizedList(new ArrayList<>());
     this.models = Collections.synchronizedList(new ArrayList<>());
@@ -149,7 +149,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   public void setModels(List<Graphic> models) {
     if (models != null) {
       this.models = Collections.synchronizedList(models);
-      this.layers = Collections.synchronizedList(getLayerlist());
+      this.layers = Collections.synchronizedList(getLayerList());
     }
   }
 
@@ -194,7 +194,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
     }
   }
 
-  private List<GraphicLayer> getLayerlist() {
+  private List<GraphicLayer> getLayerList() {
     return models.parallelStream().map(getLayer).distinct().collect(Collectors.toList());
   }
 
@@ -515,7 +515,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   // }
 
   @Override
-  public List<DragGraphic> getSelectedDragableGraphics() {
+  public List<DragGraphic> getSelectedDraggableGraphics() {
     return models.stream()
         .filter(isGraphicSelected)
         .filter(DragGraphic.class::isInstance)
@@ -531,7 +531,7 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
   @Override
   public Optional<SelectGraphic> getSelectGraphic() {
     return models.stream()
-        .filter(g -> g instanceof SelectGraphic)
+        .filter(SelectGraphic.class::isInstance)
         .map(SelectGraphic.class::cast)
         .findFirst();
   }
@@ -660,19 +660,19 @@ public abstract class AbstractGraphicModel extends DefaultUUID implements Graphi
 
   @Override
   public void fireChanged() {
-    if (!changeFireingSuspended) {
+    if (!changeFiringSuspended) {
       modelListeners.stream().forEach(l -> l.handleModelChanged(this));
     }
   }
 
   @Override
-  public Boolean isChangeFireingSuspended() {
-    return changeFireingSuspended;
+  public Boolean isChangeFiringSuspended() {
+    return changeFiringSuspended;
   }
 
   @Override
-  public void setChangeFireingSuspended(Boolean change) {
-    this.changeFireingSuspended = Optional.ofNullable(change).orElse(Boolean.FALSE);
+  public void setChangeFiringSuspended(Boolean change) {
+    this.changeFiringSuspended = Optional.ofNullable(change).orElse(Boolean.FALSE);
   }
 
   @Override

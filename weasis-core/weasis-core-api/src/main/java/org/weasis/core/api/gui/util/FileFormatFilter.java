@@ -107,16 +107,20 @@ public class FileFormatFilter extends FileFilter {
   public String getDescription() {
     if (fFullDescription == null) {
       if (fDescription == null || isExtensionListInDescription()) {
-        fFullDescription = fDescription != null ? fDescription + " (" : "(";
+        StringBuilder builder = new StringBuilder(fDescription != null ? fDescription + " (" : "(");
         Set<String> extensions = fExtensions.keySet();
         Iterator<String> it = extensions.iterator();
         if (it.hasNext()) {
-          fFullDescription += "*." + it.next();
+          builder.append("*.");
+          builder.append(it.next());
         }
+
         while (it.hasNext()) {
-          fFullDescription += ", *." + it.next();
+          builder.append(", *.");
+          builder.append(it.next());
         }
-        fFullDescription += ")";
+        builder.append(")");
+        fFullDescription = builder.toString();
       } else {
         fFullDescription = fDescription;
       }

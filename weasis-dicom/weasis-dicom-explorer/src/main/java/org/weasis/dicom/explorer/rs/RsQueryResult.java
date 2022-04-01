@@ -56,7 +56,7 @@ import org.weasis.dicom.web.Multipart;
 public class RsQueryResult extends AbstractQueryResult {
   private static final Logger LOGGER = LoggerFactory.getLogger(RsQueryResult.class);
 
-  private static final boolean multipleParams =
+  private static final boolean MULTIPLE_PARAMS =
       LangUtil.getEmptytoFalse(System.getProperty("dicom.qido.query.multi.params"));
   public static final String STUDY_QUERY =
       multiParams(
@@ -90,7 +90,7 @@ public class RsQueryResult extends AbstractQueryResult {
   }
 
   private static String multiParams(String query) {
-    return multipleParams ? query.replace(",", "&includefield=") : query; // NON-NLS
+    return MULTIPLE_PARAMS ? query.replace(",", "&includefield=") : query; // NON-NLS
   }
 
   @Override
@@ -201,10 +201,8 @@ public class RsQueryResult extends AbstractQueryResult {
 
     if (StringUtil.hasText(rsQueryParams.getMostRecentResults())) {
       int recent = StringUtil.getInteger(rsQueryParams.getMostRecentResults());
-      if (recent > 0) {
-        if (studies.size() > recent) {
-          studies.subList(recent, studies.size()).clear();
-        }
+      if (recent > 0 && studies.size() > recent) {
+        studies.subList(recent, studies.size()).clear();
       }
     }
 
@@ -453,8 +451,8 @@ public class RsQueryResult extends AbstractQueryResult {
   }
 
   private void fillInstance(Attributes seriesDataset, Series<?> dicomSeries) {
-    String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    if (StringUtil.hasText(serieInstanceUID)) {
+    String seriesInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
+    if (StringUtil.hasText(seriesInstanceUID)) {
       String seriesRetrieveURL = TagD.getTagValue(dicomSeries, Tag.RetrieveURL, String.class);
       StringBuilder buf = new StringBuilder(seriesRetrieveURL);
       buf.append("/instances?includefield="); // NON-NLS
@@ -476,7 +474,7 @@ public class RsQueryResult extends AbstractQueryResult {
           }
         }
       } catch (Exception e) {
-        LOGGER.error("QIDO-RS all instances with seriesUID {}", serieInstanceUID, e);
+        LOGGER.error("QIDO-RS all instances with seriesUID {}", seriesInstanceUID, e);
       }
     }
   }
@@ -492,8 +490,7 @@ public class RsQueryResult extends AbstractQueryResult {
       sop = new SopInstance(sopUID, frame);
       String rurl = instanceDataSet.getString(Tag.RetrieveURL);
       if (!StringUtil.hasText(rurl)) {
-        String b = seriesRetrieveURL + "/instances/" + sopUID; // NON-NLS
-        rurl = b;
+        rurl = seriesRetrieveURL + "/instances/" + sopUID;
       }
       sop.setDirectDownloadFile(rurl);
       seriesInstanceList.addSopInstance(sop);
@@ -513,7 +510,7 @@ public class RsQueryResult extends AbstractQueryResult {
     if (patient == null) {
       patient =
           new MediaSeriesGroupNode(
-              TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
+              TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.tagView());
       patient.setTag(TagD.get(Tag.PatientID), patientComparator.getPatientId());
       patient.setTag(TagD.get(Tag.PatientName), patientComparator.getName());
       patient.setTagNoNull(
@@ -539,8 +536,7 @@ public class RsQueryResult extends AbstractQueryResult {
     MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
     if (study == null) {
       study =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
       TagW[] tags =
           TagD.getTagFromIDs(
               Tag.StudyDate,

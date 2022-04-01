@@ -108,11 +108,10 @@ public class DefaultDragSequence implements Draggable {
             boolean isEditingGraph = false;
             Optional<Graphic> first =
                 graphPane.getGraphicManager().getFirstGraphicIntersecting(mouseEvent);
-            if (first.isPresent() && first.get() instanceof AbstractDragGraphic) {
-              AbstractDragGraphic dragGraph = (AbstractDragGraphic) first.get();
+            if (first.isPresent() && first.get() instanceof AbstractDragGraphic dragGraph) {
               if (dragGraph.getSelected() && dragGraph.getVariablePointsNumber()) {
                 List<DragGraphic> selectedDragGraphList =
-                    graphPane.getGraphicManager().getSelectedDragableGraphics();
+                    graphPane.getGraphicManager().getSelectedDraggableGraphics();
 
                 if (selectedDragGraphList.size() == 1
                     && !dragGraph.isOnGraphicLabel(mouseEvent)

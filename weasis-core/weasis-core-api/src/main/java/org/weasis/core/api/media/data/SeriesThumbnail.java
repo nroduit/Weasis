@@ -192,12 +192,12 @@ public class SeriesThumbnail extends Thumbnail
     int size = GuiUtils.getScaleLength(thumbnailSize);
     if (this.thumbnailSize != size) {
       this.thumbnailSize = GuiUtils.getScaleLength(size);
-      Object media = series.getMedia(mediaPosition, null, null);
+      MediaElement media = series.getMedia(mediaPosition, null, null);
       if (media == null) {
         media = series.getFirstSpecialElement();
       }
       removeImageFromCache();
-      buildThumbnail((MediaElement) media, series.getTagValue(TagW.ExplorerModel) != null, null);
+      buildThumbnail(media, series.getTagValue(TagW.ExplorerModel) != null, null);
     }
   }
 

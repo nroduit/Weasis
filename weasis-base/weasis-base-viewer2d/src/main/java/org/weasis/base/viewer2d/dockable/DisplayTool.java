@@ -218,13 +218,11 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           }
         }
 
-      } else if (info.equals(parent)) {
-        if (selObject != null) {
-          for (ViewCanvas<ImageElement> v : views) {
-            LayerAnnotation layer = v.getInfoLayer();
-            if (layer != null && layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
-              v.getJComponent().repaint();
-            }
+      } else if (info.equals(parent) && selObject != null) {
+        for (ViewCanvas<ImageElement> v : views) {
+          LayerAnnotation layer = v.getInfoLayer();
+          if (layer != null && layer.setDisplayPreferencesValue(selObject.toString(), selected)) {
+            v.getJComponent().repaint();
           }
         }
       }
@@ -256,8 +254,9 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
   @Override
   public void changingViewContentEvent(SeriesViewerEvent event) {
     EVENT e = event.getEventType();
-    if (EVENT.SELECT_VIEW.equals(e) && event.getSeriesViewer() instanceof View2dContainer) {
-      iniTreeValues(((View2dContainer) event.getSeriesViewer()).getSelectedImagePane());
+    if (EVENT.SELECT_VIEW.equals(e)
+        && event.getSeriesViewer() instanceof View2dContainer container) {
+      iniTreeValues(container.getSelectedImagePane());
     }
   }
 
@@ -265,12 +264,10 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
     Enumeration<?> children = start.children();
     while (children.hasMoreElements()) {
       Object child = children.nextElement();
-      if (child instanceof DefaultMutableTreeNode dtm) {
-        if (!dtm.isLeaf()) {
-          TreePath tp = new TreePath(dtm.getPath());
-          tree.expandPath(tp);
-          expandTree(tree, dtm);
-        }
+      if (child instanceof DefaultMutableTreeNode dtm && !dtm.isLeaf()) {
+        TreePath tp = new TreePath(dtm.getPath());
+        tree.expandPath(tp);
+        expandTree(tree, dtm);
       }
     }
   }

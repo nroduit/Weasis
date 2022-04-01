@@ -28,8 +28,8 @@ public class SrToolBar extends WtoolBar {
         e -> {
           ImageViewerPlugin<?> container =
               SRContainer.SR_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof SRContainer) {
-            ((SRContainer) container).printCurrentView();
+          if (container instanceof SRContainer srContainer) {
+            srContainer.printCurrentView();
           }
         });
     add(printButton);
@@ -40,9 +40,8 @@ public class SrToolBar extends WtoolBar {
         e -> {
           ImageViewerPlugin<?> container =
               SRContainer.SR_EVENT_MANAGER.getSelectedView2dContainer();
-          if (container instanceof SRContainer) {
-            DicomFieldsView.displayHeaderForSpecialElement(
-                container, ((SRContainer) container).getSeries());
+          if (container instanceof SRContainer srContainer) {
+            DicomFieldsView.displayHeaderForSpecialElement(container, srContainer.getSeries());
           }
         });
     add(metaButton);

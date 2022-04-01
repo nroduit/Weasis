@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,10 +54,9 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
           if (ObservableEvent.BasicAction.LOADING_STOP.equals(cmd)
               || ObservableEvent.BasicAction.LOADING_CANCEL.equals(cmd)) {
             checkDownloadIssues(series);
-          } else if (ObservableEvent.BasicAction.LOADING_START.equals(cmd)) {
-            if (!loadSeriesList.contains(series)) {
-              loadSeriesList.add(series);
-            }
+          } else if (ObservableEvent.BasicAction.LOADING_START.equals(cmd)
+              && !loadSeriesList.contains(series)) {
+            loadSeriesList.add(series);
           }
         }
       };
@@ -66,7 +66,7 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
     if (xmlFiles == null || !(explorerModel instanceof DicomModel)) {
       throw new IllegalArgumentException("invalid parameters");
     }
-    this.xmlFiles = xmlFiles.stream().filter(Objects::nonNull).toList();
+    this.xmlFiles = xmlFiles.stream().filter(Objects::nonNull).collect(Collectors.toList());
     this.dicomModel = (DicomModel) explorerModel;
   }
 

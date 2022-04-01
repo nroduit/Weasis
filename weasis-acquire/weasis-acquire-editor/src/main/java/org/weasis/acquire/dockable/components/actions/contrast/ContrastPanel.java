@@ -105,7 +105,7 @@ public class ContrastPanel extends AbstractAcquireActionPanel
     if (node != null) {
       node.clearIOCache();
       node.setParam(
-          BrightnessOp.P_BRIGTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
+          BrightnessOp.P_BRIGHTNESS_VALUE, (double) imageInfo.getNextValues().getBrightness());
       node.setParam(
           BrightnessOp.P_CONTRAST_VALUE, (double) imageInfo.getNextValues().getContrast());
     }

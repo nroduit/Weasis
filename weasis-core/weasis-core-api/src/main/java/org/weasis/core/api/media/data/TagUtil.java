@@ -36,12 +36,12 @@ public final class TagUtil {
     if (temporal != null) {
       try {
         TemporalAccessor t = temporal;
-        if (temporal instanceof LocalDate) {
-          t = ((LocalDate) temporal).atStartOfDay(ZoneId.systemDefault());
-        } else if (temporal instanceof LocalTime) {
-          t = ((LocalTime) temporal).atDate(LocalDate.ofEpochDay(0)).atZone(ZoneId.systemDefault());
-        } else if (temporal instanceof LocalDateTime) {
-          t = ((LocalDateTime) temporal).atZone(ZoneId.systemDefault());
+        if (temporal instanceof LocalDate date) {
+          t = date.atStartOfDay(ZoneId.systemDefault());
+        } else if (temporal instanceof LocalTime time) {
+          t = time.atDate(LocalDate.ofEpochDay(0)).atZone(ZoneId.systemDefault());
+        } else if (temporal instanceof LocalDateTime dateTime) {
+          t = dateTime.atZone(ZoneId.systemDefault());
         }
         return Date.from(Instant.from(t));
       } catch (Exception e) {
@@ -124,9 +124,8 @@ public final class TagUtil {
       return LocalUtil.getTimeFormatter().format(date);
     } else if (date instanceof LocalDateTime || date instanceof ZonedDateTime) {
       return LocalUtil.getDateTimeFormatter().format(date);
-    } else if (date instanceof Instant) {
-      return LocalUtil.getDateTimeFormatter()
-          .format(((Instant) date).atZone(ZoneId.systemDefault()));
+    } else if (date instanceof Instant instant) {
+      return LocalUtil.getDateTimeFormatter().format(instant.atZone(ZoneId.systemDefault()));
     }
     return "";
   }
@@ -399,10 +398,10 @@ public final class TagUtil {
   }
 
   /**
-   * @param value1
-   * @param value2
+   * @param value1 the first object to compare
+   * @param value2 the second object to compare
    * @param ignoreCase (only when values are String)
-   * @return
+   * @return the result of equals
    */
   public static boolean isEquals(Object value1, Object value2, boolean ignoreCase) {
     if (value1 == null && value2 == null) {
@@ -430,8 +429,8 @@ public final class TagUtil {
         if (o1 == null && o2 == null) {
           continue;
         }
-        if (ignoreCase && o1 instanceof String && o2 instanceof String) {
-          if (!((String) o1).equalsIgnoreCase((String) o2)) {
+        if (ignoreCase && o1 instanceof String st1 && o2 instanceof String st2) {
+          if (!st1.equalsIgnoreCase(st2)) {
             return false;
           }
         } else if (o1 != null && !o1.equals(o2)) {
@@ -440,8 +439,8 @@ public final class TagUtil {
       }
       return true;
     } else {
-      if (ignoreCase && value1 instanceof String && value2 instanceof String) {
-        return ((String) value1).equalsIgnoreCase((String) value2);
+      if (ignoreCase && value1 instanceof String st1 && value2 instanceof String st2) {
+        return st1.equalsIgnoreCase(st2);
       }
       return value1.equals(value2);
     }

@@ -23,6 +23,7 @@ public class FlatWeasisTheme extends ThemeLaf {
     super(loadTheme("Weasis.theme.json"));
   }
 
+  @Override
   public String getName() {
     return "Weasis";
   }

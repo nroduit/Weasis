@@ -25,8 +25,8 @@ import org.weasis.core.api.util.LocalUtil;
 import org.weasis.core.ui.Messages;
 import org.weasis.core.util.StringUtil;
 
-public class LanguagelSetting extends AbstractItemDialogPage {
-  private static final Logger LOGGER = LoggerFactory.getLogger(LanguagelSetting.class);
+public class LanguageSetting extends AbstractItemDialogPage {
+  private static final Logger LOGGER = LoggerFactory.getLogger(LanguageSetting.class);
 
   public static final String PAGE_NAME = Messages.getString("GeneralSetting.language");
 
@@ -50,7 +50,7 @@ public class LanguagelSetting extends AbstractItemDialogPage {
         }
       };
 
-  public LanguagelSetting() {
+  public LanguageSetting() {
     super(PAGE_NAME, 101);
 
     try {

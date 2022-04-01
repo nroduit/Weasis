@@ -149,8 +149,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
   }
 
-  public static final String PROP_LAYER_OFFSET = "layer.offset";
-
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
   public static final Cursor EDIT_CURSOR =
@@ -169,8 +167,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
   private int pointerType = 0;
 
-  protected final Color pointerColor1 = Color.black;
-  protected final Color pointerColor2 = Color.white;
+  protected static final Color pointerColor1 = Color.black;
+  protected static final Color pointerColor2 = Color.white;
   protected final Border focusBorder =
       BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
   protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
@@ -187,11 +185,11 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   protected final ImageViewerEventManager<E> eventManager;
 
-  public DefaultView2d(ImageViewerEventManager<E> eventManager) {
+  protected DefaultView2d(ImageViewerEventManager<E> eventManager) {
     this(eventManager, null);
   }
 
-  public DefaultView2d(ImageViewerEventManager<E> eventManager, ViewModel viewModel) {
+  protected DefaultView2d(ImageViewerEventManager<E> eventManager, ViewModel viewModel) {
     super(viewModel);
     this.eventManager = Objects.requireNonNull(eventManager);
     this.viewButtons = new ArrayList<>();
@@ -372,9 +370,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       childDS = new ArrayList<>(dragGraphList.size());
 
       for (DragGraphic dragGraph : dragGraphList) {
-        Draggable dragsequence = dragGraph.createMoveDrag();
-        if (dragsequence != null) {
-          childDS.add(dragsequence);
+        Draggable dragSequence = dragGraph.createMoveDrag();
+        if (dragSequence != null) {
+          childDS.add(dragSequence);
         }
       }
     }
@@ -428,19 +426,19 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
 
   @Override
   public void setSeries(MediaSeries<E> newSeries, E selectedMedia) {
-    MediaSeries<E> oldsequence = this.series;
+    MediaSeries<E> oldSequence = this.series;
     this.series = newSeries;
 
-    if (oldsequence == null && newSeries == null) {
+    if (oldSequence == null && newSeries == null) {
       return;
     }
-    if (oldsequence != null
-        && oldsequence.equals(newSeries)
+    if (oldSequence != null
+        && oldSequence.equals(newSeries)
         && imageLayer.getSourceImage() != null) {
       return;
     }
 
-    closingSeries(oldsequence);
+    closingSeries(oldSequence);
 
     initActionWState();
     try {
@@ -451,12 +449,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         if (selectedMedia == null) {
           media =
               newSeries.getMedia(
-                  tileOffset < 0 ? 0 : tileOffset,
+                  Math.max(tileOffset, 0),
                   (Filter<E>) actionsInView.get(ActionW.FILTERED_SERIES.cmd()),
                   getCurrentSortComparator());
         }
         imageLayer.fireOpEvent(
-            new ImageOpEvent(ImageOpEvent.OpEvent.SeriesChange, series, media, null));
+            new ImageOpEvent(ImageOpEvent.OpEvent.SERIES_CHANGE, series, media, null));
         if (lens != null) {
           lens.setFreezeImage(null);
         }
@@ -570,9 +568,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     if (img == null) {
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
       ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-      if (spUnitAction instanceof ComboItemListener) {
-        ((ComboItemListener) spUnitAction)
-            .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
+      if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
+        comboItemListener.setSelectedItemWithoutTriggerAction(
+            actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
       }
       // Force the update for null image
       imageLayer.setEnableDispOperations(true);
@@ -588,22 +586,22 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
         if (eventManager.getSelectedViewPane() == this) {
           ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-          if (spUnitAction instanceof ComboItemListener) {
-            ((ComboItemListener) spUnitAction)
-                .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
+          if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
+            comboItemListener.setSelectedItemWithoutTriggerAction(
+                actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
           }
         }
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
         ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener) {
-          ((ComboItemListener) spUnitAction)
-              .setSelectedItemWithoutTriggerAction(actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
+        if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
+          comboItemListener.setSelectedItemWithoutTriggerAction(
+              actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
         }
 
         updateCanvas(img, false);
 
         imageLayer.fireOpEvent(
-            new ImageOpEvent(ImageOpEvent.OpEvent.ImageChange, series, img, null));
+            new ImageOpEvent(ImageOpEvent.OpEvent.IMAGE_CHANGE, series, img, null));
         resetZoom();
 
         imageLayer.setImage(img, (OpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()));
@@ -655,8 +653,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       List<DockableTool> tools = viewerPlugin.getToolPanel();
       synchronized (tools) {
         for (DockableTool p : tools) {
-          if (p instanceof GraphicSelectionListener) {
-            graphicManager.addGraphicSelectionListener((GraphicSelectionListener) p);
+          if (p instanceof GraphicSelectionListener selectionListener) {
+            graphicManager.addGraphicSelectionListener(selectionListener);
           }
         }
       }
@@ -700,8 +698,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
       ratio = DefaultViewModel.SCALE_MAX;
     }
     ActionState zoom = eventManager.getAction(ActionW.ZOOM);
-    if (zoom instanceof SliderChangeListener) {
-      SliderChangeListener z = (SliderChangeListener) zoom;
+    if (zoom instanceof SliderChangeListener z) {
       // Adjust the best fit value according to the possible range of the model zoom action.
       if (eventManager.getSelectedViewPane() == this) {
         // Set back the value to UI components as this value cannot be computed early.
@@ -714,11 +711,10 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     return ratio;
   }
 
-  @SuppressWarnings("rawtypes")
   protected boolean isDrawActionActive() {
-    ViewerPlugin container = WinUtil.getParentOfClass(this, ViewerPlugin.class);
+    ViewerPlugin<?> container = WinUtil.getParentOfClass(this, ViewerPlugin.class);
     if (container != null) {
-      final ViewerToolBar toolBar = container.getViewerToolBar();
+      final ViewerToolBar<?> toolBar = container.getViewerToolBar();
       if (toolBar != null) {
         return toolBar.isCommandActive(ActionW.MEASURE.cmd())
             || toolBar.isCommandActive(ActionW.DRAW.cmd());
@@ -1096,8 +1092,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     final String command = evt.getPropertyName();
     if (command.equals(ActionW.SYNCH.cmd())) {
       SynchEvent synch = (SynchEvent) evt.getNewValue();
-      if (synch instanceof SynchCineEvent) {
-        propertyChange((SynchCineEvent) synch);
+      if (synch instanceof SynchCineEvent cineEvent) {
+        propertyChange(cineEvent);
       } else {
         propertyChange(synch);
       }
@@ -1286,7 +1282,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
       eventManager.fireSeriesViewerListeners(
           new SeriesViewerEvent(
-              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOOGLE_INFO));
+              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
       // Counterclockwise
       eventManager
@@ -1368,7 +1364,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     for (int i = 1; i < pointer.length; i++) {
       g.draw(pointer[i]);
     }
-    g.setStroke(new BasicStroke(1.0f, 0, 0, 5.0f, dash, 0.0f));
+    g.setStroke(
+        new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
     g.setPaint(pointerColor2);
     for (int i = 1; i < pointer.length; i++) {
       g.draw(pointer[i]);
@@ -1506,7 +1503,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     Object oldUnit = actionsInView.get(ActionW.SPATIAL_UNIT.cmd());
     initActionWState();
     imageLayer.fireOpEvent(
-        new ImageOpEvent(ImageOpEvent.OpEvent.ResetDisplay, series, getImage(), null));
+        new ImageOpEvent(ImageOpEvent.OpEvent.RESET_DISPLAY, series, getImage(), null));
     resetZoom();
     resetPan();
     imageLayer.setEnableDispOperations(true);

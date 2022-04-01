@@ -71,7 +71,7 @@ public class Activator implements BundleActivator {
   }
 
   @Override
-  public void stop(BundleContext bundleContext) throws Exception {
+  public void stop(BundleContext bundleContext) {
     // Let osgi services doing their job
   }
 }

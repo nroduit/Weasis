@@ -15,6 +15,7 @@ import java.awt.Component;
 import java.awt.GridBagConstraints;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import javax.swing.JPanel;
 import javax.swing.plaf.PanelUI;
 import org.weasis.core.api.image.GridBagLayoutModel;
@@ -82,12 +83,12 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
     final Map<LayoutConstraints, Component> map = new LinkedHashMap<>(oldMap.size());
     this.layoutModel = new GridBagLayoutModel(map, "exp_tmp", ""); // NON-NLS
 
-    for (LayoutConstraints e : oldMap.keySet()) {
-      Component v = oldMap.get(e);
-      LayoutConstraints constraint = e.copy();
+    for (Entry<LayoutConstraints, Component> e : oldMap.entrySet()) {
+      Component v = e.getValue();
+      LayoutConstraints constraint = e.getKey().copy();
 
-      if (v instanceof ViewCanvas) {
-        ExportImage<?> export = new ExportImage<>((ViewCanvas) v);
+      if (v instanceof ViewCanvas<?> viewCanvas) {
+        ExportImage<?> export = new ExportImage<>(viewCanvas);
         export.getInfoLayer().setBorder(3);
         map.put(constraint, export);
         v = export;
@@ -105,8 +106,8 @@ public class ExportLayout<E extends ImageElement> extends JPanel {
 
   public void dispose() {
     for (Component c : layoutModel.getConstraints().values()) {
-      if (c instanceof ExportImage) {
-        ((ExportImage) c).disposeView();
+      if (c instanceof ExportImage<?> exportImage) {
+        exportImage.disposeView();
       }
     }
   }

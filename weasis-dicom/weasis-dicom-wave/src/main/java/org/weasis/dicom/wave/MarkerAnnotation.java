@@ -21,9 +21,9 @@ public class MarkerAnnotation {
   private final Lead lead;
 
   private Double startSeconds;
-  private Double startMiliVolt;
+  private Double startMilliVolt;
   private Double stopSeconds;
-  private Double stopMiliVolt;
+  private Double stopMilliVolt;
 
   private Double duration;
   private Double diffmV;
@@ -33,14 +33,14 @@ public class MarkerAnnotation {
     this.lead = lead;
   }
 
-  public void setStartValues(Double seconds, Double miliVolt) {
+  public void setStartValues(Double seconds, Double milliVolt) {
     this.startSeconds = seconds;
-    this.startMiliVolt = miliVolt;
+    this.startMilliVolt = milliVolt;
   }
 
-  public void setStopValues(Double seconds, Double miliVolt) {
+  public void setStopValues(Double seconds, Double milliVolt) {
     this.stopSeconds = seconds;
-    this.stopMiliVolt = miliVolt;
+    this.stopMilliVolt = milliVolt;
   }
 
   public void setSelectionValues(Double duration, Double diffmV, Double amplitude) {
@@ -57,12 +57,12 @@ public class MarkerAnnotation {
     this.startSeconds = startSeconds;
   }
 
-  public Double getStartMiliVolt() {
-    return startMiliVolt;
+  public Double getStartMilliVolt() {
+    return startMilliVolt;
   }
 
-  public void setStartMiliVolt(Double startMiliVolt) {
-    this.startMiliVolt = startMiliVolt;
+  public void setStartMilliVolt(Double startMilliVolt) {
+    this.startMilliVolt = startMilliVolt;
   }
 
   public Double getStopSeconds() {
@@ -73,12 +73,12 @@ public class MarkerAnnotation {
     this.stopSeconds = stopSeconds;
   }
 
-  public Double getStopMiliVolt() {
-    return stopMiliVolt;
+  public Double getStopMilliVolt() {
+    return stopMilliVolt;
   }
 
-  public void setStopMiliVolt(Double stopMiliVolt) {
-    this.stopMiliVolt = stopMiliVolt;
+  public void setStopMilliVolt(Double stopMilliVolt) {
+    this.stopMilliVolt = stopMilliVolt;
   }
 
   public Double getDuration() {

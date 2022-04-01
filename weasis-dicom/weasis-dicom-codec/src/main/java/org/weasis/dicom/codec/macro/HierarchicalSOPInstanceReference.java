@@ -17,26 +17,26 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 
-public class HierachicalSOPInstanceReference extends Module {
+public class HierarchicalSOPInstanceReference extends Module {
 
-  public HierachicalSOPInstanceReference(Attributes dcmItems) {
+  public HierarchicalSOPInstanceReference(Attributes dcmItems) {
     super(dcmItems);
   }
 
-  public HierachicalSOPInstanceReference() {
+  public HierarchicalSOPInstanceReference() {
     super(new Attributes());
   }
 
-  public static Collection<HierachicalSOPInstanceReference> toHierachicalSOPInstanceReferenceMacros(
-      Sequence seq) {
+  public static Collection<HierarchicalSOPInstanceReference>
+      toHierarchicalSOPInstanceReferenceMacros(Sequence seq) {
     if (seq == null || seq.isEmpty()) {
       return Collections.emptyList();
     }
 
-    ArrayList<HierachicalSOPInstanceReference> list = new ArrayList<>(seq.size());
+    ArrayList<HierarchicalSOPInstanceReference> list = new ArrayList<>(seq.size());
 
     for (Attributes attr : seq) {
-      list.add(new HierachicalSOPInstanceReference(attr));
+      list.add(new HierarchicalSOPInstanceReference(attr));
     }
 
     return list;

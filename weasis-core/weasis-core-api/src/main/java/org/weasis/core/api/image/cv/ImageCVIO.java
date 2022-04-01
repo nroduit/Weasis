@@ -147,7 +147,7 @@ public class ImageCVIO implements MediaReader {
   }
 
   private PlanarImage readImage(File file, boolean createTiledLayout) throws Exception {
-    PlanarImage img = null;
+    PlanarImage img;
     if (file.getPath().endsWith(".wcv")) {
       img = new FileRawImage(file).read();
     } else if (codec instanceof NativeOpenCVCodec) {
@@ -221,7 +221,7 @@ public class ImageCVIO implements MediaReader {
       sUID = uri.toString();
     }
     MediaSeries<MediaElement> series =
-        new Series<>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.getTagView()) {
+        new Series<>(TagW.SubseriesInstanceUID, sUID, AbstractFileModel.series.tagView()) {
 
           @Override
           public String getMimeType() {

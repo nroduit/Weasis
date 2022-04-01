@@ -152,9 +152,7 @@ public class KeyObjectToolBar extends WtoolBar {
     list.setBorder(BorderFactory.createLoweredSoftBevelBorder());
     list.setSelectionModel(new ToggleSelectionModel());
 
-    if (koElementCollection != null) {
-      list.setListData(koElementCollection.toArray(KOSpecialElement[]::new));
-    }
+    list.setListData(koElementCollection.toArray(KOSpecialElement[]::new));
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     JScrollPane scrollList = new JScrollPane(list);
@@ -224,7 +222,7 @@ public class KeyObjectToolBar extends WtoolBar {
         if (dicomModel != null) {
           dicomModel.removeSpecialElement(list.getSelectedValue());
           if (selectedView2d instanceof View2d view2d) {
-            boolean needToRepaint = view2d.updateKOselectedState(selectedView2d.getImage());
+            boolean needToRepaint = view2d.updateKOSelectedState(selectedView2d.getImage());
             if (needToRepaint) {
               evtMgr.updateKeyObjectComponentsListener(selectedView2d);
               repaint();

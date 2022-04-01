@@ -83,6 +83,8 @@ public class PRManager {
   public static final String TAG_PR_ZOOM = "original.zoom";
   public static final String TAG_DICOM_LAYERS = "pr.layers";
 
+  private PRManager() {}
+
   public static void applyPresentationState(
       ViewCanvas<DicomImageElement> view, PresentationStateReader reader, DicomImageElement img) {
     if (view == null || reader == null || img == null) {
@@ -136,8 +138,8 @@ public class PRManager {
         changePixelSize(img, actionsInView, prPixSize);
         img.setPixelSpacingUnit(Unit.MILLIMETER);
         ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener) {
-          ((ComboItemListener) spUnitAction).setSelectedItem(Unit.MILLIMETER);
+        if (spUnitAction instanceof ComboItemListener itemListener) {
+          itemListener.setSelectedItem(Unit.MILLIMETER);
         }
       } else {
         applyAspectRatio(img, actionsInView, prPixSize);
@@ -176,9 +178,9 @@ public class PRManager {
 
       PlanarImage source = view.getSourceImage();
       if (source != null) {
-        Rectangle imgBouds = ImageConversion.getBounds(source);
-        area = area.intersection(imgBouds);
-        if (area.width > 1 && area.height > 1 && !area.equals(imgBouds)) {
+        Rectangle imgBounds = ImageConversion.getBounds(source);
+        area = area.intersection(imgBounds);
+        if (area.width > 1 && area.height > 1 && !area.equals(imgBounds)) {
           SimpleOpManager opManager =
               Optional.ofNullable((SimpleOpManager) actionsInView.get(ActionW.PREPROCESSING.cmd()))
                   .orElseGet(SimpleOpManager::new);
@@ -211,13 +213,13 @@ public class PRManager {
     if (MathUtil.isDifferent(aspects[0], aspects[1])) {
       // set the aspects to the pixel size of the image to stretch the image rendering (square
       // pixel)
-      double[] pixelsize;
+      double[] pixelSize;
       if (aspects[1] < aspects[0]) {
-        pixelsize = new double[] {aspects[0] / aspects[1], 1.0};
+        pixelSize = new double[] {aspects[0] / aspects[1], 1.0};
       } else {
-        pixelsize = new double[] {1.0, aspects[1] / aspects[0]};
+        pixelSize = new double[] {1.0, aspects[1] / aspects[0]};
       }
-      changePixelSize(img, actionsInView, pixelsize);
+      changePixelSize(img, actionsInView, pixelSize);
       img.setPixelSpacingUnit(Unit.PIXEL);
       // TODO update graphics
     }
@@ -269,16 +271,16 @@ public class PRManager {
     Map<String, Object> actionsInView = view.getActionsInView();
 
     ArrayList<GraphicLayer> layers = null;
-    Attributes dcmobj = reader.getDicomObject();
-    if (dcmobj != null) {
+    Attributes attributes = reader.getDicomObject();
+    if (attributes != null) {
       String imgSop = TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
       int dicomFrame = 1;
-      if (img.getKey() instanceof Integer) {
-        dicomFrame = (Integer) img.getKey() + 1;
+      if (img.getKey() instanceof Integer intVal) {
+        dicomFrame = intVal + 1;
       }
 
-      Sequence gams = dcmobj.getSequence(Tag.GraphicAnnotationSequence);
-      Sequence layerSeqs = dcmobj.getSequence(Tag.GraphicLayerSequence);
+      Sequence gams = attributes.getSequence(Tag.GraphicAnnotationSequence);
+      Sequence layerSeqs = attributes.getSequence(Tag.GraphicLayerSequence);
 
       if (gams != null && layerSeqs != null) {
         Map<String, Attributes> glms = new HashMap<>(layerSeqs.size());
@@ -299,11 +301,11 @@ public class PRManager {
         double height = area == null ? modelArea.getHeight() : area.getHeight();
         AffineTransform inverse = null;
         if (rotation != 0 || flip) {
-          double offsetx = area == null ? 0.0 : area.getX() / area.getWidth();
-          double offsety = area == null ? 0.0 : area.getY() / area.getHeight();
+          double offsetX = area == null ? 0.0 : area.getX() / area.getWidth();
+          double offsetY = area == null ? 0.0 : area.getY() / area.getHeight();
           // Create inverse transformation for display coordinates (will convert in real
           // coordinates)
-          inverse = AffineTransform.getTranslateInstance(offsetx, offsety);
+          inverse = AffineTransform.getTranslateInstance(offsetX, offsetY);
           if (flip) {
             inverse.scale(-1.0, 1.0);
             inverse.translate(-1.0, 0.0);
@@ -341,17 +343,17 @@ public class PRManager {
                   glm, Tag.GraphicLayerRecommendedDisplayGrayscaleValue, null);
           int[] colorRgb =
               CIELab.dicomLab2rgb(
-                  DicomMediaUtils.getIntAyrrayFromDicomElement(
+                  DicomMediaUtils.getIntArrayFromDicomElement(
                       glm, Tag.GraphicLayerRecommendedDisplayCIELabValue, null));
-          if (colorRgb == null) {
+          if (colorRgb.length == 0) {
             colorRgb =
-                DicomMediaUtils.getIntAyrrayFromDicomElement(
+                DicomMediaUtils.getIntArrayFromDicomElement(
                     glm, Tag.GraphicLayerRecommendedDisplayRGBValue, null);
-          }
-          if (colorRgb == null && grayVal == null) {
-            Color c =
-                Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
-            colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
+            if (colorRgb == null && grayVal == null) {
+              Color c =
+                  Optional.ofNullable(MeasureTool.viewSetting.getLineColor()).orElse(Color.YELLOW);
+              colorRgb = new int[] {c.getRed(), c.getGreen(), c.getBlue()};
+            }
           }
 
           Color rgbColor = DicomObjectUtil.getRGBColor(grayVal == null ? 255 : grayVal, colorRgb);
@@ -382,9 +384,7 @@ public class PRManager {
                   DicomMediaUtils.getFloatFromDicomElement(style, Tag.LineThickness, 1.0f);
               if (style != null) {
                 int[] rgb = CIELab.dicomLab2rgb(style.getInts(Tag.PatternOnColorCIELabValue));
-                if (rgb != null) {
-                  rgbColor = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
-                }
+                rgbColor = DicomObjectUtil.getRGBColor(0xFFFF, rgb);
               }
 
               String[] textLines =
@@ -562,8 +562,8 @@ public class PRManager {
 
   public static PrDicomObject getPrDicomObject(Object prElement) {
     PRSpecialElement pr = null;
-    if (prElement instanceof PRSpecialElement) {
-      pr = (PRSpecialElement) prElement;
+    if (prElement instanceof PRSpecialElement specialElement) {
+      pr = specialElement;
     }
     return pr == null ? null : pr.getPrDicomObject();
   }

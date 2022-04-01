@@ -23,15 +23,15 @@ public class SearchableComboBox<E> extends JComboBox<E> {
   private final JComboBox<E> filteredCombobox = new JComboBox<>();
 
   public SearchableComboBox() {
-    this(new DefaultComboBoxModel<E>());
+    this(new DefaultComboBoxModel<>());
   }
 
   public SearchableComboBox(E[] items) {
-    this(new DefaultComboBoxModel<E>(items));
+    this(new DefaultComboBoxModel<>(items));
   }
 
   public SearchableComboBox(Vector<E> items) {
-    this(new DefaultComboBoxModel<E>(items));
+    this(new DefaultComboBoxModel<>(items));
   }
 
   public SearchableComboBox(ComboBoxModel<E> comboBoxModel) {
@@ -41,6 +41,7 @@ public class SearchableComboBox<E> extends JComboBox<E> {
     editorComponent.putClientProperty(FlatClientProperties.TEXT_FIELD_SHOW_CLEAR_BUTTON, true);
     editorComponent.addKeyListener(
         new KeyAdapter() {
+          @Override
           public void keyReleased(KeyEvent ke) {
             filter(editorComponent.getText());
           }

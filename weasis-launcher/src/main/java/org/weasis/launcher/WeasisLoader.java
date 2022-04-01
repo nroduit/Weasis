@@ -116,8 +116,8 @@ public class WeasisLoader {
 
     container.add(panel, BorderLayout.CENTER);
 
-    if (container instanceof Window) {
-      ((Window) container).pack();
+    if (container instanceof Window window) {
+      window.pack();
     }
   }
 
@@ -186,8 +186,8 @@ public class WeasisLoader {
           if (container.getParent() != null) {
             container.getParent().remove(container);
           }
-          if (container instanceof Window) {
-            ((Window) container).dispose();
+          if (container instanceof Window window) {
+            window.dispose();
           }
           container = null;
           cancelButton = null;

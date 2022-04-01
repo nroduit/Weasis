@@ -70,33 +70,20 @@ public class Ultrasound {
   }
 
   public static String valueOfUnits(int id) {
-    switch (id) {
-      case 1:
-        return "Percent"; // NON-NLS
-      case 2:
-        return "dB"; // NON-NLS
-      case 3:
-        return "cm"; // NON-NLS
-      case 4:
-        return "seconds"; // NON-NLS
-      case 5:
-        return "hertz(seconds-1)"; // NON-NLS
-      case 6:
-        return "dB/seconds"; // NON-NLS
-      case 7:
-        return "cm/sec"; // NON-NLS
-      case 8:
-        return "cm2"; // NON-NLS
-      case 9:
-        return "cm2/sec"; // NON-NLS
-      case 10:
-        return "cm3"; // NON-NLS
-      case 11:
-        return "cm3/sec"; // NON-NLS
-      case 12:
-        return "degrees"; // NON-NLS
-      default:
-        return "None"; // NON-NLS
-    }
+    return switch (id) {
+      case 1 -> "Percent"; // NON-NLS
+      case 2 -> "dB"; // NON-NLS
+      case 3 -> "cm"; // NON-NLS
+      case 4 -> "seconds"; // NON-NLS
+      case 5 -> "hertz(seconds-1)"; // NON-NLS
+      case 6 -> "dB/seconds"; // NON-NLS
+      case 7 -> "cm/sec"; // NON-NLS
+      case 8 -> "cm2"; // NON-NLS
+      case 9 -> "cm2/sec"; // NON-NLS
+      case 10 -> "cm3"; // NON-NLS
+      case 11 -> "cm3/sec"; // NON-NLS
+      case 12 -> "degrees"; // NON-NLS
+      default -> "None"; // NON-NLS
+    };
   }
 }

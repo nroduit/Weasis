@@ -270,7 +270,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
   }
 
   /**
-   * @param wl
+   * @param wl the WlParams value
    * @return 8 bits unsigned Lookup Table
    */
   @Override

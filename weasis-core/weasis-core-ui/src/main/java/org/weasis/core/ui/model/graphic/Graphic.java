@@ -40,9 +40,8 @@ import org.weasis.core.ui.util.MouseEventDouble;
 @XmlJavaTypeAdapter(AbstractGraphic.Adapter.class)
 public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Graphic> {
   Color DEFAULT_COLOR = Color.YELLOW;
-  Integer DEFAULT_POINT_NUMBER = 1;
   Float DEFAULT_LINE_THICKNESS = 1f;
-  Boolean DEFAULT_LABEL_VISISIBLE = Boolean.TRUE;
+  Boolean DEFAULT_LABEL_VISIBLE = Boolean.TRUE;
   Boolean DEFAULT_FILLED = Boolean.FALSE;
   Boolean DEFAULT_SELECTED = Boolean.FALSE;
   Integer DEFAULT_PTS_SIZE = 10;
@@ -203,7 +202,7 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
    * Set the list of points. Do not use this method when building a graphic programmatically, use
    * buildGraphic(List<Point2D> pts) instead.
    *
-   * @param pts
+   * @param pts the list of points
    */
   void setPts(List<Point2D> pts);
 
@@ -228,10 +227,6 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
   /**
    * This is the method for building a new graphic with a list of points. This method is an adapter
    * as the constructor must have no parameter for serialization.
-   *
-   * @param pts
-   * @return
-   * @throws InvalidShapeException
    */
   Graphic buildGraphic(List<Point2D> pts) throws InvalidShapeException;
 

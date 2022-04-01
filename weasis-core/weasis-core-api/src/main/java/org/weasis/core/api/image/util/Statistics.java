@@ -40,7 +40,7 @@ public class Statistics {
     my = mean(y);
 
     if (x.length < 2) {
-      return; // variance est égale à 0
+      return; // variance is 0
     }
     for (int i = 0; i < x.length; i++) {
       // central bivariate moments
@@ -120,9 +120,6 @@ public class Statistics {
   /**
    * Compute standard deviation in one pass (less accurate for small or large values) Ref.
    * http://www.strchr.com/standard_deviation_in_one_pass
-   *
-   * @param data
-   * @return
    */
   public static double stDevOnePass(double[] data) {
     double sHat;
@@ -360,7 +357,7 @@ public class Statistics {
    *
    * @param y the x coordinates of data points
    * @param x the y coordinates of data points
-   * @param norder
+   * @param norder the n order value
    * @return the coefficients for the solved equation in the form {a0, a1,...,an}
    */
   public static double[] regression(double[] x, double[] y, int norder) {
@@ -411,10 +408,6 @@ public class Statistics {
   /**
    * IIRC, standard gaussian technique for solving simultaneous eq. of the form: |A| = |B| * |C|
    * where we know the values of |A| and |B|, and we are solving for the coefficients in |C|
-   *
-   * @param ax
-   * @param bx
-   * @return
    */
   private static double[] gauss(double[][] ax, double[] bx) {
     double[][] a = new double[ax.length][ax[0].length];

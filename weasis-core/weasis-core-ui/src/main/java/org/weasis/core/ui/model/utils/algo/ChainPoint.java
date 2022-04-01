@@ -10,6 +10,7 @@
 package org.weasis.core.ui.model.utils.algo;
 
 import java.util.List;
+import java.util.Objects;
 import org.weasis.core.util.MathUtil;
 
 /**
@@ -46,30 +47,20 @@ public class ChainPoint implements Comparable<ChainPoint> {
   }
 
   @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + x;
-    result = prime * result + y;
-    return result;
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    ChainPoint that = (ChainPoint) o;
+    return x == that.x && y == that.y;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null) {
-      return false;
-    }
-    if (getClass() != obj.getClass()) {
-      return false;
-    }
-    ChainPoint other = (ChainPoint) obj;
-    if (x != other.x) {
-      return false;
-    }
-    return y == other.y;
+  public int hashCode() {
+    return Objects.hash(x, y);
   }
 
   public static double[] regression(List<ChainPoint> list) {

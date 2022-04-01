@@ -130,6 +130,7 @@ public class PreferenceDialog extends AbstractWizardDialog {
     iniTree();
   }
 
+  @Override
   protected void selectPage(AbstractItemDialogPage page) {
     if (page != null) {
       super.selectPage(page);

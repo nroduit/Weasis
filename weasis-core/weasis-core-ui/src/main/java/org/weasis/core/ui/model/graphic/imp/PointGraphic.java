@@ -32,8 +32,8 @@ public class PointGraphic extends AbstractGraphic {
     super(1);
   }
 
-  public PointGraphic(PointGraphic pointGaphic) {
-    super(pointGaphic);
+  public PointGraphic(PointGraphic pointGraphic) {
+    super(pointGraphic);
   }
 
   @Override
@@ -43,8 +43,8 @@ public class PointGraphic extends AbstractGraphic {
 
   @Override
   protected void initCopy(Graphic graphic) {
-    if (graphic instanceof PointGraphic) {
-      setPointSize(((PointGraphic) graphic).getPointSize());
+    if (graphic instanceof PointGraphic pointGraphic) {
+      setPointSize(pointGraphic.getPointSize());
     }
   }
 

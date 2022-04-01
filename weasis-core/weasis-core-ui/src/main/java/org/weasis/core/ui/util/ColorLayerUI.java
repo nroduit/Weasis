@@ -41,8 +41,8 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
   }
 
   public static ColorLayerUI createTransparentLayerUI(RootPaneContainer parent) {
-    if (parent != null) {
-      JXLayer<JComponent> layer = new JXLayer(parent.getContentPane());
+    if (parent != null && parent.getContentPane() instanceof JComponent jComponent) {
+      JXLayer<JComponent> layer = new JXLayer<>(jComponent);
       final ColorLayerUI ui = new ColorLayerUI(layer, parent);
       layer.setUI(ui);
       parent.setContentPane(layer);
@@ -115,10 +115,6 @@ public class ColorLayerUI extends AbstractLayerUI<JComponent> {
         });
     this.xlayer.repaint();
     timer.start();
-  }
-
-  public JXLayer<JComponent> getXlayer() {
-    return xlayer;
   }
 
   public static Container getContentPane(ColorLayerUI layer) {

@@ -25,8 +25,6 @@ import javax.swing.RowSorter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.ResourceUtil;
@@ -34,7 +32,6 @@ import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.util.LabelHighlighted;
 
 public class TagSearchTablePanel extends AbstractTagSearchPanel {
-  private static final Logger LOGGER = LoggerFactory.getLogger(TagSearchTablePanel.class);
 
   private final TreeSet<Integer> searchPositions = new TreeSet<>();
   private int currentSearchIndex = -1;

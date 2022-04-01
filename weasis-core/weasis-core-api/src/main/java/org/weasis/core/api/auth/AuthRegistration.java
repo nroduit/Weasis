@@ -10,6 +10,8 @@
 package org.weasis.core.api.auth;
 
 public class AuthRegistration {
+
+  public static final String CODE = "code"; // NON-NLS
   private String clientId;
   private String clientSecret;
   private String scope;
@@ -54,6 +56,6 @@ public class AuthRegistration {
   }
 
   public String getAuthorizationGrantType() {
-    return "code"; // NON-NLS
+    return CODE;
   }
 }

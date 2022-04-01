@@ -293,7 +293,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
         TOOLBARS.add(new KeyObjectToolBar(90));
       }
 
-      PluginTool tool = null;
+      PluginTool tool;
 
       if (InsertableUtil.getBooleanProperty(
           BundleTools.SYSTEM_PREFERENCES,
@@ -309,16 +309,16 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
               public SliderChangeListener[] getActions() {
                 ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
                 ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) seqAction);
+                if (seqAction instanceof SliderChangeListener changeListener) {
+                  listeners.add(changeListener);
                 }
                 ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                if (zoomAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) zoomAction);
+                if (zoomAction instanceof SliderChangeListener changeListener) {
+                  listeners.add(changeListener);
                 }
                 ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                if (rotateAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) rotateAction);
+                if (rotateAction instanceof SliderChangeListener changeListener) {
+                  listeners.add(changeListener);
                 }
                 return listeners.toArray(new SliderChangeListener[0]);
               }
@@ -496,8 +496,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
                 DicomImageElement img = view2DPane.getImage();
                 if (img != null && view2DPane.getSeries() == series) {
                   ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                  if (seqAction instanceof SliderCineListener) {
-                    SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                  if (seqAction instanceof SliderCineListener sliceAction) {
                     if (param instanceof DicomImageElement) {
                       Filter<DicomImageElement> filter =
                           (Filter<DicomImageElement>)
@@ -510,9 +509,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
                         // (require at least one image)
                         view2DPane.setSeries(series, null);
                       }
-                      if (imgIndex >= 0) {
-                        sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
-                      }
+                      sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
                     }
                   }
                 }
@@ -535,22 +532,18 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
                 }
               }
             }
-          } else if (SeriesEvent.Action.PRELOADING.equals(action2)) {
-            if (source instanceof DicomSeries dcm) {
-              for (ViewCanvas<DicomImageElement> v : view2ds) {
-                if (dcm == v.getSeries()) {
-                  v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
-                }
+          } else if (SeriesEvent.Action.PRELOADING.equals(action2)
+              && source instanceof DicomSeries dcm) {
+            for (ViewCanvas<DicomImageElement> v : view2ds) {
+              if (dcm == v.getSeries()) {
+                v.getJComponent().repaint(v.getInfoLayer().getPreloadingProgressBound());
               }
             }
           }
-        } else if (ObservableEvent.BasicAction.UPDATE.equals(action)) {
-          if (SeriesEvent.Action.UPDATE.equals(action2)) {
-            if (source instanceof KOSpecialElement) {
-              setKOSpecialElement(
-                  (KOSpecialElement) source, null, false, param.equals("updateAll"));
-            }
-          }
+        } else if (ObservableEvent.BasicAction.UPDATE.equals(action)
+            && SeriesEvent.Action.UPDATE.equals(action2)
+            && source instanceof KOSpecialElement) {
+          setKOSpecialElement((KOSpecialElement) source, null, false, param.equals("updateAll"));
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
@@ -614,20 +607,17 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
         // Series of
         // DicomSpecialElement do not necessarily concerned the series in the Viewer2dContainer
 
-        if (newVal instanceof Series) {
-          specialElement =
-              DicomModel.getFirstSpecialElement((Series) newVal, DicomSpecialElement.class);
-        } else if (newVal instanceof DicomSpecialElement) {
-          specialElement = (DicomSpecialElement) newVal;
+        if (newVal instanceof Series series) {
+          specialElement = DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
+        } else if (newVal instanceof DicomSpecialElement dicomSpecialElement) {
+          specialElement = dicomSpecialElement;
         }
 
-        if (specialElement instanceof PRSpecialElement) {
+        if (specialElement instanceof PRSpecialElement prSpecialElement) {
           for (ViewCanvas<DicomImageElement> view : view2ds) {
-            if (view instanceof View2d) {
-              if (PresentationStateReader.isImageApplicable(
-                  (PRSpecialElement) specialElement, view.getImage())) {
-                ((View2d) view).updatePR();
-              }
+            if (view instanceof View2d view2d
+                && PresentationStateReader.isImageApplicable(prSpecialElement, view.getImage())) {
+              view2d.updatePR();
             }
           }
         }
@@ -635,15 +625,14 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
         /*
          * Update if necessary all the views with the KOSpecialElement
          */
-        else if (specialElement instanceof KOSpecialElement) {
-          setKOSpecialElement((KOSpecialElement) specialElement, null, false, false);
+        else if (specialElement instanceof KOSpecialElement koSpecialElement) {
+          setKOSpecialElement(koSpecialElement, null, false, false);
         }
-      } else if (ObservableEvent.BasicAction.SELECT.equals(action)) {
-        if (newVal instanceof KOSpecialElement) {
-          // Match using UID of the plugin window and the source event
-          if (this.getDockableUID().equals(evt.getSource())) {
-            setKOSpecialElement((KOSpecialElement) newVal, true, true, false);
-          }
+      } else if (ObservableEvent.BasicAction.SELECT.equals(action)
+          && newVal instanceof KOSpecialElement koSpecialElement) {
+        // Match using UID of the plugin window and the source event
+        if (this.getDockableUID().equals(evt.getSource())) {
+          setKOSpecialElement(koSpecialElement, true, true, false);
         }
       }
     }
@@ -656,23 +645,23 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
       boolean updateAll) {
     ViewCanvas<DicomImageElement> selectedView = getSelectedImagePane();
 
-    if (updatedKOSelection != null && selectedView instanceof View2d) {
+    if (updatedKOSelection != null && selectedView instanceof View2d view2d) {
       if (SynchData.Mode.TILE.equals(this.getSynchView().getSynchData().getMode())) {
 
         ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
-        if (koSelection instanceof ComboItemListener) {
-          ((ComboItemListener) koSelection).setSelectedItem(updatedKOSelection);
+        if (koSelection instanceof ComboItemListener<?> itemListener) {
+          itemListener.setSelectedItem(updatedKOSelection);
         }
 
         if (forceUpdate || enableFilter != null) {
           ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
-          if (koFilterAction instanceof ToggleButtonListener) {
+          if (koFilterAction instanceof ToggleButtonListener buttonListener) {
             if (enableFilter == null) {
               enableFilter =
                   LangUtil.getNULLtoFalse(
                       (Boolean) selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
             }
-            ((ToggleButtonListener) koFilterAction).setSelected(enableFilter);
+            buttonListener.setSelected(enableFilter);
           }
         }
 
@@ -682,7 +671,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
             ((View2d) view).updateKOButtonVisibleState();
           }
         } else {
-          ((View2d) selectedView).updateKOButtonVisibleState();
+          view2d.updateKOButtonVisibleState();
         }
 
       } else {
@@ -694,7 +683,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
 
         for (ViewCanvas<DicomImageElement> view : viewList) {
 
-          if (!(view.getSeries() instanceof DicomSeries) || !(view instanceof View2d)) {
+          if (!(view.getSeries() instanceof DicomSeries dicomSeries) || !(view instanceof View2d)) {
             continue;
           }
 
@@ -704,7 +693,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
                 view, forceUpdate ? updatedKOSelection : null, enableFilter, -1);
           }
 
-          DicomSeries dicomSeries = (DicomSeries) view.getSeries();
           String seriesInstanceUID =
               TagD.getTagValue(dicomSeries, Tag.SeriesInstanceUID, String.class);
 
@@ -744,7 +732,7 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     if (isViewType(DefaultView2d.class, clazz)) {
       return createDefaultView(clazz);
     }

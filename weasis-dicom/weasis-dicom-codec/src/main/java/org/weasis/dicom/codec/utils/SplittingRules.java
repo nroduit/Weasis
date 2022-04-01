@@ -127,7 +127,7 @@ public class SplittingRules {
         String key = xmler.getName().getLocalPart();
         if ("modality".equals(key) && xmler.getAttributeCount() >= 1) { // NON-NLS
           String name = xmler.getAttributeValue(null, "name"); // NON-NLS
-          Modality m = getModdality(name);
+          Modality m = getModality(name);
           if (m != null) {
             try {
               String extend = xmler.getAttributeValue(null, "extend"); // NON-NLS
@@ -257,9 +257,9 @@ public class SplittingRules {
 
   private SplittingModalityRules getSplittingModalityRules(String extend) {
     if (StringUtil.hasText(extend)) {
-      SplittingModalityRules val = rules.get(getModdality(extend));
+      SplittingModalityRules val = rules.get(getModality(extend));
       if (val == null) {
-        LOGGER.error("Modality {} doesn't exist! Cannot ihnerit the rules.", extend);
+        LOGGER.error("Modality {} doesn't exist! Cannot inherit the rules.", extend);
       }
     }
     return null;
@@ -282,7 +282,7 @@ public class SplittingRules {
     return null;
   }
 
-  private static Modality getModdality(String name) {
+  private static Modality getModality(String name) {
     try {
       return Modality.valueOf(name);
     } catch (Exception e) {

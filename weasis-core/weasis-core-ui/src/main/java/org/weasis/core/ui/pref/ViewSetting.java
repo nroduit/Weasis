@@ -29,7 +29,7 @@ import org.weasis.core.ui.model.utils.bean.Measurement;
 public class ViewSetting {
   public static final String PREFERENCE_NODE = "view2d.default";
 
-  private String fontkey;
+  private String fontKey;
   private boolean drawOnlyOnce;
   private Color lineColor;
   private int lineWidth;
@@ -41,7 +41,7 @@ public class ViewSetting {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences font = p.node("font"); // NON-NLS
-      fontkey = font.get("key", "defaultFont"); // NON-NLS
+      fontKey = font.get("key", "defaultFont"); // NON-NLS
       Preferences draw = p.node("drawing"); // NON-NLS
       drawOnlyOnce = draw.getBoolean("once", true); // NON-NLS
       lineWidth = draw.getInt("width", 1); // NON-NLS
@@ -157,7 +157,7 @@ public class ViewSetting {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);
       Preferences font = p.node("font"); // NON-NLS
-      BundlePreferences.putStringPreferences(font, "key", fontkey); // NON-NLS
+      BundlePreferences.putStringPreferences(font, "key", fontKey); // NON-NLS
 
       Preferences draw = p.node("drawing"); // NON-NLS
       BundlePreferences.putBooleanPreferences(draw, "once", drawOnlyOnce); // NON-NLS
@@ -193,16 +193,16 @@ public class ViewSetting {
     }
   }
 
-  public String getFontkey() {
-    return fontkey;
+  public String getFontKey() {
+    return fontKey;
   }
 
-  public void setFontkey(String fontkey) {
-    this.fontkey = fontkey;
+  public void setFontKey(String fontKey) {
+    this.fontKey = fontKey;
   }
 
   public Font getFont() {
-    return UIManager.getFont(fontkey);
+    return UIManager.getFont(fontKey);
   }
 
   public void setDrawOnlyOnce(boolean drawOnlyOnce) {

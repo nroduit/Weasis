@@ -19,7 +19,7 @@ public final class SortSeriesStack {
   // Comparator cannot be a generic list of DicomOpImage because the Collection to sort has an
   // AbstractImage type
   public static final SeriesComparator<DicomImageElement> instanceNumber =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
@@ -37,7 +37,7 @@ public final class SortSeriesStack {
         }
       };
   public static final SeriesComparator<DicomImageElement> slicePosition =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
@@ -56,7 +56,7 @@ public final class SortSeriesStack {
       };
 
   public static final SeriesComparator<DicomImageElement> sliceLocation =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
@@ -75,7 +75,7 @@ public final class SortSeriesStack {
       };
 
   public static final SeriesComparator<DicomImageElement> acquisitionTime =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
@@ -93,7 +93,7 @@ public final class SortSeriesStack {
         }
       };
   public static final SeriesComparator<DicomImageElement> contentTime =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {
@@ -112,7 +112,7 @@ public final class SortSeriesStack {
       };
 
   public static final SeriesComparator<DicomImageElement> diffusionBValue =
-      new SeriesComparator<DicomImageElement>() {
+      new SeriesComparator<>() {
 
         @Override
         public int compare(DicomImageElement m1, DicomImageElement m2) {

@@ -45,8 +45,8 @@ public class XmlGraphicModel extends AbstractGraphicModel {
 
     List<Integer> frameList = new ArrayList<>(1);
     int frames = img.getMediaReader().getMediaElementNumber();
-    if (frames > 1 && img.getKey() instanceof Integer) {
-      frameList.add((Integer) img.getKey());
+    if (frames > 1 && img.getKey() instanceof Integer intVal) {
+      frameList.add(intVal);
     }
 
     return Collections.singletonList(

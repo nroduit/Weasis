@@ -212,7 +212,10 @@ public class WProperties extends Properties {
       try {
         String val = StringUtil.EMPTY_STRING;
         if (value != null && value.length > 0) {
-          val = new String(Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)));
+          val =
+              new String(
+                  Base64.getEncoder().encode(GzipManager.gzipCompressToByte(value)),
+                  StandardCharsets.UTF_8);
         }
         this.put(key, val);
       } catch (IOException e) {

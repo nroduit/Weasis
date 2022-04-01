@@ -30,11 +30,11 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
 
   private Boolean resizingOrMoving = DEFAULT_RESIZE_OR_MOVING;
 
-  public AbstractDragGraphic(Integer pointNumber) {
+  protected AbstractDragGraphic(Integer pointNumber) {
     super(pointNumber);
   }
 
-  public AbstractDragGraphic(AbstractGraphic graphic) {
+  protected AbstractDragGraphic(AbstractGraphic graphic) {
     super(graphic);
   }
 
@@ -88,12 +88,7 @@ public abstract class AbstractDragGraphic extends AbstractGraphic implements Dra
     return null;
   }
 
-  /**
-   * Adjust the mouse cursor at the center of the handle point
-   *
-   * @param handlePtIndex
-   * @param event
-   */
+  /** Adjust the mouse cursor at the center of the handle point */
   @Override
   public void moveMouseOverHandlePoint(Integer handlePtIndex, MouseEventDouble event) {
     ViewCanvas<?> graphPane = getDefaultView2d(event);

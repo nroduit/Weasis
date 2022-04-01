@@ -15,10 +15,9 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
 import org.weasis.core.api.util.LocalUtil;
 
-/** The Class DecFormater. */
-public class DecFormater {
+public class DecFormatter {
 
-  private DecFormater() {}
+  private DecFormatter() {}
 
   private static final NumberFormat df1 = LocalUtil.getNumberInstance(); // 1 decimals
   private static final NumberFormat df2 = LocalUtil.getNumberInstance(); // 2 decimals

@@ -45,8 +45,8 @@ public class NonEditableGraphic extends AbstractGraphic {
   @Override
   protected void initCopy(Graphic graphic) {
     super.initCopy(graphic);
-    if (graphic instanceof NonEditableGraphic) {
-      this.stroke = ((NonEditableGraphic) graphic).stroke;
+    if (graphic instanceof NonEditableGraphic nonEditableGraphic) {
+      this.stroke = nonEditableGraphic.stroke;
     }
   }
 

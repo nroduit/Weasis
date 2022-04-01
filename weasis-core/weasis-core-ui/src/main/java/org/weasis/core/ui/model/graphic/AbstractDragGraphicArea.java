@@ -18,11 +18,11 @@ import org.weasis.core.ui.model.utils.bean.MeasureItem;
 
 public abstract class AbstractDragGraphicArea extends AbstractDragGraphic implements GraphicArea {
 
-  public AbstractDragGraphicArea(Integer pointNumber) {
+  protected AbstractDragGraphicArea(Integer pointNumber) {
     super(pointNumber);
   }
 
-  public AbstractDragGraphicArea(AbstractDragGraphicArea graphic) {
+  protected AbstractDragGraphicArea(AbstractDragGraphicArea graphic) {
     super(graphic);
   }
 

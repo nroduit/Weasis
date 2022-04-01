@@ -51,7 +51,7 @@ public class SRReader {
     return dicomSR;
   }
 
-  public Attributes getDcmobj() {
+  public Attributes getAttributes() {
     return dcmItems;
   }
 
@@ -237,7 +237,7 @@ public class SRReader {
           for (Attributes attributes : sc) {
             SRDocumentContent c2 = new SRDocumentContent(attributes);
             String id = getReferencedContentItemIdentifier(c2.getReferencedContentItemIdentifier());
-            SRImageReference imgRef = null;
+            SRImageReference imgRef;
             if (id == null) {
               imgRef = getReferencedImage(map, level, attributes);
               id = level;

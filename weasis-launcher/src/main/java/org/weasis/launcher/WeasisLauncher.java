@@ -242,12 +242,12 @@ public class WeasisLauncher {
       loader.close();
       loader = null;
 
-      String logActivatation = serverProp.get("org.apache.sling.commons.log.file");
-      if (Utils.hasText(logActivatation)) {
+      String logActivation = serverProp.get("org.apache.sling.commons.log.file");
+      if (Utils.hasText(logActivation)) {
         LOGGER.log(
             Level.INFO,
             "Logs has been delegated to the OSGI service and can be read in {0}",
-            logActivatation);
+            logActivation);
       }
 
       executeCommands(configData.getArguments(), goshArgs);
@@ -771,7 +771,7 @@ public class WeasisLauncher {
     getGeneralProperty(
         "org.apache.sling.commons.log.level", "INFO", serverProp, currentProps, true, true);
     // Empty string make the file log writer disable
-    String logActivatation =
+    String logActivation =
         getGeneralProperty(
             "org.apache.sling.commons.log.file.activate",
             Boolean.FALSE.toString(),
@@ -779,7 +779,7 @@ public class WeasisLauncher {
             currentProps,
             true,
             true);
-    if (Utils.getEmptytoFalse(logActivatation)) {
+    if (Utils.getEmptytoFalse(logActivation)) {
       String logFile = dir + File.separator + "log" + File.separator + "default.log"; // NON-NLS
       serverProp.put("org.apache.sling.commons.log.file", logFile);
       currentProps.remove("org.apache.sling.commons.log.file");

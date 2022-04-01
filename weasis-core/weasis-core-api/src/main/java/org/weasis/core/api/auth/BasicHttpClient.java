@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,10 +40,10 @@ import org.weasis.core.util.FileUtil;
 
 public class BasicHttpClient implements HttpClient {
 
-  public BasicHttpClient() {}
-
   @Override
-  public void close() {}
+  public void close() {
+    // Do nothing
+  }
 
   @Override
   public <T> Future<T> executeAsync(
@@ -246,7 +247,7 @@ public class BasicHttpClient implements HttpClient {
       @Override
       void setBody(HttpURLConnection connection, Object bodyContents, boolean requiresBody)
           throws IOException {
-        addBody(connection, ((String) bodyContents).getBytes(), requiresBody);
+        addBody(connection, ((String) bodyContents).getBytes(StandardCharsets.UTF_8), requiresBody);
       }
     };
 
@@ -334,8 +335,7 @@ public class BasicHttpClient implements HttpClient {
   }
 
   public static void prepareMultipartPayload(
-      List<BodySupplier<InputStream>> bodySuppliers, MultipartPayload multipartPayload)
-      throws IOException {
+      List<BodySupplier<InputStream>> bodySuppliers, MultipartPayload multipartPayload) {
     StringBuilder buf = new StringBuilder();
 
     final String preamble = multipartPayload.getPreamble();
@@ -365,17 +365,16 @@ public class BasicHttpClient implements HttpClient {
         buf.append("\r\n");
         bodySuppliers.add(newBodySupplier(buf));
 
-        if (bodyPart instanceof MultipartPayload) {
-          prepareMultipartPayload(bodySuppliers, (MultipartPayload) bodyPart);
-        } else if (bodyPart instanceof ByteArrayBodyPartPayload) {
-          ByteArrayBodyPartPayload byteArrayBodyPart = (ByteArrayBodyPartPayload) bodyPart;
+        if (bodyPart instanceof MultipartPayload multi) {
+          prepareMultipartPayload(bodySuppliers, multi);
+        } else if (bodyPart instanceof ByteArrayBodyPartPayload byteArrayBodyPart) {
           bodySuppliers.add(
               newBodySupplier(
                   byteArrayBodyPart.getPayload(),
                   byteArrayBodyPart.getOff(),
                   byteArrayBodyPart.getLen()));
-        } else if (bodyPart instanceof FileBodyPartPayload) {
-          bodySuppliers.add(((FileBodyPartPayload) bodyPart).getPayload());
+        } else if (bodyPart instanceof FileBodyPartPayload fileBodyPart) {
+          bodySuppliers.add(fileBodyPart.getPayload());
         } else {
           throw new AssertionError(bodyPart.getClass());
         }
@@ -396,13 +395,13 @@ public class BasicHttpClient implements HttpClient {
   }
 
   private static BodySupplier<InputStream> newBodySupplier(StringBuilder buf) {
-    byte[] bytes = buf.toString().getBytes();
+    byte[] bytes = buf.toString().getBytes(StandardCharsets.UTF_8);
     buf.setLength(0);
     return newBodySupplier(bytes);
   }
 
   private static BodySupplier<InputStream> newBodySupplier(byte[] bytes) {
-    return new BodySupplier<InputStream>() {
+    return new BodySupplier<>() {
       @Override
       public InputStream get() {
         return new ByteArrayInputStream(bytes);
@@ -419,7 +418,7 @@ public class BasicHttpClient implements HttpClient {
     if (off == 0 && len == payload.length) {
       return newBodySupplier(payload);
     }
-    return new BodySupplier<InputStream>() {
+    return new BodySupplier<>() {
       @Override
       public InputStream get() {
         return new ByteArrayInputStream(payload, off, len);

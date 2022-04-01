@@ -10,6 +10,8 @@
 package org.weasis.core.api.auth;
 
 public class AuthProvider {
+
+  public static final String DEFAULT_NAME = "name"; // NON-NLS
   private String name;
   private String authorizationUri;
   private String tokenUri;
@@ -70,6 +72,6 @@ public class AuthProvider {
   }
 
   public String getUserNameAttribute() {
-    return "name"; // NON-NLS
+    return DEFAULT_NAME;
   }
 }

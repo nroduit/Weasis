@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -76,7 +76,7 @@ public class CalibrationView extends JPanel {
     GuiUtils.setPreferredWidth(jTextFieldLineWidth, 170);
     jTextFieldLineWidth.setLocale(LocalUtil.getLocaleFormat());
     jTextFieldLineWidth.setFormatterFactory(
-        DecFormater.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
+        DecFormatter.setPreciseDoubleFormat(0.000005d, Double.MAX_VALUE));
     jTextFieldLineWidth.setValue(1.0);
     GuiUtils.addCheckAction(jTextFieldLineWidth);
 

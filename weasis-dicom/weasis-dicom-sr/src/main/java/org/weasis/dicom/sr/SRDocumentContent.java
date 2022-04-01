@@ -15,8 +15,8 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 
 public class SRDocumentContent extends SRDocumentContentModule {
 
-  public SRDocumentContent(Attributes dcmobj) {
-    super(dcmobj);
+  public SRDocumentContent(Attributes attributes) {
+    super(attributes);
   }
 
   public String getRelationshipType() {
@@ -24,7 +24,7 @@ public class SRDocumentContent extends SRDocumentContentModule {
   }
 
   public int[] getReferencedContentItemIdentifier() {
-    return DicomMediaUtils.getIntAyrrayFromDicomElement(
+    return DicomMediaUtils.getIntArrayFromDicomElement(
         dcmItems, Tag.ReferencedContentItemIdentifier, null);
   }
 }

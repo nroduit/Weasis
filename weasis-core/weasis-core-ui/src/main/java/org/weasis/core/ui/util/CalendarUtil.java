@@ -16,6 +16,9 @@ import java.awt.Color;
 import javax.swing.BorderFactory;
 
 public class CalendarUtil {
+
+  private CalendarUtil() {}
+
   public static void adaptCalendarColors(DatePickerSettings settings) {
     Color textButton = FlatUIUtils.getUIColor("Button.foreground", Color.BLACK);
     Color backgroundButton = FlatUIUtils.getUIColor("Button.background", Color.WHITE);

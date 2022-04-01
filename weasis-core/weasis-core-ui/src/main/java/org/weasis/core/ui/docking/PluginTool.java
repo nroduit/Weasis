@@ -29,17 +29,17 @@ public abstract class PluginTool extends JPanel implements DockableTool {
 
   private final Type type;
 
-  private int toolPosition = 100;
+  private int toolPosition;
   private int dockableWidth;
   protected final DefaultSingleCDockable dockable;
   protected POSITION defaultPosition;
   protected ExtendedMode defaultMode;
 
-  public PluginTool(String id, String toolName, Type type, int position) {
+  protected PluginTool(String id, String toolName, Type type, int position) {
     this(id, toolName, null, null, type, position);
   }
 
-  public PluginTool(
+  protected PluginTool(
       String id,
       String toolName,
       POSITION defaultPosition,

@@ -26,7 +26,7 @@ import javax.swing.event.ChangeListener;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
@@ -40,6 +40,8 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer2d.Messages;
 
 public class MipPopup {
+
+  private MipPopup() {}
 
   public static MipDialog buildDialog(final MipView view) {
     if (view == null || view.isProcessRunning()) {
@@ -113,29 +115,23 @@ public class MipPopup {
       }
       rdbtnMinProjection.addActionListener(
           e -> {
-            if (e.getSource() instanceof JRadioButton btn) {
-              if (btn.isSelected()) {
-                view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MIN);
-                MipView.buildMip(view, false);
-              }
+            if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
+              view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MIN);
+              MipView.buildMip(view, false);
             }
           });
       rdbtnMeanProjection.addActionListener(
           e -> {
-            if (e.getSource() instanceof JRadioButton btn) {
-              if (btn.isSelected()) {
-                view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MEAN);
-                MipView.buildMip(view, false);
-              }
+            if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
+              view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MEAN);
+              MipView.buildMip(view, false);
             }
           });
       rdbtnMaxProjection.addActionListener(
           e -> {
-            if (e.getSource() instanceof JRadioButton btn) {
-              if (btn.isSelected()) {
-                view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MAX);
-                MipView.buildMip(view, false);
-              }
+            if (e.getSource() instanceof JRadioButton btn && btn.isSelected()) {
+              view.setActionsInView(MipView.MIP.cmd(), MipView.Type.MAX);
+              MipView.buildMip(view, false);
             }
           });
 
@@ -220,7 +216,7 @@ public class MipPopup {
 
         if (fimg != null && limg != null) {
           buf.append(" (");
-          buf.append(DecFormater.allNumber(SeriesBuilder.getThickness(fimg, limg, max - min)));
+          buf.append(DecFormatter.allNumber(SeriesBuilder.getThickness(fimg, limg, max - min)));
           buf.append(" ");
           buf.append(fimg.getPixelSpacingUnit().getAbbreviation());
           buf.append(")");

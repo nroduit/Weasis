@@ -27,7 +27,7 @@ class StandardWaveLayout implements WaveLayout {
       }
     }
 
-    copy.remove(Lead.RYTHM);
+    copy.remove(Lead.RHYTHM);
     if (!copy.isEmpty()) {
       list.addAll(copy.values());
     }

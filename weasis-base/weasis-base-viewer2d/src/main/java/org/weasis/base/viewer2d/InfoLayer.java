@@ -14,7 +14,7 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.util.HashMap;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -144,9 +144,9 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
       if (window != null && level != null) {
         sb.append(ActionW.WINLEVEL.getTitle());
         sb.append(StringUtil.COLON_AND_SPACE);
-        sb.append(DecFormater.allNumber(window));
+        sb.append(DecFormatter.allNumber(window));
         sb.append("/");
-        sb.append(DecFormater.allNumber(level));
+        sb.append(DecFormatter.allNumber(level));
       }
       FontTools.paintFontOutline(g2, sb.toString(), border, drawY);
       drawY -= fontHeight;
@@ -156,7 +156,7 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
-              + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
+              + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
           border,
           drawY);
       drawY -= fontHeight;

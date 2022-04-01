@@ -12,7 +12,6 @@ package org.weasis.dicom.explorer;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
@@ -29,7 +28,6 @@ import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
 public class LoadLocalDicom extends LoadDicom {
 
-  private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadLocalDicom.class);
   private final File[] files;
   private final boolean recursive;
 

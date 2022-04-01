@@ -9,7 +9,6 @@
  */
 package org.weasis.core.api.util;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -91,7 +90,7 @@ public class URLParameters {
     return allowUserInteraction;
   }
 
-  public static Map<String, String> splitParameter(URL url) throws UnsupportedEncodingException {
+  public static Map<String, String> splitParameter(URL url) {
     Map<String, String> queryPairs = new LinkedHashMap<>();
     String query = url.getQuery();
     String[] pairs = query.split("&");
@@ -104,8 +103,7 @@ public class URLParameters {
     return queryPairs;
   }
 
-  public static Map<String, List<String>> splitMultipleValuesParameter(URL url)
-      throws UnsupportedEncodingException {
+  public static Map<String, List<String>> splitMultipleValuesParameter(URL url) {
     final Map<String, List<String>> queryPairs = new LinkedHashMap<>();
     final String[] pairs = url.getQuery().split("&");
     for (String pair : pairs) {

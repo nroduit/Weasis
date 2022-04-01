@@ -119,7 +119,7 @@ public abstract class AbstractDicomNode {
   private UsageType usageType;
   private boolean local;
 
-  public AbstractDicomNode(String description, Type type, UsageType usageType) {
+  protected AbstractDicomNode(String description, Type type, UsageType usageType) {
     if (type == null) {
       throw new IllegalArgumentException("Type cannot be null");
     }

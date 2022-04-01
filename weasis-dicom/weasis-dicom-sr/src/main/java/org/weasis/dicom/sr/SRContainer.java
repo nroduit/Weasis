@@ -319,7 +319,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     try {
       // FIXME use classloader.loadClass or injection
       JComponent component = buildInstance(Class.forName(clazz));

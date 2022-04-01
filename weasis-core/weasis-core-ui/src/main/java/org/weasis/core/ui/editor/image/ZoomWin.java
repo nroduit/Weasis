@@ -79,7 +79,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
   private Color backgroundColor;
   private Stroke stroke;
 
-  private PopUpMenuOnZoom popup = null;
+  private final PopUpMenuOnZoom popup;
   private final RenderedImageLayer<E> imageLayer;
   private final MouseHandler mouseHandler;
   private SimpleOpManager freezeOperations;
@@ -95,8 +95,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
     operations.addImageOperationAction(new AffineTransformOp());
 
     ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
-    if (zoomAction instanceof SliderChangeListener) {
-      actionsInView.put(ActionW.ZOOM.cmd(), ((SliderChangeListener) zoomAction).getRealValue());
+    if (zoomAction instanceof SliderChangeListener changeListener) {
+      actionsInView.put(ActionW.ZOOM.cmd(), changeListener.getRealValue());
     }
 
     this.popup = new PopUpMenuOnZoom(this);
@@ -153,7 +153,7 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
       freezeOperations.setFirstNode(imageLayer.getSourceRenderedImage());
       freezeOperations.handleImageOpEvent(
           new ImageOpEvent(
-              ImageOpEvent.OpEvent.ImageChange, view2d.getSeries(), view2d.getImage(), null));
+              ImageOpEvent.OpEvent.IMAGE_CHANGE, view2d.getSeries(), view2d.getImage(), null));
       freezeOperations.process();
     }
   }
@@ -181,16 +181,16 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
   public void hideZoom() {
     if (Objects.equals(view2d.getEventManager().getSelectedViewPane(), view2d)) {
       ActionState lens = view2d.getEventManager().getAction(ActionW.LENS);
-      if (lens instanceof ToggleButtonListener) {
-        ((ToggleButtonListener) lens).setSelected(false);
+      if (lens instanceof ToggleButtonListener buttonListener) {
+        buttonListener.setSelected(false);
       }
     }
   }
 
   @Override
   public void paintComponent(Graphics g) {
-    if (g instanceof Graphics2D) {
-      draw((Graphics2D) g);
+    if (g instanceof Graphics2D graphics2D) {
+      draw(graphics2D);
     }
   }
 
@@ -381,8 +381,8 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
       } else if (mouseevent.getClickCount() == 2) {
         ImageViewerEventManager<E> manager = view2d.getEventManager();
         ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
-        if (zoomAction instanceof SliderChangeListener) {
-          ((SliderChangeListener) zoomAction).setRealValue(view2d.getViewModel().getViewScale());
+        if (zoomAction instanceof SliderChangeListener changeListener) {
+          changeListener.setRealValue(view2d.getViewModel().getViewScale());
         }
       }
     }
@@ -460,14 +460,14 @@ public class ZoomWin<E extends ImageElement> extends GraphicsPane
 
   public void setCommandFromParentView(String command, Object value) {
     String cmd = null;
-    if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent) {
+    if (ActionW.SYNCH.cmd().equals(command) && value instanceof SynchEvent synchEvent) {
       if (!(value instanceof SynchCineEvent)) {
         SynchData synchData = (SynchData) view2d.getActionValue(ActionW.SYNCH_LINK.cmd());
         if (synchData != null && Mode.NONE.equals(synchData.getMode())) {
           return;
         }
 
-        for (Entry<String, Object> entry : ((SynchEvent) value).getEvents().entrySet()) {
+        for (Entry<String, Object> entry : synchEvent.getEvents().entrySet()) {
           if (synchData != null && !synchData.isActionEnable(entry.getKey())) {
             continue;
           }

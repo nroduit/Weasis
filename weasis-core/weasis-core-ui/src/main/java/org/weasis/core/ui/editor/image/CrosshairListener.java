@@ -29,12 +29,12 @@ public abstract class CrosshairListener extends MouseActionAdapter
   private MouseActionAdapter win = null;
   private MouseActionAdapter lev = null;
   private final BasicActionState basicState;
-  private final boolean triggerAction = true;
+  private boolean triggerAction = true;
   private Point pickPoint;
 
   private Point2D point;
 
-  public CrosshairListener(ActionW action, Point2D point) {
+  protected CrosshairListener(ActionW action, Point2D point) {
     this.basicState = new BasicActionState(action);
     this.point = point == null ? new Point2D.Double() : point;
   }

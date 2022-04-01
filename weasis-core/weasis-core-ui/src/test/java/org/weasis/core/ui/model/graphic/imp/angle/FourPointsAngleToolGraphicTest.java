@@ -55,7 +55,7 @@ public class FourPointsAngleToolGraphicTest extends GraphicTester<FourPointsAngl
   public Object[] getParameters() {
     return new Object[] {
       Graphic.DEFAULT_FILLED,
-      Graphic.DEFAULT_LABEL_VISISIBLE,
+      Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)

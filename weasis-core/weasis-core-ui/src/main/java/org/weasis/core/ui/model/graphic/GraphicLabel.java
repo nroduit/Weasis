@@ -40,7 +40,7 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
    * Should be used to check if mouse coordinates are inside/outside label bounding rectangle. Also,
    * useful to check intersection with clipping rectangle.
    *
-   * @param transform
+   * @param transform the AffineTransform value
    * @return Labels bounding rectangle in real world with size rescaled. It takes care of the
    *     current transformation scaling factor so labels painting have invariant size according to
    *     the given transformation.
@@ -48,7 +48,7 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
   Rectangle2D getBounds(AffineTransform transform);
 
   /**
-   * @param transform
+   * @param transform the AffineTransform value
    * @return Real label bounding rectangle translated according to given transformation. <br>
    */
   Rectangle2D getTransformedBounds(AffineTransform transform);

@@ -11,8 +11,6 @@ package org.weasis.core.api.image;
 
 import java.awt.image.DataBuffer;
 import org.opencv.core.Core.MinMaxLocResult;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.weasis.core.api.Messages;
 import org.weasis.core.util.LangUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -20,7 +18,6 @@ import org.weasis.opencv.op.ImageConversion;
 import org.weasis.opencv.op.ImageProcessor;
 
 public class AutoLevelsOp extends AbstractOp {
-  private static final Logger LOGGER = LoggerFactory.getLogger(AutoLevelsOp.class);
 
   public static final String OP_NAME = Messages.getString("AutoLevelsOp.auto_ct");
   /**

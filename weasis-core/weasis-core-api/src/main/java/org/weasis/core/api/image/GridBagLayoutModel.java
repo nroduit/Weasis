@@ -54,8 +54,8 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
     this.title = title;
     this.id = id;
     this.constraints = new LinkedHashMap<>(cols * rows);
-    double weightx = 1.0 / cols;
-    double weighty = 1.0 / rows;
+    double weightX = 1.0 / cols;
+    double weightY = 1.0 / rows;
     for (int y = 0; y < rows; y++) {
       for (int x = 0; x < cols; x++) {
         constraints.put(
@@ -66,8 +66,8 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
                 y,
                 1,
                 1,
-                weightx,
-                weighty,
+                weightX,
+                weightY,
                 GridBagConstraints.CENTER,
                 GridBagConstraints.BOTH),
             null);

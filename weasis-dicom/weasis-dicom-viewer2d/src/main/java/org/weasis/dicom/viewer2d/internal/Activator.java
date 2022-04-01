@@ -52,7 +52,7 @@ public class Activator implements BundleActivator, ServiceListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 
   @Override
-  public void start(final BundleContext bundleContext) throws Exception {
+  public void start(final BundleContext bundleContext) {
 
     Dictionary<String, Object> dict = new Hashtable<>();
     dict.put(CommandProcessor.COMMAND_SCOPE, "dcmview2d"); // NON-NLS
@@ -72,7 +72,7 @@ public class Activator implements BundleActivator, ServiceListener {
   }
 
   @Override
-  public void stop(BundleContext bundleContext) throws Exception {
+  public void stop(BundleContext bundleContext) {
     // Save preferences
     ImageViewerPlugin<DicomImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();

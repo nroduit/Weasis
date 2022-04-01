@@ -98,12 +98,12 @@ public class CFindQueryResult extends AbstractQueryResult {
       DicomNode calledNode,
       Attributes seriesDataset,
       Study study) {
-    String serieInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
-    if (StringUtil.hasText(serieInstanceUID)) {
+    String seriesInstanceUID = seriesDataset.getString(Tag.SeriesInstanceUID);
+    if (StringUtil.hasText(seriesInstanceUID)) {
       DicomParam[] keysInstance = {
         // Matching Keys
         new DicomParam(Tag.StudyInstanceUID, study.getStudyInstanceUID()),
-        new DicomParam(Tag.SeriesInstanceUID, serieInstanceUID),
+        new DicomParam(Tag.SeriesInstanceUID, seriesInstanceUID),
         // Return Keys
         CFind.SOPInstanceUID,
         CFind.InstanceNumber

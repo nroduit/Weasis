@@ -154,7 +154,6 @@ public class MeasureToolBar extends WtoolBar {
   protected final JButton jButtondelete = new JButton();
   protected final ImageViewerEventManager<?> eventManager;
 
-  @SuppressWarnings("rawtypes")
   public MeasureToolBar(final ImageViewerEventManager<?> eventManager, int index) {
     super(Messages.getString("MeasureToolBar.title"), index);
     if (eventManager == null) {
@@ -166,12 +165,13 @@ public class MeasureToolBar extends WtoolBar {
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
     MeasureToolBar.drawGraphicList.forEach(
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
-
+    @SuppressWarnings("rawtypes")
     Optional<ComboItemListener> measure =
         eventManager.getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
+    measure.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
+    @SuppressWarnings("rawtypes")
     Optional<ComboItemListener> draw =
         eventManager.getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class);
-    measure.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
     draw.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
 
     if (measure.isPresent() || draw.isPresent()) {
@@ -207,10 +207,8 @@ public class MeasureToolBar extends WtoolBar {
     action.registerActionState(menu);
 
     for (RadioMenuItem item : menu.getRadioMenuItemListCopy()) {
-      if (item.getUserObject() instanceof Graphic g) {
-        if (g.getKeyCode() != 0) {
-          item.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
-        }
+      if (item.getUserObject() instanceof Graphic g && g.getKeyCode() != 0) {
+        item.setAccelerator(KeyStroke.getKeyStroke(g.getKeyCode(), g.getModifier()));
       }
     }
 

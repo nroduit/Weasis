@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.System.Logger;
 import java.lang.System.Logger.Level;
+import java.util.Map.Entry;
 import java.util.Properties;
 import javax.swing.UIManager;
 
@@ -59,12 +60,12 @@ public class SwingResources {
         FileUtil.safeClose(inStream);
       }
 
-      for (Object key : swingDialogs.keySet()) {
-        String stringKey = key.toString();
-        String compositeKey = null;
+      for (Entry<Object, Object> entry : swingDialogs.entrySet()) {
+        String stringKey = entry.getKey().toString();
+        Object value = entry.getValue();
+        String compositeKey;
 
         if (stringKey.endsWith(AND_MNEMONIC)) {
-          Object value = swingDialogs.get(key);
           if (value != null) {
             String text = value.toString();
             String mnemonic = null;
@@ -99,7 +100,7 @@ public class SwingResources {
             }
           }
         } else {
-          UIManager.put(key, swingDialogs.get(key));
+          UIManager.put(entry.getKey(), value);
         }
       }
     }

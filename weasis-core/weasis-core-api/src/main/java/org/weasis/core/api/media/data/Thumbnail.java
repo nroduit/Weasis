@@ -96,7 +96,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
   }
 
   /**
-   * @param media
+   * @param media the {@link MediaElement} value
    * @param keepMediaCache if true will remove the media from cache after building the thumbnail.
    *     Only when media is an image.
    */
@@ -168,7 +168,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
       OpManager opManager) {
     this.setSize(thumbnailSize, thumbnailSize);
 
-    ImageIcon icon =
+    ImageIcon imageIcon =
         new ImageIcon() {
 
           @Override
@@ -222,10 +222,12 @@ public class Thumbnail extends JLabel implements Thumbnailable {
             return thumbnailSize;
           }
         };
-    setIcon(icon);
+    setIcon(imageIcon);
   }
 
-  protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {}
+  protected void drawOverIcon(Graphics2D g2d, int x, int y, int width, int height) {
+    // Do nothing
+  }
 
   @Override
   public File getThumbnailPath() {
@@ -245,7 +247,7 @@ public class Thumbnail extends JLabel implements Thumbnailable {
               }
 
               @Override
-              protected Boolean doInBackground() throws Exception {
+              protected Boolean doInBackground() {
                 loadThumbnail(media, keepMediaCache, opManager);
                 return Boolean.TRUE;
               }
@@ -293,15 +295,13 @@ public class Thumbnail extends JLabel implements Thumbnailable {
                 MatOfInt map = new MatOfInt(Imgcodecs.IMWRITE_JPEG_QUALITY, 80);
                 if (ImageProcessor.writeImage(thumb.toMat(), file, map)) {
                   /*
-                   * Write the thumbnail in temp folder, better than getting the thumbnail directly
-                   * from t.getAsBufferedImage() (it is true if the image is big and cannot handle all
-                   * the tiles in memory)
+                   * Write the thumbnail in temp folder, better than handling the thumbnail in memory.
+                   *
+                   * If writeImage returns false, it could be an out of memory exception.
                    */
                   image.setTag(TagW.ThumbnailPath, file.getPath());
                   thumbnailPath = file;
                   return;
-                } else {
-                  // out of memory
                 }
               }
 

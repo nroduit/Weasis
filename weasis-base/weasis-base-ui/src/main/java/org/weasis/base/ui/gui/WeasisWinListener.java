@@ -100,8 +100,8 @@ public class WeasisWinListener implements MainWindowListener {
             }
           }
         } else if (ObservableEvent.BasicAction.REGISTER.equals(action)) {
-          if (source instanceof ViewerPlugin) {
-            mainWindow.registerPlugin((ViewerPlugin) source);
+          if (source instanceof ViewerPlugin<?> viewerPlugin) {
+            mainWindow.registerPlugin(viewerPlugin);
           } else if (source instanceof ViewerPluginBuilder builder) {
             DataExplorerModel model = builder.getModel();
             List<MediaSeries<MediaElement>> series = builder.getSeries();

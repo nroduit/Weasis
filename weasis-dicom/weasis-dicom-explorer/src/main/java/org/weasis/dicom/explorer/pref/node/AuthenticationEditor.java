@@ -140,7 +140,7 @@ public class AuthenticationEditor extends JDialog {
 
     List<AuthMethod> selItems = jList1.getSelectedValuesList();
     if (selItems.size() == 1) {
-      modifiy(selItems.get(0));
+      modify(selItems.get(0));
     } else {
       JOptionPane.showMessageDialog(
           this, Messages.getString("no.item"), this.getTitle(), JOptionPane.ERROR_MESSAGE);
@@ -157,10 +157,10 @@ public class AuthenticationEditor extends JDialog {
   }
 
   private void add() {
-    modifiy(null);
+    modify(null);
   }
 
-  private void modifiy(AuthMethod input) {
+  private void modify(AuthMethod input) {
     AuthMethodDialog dialog =
         new AuthMethodDialog(this, Messages.getString("auth.method"), input, comboBox);
     GuiUtils.showCenterScreen(dialog);

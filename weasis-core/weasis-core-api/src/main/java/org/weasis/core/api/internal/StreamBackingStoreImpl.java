@@ -70,7 +70,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   /**
    * This method is invoked to check if the backing store is accessible right now.
    *
-   * @throws BackingStoreException
+   * @throws BackingStoreException exception during storing data
    */
   protected void checkAccess() throws BackingStoreException {
     if (prefRootDirectory == null || !prefRootDirectory.exists()) {
@@ -127,7 +127,7 @@ public class StreamBackingStoreImpl implements BackingStore {
   /**
    * Get the file for the preferences tree.
    *
-   * @param desc
+   * @param desc the PreferencesDescription value
    * @return the preference file
    */
   protected File getFile(PreferencesDescription desc) {
@@ -205,7 +205,7 @@ public class StreamBackingStoreImpl implements BackingStore {
       // Force the changeset to store remote prefs
       prefs
           .getChangeSet()
-          .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElseGet(() -> ""));
+          .propertyChanged(prefs.getProperties().keySet().stream().findFirst().orElse(""));
     }
 
     for (PreferencesImpl uchild : uchildren) {
@@ -265,7 +265,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     if (StringUtil.hasText(prefUrl)
         && (!BundleTools.isLocalSession() || BundleTools.isStoreLocalSession())) {
 
-      String serviceURL = null;
+      String serviceURL;
       try {
         serviceURL = getURL(desc, prefUrl);
       } catch (UnsupportedEncodingException e) {
@@ -301,10 +301,8 @@ public class StreamBackingStoreImpl implements BackingStore {
 
     } catch (XMLStreamException e) {
       boolean isHttpNoContent = false;
-      if (conn.getUrlConnection() instanceof HttpURLConnection) {
-        isHttpNoContent =
-            HttpURLConnection.HTTP_NO_CONTENT
-                == ((HttpURLConnection) conn.getUrlConnection()).getResponseCode();
+      if (conn.getUrlConnection() instanceof HttpURLConnection httpURLConnection) {
+        isHttpNoContent = HttpURLConnection.HTTP_NO_CONTENT == httpURLConnection.getResponseCode();
       }
       if (!isHttpNoContent)
         throw new BackingStoreException(
@@ -373,9 +371,8 @@ public class StreamBackingStoreImpl implements BackingStore {
         try (OutputStream out = http.getOutputStream()) {
           writeStream(new FileInputStream(file), out);
         }
-        if (http.getUrlConnection() instanceof HttpURLConnection) {
-          NetworkUtil.readResponse(
-              (HttpURLConnection) http.getUrlConnection(), urlParams.getUnmodifiableHeaders());
+        if (http.getUrlConnection() instanceof HttpURLConnection httpURLConnection) {
+          NetworkUtil.readResponse(httpURLConnection, urlParams.getUnmodifiableHeaders());
         }
       }
     }
@@ -437,14 +434,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     // Do nothing, only update when writing
   }
 
-  /**
-   * Write the preferences recursively to the output stream.
-   *
-   * @param prefs
-   * @param writer
-   * @throws IOException
-   * @throws XMLStreamException
-   */
+  /** Write the preferences recursively to the output stream. */
   protected void write(PreferencesImpl prefs, XMLStreamWriter writer) throws XMLStreamException {
     final int size = prefs.getProperties().size();
     if (size > 0) {
@@ -467,16 +457,14 @@ public class StreamBackingStoreImpl implements BackingStore {
       eventType = xmler.next();
       switch (eventType) {
           // It is a properties of the node
-        case XMLStreamConstants.CHARACTERS:
-          prefs.getProperties().put(startKey, xmler.getText());
-          break;
+        case XMLStreamConstants.CHARACTERS -> prefs.getProperties().put(startKey, xmler.getText());
           // It is a child of the node
-        case XMLStreamConstants.START_ELEMENT:
+        case XMLStreamConstants.START_ELEMENT -> {
           PreferencesImpl impl = prefs.getOrCreateNode(startKey);
           this.read(impl, xmler, xmler.getName().getLocalPart());
           impl.getChangeSet().clear();
-          break;
-        case XMLStreamConstants.END_ELEMENT:
+        }
+        case XMLStreamConstants.END_ELEMENT -> {
           // In case the tag does not contain values or inner tag
           if (prefs.getProperties().isEmpty() && prefs.getChildren().isEmpty()) {
             prefs.getOrCreateNode(startKey);
@@ -484,9 +472,7 @@ public class StreamBackingStoreImpl implements BackingStore {
           if (startKey.equals(xmler.getName().getLocalPart())) {
             return; // Return to the parent tag
           }
-          break;
-        default:
-          break;
+        }
       }
     }
   }
@@ -494,9 +480,8 @@ public class StreamBackingStoreImpl implements BackingStore {
   protected void writePreferences(PreferencesImpl prefs, XMLStreamWriter writer)
       throws XMLStreamException {
     for (Entry<String, String> stringStringEntry : prefs.getProperties().entrySet()) {
-      final Entry<?, ?> entry = stringStringEntry;
-      writer.writeStartElement(entry.getKey().toString());
-      writer.writeCharacters(EscapeChars.forXML(entry.getValue().toString()));
+      writer.writeStartElement(stringStringEntry.getKey());
+      writer.writeCharacters(EscapeChars.forXML(stringStringEntry.getValue()));
       writer.writeEndElement();
     }
     writer.flush();

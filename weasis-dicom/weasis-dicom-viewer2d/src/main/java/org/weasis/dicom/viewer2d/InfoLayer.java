@@ -25,7 +25,7 @@ import org.dcm4che3.img.data.PrDicomObject;
 import org.jogamp.vecmath.Vector3d;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
@@ -260,9 +260,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       if (window != null && level != null) {
         sb.append(ActionW.WINLEVEL.getTitle());
         sb.append(StringUtil.COLON_AND_SPACE);
-        sb.append(DecFormater.allNumber(window));
+        sb.append(DecFormatter.allNumber(window));
         sb.append("/");
-        sb.append(DecFormater.allNumber(level));
+        sb.append(DecFormatter.allNumber(level));
 
         PrDicomObject prDicomObject =
             PRManager.getPrDicomObject(view2DPane.getActionValue(ActionW.PR_STATE.cmd()));
@@ -292,7 +292,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
           g2,
           Messages.getString("InfoLayer.zoom")
               + StringUtil.COLON_AND_SPACE
-              + DecFormater.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
+              + DecFormatter.percentTwoDecimal(view2DPane.getViewModel().getViewScale()),
           border,
           drawY);
       drawY -= fontHeight;
@@ -350,19 +350,17 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       drawY = fontHeight;
       TagView[] infos = corner.getInfos();
       for (TagView tagView : infos) {
-        if (tagView != null) {
-          if (hideMin || tagView.containsTag(TagD.get(Tag.PatientName))) {
-            for (TagW tag : tagView.getTag()) {
-              if (!anonymize || tag.getAnonymizationType() != 1) {
-                Object value = getTagValue(tag, patient, study, series, image);
-                if (value != null) {
-                  String str = tag.getFormattedTagValue(value, tagView.getFormat());
-                  if (StringUtil.hasText(str)) {
-                    FontTools.paintFontOutline(g2, str, border, drawY);
-                    drawY += fontHeight;
-                  }
-                  break;
+        if (tagView != null && (hideMin || tagView.containsTag(TagD.get(Tag.PatientName)))) {
+          for (TagW tag : tagView.getTag()) {
+            if (!anonymize || tag.getAnonymizationType() != 1) {
+              Object value = getTagValue(tag, patient, study, series, image);
+              if (value != null) {
+                String str = tag.getFormattedTagValue(value, tagView.getFormat());
+                if (StringUtil.hasText(str)) {
+                  FontTools.paintFontOutline(g2, str, border, drawY);
+                  drawY += fontHeight;
                 }
+                break;
               }
             }
           }
@@ -575,8 +573,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   private MediaSeriesGroup getParent(Series series, TreeModelNode node) {
     if (series != null) {
       Object tagValue = series.getTagValue(TagW.ExplorerModel);
-      if (tagValue instanceof DicomModel) {
-        return ((DicomModel) tagValue).getParent(series, node);
+      if (tagValue instanceof DicomModel model) {
+        return model.getParent(series, node);
       }
     }
     return null;
@@ -599,9 +597,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
   }
 
   private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
-    if (getDisplayPreferences(PRELOADING_BAR) && series instanceof DicomSeries) {
-      DicomSeries s = (DicomSeries) series;
-      boolean[] list = s.getImageInMemoryList();
+    if (getDisplayPreferences(PRELOADING_BAR) && series instanceof DicomSeries dicomSeries) {
+      boolean[] list = dicomSeries.getImageInMemoryList();
       int maxLength = GuiUtils.getScaleLength(120);
       int height = GuiUtils.getScaleLength(5);
       int length = Math.min(list.length, maxLength);

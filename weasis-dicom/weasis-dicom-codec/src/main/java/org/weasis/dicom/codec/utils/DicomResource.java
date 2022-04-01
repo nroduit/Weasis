@@ -12,12 +12,12 @@ package org.weasis.dicom.codec.utils;
 import org.weasis.core.api.util.ResourceUtil.ResourcePath;
 
 public enum DicomResource implements ResourcePath {
-  ATTRIBUTES_VIEW("attributes-view.xml"),
+  ATTRIBUTES_VIEW("attributes-view.xml"), // NON-NLS
   CALLING_NODES("dicomCallingNodes.xml"),
-  LUTS("luts"),
+  LUTS("luts"), // NON-NLS
   PRESETS("presets.xml"),
-  SERIES_SPITTING_RULES("series-splitting-rules.xml"),
-  CGET_SOP_UID("store-tcs.properties");
+  SERIES_SPITTING_RULES("series-splitting-rules.xml"), // NON-NLS
+  CGET_SOP_UID("store-tcs.properties"); // NON-NLS
 
   private final String path;
 

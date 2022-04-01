@@ -23,9 +23,7 @@ import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
 /**
- * @note This class is a pure copy of LoadLocalDicom taking care only of the DicomObject and not the
- *     file
- * @version $Rev$ $Date$
+ * This class is a pure copy of LoadLocalDicom taking care only of the DicomObject and not the bfile
  */
 public class LoadDicomObjects extends LoadDicom {
 

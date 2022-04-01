@@ -32,6 +32,8 @@ import org.weasis.core.ui.model.imp.XmlGraphicModel;
 public class XmlSerializer {
   private static final Logger LOGGER = LoggerFactory.getLogger(XmlSerializer.class);
 
+  private XmlSerializer() {}
+
   public static GraphicModel readPresentationModel(File gpxFile) {
     if (gpxFile.canRead()) {
       try {
@@ -42,7 +44,7 @@ public class XmlSerializer {
         model.getModels().removeIf(g -> g.getLayer() == null);
         if (length > model.getModels().size()) {
           LOGGER.error(
-              "Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+              "Removing {} graphics without a attached layer", model.getModels().size() - length);
         }
         return model;
       } catch (Exception e) {
@@ -104,7 +106,7 @@ public class XmlSerializer {
       model.getModels().removeIf(g -> g.getLayer() == null);
       if (length > model.getModels().size()) {
         LOGGER.error(
-            "Removing {} graphics wihout a attached layer", model.getModels().size() - length);
+            "Removing {} graphics without a attached layer", model.getModels().size() - length);
       }
       return model;
     } catch (Exception e) {

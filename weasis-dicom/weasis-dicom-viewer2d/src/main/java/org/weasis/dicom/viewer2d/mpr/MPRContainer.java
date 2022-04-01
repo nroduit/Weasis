@@ -96,7 +96,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
 
   public static final List<SynchView> SYNCH_LIST = Collections.synchronizedList(new ArrayList<>());
 
-  static SynchView DEFAULT_MPR;
+  static SynchView defaultMpr;
 
   static {
     SYNCH_LIST.add(SynchView.NONE);
@@ -112,7 +112,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     actions.put(ActionW.LUT.cmd(), true);
     actions.put(ActionW.INVERT_LUT.cmd(), true);
     actions.put(ActionW.FILTER.cmd(), true);
-    DEFAULT_MPR =
+    defaultMpr =
         new SynchView(
             "MPR synch", // NON-NLS
             "mpr", // NON-NLS
@@ -120,7 +120,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
             ActionIcon.TILE,
             actions);
 
-    SYNCH_LIST.add(DEFAULT_MPR);
+    SYNCH_LIST.add(defaultMpr);
   }
 
   public static final GridBagLayoutModel VIEWS_2x1_mpr =
@@ -213,13 +213,13 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
 
       EventManager evtMg = EventManager.getInstance();
       Optional<Toolbar> importBar =
-          View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ImportToolBar).findFirst();
+          View2dContainer.TOOLBARS.stream().filter(ImportToolBar.class::isInstance).findFirst();
       importBar.ifPresent(TOOLBARS::add);
       Optional<Toolbar> exportBar =
-          View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ExportToolBar).findFirst();
+          View2dContainer.TOOLBARS.stream().filter(ExportToolBar.class::isInstance).findFirst();
       exportBar.ifPresent(TOOLBARS::add);
       Optional<Toolbar> viewBar =
-          View2dContainer.TOOLBARS.stream().filter(b -> b instanceof ViewerToolBar).findFirst();
+          View2dContainer.TOOLBARS.stream().filter(ViewerToolBar.class::isInstance).findFirst();
       viewBar.ifPresent(TOOLBARS::add);
       TOOLBARS.add(new MeasureToolBar(evtMg, 11));
       TOOLBARS.add(new ZoomToolBar(evtMg, 20, true));
@@ -425,7 +425,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     if (isViewType(DefaultView2d.class, clazz)) {
       return createDefaultView(clazz);
     }
@@ -486,11 +486,11 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   public MprView getMprView(SliceOrientation sliceOrientation) {
-    for (ViewCanvas v : view2ds) {
-      if (v instanceof MprView mprView) {
-        if (sliceOrientation != null && sliceOrientation.equals(mprView.getSliceOrientation())) {
-          return mprView;
-        }
+    for (ViewCanvas<?> v : view2ds) {
+      if (v instanceof MprView mprView
+          && sliceOrientation != null
+          && sliceOrientation.equals(mprView.getSliceOrientation())) {
+        return mprView;
       }
     }
     return null;
@@ -535,8 +535,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                     .execute(
                         () -> {
                           ActionState synch = eventManager.getAction(ActionW.SYNCH);
-                          if (synch instanceof ComboItemListener) {
-                            ((ComboItemListener) synch).setSelectedItem(MPRContainer.DEFAULT_MPR);
+                          if (synch instanceof ComboItemListener<?> itemListener) {
+                            itemListener.setSelectedItem(MPRContainer.defaultMpr);
                           }
                           // Set the middle image ( the best choice to propagate the default preset
                           // of non CT modalities)
@@ -546,15 +546,14 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                             sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
                           }
                           ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
-                          if (cross instanceof CrosshairListener) {
-                            ((CrosshairListener) cross)
-                                .setPoint(
-                                    view.getImageCoordinatesFromMouse(
-                                        view.getWidth() / 2, view.getHeight() / 2));
+                          if (cross instanceof CrosshairListener itemListener) {
+                            itemListener.setPoint(
+                                view.getImageCoordinatesFromMouse(
+                                    view.getWidth() / 2, view.getHeight() / 2));
                           }
                           // Force to propagate the default preset
                           ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                          if (presetAction instanceof ComboItemListener p) {
+                          if (presetAction instanceof ComboItemListener<?> p) {
                             p.setSelectedItemWithoutTriggerAction(null);
                             p.setSelectedItem(p.getFirstItem());
                           }
@@ -614,9 +613,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
   public MprView selectLayoutPositionForAddingSeries(MediaSeries<DicomImageElement> s) {
     if (s != null) {
       Object img = s.getMedia(MediaSeries.MEDIA_POSITION.MIDDLE, null, null);
-      if (img instanceof DicomImageElement) {
-        double[] v =
-            TagD.getTagValue((DicomImageElement) img, Tag.ImageOrientationPatient, double[].class);
+      if (img instanceof DicomImageElement imageElement) {
+        double[] v = TagD.getTagValue(imageElement, Tag.ImageOrientationPatient, double[].class);
         if (v != null && v.length == 6) {
           Label orientation =
               ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(

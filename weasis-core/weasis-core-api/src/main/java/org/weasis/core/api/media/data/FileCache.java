@@ -78,18 +78,12 @@ public class FileCache {
 
   public long getLength() {
     Optional<File> f = getOriginalFile();
-    if (f.isPresent()) {
-      return f.get().length();
-    }
-    return 0L;
+    return f.map(File::length).orElse(0L);
   }
 
   public long getLastModified() {
     Optional<File> f = getOriginalFile();
-    if (f.isPresent()) {
-      return f.get().lastModified();
-    }
-    return 0L;
+    return f.map(File::lastModified).orElse(0L);
   }
 
   public void dispose() {

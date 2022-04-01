@@ -78,7 +78,7 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.KOSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.codec.macro.HierachicalSOPInstanceReference;
+import org.weasis.dicom.codec.macro.HierarchicalSOPInstanceReference;
 import org.weasis.dicom.codec.macro.KODocumentModule;
 import org.weasis.dicom.codec.macro.SOPInstanceReferenceAndMAC;
 import org.weasis.dicom.codec.macro.SeriesAndInstanceReference;
@@ -302,7 +302,7 @@ public class DownloadManager {
         }
       }
 
-      File tempFile = null;
+      File tempFile;
       if (uri.toString().startsWith("file:") && path.endsWith(".xml")) { // NON-NLS
         tempFile = new File(path);
       } else {
@@ -414,13 +414,13 @@ public class DownloadManager {
         Boolean.parseBoolean(
             TagUtil.getTagAttribute(
                 xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-    String additionnalParameters =
+    String additionalParameters =
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
         new WadoParameters(
-            arcID, wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+            arcID, wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
     params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, ArcParameters.TAG_ARC_QUERY);
   }
@@ -432,12 +432,12 @@ public class DownloadManager {
         Boolean.parseBoolean(
             TagUtil.getTagAttribute(
                 xmler, WadoParameters.WADO_ONLY_SOP_UID, Boolean.FALSE.toString()));
-    String additionnalParameters =
+    String additionalParameters =
         TagUtil.getTagAttribute(xmler, ArcParameters.ADDITIONNAL_PARAMETERS, "");
     String overrideList = TagUtil.getTagAttribute(xmler, ArcParameters.OVERRIDE_TAGS, null);
     String webLogin = TagUtil.getTagAttribute(xmler, ArcParameters.WEB_LOGIN, null);
     final WadoParameters wadoParameters =
-        new WadoParameters(wadoURL, onlySopUID, additionnalParameters, overrideList, webLogin);
+        new WadoParameters(wadoURL, onlySopUID, additionalParameters, overrideList, webLogin);
     params.wadoUri = getWadoUrl(wadoURL);
     readQuery(xmler, params, wadoParameters, WadoParameters.TAG_WADO_QUERY);
   }
@@ -458,9 +458,9 @@ public class DownloadManager {
             MediaSeriesGroup patient = readPatient(xmler, params, wadoParameters);
             patients.add(patient);
           } else if (ArcParameters.TAG_HTTP_TAG.equals(key)) {
-            String httpkey = TagUtil.getTagAttribute(xmler, "key", null); // NON-NLS
-            String httpvalue = TagUtil.getTagAttribute(xmler, "value", null); // NON-NLS
-            wadoParameters.addHttpTag(httpkey, httpvalue);
+            String httpKey = TagUtil.getTagAttribute(xmler, "key", null); // NON-NLS
+            String httpValue = TagUtil.getTagAttribute(xmler, "value", null); // NON-NLS
+            wadoParameters.addHttpTag(httpKey, httpValue);
           } else if ("Message".equals(key)) { // NON-NLS
             final String title = TagUtil.getTagAttribute(xmler, "title", null); // NON-NLS
             final String message = TagUtil.getTagAttribute(xmler, "description", null);
@@ -535,7 +535,7 @@ public class DownloadManager {
     if (patient == null) {
       patient =
           new MediaSeriesGroupNode(
-              TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.getTagView());
+              TagD.getUID(Level.PATIENT), patientPseudoUID, DicomModel.patient.tagView());
       patient.setTag(idTag, TagUtil.getTagAttribute(xmler, idTag.getKeyword(), TagW.NO_VALUE));
       patient.setTag(nameTag, TagUtil.getTagAttribute(xmler, nameTag.getKeyword(), TagW.NO_VALUE));
       patient.setTagNoNull(
@@ -571,8 +571,7 @@ public class DownloadManager {
     MediaSeriesGroup study = model.getHierarchyNode(patient, studyUID);
     if (study == null) {
       study =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
       TagW[] tags =
           TagD.getTagFromIDs(
               Tag.StudyDate, Tag.StudyTime, Tag.StudyDescription, Tag.AccessionNumber, Tag.StudyID);
@@ -738,18 +737,18 @@ public class DownloadManager {
   private static void readSelection(XMLStreamReader xmler, ReaderParams params)
       throws XMLStreamException {
 
-    String sereiesUIDKey = TagD.get(Tag.SeriesInstanceUID).getKeyword();
+    String seriesUIDKey = TagD.get(Tag.SeriesInstanceUID).getKeyword();
     String name = TagUtil.getTagAttribute(xmler, KOSpecialElement.SEL_NAME, null);
-    String koSeriesUID = TagUtil.getTagAttribute(xmler, sereiesUIDKey, null);
-    List<HierachicalSOPInstanceReference> referencedStudies = new ArrayList<>();
+    String koSeriesUID = TagUtil.getTagAttribute(xmler, seriesUIDKey, null);
+    List<HierarchicalSOPInstanceReference> referencedStudies = new ArrayList<>();
     List<SeriesAndInstanceReference> referencedSeries = new ArrayList<>();
-    HierachicalSOPInstanceReference hierachicalDicom = new HierachicalSOPInstanceReference();
-    referencedStudies.add(hierachicalDicom);
+    HierarchicalSOPInstanceReference hierarchicalDicom = new HierarchicalSOPInstanceReference();
+    referencedStudies.add(hierarchicalDicom);
 
     DicomModel model = params.getModel();
     BiConsumerWithException<XMLStreamReader, ReaderParams, XMLStreamException> method =
         (x, r) -> {
-          String seriesUID = TagUtil.getTagAttribute(xmler, sereiesUIDKey, null);
+          String seriesUID = TagUtil.getTagAttribute(xmler, seriesUIDKey, null);
           SeriesAndInstanceReference refSerInst = new SeriesAndInstanceReference();
           refSerInst.setSeriesInstanceUID(seriesUID);
           referencedSeries.add(refSerInst);
@@ -769,9 +768,9 @@ public class DownloadManager {
       MediaSeriesGroup patient = model.getParent(study, DicomModel.patient);
       DicomMediaUtils.fillAttributes(patient.getTagEntrySetIterator(), srcAttribute);
       Attributes attributes = DicomMediaUtils.createDicomKeyObject(srcAttribute, name, koSeriesUID);
-      hierachicalDicom.setStudyInstanceUID(
+      hierarchicalDicom.setStudyInstanceUID(
           TagD.getTagValue(study, Tag.StudyInstanceUID, String.class));
-      hierachicalDicom.setReferencedSeries(referencedSeries);
+      hierarchicalDicom.setReferencedSeries(referencedSeries);
 
       new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
       DicomModel.LOADING_EXECUTOR.execute(

@@ -46,8 +46,8 @@ public class ExportTree extends JPanel {
             TreePath curPath = getPathForLocation(evt.getX(), evt.getY());
             if (curPath != null) {
               Object object = curPath.getLastPathComponent();
-              if (object instanceof ToolTipTreeNode) {
-                return ((ToolTipTreeNode) object).getToolTipText();
+              if (object instanceof ToolTipTreeNode treeNode) {
+                return treeNode.getToolTipText();
               }
             }
             return null;

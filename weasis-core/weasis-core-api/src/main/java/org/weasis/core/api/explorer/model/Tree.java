@@ -10,6 +10,7 @@
 package org.weasis.core.api.explorer.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -113,9 +114,7 @@ public class Tree<T> {
 
   private String printTree(int increment) {
     char[] value = new char[increment];
-    for (int i = 0; i < value.length; i++) {
-      value[i] = ' ';
-    }
+    Arrays.fill(value, ' ');
     String inc = new String(value);
     StringBuilder s = new StringBuilder(inc + head);
     for (Tree<T> child : leafs) {

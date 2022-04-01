@@ -9,7 +9,7 @@
  */
 package org.weasis.dicom.codec.display;
 
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
@@ -30,10 +30,10 @@ public class WindowAndPresetsOp extends WindowOp {
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.getEventType();
-    if (OpEvent.ImageChange.equals(type)) {
+    if (OpEvent.IMAGE_CHANGE.equals(type)) {
       setParam(P_IMAGE_ELEMENT, event.getImage());
       removeParam(P_PR_ELEMENT);
-    } else if (OpEvent.ResetDisplay.equals(type) || OpEvent.SeriesChange.equals(type)) {
+    } else if (OpEvent.RESET_DISPLAY.equals(type) || OpEvent.SERIES_CHANGE.equals(type)) {
       ImageElement img = event.getImage();
       setParam(P_IMAGE_ELEMENT, img);
       PrDicomObject pr = (PrDicomObject) getParam(P_PR_ELEMENT);
@@ -47,16 +47,16 @@ public class WindowAndPresetsOp extends WindowOp {
         boolean pixelPadding =
             LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
         PresetWindowLevel preset = null;
-        if (img instanceof DicomImageElement) {
+        if (img instanceof DicomImageElement imageElement) {
           DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
           if (pr != null) {
-            ((DicomImageElement) img).getPresetList(wlp, true);
+            imageElement.getPresetList(wlp, true);
           }
-          preset = ((DicomImageElement) img).getDefaultPreset(wlp);
+          preset = imageElement.getDefaultPreset(wlp);
         }
         setPreset(preset, img, pixelPadding);
       }
-    } else if (OpEvent.ApplyPR.equals(type)) {
+    } else if (OpEvent.APPLY_PR.equals(type)) {
       ImageElement img = event.getImage();
       setParam(P_IMAGE_ELEMENT, img);
       if (img != null) {
@@ -66,7 +66,7 @@ public class WindowAndPresetsOp extends WindowOp {
         }
         boolean pixelPadding =
             LangUtil.getNULLtoTrue((Boolean) getParam(ActionW.IMAGE_PIX_PADDING.cmd()));
-        HashMap<String, Object> p = event.getParams();
+        Map<String, Object> p = event.getParams();
         if (p != null) {
           PRSpecialElement pr =
               Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))
@@ -76,9 +76,9 @@ public class WindowAndPresetsOp extends WindowOp {
           setParam(P_PR_ELEMENT, pr == null ? null : pr.getPrDicomObject());
 
           PresetWindowLevel preset = (PresetWindowLevel) p.get(ActionW.PRESET.cmd());
-          if (preset == null && img instanceof DicomImageElement) {
+          if (preset == null && img instanceof DicomImageElement imageElement) {
             DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
-            preset = ((DicomImageElement) img).getDefaultPreset(wlp);
+            preset = imageElement.getDefaultPreset(wlp);
           }
           setPreset(preset, img, pixelPadding);
         }

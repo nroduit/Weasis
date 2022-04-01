@@ -19,7 +19,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -151,19 +150,11 @@ public class View2d extends DefaultView2d<ImageElement> {
   }
 
   @Override
-  public void propertyChange(PropertyChangeEvent evt) {
-    super.propertyChange(evt);
-    if (series == null) {
-      return;
-    }
-  }
-
-  @Override
   public synchronized void enableMouseAndKeyListener(MouseActions actions) {
     disableMouseAndKeyListener();
     iniDefaultMouseListener();
     iniDefaultKeyListener();
-    // Set the butonMask to 0 of all the actions
+    // Set the buttonMask to 0 of all the actions
     resetMouseAdapter();
 
     this.setCursor(DefaultView2d.DEFAULT_CURSOR);
@@ -240,8 +231,8 @@ public class View2d extends DefaultView2d<ImageElement> {
 
   protected void resetMouseAdapter() {
     for (ActionState adapter : eventManager.getAllActionValues()) {
-      if (adapter instanceof MouseActionAdapter) {
-        ((MouseActionAdapter) adapter).setButtonMaskEx(0);
+      if (adapter instanceof MouseActionAdapter mouseActionAdapter) {
+        mouseActionAdapter.setButtonMaskEx(0);
       }
     }
     // reset context menu that is a field of this instance
@@ -429,7 +420,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     return null;
   }
 
-  protected JPopupMenu buildContexMenu(final MouseEvent evt) {
+  protected JPopupMenu buildContextMenu(final MouseEvent evt) {
     JPopupMenu popupMenu = new JPopupMenu();
     TitleMenuItem itemTitle =
         new TitleMenuItem(Messages.getString("View2d.left_mouse") + StringUtil.COLON);
@@ -441,7 +432,7 @@ public class View2d extends DefaultView2d<ImageElement> {
     ButtonGroup groupButtons = new ButtonGroup();
     ImageViewerPlugin<ImageElement> view = eventManager.getSelectedView2dContainer();
     if (view != null) {
-      final ViewerToolBar toolBar = view.getViewerToolBar();
+      final ViewerToolBar<?> toolBar = view.getViewerToolBar();
       if (toolBar != null) {
         ActionListener leftButtonAction =
             e -> {
@@ -535,7 +526,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         if (!selected.isEmpty() && isDrawActionActive()) {
           popupMenu = View2d.this.buildGraphicContextMenu(evt, selected);
         } else if (View2d.this.getSourceImage() != null) {
-          popupMenu = View2d.this.buildContexMenu(evt);
+          popupMenu = View2d.this.buildContextMenu(evt);
         }
         if (popupMenu != null) {
           popupMenu.show(evt.getComponent(), evt.getX(), evt.getY());
@@ -579,7 +570,7 @@ public class View2d extends DefaultView2d<ImageElement> {
         try {
           files = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
         } catch (Exception e) {
-          LOGGER.error("Get dragable files", e);
+          LOGGER.error("Get draggable files", e);
         }
         return dropDicomFiles(files);
       }
@@ -592,7 +583,7 @@ public class View2d extends DefaultView2d<ImageElement> {
           String val = (String) transferable.getTransferData(UriListFlavor.flavor);
           files = UriListFlavor.textURIListToFileList(val);
         } catch (Exception e) {
-          LOGGER.error("Get dragable URIs", e);
+          LOGGER.error("Get draggable URIs", e);
         }
         return dropDicomFiles(files);
       }

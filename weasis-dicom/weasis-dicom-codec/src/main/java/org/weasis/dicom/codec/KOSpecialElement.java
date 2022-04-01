@@ -95,8 +95,8 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
     mf.append(" ");
     Xml.addXmlAttribute(SEL_NAME, ko.getLabelWithoutPrefix(), mf);
     mf.append(" ");
-    String sereiesUID = TagD.get(Tag.SeriesInstanceUID).getKeyword();
-    Xml.addXmlAttribute(sereiesUID, TagD.getTagValue(ko, Tag.SeriesInstanceUID, String.class), mf);
+    String seriesUID = TagD.get(Tag.SeriesInstanceUID).getKeyword();
+    Xml.addXmlAttribute(seriesUID, TagD.getTagValue(ko, Tag.SeriesInstanceUID, String.class), mf);
     mf.append(">");
 
     for (Entry<String, Map<String, SOPInstanceReferenceAndMAC>> entry :
@@ -104,7 +104,7 @@ public class KOSpecialElement extends AbstractKOSpecialElement {
       mf.append("\n<");
       mf.append(Xml.Level.SERIES.getTagName());
       mf.append(" ");
-      Xml.addXmlAttribute(sereiesUID, entry.getKey(), mf);
+      Xml.addXmlAttribute(seriesUID, entry.getKey(), mf);
       mf.append(">");
 
       writeImages(entry.getValue(), mf);

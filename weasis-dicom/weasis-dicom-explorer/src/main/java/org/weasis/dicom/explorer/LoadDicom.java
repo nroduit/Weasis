@@ -87,7 +87,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
       if (study == null) {
         patient =
             new MediaSeriesGroupNode(
-                TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.getTagView());
+                TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.tagView());
         dicomReader.writeMetaData(patient);
         dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
         LOGGER.info("Adding patient: {}", patient);
@@ -101,8 +101,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
     MediaSeriesGroup study = dicomModel.getHierarchyNode(patient, studyUID);
     if (study == null) {
       study =
-          new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), studyUID, DicomModel.study.getTagView());
+          new MediaSeriesGroupNode(TagD.getUID(Level.STUDY), studyUID, DicomModel.study.tagView());
       dicomReader.writeMetaData(study);
       dicomModel.addHierarchyNode(patient, study);
     }

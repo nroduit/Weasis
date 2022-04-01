@@ -94,7 +94,9 @@ public class MeasureDialog extends PropertiesDialog {
         panelFilled.add(checkBoxFill);
         panelFilled.add(GuiUtils.boxHorizontalStrut(size));
       }
-      if (view2D != null && graphics.size() == 1 && graphic instanceof AnnotationGraphic) {
+      if (view2D != null
+          && graphics.size() == 1
+          && graphic instanceof AnnotationGraphic annotationGraphic) {
         JScrollPane panel = new JScrollPane();
         panel.setBorder(
             new CompoundBorder(
@@ -102,7 +104,7 @@ public class MeasureDialog extends PropertiesDialog {
                 GuiUtils.getTitledBorder(Messages.getString("MeasureDialog.text"))));
         panel.setPreferredSize(GuiUtils.getDimension(400, 140));
         StringBuilder buf = new StringBuilder();
-        String[] labels = ((AnnotationGraphic) graphic).getLabels();
+        String[] labels = annotationGraphic.getLabels();
         for (String s : labels) {
           buf.append(s);
           buf.append("\n");

@@ -32,7 +32,7 @@ public interface Codec {
   MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties);
 
   /**
-   * @param mimeType
+   * @param mimeType the mime type value
    * @return true if the codec supports the MIME type
    */
   boolean isMimeTypeSupported(String mimeType);

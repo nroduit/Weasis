@@ -18,6 +18,7 @@ import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Stroke;
 import java.awt.Toolkit;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Line2D;
@@ -104,12 +105,12 @@ public class LeadPanel extends JPanel {
           @Override
           public void mouseMoved(MouseEvent e) {
             if (selectedPosition >= 0) {
-              if ((e.getModifiersEx() & MouseEvent.BUTTON1_DOWN_MASK)
-                  == MouseEvent.BUTTON1_DOWN_MASK) {
+              if ((e.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK)
+                  == InputEvent.BUTTON1_DOWN_MASK) {
                 setSignalMarker(selectedPosition, SignalMarker.Type.START);
               }
-              if ((e.getModifiersEx() & MouseEvent.BUTTON3_DOWN_MASK)
-                  == MouseEvent.BUTTON3_DOWN_MASK) {
+              if ((e.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK)
+                  == InputEvent.BUTTON3_DOWN_MASK) {
                 setSignalMarker(selectedPosition, SignalMarker.Type.STOP);
               }
               repaint();
@@ -206,7 +207,7 @@ public class LeadPanel extends JPanel {
   public void shiftSignalMarker(Measure tool, SignalMarker.Type type, int shift) {
     for (SignalMarker marker : markers) {
       if (isMarkerAdapted(marker, tool, type)) {
-        marker.setPosition(marker.getPostion() + shift);
+        marker.setPosition(marker.getPosition() + shift);
       }
     }
   }
@@ -245,8 +246,8 @@ public class LeadPanel extends JPanel {
       return;
     }
 
-    int startPos = start.getPostion();
-    int stopPos = stop.getPostion();
+    int startPos = start.getPosition();
+    int stopPos = stop.getPosition();
 
     double time = (stopPos - startPos) / (double) view.getSamplesPerSecond();
     double diffuV = data.getSample(stopPos, channels) - data.getSample(startPos, channels);
@@ -356,8 +357,8 @@ public class LeadPanel extends JPanel {
     Color background = new Color(230, 230, 230, 100);
     g2.setColor(background);
 
-    double startX = this.ratioX * start.getPostion();
-    double stopX = this.ratioX * stop.getPostion();
+    double startX = this.ratioX * start.getPosition();
+    double stopX = this.ratioX * stop.getPosition();
     if (startX > stopX) {
       double tmp = stopX;
       stopX = startX;
@@ -377,7 +378,7 @@ public class LeadPanel extends JPanel {
       } else {
         color = Color.CYAN;
       }
-      drawMarker(g2, color, marker.getPostion(), dim);
+      drawMarker(g2, color, marker.getPosition(), dim);
     }
   }
 

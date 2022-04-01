@@ -140,10 +140,8 @@ public class StowRS extends DicomStowRS {
           authMethod.resetToken();
           authMethod.getToken();
         }
-      } else if (httpCon instanceof ClosableURLConnection
-          && ((ClosableURLConnection) httpCon).getUrlConnection() instanceof HttpURLConnection) {
-        HttpURLConnection http =
-            (HttpURLConnection) ((ClosableURLConnection) httpCon).getUrlConnection();
+      } else if (httpCon instanceof ClosableURLConnection urlConnection
+          && urlConnection.getUrlConnection() instanceof HttpURLConnection http) {
         MultipartPayload multipartPayload = getMultipartPayload(filesOrFolders, recursive);
         nbFile = multipartPayload.getBodyParts().size();
         BasicHttpClient.addBody(http, multipartPayload, true);

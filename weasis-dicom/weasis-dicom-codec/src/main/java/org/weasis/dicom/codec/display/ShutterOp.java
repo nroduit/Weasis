@@ -13,8 +13,8 @@ import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -67,7 +67,7 @@ public class ShutterOp extends AbstractOp {
   @Override
   public void handleImageOpEvent(ImageOpEvent event) {
     OpEvent type = event.getEventType();
-    if (OpEvent.ImageChange.equals(type) || OpEvent.ResetDisplay.equals(type)) {
+    if (OpEvent.IMAGE_CHANGE.equals(type) || OpEvent.RESET_DISPLAY.equals(type)) {
       ImageElement img = event.getImage();
       // If no image, reset the shutter
       boolean noMedia = img == null;
@@ -76,8 +76,8 @@ public class ShutterOp extends AbstractOp {
       setParam(P_RGB_COLOR, noMedia ? null : img.getTagValue(TagW.ShutterRGBColor));
       setParam(WindowAndPresetsOp.P_PR_ELEMENT, null);
       setParam(P_IMAGE_ELEMENT, noMedia ? null : img);
-    } else if (OpEvent.ApplyPR.equals(type)) {
-      HashMap<String, Object> p = event.getParams();
+    } else if (OpEvent.APPLY_PR.equals(type)) {
+      Map<String, Object> p = event.getParams();
       if (p != null) {
         PRSpecialElement pr =
             Optional.ofNullable(p.get(ActionW.PR_STATE.cmd()))

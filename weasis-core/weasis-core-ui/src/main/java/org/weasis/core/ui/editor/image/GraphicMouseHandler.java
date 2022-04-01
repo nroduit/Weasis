@@ -97,7 +97,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
       if (firstGraphicIntersecting.isPresent()
           && firstGraphicIntersecting.get() instanceof DragGraphic dragGraph) {
-        List<DragGraphic> selectedDragGraphList = graphicList.getSelectedDragableGraphics();
+        List<DragGraphic> selectedDragGraphList = graphicList.getSelectedDraggableGraphics();
         boolean locked = dragGraph.getLayer().getLocked();
 
         if (!locked && selectedDragGraphList.contains(dragGraph)) {
@@ -153,8 +153,8 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
           Graphic graph =
               AbstractGraphicModel.drawFromCurrentGraphic(
                   vImg, (Graphic) (item instanceof Graphic ? item : null));
-          if (graph instanceof DragGraphic) {
-            ds = ((DragGraphic) graph).createResizeDrag();
+          if (graph instanceof DragGraphic dragGraphic) {
+            ds = dragGraphic.createResizeDrag();
             if (!(graph instanceof SelectGraphic)) {
               vImg.getGraphicManager().setSelectedGraphic(Collections.singletonList(graph));
             }
@@ -201,12 +201,12 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
       AffineTransform transform = DefaultView2d.getAffineTransform(mouseEvt);
       Rectangle selectionRect = selectGraphic.getBounds(transform);
 
-      // Little size rectangle in selection click is interpreted as a single clic
-      boolean isSelectionSingleClic =
+      // Little size rectangle in selection click is interpreted as a single click
+      boolean isSelectionSingleClick =
           selectionRect == null || (selectionRect.width < 5 && selectionRect.height < 5);
 
       final List<Graphic> newSelectedGraphList = new ArrayList<>();
-      if (isSelectionSingleClic) {
+      if (isSelectionSingleClick) {
         vImg.getGraphicManager()
             .getFirstGraphicIntersecting(mouseEvt)
             .ifPresent(newSelectedGraphList::add);
@@ -229,7 +229,7 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
                 g -> {
                   if (!newSelectedGraphList.contains(g)) {
                     newSelectedGraphList.add(g);
-                  } else if (isSelectionSingleClic) {
+                  } else if (isSelectionSingleClick) {
                     newSelectedGraphList.remove(g);
                   }
                 });
@@ -263,14 +263,14 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     // Evaluates if mouse is on a dragging position, and changes cursor image consequently
     List<DragGraphic> selectedDragGraphList =
-        vImg.getGraphicManager().getSelectedDragableGraphics();
+        vImg.getGraphicManager().getSelectedDraggableGraphics();
     Optional<Graphic> firstGraphicIntersecting =
         vImg.getGraphicManager().getFirstGraphicIntersecting(mouseEvt);
 
     if (firstGraphicIntersecting.isPresent()
         && firstGraphicIntersecting.get() instanceof DragGraphic dragGraph
         && !firstGraphicIntersecting.get().getLayer().getLocked()) {
-      newCursor = getCursor(mouseEvt, newCursor, selectedDragGraphList, dragGraph, cursorSet);
+      newCursor = getCursor(mouseEvt, selectedDragGraphList, dragGraph, cursorSet);
     }
 
     vImg.getJComponent()
@@ -279,16 +279,16 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
   private static Cursor getCursor(
       MouseEventDouble mouseEvt,
-      Cursor newCursor,
       List<DragGraphic> selectedDragGraphList,
       DragGraphic dragGraph,
       CursorSet cursorSet) {
+    Cursor newCursor;
     if (selectedDragGraphList.contains(dragGraph)) {
 
       if (selectedDragGraphList.size() > 1) {
         newCursor = cursorSet.getMoveCursor();
 
-      } else if (selectedDragGraphList.size() == 1) {
+      } else {
         if (dragGraph.isOnGraphicLabel(mouseEvt)) {
           newCursor = cursorSet.getHandCursor();
 
@@ -358,9 +358,9 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
             && firstGraphicIntersecting.get() instanceof DragGraphic dragGraph
             && !firstGraphicIntersecting.get().getLayer().getLocked()) {
           List<DragGraphic> selectedDragGraphList =
-              vImg.getGraphicManager().getSelectedDragableGraphics();
+              vImg.getGraphicManager().getSelectedDraggableGraphics();
 
-          newCursor = getCursor(mouseEvt, newCursor, selectedDragGraphList, dragGraph, cursorSet);
+          newCursor = getCursor(mouseEvt, selectedDragGraphList, dragGraph, cursorSet);
         }
       }
       vImg.getJComponent()

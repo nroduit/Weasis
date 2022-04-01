@@ -104,8 +104,8 @@ public class SendDicomView extends AbstractItemDialogPage implements ExportDicom
     add(exportTree);
   }
 
-  protected void initialize(boolean afirst) {
-    if (afirst) {
+  protected void initialize(boolean firstTime) {
+    if (firstTime) {
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.DICOM, UsageType.STORAGE);
       AbstractDicomNode.loadDicomNodes(comboNode, AbstractDicomNode.Type.WEB, UsageType.STORAGE);
       String desc = SendDicomFactory.EXPORT_PERSISTENCE.getProperty(LAST_SEL_NODE);

@@ -26,6 +26,7 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
@@ -79,11 +80,10 @@ public class NetworkUtil {
       return prepareConnection(new URL(url).openConnection(), urlParameters);
     }
     OAuthRequest request;
-    if (authRequest == null) {
-      request = new OAuthRequest(urlParameters.isHttpPost() ? Verb.POST : Verb.GET, url);
-    } else {
-      request = authRequest;
-    }
+    request =
+        Objects.requireNonNullElseGet(
+            authRequest,
+            () -> new OAuthRequest(urlParameters.isHttpPost() ? Verb.POST : Verb.GET, url));
     return prepareAuthConnection(request, urlParameters, authMethod);
   }
 
@@ -149,8 +149,7 @@ public class NetworkUtil {
     if (urlParameters.isHttpPost()) {
       urlConnection.setDoOutput(true);
     }
-    if (urlConnection instanceof HttpURLConnection) {
-      HttpURLConnection httpURLConnection = (HttpURLConnection) urlConnection;
+    if (urlConnection instanceof HttpURLConnection httpURLConnection) {
       try {
         if (urlParameters.isHttpPost()) {
           httpURLConnection.setRequestMethod("POST");
@@ -208,8 +207,8 @@ public class NetworkUtil {
     for (int i = 0; i < MAX_REDIRECTS; i++) {
       if (redirect != null) {
         String cookies = c.getHeaderField("Set-Cookie");
-        if (c instanceof HttpURLConnection) {
-          ((HttpURLConnection) c).disconnect();
+        if (c instanceof HttpURLConnection httpURLConnection) {
+          httpURLConnection.disconnect();
         }
         c = new URL(redirect).openConnection();
         c.setRequestProperty("Cookie", cookies);

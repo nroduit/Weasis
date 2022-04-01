@@ -11,6 +11,7 @@ package org.weasis.core.ui.editor.image;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import javax.swing.JComponent;
 import javax.swing.TransferHandler;
 import org.weasis.core.api.image.SimpleOpManager;
@@ -46,11 +47,11 @@ public class ImageTransferHandler extends TransferHandler implements Transferabl
   }
 
   @Override
-  public Object getTransferData(DataFlavor flavor) {
+  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
     if (isDataFlavorSupported(flavor)) {
       return ImageConversion.toBufferedImage(disOp.process());
     }
-    return null;
+    throw new UnsupportedFlavorException(flavor);
   }
 
   @Override

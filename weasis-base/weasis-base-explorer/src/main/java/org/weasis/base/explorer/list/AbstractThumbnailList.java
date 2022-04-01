@@ -13,7 +13,6 @@ import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.dnd.DnDConstants;
@@ -82,11 +81,11 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   private Point dragPressed = null;
   private DragSource dragSource = null;
 
-  public AbstractThumbnailList(JIThumbnailCache thumbCache) {
+  protected AbstractThumbnailList(JIThumbnailCache thumbCache) {
     this(thumbCache, HORIZONTAL_WRAP);
   }
 
-  public AbstractThumbnailList(JIThumbnailCache thumbCache, int scrollMode) {
+  protected AbstractThumbnailList(JIThumbnailCache thumbCache, int scrollMode) {
     super();
     this.thumbCache = thumbCache == null ? new JIThumbnailCache() : thumbCache;
     this.setModel(newModel());
@@ -179,10 +178,6 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   @Override
   public IThumbnailModel<E> getThumbnailListModel() {
     return (IThumbnailModel) getModel();
-  }
-
-  public Frame getFrame() {
-    return null;
   }
 
   // Subclass JList to workaround bug 4832765, which can cause the
@@ -464,9 +459,9 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       e.consume();
       final int firstIndex = getFirstVisibleIndex();
       final int visibleRows = getVisibleRowCount();
-      final int visibleColums =
+      final int visibleColumns =
           (int) (((float) (lastIndex - firstIndex) / (float) visibleRows) + .5);
-      final int visibleItems = visibleRows * visibleColums;
+      final int visibleItems = visibleRows * visibleColumns;
 
       final int val =
           (lastIndex + visibleItems >= getModel().getSize())
@@ -489,9 +484,9 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       e.consume();
       final int firstIndex = getFirstVisibleIndex();
       final int visibleRows = getVisibleRowCount();
-      final int visibleColums =
+      final int visibleColumns =
           (int) (((float) (lastIndex - firstIndex) / (float) visibleRows) + .5);
-      final int visibleItems = visibleRows * visibleColums;
+      final int visibleItems = visibleRows * visibleColumns;
 
       final int val = Math.max((firstIndex - 1) - visibleItems, 0);
       clearSelection();
@@ -622,8 +617,8 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
       if (series != null) {
         GhostGlassPane glassPane = AppProperties.glassPane;
         Icon icon = null;
-        if (media instanceof ImageElement) {
-          icon = thumbCache.getThumbnailFor((ImageElement) media, this, index);
+        if (media instanceof ImageElement imageElement) {
+          icon = thumbCache.getThumbnailFor(imageElement, this, index);
         }
         if (icon == null) {
           icon = JIUtility.getSystemIcon(media);
@@ -640,23 +635,23 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   }
 
   @Override
-  public void dragMouseMoved(DragSourceDragEvent dsde) {
-    drawGlassPane(dsde.getLocation());
+  public void dragMouseMoved(DragSourceDragEvent dragEvent) {
+    drawGlassPane(dragEvent.getLocation());
   }
 
   // --- DragSourceListener methods -----------------------------------
 
   @Override
-  public void dragEnter(DragSourceDragEvent dsde) {}
+  public void dragEnter(DragSourceDragEvent dragEvent) {}
 
   @Override
-  public void dragOver(DragSourceDragEvent dsde) {}
+  public void dragOver(DragSourceDragEvent dragEvent) {}
 
   @Override
-  public void dragExit(DragSourceEvent dsde) {}
+  public void dragExit(DragSourceEvent dragEvent) {}
 
   @Override
-  public void dragDropEnd(DragSourceDropEvent dsde) {
+  public void dragDropEnd(DragSourceDropEvent dragEvent) {
     GhostGlassPane glassPane = AppProperties.glassPane;
     dragPressed = null;
     glassPane.setImagePosition(null);
@@ -665,7 +660,7 @@ public abstract class AbstractThumbnailList<E extends MediaElement> extends JLis
   }
 
   @Override
-  public void dropActionChanged(DragSourceDragEvent dsde) {}
+  public void dropActionChanged(DragSourceDragEvent dragEvent) {}
 
   public void drawGlassPane(Point p) {
     if (dragPressed != null) {

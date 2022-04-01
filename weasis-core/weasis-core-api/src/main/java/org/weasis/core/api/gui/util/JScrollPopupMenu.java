@@ -139,10 +139,14 @@ public class JScrollPopupMenu extends JPopupMenu {
 
   protected static class ScrollPopupMenuLayout implements LayoutManager {
     @Override
-    public void addLayoutComponent(String name, Component comp) {}
+    public void addLayoutComponent(String name, Component comp) {
+      // Not implemented
+    }
 
     @Override
-    public void removeLayoutComponent(Component comp) {}
+    public void removeLayoutComponent(Component comp) {
+      // Not implemented
+    }
 
     @Override
     public Dimension preferredLayoutSize(Container parent) {

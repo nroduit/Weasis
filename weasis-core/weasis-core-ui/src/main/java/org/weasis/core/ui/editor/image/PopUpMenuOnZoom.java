@@ -43,7 +43,7 @@ public class PopUpMenuOnZoom extends JPopupMenu {
   private final JMenu jMenuImage = new JMenu();
   private final JRadioButtonMenuItem jMenuItemMagnifyOther = new JRadioButtonMenuItem();
   private final JCheckBoxMenuItem jCheckBoxMenuItemDraw = new JCheckBoxMenuItem();
-  private final JCheckBoxMenuItem jCheckBoxMenutemSychronize = new JCheckBoxMenuItem();
+  private final JCheckBoxMenuItem jCheckBoxMenuItemSynchronize = new JCheckBoxMenuItem();
   private final JMenuItem resetFreeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.reset"));
   private final ActionListener magnifyListener;
 
@@ -63,9 +63,9 @@ public class PopUpMenuOnZoom extends JPopupMenu {
           zoomWin.repaint();
         });
     jMenuImage.setText(Messages.getString("PopUpMenuOnZoom.image"));
-    final JMenuItem freezParams = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freeze"));
-    freezParams.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS));
-    jMenuImage.add(freezParams);
+    final JMenuItem freesParams = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freeze"));
+    freesParams.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_PARAMETERS));
+    jMenuImage.add(freesParams);
     final JMenuItem freeze = new JMenuItem(Messages.getString("PopUpMenuOnZoom.freezeImg"));
     freeze.addActionListener(e -> zoomWin.setFreezeImage(SyncType.PARENT_IMAGE));
     jMenuImage.add(freeze);
@@ -74,16 +74,16 @@ public class PopUpMenuOnZoom extends JPopupMenu {
     jMenuImage.add(resetFreeze);
 
     jMenuMagnify.setText(Messages.getString("PopUpMenuOnZoom.magnify"));
-    jCheckBoxMenutemSychronize.setText(Messages.getString("PopUpMenuOnZoom.synch"));
-    jCheckBoxMenutemSychronize.addActionListener(
+    jCheckBoxMenuItemSynchronize.setText(Messages.getString("PopUpMenuOnZoom.synch"));
+    jCheckBoxMenuItemSynchronize.addActionListener(
         e -> {
-          zoomWin.setActionInView(ZoomWin.SYNCH_CMD, jCheckBoxMenutemSychronize.isSelected());
+          zoomWin.setActionInView(ZoomWin.SYNCH_CMD, jCheckBoxMenuItemSynchronize.isSelected());
           zoomWin.updateZoom();
         });
     this.add(jMenuItemZoom);
     this.addSeparator();
     this.add(jCheckBoxMenuItemDraw);
-    this.add(jCheckBoxMenutemSychronize);
+    this.add(jCheckBoxMenuItemSynchronize);
     this.add(jMenuMagnify);
     iniMenuItemZoomMagnify();
     this.add(jMenuImage);
@@ -102,15 +102,15 @@ public class PopUpMenuOnZoom extends JPopupMenu {
   }
 
   public void enableMenuItem() {
-    // Do not trigger actionLinstener
-    jCheckBoxMenutemSychronize.setSelected((Boolean) zoomWin.getActionValue(ZoomWin.SYNCH_CMD));
+    // Do not trigger actionListener
+    jCheckBoxMenuItemSynchronize.setSelected((Boolean) zoomWin.getActionValue(ZoomWin.SYNCH_CMD));
     jCheckBoxMenuItemDraw.setSelected((Boolean) zoomWin.getActionValue(ActionW.DRAWINGS.cmd()));
     Object type = zoomWin.getActionValue(ZoomWin.FREEZE_CMD);
     resetFreeze.setEnabled(
         SyncType.PARENT_PARAMETERS.equals(type) || SyncType.PARENT_IMAGE.equals(type));
 
     // Get current zoom magnitude
-    boolean noselection = true;
+    boolean noSelection = true;
     if (jRadioButtonMenuItemMagnify.length < jMenuMagnify.getItemCount()) {
       jMenuMagnify.remove(jMenuItemMagnifyOther);
     }
@@ -123,11 +123,11 @@ public class PopUpMenuOnZoom extends JPopupMenu {
       if ((magnify[i] * 100) == currentZoomRatio) {
         JRadioButtonMenuItem item3 = jRadioButtonMenuItemMagnify[i];
         item3.setSelected(true);
-        noselection = false;
+        noSelection = false;
         break;
       }
     }
-    if (noselection) {
+    if (noSelection) {
       ratio = Math.abs(ratio);
       jMenuItemMagnifyOther.setText(ratio + "X"); // NON-NLS
       buttonMagnify.add(jMenuItemMagnifyOther);

@@ -40,9 +40,7 @@ public class PRSpecialElement extends DicomSpecialElement {
     if (clabel == null) {
       super.initLabel();
     } else {
-      StringBuilder buf = new StringBuilder(getLabelPrefix());
-      buf.append(clabel);
-      label = buf.toString();
+      label = getLabelPrefix() + clabel;
     }
   }
 

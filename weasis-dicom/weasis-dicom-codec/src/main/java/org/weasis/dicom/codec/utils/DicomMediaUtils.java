@@ -262,10 +262,8 @@ public class DicomMediaUtils {
 
     if (computeOnlyIfNull) {
       String s = dicom.getString(privateCreatorID, tag, defaultValue);
-      if (StringUtil.hasText(s)) {
-        if (StringUtil.hasText(TagD.getDicomPeriod(s))) {
-          return s;
-        }
+      if (StringUtil.hasText(s) && StringUtil.hasText(TagD.getDicomPeriod(s))) {
+        return s;
       }
     }
 
@@ -279,23 +277,23 @@ public class DicomMediaUtils {
             Tag.StudyDate);
 
     if (date != null) {
-      Date bithdate = dicom.getDate(Tag.PatientBirthDate);
-      if (bithdate != null) {
-        return getPeriod(TagUtil.toLocalDate(bithdate), TagUtil.toLocalDate(date));
+      Date birthdate = dicom.getDate(Tag.PatientBirthDate);
+      if (birthdate != null) {
+        return getPeriod(TagUtil.toLocalDate(birthdate), TagUtil.toLocalDate(date));
       }
     }
     return null;
   }
 
   private static Date getDate(Attributes dicom, int... tagID) {
-    Date date = null;
+    Date date;
     for (int i : tagID) {
       date = dicom.getDate(i);
       if (date != null) {
         return date;
       }
     }
-    return date;
+    return null;
   }
 
   public static String getPeriod(LocalDate first, LocalDate last) {
@@ -382,7 +380,7 @@ public class DicomMediaUtils {
     return defaultValue;
   }
 
-  public static int[] getIntAyrrayFromDicomElement(Attributes dicom, int tag, int[] defaultValue) {
+  public static int[] getIntArrayFromDicomElement(Attributes dicom, int tag, int[] defaultValue) {
     return getIntArrayFromDicomElement(dicom, tag, null, defaultValue);
   }
 
@@ -474,7 +472,7 @@ public class DicomMediaUtils {
     // Unsigned Short (0 to 65535) and Signed Short (-32768 to +32767)
     int minInValue = signed ? -(1 << (stored - 1)) : 0;
     int maxInValue = signed ? (1 << (stored - 1)) - 1 : (1 << stored) - 1;
-    return result < minInValue ? minInValue : result > maxInValue ? maxInValue : result;
+    return result < minInValue ? minInValue : Math.min(result, maxInValue);
   }
 
   public static void setTag(Map<TagW, Object> tags, TagW tag, Object value) {
@@ -682,8 +680,8 @@ public class DicomMediaUtils {
   public static void computeSUVFactor(Attributes dicomObject, Taggable taggable, int index) {
     // From vendor neutral code at
     // http://qibawiki.rsna.org/index.php?title=Standardized_Uptake_Value_%28SUV%29
-    String modlality = TagD.getTagValue(taggable, Tag.Modality, String.class);
-    if ("PT".equals(modlality)) {
+    String modality = TagD.getTagValue(taggable, Tag.Modality, String.class);
+    if ("PT".equals(modality)) {
       String correctedImage = getStringFromDicomElement(dicomObject, Tag.CorrectedImage);
       if (correctedImage != null
           && correctedImage.contains("ATTN")
@@ -838,7 +836,6 @@ public class DicomMediaUtils {
    * @param seriesInstanceUID is supposed to be valid and won't be verified, it's the user
    *     responsibility to manage this value. If null a randomly new one will be generated instead
    * @return new dicomKeyObjectSelection Document Attributes
-   * @throws IOException
    */
   public static Attributes createDicomKeyObject(
       Attributes dicomSourceAttribute, String keyObjectDescription, String seriesInstanceUID) {
@@ -1049,7 +1046,7 @@ public class DicomMediaUtils {
             String codeMeaning = xmler.getAttributeValue(null, "meaning"); // NON-NLS
 
             String conceptNameCodeModifier = xmler.getAttributeValue(null, "conceptMod");
-            String contexGroupIdModifier = xmler.getAttributeValue(null, "contexId");
+            String contextGroupIdModifier = xmler.getAttributeValue(null, "contexId");
 
             codeByValue.put(
                 codeValue,
@@ -1060,7 +1057,7 @@ public class DicomMediaUtils {
                     codeValue,
                     codeMeaning,
                     conceptNameCodeModifier,
-                    contexGroupIdModifier));
+                    contextGroupIdModifier));
           }
         }
       }
@@ -1077,7 +1074,7 @@ public class DicomMediaUtils {
     final String codeMeaning;
 
     final String conceptNameCodeModifier;
-    final String contexGroupIdModifier;
+    final String contextGroupIdModifier;
 
     public KeyObjectSelectionCode(
         String resourceName,
@@ -1086,7 +1083,7 @@ public class DicomMediaUtils {
         String codeValue,
         String codeMeaning,
         String conceptNameCodeModifier,
-        String contexGroupIdModifier) {
+        String contextGroupIdModifier) {
 
       this.resourceName = resourceName;
       this.contextGroupID = contextGroupID;
@@ -1096,7 +1093,7 @@ public class DicomMediaUtils {
       this.codeMeaning = codeMeaning;
 
       this.conceptNameCodeModifier = conceptNameCodeModifier;
-      this.contexGroupIdModifier = contexGroupIdModifier;
+      this.contextGroupIdModifier = contextGroupIdModifier;
     }
 
     final Boolean hasConceptModifier() {

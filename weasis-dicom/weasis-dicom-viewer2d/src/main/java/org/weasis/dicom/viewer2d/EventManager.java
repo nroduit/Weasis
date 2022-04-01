@@ -12,6 +12,7 @@ package org.weasis.dicom.viewer2d;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.image.DataBuffer;
@@ -226,7 +227,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   private ComboItemListener<KernelData> newFilterAction() {
-    return new ComboItemListener<KernelData>(ActionW.FILTER, KernelData.getAllFilters()) {
+    return new ComboItemListener<>(ActionW.FILTER, KernelData.getAllFilters()) {
 
       @Override
       public void itemStateChanged(Object object) {
@@ -242,8 +243,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
 
   @Override
   protected SliderCineListener getMoveTroughSliceAction(
-      int speed, TIME time, double mouseSensivity) {
-    return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
+      int speed, TIME time, double mouseSensitivity) {
+    return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensitivity) {
 
       private CineThread currentCine;
 
@@ -823,7 +824,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           cineAction.get().start();
         }
       }
-      return;
     } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
       ImageViewerPlugin<DicomImageElement> view = getSelectedView2dContainer();
       if (view != null) {
@@ -1359,7 +1359,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             cineAction.ifPresent(
                 a ->
                     a.setSliderMinMaxValue(
-                        1, maxShift < 1 ? 1 : maxShift, viewPane.getFrameIndex() + 1, false));
+                        1, Math.max(maxShift, 1), viewPane.getFrameIndex() + 1, false));
 
             Object selectedKO = viewPane.getActionValue(ActionW.KO_SELECTION.cmd());
             Boolean enableFilter = (Boolean) viewPane.getActionValue(ActionW.KO_FILTER.cmd());
@@ -1564,7 +1564,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_COUNTERCLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, KeyEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L, InputEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1574,7 +1574,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           menuItem = new JMenuItem(Messages.getString("View2dContainer.+90"));
           menuItem.setIcon(ResourceUtil.getIcon(ActionIcon.ROTATE_CLOCKWISE));
           GuiUtils.applySelectedIconEffect(menuItem);
-          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.ALT_DOWN_MASK));
+          menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK));
           menuItem.addActionListener(
               e ->
                   rotateAction
@@ -1600,7 +1600,8 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                         Messages.getString("View2dContainer.flip_h"),
                         ResourceUtil.getIcon(ActionIcon.FLIP));
             GuiUtils.applySelectedIconEffect(menuItem);
-            menuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F, KeyEvent.ALT_DOWN_MASK));
+            menuItem.setAccelerator(
+                KeyStroke.getKeyStroke(KeyEvent.VK_F, InputEvent.ALT_DOWN_MASK));
             menu.add(menuItem);
           }
         }

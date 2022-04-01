@@ -26,7 +26,7 @@ public abstract class ComboItemListener<T> extends BasicActionState
 
   protected final DefaultComboBoxModel<T> model;
 
-  public ComboItemListener(ActionW action, T[] objects) {
+  protected ComboItemListener(ActionW action, T[] objects) {
     super(action);
     model = (objects != null) ? new DefaultComboBoxModel<>(objects) : new DefaultComboBoxModel<>();
     model.addListDataListener(this);

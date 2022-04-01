@@ -38,7 +38,7 @@ import org.weasis.dicom.explorer.wado.LoadSeries;
 public class DicomZipImport extends AbstractItemDialogPage implements ImportDicom {
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomZipImport.class);
 
-  private static final String lastDICOMDIR = "lastDicomZip";
+  private static final String LAST_DICOM_ZIP = "lastDicomZip";
   private static final String LAST_DICOM_ZIP_OPEN_MODE = "last.dicom.zip.open.mode";
 
   private final JComboBox<OpeningViewer> openingViewerJComboBox =
@@ -61,7 +61,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
   }
 
   public void browseImgFile() {
-    String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(lastDICOMDIR, "");
+    String directory = Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LAST_DICOM_ZIP, "");
 
     JFileChooser fileChooser = new JFileChooser(directory);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -71,7 +71,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         || (selectedFile = fileChooser.getSelectedFile()) == null) {
       fileLabel.setText("");
     } else {
-      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(lastDICOMDIR, selectedFile.getParent());
+      Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_ZIP, selectedFile.getParent());
       fileLabel.setText(selectedFile.getPath());
     }
   }

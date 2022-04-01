@@ -18,7 +18,7 @@ import javax.swing.BoundedRangeModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JSliderW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -36,7 +36,7 @@ class InfoPanel extends JPanel {
   private final JLabel minimum = new JLabel();
 
   private final JLabel currentLabel = new JLabel();
-  private final JLabel miliVolt = new JLabel();
+  private final JLabel milliVolt = new JLabel();
   private final JLabel seconds = new JLabel();
 
   public InfoPanel(double zoomRatio) {
@@ -51,14 +51,14 @@ class InfoPanel extends JPanel {
           public void stateChanged(BoundedRangeModel model) {
             ImageViewerPlugin<?> container =
                 WaveContainer.ECG_EVENT_MANAGER.getSelectedView2dContainer();
-            if (container instanceof WaveContainer) {
-              ((WaveContainer) container).setZoomRatio(toModelValue(model.getValue()));
+            if (container instanceof WaveContainer waveContainer) {
+              waveContainer.setZoomRatio(toModelValue(model.getValue()));
             }
           }
 
           @Override
           public String getValueToDisplay() {
-            return DecFormater.percentTwoDecimal(getRealValue());
+            return DecFormatter.percentTwoDecimal(getRealValue());
           }
 
           @Override
@@ -96,7 +96,7 @@ class InfoPanel extends JPanel {
     main.add(seconds);
 
     main.add(maximum);
-    main.add(miliVolt);
+    main.add(milliVolt);
 
     GridBagConstraints gbc = new GridBagConstraints();
     gbc.insets = new Insets(0, 15, 0, 10);
@@ -140,11 +140,11 @@ class InfoPanel extends JPanel {
 
   public void setCurrentValues(double sec, double mV) {
     if (sec < 0) {
-      clearValue(currentLabel, seconds, miliVolt);
+      clearValue(currentLabel, seconds, milliVolt);
     } else {
       currentLabel.setText(Messages.getString("InfoPanel.cursor"));
       seconds.setText(MarkerAnnotation.secondFormatter.format(sec));
-      miliVolt.setText(MarkerAnnotation.mVFormatter.format(mV));
+      milliVolt.setText(MarkerAnnotation.mVFormatter.format(mV));
     }
   }
 

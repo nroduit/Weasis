@@ -17,9 +17,7 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import javax.swing.event.MouseInputAdapter;
-import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.media.data.ImageElement;
-import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.Thumbnail;
 
 /** @author Nicolas Roduit */
@@ -41,11 +39,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
   }
 
   @Override
-  protected void init(MediaElement media, boolean keepMediaCache, OpManager opManager) {
-    super.init(media, keepMediaCache, opManager);
-  }
-
-  @Override
   public void registerListeners() {
     super.registerListeners();
     addMouseListener(mouseClickHandler);
@@ -60,19 +53,6 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
 
   public boolean isUpdatingImageDisplay() {
     return updatingImageDisplay;
-  }
-
-  private void updateImageDisplay() {
-    if (view != null) {
-      final Rectangle2D ma = view.getViewModel().getModelArea();
-      double mpX =
-          (slider.getCenterX() - panArea.getCenterX()) * ma.getWidth() / panArea.getWidth();
-      double mpY =
-          (slider.getCenterY() - panArea.getCenterY()) * ma.getHeight() / panArea.getHeight();
-      updatingImageDisplay = true;
-      view.setCenter(mpX, mpY);
-      updatingImageDisplay = false;
-    }
   }
 
   public void updateImage() {
@@ -203,6 +183,19 @@ public final class Panner<E extends ImageElement> extends Thumbnail {
             slider.getHeight());
         updateImageDisplay();
         repaint();
+      }
+    }
+
+    private void updateImageDisplay() {
+      if (view != null) {
+        final Rectangle2D ma = view.getViewModel().getModelArea();
+        double mpX =
+            (slider.getCenterX() - panArea.getCenterX()) * ma.getWidth() / panArea.getWidth();
+        double mpY =
+            (slider.getCenterY() - panArea.getCenterY()) * ma.getHeight() / panArea.getHeight();
+        updatingImageDisplay = true;
+        view.setCenter(mpX, mpY);
+        updatingImageDisplay = false;
       }
     }
   }

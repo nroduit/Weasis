@@ -38,7 +38,7 @@ public class FileModel extends AbstractFileModel {
       AppProperties.buildAccessibleTempDirectory(AppProperties.FILE_CACHE_DIR.getName(), "image");
 
   private File getFile(String url) {
-    File outFile = null;
+    File outFile;
     try (ClosableURLConnection http =
             NetworkUtil.getUrlConnection(url, new URLParameters(BundleTools.SESSION_TAGS_FILE));
         InputStream in = http.getInputStream()) {

@@ -45,7 +45,7 @@ public class ReferencedImage extends DefaultUUID {
    * <p>Note: to match with DICOM Instance Frame the value must be increment of one (DicomFrame =
    * frame + 1).
    *
-   * @param frames
+   * @param frames the image frame list
    */
   public void setFrames(List<Integer> frames) {
     this.frames = Optional.ofNullable(frames).orElseGet(ArrayList::new);

@@ -201,7 +201,7 @@ public class FileUtil {
   public static boolean isEmpty(Path path) throws IOException {
     if (Files.isDirectory(path)) {
       try (Stream<Path> entries = Files.list(path)) {
-        return !entries.findFirst().isPresent();
+        return entries.findFirst().isEmpty();
       }
     }
     return false;

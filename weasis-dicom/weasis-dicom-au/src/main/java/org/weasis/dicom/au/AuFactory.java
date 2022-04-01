@@ -51,13 +51,13 @@ public class AuFactory implements SeriesViewerFactory {
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel) {
-        model = (GridBagLayoutModel) obj;
+      if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
+        model = gridBagLayoutModel;
       }
       // Set UID
       Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String) {
-        uid = (String) val;
+      if (val instanceof String s) {
+        uid = s;
       }
     }
 

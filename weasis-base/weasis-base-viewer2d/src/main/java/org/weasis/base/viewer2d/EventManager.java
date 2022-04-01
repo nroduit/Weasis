@@ -227,7 +227,6 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           cineAction.get().start();
         }
       }
-      return;
     } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
       ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
       if (view != null) {
@@ -493,10 +492,10 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
     // register all actions for the selected view and for the other views register according to
     // synchview.
-    ComboItemListener synchAtction = getAction(ActionW.SYNCH, ComboItemListener.class).orElse(null);
+    ComboItemListener synchAction = getAction(ActionW.SYNCH, ComboItemListener.class).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
-        synchAtction == null ? SynchView.NONE : (SynchView) synchAtction.getSelectedItem());
+        synchAction == null ? SynchView.NONE : (SynchView) synchAction.getSelectedItem());
 
     view2d.updateGraphicSelectionListener(selectedView2dContainer);
 

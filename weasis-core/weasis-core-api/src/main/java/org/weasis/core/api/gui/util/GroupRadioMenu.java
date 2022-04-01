@@ -144,6 +144,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     return -1;
   }
 
+  @SuppressWarnings("unchecked")
   public T getSelectedItem() {
     return (T) dataModel.getSelectedItem();
   }

@@ -13,6 +13,8 @@ import it.cnr.imaa.essi.lablib.gui.checkboxtree.DefaultCheckboxTreeCellRenderer;
 
 public class CheckBoxTreeBuilder {
 
+  private CheckBoxTreeBuilder() {}
+
   public static DefaultCheckboxTreeCellRenderer buildNoIconCheckboxTreeCellRenderer() {
     DefaultCheckboxTreeCellRenderer renderer = new DefaultCheckboxTreeCellRenderer();
     renderer.setOpenIcon(null);

@@ -178,12 +178,10 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
       View v = getLeafViewAtPoint(new Point(x, pageStartY), rootView, sourcePane);
       if (v != null) {
         Rectangle alloc = getAllocation(v, sourcePane).getBounds();
-        if (alloc.y < pageStartY && alloc.y + alloc.height > pageStartY) {
-          if (!alloc.equals(last)) {
-            Rectangle r = new Rectangle(alloc);
-            r.y -= pageStartY;
-            result.subtract(new Area(r));
-          }
+        if (alloc.y < pageStartY && alloc.y + alloc.height > pageStartY && !alloc.equals(last)) {
+          Rectangle r = new Rectangle(alloc);
+          r.y -= pageStartY;
+          result.subtract(new Area(r));
         }
         last = alloc;
       }
@@ -194,12 +192,12 @@ public class EditorPanePrinter extends JPanel implements Pageable, Printable {
       View v = getLeafViewAtPoint(new Point(x, pageStartY + pageHeight), rootView, sourcePane);
       if (v != null) {
         Rectangle alloc = getAllocation(v, sourcePane).getBounds();
-        if (alloc.y < pageStartY + pageHeight && alloc.y + alloc.height > pageStartY + pageHeight) {
-          if (!alloc.equals(last)) {
-            Rectangle r = new Rectangle(alloc);
-            r.y -= pageStartY;
-            result.subtract(new Area(r));
-          }
+        if (alloc.y < pageStartY + pageHeight
+            && alloc.y + alloc.height > pageStartY + pageHeight
+            && !alloc.equals(last)) {
+          Rectangle r = new Rectangle(alloc);
+          r.y -= pageStartY;
+          result.subtract(new Area(r));
         }
         last = alloc;
       }

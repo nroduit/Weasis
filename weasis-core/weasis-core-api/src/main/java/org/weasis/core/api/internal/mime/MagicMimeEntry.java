@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import org.weasis.core.util.LangUtil;
@@ -245,7 +246,7 @@ public class MagicMimeEntry {
   /*
    * private methods for reading to local buffer
    */
-  private ByteBuffer readBuffer(byte[] content) throws IOException {
+  private ByteBuffer readBuffer(byte[] content) {
     int startPos = getCheckBytesFrom();
     if (startPos > content.length) {
       return null;
@@ -310,7 +311,7 @@ public class MagicMimeEntry {
   /*
    * private methods used for matching different types
    */
-  private boolean match(ByteBuffer buf) throws IOException {
+  private boolean match(ByteBuffer buf) {
     boolean matches;
 
     if (STRING_TYPE == type) {
@@ -358,9 +359,9 @@ public class MagicMimeEntry {
     return matches;
   }
 
-  private boolean matchString(ByteBuffer bbuf) throws IOException {
+  private boolean matchString(ByteBuffer bbuf) {
     if (isBetween) {
-      String buffer = new String(bbuf.array());
+      String buffer = new String(bbuf.array(), StandardCharsets.UTF_8);
       return buffer.contains(getContent());
     }
     int read = getContent().length();
@@ -372,13 +373,12 @@ public class MagicMimeEntry {
     return true;
   }
 
-  private boolean matchByte(ByteBuffer bbuf) throws IOException {
+  private boolean matchByte(ByteBuffer bbuf) {
     byte b = bbuf.get(0);
     return b == getContent().charAt(0);
   }
 
-  private boolean matchShort(ByteBuffer bbuf, ByteOrder bo, boolean needMask, short sMask)
-      throws IOException {
+  private boolean matchShort(ByteBuffer bbuf, ByteOrder bo, boolean needMask, short sMask) {
     bbuf.order(bo);
     short got;
     String testContent = getContent();
@@ -399,8 +399,7 @@ public class MagicMimeEntry {
     return got == found;
   }
 
-  private boolean matchLong(ByteBuffer bbuf, ByteOrder bo, boolean needMask, long lMask)
-      throws IOException {
+  private boolean matchLong(ByteBuffer bbuf, ByteOrder bo, boolean needMask, long lMask) {
     bbuf.order(bo);
     long got;
     String testContent = getContent();

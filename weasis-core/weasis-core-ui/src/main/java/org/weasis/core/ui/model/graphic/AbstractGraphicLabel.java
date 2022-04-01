@@ -40,17 +40,17 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
   protected Double offsetX;
   protected Double offsetY;
 
-  public AbstractGraphicLabel() {
+  protected AbstractGraphicLabel() {
     this(DEFAULT_OFFSET_X, DEFAULT_OFFSET_Y);
   }
 
-  public AbstractGraphicLabel(Double offsetX, Double offsetY) {
+  protected AbstractGraphicLabel(Double offsetX, Double offsetY) {
     this.offsetX = Optional.ofNullable(offsetX).orElse(DEFAULT_OFFSET_X);
     this.offsetY = Optional.ofNullable(offsetY).orElse(DEFAULT_OFFSET_Y);
     reset();
   }
 
-  public AbstractGraphicLabel(AbstractGraphicLabel object) {
+  protected AbstractGraphicLabel(AbstractGraphicLabel object) {
     this.offsetX = object.offsetX;
     this.offsetY = object.offsetY;
     this.labels = Optional.ofNullable(object.labels).map(String[]::clone).orElse(null);

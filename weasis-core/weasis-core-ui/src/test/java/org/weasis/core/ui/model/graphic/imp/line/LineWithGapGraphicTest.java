@@ -50,7 +50,7 @@ public class LineWithGapGraphicTest extends GraphicTester<LineWithGapGraphic> {
     return new Object[] {
       LineWithGapGraphic.DEFAULT_GAP_SIZE,
       Graphic.DEFAULT_FILLED,
-      Graphic.DEFAULT_LABEL_VISISIBLE,
+      Graphic.DEFAULT_LABEL_VISIBLE,
       Graphic.DEFAULT_LINE_THICKNESS,
       getGraphicUuid(),
       WProperties.color2Hexadecimal(Graphic.DEFAULT_COLOR, true)

@@ -145,15 +145,13 @@ public class Contour {
   }
 
   public double[] getCoordinatesX() {
-    if (this.coordinatesX == null) {
-      if (points != null && points.length % 3 == 0) {
-        this.coordinatesX = new double[points.length / 3];
+    if (this.coordinatesX == null && points != null && points.length % 3 == 0) {
+      this.coordinatesX = new double[points.length / 3];
 
-        int j = 0;
-        for (int i = 0; i < points.length; i = i + 3) {
-          this.coordinatesX[j] = points[i];
-          j++;
-        }
+      int j = 0;
+      for (int i = 0; i < points.length; i = i + 3) {
+        this.coordinatesX[j] = points[i];
+        j++;
       }
     }
 
@@ -161,15 +159,13 @@ public class Contour {
   }
 
   public double[] getCoordinatesY() {
-    if (this.coordinatesY == null) {
-      if (points != null && points.length % 3 == 0) {
-        this.coordinatesY = new double[points.length / 3];
+    if (this.coordinatesY == null && points != null && points.length % 3 == 0) {
+      this.coordinatesY = new double[points.length / 3];
 
-        int j = 0;
-        for (int i = 1; i < points.length; i = i + 3) {
-          this.coordinatesY[j] = points[i];
-          j++;
-        }
+      int j = 0;
+      for (int i = 1; i < points.length; i = i + 3) {
+        this.coordinatesY[j] = points[i];
+        j++;
       }
     }
 
@@ -279,14 +275,14 @@ public class Contour {
 
   private double polygonArea(double[] x, double[] y) {
     // Initialise the area
-    double area = 0.0;
+    double polygonArea = 0.0;
 
     // Calculate value of shoelace formula
     for (int i = 0; i < x.length; i++) {
       int j = (i + 1) % x.length;
-      area += (x[i] * y[j]) - (x[j] * y[i]);
+      polygonArea += (x[i] * y[j]) - (x[j] * y[i]);
     }
 
-    return Math.abs(area / 2.0);
+    return Math.abs(polygonArea / 2.0);
   }
 }

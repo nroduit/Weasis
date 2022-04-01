@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 import javax.swing.BoundedRangeModel;
 import javax.swing.event.SwingPropertyChangeSupport;
 import org.slf4j.Logger;
@@ -29,7 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
-import org.weasis.core.api.gui.util.DecFormater;
+import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -72,7 +71,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected volatile boolean enabledAction = true;
   protected ImageViewerPlugin<E> selectedView2dContainer;
 
-  public ImageViewerEventManager() {
+  protected ImageViewerEventManager() {
     super();
   }
 
@@ -85,12 +84,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected SliderCineListener getMoveTroughSliceAction(
-      int speed, final TIME time, double mouseSensivity) {
-    return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensivity) {
+      int speed, final TIME time, double mouseSensitivity) {
+    return new SliderCineListener(ActionW.SCROLL_SERIES, 1, 2, 1, speed, time, mouseSensitivity) {
 
       private volatile boolean cining = true;
 
-      protected CineThread currentCine;
+      private CineThread currentCine;
 
       @Override
       public void stateChanged(BoundedRangeModel model) {
@@ -144,8 +143,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
         private AtomicInteger wait;
         private volatile int currentCineRate;
         private volatile long start;
-        private final int timeDiv =
-            TIME.SECOND.equals(time) ? 1000 : TIME.MINUTE.equals(time) ? 60000 : 3600000;
 
         @Override
         public void run() {
@@ -188,6 +185,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
         public void iniSpeed() {
           iteration = new AtomicInteger(0);
+          int timeDiv =
+              TIME.SECOND.equals(time) ? 1000 : TIME.MINUTE.equals(time) ? 60000 : 3600000;
           wait = new AtomicInteger(timeDiv / getSpeed());
           currentCineRate = getSpeed();
           start = System.currentTimeMillis();
@@ -294,7 +293,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public String getValueToDisplay() {
-        return getSliderValue() + " \u00b0";
+        return getSliderValue() + " °";
       }
     };
   }
@@ -321,7 +320,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public String getValueToDisplay() {
-        return DecFormater.percentTwoDecimal(getRealValue());
+        return DecFormatter.percentTwoDecimal(getRealValue());
       }
 
       @Override
@@ -430,7 +429,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public String getValueToDisplay() {
-        return DecFormater.percentTwoDecimal(getRealValue());
+        return DecFormatter.percentTwoDecimal(getRealValue());
       }
 
       @Override
@@ -455,19 +454,19 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public void itemStateChanged(Object object) {
-        if (object instanceof GridBagLayoutModel && selectedView2dContainer != null) {
+        if (selectedView2dContainer != null
+            && object instanceof GridBagLayoutModel gridBagLayoutModel) {
           // change layout
           clearAllPropertyChangeListeners();
           ViewCanvas<E> view = selectedView2dContainer.getSelectedImagePane();
-          selectedView2dContainer.setLayoutModel((GridBagLayoutModel) object);
+          selectedView2dContainer.setLayoutModel(gridBagLayoutModel);
           if (!selectedView2dContainer.isContainingView(view)) {
             view = selectedView2dContainer.getSelectedImagePane();
           }
           selectedView2dContainer.setSelectedImagePane(view);
           ActionState synch = getAction(ActionW.SYNCH);
-          if (synch instanceof ComboItemListener) {
-            selectedView2dContainer.setSynchView(
-                (SynchView) ((ComboItemListener) synch).getSelectedItem());
+          if (synch instanceof ComboItemListener<?> itemListener) {
+            selectedView2dContainer.setSynchView((SynchView) itemListener.getSelectedItem());
           }
         }
       }
@@ -480,8 +479,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
 
       @Override
       public void itemStateChanged(Object object) {
-        if (object instanceof SynchView && selectedView2dContainer != null) {
-          SynchView synchView = (SynchView) object;
+        if (object instanceof SynchView synchView && selectedView2dContainer != null) {
           selectedView2dContainer.setSynchView(synchView);
         }
       }
@@ -502,7 +500,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected static ComboItemListener<Graphic> newMeasurementAction(Graphic[] graphics) {
-    return new ComboItemListener<Graphic>(
+    return new ComboItemListener<>(
         ActionW.DRAW_MEASURE, Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
       @Override
@@ -513,7 +511,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected static ComboItemListener<Graphic> newDrawAction(Graphic[] graphics) {
-    return new ComboItemListener<Graphic>(
+    return new ComboItemListener<>(
         ActionW.DRAW_GRAPHICS, Optional.ofNullable(graphics).orElseGet(() -> new Graphic[0])) {
 
       @Override
@@ -538,7 +536,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   protected ComboItemListener<Unit> newSpatialUnit(Unit[] units) {
-    return new ComboItemListener<Unit>(
+    return new ComboItemListener<>(
         ActionW.SPATIAL_UNIT, Optional.ofNullable(units).orElseGet(() -> new Unit[0])) {
 
       @Override
@@ -624,7 +622,6 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     return false;
   }
 
-  @SuppressWarnings("unchecked")
   public <T> Optional<T> getAction(ActionW action, Class<T> type) {
     Objects.requireNonNull(action);
     Objects.requireNonNull(type);
@@ -680,10 +677,10 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
   }
 
-  @SuppressWarnings("unchecked")
   public void nextLeftMouseAction() {
     ImageViewerPlugin<E> view = getSelectedView2dContainer();
     if (view != null) {
+      @SuppressWarnings("unchecked")
       ViewerToolBar<E> toolBar = view.getViewerToolBar();
       if (toolBar != null) {
         String command =
@@ -715,7 +712,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   }
 
   public Collection<ActionState> getAllActionValues() {
-    return actions.values().stream().filter(Objects::nonNull).collect(Collectors.toList());
+    return actions.values().stream().filter(Objects::nonNull).toList();
   }
 
   public MouseActions getMouseActions() {
@@ -805,18 +802,15 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     Optional<ComboItemListener> drawAction = getAction(action, ComboItemListener.class);
     if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
       for (Object obj : drawAction.get().getAllItem()) {
-        if (obj instanceof Graphic) {
-          Graphic g = (Graphic) obj;
+        if (obj instanceof Graphic g) {
           if (g.getKeyCode() == keyEvent && g.getModifier() == modifiers) {
             ImageViewerPlugin<E> view = getSelectedView2dContainer();
             if (view != null) {
               final ViewerToolBar<?> toolBar = view.getViewerToolBar();
-              if (toolBar != null) {
-                if (!toolBar.isCommandActive(cmd)) {
-                  mouseActions.setAction(MouseActions.T_LEFT, cmd);
-                  view.setMouseActions(mouseActions);
-                  toolBar.changeButtonState(MouseActions.T_LEFT, cmd);
-                }
+              if (toolBar != null && !toolBar.isCommandActive(cmd)) {
+                mouseActions.setAction(MouseActions.T_LEFT, cmd);
+                view.setMouseActions(mouseActions);
+                toolBar.changeButtonState(MouseActions.T_LEFT, cmd);
               }
             }
             drawAction.get().setSelectedItem(obj);

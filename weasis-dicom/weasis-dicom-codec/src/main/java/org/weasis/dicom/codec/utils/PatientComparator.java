@@ -68,21 +68,11 @@ public class PatientComparator {
       String[] split = property.split(",");
       for (String string : split) {
         switch (string) {
-          case "issuerOfPatientID":
-            buffer.append(issuerOfPatientID);
-            break;
-          case "patientId":
-            buffer.append(patientId);
-            break;
-          case "patientName":
-            buffer.append(name);
-            break;
-          case "patientBirthdate":
-            buffer.append(birthdate);
-            break;
-          case "patientSex":
-            buffer.append(sex);
-            break;
+          case "issuerOfPatientID" -> buffer.append(issuerOfPatientID);
+          case "patientId" -> buffer.append(patientId);
+          case "patientName" -> buffer.append(name);
+          case "patientBirthdate" -> buffer.append(birthdate);
+          case "patientSex" -> buffer.append(sex);
         }
       }
       return buffer.toString();

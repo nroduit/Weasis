@@ -23,7 +23,6 @@ import javax.sound.sampled.DataLine;
 import javax.sound.sampled.FloatControl;
 import javax.sound.sampled.LineUnavailableException;
 import javax.sound.sampled.SourceDataLine;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -82,17 +81,17 @@ public class AuView extends JPanel implements SeriesViewerListener {
   }
 
   public synchronized void setSeries(Series newSeries) {
-    MediaSeries<?> oldsequence = this.series;
+    MediaSeries<?> oldSequence = this.series;
     this.series = newSeries;
 
-    if (oldsequence == null && newSeries == null) {
+    if (oldSequence == null && newSeries == null) {
       return;
     }
-    if (oldsequence != null && oldsequence.equals(newSeries)) {
+    if (oldSequence != null && oldSequence.equals(newSeries)) {
       return;
     }
 
-    closingSeries(oldsequence);
+    closingSeries(oldSequence);
 
     if (series != null) {
       DicomSpecialElement s = null;
@@ -162,7 +161,7 @@ public class AuView extends JPanel implements SeriesViewerListener {
 
   // Create a SoundPlayer component for the specified file.
   private void showPlayer(final DicomSpecialElement media)
-      throws IOException, UnsupportedAudioFileException, LineUnavailableException {
+      throws IOException, LineUnavailableException {
     AudioData audioData = getAudioData(media);
     if (audioData == null) {
       throw new IllegalStateException("Cannot build an AudioInputStream");
@@ -233,27 +232,26 @@ public class AuView extends JPanel implements SeriesViewerListener {
       fileChooser.addChoosableFileFilter(new FileFormatFilter("wav", "WAVE")); // NON-NLS
       fileChooser.setFileFilter(filter);
 
-      if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-        if (fileChooser.getSelectedFile() != null) {
-          File file = fileChooser.getSelectedFile();
-          filter = (FileFormatFilter) fileChooser.getFileFilter();
-          String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); // NON-NLS
-          String filename =
-              file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
+      if (fileChooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION
+          && fileChooser.getSelectedFile() != null) {
+        File file = fileChooser.getSelectedFile();
+        filter = (FileFormatFilter) fileChooser.getFileFilter();
+        String extension = filter == null ? ".au" : "." + filter.getDefaultExtension(); // NON-NLS
+        String filename =
+            file.getName().endsWith(extension) ? file.getPath() : file.getPath() + extension;
 
-          try (AudioInputStream audioStream =
-              new AudioInputStream(
-                  audioData.bulkData.openStream(),
-                  audioData.audioFormat,
-                  audioData.bulkData.length() / audioData.audioFormat.getFrameSize())) {
-            if (".wav".equals(extension)) {
-              AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, new File(filename));
-            } else {
-              AudioSystem.write(audioStream, AudioFileFormat.Type.AU, new File(filename));
-            }
-          } catch (IOException ex) {
-            LOGGER.error("Cannot save audio file!", ex);
+        try (AudioInputStream audioStream =
+            new AudioInputStream(
+                audioData.bulkData.openStream(),
+                audioData.audioFormat,
+                audioData.bulkData.length() / audioData.audioFormat.getFrameSize())) {
+          if (".wav".equals(extension)) {
+            AudioSystem.write(audioStream, AudioFileFormat.Type.WAVE, new File(filename));
+          } else {
+            AudioSystem.write(audioStream, AudioFileFormat.Type.AU, new File(filename));
           }
+        } catch (IOException ex) {
+          LOGGER.error("Cannot save audio file!", ex);
         }
       }
     }

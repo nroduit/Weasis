@@ -232,21 +232,15 @@ public abstract class ImageOrientation {
   }
 
   public static char getImageOrientationOpposite(char c) {
-    switch (c) {
-      case 'L':
-        return 'R';
-      case 'R':
-        return 'L';
-      case 'P':
-        return 'A';
-      case 'A':
-        return 'P';
-      case 'H':
-        return 'F';
-      case 'F':
-        return 'H';
-    }
-    return ' ';
+    return switch (c) {
+      case 'L' -> 'R';
+      case 'R' -> 'L';
+      case 'P' -> 'A';
+      case 'A' -> 'P';
+      case 'H' -> 'F';
+      case 'F' -> 'H';
+      default -> ' ';
+    };
   }
 
   public static double[] computeNormalVectorOfPlan(double[] vector) {
@@ -288,11 +282,13 @@ public abstract class ImageOrientation {
           return label1.equals(label2);
         }
         // If oblique search and if the plan has approximately the same orientation
-        double[] postion1 = computeNormalVectorOfPlan(v1);
-        double[] postion2 = computeNormalVectorOfPlan(v2);
-        if (postion1 != null && postion2 != null) {
+        double[] position1 = computeNormalVectorOfPlan(v1);
+        double[] position2 = computeNormalVectorOfPlan(v2);
+        if (position1 != null && position2 != null) {
           double prod =
-              postion1[0] * postion2[0] + postion1[1] * postion2[1] + postion1[2] * postion2[2];
+              position1[0] * position2[0]
+                  + position1[1] * position2[1]
+                  + position1[2] * position2[2];
           // A little tolerance
           return prod > 0.95;
         }

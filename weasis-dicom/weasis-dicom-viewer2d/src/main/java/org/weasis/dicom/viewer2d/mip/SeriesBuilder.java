@@ -45,10 +45,6 @@ import org.weasis.opencv.data.PlanarImage;
 public class SeriesBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
 
-  public static final File MPR_CACHE_DIR =
-      AppProperties.buildAccessibleTempDirectory(
-          AppProperties.FILE_CACHE_DIR.getName(), "mip"); // NON-NLS
-
   private SeriesBuilder() {}
 
   public static void applyMipParameters(
@@ -163,7 +159,6 @@ public class SeriesBuilder {
           curImage = null;
         }
 
-        final DicomImageElement dicom;
         if (curImage != null) {
 
           DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);

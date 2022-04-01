@@ -77,14 +77,14 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
       String unknown = TagW.NO_VALUE;
       MediaSeriesGroup patient =
           new MediaSeriesGroupNode(
-              TagD.getUID(Level.PATIENT), UIDUtils.createUID(), DicomModel.patient.getTagView());
+              TagD.getUID(Level.PATIENT), UIDUtils.createUID(), DicomModel.patient.tagView());
       patient.setTag(TagD.get(Tag.PatientID), unknown);
       patient.setTag(TagD.get(Tag.PatientName), unknown);
       dicomModel.addHierarchyNode(MediaSeriesGroupNode.rootNode, patient);
 
       MediaSeriesGroup study =
           new MediaSeriesGroupNode(
-              TagD.getUID(Level.STUDY), UIDUtils.createUID(), DicomModel.study.getTagView());
+              TagD.getUID(Level.STUDY), UIDUtils.createUID(), DicomModel.study.tagView());
       dicomModel.addHierarchyNode(patient, study);
 
       Series dicomSeries = new DicomSeries(seriesUID);

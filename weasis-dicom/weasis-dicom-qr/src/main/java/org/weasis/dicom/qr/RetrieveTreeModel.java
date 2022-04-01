@@ -19,6 +19,7 @@ import java.util.Objects;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -133,7 +134,7 @@ public class RetrieveTreeModel {
     public String getToolTipText() {
       TagReadable s = (TagReadable) getUserObject();
       StringBuilder toolTips = new StringBuilder();
-      toolTips.append("<html>");
+      toolTips.append(GuiUtils.HTML_START);
       s.getTagEntrySetIterator()
           .forEachRemaining(
               i -> {
@@ -143,9 +144,9 @@ public class RetrieveTreeModel {
                 toolTips.append("</b>");
                 toolTips.append(StringUtil.COLON_AND_SPACE);
                 toolTips.append(tag.getFormattedTagValue(i.getValue(), null));
-                toolTips.append("<br>");
+                toolTips.append(GuiUtils.HTML_BR);
               });
-      toolTips.append("</html>");
+      toolTips.append(GuiUtils.HTML_END);
       return toolTips.toString();
     }
   }

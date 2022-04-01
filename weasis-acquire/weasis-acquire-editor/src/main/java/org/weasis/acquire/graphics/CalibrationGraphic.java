@@ -70,7 +70,7 @@ public class CalibrationGraphic extends LineGraphic {
           if (image != null) {
             AcquireImageInfo info = AcquireManager.findByImage(image);
             if (info != null) {
-              List<AcquireImageInfo> list = AcquireManager.findbySeries(info.getSeries());
+              List<AcquireImageInfo> list = AcquireManager.findBySeries(info.getSeries());
               for (AcquireImageInfo acquireImageInfo : list) {
                 ImageElement img = acquireImageInfo.getImage();
                 if (img != image) {

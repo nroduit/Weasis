@@ -78,7 +78,7 @@ public class ThumbnailRenderer<E extends MediaElement> extends JPanel
       JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
     ThumbnailIcon icon = null;
     if (value instanceof ImageElement imageElement) {
-      if (list instanceof AbstractThumbnailList thumbnailList) {
+      if (list instanceof AbstractThumbnailList<?> thumbnailList) {
         icon = thumbnailList.getThumbCache().getThumbnailFor(imageElement, thumbnailList, index);
       }
       if (LangUtil.getNULLtoFalse((Boolean) value.getTagValue(TagW.Checked))) {

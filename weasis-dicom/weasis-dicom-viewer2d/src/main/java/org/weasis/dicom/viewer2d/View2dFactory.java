@@ -89,30 +89,29 @@ public class View2dFactory implements SeriesViewerFactory {
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());
-      if (obj instanceof GridBagLayoutModel) {
-        model = (GridBagLayoutModel) obj;
+      if (obj instanceof GridBagLayoutModel gridBagLayoutModel) {
+        model = gridBagLayoutModel;
       } else {
         obj = properties.get(ViewCanvas.class.getName());
-        if (obj instanceof Integer) {
+        if (obj instanceof Integer intVal) {
           ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
           if (layout instanceof ComboItemListener) {
-            model = ImageViewerPlugin.getBestDefaultViewLayout(layout, (Integer) obj);
+            model = ImageViewerPlugin.getBestDefaultViewLayout(layout, intVal);
           }
         }
       }
 
       // Set UID
       Object val = properties.get(ViewerPluginBuilder.UID);
-      if (val instanceof String) {
-        uid = (String) val;
+      if (val instanceof String s) {
+        uid = s;
       }
     }
     View2dContainer instance = new View2dContainer(model, uid, getUIName(), getIcon(), null);
     if (properties != null) {
       Object obj = properties.get(DataExplorerModel.class.getName());
-      if (obj instanceof DicomModel) {
+      if (obj instanceof DicomModel m) {
         // Register the PropertyChangeListener
-        DicomModel m = (DicomModel) obj;
         m.addPropertyChangeListener(instance);
       }
     }
@@ -229,9 +228,8 @@ public class View2dFactory implements SeriesViewerFactory {
           ViewerPluginBuilder.openSequenceInDefaultPlugin(
               list, ViewerPluginBuilder.DefaultDataModel, true, true);
         } else {
-          Component c = e.getSource() instanceof Component ? (Component) e.getSource() : null;
           JOptionPane.showMessageDialog(
-              c,
+              e.getSource() instanceof Component c ? c : null,
               Messages.getString("OpenDicomAction.open_err_msg"),
               Messages.getString("OpenDicomAction.desc"),
               JOptionPane.WARNING_MESSAGE);

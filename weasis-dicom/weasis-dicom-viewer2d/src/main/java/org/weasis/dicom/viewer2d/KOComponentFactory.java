@@ -80,14 +80,14 @@ public final class KOComponentFactory {
           if (evtMgr.getSelectedViewPane() == view2d) {
             ActionState koToggleAction =
                 view2d.getEventManager().getAction(ActionW.KO_TOGGLE_STATE);
-            if (koToggleAction instanceof ToggleButtonListener) {
+            if (koToggleAction instanceof ToggleButtonListener buttonListener) {
               // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState)
               // {
               // // When action and view are not synchronized, adapt the state of the action.
               // ((ToggleButtonListener) koToggleAction)
               // .setSelectedWithoutTriggerAction(currentSelectedState);
               // }
-              ((ToggleButtonListener) koToggleAction).setSelected(!currentSelectedState);
+              buttonListener.setSelected(!currentSelectedState);
             }
           }
         });
@@ -117,15 +117,11 @@ public final class KOComponentFactory {
 
     @Override
     public Icon getIcon() {
-      switch (state) {
-        case UNSELECTED:
-          return KeyObjectToolBar.KO_STAR_ICON;
-        case EXIST:
-          return KeyObjectToolBar.KO_STAR_ICON_EXIST;
-        case SELECTED:
-          return KeyObjectToolBar.KO_STAR_ICON_SELECTED;
-      }
-      return null;
+      return switch (state) {
+        case UNSELECTED -> KeyObjectToolBar.KO_STAR_ICON;
+        case EXIST -> KeyObjectToolBar.KO_STAR_ICON_EXIST;
+        case SELECTED -> KeyObjectToolBar.KO_STAR_ICON_SELECTED;
+      };
     }
   }
 }

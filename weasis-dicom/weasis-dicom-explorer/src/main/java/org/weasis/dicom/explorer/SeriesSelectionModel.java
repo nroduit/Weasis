@@ -38,7 +38,7 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
 
   private Series<?> anchorSelection;
   private Series<?> leadSelection;
-  private boolean openningSeries = false;
+  private boolean openingSeries = false;
 
   public SeriesSelectionModel(PatientPane patientContainer) {
     this.patientContainer = Objects.requireNonNull(patientContainer);
@@ -177,7 +177,6 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
     if (e != null && series != null) {
       boolean anchorSelected;
       Series<?> anchor = anchorSelection;
-      Series<?> row = series;
       if (anchor == null) {
         anchorSelected = false;
       } else {
@@ -187,21 +186,21 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
       if ((e.getModifiers() & Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()) != 0) {
         if (e.isShiftDown()) {
           if (anchorSelected) {
-            addSelectionInterval(anchor, row);
+            addSelectionInterval(anchor, series);
           } else {
-            removeSelectionInterval(anchor, row);
+            removeSelectionInterval(anchor, series);
           }
         } else if (e instanceof KeyEvent) {
-          setSelectionInterval(row, row);
-        } else if (this.contains(row)) {
-          removeSelectionInterval(row, row);
+          setSelectionInterval(series, series);
+        } else if (this.contains(series)) {
+          removeSelectionInterval(series, series);
         } else {
-          addSelectionInterval(row, row);
+          addSelectionInterval(series, series);
         }
       } else if (e.isShiftDown()) {
-        setSelectionInterval(anchor, row);
+        setSelectionInterval(anchor, series);
       } else {
-        setSelectionInterval(row, row);
+        setSelectionInterval(series, series);
       }
     }
   }
@@ -344,11 +343,11 @@ public class SeriesSelectionModel extends ArrayList<Series<?>> {
     return null;
   }
 
-  public boolean isOpenningSeries() {
-    return openningSeries;
+  public boolean isOpeningSeries() {
+    return openingSeries;
   }
 
-  public void setOpenningSeries(boolean openningSeries) {
-    this.openningSeries = openningSeries;
+  public void setOpeningSeries(boolean openingSeries) {
+    this.openingSeries = openingSeries;
   }
 }

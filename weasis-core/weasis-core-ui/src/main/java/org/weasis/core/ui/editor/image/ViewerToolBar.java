@@ -271,17 +271,16 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
   @Override
   public void actionPerformed(ActionEvent e) {
-    if (e.getSource() instanceof JRadioButtonMenuItem item) {
-      if (item.getParent() instanceof JPopupMenu popupMenu) {
-        MouseActions mouseActions = eventManager.getMouseActions();
-        mouseActions.setAction(popupMenu.getLabel(), item.getActionCommand());
-        ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
-        if (view != null) {
-          view.setMouseActions(mouseActions);
-        }
-        if (popupMenu.getInvoker() instanceof DropDownButton) {
-          changeButtonState(popupMenu.getLabel(), item.getActionCommand());
-        }
+    if (e.getSource() instanceof JRadioButtonMenuItem item
+        && item.getParent() instanceof JPopupMenu popupMenu) {
+      MouseActions mouseActions = eventManager.getMouseActions();
+      mouseActions.setAction(popupMenu.getLabel(), item.getActionCommand());
+      ImageViewerPlugin<E> view = eventManager.getSelectedView2dContainer();
+      if (view != null) {
+        view.setMouseActions(mouseActions);
+      }
+      if (popupMenu.getInvoker() instanceof DropDownButton) {
+        changeButtonState(popupMenu.getLabel(), item.getActionCommand());
       }
     }
   }

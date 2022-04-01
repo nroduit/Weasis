@@ -106,7 +106,7 @@ public abstract class AThumbnailListPane<E extends MediaElement> extends JScroll
 
   public JComponent getRendererComponent() {
     final Object obj = this.thumbnailList.getCellRenderer();
-    return (obj instanceof JComponent) ? (JComponent) obj : null;
+    return (obj instanceof JComponent component) ? component : null;
   }
 
   @Override

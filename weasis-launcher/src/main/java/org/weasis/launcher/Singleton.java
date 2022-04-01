@@ -24,6 +24,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -131,7 +132,8 @@ public class Singleton {
 
           File siFile = new File(SI_FILEDIR, file);
           // get random number from single instance file
-          try (BufferedReader br = new BufferedReader(new FileReader(siFile))) {
+          try (BufferedReader br =
+              new BufferedReader(new FileReader(siFile, StandardCharsets.UTF_8))) {
             randomNumberString = br.readLine();
           } catch (IOException ioe) {
             LOGGER.log(Level.ERROR, "Cannot read random numbrer from file {0}", siFile.getPath());

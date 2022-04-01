@@ -16,14 +16,14 @@ public interface Option {
    * stop parsing on the first unknown option. This allows one parser to get its own options and
    * then pass the remaining options to another parser.
    *
-   * @param stopOnBadOption
+   * @param stopOnBadOption true will stop on the first unknown option.
    */
   Option setStopOnBadOption(boolean stopOnBadOption);
 
   /**
    * require options to precede args. Default is false, so options can appear between or after args.
    *
-   * @param optionsFirst
+   * @param optionsFirst true if the options are before arguments
    */
   Option setOptionsFirst(boolean optionsFirst);
 
@@ -31,32 +31,28 @@ public interface Option {
    * parse arguments. If skipArgv0 is true, then parsing begins at arg1. This allows for commands
    * where argv0 is the command name rather than a real argument.
    *
-   * @param argv
-   * @param skipArg0
-   * @return
+   * @param argv the arguments list
+   * @param skipArg0 true will skip the first argument
+   * @return the Option value
    */
   Option parse(List<?> argv, boolean skipArg0);
 
   /**
-   * parse arguments.
+   * parse arguments. See {@link #parse(List, boolean)
    *
-   * @see {@link #parse(List, boolean)
    *
    */
   Option parse(List<?> argv);
 
   /**
-   * parse arguments.
+   * parse arguments. See {@link #parse(List, boolean)
    *
-   * @see {@link #parse(List, boolean)
    *
    */
   Option parse(Object[] argv, boolean skipArg0);
 
   /**
-   * parse arguments.
-   *
-   * @see {@link #parse(List, boolean)
+   * parse arguments. See {@link #parse(List, boolean)
    *
    */
   Option parse(Object[] argv);
@@ -64,8 +60,8 @@ public interface Option {
   /**
    * test whether specified option has been explicitly set.
    *
-   * @param name
-   * @return
+   * @param name the option name
+   * @return true if the option has been set
    */
   boolean isSet(String name);
 
@@ -73,8 +69,8 @@ public interface Option {
    * get value of named option. If multiple options given, this method returns the last one. Use
    * {@link #getList(String)} to get all values.
    *
-   * @param name
-   * @return
+   * @param name the option name
+   * @return the String value
    * @throws IllegalArgumentException if value is not a String.
    */
   String get(String name);
@@ -82,7 +78,7 @@ public interface Option {
   /**
    * get list of all values for named option.
    *
-   * @param name
+   * @param name the option name
    * @return empty list if option not given and no default specified.
    * @throws IllegalArgumentException if all values are not Strings.
    */
@@ -92,24 +88,24 @@ public interface Option {
    * get value of named option as an Object. If multiple options given, this method returns the last
    * one. Use {@link #getObjectList(String)} to get all values.
    *
-   * @param name
-   * @return
+   * @param name the option name
+   * @return the Object value
    */
   Object getObject(String name);
 
   /**
    * get list of all Object values for named option.
    *
-   * @param name
-   * @return
+   * @param name the option name
+   * @return the list of all Object values
    */
   List<Object> getObjectList(String name);
 
   /**
    * get value of named option as a Number.
    *
-   * @param name
-   * @return
+   * @param name the option name
+   * @return the integer value
    * @throws IllegalArgumentException if argument is not a Number.
    */
   int getNumber(String name);
@@ -117,7 +113,7 @@ public interface Option {
   /**
    * get remaining non-options args as Strings.
    *
-   * @return
+   * @return the arguments as Strings
    * @throws IllegalArgumentException if args are not Strings.
    */
   List<String> args();
@@ -125,7 +121,7 @@ public interface Option {
   /**
    * get remaining non-options args as Objects.
    *
-   * @return
+   * @return the arguments as Objects
    */
   List<Object> argObjects();
 
@@ -135,7 +131,7 @@ public interface Option {
   /**
    * print specified usage error to System.err. You should explicitly throw the returned exception.
    *
-   * @param error
+   * @param error the error message
    * @return IllegalArgumentException
    */
   IllegalArgumentException usageError(String error);

@@ -78,7 +78,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
   private static volatile boolean initComponents = false;
 
   static final ImageViewerEventManager<DicomImageElement> AU_EVENT_MANAGER =
-      new ImageViewerEventManager<DicomImageElement>() {
+      new ImageViewerEventManager<>() {
 
         @Override
         public boolean updateComponentsListener(ViewCanvas<DicomImageElement> defaultView2d) {
@@ -144,7 +144,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
           true)) {
         Optional<Toolbar> b =
             UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
-                .filter(t -> t instanceof ImportToolBar)
+                .filter(ImportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
@@ -157,7 +157,7 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
           true)) {
         Optional<Toolbar> b =
             UIManager.EXPLORER_PLUGIN_TOOLBARS.stream()
-                .filter(t -> t instanceof ExportToolBar)
+                .filter(ExportToolBar.class::isInstance)
                 .findFirst();
         b.ifPresent(TOOLBARS::add);
       }
@@ -228,33 +228,31 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
 
-      if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-        if (newVal instanceof MediaSeriesGroup group) {
-          // Patient Group
-          if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
-            if (group.equals(getGroupID())) {
-              // Close the content of the plug-in
-              close();
-              handleFocusAfterClosing();
-            }
+      if (ObservableEvent.BasicAction.REMOVE.equals(action)
+          && newVal instanceof MediaSeriesGroup group) {
+        // Patient Group
+        if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
+          if (group.equals(getGroupID())) {
+            // Close the content of the plug-in
+            close();
+            handleFocusAfterClosing();
           }
-          // Study Group
-          else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel model) {
-              if (auview != null
-                  && group.equals(model.getParent(auview.getSeries(), DicomModel.study))) {
-                close();
-                handleFocusAfterClosing();
-              }
-            }
+        }
+        // Study Group
+        else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
+          if (event.getSource() instanceof DicomModel model
+              && auview != null
+              && group.equals(model.getParent(auview.getSeries(), DicomModel.study))) {
+            close();
+            handleFocusAfterClosing();
           }
-          // Series Group
-          else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
-            if (auview != null && auview.getSeries() == newVal) {
-              close();
-              handleFocusAfterClosing();
-            }
-          }
+        }
+        // Series Group
+        else if (TagD.getUID(Level.SERIES).equals(group.getTagID())
+            && auview != null
+            && auview.getSeries() == newVal) {
+          close();
+          handleFocusAfterClosing();
         }
       }
     }
@@ -284,12 +282,12 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public JComponent createUIcomponent(String clazz) {
+  public JComponent createComponent(String clazz) {
     try {
       // FIXME use classloader.loadClass or injection
       JComponent component = buildInstance(Class.forName(clazz));
-      if (component instanceof AuView) {
-        auview = (AuView) component;
+      if (component instanceof AuView view) {
+        auview = view;
       }
       return component;
     } catch (Exception e) {
@@ -312,8 +310,8 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
 
   @Override
   public void addSeries(MediaSeries<DicomImageElement> sequence) {
-    if (auview != null && sequence instanceof Series && auview.getSeries() != sequence) {
-      auview.setSeries((Series) sequence);
+    if (auview != null && sequence instanceof Series series && auview.getSeries() != sequence) {
+      auview.setSeries(series);
     }
   }
 
