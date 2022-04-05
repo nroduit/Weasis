@@ -158,16 +158,6 @@ public class WeasisLauncher {
   public WeasisLauncher(ConfigData configData) {
     this.configData = Objects.requireNonNull(configData);
     this.modulesi18n = new Properties();
-
-    Desktop app = Desktop.getDesktop();
-    if (app.isSupported(Action.APP_OPEN_URI)) {
-      app.setOpenURIHandler(
-          e -> {
-            String uri = e.getURI().toString();
-            LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}}", uri);
-            executeCommands(List.of(uri), null);
-          });
-    }
   }
 
   public final void launch(Type type) throws Exception {
@@ -881,6 +871,17 @@ public class WeasisLauncher {
             FlatSystemProperties.UI_SCALE, null, serverProp, currentProps, true, false);
     if (scaleFactor != null) {
       System.setProperty(FlatSystemProperties.UI_SCALE, scaleFactor);
+    }
+
+    // Init after default properties for UI
+    Desktop app = Desktop.getDesktop();
+    if (app.isSupported(Action.APP_OPEN_URI)) {
+      app.setOpenURIHandler(
+          e -> {
+            String uri = e.getURI().toString();
+            LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}}", uri);
+            executeCommands(List.of(uri), null);
+          });
     }
 
     /*
