@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.image.op;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -212,7 +213,7 @@ public class ByteLutCollection {
   }
 
   public static BufferedImage getLUT(byte[][] lut) {
-    BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_INT_BGR);
+    BufferedImage image = new BufferedImage(20, 256, BufferedImage.TYPE_3BYTE_BGR);
     Graphics2D g = image.createGraphics();
     for (int k = 0; k < 256; k++) {
       g.setPaint(new Color(lut[0][k] & 0xff, lut[1][k] & 0xff, lut[2][k] & 0xff));
@@ -226,6 +227,9 @@ public class ByteLutCollection {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
+        if ( g instanceof Graphics2D g2d) {
+          g2d.setStroke(new BasicStroke(1.2f));
+        }
         int lutHeight = height - 2 * border;
         int sx = x + border;
         int sy = y + border;
