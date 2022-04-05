@@ -85,7 +85,7 @@ public class ViewTransferHandler extends TransferHandler implements Transferable
   public static <E extends ImageElement> RenderedImage createComponentImage(
       DefaultView2d<E> canvas, boolean anonymize) {
     BufferedImage img =
-        new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_INT_BGR);
+        new BufferedImage(canvas.getWidth(), canvas.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
     ExportImage<E> exportImage = new ExportImage<>(canvas);
     try {
       exportImage

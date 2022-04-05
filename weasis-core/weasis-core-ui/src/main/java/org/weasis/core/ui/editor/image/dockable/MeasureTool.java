@@ -183,8 +183,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       transform.add(GuiUtils.getFlowLayoutPanel(lutLabel, unitComboBox));
     }
 
-    final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
-    btnGerenralOptions.addActionListener(
+    final JButton btnGeneralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
+    btnGeneralOptions.addActionListener(
         e -> {
           Window win = SwingUtilities.getWindowAncestor(MeasureTool.this);
           ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win.getParent());
@@ -192,7 +192,7 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
           dialog.showPage(LABEL_PREF_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
-    transform.add(GuiUtils.getFlowLayoutPanel(btnGerenralOptions));
+    transform.add(GuiUtils.getFlowLayoutPanel(btnGeneralOptions));
     return transform;
   }
 
