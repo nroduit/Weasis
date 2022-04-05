@@ -34,7 +34,6 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
-import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
@@ -121,7 +120,9 @@ public class ThemeSetting extends AbstractItemDialogPage {
         });
 
     if (SystemInfo.isLinux) {
-      add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxDecoration));
+      add(
+          GuiUtils.getFlowLayoutPanel(
+              ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxDecoration));
     }
 
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
@@ -178,7 +179,8 @@ public class ThemeSetting extends AbstractItemDialogPage {
     spinner1.setValue(Math.round(scale * 100));
 
     if (SystemInfo.isLinux) {
-      checkboxDecoration.setSelected(preferences.getBooleanProperty(BundleTools.LINUX_WINDOWS_DECORATION, false));
+      checkboxDecoration.setSelected(
+          preferences.getBooleanProperty(BundleTools.LINUX_WINDOWS_DECORATION, false));
     }
   }
 

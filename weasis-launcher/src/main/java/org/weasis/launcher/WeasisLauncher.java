@@ -857,8 +857,7 @@ public class WeasisLauncher {
         JFrame.setDefaultLookAndFeelDecorated(true);
         JDialog.setDefaultLookAndFeelDecorated(true);
       }
-    }
-    else if (SystemInfo.isMacOS) {
+    } else if (SystemInfo.isMacOS) {
       // Enable screen menu bar - MUST BE initialized before UI components
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.application.name", System.getProperty(P_WEASIS_NAME));

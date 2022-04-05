@@ -16,6 +16,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -185,9 +186,9 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     final JButton btnGerenralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
     btnGerenralOptions.addActionListener(
         e -> {
-          ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(MeasureTool.this);
-          PreferenceDialog dialog =
-              new PreferenceDialog(SwingUtilities.getWindowAncestor(MeasureTool.this));
+          Window win = SwingUtilities.getWindowAncestor(MeasureTool.this);
+          ColorLayerUI layer = ColorLayerUI.createTransparentLayerUI(win.getParent());
+          PreferenceDialog dialog = new PreferenceDialog(win);
           dialog.showPage(LABEL_PREF_NAME);
           ColorLayerUI.showCenterScreen(dialog, layer);
         });
