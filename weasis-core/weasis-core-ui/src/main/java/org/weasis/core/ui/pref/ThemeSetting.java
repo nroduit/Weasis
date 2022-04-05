@@ -11,12 +11,14 @@ package org.weasis.core.ui.pref;
 
 import com.formdev.flatlaf.FlatLaf;
 import com.formdev.flatlaf.FlatSystemProperties;
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Window;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Objects;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -32,6 +34,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
+import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.ui.Messages;
@@ -50,6 +53,9 @@ public class ThemeSetting extends AbstractItemDialogPage {
   private final JRadioButton userScaleRadio = new JRadioButton("Use a custom scale factor (%)");
   private final ButtonGroup buttonGroup = new ButtonGroup();
   private final JSpinner spinner1 = new JSpinner();
+
+  private final JCheckBox checkboxDecoration =
+      new JCheckBox("Menu integrated into title bar of the main window");
 
   record LookInfo(String name, String className) {
     @Override
@@ -114,6 +120,10 @@ public class ThemeSetting extends AbstractItemDialogPage {
           GuiExecutor.instance().execute(runnable);
         });
 
+    if (SystemInfo.isLinux) {
+      add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR_LARGE, checkboxDecoration));
+    }
+
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
     String alert =
         """
@@ -166,6 +176,10 @@ public class ThemeSetting extends AbstractItemDialogPage {
       userScaleRadio.doClick();
     }
     spinner1.setValue(Math.round(scale * 100));
+
+    if (SystemInfo.isLinux) {
+      checkboxDecoration.setSelected(preferences.getBooleanProperty(BundleTools.LINUX_WINDOWS_DECORATION, false));
+    }
   }
 
   public void setList(JComboBox<LookInfo> jComboBox, LookAndFeelInfo[] look) {
@@ -227,13 +241,21 @@ public class ThemeSetting extends AbstractItemDialogPage {
       scale = String.valueOf(val / 100.f);
     }
     BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, scale);
+
+    if (SystemInfo.isLinux) {
+      BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
+          BundleTools.LINUX_WINDOWS_DECORATION, checkboxDecoration.isSelected());
+    }
   }
 
   @Override
   public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
     BundleTools.SYSTEM_PREFERENCES.resetProperty("flatlaf.uiScale", null);
-
+    if (SystemInfo.isLinux) {
+      BundleTools.SYSTEM_PREFERENCES.resetProperty(
+          BundleTools.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
+    }
     initialize(false);
   }
 }

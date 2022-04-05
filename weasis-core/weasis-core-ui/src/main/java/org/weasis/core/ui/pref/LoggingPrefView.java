@@ -137,7 +137,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     }
     comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");
 
-    checkboxFileLog.setSelected(StringUtil.hasText(prefs.getProperty(AuditLog.LOG_FILE, "")));
+    checkboxFileLog.setSelected(prefs.getBooleanProperty(AuditLog.LOG_FILE, false));
     spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRollingLog();
@@ -154,8 +154,8 @@ public class LoggingPrefView extends AbstractItemDialogPage {
       level = LEVEL.INFO;
     }
     BundleTools.SYSTEM_PREFERENCES.setProperty(AuditLog.LOG_LEVEL, level.toString());
-    BundleTools.SYSTEM_PREFERENCES.setProperty(
-        AuditLog.LOG_FILE_ACTIVATION, String.valueOf(checkboxFileLog.isSelected()));
+    BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
+        AuditLog.LOG_FILE_ACTIVATION, checkboxFileLog.isSelected());
     String logFile =
         checkboxFileLog.isSelected()
             ? AppProperties.WEASIS_PATH + File.separator + "log" + File.separator + "default.log"

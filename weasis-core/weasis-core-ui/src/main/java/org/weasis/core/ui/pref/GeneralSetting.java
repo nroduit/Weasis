@@ -82,7 +82,7 @@ public class GeneralSetting extends AbstractItemDialogPage {
     }
 
     BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
-        "weasis.confirm.closing", checkboxConfirmClosing.isSelected());
+        BundleTools.CONFIRM_CLOSE, checkboxConfirmClosing.isSelected());
   }
 
   @Override

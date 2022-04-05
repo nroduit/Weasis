@@ -53,11 +53,6 @@ public final class LookAndFeels {
     lookAndFeels = buildFlatLookAndFeels();
     lookAndFeels.add(defaultLightTheme);
     lookAndFeels.add(defaultDarkTheme);
-    if (SystemInfo.isLinux) {
-      // enable custom window decorations
-      JFrame.setDefaultLookAndFeelDecorated(true);
-      JDialog.setDefaultLookAndFeelDecorated(true);
-    }
   }
 
   private static List<ReadableLookAndFeelInfo> buildFlatLookAndFeels() {

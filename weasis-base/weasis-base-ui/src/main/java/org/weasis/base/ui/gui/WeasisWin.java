@@ -251,7 +251,7 @@ public class WeasisWin {
   public boolean closeWindow() {
     boolean busy = false;
     if (!busy) {
-      if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.confirm.closing", false)) {
+      if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(BundleTools.CONFIRM_CLOSE, false)) {
         int option = JOptionPane.showConfirmDialog(frame, Messages.getString("WeasisWin.exit_mes"));
         if (option == JOptionPane.YES_OPTION) {
           closeAllRunnable();

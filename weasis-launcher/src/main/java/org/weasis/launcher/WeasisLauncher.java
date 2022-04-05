@@ -40,6 +40,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import javax.management.ObjectName;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JTextPane;
@@ -841,7 +842,23 @@ public class WeasisLauncher {
     final ReadableLookAndFeelInfo lookAndFeelInfo =
         lookAndFeels.getAvailableLookAndFeel(look, profileName);
 
-    if (SystemInfo.isMacOS) {
+    // See https://github.com/JFormDesigner/FlatLaf/issues/482
+    if (SystemInfo.isLinux) {
+      String decoration =
+          getGeneralProperty(
+              "weasis.linux.windows.decoration",
+              Boolean.FALSE.toString(),
+              serverProp,
+              currentProps,
+              true,
+              true);
+      if (Utils.getEmptytoFalse(decoration)) {
+        // enable custom window decorations
+        JFrame.setDefaultLookAndFeelDecorated(true);
+        JDialog.setDefaultLookAndFeelDecorated(true);
+      }
+    }
+    else if (SystemInfo.isMacOS) {
       // Enable screen menu bar - MUST BE initialized before UI components
       System.setProperty("apple.laf.useScreenMenuBar", "true");
       System.setProperty("apple.awt.application.name", System.getProperty(P_WEASIS_NAME));
