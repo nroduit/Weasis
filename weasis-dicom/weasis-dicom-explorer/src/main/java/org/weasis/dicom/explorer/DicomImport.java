@@ -12,6 +12,8 @@ package org.weasis.dicom.explorer;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import javax.swing.JButton;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -25,6 +27,7 @@ import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.dicom.explorer.internal.Activator;
 
 public class DicomImport extends AbstractWizardDialog {
@@ -43,15 +46,30 @@ public class DicomImport extends AbstractWizardDialog {
         new Dimension(650, 500));
     this.dicomModel = dicomModel;
 
-    final JButton importAndClose = new JButton(Messages.getString("DicomImport.impAndClose0"));
+    JButton importAndClose = new JButton(Messages.getString("DicomImport.impAndClose0"));
     importAndClose.addActionListener(
         e -> {
           importSelection();
           cancel();
         });
 
-    final JButton importButton = new JButton(Messages.getString("DicomImport.imp"));
+    JButton importButton = new JButton(Messages.getString("DicomImport.imp"));
     importButton.addActionListener(e -> importSelection());
+
+    JButton jButtonHelp = new JButton();
+    jButtonHelp.putClientProperty("JButton.buttonType", "help");
+    jButtonHelp.addActionListener(
+        e -> {
+          try {
+            GuiUtils.openInDefaultBrowser(
+                jButtonHelp,
+                new URL(
+                    BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
+                        + "dicom-import"));
+          } catch (MalformedURLException e1) {
+            LOGGER.error("Cannot open online help", e1);
+          }
+        });
 
     jPanelBottom.removeAll();
     jPanelBottom.add(
@@ -59,6 +77,7 @@ public class DicomImport extends AbstractWizardDialog {
             FlowLayout.TRAILING,
             HORIZONTAL_GAP,
             VERTICAL_GAP,
+            jButtonHelp,
             importButton,
             importAndClose,
             jButtonClose));

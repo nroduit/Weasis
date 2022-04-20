@@ -15,6 +15,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Window;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -36,6 +38,7 @@ import org.weasis.core.api.gui.util.AbstractWizardDialog;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
 import org.weasis.core.api.media.data.Series;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.explorer.internal.Activator;
@@ -57,15 +60,30 @@ public class DicomExport extends AbstractWizardDialog {
     this.dicomModel = dicomModel;
     this.treeModel = new CheckTreeModel(dicomModel);
 
-    final JButton exportAndClose = new JButton(Messages.getString("DicomExport.exp_close"));
+    JButton exportAndClose = new JButton(Messages.getString("DicomExport.exp_close"));
     exportAndClose.addActionListener(
         e -> {
           exportSelection();
           cancel();
         });
-    final JButton exportButton = new JButton();
+    JButton exportButton = new JButton();
     exportButton.addActionListener(e -> exportSelection());
     exportButton.setText(Messages.getString("DicomExport.exp"));
+
+    JButton jButtonHelp = new JButton();
+    jButtonHelp.putClientProperty("JButton.buttonType", "help");
+    jButtonHelp.addActionListener(
+        e -> {
+          try {
+            GuiUtils.openInDefaultBrowser(
+                jButtonHelp,
+                new URL(
+                    BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
+                        + "dicom-export"));
+          } catch (MalformedURLException e1) {
+            LOGGER.error("Cannot open online help", e1);
+          }
+        });
 
     jPanelBottom.removeAll();
     jPanelBottom.add(
@@ -73,6 +91,7 @@ public class DicomExport extends AbstractWizardDialog {
             FlowLayout.TRAILING,
             HORIZONTAL_GAP,
             VERTICAL_GAP,
+            jButtonHelp,
             exportButton,
             exportAndClose,
             jButtonClose));

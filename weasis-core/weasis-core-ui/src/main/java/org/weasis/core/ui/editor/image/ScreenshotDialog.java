@@ -123,7 +123,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       float ratio = val / 100f;
       labelSizePix.setText(
           String.format(
-              "(%dx%d)", // NON-NLS
+              "(%dx%d px)", // NON-NLS
               Math.round(image.width() * ratio), Math.round(image.height() * ratio)));
     }
   }
