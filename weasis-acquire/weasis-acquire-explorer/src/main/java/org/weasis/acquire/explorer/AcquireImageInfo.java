@@ -41,6 +41,7 @@ import org.weasis.core.api.image.ImageOpNode;
 import org.weasis.core.api.image.MaskOp;
 import org.weasis.core.api.image.RotationOp;
 import org.weasis.core.api.image.SimpleOpManager;
+import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
 import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.media.data.ImageElement;
@@ -208,6 +209,10 @@ public class AcquireImageInfo {
   public void applyCurrentProcessing(ViewCanvas<ImageElement> view) {
     if (view != null) {
       ImageLayer<ImageElement> imageLayer = view.getImageLayer();
+      ImageOpNode node = imageLayer.getDisplayOpManager().getNode(WindowOp.OP_NAME);
+      if (node != null) {
+        node.setEnabled(false);
+      }
       imageLayer.setImage(image, postProcessOpManager);
     }
   }
