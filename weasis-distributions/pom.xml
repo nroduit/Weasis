@@ -156,7 +156,6 @@
               <artifactItems>
                 <!-- ===================================== -->
                 <!-- OSGI Framework and Launcher -->
-                <!-- (only one version, referenced in JNLP) -->
                 <!-- ===================================== -->
                 <artifactItem>
                   <groupId>org.apache.felix</groupId>
@@ -478,30 +477,6 @@
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
 
-              </artifactItems>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>copy-bindex-lib</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-
-            <!-- Get lib to be used by antrun call to generate OSGI-OBR repository.xml -->
-            <configuration>
-              <stripVersion>true</stripVersion>
-              <outputDirectory>${project.build.directory}/lib</outputDirectory>
-
-              <artifactItems>
-                <artifactItem>
-                  <groupId>org.osgi.util</groupId>
-                  <artifactId>bindex</artifactId>
-                  <version>2.2</version>
-                  <type>jar</type>
-                  <destFileName>bindex.jar</destFileName>
-                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>

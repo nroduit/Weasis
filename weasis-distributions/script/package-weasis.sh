@@ -5,7 +5,7 @@
 
 # Specify the required Java version.
 # Only major version is checked. Minor version or any other version string info is left out.
-REQUIRED_TEXT_VERSION=14
+REQUIRED_TEXT_VERSION=18
 
 # Build Parameters
 REVISON_INC="1"

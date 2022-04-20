@@ -202,7 +202,7 @@ public class ConfigData {
 
     String portable = properties.getProperty("weasis.portable.dir");
     if (portable != null) {
-      LOGGER.log(Level.INFO, "Starting portable version");
+      LOGGER.log(Level.INFO, "Set default relative folders");
       String pkey = "weasis.portable.dicom.directory";
       addProperty(pkey, felixConfig.getProperty(pkey, "dicom,DICOM,IMAGES,images"));
     }
@@ -686,6 +686,11 @@ public class ConfigData {
                 localProps.getProperty(WeasisLauncher.P_WEASIS_VERSION).replaceFirst("-", "."));
         Version min = new Version(val.replaceFirst("-", "."));
         if (loc.compareTo(min) < 0) {
+          LOGGER.log(
+              Level.WARNING,
+              "Start only with the native plug-ins because the version ({}) is lower the minimal version ({}) required remotely",
+              loc,
+              min);
           felixConfig.clear();
           felixConfig.putAll(localProps);
           propURI = getLocalPropertiesURI(EXTENDED_PROPERTIES_PROP, EXTENDED_PROPERTIES_FILE_VALUE);

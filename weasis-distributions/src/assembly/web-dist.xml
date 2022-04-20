@@ -14,7 +14,6 @@
       <outputDirectory/>
       <includes>
         <include>/*.jar</include>
-        <include>bundle/repository.xml</include>
         <include>bundle/*.jar${xz.ext}</include>
       </includes>
     </fileSet>
