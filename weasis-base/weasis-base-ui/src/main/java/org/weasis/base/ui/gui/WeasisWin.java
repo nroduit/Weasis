@@ -28,7 +28,6 @@ import bibliothek.gui.dock.util.ConfiguredBackgroundPanel;
 import bibliothek.gui.dock.util.DirectWindowProvider;
 import bibliothek.gui.dock.util.DockUtilities;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
-import com.formdev.flatlaf.icons.FlatHelpButtonIcon;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -109,6 +108,7 @@ import org.weasis.core.api.media.data.Series;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
+import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.LogoIcon;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
@@ -704,7 +704,8 @@ public class WeasisWin {
     helpMenuItem.add(webMenuItem);
 
     final JMenuItem websiteMenuItem =
-        new JMenuItem(Messages.getString("WeasisWin.online"), new FlatHelpButtonIcon());
+        new JMenuItem(
+            Messages.getString("WeasisWin.online"), ResourceUtil.getIcon(ActionIcon.HELP));
     GuiUtils.applySelectedIconEffect(websiteMenuItem);
     websiteMenuItem.addActionListener(
         e ->

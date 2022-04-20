@@ -413,7 +413,8 @@ public class ImageCVIO implements MediaReader {
         return ImageConversion.convertTo(source, BufferedImage.TYPE_BYTE_GRAY);
       }
 
-      if (source.getColorModel() instanceof PackedColorModel || source.getColorModel() instanceof IndexColorModel
+      if (source.getColorModel() instanceof PackedColorModel
+          || source.getColorModel() instanceof IndexColorModel
           || numBands == 2
           || numBands > 3
           || (source.getSampleModel() instanceof BandedSampleModel && numBands > 1)) {

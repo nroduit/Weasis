@@ -227,7 +227,7 @@ public class ByteLutCollection {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if ( g instanceof Graphics2D g2d) {
+        if (g instanceof Graphics2D g2d) {
           g2d.setStroke(new BasicStroke(1.2f));
         }
         int lutHeight = height - 2 * border;

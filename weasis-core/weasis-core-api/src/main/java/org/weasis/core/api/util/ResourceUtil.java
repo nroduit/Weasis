@@ -91,6 +91,7 @@ public class ResourceUtil {
     EXPORT_IMAGE("svg/action/exportImage.svg"), // NON-NLS
     FILTER("svg/action/filter.svg"), // NON-NLS
     FLIP("svg/action/flip.svg"), // NON-NLS
+    HELP("svg/action/help.svg"), // NON-NLS
     IMPORT_CD("svg/action/importCd.svg"), // NON-NLS
     IMPORT_DICOM("svg/action/importDicom.svg"), // NON-NLS
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
