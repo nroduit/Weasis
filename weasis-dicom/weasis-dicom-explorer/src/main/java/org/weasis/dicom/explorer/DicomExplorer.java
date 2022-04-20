@@ -122,8 +122,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
           Object item = modelPatient.getSelectedItem();
           if (item instanceof MediaSeriesGroupNode patient) {
             selectPatient(patient);
-          } else if (item != null) {
-            selectPatient(null);
           }
           selectedPatient.revalidate();
           selectedPatient.repaint();
@@ -801,10 +799,6 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     if (modelPatient.getIndexOf(patient) < 0) {
       modelPatient.addElement(patient);
-      selectedPatient.setPatient(patient);
-      patientCombobox.removeItemListener(patientChangeListener);
-      patientCombobox.setSelectedItem(patient);
-      patientCombobox.addItemListener(patientChangeListener);
     }
 
     List<StudyPane> studies = patient2study.computeIfAbsent(patient, k -> new ArrayList<>());
@@ -815,7 +809,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     List<SeriesPane> seriesList = study2series.computeIfAbsent(study, k -> new ArrayList<>());
     int[] positionSeries = new int[1];
     createSeriesPaneInstance(series, positionSeries);
-    if (positionSeries[0] != -1) {
+    if (isSelectedPatient(patient) && positionSeries[0] != -1) {
       // If new study
       if (positionStudy[0] != -1) {
         if (modelStudy.getIndexOf(study) < 0) {
