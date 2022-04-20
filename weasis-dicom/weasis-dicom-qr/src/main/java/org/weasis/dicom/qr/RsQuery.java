@@ -86,27 +86,33 @@ public class RsQuery implements Callable<Boolean> {
     for (int i = 0; i < queries.size(); i++) {
       DicomParam query = queries.get(i);
       StringJoiner joiner = new StringJoiner(",");
-      for (String v : query.getValues()) {
-        String encode = URLEncoder.encode(v, StandardCharsets.UTF_8.toString());
-        joiner.add(encode);
+      if (query.getValues() != null) {
+        for (String v : query.getValues()) {
+          if (StringUtil.hasText(v)) {
+            String encode = URLEncoder.encode(v, StandardCharsets.UTF_8.toString());
+            joiner.add(encode);
+          }
+        }
       }
       String value = joiner.toString();
-      buf.append(TagUtils.toHexString(query.getTag()));
-      buf.append("=");
-      if (Tag.PatientID == query.getTag()) {
-        // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
-        int beginIndex = value.indexOf("^^^");
-        String patientVal = beginIndex <= 0 ? value : value.substring(0, beginIndex);
-        buf.append(patientVal);
-        if (beginIndex > 0) {
-          buf.append("&00100021=");
-          buf.append(value.substring(beginIndex + 3));
+      if (StringUtil.hasText(value)) {
+        buf.append(TagUtils.toHexString(query.getTag()));
+        buf.append("=");
+        if (Tag.PatientID == query.getTag()) {
+          // IssuerOfPatientID filter ( syntax like in HL7 with extension^^^root)
+          int beginIndex = value.indexOf("^^^");
+          String patientVal = beginIndex <= 0 ? value : value.substring(0, beginIndex);
+          buf.append(patientVal);
+          if (beginIndex > 0) {
+            buf.append("&00100021=");
+            buf.append(value.substring(beginIndex + 3));
+          }
+        } else {
+          buf.append(value);
         }
-      } else {
-        buf.append(value);
-      }
-      if (i + 1 < queries.size()) {
-        buf.append("&");
+        if (i + 1 < queries.size()) {
+          buf.append("&");
+        }
       }
     }
     buildQueries(buf);
