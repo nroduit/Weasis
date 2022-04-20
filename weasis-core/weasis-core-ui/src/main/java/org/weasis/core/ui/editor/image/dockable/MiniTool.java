@@ -92,9 +92,6 @@ public abstract class MiniTool extends PluginTool implements ActionListener {
       vertical = h >= w;
       if (vertical != slider.getInverted()) {
         setLayout(new BoxLayout(this, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
-        slider
-            .getParent()
-            .setLayout(new BoxLayout(slider, vertical ? BoxLayout.Y_AXIS : BoxLayout.X_AXIS));
         slider.setInverted(vertical);
         slider.setOrientation(vertical ? SwingConstants.VERTICAL : SwingConstants.HORIZONTAL);
         slider.revalidate();
