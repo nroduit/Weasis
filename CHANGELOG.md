@@ -1,5 +1,32 @@
 # Changelog
 
+## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.0-rc...HEAD)
+
+**Implemented enhancements:**
+
+- Settings for opening new tab when importing images from local devices [\#259](https://github.com/nroduit/Weasis/issues/259)
+
+## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-24)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.1...v4.0.0-rc)
+
+**Implemented enhancements:**
+
+- Exporting data: Improve exporting image rendering  [\#255](https://github.com/nroduit/Weasis/issues/255)
+- Exporting data: Improve DICOM export \(generate new UIDs, transcoding\) [\#254](https://github.com/nroduit/Weasis/issues/254)
+- Replace Substance Look and Feel by FlatLaf [\#253](https://github.com/nroduit/Weasis/issues/253)
+- Move to Java 17 \(runtime and language specifications\) [\#252](https://github.com/nroduit/Weasis/issues/252)
+- New API for image rendering directly based on OpenCV  [\#250](https://github.com/nroduit/Weasis/issues/250)
+- Save the search criteria in DICOM Q/R [\#237](https://github.com/nroduit/Weasis/issues/237)
+- Bad render of specific instances with encapsulated transfer syntax [\#226](https://github.com/nroduit/Weasis/issues/226)
+- Apple silicon support - M1 \(arm\) processor for weasis-opencv on macOS [\#212](https://github.com/nroduit/Weasis/issues/212)
+
+**Closed issues:**
+
+- Removal of Java WebStart  [\#251](https://github.com/nroduit/Weasis/issues/251)
+
 ## [v3.8.1](https://github.com/nroduit/Weasis/tree/v3.8.1) (2022-02-03)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.0...v3.8.1)
@@ -18,7 +45,6 @@
 
 **Closed issues:**
 
-- All Patients option not shown in dropdown [\#239](https://github.com/nroduit/Weasis/issues/239)
 - Building on aarch64: is it supposed to work? [\#234](https://github.com/nroduit/Weasis/issues/234)
 - Weasis icon at higher resolutions [\#233](https://github.com/nroduit/Weasis/issues/233)
 
