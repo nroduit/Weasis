@@ -14,6 +14,13 @@
 # Install the required XFS packages:
 ### sudo apt-get install xfsprogs
 
+##### Update docker images
+# docker image rm -f weasis/builder:latest
+# docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t weasis/builder:latest .
+# docker buildx build --load --platform linux/amd64 -t weasis/builder:latest .
+# docker buildx build --load --platform linux/arm64 -t weasis/builder:latest .
+# docker buildx build --load --platform linux/arm/v7 -t weasis/builder:latest .
+
 # Aux functions:
 die ( ) {
   echo -e "ERROR: $*" >&2
@@ -110,7 +117,7 @@ for arc in "${ARCS[@]}"; do
   unzip -o "$DISK_FOLDER/weasis-native.zip" -d "$DISK_FOLDER/weasis-native"
 
   # Load the local images
-  docker buildx build --load --platform "$arc" -t weasis/builder:latest .
+  # docker buildx build --load --platform "$arc" -t weasis/builder:latest .
   if [[ "$arc" == *"64"* || "$arc" = "linux/s390x" ]]; then
     docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-native --jdk /opt/java/openjdk/ --temp /work/temp"
   else

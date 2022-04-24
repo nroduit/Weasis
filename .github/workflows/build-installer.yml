@@ -17,14 +17,7 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Cache local Maven repository
-        uses: actions/cache@v2
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
+          cache: 'maven'
 
       - name: Build with Maven
         shell: bash
@@ -67,7 +60,7 @@ jobs:
       NAME: "Weasis"
       IDENTIFIER: "org.weasis.launcher"
       WEASIS_INPUT: "weasis-distributions/target/native-dist/weasis-native"
-      WEASIS_OUTPUT: "weasis-distributions/target/native-dist"
+      WEASIS_OUTPUT: "weasis-distributions/target/output-dist"
       WEASIS_INPUT_BIN: "weasis-distributions/target/native-dist/weasis-native/weasis"
     runs-on: ${{ matrix.os }}
     needs: build
