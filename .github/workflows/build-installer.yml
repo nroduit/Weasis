@@ -75,10 +75,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          #- { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
+          - { os: ubuntu-latest, platform: x64, wsystem: linux, warc: x86-64 }
           - { os: macos-latest, platform: x64, wsystem: macosx, warc: x86-64 }
           #  - { os: windows-latest, platform: x86, wsystem: windows, warc: x86 }
-          #- { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
+          - { os: windows-latest, platform: x64, wsystem: windows, warc: x86-64 }
 
     steps:
       - name: Set output version from build
@@ -168,7 +168,11 @@ jobs:
           --resource-dir "${{ env.RES }}" --app-version "${{ env.WEASIS_CLEAN_VERSION }}" --add-launcher "Dicomizer=${{ env.RES }}/dicomizer-launcher.properties" \
           "${signArgs[@]}" "${customOptions[@]}" "${commonOptions[@]}"
 
-
+          if [ "$machine" = "macosx" ] ; then
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.RES }}/weasis-url-handler.app"
+              cp -Rf "${{ env.RES }}/weasis-url-handler.app" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app/Contents/MacOS/"
+              codesign --timestamp --entitlements "${{ env.RES }}/uri-launcher.entitlements" --options runtime --force -vvv --keychain "$HOME/Library/Keychains/signing_temp.keychain-db" --sign "${{ secrets.MACOS__DEVELOPER_ID }}" "${{ env.WEASIS_OUTPUT }}/${{ env.NAME }}.app"
+          fi
 
           echo "$(ls -la ${{ env.WEASIS_OUTPUT }})"
 
