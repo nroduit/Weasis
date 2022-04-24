@@ -15,7 +15,7 @@
     <!-- force command line arguments settings to set version -->
     <!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
     <revision>4.0.0</revision>
-    <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
+    <changelist>-RC</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
     <java-version>17</java-version>
     <jdk-version>17</jdk-version>
