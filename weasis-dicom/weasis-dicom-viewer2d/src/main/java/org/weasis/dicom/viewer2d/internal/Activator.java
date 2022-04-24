@@ -46,7 +46,7 @@ import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.mpr.MPRContainer;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);

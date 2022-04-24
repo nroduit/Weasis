@@ -125,7 +125,7 @@ public class ProxyPrefView extends AbstractItemDialogPage {
     add(GuiUtils.boxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy");
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "proxy"); // NON-NLS
   }
 
   private void initState() {
@@ -177,29 +177,29 @@ public class ProxyPrefView extends AbstractItemDialogPage {
   private JPanel buildProxyPanel() {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(
-        new MigLayout("insets 5lp 15lp 5lp 0, fillx", "[right]rel[grow,fill][grow 0]"));
+        new MigLayout("insets 5lp 15lp 5lp 0, fillx", "[right]rel[grow,fill][grow 0]")); // NON-NLS
 
-    dataPanel.add(lblAddress, "newline, cell 1 0, growx 0, alignx center");
-    dataPanel.add(lblPort, "growx 0, alignx center");
-    dataPanel.add(proxyLabelHttp, "newline");
+    dataPanel.add(lblAddress, "newline, cell 1 0, growx 0, alignx center"); // NON-NLS
+    dataPanel.add(lblPort, "growx 0, alignx center"); // NON-NLS
+    dataPanel.add(proxyLabelHttp, GuiUtils.NEWLINE);
     dataPanel.add(proxyHostHttp);
     dataPanel.add(proxyPortHttp);
-    dataPanel.add(proxyLabelSecure, "newline");
+    dataPanel.add(proxyLabelSecure, GuiUtils.NEWLINE);
     dataPanel.add(proxyHostSecure);
     dataPanel.add(proxyPortSecure);
-    dataPanel.add(proxyLabelFtp, "newline");
+    dataPanel.add(proxyLabelFtp, GuiUtils.NEWLINE);
     dataPanel.add(proxyHostFtp);
     dataPanel.add(proxyPortFtp);
-    dataPanel.add(proxyLabelSocks, "newline");
+    dataPanel.add(proxyLabelSocks, GuiUtils.NEWLINE);
     dataPanel.add(proxyHostSocks);
     dataPanel.add(proxyPortSocks);
 
-    dataPanel.add(proxyLabelExceptions, "newline");
-    dataPanel.add(proxyExceptions, "spanx 2");
-    dataPanel.add(proxyAuthCheckBox, "newline, spanx, alignx leading, gaptop 15lp");
-    dataPanel.add(userLabel, "newline");
+    dataPanel.add(proxyLabelExceptions, GuiUtils.NEWLINE);
+    dataPanel.add(proxyExceptions, "spanx 2"); // NON-NLS
+    dataPanel.add(proxyAuthCheckBox, "newline, spanx, alignx leading, gaptop 15lp"); // NON-NLS
+    dataPanel.add(userLabel, GuiUtils.NEWLINE);
     dataPanel.add(proxyUser);
-    dataPanel.add(passLabel, "newline");
+    dataPanel.add(passLabel, GuiUtils.NEWLINE);
     dataPanel.add(proxyPass);
     return dataPanel;
   }

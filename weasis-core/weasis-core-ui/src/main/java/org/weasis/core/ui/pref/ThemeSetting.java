@@ -42,19 +42,21 @@ import org.weasis.core.util.StringUtil;
 public class ThemeSetting extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(ThemeSetting.class);
 
-  public static final String PAGE_NAME = "Appearance";
+  public static final String PAGE_NAME = Messages.getString("appearance");
 
   private final JLabel jLabelMLook = new JLabel();
   private final JComboBox<LookInfo> comboBoxTheme = new JComboBox<>();
   private final JButton button = new JButton(Messages.getString("GeneralSetting.show"));
 
-  private final JRadioButton systemScaleRadio = new JRadioButton("Use the system scale factor");
-  private final JRadioButton userScaleRadio = new JRadioButton("Use a custom scale factor (%)");
+  private final JRadioButton systemScaleRadio =
+      new JRadioButton(Messages.getString("use.the.system.scale.factor"));
+  private final JRadioButton userScaleRadio =
+      new JRadioButton(Messages.getString("use.a.custom.scale.factor"));
   private final ButtonGroup buttonGroup = new ButtonGroup();
   private final JSpinner spinner1 = new JSpinner();
 
   private final JCheckBox checkboxDecoration =
-      new JCheckBox("Menu integrated into title bar of the main window");
+      new JCheckBox(Messages.getString("menu.integrated.into.title.bar"));
 
   record LookInfo(String name, String className) {
     @Override
@@ -78,7 +80,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
   }
 
   private void jbInit() {
-    jLabelMLook.setText("Theme" + StringUtil.COLON);
+    jLabelMLook.setText(Messages.getString("theme") + StringUtil.COLON);
 
     add(
         GuiUtils.getFlowLayoutPanel(
@@ -91,7 +93,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     add(GuiUtils.boxVerticalStrut(BLOCK_SEPARATOR));
 
     JPanel panel = GuiUtils.getVerticalBoxLayoutPanel();
-    panel.setBorder(GuiUtils.getTitledBorder("Display Scale Factor"));
+    panel.setBorder(GuiUtils.getTitledBorder(Messages.getString("display.scale.factor")));
     panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, systemScaleRadio));
     panel.add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, 0, userScaleRadio, spinner1));
     add(panel);
@@ -136,7 +138,7 @@ public class ThemeSetting extends AbstractItemDialogPage {
     add(GuiUtils.getFlowLayoutPanel(new JLabel(alert)));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme");
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "theme"); // NON-NLS
   }
 
   protected void initialize(boolean firstTime) {

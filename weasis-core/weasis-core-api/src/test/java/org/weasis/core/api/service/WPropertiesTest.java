@@ -26,10 +26,10 @@ class WPropertiesTest {
 
     WProperties prop = new WProperties();
     prop.setProperty("string", "test!"); // NON-NLS
-    assertThat(prop.getProperty("string", null)).isEqualTo("test!");
+    assertThat(prop.getProperty("string", null)).isEqualTo("test!"); // NON-NLS
     prop.setProperty("string", null); // NON-NLS
     // Return the previous value, do not accept null value
-    assertThat(prop.getProperty("string", null)).isEqualTo("test!");
+    assertThat(prop.getProperty("string", null)).isEqualTo("test!"); // NON-NLS
   }
 
   @Test
@@ -74,7 +74,7 @@ class WPropertiesTest {
     prop.putDoubleProperty("double", Math.PI); // NON-NLS
     assertThat(prop.getDoubleProperty("double", 0.0)).isEqualTo(Math.PI); // NON-NLS
     prop.putDoubleProperty("double", Double.NEGATIVE_INFINITY); // NON-NLS
-    assertThat(prop.getDoubleProperty("double", 0.0))
+    assertThat(prop.getDoubleProperty("double", 0.0)) // NON-NLS
         .isEqualTo(Double.NEGATIVE_INFINITY); // NON-NLS
     prop.putDoubleProperty("double", 0.0f); // NON-NLS
     assertThat(prop.getDoubleProperty("double", 0.0)).isZero(); // NON-NLS

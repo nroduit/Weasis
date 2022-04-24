@@ -72,15 +72,16 @@ public class AuthMethodDialog extends JDialog {
 
   private void initComponents(boolean addAuth) {
     JPanel panel = new JPanel();
-    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
+    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]")); // NON-NLS
 
     if (addAuth) {
       buildHeader(panel);
     }
     panel.add(
-        new JLabel("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid()), "newline, spanx");
-    panel.add(getProvider(), "newline, spanx");
-    panel.add(getRegistration(), "newline, spanx");
+        new JLabel("ID" + StringUtil.COLON_AND_SPACE + authMethod.getUid()),
+        "newline, spanx"); // NON-NLS
+    panel.add(getProvider(), "newline, spanx"); // NON-NLS
+    panel.add(getRegistration(), "newline, spanx"); // NON-NLS
     buildFooter(panel);
     setContentPane(panel);
   }
@@ -90,8 +91,8 @@ public class AuthMethodDialog extends JDialog {
     okButton.addActionListener(e -> okButtonActionPerformed());
     JButton cancelButton = new JButton(Messages.getString("PrinterDialog.cancel"));
     cancelButton.addActionListener(e -> dispose());
-    panel.add(okButton, "newline, skip, growx 0, alignx trailing");
-    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
+    panel.add(okButton, "newline, skip, growx 0, alignx trailing"); // NON-NLS
+    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp"); // NON-NLS
   }
 
   public void buildHeader(JPanel panel) {
@@ -136,39 +137,39 @@ public class AuthMethodDialog extends JDialog {
     panel.add(
         GuiUtils.getFlowLayoutPanel(
             0, 0, headersLabel, comboBoxAuth, GuiUtils.boxHorizontalStrut(15), buttonFill),
-        "newline");
+        GuiUtils.NEWLINE);
   }
 
   public JPanel getProvider() {
-    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]");
+    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]"); // NON-NLS
     JPanel panel = new JPanel(layout);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
             spaceY, GuiUtils.getTitledBorder("Provider"))); // NON-NLS
 
-    panel.add(new JLabel("Name" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Name" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(name, "");
-    panel.add(new JLabel("Authorization URI" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Authorization URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(authorizationURI, "");
-    panel.add(new JLabel("Token URI" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Token URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(tokenURI, "");
-    panel.add(new JLabel("Revoke URI" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Revoke URI" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(revokeTokenURI, "");
     return panel;
   }
 
   public JPanel getRegistration() {
-    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]");
+    MigLayout layout = new MigLayout("fillx", "[right]rel[grow,fill]"); // NON-NLS
     JPanel panel = new JPanel(layout);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
             spaceY, GuiUtils.getTitledBorder("Registration"))); // NON-NLS
 
-    panel.add(new JLabel("Client ID" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Client ID" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(clientID, "");
-    panel.add(new JLabel("Client Secret" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Client Secret" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(clientSecret, "");
-    panel.add(new JLabel("Scope" + StringUtil.COLON), "newline"); // NON-NLS
+    panel.add(new JLabel("Scope" + StringUtil.COLON), GuiUtils.NEWLINE); // NON-NLS
     panel.add(scope, "");
     return panel;
   }

@@ -82,6 +82,8 @@ public class GuiUtils {
   public static final String HTML_END = "</html>";
   public static final String HTML_BR = "<br>";
 
+  public static final String NEWLINE = "newline"; // NON-NLS
+
   private GuiUtils() {}
 
   public enum IconColor {

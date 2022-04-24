@@ -77,25 +77,26 @@ public class DicomNodeDialog extends JDialog {
     setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
     JPanel panel = new JPanel();
-    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[grow,fill]"));
+    panel.setLayout(
+        new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[grow,fill]")); // NON-NLS
 
     JLabel descriptionLabel =
         new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
-    panel.add(descriptionLabel, "newline");
+    panel.add(descriptionLabel, GuiUtils.NEWLINE);
     panel.add(descriptionTf);
 
     JLabel aeTitleLabel = new JLabel(Messages.getString("PrinterDialog.aet") + StringUtil.COLON);
     aeTitleTf = new JTextField();
     aeTitleTf.setColumns(15);
-    panel.add(aeTitleLabel, "newline");
+    panel.add(aeTitleLabel, GuiUtils.NEWLINE);
     panel.add(aeTitleTf);
 
     JLabel hostnameLabel = new JLabel(Messages.getString("PrinterDialog.host") + StringUtil.COLON);
     hostnameTf = new JTextField();
     hostnameTf.setColumns(15);
-    panel.add(hostnameLabel, "newline");
+    panel.add(hostnameLabel, GuiUtils.NEWLINE);
     panel.add(hostnameTf);
 
     JLabel portLabel = new JLabel(Messages.getString("PrinterDialog.port") + StringUtil.COLON);
@@ -107,12 +108,12 @@ public class DicomNodeDialog extends JDialog {
     portTf.setColumns(5);
     GuiUtils.setPreferredWidth(portTf, 60);
     GuiUtils.addCheckAction(portTf);
-    panel.add(portLabel, "newline");
-    panel.add(portTf, "grow 0");
+    panel.add(portLabel, GuiUtils.NEWLINE);
+    panel.add(portTf, "grow 0"); // NON-NLS
 
     if (typeNode == AbstractDicomNode.Type.PRINTER) {
       printOptionsPane = new DicomPrintOptionPane();
-      panel.add(printOptionsPane, "newline, gaptop 10, spanx");
+      panel.add(printOptionsPane, "newline, gaptop 10, spanx"); // NON-NLS
     } else {
       comboBox = new JComboBox<>(new DefaultComboBoxModel<>(AbstractDicomNode.UsageType.values()));
       comboBox.setSelectedItem(AbstractDicomNode.UsageType.RETRIEVE);
@@ -121,8 +122,8 @@ public class DicomNodeDialog extends JDialog {
         hostnameTf.setText("localhost"); // NON-NLS
       }
 
-      panel.add(new JLabel(Messages.getString("usage.type") + StringUtil.COLON), "newline");
-      panel.add(comboBox, "grow 0");
+      panel.add(new JLabel(Messages.getString("usage.type") + StringUtil.COLON), GuiUtils.NEWLINE);
+      panel.add(comboBox, "grow 0"); // NON-NLS
     }
 
     JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
@@ -133,7 +134,7 @@ public class DicomNodeDialog extends JDialog {
     panel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, 0, 5, okButton, GuiUtils.boxHorizontalStrut(20), cancelButton),
-        "newline, spanx, gaptop 10lp");
+        "newline, spanx, gaptop 10lp"); // NON-NLS
     setContentPane(panel);
   }
 

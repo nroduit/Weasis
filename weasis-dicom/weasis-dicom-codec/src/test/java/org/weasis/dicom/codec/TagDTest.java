@@ -180,7 +180,7 @@ class TagDTest {
     assertThat(name).isEmpty();
 
     name = TagD.getDicomPersonName("Delaney^William^M.^Dr^MD"); // NON-NLS
-    assertThat(name).isEqualTo("Delaney, William M., Dr, MD");
+    assertThat(name).isEqualTo("Delaney, William M., Dr, MD"); // NON-NLS
   }
 
   @Test

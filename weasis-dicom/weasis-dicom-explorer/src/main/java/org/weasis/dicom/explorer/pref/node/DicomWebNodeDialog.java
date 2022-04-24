@@ -63,39 +63,40 @@ public class DicomWebNodeDialog extends JDialog {
 
     JPanel panel = new JPanel();
     panel.setLayout(
-        new MigLayout("insets 10lp 15lp 10lp 15lp", "[right]rel[left][grow,fill]", "[]10[]"));
+        new MigLayout(
+            "insets 10lp 15lp 10lp 15lp", "[right]rel[left][grow,fill]", "[]10[]")); // NON-NLS
 
     JLabel descriptionLabel =
         new JLabel(Messages.getString("PrinterDialog.desc") + StringUtil.COLON);
     descriptionTf = new JTextField();
     descriptionTf.setColumns(20);
-    panel.add(descriptionLabel, "newline");
+    panel.add(descriptionLabel, GuiUtils.NEWLINE);
     panel.add(descriptionTf);
 
     JLabel lblType =
         new JLabel(Messages.getString("DicomNodeDialog.lblType.text") + StringUtil.COLON);
     comboBox = new JComboBox<>(new DefaultComboBoxModel<>(DicomWebNode.WebType.values()));
-    panel.add(lblType, "newline");
+    panel.add(lblType, GuiUtils.NEWLINE);
     panel.add(comboBox);
 
     JLabel urlLabel = new JLabel("URL" + StringUtil.COLON);
     urlTf = new JTextField(50);
-    panel.add(urlLabel, "newline");
-    panel.add(urlTf, "growx, spanx 3, alignx leading");
+    panel.add(urlLabel, GuiUtils.NEWLINE);
+    panel.add(urlTf, "growx, spanx 3, alignx leading"); // NON-NLS
 
     JLabel lblAuth = new JLabel(Messages.getString("authentication") + StringUtil.COLON);
     AuthenticationPersistence.loadMethods(comboBoxAuth);
     comboBoxAuth.setSelectedIndex(0);
     JButton btnAuth = new JButton(Messages.getString("manager"));
     btnAuth.addActionListener(e -> manageAuth());
-    panel.add(lblAuth, "newline");
+    panel.add(lblAuth, GuiUtils.NEWLINE);
     panel.add(comboBoxAuth);
-    panel.add(btnAuth, "growx 0");
+    panel.add(btnAuth, "growx 0"); // NON-NLS
 
     JLabel headersLabel = new JLabel(Messages.getString("http.optional") + StringUtil.COLON);
     JButton btnHttpHeaders = new JButton(Messages.getString("DicomWebNodeDialog.httpHeaders"));
     btnHttpHeaders.addActionListener(e -> manageHeader());
-    panel.add(headersLabel, "newline");
+    panel.add(headersLabel, GuiUtils.NEWLINE);
     panel.add(btnHttpHeaders);
 
     JButton okButton = new JButton(Messages.getString("PrinterDialog.ok"));
@@ -106,7 +107,7 @@ public class DicomWebNodeDialog extends JDialog {
     panel.add(
         GuiUtils.getFlowLayoutPanel(
             FlowLayout.TRAILING, 0, 0, okButton, GuiUtils.boxHorizontalStrut(15), cancelButton),
-        "newline, skip 3, gap 15lp 0lp 10lp 10lp, alignx trailing");
+        "newline, skip 3, gap 15lp 0lp 10lp 10lp, alignx trailing"); // NON-NLS
     setContentPane(panel);
   }
 

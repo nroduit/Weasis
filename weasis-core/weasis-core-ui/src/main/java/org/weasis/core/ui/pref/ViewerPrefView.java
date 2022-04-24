@@ -15,13 +15,14 @@ import javax.swing.JPanel;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.PageItem;
+import org.weasis.core.ui.Messages;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
 
   private final JPanel menuPanel = new JPanel();
 
   public ViewerPrefView(PreferenceDialog dialog) {
-    super("Viewer", 500);
+    super(Messages.getString("viewer"), 500);
 
     menuPanel.setLayout(new GridLayout(0, 2));
     add(menuPanel);

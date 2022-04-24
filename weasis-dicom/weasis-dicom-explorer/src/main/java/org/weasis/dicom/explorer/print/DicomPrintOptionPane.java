@@ -55,10 +55,12 @@ public class DicomPrintOptionPane extends JPanel {
   }
 
   private void initComponents() {
-    setLayout(new MigLayout("fillx", "[right]rel[left]15lp[right]rel[left]"));
+    setLayout(new MigLayout("fillx", "[right]rel[left]15lp[right]rel[left]")); // NON-NLS
     setBorder(GuiUtils.getTitledBorder(Messages.getString("DicomPrintDialog.option_title")));
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.med_type") + StringUtil.COLON), "newline");
+    add(
+        new JLabel(Messages.getString("DicomPrintDialog.med_type") + StringUtil.COLON),
+        GuiUtils.NEWLINE);
     mediumTypeComboBox = new JComboBox<>();
     mediumTypeComboBox.setModel(
         new DefaultComboBoxModel<>(
@@ -78,7 +80,9 @@ public class DicomPrintOptionPane extends JPanel {
                 new String[] {DicomPrintOptions.DEF_PRIORITY, "MED", "HIGH"})); // NON-NLS
     add(priorityComboBox);
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.film_dest") + StringUtil.COLON), "newline");
+    add(
+        new JLabel(Messages.getString("DicomPrintDialog.film_dest") + StringUtil.COLON),
+        GuiUtils.NEWLINE);
 
     filmDestinationComboBox =
         new JComboBox<>(
@@ -92,14 +96,14 @@ public class DicomPrintOptionPane extends JPanel {
     add(numOfCopiesSpinner);
 
     colorPrintCheckBox = new JCheckBox(Messages.getString("DicomPrintDialog.print_color"));
-    add(colorPrintCheckBox, "newline, alignx leading, spanx 2");
+    add(colorPrintCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
 
     printOptionsSeparator = new JSeparator();
-    add(printOptionsSeparator, "newline, spanx");
+    add(printOptionsSeparator, "newline, spanx"); // NON-NLS
 
     add(
         new JLabel(Messages.getString("DicomPrintDialog.film_orientation") + StringUtil.COLON),
-        "newline");
+        GuiUtils.NEWLINE);
     filmOrientationComboBox =
         new JComboBox<>(
             new DefaultComboBoxModel<>(
@@ -112,7 +116,7 @@ public class DicomPrintOptionPane extends JPanel {
 
     add(
         new JLabel(Messages.getString("DicomPrintDialog.disp_format") + StringUtil.COLON),
-        "newline");
+        GuiUtils.NEWLINE);
     imageDisplayFormatComboBox = new JComboBox<>(portraitDisplayFormatsModel);
     imageDisplayFormatComboBox.setMaximumRowCount(10);
     add(imageDisplayFormatComboBox);
@@ -126,7 +130,9 @@ public class DicomPrintOptionPane extends JPanel {
                 })); // NON-NLS
     add(magnificationTypeComboBox);
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.smooth") + StringUtil.COLON), "newline");
+    add(
+        new JLabel(Messages.getString("DicomPrintDialog.smooth") + StringUtil.COLON),
+        GuiUtils.NEWLINE);
     smoothingTypeComboBox =
         new JComboBox<>(
             new DefaultComboBoxModel<>(
@@ -141,7 +147,7 @@ public class DicomPrintOptionPane extends JPanel {
     add(borderDensityComboBox);
 
     //    add(new JLabel(Messages.getString("DicomPrintDialog.min_density") + StringUtil.COLON),
-    // "newline");
+    // GuiUtils.NEWLINE);
     //     minDensitySpinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
     //     // Not used for 8 bits images
     //     minDensitySpinner.setEnabled(false);
@@ -153,7 +159,9 @@ public class DicomPrintOptionPane extends JPanel {
     //     maxDensitySpinner.setEnabled(false);
     //     add(maxDensitySpinner);
 
-    add(new JLabel(Messages.getString("DicomPrintDialog.trim") + StringUtil.COLON), "newline");
+    add(
+        new JLabel(Messages.getString("DicomPrintDialog.trim") + StringUtil.COLON),
+        GuiUtils.NEWLINE);
     trimComboBox =
         new JComboBox<>(
             new DefaultComboBoxModel<>(new String[] {DicomPrintOptions.DEF_TRIM, "YES"}));
@@ -168,10 +176,10 @@ public class DicomPrintOptionPane extends JPanel {
 
     printAnnotationsCheckBox = new JCheckBox(Messages.getString("PrintDialog.annotate"));
     printAnnotationsCheckBox.setSelected(true);
-    add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2");
+    add(printAnnotationsCheckBox, "newline, alignx leading, spanx 2"); // NON-NLS
 
     checkboxSelectedView = new JCheckBox(Messages.getString("PrintDialog.selected_view"));
-    add(checkboxSelectedView, "newline, alignx leading, spanx 2");
+    add(checkboxSelectedView, "newline, alignx leading, spanx 2"); // NON-NLS
 
     add(new JLabel(Messages.getString("DicomPrintDialog.dpi") + StringUtil.COLON));
 

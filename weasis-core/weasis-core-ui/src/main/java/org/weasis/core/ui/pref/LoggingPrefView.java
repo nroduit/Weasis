@@ -31,7 +31,7 @@ import org.weasis.core.util.StringUtil;
 public class LoggingPrefView extends AbstractItemDialogPage {
   private static final Logger LOGGER = LoggerFactory.getLogger(LoggingPrefView.class);
 
-  public static final String PAGE_NAME = "Logging";
+  public static final String PAGE_NAME = Messages.getString("logging");
 
   private final JCheckBox checkboxFileLog =
       new JCheckBox(Messages.getString("GeneralSetting.rol_log"));
@@ -91,7 +91,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     checkboxFileLog.addActionListener(e -> checkRollingLog());
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "logging");
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "logging"); // NON-NLS
   }
 
   private void checkRollingLog() {

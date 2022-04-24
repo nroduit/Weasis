@@ -83,7 +83,7 @@ public class LanguageSetting extends AbstractItemDialogPage {
     add(GuiUtils.boxYLastElement(5));
 
     getProperties().setProperty(PreferenceDialog.KEY_SHOW_RESTORE, Boolean.TRUE.toString());
-    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale");
+    getProperties().setProperty(PreferenceDialog.KEY_HELP, "locale"); // NON-NLS
   }
 
   private static String getText() {

@@ -17,11 +17,11 @@ public class HangingProtocols {
   private static final Logger LOGGER = LoggerFactory.getLogger(HangingProtocols.class);
 
   public enum OpeningViewer {
-    NONE("None"),
-    ONE_PATIENT("Only the first patient"),
-    ONE_PATIENT_CLEAN("Only the first patient (remove previous)"),
-    ALL_PATIENTS("All the patients"),
-    ALL_PATIENTS_CLEAN("All the patients (remove previous)");
+    NONE(Messages.getString("none")),
+    ONE_PATIENT(Messages.getString("only.the.first.patient")),
+    ONE_PATIENT_CLEAN(Messages.getString("only.the.first.patient.remove.previous")),
+    ALL_PATIENTS(Messages.getString("all.the.patients")),
+    ALL_PATIENTS_CLEAN(Messages.getString("all.the.patients.remove.previous"));
 
     private final String title;
 

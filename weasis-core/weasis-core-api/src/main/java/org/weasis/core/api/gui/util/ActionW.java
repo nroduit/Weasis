@@ -90,7 +90,7 @@ public class ActionW implements KeyActionValue {
   public static final ActionW SHOW_HEADER =
       new ActionW(Messages.getString("ActionW.show_header"), "reset", 0, 0, null); // NON-NLS
   public static final ActionW EXPORT_VIEW =
-      new ActionW("Exporting view", "exportImage", 0, 0, null);
+      new ActionW(Messages.getString("exporting.view"), "exportImage", 0, 0, null);
   public static final ActionW PAN =
       new ActionW(
           Messages.getString("ActionW.pan"),

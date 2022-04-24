@@ -41,7 +41,7 @@ import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);

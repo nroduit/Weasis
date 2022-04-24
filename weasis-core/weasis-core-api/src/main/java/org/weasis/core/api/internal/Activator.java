@@ -31,7 +31,7 @@ import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ResourceUtil;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 

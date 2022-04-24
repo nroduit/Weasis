@@ -15,18 +15,19 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.WtoolBar;
 
 public class ScreenshotToolBar<I extends ImageElement> extends WtoolBar {
 
   public ScreenshotToolBar(final ImageViewerEventManager<I> eventManager, int index) {
-    super("Screenshot Bar", index);
+    super(Messages.getString("screenshot.bar"), index);
     if (eventManager == null) {
       throw new IllegalArgumentException("EventManager cannot be null");
     }
 
     final JButton metaButton = new JButton(ResourceUtil.getToolBarIcon(ActionIcon.EXPORT_IMAGE));
-    metaButton.setToolTipText("Capture the selected view");
+    metaButton.setToolTipText(Messages.getString("capture.the.selected.view"));
     metaButton.addActionListener(
         e -> ScreenshotDialog.showDialog(eventManager.getSelectedViewPane()));
     add(metaButton);

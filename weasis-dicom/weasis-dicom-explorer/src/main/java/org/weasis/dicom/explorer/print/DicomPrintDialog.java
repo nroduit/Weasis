@@ -129,7 +129,7 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
 
   private void initComponents() {
     JPanel panel = new JPanel();
-    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]"));
+    panel.setLayout(new MigLayout("insets 10lp 15lp 10lp 15lp", "[grow ,fill][grow 0]")); // NON-NLS
 
     JPanel printersCfg = GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 5, 5);
     printersCfg.setBorder(
@@ -177,10 +177,10 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
         });
     printersComboBox.addActionListener(evt -> applyOptionsFromSelected());
 
-    panel.add(printersCfg, "newline, spanx");
+    panel.add(printersCfg, "newline, spanx"); // NON-NLS
 
     optionPane = new DicomPrintOptionPane();
-    panel.add(optionPane, "newline, gaptop 10, spanx");
+    panel.add(optionPane, "newline, gaptop 10, spanx"); // NON-NLS
 
     JButton printButton = new JButton(Messages.getString("DicomPrintDialog.print"));
     printButton.addActionListener(this::printButtonActionPerformed);
@@ -188,8 +188,8 @@ public class DicomPrintDialog<I extends ImageElement> extends JDialog {
     JButton cancelButton = new JButton(Messages.getString("DicomPrintDialog.cancel"));
     cancelButton.addActionListener(evt -> doClose());
 
-    panel.add(printButton, "newline, skip, growx 0, alignx trailing");
-    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp");
+    panel.add(printButton, "newline, skip, growx 0, alignx trailing"); // NON-NLS
+    panel.add(cancelButton, "gap 15lp 0lp 10lp 10lp"); // NON-NLS
     setContentPane(panel);
   }
 

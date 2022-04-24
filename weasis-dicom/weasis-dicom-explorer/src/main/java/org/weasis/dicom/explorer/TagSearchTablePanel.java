@@ -114,7 +114,7 @@ public class TagSearchTablePanel extends AbstractTagSearchPanel {
     if (text.trim().length() == 0) {
       rowSorter.setRowFilter(null);
     } else {
-      rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+      rowSorter.setRowFilter(RowFilter.regexFilter("(?i)" + text)); // NON-NLS
       for (int row = 0; row < table.getRowCount(); row++) {
         searchPositions.add(table.convertRowIndexToModel(row));
       }

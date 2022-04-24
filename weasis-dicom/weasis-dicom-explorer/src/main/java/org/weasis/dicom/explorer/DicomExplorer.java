@@ -566,21 +566,23 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
   protected JPanel getMainPanel() {
     if (panelMain == null) {
-      MigLayout layout = new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]");
+      MigLayout layout =
+          new MigLayout("fillx, ins 3", "[right]rel[grow,fill]", "[]10lp[]"); // NON-NLS
       panelMain = new JPanel(layout);
 
       final JLabel label = new JLabel(ResourceUtil.getIcon(OtherIcon.PATIENT, 24, 24));
-      panelMain.add(label, "newline");
+      panelMain.add(label, GuiUtils.NEWLINE);
       label.setLabelFor(patientCombobox);
-      panelMain.add(patientCombobox, "width 30lp:min:250lp");
+      panelMain.add(patientCombobox, "width 30lp:min:250lp"); // NON-NLS
 
       final JLabel labelStudy = new JLabel(ResourceUtil.getIcon(OtherIcon.CALENDAR, 24, 24));
       labelStudy.setLabelFor(studyCombobox);
-      panelMain.add(labelStudy, "newline");
-      panelMain.add(studyCombobox, "width 30lp:min:250lp");
+      panelMain.add(labelStudy, GuiUtils.NEWLINE);
+      panelMain.add(studyCombobox, "width 30lp:min:250lp"); // NON-NLS
 
       koOpen.setToolTipText(koOpen.getText());
-      panelMain.add(koOpen, "newline, spanx, alignx left, width 30lp:pref:pref, hidemode 2");
+      panelMain.add(
+          koOpen, "newline, spanx, alignx left, width 30lp:pref:pref, hidemode 2"); // NON-NLS
       koOpen.addActionListener(
           e -> {
             final MediaSeriesGroup patient =
@@ -1001,12 +1003,12 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   protected void changeToolWindowAnchor(CLocation clocation) {
     removeAll();
     if (verticalLayout) {
-      setLayout(new MigLayout("fillx, ins 0", "[grow,fill]", "[]rel[grow,fill]unrel[]"));
+      setLayout(new MigLayout("fillx, ins 0", "[grow,fill]", "[]rel[grow,fill]unrel[]")); // NON-NLS
       add(getMainPanel(), "");
-      add(thumbnailView, "newline, top");
-      add(loadingPanel, "newline,");
+      add(thumbnailView, "newline, top"); // NON-NLS
+      add(loadingPanel, "newline,"); // NON-NLS
     } else {
-      setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]"));
+      setLayout(new MigLayout("fillx, ins 0", "[right]rel[grow,fill]")); // NON-NLS
       add(GuiUtils.getVerticalBoxLayoutPanel(getMainPanel(), loadingPanel));
       add(thumbnailView);
     }

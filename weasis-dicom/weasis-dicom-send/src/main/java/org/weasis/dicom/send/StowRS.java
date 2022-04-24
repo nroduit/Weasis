@@ -73,11 +73,11 @@ public class StowRS extends DicomStowRS {
   private MultipartPayload getMultipartPayload(List<String> filesOrFolders, boolean recursive) {
     Map<String, String> headers = new HashMap<>();
     headers.put(
-        "Content-Type",
-        "multipart/related;type=\""
+        "Content-Type", // NON-NLS
+        "multipart/related;type=\"" // NON-NLS
             + ContentType.APPLICATION_DICOM.getType()
-            + "\";boundary="
-            + MULTIPART_BOUNDARY); // NON-NLS
+            + "\";boundary=" // NON-NLS
+            + MULTIPART_BOUNDARY);
     headers.put("Accept", Multipart.ContentType.XML.toString()); // NON-NLS
 
     MultipartPayload multipart = new MultipartPayload(MULTIPART_BOUNDARY, headers);

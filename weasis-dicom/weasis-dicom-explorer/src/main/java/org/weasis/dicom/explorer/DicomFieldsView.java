@@ -83,7 +83,9 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
   private boolean anonymize = false;
   private final SeriesViewer<?> viewer;
 
-  public static final String[] columns = {"Tag ID", "VR", "Tag Name", "Value"};
+  public static final String[] columns = {
+    Messages.getString("tag.id"), "VR", Messages.getString("tag.name"), Messages.getString("value")
+  };
   private final DefaultTableModel tableModel =
       new DefaultTableModel(columns, 0) {
         @Override
@@ -161,13 +163,13 @@ public class DicomFieldsView extends JTabbedPane implements SeriesViewerListener
 
   private static void applyFormatting(StyledDocument doc) {
     Color color = FlatUIUtils.getUIColor("TextArea.foreground", Color.DARK_GRAY);
-    Style bold = doc.addStyle("bold", doc.getStyle(StyleContext.DEFAULT_STYLE));
+    Style bold = doc.addStyle("bold", doc.getStyle(StyleContext.DEFAULT_STYLE)); // NON-NLS
     StyleConstants.setBold(bold, true);
     StyleConstants.setForeground(bold, color);
     int fontSize = StyleConstants.getFontSize(bold.getResolveParent());
     StyleConstants.setFontSize(bold, fontSize);
 
-    bold = doc.addStyle("h3", bold);
+    bold = doc.addStyle("h3", bold); // NON-NLS
     StyleConstants.setFontSize(bold, fontSize + 3);
   }
 

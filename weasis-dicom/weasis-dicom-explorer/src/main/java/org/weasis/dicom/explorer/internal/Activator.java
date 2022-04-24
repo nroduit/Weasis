@@ -23,7 +23,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.wado.DicomManager;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator {
 
   public static final Properties IMPORT_EXPORT_PERSISTENCE = new Properties();

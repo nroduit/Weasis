@@ -25,7 +25,7 @@ public class FlatWeasisTheme extends ThemeLaf {
 
   @Override
   public String getName() {
-    return "Weasis";
+    return "Weasis"; // NON-NLS
   }
 
   static IntelliJTheme loadTheme(String name) {
@@ -33,7 +33,7 @@ public class FlatWeasisTheme extends ThemeLaf {
       return new IntelliJTheme(
           FlatWeasisTheme.class.getResourceAsStream("/org/weasis/theme/" + name));
     } catch (IOException var3) {
-      String msg = "FlatLaf: Failed to load Weasis theme";
+      String msg = "FlatLaf: Failed to load Weasis theme"; // NON-NLS
       LoggingFacade.INSTANCE.logSevere(msg, var3);
       throw new RuntimeException(msg, var3);
     }

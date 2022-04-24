@@ -326,8 +326,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         GuiUtils.getVerticalBoxLayoutPanel(
             getArchivePanel(), getCallingNodePanel(), GuiUtils.boxXLastElement(2));
     sourcePanel.setBorder(GuiUtils.getEmptyBorder(ITEM_SEPARATOR));
-    tabbedPane.addTab("DICOM Source", sourcePanel);
-    tabbedPane.addTab("Search Criteria", getSearchPanel());
+    tabbedPane.addTab(Messages.getString("dicom.source"), sourcePanel);
+    tabbedPane.addTab(Messages.getString("search.criteria"), getSearchPanel());
     add(tabbedPane);
 
     add(GuiUtils.boxVerticalStrut(ITEM_SEPARATOR_LARGE));
@@ -469,9 +469,9 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     clearBtn.setToolTipText(Messages.getString("DicomQrView.clear_search"));
     clearBtn.addActionListener(e -> clearItems());
 
-    JButton addButton = new JButton("Save");
-    JButton deleteButton = new JButton("Delete");
-    deleteButton.setToolTipText("Delete the selected item");
+    JButton addButton = new JButton(Messages.getString("save"));
+    JButton deleteButton = new JButton(Messages.getString("delete"));
+    deleteButton.setToolTipText(Messages.getString("delete.the.selected.item"));
     deleteButton.addActionListener(
         evt -> {
           int response =
@@ -490,8 +490,8 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
         });
     addButton.addActionListener(
         evt -> {
-          String message = "Enter a name";
-          String title = "Search Template";
+          String message = Messages.getString("enter.a.name");
+          String title = Messages.getString("search.template");
 
           String description =
               (String)
@@ -614,7 +614,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
   private void dicomQuery() {
     stopCurrentProcess();
-    SearchParameters searchParams = buildCurrentSearchParameters("custom");
+    SearchParameters searchParams = buildCurrentSearchParameters("custom"); // NON-NLS
     List<DicomParam> p = searchParams.getParameters();
 
     if (p.isEmpty() && (Integer) limitSpinner.getValue() < 1) {

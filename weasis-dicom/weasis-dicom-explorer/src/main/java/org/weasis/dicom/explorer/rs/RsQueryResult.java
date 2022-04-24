@@ -490,7 +490,7 @@ public class RsQueryResult extends AbstractQueryResult {
       sop = new SopInstance(sopUID, frame);
       String rurl = instanceDataSet.getString(Tag.RetrieveURL);
       if (!StringUtil.hasText(rurl)) {
-        rurl = seriesRetrieveURL + "/instances/" + sopUID;
+        rurl = seriesRetrieveURL + "/instances/" + sopUID; // NON-NLS
       }
       sop.setDirectDownloadFile(rurl);
       seriesInstanceList.addSopInstance(sop);

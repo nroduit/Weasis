@@ -42,6 +42,7 @@ import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.SimpleOpManager;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundleTools;
+import org.weasis.core.ui.Messages;
 import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
@@ -82,8 +83,8 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private final ViewCanvas<I> viewCanvas;
   private final ButtonGroup buttonGroup = new ButtonGroup();
-  private final JRadioButton viewRadio = new JRadioButton("Current view");
-  private final JRadioButton imageRadio = new JRadioButton("Original image");
+  private final JRadioButton viewRadio = new JRadioButton(Messages.getString("current.view"));
+  private final JRadioButton imageRadio = new JRadioButton(Messages.getString("original.image"));
   private final JCheckBox paddingCheckBox =
       new JCheckBox(DICOM + StringUtil.SPACE + ActionW.IMAGE_PIX_PADDING.getTitle(), true);
   private final JCheckBox overlayCheckBox =
@@ -92,14 +93,15 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
       new JCheckBox(DICOM + StringUtil.SPACE + ActionW.IMAGE_SHUTTER.getTitle(), true);
   private final JCheckBox preservePixelCheckBox =
       new JCheckBox(
-          "Preserve 16-bit per channel"
+          Messages.getString("preserve.16.bit")
               + " ("
-              + String.format("Not supported with %s", Format.JPEG.title)
+              + String.format(Messages.getString("not.supported.with.s"), Format.JPEG.title)
               + ")",
           false);
 
-  private final JCheckBox anonymize = new JCheckBox("Anonymize", true);
-  private final JLabel labelSize = new JLabel("Size" + " (%)" + StringUtil.COLON);
+  private final JCheckBox anonymize = new JCheckBox(Messages.getString("anonymize"), true);
+  private final JLabel labelSize =
+      new JLabel(Messages.getString("size") + " (%)" + StringUtil.COLON);
   private final JSpinner spinner = new JSpinner();
   private final JLabel labelSizePix = new JLabel();
 
@@ -147,7 +149,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     panel.add(GuiUtils.getFlowLayoutPanel(FlowLayout.LEADING, 0, ITEM_SEPARATOR_SMALL, imageRadio));
     panel.add(GuiUtils.getHorizontalBoxLayoutPanel(buildImagePanel(dicom)));
 
-    JButton clipButton = new JButton("Clipboard");
+    JButton clipButton = new JButton(Messages.getString("clipboard"));
     clipButton.addActionListener(
         e -> {
           if (viewRadio.isSelected()) {
@@ -176,7 +178,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
             }
           }
         });
-    JButton saveButton = new JButton("Save");
+    JButton saveButton = new JButton(Messages.getString("save"));
     saveButton.addActionListener(
         e -> {
           boolean mustBeReleased = false;
@@ -284,7 +286,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
     if (dicom) {
-      dataPanel.add(anonymize, "newline");
+      dataPanel.add(anonymize, GuiUtils.NEWLINE);
     }
     return dataPanel;
   }
@@ -293,12 +295,12 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
     JPanel dataPanel = new JPanel();
     dataPanel.setLayout(new MigLayout("insets 0 25lp 30lp 10lp, fillx", "[grow 0]")); // NON-NLS
 
-    dataPanel.add(GuiUtils.getFlowLayoutPanel(labelSize, spinner, labelSizePix), "newline");
-    dataPanel.add(preservePixelCheckBox, "newline");
+    dataPanel.add(GuiUtils.getFlowLayoutPanel(labelSize, spinner, labelSizePix), GuiUtils.NEWLINE);
+    dataPanel.add(preservePixelCheckBox, GuiUtils.NEWLINE);
     if (dicom) {
-      dataPanel.add(paddingCheckBox, "newline");
-      dataPanel.add(shutterCheckBox, "newline");
-      dataPanel.add(overlayCheckBox, "newline");
+      dataPanel.add(paddingCheckBox, GuiUtils.NEWLINE);
+      dataPanel.add(shutterCheckBox, GuiUtils.NEWLINE);
+      dataPanel.add(overlayCheckBox, GuiUtils.NEWLINE);
     }
     return dataPanel;
   }

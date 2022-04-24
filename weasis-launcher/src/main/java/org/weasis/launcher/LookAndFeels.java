@@ -30,7 +30,7 @@ public final class LookAndFeels {
   private final ReadableLookAndFeelInfo defaultDarkTheme;
 
   private static final String[] FLAT_NAMES = {
-    "Core Dark - FlatDarcula", "Core Dark - FlatDark", "Core Light - FlatLight"
+    "Core Dark - FlatDarcula", "Core Dark - FlatDark", "Core Light - FlatLight" // NON-NLS
   };
 
   private static final String[] FLAT_CLASSES = {
@@ -43,10 +43,10 @@ public final class LookAndFeels {
     FlatLaf.registerCustomDefaultsSource("org.weasis.theme");
     defaultLightTheme =
         new ReadableLookAndFeelInfo(
-            "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false);
+            "Core Light - FlatIntelliJ", "com.formdev.flatlaf.FlatIntelliJLaf", false); // NON-NLS
     defaultDarkTheme =
         new ReadableLookAndFeelInfo(
-            "Core Dark - FlatWeasis", "org.weasis.launcher.FlatWeasisTheme", true);
+            "Core Dark - FlatWeasis", "org.weasis.launcher.FlatWeasisTheme", true); // NON-NLS
     lookAndFeels = buildFlatLookAndFeels();
     lookAndFeels.add(defaultLightTheme);
     lookAndFeels.add(defaultDarkTheme);
@@ -59,7 +59,7 @@ public final class LookAndFeels {
             i ->
                 infos.add(
                     new ReadableLookAndFeelInfo(
-                        i.isDark() ? "Dark - " + i.getName() : "Light - " + i.getName(),
+                        i.isDark() ? "Dark - " + i.getName() : "Light - " + i.getName(), // NON-NLS
                         i.getClassName(),
                         i.isDark())));
 
@@ -67,7 +67,7 @@ public final class LookAndFeels {
       if (isClassExist(FLAT_CLASSES[i])) {
         infos.add(
             new ReadableLookAndFeelInfo(
-                FLAT_NAMES[i], FLAT_CLASSES[i], FLAT_CLASSES[i].contains("Dark")));
+                FLAT_NAMES[i], FLAT_CLASSES[i], FLAT_CLASSES[i].contains("Dark"))); // NON-NLS
       }
     }
     return infos;

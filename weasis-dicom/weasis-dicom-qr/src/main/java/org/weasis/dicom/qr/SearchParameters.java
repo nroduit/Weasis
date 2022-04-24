@@ -38,16 +38,16 @@ public class SearchParameters {
   static final String T_NODES = "searchParametersList"; // NON-NLS
   static final String T_NODE = "searchParameters"; // NON-NLS
 
-  static final String T_NAME = "name";
-  static final String T_PERIOD = "period";
+  static final String T_NAME = "name"; // NON-NLS
+  static final String T_PERIOD = "period"; // NON-NLS
 
   static final String T_PARAMS = "dicomParams"; // NON-NLS
   static final String T_PARAM = "dicomParam"; // NON-NLS
 
-  static final String T_TAG = "tag";
-  static final String T_VALUES = "values";
-  static final String T_VALUE = "value";
-  static final String T_PARENT_SEQ = "parentSeqTags";
+  static final String T_TAG = "tag"; // NON-NLS
+  static final String T_VALUES = "values"; // NON-NLS
+  static final String T_VALUE = "value"; // NON-NLS
+  static final String T_PARENT_SEQ = "parentSeqTags"; // NON-NLS
 
   private String name;
   private Period period;

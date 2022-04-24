@@ -195,7 +195,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       JSlider slider = buildQualitySlider();
       JCheckBox onlyUncompressed =
           new JCheckBox(
-              "Transcode only uncompressed",
+              Messages.getString("transcode.only.uncompressed"),
               Boolean.parseBoolean(pref.getProperty(DICOM_ONLY_RAW, Boolean.TRUE.toString())));
       JComboBox<TransferSyntax> syntaxComboBox = new JComboBox<>(new Vector<>(transferSyntaxList));
       syntaxComboBox.setSelectedItem(null);
@@ -221,12 +221,13 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
               slider);
       Border spaceY = GuiUtils.getEmptyBorder(10, 5, 10, 5);
       transcodingPanel.setBorder(
-          BorderFactory.createCompoundBorder(spaceY, GuiUtils.getTitledBorder("Transcoding")));
+          BorderFactory.createCompoundBorder(
+              spaceY, GuiUtils.getTitledBorder(Messages.getString("transcoding"))));
       options.add(transcodingPanel);
 
       JCheckBox newUidCheckBox =
           new JCheckBox(
-              "Generate new unique identifiers",
+              Messages.getString("generate.new.unique.identifiers"),
               Boolean.parseBoolean(pref.getProperty(DICOM_NEW_UID, Boolean.FALSE.toString())));
       options.add(newUidCheckBox);
 
@@ -277,7 +278,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       boolean lossy = Format.JPEG == selected;
       JSlider slider = null;
       JCheckBox preservePixelCheckBox;
-      String dicom = "DICOM ";
+      String dicom = "DICOM "; // NON-NLS
       JCheckBox paddingCheckBox =
           new JCheckBox(
               dicom + ActionW.IMAGE_PIX_PADDING.getTitle(),
@@ -639,7 +640,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       cdCompatible = true;
       writeDir =
           FileUtil.createTempDir(
-              AppProperties.buildAccessibleTempDirectory("tmp", Format.DICOM_ZIP.extension));
+              AppProperties.buildAccessibleTempDirectory(
+                  "tmp", Format.DICOM_ZIP.extension)); // NON-NLS
     } else {
       writeDicomdir = Boolean.parseBoolean(pref.getProperty(INC_DICOMDIR, Boolean.TRUE.toString()));
       keepNames =

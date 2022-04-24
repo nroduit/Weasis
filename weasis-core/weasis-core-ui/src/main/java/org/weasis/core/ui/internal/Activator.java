@@ -37,7 +37,7 @@ import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.util.FileUtil;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator, ServiceListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 

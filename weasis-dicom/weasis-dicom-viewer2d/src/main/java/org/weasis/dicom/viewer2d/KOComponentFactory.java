@@ -104,7 +104,7 @@ public final class KOComponentFactory {
     }
 
     public KOViewButton(ShowPopup popup) {
-      super(popup, KeyObjectToolBar.KO_STAR_ICON.derive(24, 24), "star");
+      super(popup, KeyObjectToolBar.KO_STAR_ICON.derive(24, 24), "star"); // NON-NLS
     }
 
     public eState getState() {

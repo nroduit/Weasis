@@ -27,7 +27,7 @@ import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.docking.UIManager;
 
-@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}")
+@Header(name = Constants.BUNDLE_ACTIVATOR, value = "${@class}") // NON-NLS
 public class Activator implements BundleActivator {
   private static final Logger LOGGER = LoggerFactory.getLogger(Activator.class);
 

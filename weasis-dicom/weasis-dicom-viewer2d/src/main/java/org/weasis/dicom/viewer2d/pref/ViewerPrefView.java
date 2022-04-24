@@ -160,7 +160,8 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxWLcolor));
     otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxLevelInverse));
     otherPanel.add(GuiUtils.getFlowLayoutPanel(checkBoxApplyPR));
-    otherPanel.add(GuiUtils.getFlowLayoutPanel(new JLabel("Overlay color"), overlayColor));
+    otherPanel.add(
+        GuiUtils.getFlowLayoutPanel(new JLabel(Messages.getString("overlay.color")), overlayColor));
     add(otherPanel);
 
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
