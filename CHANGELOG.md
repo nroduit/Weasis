@@ -1,19 +1,12 @@
 # Changelog
 
-## [Unreleased](https://github.com/nroduit/Weasis/tree/HEAD)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.0-rc...HEAD)
-
-**Implemented enhancements:**
-
-- Settings for opening new tab when importing images from local devices [\#259](https://github.com/nroduit/Weasis/issues/259)
-
 ## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-24)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.1...v4.0.0-rc)
 
 **Implemented enhancements:**
 
+- Settings for opening new tab when importing images from local devices [\#259](https://github.com/nroduit/Weasis/issues/259)
 - Exporting data: Improve exporting image rendering  [\#255](https://github.com/nroduit/Weasis/issues/255)
 - Exporting data: Improve DICOM export \(generate new UIDs, transcoding\) [\#254](https://github.com/nroduit/Weasis/issues/254)
 - Replace Substance Look and Feel by FlatLaf [\#253](https://github.com/nroduit/Weasis/issues/253)
