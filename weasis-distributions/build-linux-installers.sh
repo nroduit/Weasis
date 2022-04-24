@@ -95,7 +95,7 @@ mount -o loop "$DISK" "$DISK_FOLDER"
 
 rm -Rf "$DISK_FOLDER/script"
 mkdir -p "$DISK_FOLDER/installer"
-cp -f target/portable-dist/weasis-portable.zip "$DISK_FOLDER"/
+cp -f target/native-dist/weasis-native.zip "$DISK_FOLDER"/
 cp -Rf script "$DISK_FOLDER"/
 
 
@@ -106,16 +106,16 @@ for arc in "${ARCS[@]}"; do
     continue
   fi
 
-  rm -Rf "$DISK_FOLDER/weasis-portable"
-  unzip -o "$DISK_FOLDER/weasis-portable.zip" -d "$DISK_FOLDER/weasis-portable"
+  rm -Rf "$DISK_FOLDER/weasis-native"
+  unzip -o "$DISK_FOLDER/weasis-native.zip" -d "$DISK_FOLDER/weasis-native"
 
   # Load the local images
-  # docker buildx build --load --platform "$arc" -t weasis/builder:latest .
+  docker buildx build --load --platform "$arc" -t weasis/builder:latest .
   if [[ "$arc" == *"64"* || "$arc" = "linux/s390x" ]]; then
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /opt/java/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-native --jdk /opt/java/openjdk/ --temp /work/temp"
   else
     echo "32-bit needs to copy jdk on 32-bit file system"
-    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-portable --jdk /work/openjdk/ --temp /work/temp"
+    docker run --platform "$arc" -it --rm -v "$PWD/$DISK_FOLDER":/work weasis/builder:latest bash -c "cp -r /opt/java/openjdk /work/; export JAVA_TOOL_OPTIONS=-Djdk.lang.Process.launchMechanism=vfork; cd /work/installer; /work/script/package-weasis.sh --input /work/weasis-native --jdk /work/openjdk/ --temp /work/temp"
   fi
 done
 

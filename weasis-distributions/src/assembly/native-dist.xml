@@ -21,7 +21,7 @@
     </fileSet>
     <fileSet>
       <!-- Direct resources copy -->
-      <directory>src/main/resources-portable</directory>
+      <directory>src/main/resources-native</directory>
       <outputDirectory/>
       <fileMode>0755</fileMode>
       <directoryMode>0755</directoryMode>

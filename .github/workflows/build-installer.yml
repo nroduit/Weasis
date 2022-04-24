@@ -30,7 +30,7 @@ jobs:
         shell: bash
         run: |
           mvn -B clean install
-          mvn -B -Dportable=true -P compressXZ -f weasis-distributions clean install
+          mvn -B -P compressXZ -f weasis-distributions clean package
 
       - name: Retrieve version
         shell: bash
@@ -49,13 +49,13 @@ jobs:
       - id: stepcleanversion
         run: echo ::set-output name=version::${{ env.WEASIS_CLEAN_VERSION }}
 
-      - name: Upload weasis portable distribution
+      - name: Upload the weasis package for building the native distribution
         uses: actions/upload-artifact@v2
         with:
-          name: weasis-portable-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/portable-dist/weasis-portable.zip
+          name: weasis-native-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/native-dist/weasis-native.zip
 
-      - name: Upload weasis web distribution
+      - name: Upload the weasis web distribution
         uses: actions/upload-artifact@v2
         with:
           name: weasis-web-${{ env.WEASIS_VERSION }}
@@ -66,9 +66,9 @@ jobs:
       JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
       NAME: "Weasis"
       IDENTIFIER: "org.weasis.launcher"
-      WEASIS_INPUT: "weasis-distributions/target/portable-dist/weasis-portable"
+      WEASIS_INPUT: "weasis-distributions/target/native-dist/weasis-native"
       WEASIS_OUTPUT: "weasis-distributions/target/native-dist"
-      WEASIS_INPUT_BIN: "weasis-distributions/target/portable-dist/weasis-portable/weasis"
+      WEASIS_INPUT_BIN: "weasis-distributions/target/native-dist/weasis-native/weasis"
     runs-on: ${{ matrix.os }}
     needs: build
     strategy:
@@ -95,20 +95,20 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '18-ea'
+          java-version: '18'
 
-      - name: Download weasis-portable
+      - name: Download weasis-native
         uses: actions/download-artifact@v2
         with:
-          name: weasis-portable-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/portable-dist
+          name: weasis-native-${{ env.WEASIS_VERSION }}
+          path: weasis-distributions/target/native-dist
 
-      - name: Unzip portable version
+      - name: Unzip the native package version
         shell: bash
         run: |
-          unzip -o "weasis-distributions/target/portable-dist/weasis-portable.zip" -d "${{ env.WEASIS_INPUT }}"
+          unzip -o "weasis-distributions/target/native-dist/weasis-native.zip" -d "${{ env.WEASIS_INPUT }}"
 
-      - name: Remove binaries not releated to the current architecture
+      - name: Remove binaries not related to the current architecture
         shell: bash
         run: |
           # Remove pack jar for launcher
@@ -145,7 +145,7 @@ jobs:
         run: |
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
-            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true")
+            declare -a customOptions=("--java-options" "-splash:\$APPDIR/resources/images/about-round.png" "--java-options" "-Dapple.laf.useScreenMenuBar=true" "--java-options" "-Dapple.awt.application.appearance=NSAppearanceNameDarkAqua")
             declare -a signArgs=("--mac-package-identifier" "${{ env.IDENTIFIER }}" "--mac-signing-keychain" "$HOME/Library/Keychains/signing_temp.keychain-db" "--mac-sign")
           elif [ "$machine" = "windows" ] ; then
             declare -a customOptions=("--java-options" "-splash:\$APPDIR\resources\images\about-round.png" )
