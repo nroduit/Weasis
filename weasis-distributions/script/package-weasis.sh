@@ -51,6 +51,8 @@ echo " --jdk -j
 Path of the jdk with the jpackage module (>= jdk-16+12)"
 echo " --temp
 Path of the temporary directory during build"
+echo " --no-installer
+Build only the native binaries not the final installer"
 echo " --mac-signing-key-user-name
 Key user name of the certificate to sign the bundle"
 exit 0
@@ -74,6 +76,10 @@ shift # past value
 TEMP_PATH="$2"
 shift # past argument
 shift # past value
+;;
+--no-installer)
+PACKAGE="NO"
+shift # past argument
 ;;
 --mac-signing-key-user-name)
 CERTIFICATE="$2"

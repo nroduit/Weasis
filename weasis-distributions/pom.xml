@@ -480,19 +480,6 @@
               </artifactItems>
             </configuration>
           </execution>
-
-          <execution>
-            <id>purge-local-dependencies</id>
-            <phase>process-sources</phase>
-            <goals>
-              <goal>purge-local-repository</goal>
-            </goals>
-            <configuration>
-              <includes>
-                <include>org.weasis:weasis-i18n-dist</include>
-              </includes>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
 
@@ -575,6 +562,34 @@
                   <archiveDirectory>${tmp.bundle.dir}</archiveDirectory>
                   <includes>
                     <include>**/*.jar</include>
+                  </includes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>purgeI18nPackage</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>purge-local-dependencies</id>
+                <phase>process-sources</phase>
+                <goals>
+                  <goal>purge-local-repository</goal>
+                </goals>
+                <configuration>
+                  <includes>
+                    <include>org.weasis:weasis-i18n-dist</include>
                   </includes>
                 </configuration>
               </execution>
