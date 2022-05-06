@@ -120,7 +120,7 @@ public class ScreenshotDialog<I extends ImageElement> extends JDialog {
 
   private void setImageSize(int val) {
     I imageElement = viewCanvas.getImage();
-    PlanarImage image = imageElement.getImage(null);
+    PlanarImage image = imageElement == null ? null : imageElement.getImage(null);
     if (image != null) {
       float ratio = val / 100f;
       labelSizePix.setText(
