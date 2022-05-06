@@ -79,7 +79,7 @@ public class DicomExport extends AbstractWizardDialog {
                 jButtonHelp,
                 new URL(
                     BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")
-                        + "dicom-export"));
+                        + "dicom-export/#dicom-export"));
           } catch (MalformedURLException e1) {
             LOGGER.error("Cannot open online help", e1);
           }

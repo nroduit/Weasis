@@ -4,6 +4,8 @@ about: Create a report to help us to fix the issue
 
 ---
 
+Please check the [GitHub issues system](https://github.com/nroduit/Weasis/issues), the [forum](https://groups.google.com/group/dcm4che) and/or this [website](../getting-started) first to see if your problem has not been reported yet.
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -18,8 +20,7 @@ Steps to reproduce the behavior:
 A clear and concise description of what you expected to happen.
 
 **Desktop (please complete the following information):**
- - OS: [e.g. Windows]
- - Java Rutime: [e.g. JRE-8_191-x86-64]
+ - OS: [e.g. Mac OS 10.15.1]
  - Weasis Version [e.g. 3.1.0]
 
 **Additional context**
@@ -29,4 +30,4 @@ Add any other context about the problem here [e.g. network issue: give informati
 If applicable, add screenshots to help explain your problem.
 
 **Traces**
-If applicable, add log files from Weasis, Java Runtime or PACS.
+If applicable, add [log files from Weasis](https://nroduit.github.io/en/faq/#how-to-enable-weasis-logging) or from the DICOM archive.
