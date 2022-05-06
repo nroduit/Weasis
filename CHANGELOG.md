@@ -1,6 +1,6 @@
 # Changelog
 
-## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-24)
+## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-29)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.1...v4.0.0-rc)
 
