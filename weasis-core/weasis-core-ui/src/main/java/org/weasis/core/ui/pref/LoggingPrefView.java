@@ -137,7 +137,7 @@ public class LoggingPrefView extends AbstractItemDialogPage {
     }
     comboBoxStackLimit.setSelectedItem(limit >= 0 ? Integer.toString(limit) : "");
 
-    checkboxFileLog.setSelected(prefs.getBooleanProperty(AuditLog.LOG_FILE, false));
+    checkboxFileLog.setSelected(prefs.getBooleanProperty(AuditLog.LOG_FILE_ACTIVATION, false));
     spinner.setValue(getIntPreferences(AuditLog.LOG_FILE_NUMBER, 5, null));
     spinner1.setValue(getIntPreferences(AuditLog.LOG_FILE_SIZE, 10, "MB"));
     checkRollingLog();
