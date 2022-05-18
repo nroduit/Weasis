@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.File;
@@ -1112,7 +1113,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           dirs[i] = dirs[i].trim().replace("/", File.separator);
         }
         File[] files = new File[dirs.length];
-        boolean notCaseSensitive = AppProperties.OPERATING_SYSTEM.startsWith("win"); // NON-NLS
+        boolean notCaseSensitive = SystemInfo.isWindows;
         if (notCaseSensitive) {
           Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
         }

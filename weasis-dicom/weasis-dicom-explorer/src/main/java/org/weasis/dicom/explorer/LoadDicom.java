@@ -168,6 +168,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
                   ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
         }
 
+        boolean selectPatient = true;
         if (!OpeningViewer.NONE.equals(openingMode)
             && openPlugin
             && LangUtil.getNULLtoTrue(openPatientMap.get(patient))) {
@@ -179,13 +180,15 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             } else {
               openPatientMap.put(patient, false);
             }
+            selectPatient = false;
             ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
-          } else if (plugin != null) {
-            // Send event to select the related patient in Dicom Explorer.
-            dicomModel.firePropertyChange(
-                new ObservableEvent(
-                    ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
           }
+        }
+        if (selectPatient) {
+          // Send event to select the related patient in Dicom Explorer.
+          dicomModel.firePropertyChange(
+              new ObservableEvent(
+                  ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
         }
       } else {
         // Test if SOPInstanceUID already exists

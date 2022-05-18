@@ -185,6 +185,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         modelStudy.insertElementAt(ALL_STUDIES, 0);
         modelStudy.setSelectedItem(ALL_STUDIES);
         koOpen.setVisible(false);
+        selectedPatient.patient = null;
       }
     }
   }
