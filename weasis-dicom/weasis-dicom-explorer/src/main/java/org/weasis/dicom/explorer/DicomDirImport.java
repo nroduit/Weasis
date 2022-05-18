@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Dialog;
 import java.io.File;
 import java.net.URI;
@@ -26,7 +27,6 @@ import javax.swing.filechooser.FileFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.util.ResourceUtil;
@@ -202,14 +202,16 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   public static File getDcmDirFromMedia() {
     final List<File> dvs = new ArrayList<>();
     try {
-      if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
+      if (SystemInfo.isWindows) {
         dvs.addAll(Arrays.asList(File.listRoots()));
-      } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { // NON-NLS
+      } else if (SystemInfo.isMacOS) {
         addFiles(dvs, new File("/Volumes"));
       } else {
         addFiles(dvs, new File("/media"));
         addFiles(dvs, new File("/mnt"));
-        addFiles(dvs, new File("/media/" + System.getProperty("user.name", "local"))); // NON-NLS
+        String user = System.getProperty("user.name", "local"); // NON-NLS
+        addFiles(dvs, new File("/media/" + user ));
+        addFiles(dvs, new File("/run/media/" + user ));
       }
     } catch (Exception e) {
       LOGGER.error("Error when reading device directories: {}", e.getMessage());
