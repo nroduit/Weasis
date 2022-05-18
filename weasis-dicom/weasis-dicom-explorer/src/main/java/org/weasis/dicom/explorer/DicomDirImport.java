@@ -261,20 +261,29 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     return loadSeries;
   }
 
+  private static void addFiles(List<File> dvs, File folder) {
+    if (folder.canRead()) {
+      File[] files = folder.listFiles();
+      if (files != null) {
+        Collections.addAll(dvs, files);
+      }
+    }
+  }
+
+
   public static File getDcmDirFromMedia() {
     final List<File> dvs = new ArrayList<>();
     try {
       if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
         dvs.addAll(Arrays.asList(File.listRoots()));
       } else if (AppProperties.OPERATING_SYSTEM.startsWith("mac")) { // NON-NLS
-        dvs.addAll(Arrays.asList(new File("/Volumes").listFiles()));
+        addFiles(dvs, new File("/Volumes"));
       } else {
-        dvs.addAll(Arrays.asList(new File("/media").listFiles()));
-        dvs.addAll(Arrays.asList(new File("/mnt").listFiles()));
-        File userDir = new File("/media/" + System.getProperty("user.name", "local")); // NON-NLS
-        if (userDir.exists()) {
-          dvs.addAll(Arrays.asList(userDir.listFiles()));
-        }
+        addFiles(dvs, new File("/media"));
+        addFiles(dvs, new File("/mnt"));
+        String user = System.getProperty("user.name", "local"); // NON-NLS
+        addFiles(dvs, new File("/media/" + user ));
+        addFiles(dvs, new File("/run/media/" + user ));
       }
     } catch (Exception e) {
       LOGGER.error("Error when reading device directories: {}", e.getMessage());
