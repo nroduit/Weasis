@@ -210,8 +210,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         addFiles(dvs, new File("/media"));
         addFiles(dvs, new File("/mnt"));
         String user = System.getProperty("user.name", "local"); // NON-NLS
-        addFiles(dvs, new File("/media/" + user ));
-        addFiles(dvs, new File("/run/media/" + user ));
+        addFiles(dvs, new File("/media/" + user));
+        addFiles(dvs, new File("/run/media/" + user));
       }
     } catch (Exception e) {
       LOGGER.error("Error when reading device directories: {}", e.getMessage());

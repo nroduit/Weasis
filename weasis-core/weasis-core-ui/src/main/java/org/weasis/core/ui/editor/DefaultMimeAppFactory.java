@@ -13,7 +13,6 @@ import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.util.Map;
 import javax.swing.Icon;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;

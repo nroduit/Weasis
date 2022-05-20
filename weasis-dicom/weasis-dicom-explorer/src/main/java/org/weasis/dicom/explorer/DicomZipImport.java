@@ -18,7 +18,11 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JProgressBar;
+import net.lingala.zip4j.ZipFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
@@ -29,6 +33,7 @@ import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.ClosableURLConnection;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.URLParameters;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
@@ -99,8 +104,27 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
       File dir =
           FileUtil.createTempDir(
               AppProperties.buildAccessibleTempDirectory("tmp", "zip")); // NON-NLS
-      try {
-        FileUtil.unzip(file, dir);
+      try (ZipFile zipFile = new ZipFile(file)) {
+        if (zipFile.isEncrypted()) {
+          JPanel panel = new JPanel();
+          JPasswordField pass = new JPasswordField(16);
+          panel.add(new JLabel("Enter a password"));
+          panel.add(pass);
+          int response =
+              JOptionPane.showOptionDialog(
+                  UIManager.getApplicationWindow(),
+                  panel,
+                  Messages.getString("DicomZipImport.title"),
+                  JOptionPane.OK_CANCEL_OPTION,
+                  JOptionPane.PLAIN_MESSAGE,
+                  null,
+                  null,
+                  null);
+          if (response == JOptionPane.OK_OPTION) {
+            zipFile.setPassword(pass.getPassword());
+          }
+        }
+        zipFile.extractAll(dir.getPath());
       } catch (IOException e) {
         LOGGER.error("unzipping", e);
       }

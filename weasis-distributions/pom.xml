@@ -300,6 +300,12 @@
                   <version>${jackson.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>net.lingala.zip4j</groupId>
+                  <artifactId>zip4j</artifactId>
+                  <version>${zip4j.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
 
                 <!-- ===================================== -->
                 <!-- Weasis Core bundles -->

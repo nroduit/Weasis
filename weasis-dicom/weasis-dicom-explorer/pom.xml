@@ -45,5 +45,10 @@
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>net.lingala.zip4j</groupId>
+      <artifactId>zip4j</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>
