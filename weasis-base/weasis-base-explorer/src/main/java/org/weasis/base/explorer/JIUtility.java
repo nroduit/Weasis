@@ -9,12 +9,12 @@
  */
 package org.weasis.base.explorer;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import javax.swing.Icon;
 import javax.swing.filechooser.FileSystemView;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 
 public final class JIUtility {
@@ -23,7 +23,7 @@ public final class JIUtility {
   public static final String ROOT_FOLDER;
 
   static {
-    if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
+    if (SystemInfo.isWindows) {
       ROOT_FOLDER = System.getProperty("java.io.tmpdir") + File.separator + "rootFolder"; // NON-NLS
     } else {
       ROOT_FOLDER = File.separator;
@@ -34,7 +34,7 @@ public final class JIUtility {
 
   public static FileTreeModel createTreeModel() {
     Path rootPath;
-    if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
+    if (SystemInfo.isWindows) {
       final File winRootFolder = new File(ROOT_FOLDER);
       winRootFolder.mkdirs();
       winRootFolder.deleteOnExit();

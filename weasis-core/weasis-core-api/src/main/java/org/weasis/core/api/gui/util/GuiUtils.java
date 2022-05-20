@@ -14,6 +14,7 @@ import com.formdev.flatlaf.extras.FlatSVGIcon;
 import com.formdev.flatlaf.extras.FlatSVGIcon.ColorFilter;
 import com.formdev.flatlaf.icons.FlatTreeCollapsedIcon;
 import com.formdev.flatlaf.ui.FlatUIUtils;
+import com.formdev.flatlaf.util.SystemInfo;
 import com.formdev.flatlaf.util.UIScale;
 import java.awt.Color;
 import java.awt.Component;
@@ -468,7 +469,7 @@ public class GuiUtils {
 
   public static void openInDefaultBrowser(Component parent, URL url) {
     if (url != null) {
-      if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { // NON-NLS
+      if (SystemInfo.isLinux) {
         try {
           String cmd = String.format("xdg-open %s", url); // NON-NLS
           Runtime.getRuntime().exec(cmd);

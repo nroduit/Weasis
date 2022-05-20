@@ -9,6 +9,7 @@
  */
 package org.weasis.core.ui.editor;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.util.Map;
 import javax.swing.Icon;
@@ -41,9 +42,9 @@ public class DefaultMimeAppFactory implements SeriesViewerFactory {
                 // Desktop.isDesktopSupported()
                 // in KDE session, but actually does not support it.
                 // http://bugs.sun.com/view_bug.do?bug_id=6486393
-                if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { // NON-NLS
+                if (SystemInfo.isLinux) {
                   startAssociatedProgramFromLinux(m.getFile());
-                } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
+                } else if (SystemInfo.isWindows) {
                   // Workaround of the bug with mpg file see
                   // http://bugs.sun.com/view_bug.do?bug_id=6599987
                   startAssociatedProgramFromWinCMD(m.getFile());

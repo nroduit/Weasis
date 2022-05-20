@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.util.Timer;
 import java.util.TimerTask;
 import javax.swing.Action;
@@ -54,9 +55,8 @@ public abstract class DynamicMenu extends JMenu {
   public void popupMenuCanceled() {}
 
   public void addPopupMenuListener() {
-    // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar with native look
-    // and feel
-    if (AppProperties.OPERATING_SYSTEM.startsWith("mac") // NON-NLS
+    // #WEA-6 - workaround, PopupMenuListener doesn't work on Mac in the top bar
+    if (SystemInfo.isMacOS
         && Boolean.TRUE
             .toString()
             .equals(

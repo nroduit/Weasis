@@ -9,11 +9,11 @@
  */
 package org.weasis.dicom.explorer;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
 import java.io.File;
 import java.util.Map;
 import javax.swing.Icon;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.util.ResourceUtil;
@@ -44,9 +44,9 @@ public class MimeSystemAppFactory implements SeriesViewerFactory {
             // in KDE session, but actually does not support it.
             // http://bugs.sun.com/view_bug.do?bug_id=6486393
             for (File file : extractor.getExtractFiles()) {
-              if (AppProperties.OPERATING_SYSTEM.startsWith("linux")) { // NON-NLS
+              if (SystemInfo.isLinux) {
                 startAssociatedProgramFromLinux(file);
-              } else if (AppProperties.OPERATING_SYSTEM.startsWith("win")) { // NON-NLS
+              } else if (SystemInfo.isWindows) {
                 // Workaround of the bug with mpg file see
                 // http://bugs.sun.com/view_bug.do?bug_id=6599987
                 startAssociatedProgramFromWinCMD(file);
