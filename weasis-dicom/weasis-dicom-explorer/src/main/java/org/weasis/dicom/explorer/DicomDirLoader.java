@@ -324,7 +324,19 @@ public class DicomDirLoader {
       // Try to find lower case relative path, it happens sometimes when mounting cdrom on Linux
       File fileLowerCase = new File(reader.getFile().getParent(), sb.toString().toLowerCase());
       if (fileLowerCase.exists()) {
-        file = fileLowerCase;
+        return fileLowerCase;
+      }
+
+      // Try to find relative path with extension, image file may have it
+      String dcmFilename = file.getName();
+      File[] dcmFileList =
+          file.getParentFile()
+              .listFiles(
+                  (p, name) ->
+                      name.startsWith(dcmFilename + ".")
+                          || name.startsWith(dcmFilename.toLowerCase() + "."));
+      if (dcmFileList != null && dcmFileList.length == 1) {
+        return dcmFileList[0];
       }
     }
 
