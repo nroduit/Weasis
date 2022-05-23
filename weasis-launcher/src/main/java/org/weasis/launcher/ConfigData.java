@@ -317,12 +317,6 @@ public class ConfigData {
       baseURI += "/" + CONFIG_DIRECTORY + "/";
       addProperty(CONFIG_PROPERTIES_PROP, baseURI + CONFIG_PROPERTIES_FILE_VALUE);
       addProperty(EXTENDED_PROPERTIES_PROP, baseURI + EXTENDED_PROPERTIES_FILE_VALUE);
-
-      // Allow export feature for local/portable version
-      addProperty("weasis.export.dicom", Boolean.TRUE.toString());
-      addProperty("weasis.export.dicom.send", Boolean.TRUE.toString());
-      addProperty("weasis.import.dicom", Boolean.TRUE.toString());
-      addProperty("weasis.import.dicom.qr", Boolean.TRUE.toString());
     } catch (Exception e) {
       LOGGER.log(Level.SEVERE, "Apply Codebase", e);
     }
