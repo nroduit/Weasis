@@ -47,9 +47,8 @@ import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import org.apache.felix.framework.Felix;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
@@ -449,18 +448,7 @@ public class WeasisLauncher {
         EventQueue.invokeLater(
             () -> {
               JTextPane jTextPane1 = new JTextPane();
-              HTMLEditorKit kit = new HTMLEditorKit();
-              StyleSheet ss = kit.getStyleSheet();
-              ss.addRule(
-                  "body {font-family:sans-serif;font-size:12pt;background-color:#"
-                      + Integer.toHexString(
-                              (jTextPane1.getBackground().getRGB() & 0xffffff) | 0x1000000)
-                          .substring(1)
-                      + ";color:#"
-                      + Integer.toHexString(
-                              (jTextPane1.getForeground().getRGB() & 0xffffff) | 0x1000000)
-                          .substring(1)
-                      + ";margin:3;font-weight:normal;}");
+              jTextPane1.setBorder(new EmptyBorder(5, 5, 15, 5));
               jTextPane1.setContentType("text/html");
               jTextPane1.setEditable(false);
               jTextPane1.addHyperlinkListener(
@@ -471,26 +459,7 @@ public class WeasisLauncher {
                     } else if (e.getEventType() == HyperlinkEvent.EventType.EXITED) {
                       pane.setToolTipText(null);
                     } else if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                      if (System.getProperty(P_OS_NAME, "unknown") // NON-NLS
-                          .toLowerCase()
-                          .startsWith("linux")) { // NON-NLS
-                        try {
-                          String cmd = String.format("xdg-open %s", e.getURL()); // NON-NLS
-                          Runtime.getRuntime().exec(cmd);
-                        } catch (IOException e1) {
-                          LOGGER.log(Level.ERROR, "Unable to launch the WEB browser");
-                        }
-                      } else if (Desktop.isDesktopSupported()) {
-                        final Desktop desktop = Desktop.getDesktop();
-                        if (desktop.isSupported(Desktop.Action.BROWSE)) {
-                          try {
-                            desktop.browse(e.getURL().toURI());
-
-                          } catch (Exception ex) {
-                            LOGGER.log(Level.ERROR, "Unable to launch the WEB browser");
-                          }
-                        }
-                      }
+                      Utils.openInDefaultBrowser(e.getURL());
                     }
                   });
 
@@ -511,7 +480,7 @@ public class WeasisLauncher {
                       : mainFrame.getRootPaneContainer().getContentPane(),
                   jTextPane1,
                   Messages.getString("WeasisLauncher.News"),
-                  JOptionPane.PLAIN_MESSAGE);
+                  JOptionPane.INFORMATION_MESSAGE);
             });
       }
     }
