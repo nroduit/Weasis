@@ -16,6 +16,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
@@ -172,7 +173,7 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   }
 
   private void removePatientPane(MediaSeriesGroup patient) {
-    if (patient != null && selectedPatient.isPatient(patient)) {
+    if (patient != null) {
       List<StudyPane> studies = patient2study.remove(patient);
       if (studies != null) {
         for (StudyPane studyPane : studies) {
@@ -185,6 +186,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
         modelStudy.insertElementAt(ALL_STUDIES, 0);
         modelStudy.setSelectedItem(ALL_STUDIES);
         koOpen.setVisible(false);
+      }
+      if (selectedPatient.isPatient(patient)) {
         selectedPatient.patient = null;
       }
     }
@@ -463,8 +466,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     private void refreshLayout() {
-      this.setLayout(
-          verticalLayout ? new WrapLayout(FlowLayout.LEFT) : new BoxLayout(this, BoxLayout.X_AXIS));
+      LayoutManager layoutManager = getLayout();
+      if (verticalLayout && !(layoutManager instanceof WrapLayout)
+          || !verticalLayout && !(layoutManager instanceof BoxLayout)) {
+        this.setLayout(
+            verticalLayout
+                ? new WrapLayout(FlowLayout.LEFT)
+                : new BoxLayout(this, BoxLayout.X_AXIS));
+      }
     }
 
     private void showAllSeries() {
@@ -776,8 +785,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     } else {
       StudyPane studyPane = getStudyPane(selectedStudy);
       if (studyPane != null) {
-        studyPane.showAllSeries();
         studyPane.refreshLayout();
+        studyPane.showAllSeries();
         selectedPatient.addPane(studyPane);
         studyPane.doLayout();
       }
@@ -802,6 +811,9 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
 
     if (modelPatient.getIndexOf(patient) < 0) {
       modelPatient.addElement(patient);
+      if (modelPatient.getSize() == 1) {
+        modelPatient.setSelectedItem(patient);
+      }
     }
 
     List<StudyPane> studies = patient2study.computeIfAbsent(patient, k -> new ArrayList<>());

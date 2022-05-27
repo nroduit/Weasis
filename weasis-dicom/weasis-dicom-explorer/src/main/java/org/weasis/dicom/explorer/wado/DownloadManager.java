@@ -163,11 +163,11 @@ public class DownloadManager {
 
   public static void offerSeriesInQueue(final LoadSeries series) {
     if (series.getPriority().hasConcurrentDownload()) {
-      if (DownloadManager.PRIORITY_QUEUE.offer(series)) {
+      if (!DownloadManager.PRIORITY_QUEUE.offer(series)) {
         LOGGER.warn("Cannot add series {} to download queue", series.getDicomSeries());
       }
     } else {
-      if (DownloadManager.UNIQUE_QUEUE.offer(series)) {
+      if (!DownloadManager.UNIQUE_QUEUE.offer(series)) {
         LOGGER.warn("Cannot add series {} to download queue", series.getDicomSeries());
       }
     }

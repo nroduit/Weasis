@@ -766,8 +766,7 @@ public class TagD extends TagW {
           return TagD.get(Tag.StudyInstanceUID);
         case SERIES:
           return TagW.SubseriesInstanceUID;
-        case INSTANCE:
-        case FRAME:
+        case INSTANCE, FRAME:
           return TagD.get(Tag.SOPInstanceUID);
         default:
           break;

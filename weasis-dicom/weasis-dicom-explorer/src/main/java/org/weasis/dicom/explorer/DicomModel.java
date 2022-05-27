@@ -196,6 +196,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
     for (MediaSeriesGroup st : studies) {
       studyMap.put(st, getChildren(st));
     }
+    firePropertyChange(new ObservableEvent(BasicAction.REMOVE, DicomModel.this, null, pt));
 
     for (Entry<MediaSeriesGroup, Collection<MediaSeriesGroup>> stEntry : studyMap.entrySet()) {
       MediaSeriesGroup st = stEntry.getKey();
@@ -235,6 +236,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
       addHierarchyNode(studyGroup2, s);
       firePropertyChange(new ObservableEvent(BasicAction.ADD, DicomModel.this, null, s));
     }
+    firePropertyChange(new ObservableEvent(BasicAction.REMOVE, DicomModel.this, null, studyGroup));
     removeHierarchyNode(patientGroup, studyGroup);
   }
 

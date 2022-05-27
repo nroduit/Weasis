@@ -502,27 +502,41 @@ public class DicomMediaUtils {
     }
     // Patient Group
     if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
+      Object pid = group.getTagValue(TagW.PatientPseudoUID);
+      if (pid != null) {
+        String pid2 = new PatientComparator(header).buildPatientPseudoUID();
+        if (!Objects.equals(pid, pid2)) {
+          LOGGER.warn(
+              "Inconsistent Patient ID + Issuer of Patient ID between DICOM objets: {} and {}",
+              pid,
+              pid2);
+        }
+      }
       DicomMediaIO.tagManager.readTags(Level.PATIENT, header, group);
     }
     // Study Group
     else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-      DicomMediaIO.tagManager.readTags(Level.STUDY, header, group);
-      if (!group.matchIdValue(header.getString(Tag.StudyInstanceUID))) {
+      TagW tagID = TagD.getUID(Level.STUDY);
+      Object studyUID = group.getTagValue(tagID);
+      if (studyUID != null && !Objects.equals(studyUID, header.getString(tagID.getId()))) {
         LOGGER.warn(
             "Inconsistent Study Instance UID between DICOM objets: {} and {}",
             group.getTagValue(TagD.getUID(Level.STUDY)),
             header.getString(Tag.StudyInstanceUID));
       }
+      DicomMediaIO.tagManager.readTags(Level.STUDY, header, group);
     }
     // Series Group
     else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
-      DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
-      if (!group.matchIdValue(header.getString(Tag.SeriesInstanceUID))) {
+      TagW tagID = TagD.get(Tag.SeriesInstanceUID); // cannot compare sub-series, only in group
+      Object seriesUID = group.getTagValue(tagID);
+      if (seriesUID != null && !Objects.equals(seriesUID, header.getString(tagID.getId()))) {
         LOGGER.warn(
             "Inconsistent Series Instance UID between DICOM objets: {} and {}",
-            group.getTagValue(TagD.getUID(Level.STUDY)),
-            header.getString(Tag.SeriesInstanceUID));
+            seriesUID,
+            header.getString(tagID.getId()));
       }
+      DicomMediaIO.tagManager.readTags(Level.SERIES, header, group);
       // Build patient age if not present
       group.setTagNoNull(
           TagD.get(Tag.PatientAge), getPatientAgeInPeriod(header, Tag.PatientAge, true));
