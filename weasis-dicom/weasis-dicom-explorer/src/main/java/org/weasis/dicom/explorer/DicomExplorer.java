@@ -21,6 +21,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ItemEvent;
@@ -670,8 +671,14 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
     }
 
     private void refreshLayout() {
-      this.setLayout(
-          verticalLayout ? new WrapLayout(FlowLayout.LEFT) : new BoxLayout(this, BoxLayout.X_AXIS));
+      LayoutManager layoutManager = getLayout();
+      if (verticalLayout && !(layoutManager instanceof WrapLayout)
+          || !verticalLayout && !(layoutManager instanceof BoxLayout)) {
+        this.setLayout(
+            verticalLayout
+                ? new WrapLayout(FlowLayout.LEFT)
+                : new BoxLayout(this, BoxLayout.X_AXIS));
+      }
     }
 
     private void showAllSeries() {
@@ -1101,8 +1108,8 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
       } else {
         StudyPane studyPane = getStudyPane(selectedStudy);
         if (studyPane != null) {
-          studyPane.showAllSeries();
           studyPane.refreshLayout();
+          studyPane.showAllSeries();
           selectedPatient.addPane(studyPane);
           studyPane.doLayout();
         }

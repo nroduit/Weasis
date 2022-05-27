@@ -915,8 +915,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           dicomReader = new DicomMediaIO(tempFile);
           if (dicomReader.isReadableDicom() && dicomSeries.size(null) == 0) {
             // Override the group (patient, study and series) by the dicom fields except the UID of
-            // the
-            // group
+            // the group
             MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
             dicomReader.writeMetaData(patient);
             MediaSeriesGroup study = dicomModel.getParent(dicomSeries, DicomModel.study);
