@@ -14,6 +14,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
+import org.osgi.framework.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.util.FileUtil;
@@ -128,5 +129,15 @@ public class AppProperties {
       }
     }
     return AppProperties.APP_TEMP_DIR;
+  }
+
+  public static Version getVersion(String version) {
+    String v = "";
+    if (version != null) {
+      int start = version.startsWith("v") ? 1 : 0;
+      int end = version.indexOf('-');
+      v = end > 0 ? version.substring(start, end) : version;
+    }
+    return new Version(v);
   }
 }

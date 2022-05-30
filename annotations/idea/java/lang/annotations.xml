@@ -5,6 +5,9 @@
   <item name='java.lang.String boolean endsWith(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='java.lang.String boolean startsWith(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.lang.String int indexOf(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>

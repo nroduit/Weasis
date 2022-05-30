@@ -23,7 +23,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextPane;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
@@ -82,7 +81,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-    htmlPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
+    htmlPanel.setBorder(GuiUtils.getEmptyBorder(5, 5, 5, 5));
     htmlPanel.setContentType("text/html");
     htmlPanel.setEditable(false);
     htmlPanel.addHyperlinkListener(

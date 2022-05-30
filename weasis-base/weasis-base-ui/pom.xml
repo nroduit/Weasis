@@ -44,5 +44,10 @@
       <version>${weasis.core.img.version}</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.glassfish</groupId>
+      <artifactId>jakarta.json</artifactId>
+      <scope>provided</scope>
+    </dependency>
   </dependencies>
 </project>

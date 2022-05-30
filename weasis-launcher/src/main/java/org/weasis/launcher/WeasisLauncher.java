@@ -996,6 +996,8 @@ public class WeasisLauncher {
 
     if (update) {
       FileUtil.storeProperties(sourceIDProps, localSourceProp, null);
+      // Reset message when deploying a new release
+      currentProps.setProperty("weasis.show.update.next.release", Boolean.TRUE.toString());
     }
 
     // Transmit weasis.properties

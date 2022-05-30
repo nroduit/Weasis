@@ -170,14 +170,13 @@ public class RsQuery implements Callable<Boolean> {
               TagW.PatientPseudoUID, patientPseudoUID, DicomModel.patient.tagView()) {
             @Override
             public String toString() {
-              StringBuilder buf = new StringBuilder(getDisplayValue(this, Tag.PatientName));
-              buf.append(" [");
-              buf.append(getDisplayValue(this, Tag.PatientID));
-              buf.append("] ");
-              buf.append(getDisplayValue(this, Tag.PatientBirthDate));
-              buf.append(" ");
-              buf.append(getDisplayValue(this, Tag.PatientSex));
-              return buf.toString();
+              return getDisplayValue(this, Tag.PatientName)
+                  + " ["
+                  + getDisplayValue(this, Tag.PatientID)
+                  + "] "
+                  + getDisplayValue(this, Tag.PatientBirthDate)
+                  + " "
+                  + getDisplayValue(this, Tag.PatientSex);
             }
           };
       DicomMediaUtils.writeMetaData(patient, item);

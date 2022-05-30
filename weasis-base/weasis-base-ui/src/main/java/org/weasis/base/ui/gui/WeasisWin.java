@@ -9,6 +9,8 @@
  */
 package org.weasis.base.ui.gui;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
+
 import bibliothek.extension.gui.dock.theme.EclipseTheme;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabDockActionLocation;
 import bibliothek.extension.gui.dock.theme.eclipse.EclipseTabStateInfo;
@@ -52,26 +54,41 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.io.StringReader;
 import java.lang.management.ManagementFactory;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonReader;
 import javax.management.InstanceNotFoundException;
 import javax.management.JMException;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.swing.Action;
 import javax.swing.Icon;
+import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -84,6 +101,7 @@ import javax.swing.RootPaneContainer;
 import javax.swing.TransferHandler;
 import javax.swing.TransferHandler.DropLocation;
 import javax.swing.WindowConstants;
+import org.osgi.framework.Version;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.base.ui.Messages;
@@ -313,6 +331,14 @@ public class WeasisWin {
     UIManager.MAIN_AREA.getComponent().setTransferHandler(new SequenceHandler());
     UIManager.MAIN_AREA.setLocation(CLocation.base().normalRectangle(0, 0, 1, 1));
     UIManager.MAIN_AREA.setVisible(true);
+
+    boolean updateRelease =
+        BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.update.release", true);
+    boolean showDownloadRelease =
+        BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.show.update.next.release", true);
+    if (updateRelease && showDownloadRelease) {
+      CompletableFuture.runAsync(() -> checkReleaseUpdate(frame));
+    }
   }
 
   HashMap<MediaSeriesGroup, List<MediaSeries<?>>> getSeriesByEntry(
@@ -712,6 +738,37 @@ public class WeasisWin {
             openBrowser(
                 websiteMenuItem, BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.help.online")));
     helpMenuItem.add(websiteMenuItem);
+    helpMenuItem.add(new JSeparator());
+
+    final JMenuItem updateMenuItem = new JMenuItem("Check for Updates...");
+    updateMenuItem.addActionListener(
+        e -> {
+          JsonObject object = getLastRelease();
+          if (object != null) {
+            Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
+            Version vNew = AppProperties.getVersion(object.getString("version"));
+            if (vNew.compareTo(vOld) > 0) {
+              openBrowser(updateMenuItem, object.getString("url"));
+            } else {
+              GuiExecutor.instance()
+                  .execute(
+                      () ->
+                          JOptionPane.showMessageDialog(
+                              updateMenuItem,
+                              "The current release is already the latest release available.",
+                              "Update",
+                              JOptionPane.INFORMATION_MESSAGE));
+            }
+          }
+        });
+    helpMenuItem.add(updateMenuItem);
+
+    final JMenuItem reportMenuItem = new JMenuItem("Submit a Bug Report");
+    reportMenuItem.addActionListener(
+        e -> openBrowser(reportMenuItem, "https://github.com/nroduit/Weasis/issues"));
+    helpMenuItem.add(reportMenuItem);
+    helpMenuItem.add(new JSeparator());
+
     final JMenuItem aboutMenuItem =
         new JMenuItem(
             String.format(Messages.getString("WeasisAboutBox.about"), AppProperties.WEASIS_NAME));
@@ -724,6 +781,63 @@ public class WeasisWin {
     helpMenuItem.add(aboutMenuItem);
     menuBar.add(helpMenuItem);
     return menuBar;
+  }
+
+  private JsonObject getLastRelease() {
+    try {
+      HttpRequest request =
+          HttpRequest.newBuilder()
+              .uri(new URI("https://nroduit.github.io/en/api/release/api.json"))
+              .timeout(Duration.of(10, SECONDS))
+              .GET()
+              .build();
+
+      HttpResponse<String> response =
+          HttpClient.newBuilder()
+              .followRedirects(HttpClient.Redirect.ALWAYS)
+              .build()
+              .send(request, BodyHandlers.ofString());
+
+      try (JsonReader jsonReader = Json.createReader(new StringReader(response.body()))) {
+        return jsonReader.readObject();
+      }
+    } catch (IOException | URISyntaxException ex) {
+      LOGGER.error("Cannot check release update", ex);
+    } catch (InterruptedException ex2) {
+      Thread.currentThread().interrupt();
+    }
+    return null;
+  }
+
+  private void checkReleaseUpdate(Component parent) {
+    JsonObject object = getLastRelease();
+    if (object != null) {
+      Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
+      // Version vNew = AppProperties.getVersion(object.getString("version"));
+      Version vNew = AppProperties.getVersion("4.0.2");
+      if (vNew.compareTo(vOld) > 0) {
+        GuiExecutor.instance()
+            .execute(
+                () -> {
+                  JLabel label =
+                      new JLabel("A new release is available. Do you want to download it?");
+                  label.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
+                  JCheckBox dontAskMeAgain = new JCheckBox("Don't ask me again");
+                  dontAskMeAgain.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
+                  JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskMeAgain);
+                  int confirm =
+                      JOptionPane.showConfirmDialog(
+                          parent, panel, "Update", JOptionPane.YES_NO_OPTION);
+                  if (confirm == 0) {
+                    openBrowser(parent, object.getString("url"));
+                  }
+                  if (dontAskMeAgain.isSelected()) {
+                    BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
+                        "weasis.show.update.next.release", false);
+                  }
+                });
+      }
+    }
   }
 
   private void openBrowser(Component c, String ref) {
