@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Dicomizer
+Comment=Build DICOM files from images
+Exec=weasis.dicomizer
+Icon=${SNAP}/meta/gui/dicomizer.png
+Terminal=false
+Type=Application
+Categories=Viewer;MedicalSoftware;Graphics;

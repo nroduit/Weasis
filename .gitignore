@@ -42,3 +42,6 @@ hs_err*.log
 # Mac temporary folders
 _*/
 
+#snap
+weasis_*.snap
+

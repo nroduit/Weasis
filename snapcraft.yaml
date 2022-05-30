@@ -1,0 +1,120 @@
+name: weasis
+title: Weasis
+base: core20
+version: '4.0.0-RC2'
+summary: A free/libre/open medical DICOM viewer
+description: |
+  Weasis is a multipurpose standalone and web-based DICOM viewer with 
+  a highly modular architecture. It is a very popular clinical viewer 
+  used in healthcare by hospitals, health networks, multicenter research 
+  trials, and patients.
+  
+  Key features:
+  - Flexible integration to PACS, VNA, RIS, HIS or PHR
+  - Responsive user interface and work well on high DPI screens
+  - Web access through weasis protocol
+  - Multi-language support
+  - Configuration of preferences on server-side and client-side
+  - API for building custom plug-ins
+  - DICOM Send (storeSCU and STOW-RS)
+  - DICOM Query/Retrieve (C-GET, C-MOVE and WADO-URI) and DICOMWeb (QUERY and RETRIEVE)
+  - Dicomizer module (allow importing standard images and convert them in DICOM)
+license: Apache-2.0
+grade: stable
+confinement: strict
+architectures:
+  - build-on: [amd64]
+    run-on: [amd64]
+#- build-on: [amd64, arm64, armhf]
+#  run-on: [amd64, arm64, armhf]
+
+plugs:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes
+  gtk-3-themes:
+    default-provider: gtk-common-themes:gtk-3-themes
+    interface: content
+    target: $SNAP/data-dir/themes
+  sound-themes:
+    default-provider: gtk-common-themes:sound-themes
+    interface: content
+    target: $SNAP/data-dir/sounds
+  gnome-3-28-1804:
+    default-provider: gnome-3-28-1804:gnome-3-28-1804
+    interface: content
+    target: $SNAP/gnome-platform
+  icon-themes:
+    default-provider: gtk-common-themes:icon-themes
+    interface: content
+    target: $SNAP/data-dir/icons
+
+layout:
+  /usr/bin/lpr:
+    bind-file: $SNAP/usr/bin/lpr
+
+parts:
+  remote-openjdk:
+    plugin: dump
+    source:
+      - on amd64: https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_x64_linux_hotspot_18.0.1_10.tar.gz
+      - on arm64: https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_aarch64_linux_hotspot_18.0.1_10.tar.gz
+      - on armhf: https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_arm_linux_hotspot_18.0.1_10.tar.gz
+    organize:
+      '*': java-runtime/
+    override-stage: 'true'
+    override-prime: 'true'
+
+  remote-weasis-build:
+    after: [remote-openjdk]
+    plugin: dump
+    source: weasis-distributions/target/native-dist/weasis-native.zip
+    #source: https://github.com/nroduit/Weasis/releases/download/v4.0.0-rc/weasis-native.zip
+    organize:
+      '*': weasis-native/
+    override-stage: 'true'
+    override-prime: 'true'
+
+  weasis:
+    plugin: nil
+    source: .
+    source-type: local
+    source-subdir: weasis-distributions
+    override-build: |
+      cp -Rf /root/parts/remote-weasis-build/install/weasis-native ${SNAPCRAFT_PART_BUILD}/
+      weasis-distributions/script/package-weasis.sh --input weasis-native --output ${SNAPCRAFT_PART_INSTALL} --no-installer --jdk /root/parts/remote-openjdk/install/java-runtime
+      mv ${SNAPCRAFT_PART_INSTALL}/Weasis/* ${SNAPCRAFT_PART_INSTALL}/
+      rm -rf ${SNAPCRAFT_PART_INSTALL}/Weasis
+      snapcraftctl build
+
+apps:
+  weasis:
+    extensions:
+      - gnome-3-38
+    command: bin/Weasis
+    environment:
+      _JAVA_OPTIONS: -Duser.home=$SNAP_USER_DATA
+    plugs:
+      - avahi-control
+      - home
+      - network
+      - network-bind
+      - mount-observe
+      - removable-media
+      - cups-control
+  
+  dicomizer:
+    extensions:
+      - gnome-3-38
+    command: bin/Dicomizer
+    environment:
+      _JAVA_OPTIONS: -Duser.home=$SNAP_USER_DATA
+    plugs:
+      - avahi-control
+      - home
+      - network
+      - network-bind
+      - mount-observe
+      - removable-media
+      - cups-control
