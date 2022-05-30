@@ -813,8 +813,7 @@ public class WeasisWin {
     JsonObject object = getLastRelease();
     if (object != null) {
       Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
-      // Version vNew = AppProperties.getVersion(object.getString("version"));
-      Version vNew = AppProperties.getVersion("4.0.2");
+      Version vNew = AppProperties.getVersion(object.getString("version"));
       if (vNew.compareTo(vOld) > 0) {
         GuiExecutor.instance()
             .execute(
