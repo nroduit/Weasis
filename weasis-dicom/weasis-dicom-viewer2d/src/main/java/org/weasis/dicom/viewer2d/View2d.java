@@ -658,6 +658,14 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     }
   }
 
+  @Override
+  public void reset() {
+    super.reset();
+    if (getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement pr) {
+      setPresentationState(pr, true);
+    }
+  }
+
   private void deletePrLayers() {
     // Delete previous PR Layers
     List<GraphicLayer> dcmLayers =
