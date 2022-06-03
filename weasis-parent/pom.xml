@@ -25,8 +25,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
     <app.version>${revision}${changelist}</app.version>
-    <felix.framework.version>7.0.3</felix.framework.version>
-    <flatlaf.version>2.2</flatlaf.version>
+    <felix.framework.version>7.0.4</felix.framework.version>
+    <flatlaf.version>2.3</flatlaf.version>
     <miglayout.version>11.0</miglayout.version>
     <xz.version>1.9</xz.version>
 
@@ -38,7 +38,7 @@
     <felix.bundlerepository.version>2.0.10</felix.bundlerepository.version>
     <felix.configadmin.version>1.9.22</felix.configadmin.version>
     <felix.prefs.version>1.1.0</felix.prefs.version>
-    <felix.scr.version>2.1.28</felix.scr.version>
+    <felix.scr.version>2.2.0</felix.scr.version>
     <felix.metatype.version>1.2.4</felix.metatype.version>
 
     <slf4j.version>1.7.35</slf4j.version>
@@ -54,8 +54,8 @@
     <scribejava.version>8.3.1</scribejava.version>
     <zip4j.version>2.10.0</zip4j.version>
 
-    <assertj.version>3.22.0</assertj.version>
-    <mockito.version>4.4.0</mockito.version>
+    <assertj.version>3.23.1</assertj.version>
+    <mockito.version>4.6.1</mockito.version>
   </properties>
 
   <licenses>
