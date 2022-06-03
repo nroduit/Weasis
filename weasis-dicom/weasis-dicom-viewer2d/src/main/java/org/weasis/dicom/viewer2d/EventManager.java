@@ -946,9 +946,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
           ActionW.SYNCH.cmd(),
           null,
           new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
-
-    } else if (ResetTools.ROTATION.equals(action)) {
-      getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
     } else if (ResetTools.WL.equals(action)) {
       getAction(ActionW.PRESET, ComboItemListener.class)
           .ifPresent(a -> a.setSelectedItem(a.getFirstItem()));
@@ -2014,8 +2011,6 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
                       reset(ResetTools.ZOOM);
                     } else if (ActionW.PAN.cmd().equals(command)) {
                       reset(ResetTools.PAN);
-                    } else if (ActionW.ROTATION.cmd().equals(command)) {
-                      reset(ResetTools.ROTATION);
                     } else {
                       LOGGER.warn("Reset command not found: {}", command);
                     }

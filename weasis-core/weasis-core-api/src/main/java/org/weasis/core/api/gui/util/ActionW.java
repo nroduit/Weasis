@@ -88,7 +88,7 @@ public class ActionW implements KeyActionValue {
   public static final ActionW RESET =
       new ActionW(Messages.getString("ActionW.Reset"), "reset", 0, 0, null); // NON-NLS
   public static final ActionW SHOW_HEADER =
-      new ActionW(Messages.getString("ActionW.show_header"), "reset", 0, 0, null); // NON-NLS
+      new ActionW(Messages.getString("ActionW.show_header"), "show_header", 0, 0, null); // NON-NLS
   public static final ActionW EXPORT_VIEW =
       new ActionW(Messages.getString("exporting.view"), "exportImage", 0, 0, null);
   public static final ActionW PAN =

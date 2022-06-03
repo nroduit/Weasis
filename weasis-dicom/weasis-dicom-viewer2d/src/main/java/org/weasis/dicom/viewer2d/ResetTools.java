@@ -16,8 +16,6 @@ public enum ResetTools {
 
   ZOOM(Messages.getString("ViewerPrefView.zoom")),
 
-  ROTATION(Messages.getString("ResetTools.rotation")),
-
   PAN(Messages.getString("ResetTools.pan"));
 
   private final String name;
