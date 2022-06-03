@@ -11,6 +11,9 @@ package org.weasis.dicom.codec.display;
 
 import java.util.Map;
 import java.util.Optional;
+import org.dcm4che3.data.Tag;
+import org.dcm4che3.data.UID;
+import org.dcm4che3.img.DicomImageUtils;
 import org.dcm4che3.img.data.PrDicomObject;
 import org.dcm4che3.img.lut.PresetWindowLevel;
 import org.weasis.core.api.gui.util.ActionW;
@@ -21,6 +24,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.PRSpecialElement;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 public class WindowAndPresetsOp extends WindowOp {
@@ -97,5 +101,23 @@ public class WindowAndPresetsOp extends WindowOp {
     setParam(ActionW.LEVEL_MIN.cmd(), img.getMinValue(wlp));
     setParam(ActionW.LEVEL_MAX.cmd(), img.getMaxValue(wlp));
     setParam(ActionW.LUT_SHAPE.cmd(), p ? preset.getLutShape() : img.getDefaultShape(wlp));
+  }
+
+  public void process() throws Exception {
+    PlanarImage source = (PlanarImage) params.get(Param.INPUT_IMG);
+    PlanarImage result = source;
+    ImageElement imageElement = (ImageElement) params.get(P_IMAGE_ELEMENT);
+
+    if (imageElement != null) {
+      PrDicomObject pr = (PrDicomObject) params.get(P_PR_ELEMENT);
+      if (pr != null
+          && UID.PseudoColorSoftcopyPresentationStateStorage.equals(
+              pr.getDicomObject().getString(Tag.SOPClassUID))) {
+        source = DicomImageUtils.getRGBImageFromPaletteColorModel(source, pr.getDicomObject());
+      }
+      result = imageElement.getRenderedImage(source, params);
+    }
+
+    params.put(Param.OUTPUT_IMG, result);
   }
 }
