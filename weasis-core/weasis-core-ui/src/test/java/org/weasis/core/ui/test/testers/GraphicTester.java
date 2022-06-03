@@ -13,6 +13,7 @@ import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeSupport;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.assertj.core.api.Fail;
+import org.assertj.core.api.recursive.comparison.RecursiveComparisonConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.weasis.core.ui.model.graphic.AbstractGraphic;
@@ -70,7 +72,8 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     assertThat(deserializedGraphic)
         .isInstanceOfAny(Graphic.class, AbstractGraphic.class, getGraphicClass());
     assertThat(deserializedGraphic.getUuid()).isEqualTo(graphic.getUuid());
-    assertThat(deserializedGraphic).usingRecursiveComparison().isEqualTo(graphic);
+    assertThat(deserializedGraphic).usingRecursiveComparison(
+        RecursiveComparisonConfiguration.builder().withIgnoredFieldsOfTypes(PropertyChangeSupport.class).build()).isEqualTo(graphic);
   }
 
   @SuppressWarnings("unchecked")
@@ -140,7 +143,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     assertThat(expected).isNotNull();
 
     assertThat(result.getUuid()).isNotEmpty().isEqualTo(expected.getUuid());
-    assertThat(result).usingRecursiveComparison().isEqualTo(expected);
+    assertThat(result).usingRecursiveComparison(RecursiveComparisonConfiguration.builder().withIgnoredFieldsOfTypes(PropertyChangeSupport.class).build()).isEqualTo(expected);
 
     checkGraphicInterfaceFields(result, expected);
 
@@ -208,23 +211,14 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
   @Test
   public void testCopy() throws Exception {
     InputStream xml0 = getClass().getResourceAsStream(getXmlFilePathCase0());
-
     E object0 = deserialize(xml0, getGraphicClass());
-    E copy0 = (E) object0.copy();
-
-    testCopy(object0, copy0);
+    checkGraphicInterfaceFields(object0, object0.copy());
 
     InputStream xml1 = getClass().getResourceAsStream(getXmlFilePathCase1());
-
     E object1 = deserialize(xml1, getGraphicClass());
-    E copy1 = (E) object1.copy();
-
-    testCopy(copy1, object1);
+    checkGraphicInterfaceFields(object1.copy(), object1);
   }
 
-  protected void testCopy(E actual, E expected) throws Exception {
-    checkGraphicInterfaceFields(actual, expected);
-  }
 
   protected final void checkGraphicInterfaceFields(Graphic result, Graphic expected) {
     assertThat(result.getPts()).isEqualTo(expected.getPts());
