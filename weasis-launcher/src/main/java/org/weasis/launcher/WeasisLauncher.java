@@ -9,6 +9,8 @@
  */
 package org.weasis.launcher;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 import com.formdev.flatlaf.FlatSystemProperties;
 import com.formdev.flatlaf.util.SystemInfo;
 import java.awt.Desktop;
@@ -29,15 +31,23 @@ import java.lang.reflect.Proxy;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import javax.management.ObjectName;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -1174,11 +1184,69 @@ public class WeasisLauncher {
     } finally {
       cleanImageCache();
       stopSingletonServer();
+      cleanOldFolders();
 
       // If System.exit() hangs call Runtime.getRuntime().halt(1) to kill the application
       Timer timer = new Timer();
       timer.schedule(new HaltTask(), 15000);
     }
+  }
+
+  private void cleanOldFolders() {
+    String dir = System.getProperty(P_WEASIS_PATH);
+    if (Utils.hasText(dir)) {
+      Path path = Paths.get(dir);
+      if( Files.isDirectory(path)){
+        try {
+          List<Path> folders = listOldFolders(path);
+          folders.forEach( p -> {
+              System.err.println("Delete old folder: " + p);
+              FileUtil.delete(p.toFile());
+              Optional<String> id = getID(p.getFileName().toString());
+              if(id.isPresent()) {
+                Path file = Paths.get(dir,id.get() + ".properties");
+                if(Files.isReadable(file)) {
+                  FileUtil.delete(file.toFile());
+                }
+                Path data = Paths.get(dir, "data", id.get());
+                if(Files.isReadable(data)) {
+                  FileUtil.delete(data.toFile());
+                }
+              }
+          });
+        } catch (IOException e) {
+          System.err.println("Cannot clean old folders - " + e);
+        }
+      }
+    }
+  }
+
+  private List<Path> listOldFolders(Path dir) throws IOException {
+    long days = Math.max(Long.parseLong(System.getProperty("weasis.clean.old.version.days", "100")), 30);
+    try (Stream<Path> stream = Files.list(dir)) {
+      return stream
+          .filter(path -> Files.isDirectory(path) && path.getFileName().toString().startsWith("cache-") && isOlderThan(path, days))
+          .toList();
+    }
+  }
+
+  private boolean isOlderThan(Path path, long days)  {
+    try {
+      FileTime fileTime = Files.getLastModifiedTime(path);
+      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime convertedFileTime = LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault());
+      long daysBetween = DAYS.between(convertedFileTime, now);
+      return daysBetween > days;
+    } catch (Exception e) {
+      System.err.println("Cannot get the last modified time - " + e);
+    }
+    return false;
+  }
+
+  public Optional<String> getID(String filename) {
+    return Optional.ofNullable(filename)
+        .filter(f -> f.contains("-"))
+        .map(f -> f.substring(filename.lastIndexOf("-") + 1));
   }
 
   protected void stopSingletonServer() {

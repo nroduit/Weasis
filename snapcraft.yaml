@@ -9,6 +9,8 @@ description: |
   used in healthcare by hospitals, health networks, multicenter research 
   trials, and patients.
   
+  Note: With Snap, the .weasis directory is now located in /home/<username>/snap/weasis/current/.
+  
   Key features:
   - Flexible integration to PACS, VNA, RIS, HIS or PHR
   - Responsive user interface and work well on high DPI screens
