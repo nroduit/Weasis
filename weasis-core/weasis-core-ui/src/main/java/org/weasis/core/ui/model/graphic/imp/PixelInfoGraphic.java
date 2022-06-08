@@ -188,7 +188,6 @@ public class PixelInfoGraphic extends AnnotationGraphic {
   @Override
   public List<MeasureItem> computeMeasurements(
       MeasurableLayer layer, boolean releaseEvent, Unit displayUnit) {
-    // FIXME not used
     if (layer != null && layer.hasContent() && isShapeValid()) {
       MeasurementsAdapter adapter = layer.getMeasurementAdapter(displayUnit);
 
