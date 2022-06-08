@@ -295,17 +295,7 @@ public class ViewerPluginBuilder {
       }
 
       for (MediaElement media : medias) {
-        if (media instanceof ImageElement) {
-          FileCache fc = media.getFileCache();
-          Optional<File> fo = fc.getOriginalFile();
-          if (fc.isLocalFile() && fo.isPresent()) {
-            File gpxFile = new File(fo.get().getPath() + ".xml");
-            GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
-            if (graphicModel != null) {
-              media.setTag(TagW.PresentationModel, graphicModel);
-            }
-          }
-        }
+        openAssociatedGraphics(media);
       }
 
     } catch (Exception e) {
@@ -314,5 +304,19 @@ public class ViewerPluginBuilder {
       reader.reset();
     }
     return series;
+  }
+
+  public static void openAssociatedGraphics(MediaElement media) {
+    if (media instanceof ImageElement) {
+      FileCache fc = media.getFileCache();
+      Optional<File> fo = fc.getOriginalFile();
+      if (fc.isLocalFile() && fo.isPresent()) {
+        File gpxFile = new File(fo.get().getPath() + ".xml");
+        GraphicModel graphicModel = XmlSerializer.readPresentationModel(gpxFile);
+        if (graphicModel != null) {
+          media.setTag(TagW.PresentationModel, graphicModel);
+        }
+      }
+    }
   }
 }
