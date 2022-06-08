@@ -72,8 +72,12 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     assertThat(deserializedGraphic)
         .isInstanceOfAny(Graphic.class, AbstractGraphic.class, getGraphicClass());
     assertThat(deserializedGraphic.getUuid()).isEqualTo(graphic.getUuid());
-    assertThat(deserializedGraphic).usingRecursiveComparison(
-        RecursiveComparisonConfiguration.builder().withIgnoredFieldsOfTypes(PropertyChangeSupport.class).build()).isEqualTo(graphic);
+    assertThat(deserializedGraphic)
+        .usingRecursiveComparison(
+            RecursiveComparisonConfiguration.builder()
+                .withIgnoredFieldsOfTypes(PropertyChangeSupport.class)
+                .build())
+        .isEqualTo(graphic);
   }
 
   @SuppressWarnings("unchecked")
@@ -143,7 +147,12 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     assertThat(expected).isNotNull();
 
     assertThat(result.getUuid()).isNotEmpty().isEqualTo(expected.getUuid());
-    assertThat(result).usingRecursiveComparison(RecursiveComparisonConfiguration.builder().withIgnoredFieldsOfTypes(PropertyChangeSupport.class).build()).isEqualTo(expected);
+    assertThat(result)
+        .usingRecursiveComparison(
+            RecursiveComparisonConfiguration.builder()
+                .withIgnoredFieldsOfTypes(PropertyChangeSupport.class)
+                .build())
+        .isEqualTo(expected);
 
     checkGraphicInterfaceFields(result, expected);
 
@@ -218,7 +227,6 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
     E object1 = deserialize(xml1, getGraphicClass());
     checkGraphicInterfaceFields(object1.copy(), object1);
   }
-
 
   protected final void checkGraphicInterfaceFields(Graphic result, Graphic expected) {
     assertThat(result.getPts()).isEqualTo(expected.getPts());

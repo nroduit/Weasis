@@ -194,11 +194,18 @@ public class ViewerFactory implements SeriesViewerFactory {
               if (series == null) {
                 // TODO improve group model for image, uid for group ?
                 series = reader.getMediaSeries();
+                MediaElement[] elements = reader.getMediaElement();
+                if (elements != null) {
+                  for (MediaElement media : elements) {
+                    ViewerPluginBuilder.openAssociatedGraphics(media);
+                  }
+                }
               } else {
                 MediaElement[] elements = reader.getMediaElement();
                 if (elements != null) {
                   for (MediaElement media : elements) {
                     series.addMedia(media);
+                    ViewerPluginBuilder.openAssociatedGraphics(media);
                   }
                 }
               }

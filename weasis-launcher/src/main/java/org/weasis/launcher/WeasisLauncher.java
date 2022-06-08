@@ -1196,24 +1196,25 @@ public class WeasisLauncher {
     String dir = System.getProperty(P_WEASIS_PATH);
     if (Utils.hasText(dir)) {
       Path path = Paths.get(dir);
-      if( Files.isDirectory(path)){
+      if (Files.isDirectory(path)) {
         try {
           List<Path> folders = listOldFolders(path);
-          folders.forEach( p -> {
-              System.err.println("Delete old folder: " + p);
-              FileUtil.delete(p.toFile());
-              Optional<String> id = getID(p.getFileName().toString());
-              if(id.isPresent()) {
-                Path file = Paths.get(dir,id.get() + ".properties");
-                if(Files.isReadable(file)) {
-                  FileUtil.delete(file.toFile());
+          folders.forEach(
+              p -> {
+                System.err.println("Delete old folder: " + p);
+                FileUtil.delete(p.toFile());
+                Optional<String> id = getID(p.getFileName().toString());
+                if (id.isPresent()) {
+                  Path file = Paths.get(dir, id.get() + ".properties");
+                  if (Files.isReadable(file)) {
+                    FileUtil.delete(file.toFile());
+                  }
+                  Path data = Paths.get(dir, "data", id.get());
+                  if (Files.isReadable(data)) {
+                    FileUtil.delete(data.toFile());
+                  }
                 }
-                Path data = Paths.get(dir, "data", id.get());
-                if(Files.isReadable(data)) {
-                  FileUtil.delete(data.toFile());
-                }
-              }
-          });
+              });
         } catch (IOException e) {
           System.err.println("Cannot clean old folders - " + e);
         }
@@ -1222,19 +1223,25 @@ public class WeasisLauncher {
   }
 
   private List<Path> listOldFolders(Path dir) throws IOException {
-    long days = Math.max(Long.parseLong(System.getProperty("weasis.clean.old.version.days", "100")), 30);
+    long days =
+        Math.max(Long.parseLong(System.getProperty("weasis.clean.old.version.days", "100")), 30);
     try (Stream<Path> stream = Files.list(dir)) {
       return stream
-          .filter(path -> Files.isDirectory(path) && path.getFileName().toString().startsWith("cache-") && isOlderThan(path, days))
+          .filter(
+              path ->
+                  Files.isDirectory(path)
+                      && path.getFileName().toString().startsWith("cache-")
+                      && isOlderThan(path, days))
           .toList();
     }
   }
 
-  private boolean isOlderThan(Path path, long days)  {
+  private boolean isOlderThan(Path path, long days) {
     try {
       FileTime fileTime = Files.getLastModifiedTime(path);
       LocalDateTime now = LocalDateTime.now();
-      LocalDateTime convertedFileTime = LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault());
+      LocalDateTime convertedFileTime =
+          LocalDateTime.ofInstant(fileTime.toInstant(), ZoneId.systemDefault());
       long daysBetween = DAYS.between(convertedFileTime, now);
       return daysBetween > days;
     } catch (Exception e) {
