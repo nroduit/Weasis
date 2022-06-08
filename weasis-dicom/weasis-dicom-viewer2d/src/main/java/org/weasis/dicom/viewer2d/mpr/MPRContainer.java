@@ -42,7 +42,6 @@ import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
@@ -86,6 +85,7 @@ import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
@@ -312,6 +312,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
     }
   }
 
+  @Override
+  protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
+    super.setLayoutModel(layoutModel);
+    if (eventManager instanceof EventManager manager) {
+      // Force to refresh view with ZoomType.CURRENT
+      manager.reset(ResetTools.ZOOM);
+    }
+  }
+
   private boolean closeIfNoContent() {
     if (getOpenSeries().isEmpty()) {
       close();
@@ -530,8 +539,7 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
                           // Set the middle image ( the best choice to propagate the default preset
                           // of non CT modalities)
                           ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                          if (seqAction instanceof SliderChangeListener) {
-                            SliderCineListener sliceAction = (SliderCineListener) seqAction;
+                          if (seqAction instanceof SliderCineListener sliceAction) {
                             sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
                           }
                           ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
