@@ -84,6 +84,7 @@ import org.weasis.dicom.viewer2d.DcmHeaderToolBar;
 import org.weasis.dicom.viewer2d.EventManager;
 import org.weasis.dicom.viewer2d.LutToolBar;
 import org.weasis.dicom.viewer2d.Messages;
+import org.weasis.dicom.viewer2d.ResetTools;
 import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
@@ -313,6 +314,15 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
         }
       }
       eventManager.setSelectedView2dContainer(null);
+    }
+  }
+
+  @Override
+  protected synchronized void setLayoutModel(GridBagLayoutModel layoutModel) {
+    super.setLayoutModel(layoutModel);
+    if (eventManager instanceof EventManager) {
+      // Force to refresh view with ZoomType.CURRENT
+      ((EventManager) eventManager).reset(ResetTools.ZOOM);
     }
   }
 
