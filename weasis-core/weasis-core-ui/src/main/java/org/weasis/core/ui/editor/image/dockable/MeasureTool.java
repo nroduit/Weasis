@@ -62,6 +62,7 @@ import org.weasis.core.ui.editor.image.ViewerToolBar;
 import org.weasis.core.ui.model.graphic.DragGraphic;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.graphic.GraphicSelectionListener;
+import org.weasis.core.ui.model.graphic.imp.AnnotationGraphic;
 import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.ImageStatistics;
 import org.weasis.core.ui.model.utils.bean.MeasureItem;
@@ -345,9 +346,8 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
       if (g != null && selectedGraphic.size() == 1) {
         // Warning only comparing if it is the same instance, cannot compare handle points.
         // Update of the list of measures is performed in the drag sequence (move, complete). Here
-        // only the
-        // change of selection will compute the measurements
-        if (g == selectedGraphic.get(0)) {
+        // only the change of selection will compute the measurements
+        if (g == selectedGraphic.get(0) && !(g instanceof AnnotationGraphic)) {
           computeAllMeasures = false;
         }
       }
