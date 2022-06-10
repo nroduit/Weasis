@@ -34,6 +34,7 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.pref.node.AuthenticationPersistence;
 import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
@@ -61,6 +62,8 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
   private final Map<String, String> retrieveHeaders;
   protected final Map<String, List<String>> requestMap;
   protected final RsQueryResult arcConfig;
+
+  protected final PluginOpeningStrategy openingStrategy;
 
   public RsQueryParams(
       DicomModel dicomModel,
@@ -108,6 +111,7 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
       }
     }
     this.arcConfig = new RsQueryResult(this, method);
+    this.openingStrategy = new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
   }
 
   public static Map<String, String> getHeaders(List<String> urlHeaders) {
@@ -154,26 +158,36 @@ public class RsQueryParams extends ExplorerTask<Boolean, String> {
   }
 
   @Override
+  protected void done() {
+    openingStrategy.reset();
+  }
+
+  @Override
   protected Boolean doInBackground() throws Exception {
     fillPatientList();
-    WadoParameters wp = new WadoParameters("", true, true);
-    getRetrieveHeaders().forEach(wp::addHttpTag);
-    wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
 
-    for (final LoadSeries loadSeries : seriesMap.values()) {
-      String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
-      if (!ps) {
-        loadSeries.startDownloadImageReference(wp);
+    if (!seriesMap.isEmpty()) {
+      openingStrategy.prepareImport();
+      WadoParameters wp = new WadoParameters("", true, true);
+      getRetrieveHeaders().forEach(wp::addHttpTag);
+      wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
+
+      for (final LoadSeries loadSeries : seriesMap.values()) {
+        String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
+        boolean ps = ("PR".equals(modality) || "KO".equals(modality)); // NON-NLS
+        if (!ps) {
+          loadSeries.startDownloadImageReference(wp);
+        }
+        loadSeries.setPOpeningStrategy(openingStrategy);
+        DownloadManager.addLoadSeries(loadSeries, dicomModel, loadSeries.isStartDownloading());
       }
-      DownloadManager.addLoadSeries(loadSeries, dicomModel, loadSeries.isStartDownloading());
+
+      // Sort tasks from the download priority order (low number has a higher priority), TASKS
+      // is sorted from low to high priority.
+      DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
+
+      DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
     }
-
-    // Sort tasks from the download priority order (low number has a higher priority), TASKS
-    // is sorted from low to high priority.
-    DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
-
-    DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
     return true;
   }
 

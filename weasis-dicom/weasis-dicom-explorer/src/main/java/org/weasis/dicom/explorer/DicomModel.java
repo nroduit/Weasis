@@ -83,7 +83,6 @@ import org.weasis.dicom.codec.utils.SplittingModalityRules;
 import org.weasis.dicom.codec.utils.SplittingModalityRules.Rule;
 import org.weasis.dicom.codec.utils.SplittingRules;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
-import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
 import org.weasis.dicom.explorer.wado.DicomManager;
 import org.weasis.dicom.explorer.wado.DownloadManager;
@@ -1063,9 +1062,7 @@ public class DicomModel implements TreeModel, DataExplorerModel {
         files[i] = new File(largs.get(i));
       }
       OpeningViewer openingViewer =
-          OpeningViewer.getOpeningViewer(
-              Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(LocalImport.LAST_OPEN_VIEWER_MODE),
-              OpeningViewer.ONE_PATIENT);
+          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
       LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
     }
 
@@ -1139,10 +1136,13 @@ public class DicomModel implements TreeModel, DataExplorerModel {
           loadSeries = dirImport.readDicomDir();
         }
         if (loadSeries != null && !loadSeries.isEmpty()) {
-          LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this));
+          OpeningViewer openingViewer =
+              OpeningViewer.getOpeningViewerByLocalKey(DicomDirImport.LAST_DICOMDIR_OPEN_MODE);
+          LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, DicomModel.this, openingViewer));
         } else {
-          LOADING_EXECUTOR.execute(
-              new LoadLocalDicom(files, true, DicomModel.this, OpeningViewer.ONE_PATIENT));
+          OpeningViewer openingViewer =
+              OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
+          LOADING_EXECUTOR.execute(new LoadLocalDicom(files, true, DicomModel.this, openingViewer));
         }
       }
     }

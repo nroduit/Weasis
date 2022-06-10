@@ -11,6 +11,7 @@ package org.weasis.dicom.explorer;
 
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import bibliothek.gui.dock.control.focus.DefaultFocusRequest;
 import com.formdev.flatlaf.ui.FlatUIUtils;
 import java.awt.Color;
 import java.awt.Component;
@@ -72,6 +73,7 @@ import org.weasis.core.api.util.FontItem;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.PluginTool;
+import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerEvent;
 import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
@@ -902,6 +904,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
             MediaSeriesGroup patient = model.getParent(dcm, DicomModel.patient);
             if (!isSelectedPatient(patient)) {
               modelPatient.setSelectedItem(patient);
+              UIManager.DOCKING_CONTROL
+                  .getController()
+                  .setFocusedDockable(
+                      new DefaultFocusRequest(dockable.intern(), this, false, true, false));
             }
           }
         } else if (ObservableEvent.BasicAction.ADD.equals(action)) {
@@ -1083,8 +1089,10 @@ public class DicomExplorer extends PluginTool implements DataExplorerView, Serie
   @Override
   public void importFiles(File[] files, boolean recursive) {
     if (files != null) {
+      OpeningViewer openingViewer =
+          OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
       DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files, recursive, model, OpeningViewer.ONE_PATIENT));
+          new LoadLocalDicom(files, recursive, model, openingViewer));
     }
   }
 

@@ -133,6 +133,7 @@ import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadLocalDicom;
+import org.weasis.dicom.explorer.LocalImport;
 import org.weasis.dicom.explorer.MimeSystemAppFactory;
 import org.weasis.dicom.explorer.SeriesSelectionModel;
 import org.weasis.dicom.explorer.pr.PrGraphicUtil;
@@ -1468,10 +1469,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
           return false;
         }
         DicomModel model = (DicomModel) dicomView.getDataExplorerModel();
-
+        OpeningViewer openingViewer =
+            OpeningViewer.getOpeningViewerByLocalKey(LocalImport.LAST_OPEN_VIEWER_MODE);
         DicomModel.LOADING_EXECUTOR.execute(
-            new LoadLocalDicom(
-                files.toArray(File[]::new), true, model, OpeningViewer.ALL_PATIENTS));
+            new LoadLocalDicom(files.toArray(File[]::new), true, model, openingViewer));
         return true;
       }
       return false;

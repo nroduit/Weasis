@@ -36,6 +36,7 @@ import org.weasis.core.util.StringUtil.Suffix;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.wado.DownloadManager.PriorityTaskComparator;
 
@@ -179,12 +180,18 @@ public class LoadRemoteDicomManifest extends ExplorerTask<Boolean, String> {
 
   private void startDownloadingSeries(
       Collection<LoadSeries> wadoTasks, boolean downloadImmediately) {
-    for (final LoadSeries loadSeries : wadoTasks) {
-      DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
-    }
+    if (!wadoTasks.isEmpty()) {
+      PluginOpeningStrategy openingStrategy =
+          new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
+      openingStrategy.prepareImport();
+      for (final LoadSeries loadSeries : wadoTasks) {
+        loadSeries.setPOpeningStrategy(openingStrategy);
+        DownloadManager.addLoadSeries(loadSeries, dicomModel, downloadImmediately);
+      }
 
-    // Sort tasks from the download priority order (low number has a higher priority), TASKS
-    // is sorted from low to high priority.
-    DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
+      // Sort tasks from the download priority order (low number has a higher priority), TASKS
+      // is sorted from low to high priority.
+      DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
+    }
   }
 }

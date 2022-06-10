@@ -33,7 +33,6 @@ import org.osgi.framework.FrameworkUtil;
 import org.osgi.service.prefs.Preferences;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
@@ -53,10 +52,8 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
 import org.weasis.core.ui.editor.image.RotationToolBar;
@@ -76,8 +73,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
 import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
@@ -90,8 +87,7 @@ import org.weasis.dicom.viewer2d.View2dContainer;
 import org.weasis.dicom.viewer2d.View2dFactory;
 import org.weasis.dicom.viewer2d.mpr.MprView.SliceOrientation;
 
-public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class MPRContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(MPRContainer.class);
 
   static SynchView defaultMpr;
@@ -286,18 +282,6 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
           toolBar.changeButtonState(MouseActions.T_LEFT, command);
         }
       }
-
-      eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
     } else {
       if (lastCommand != null && toolBar != null) {
         MouseActions mouseActions = eventManager.getMouseActions();
@@ -308,8 +292,8 @@ public class MPRContainer extends ImageViewerPlugin<DicomImageElement>
           lastCommand = null;
         }
       }
-      eventManager.setSelectedView2dContainer(null);
     }
+    super.setSelected(true);
   }
 
   @Override

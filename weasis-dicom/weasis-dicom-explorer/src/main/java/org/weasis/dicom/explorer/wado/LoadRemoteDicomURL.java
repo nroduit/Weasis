@@ -27,6 +27,7 @@ import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.mf.SopInstance;
 import org.weasis.dicom.mf.WadoParameters;
 
@@ -120,6 +121,10 @@ public class LoadRemoteDicomURL extends ExplorerTask<Boolean, String> {
         if (!ps) {
           loadSeries.startDownloadImageReference(wadoParameters);
         }
+        PluginOpeningStrategy openingStrategy =
+            new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
+        openingStrategy.prepareImport();
+        loadSeries.setPOpeningStrategy(openingStrategy);
         loadSeries.setPriority(new DownloadPriority(patient, study, dicomSeries, true));
         DownloadManager.addLoadSeries(loadSeries, dicomModel, true);
         DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();

@@ -83,10 +83,13 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
   @Override
   public void closeAdditionalWindow() {
-    OpeningViewer openingViewer =
-        Objects.requireNonNullElse(
-            (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_DICOM_ZIP_OPEN_MODE, openingViewer.name());
+    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
+        LAST_DICOM_ZIP_OPEN_MODE, getOpeningViewer().name());
+  }
+
+  private OpeningViewer getOpeningViewer() {
+    return Objects.requireNonNullElse(
+        (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
   }
 
   @Override
@@ -96,10 +99,10 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
 
   @Override
   public void importDICOM(DicomModel dicomModel, JProgressBar info) {
-    loadDicomZip(selectedFile, dicomModel);
+    loadDicomZip(selectedFile, dicomModel, getOpeningViewer());
   }
 
-  public static void loadDicomZip(File file, DicomModel dicomModel) {
+  public static void loadDicomZip(File file, DicomModel dicomModel, OpeningViewer openingViewer) {
     if (file != null && file.canRead()) {
       File dir =
           FileUtil.createTempDir(
@@ -133,13 +136,14 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         DicomDirLoader dirImport = new DicomDirLoader(dicomdir, dicomModel, false);
         List<LoadSeries> loadSeries = dirImport.readDicomDir();
         if (loadSeries != null && !loadSeries.isEmpty()) {
-          DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
+          DicomModel.LOADING_EXECUTOR.execute(
+              new LoadDicomDir(loadSeries, dicomModel, openingViewer));
         } else {
           LOGGER.error("Cannot import DICOM from {}", file);
         }
       } else {
         LoadLocalDicom dicom =
-            new LoadLocalDicom(new File[] {dir}, true, dicomModel, OpeningViewer.ONE_PATIENT);
+            new LoadLocalDicom(new File[] {dir}, true, dicomModel, openingViewer);
         DicomModel.LOADING_EXECUTOR.execute(dicom);
       }
     }
@@ -162,7 +166,9 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
       } catch (Exception e) {
         LOGGER.error("Loading DICOM Zip", e);
       }
-      loadDicomZip(tempFile, dicomModel);
+      OpeningViewer openingViewer =
+          OpeningViewer.getOpeningViewerByLocalKey(LAST_DICOM_ZIP_OPEN_MODE);
+      loadDicomZip(tempFile, dicomModel, openingViewer);
     }
   }
 }

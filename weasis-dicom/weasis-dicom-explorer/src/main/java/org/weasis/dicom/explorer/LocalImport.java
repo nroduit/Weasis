@@ -88,9 +88,7 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
   static JPanel buildOpenViewerPanel(JComboBox<OpeningViewer> comboBox, String key) {
     JLabel labelOpenPatient =
         new JLabel(Messages.getString("DicomExplorer.open_win") + StringUtil.COLON);
-    comboBox.setSelectedItem(
-        OpeningViewer.getOpeningViewer(
-            Activator.IMPORT_EXPORT_PERSISTENCE.getProperty(key), OpeningViewer.ONE_PATIENT));
+    comboBox.setSelectedItem(OpeningViewer.getOpeningViewerByLocalKey(key));
     return GuiUtils.getFlowLayoutPanel(
         ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, labelOpenPatient, comboBox);
   }
@@ -127,12 +125,15 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
 
   @Override
   public void closeAdditionalWindow() {
-    OpeningViewer openingViewer =
-        Objects.requireNonNullElse(
-            (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
-    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_OPEN_VIEWER_MODE, openingViewer.name());
+    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
+        LAST_OPEN_VIEWER_MODE, getOpeningViewer().name());
     Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
         LAST_RECURSIVE_MODE, String.valueOf(checkboxSearch.isSelected()));
+  }
+
+  private OpeningViewer getOpeningViewer() {
+    return Objects.requireNonNullElse(
+        (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
   }
 
   @Override
@@ -182,11 +183,8 @@ public class LocalImport extends AbstractItemDialogPage implements ImportDicom {
       if (StringUtil.hasText(lastDir)) {
         Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(LAST_OPEN_DIR, lastDir);
       }
-      OpeningViewer openingViewer =
-          Objects.requireNonNullElse(
-              (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
       DicomModel.LOADING_EXECUTOR.execute(
-          new LoadLocalDicom(files, checkboxSearch.isSelected(), dicomModel, openingViewer));
+          new LoadLocalDicom(files, checkboxSearch.isSelected(), dicomModel, getOpeningViewer()));
       files = null;
     }
   }

@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
@@ -33,6 +35,7 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.internal.Activator;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
@@ -40,9 +43,11 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
   private static final Logger LOGGER = LoggerFactory.getLogger(DicomDirImport.class);
 
   private static final String LAST_DICOM_DIR = "lastDicomDir";
-
+  public static final String LAST_DICOMDIR_OPEN_MODE = "last.dicomdir.open.mode";
   private final JTextField textField = new JTextField();
   private JCheckBox checkboxWriteInCache;
+  private final JComboBox<OpeningViewer> openingViewerJComboBox =
+      new JComboBox<>(OpeningViewer.values());
 
   public DicomDirImport() {
     super(Messages.getString("DicomDirImport.dicomdir"), 5);
@@ -73,6 +78,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, btnCdrom));
     add(GuiUtils.getFlowLayoutPanel(ITEM_SEPARATOR_SMALL, ITEM_SEPARATOR, checkboxWriteInCache));
 
+    add(LocalImport.buildOpenViewerPanel(openingViewerJComboBox, LAST_DICOMDIR_OPEN_MODE));
     add(GuiUtils.boxYLastElement(LAST_FILLER_HEIGHT));
   }
 
@@ -112,7 +118,13 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
 
   @Override
   public void closeAdditionalWindow() {
-    // Do nothing
+    Activator.IMPORT_EXPORT_PERSISTENCE.setProperty(
+        LAST_DICOMDIR_OPEN_MODE, getOpeningViewer().name());
+  }
+
+  private OpeningViewer getOpeningViewer() {
+    return Objects.requireNonNullElse(
+        (OpeningViewer) openingViewerJComboBox.getSelectedItem(), OpeningViewer.ONE_PATIENT);
   }
 
   @Override
@@ -153,7 +165,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
           loadDicomDir(file, dicomModel, checkboxWriteInCache.isSelected());
 
       if (loadSeries != null && !loadSeries.isEmpty()) {
-        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, dicomModel));
+        DicomModel.LOADING_EXECUTOR.execute(
+            new LoadDicomDir(loadSeries, dicomModel, getOpeningViewer()));
       } else {
         LOGGER.error("Cannot import DICOM from {}", file);
 

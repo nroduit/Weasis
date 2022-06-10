@@ -33,7 +33,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -62,15 +61,14 @@ import org.weasis.dicom.codec.DicomSeries;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.wave.dockable.MeasureAnnotationTool;
 
-public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class WaveContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(WaveContainer.class);
 
   public static final GridBagLayoutModel VIEWS_1x1 =
@@ -234,18 +232,8 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
 
   @Override
   public void setSelected(boolean selected) {
+    super.setSelected(true);
     if (selected) {
-      eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
       if (ecgView != null
           && !TOOLS.isEmpty()
           && TOOLS.get(0) instanceof MeasureAnnotationTool tool) {
@@ -253,9 +241,6 @@ public class WaveContainer extends ImageViewerPlugin<DicomImageElement>
         tool.setSeries(ecgView.getSeries());
         ecgView.updateMarkersTable();
       }
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
     }
   }
 

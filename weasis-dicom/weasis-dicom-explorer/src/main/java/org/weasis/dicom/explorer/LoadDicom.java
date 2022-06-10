@@ -10,9 +10,6 @@
 package org.weasis.dicom.explorer;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
@@ -26,10 +23,6 @@ import org.weasis.core.api.media.data.SeriesThumbnail;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.core.api.media.data.Thumbnail;
 import org.weasis.core.api.service.BundleTools;
-import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.codec.DicomMediaIO;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
@@ -41,9 +34,6 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
   private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(LoadDicom.class);
 
   protected final DicomModel dicomModel;
-  protected final OpeningViewer openingMode;
-  private boolean openPlugin;
-  protected final Map<MediaSeriesGroup, Boolean> openPatientMap = new HashMap<>();
 
   protected LoadDicom(
       DataExplorerModel explorerModel, boolean interruptible, OpeningViewer openingMode) {
@@ -61,16 +51,9 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
   }
 
-  protected void prepareImport() {
-    if (OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)
-        || OpeningViewer.ALL_PATIENTS_CLEAN.equals(openingMode)) {
-      UIManager.closeSeriesViewer(UIManager.VIEWER_PLUGINS);
-    }
-  }
-
   @Override
   protected void done() {
-    openPatientMap.clear();
+    openingStrategy.reset();
     dicomModel.firePropertyChange(
         new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
     LOGGER.info("End of loading DICOM locally");
@@ -167,29 +150,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
               new ObservableEvent(
                   ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
         }
-
-        boolean selectPatient = true;
-        if (!OpeningViewer.NONE.equals(openingMode)
-            && openPlugin
-            && LangUtil.getNULLtoTrue(openPatientMap.get(patient))) {
-          SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
-          if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-            if (OpeningViewer.ONE_PATIENT.equals(openingMode)
-                || OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)) {
-              openPlugin = false;
-            } else {
-              openPatientMap.put(patient, false);
-            }
-            selectPatient = false;
-            ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
-          }
-        }
-        if (selectPatient) {
-          // Send event to select the related patient in Dicom Explorer.
-          dicomModel.firePropertyChange(
-              new ObservableEvent(
-                  ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
-        }
+        openingStrategy.openViewerPlugin(patient, dicomModel, dicomSeries);
       } else {
         // Test if SOPInstanceUID already exists
         if (isSOPInstanceUIDExist(

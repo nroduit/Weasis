@@ -73,12 +73,6 @@ import org.weasis.core.api.util.HttpResponse;
 import org.weasis.core.api.util.NetworkUtil;
 import org.weasis.core.api.util.ThreadUtil;
 import org.weasis.core.api.util.URLParameters;
-import org.weasis.core.ui.docking.UIManager;
-import org.weasis.core.ui.editor.SeriesViewerFactory;
-import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.ui.editor.image.ImageViewerPlugin;
-import org.weasis.core.ui.editor.image.ViewCanvas;
-import org.weasis.core.ui.editor.image.ViewerPlugin;
 import org.weasis.core.ui.model.GraphicModel;
 import org.weasis.core.ui.model.ReferencedImage;
 import org.weasis.core.ui.model.ReferencedSeries;
@@ -94,7 +88,7 @@ import org.weasis.dicom.codec.utils.DicomMediaUtils;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
 import org.weasis.dicom.explorer.Messages;
-import org.weasis.dicom.explorer.MimeSystemAppFactory;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.ThumbnailMouseAndKeyAdapter;
 import org.weasis.dicom.mf.HttpTag;
 import org.weasis.dicom.mf.SopInstance;
@@ -111,6 +105,16 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   public static final TagW DOWNLOAD_START_TIME = new TagW("DownloadStartTime", TagType.TIME);
   public static final TagW DOWNLOAD_TIME = new TagW("DownloadTime", TagType.TIME);
   public static final TagW DOWNLOAD_ERRORS = new TagW("DownloadErrors", TagType.INTEGER);
+
+  private PluginOpeningStrategy openingStrategy;
+
+  public void setPOpeningStrategy(PluginOpeningStrategy openingStrategy) {
+    this.openingStrategy = openingStrategy;
+  }
+
+  public PluginOpeningStrategy getOpeningStrategy() {
+    return openingStrategy;
+  }
 
   public enum Status {
     DOWNLOADING,
@@ -1004,17 +1008,18 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
       if (bytesTransferred == Integer.MIN_VALUE) {
         LOGGER.warn("Stop downloading unsupported TSUID, retry to download non compressed TSUID");
-        InputStream stream2 = replaceToDefaultTSUID().getInputStream();
-        if (overrideList == null) {
-          bytesTransferred =
-              FileUtil.writeStream(
-                  new DicomSeriesProgressMonitor(dicomSeries, stream2, false), tempFile);
-        } else {
-          bytesTransferred =
-              writFile(
-                  new DicomSeriesProgressMonitor(dicomSeries, stream2, false),
-                  tempFile,
-                  overrideList);
+        try (InputStream stream2 = replaceToDefaultTSUID().getInputStream()) {
+          if (overrideList == null) {
+            bytesTransferred =
+                FileUtil.writeStream(
+                    new DicomSeriesProgressMonitor(dicomSeries, stream2, false), tempFile);
+          } else {
+            bytesTransferred =
+                writFile(
+                    new DicomSeriesProgressMonitor(dicomSeries, stream2, false),
+                    tempFile,
+                    overrideList);
+          }
         }
       }
       return bytesTransferred;
@@ -1117,7 +1122,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             String oldStudyUID = (String) study.getTagValue(TagD.get(Tag.StudyInstanceUID));
             String studyUID = TagD.getTagValue(reader, Tag.StudyInstanceUID, String.class);
             if (!Objects.equals(oldStudyUID, studyUID)) {
-              // Fix when StudyInstanceUID in xml have different patient name
+              // Fix when StudyInstanceUID in xml have different study UID
               dicomModel.mergeStudyUID(oldStudyUID, studyUID);
             }
           }
@@ -1127,9 +1132,6 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           applyPresentationModel(media);
           dicomModel.applySplittingRules(dicomSeries, media);
         }
-        if (firstImageToDisplay && dicomSeries.size(null) == 0) {
-          firstImageToDisplay = false;
-        }
       }
 
       Thumbnail thumb = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
@@ -1138,36 +1140,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       }
 
       if (firstImageToDisplay) {
-        boolean openNewTab = true;
-        MediaSeriesGroup entry1 = dicomModel.getParent(dicomSeries, DicomModel.patient);
-        if (entry1 != null) {
-          synchronized (UIManager.VIEWER_PLUGINS) {
-            for (ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-              if (entry1.equals(p.getGroupID())) {
-                if (p instanceof ImageViewerPlugin imageViewerPlugin) {
-                  ViewCanvas<?> pane = imageViewerPlugin.getSelectedImagePane();
-                  if (pane != null
-                      && pane.getImageLayer() != null
-                      && pane.getImageLayer().getSourceImage() == null) {
-                    // When the selected view has no image send, open in it.
-                    break;
-                  }
-                }
-                openNewTab = false;
-                break;
-              }
-            }
-          }
-        }
-        if (openNewTab) {
-          SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
-          if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-            ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
-          } else if (plugin != null) {
-            // Send event to select the related patient in Dicom Explorer.
-            dicomModel.firePropertyChange(
-                new ObservableEvent(
-                    ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
+        MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+        if (patient != null) {
+          PluginOpeningStrategy open = openingStrategy;
+          if (open != null) {
+            open.openViewerPlugin(patient, dicomModel, dicomSeries);
           }
         }
       }
@@ -1251,6 +1228,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
             s.startDownloading);
     s.cancel();
     taskResume.setPriority(s.getPriority());
+    taskResume.setPOpeningStrategy(s.getOpeningStrategy());
     Thumbnail thumbnail = (Thumbnail) s.getDicomSeries().getTagValue(TagW.Thumbnail);
     if (thumbnail != null) {
       LoadSeries.removeThumbnailMouseAndKeyAdapter(thumbnail);

@@ -39,38 +39,40 @@ public class LoadDicomObjects extends LoadDicom {
 
   @Override
   protected Boolean doInBackground() throws Exception {
-    prepareImport();
     startLoadingEvent();
     addSelectionAndNotify();
     return true;
   }
 
   protected void addSelectionAndNotify() {
-    ArrayList<SeriesThumbnail> thumbs = new ArrayList<>(dicomObjectsToLoad.length);
-    for (Attributes dicom : dicomObjectsToLoad) {
-      if (isCancelled()) {
-        return;
-      }
-
-      try {
-        DicomMediaIO loader = new DicomMediaIO(dicom);
-        if (loader.isReadableDicom()) {
-          // Issue: must handle adding image to viewer and building thumbnail (middle image)
-          SeriesThumbnail t = buildDicomStructure(loader);
-          if (t != null) {
-            thumbs.add(t);
-          }
+    if (dicomObjectsToLoad.length > 0) {
+      openingStrategy.prepareImport();
+      ArrayList<SeriesThumbnail> thumbs = new ArrayList<>(dicomObjectsToLoad.length);
+      for (Attributes dicom : dicomObjectsToLoad) {
+        if (isCancelled()) {
+          return;
         }
-      } catch (URISyntaxException e) {
-        LOGGER.error("Reading DICOM object", e);
-      }
-    }
 
-    for (final SeriesThumbnail t : thumbs) {
-      MediaSeries<MediaElement> series = t.getSeries();
-      // Avoid rebuilding most of CR series thumbnail
-      if (series != null && series.size(null) > 2) {
-        GuiExecutor.instance().execute(t::reBuildThumbnail);
+        try {
+          DicomMediaIO loader = new DicomMediaIO(dicom);
+          if (loader.isReadableDicom()) {
+            // Issue: must handle adding image to viewer and building thumbnail (middle image)
+            SeriesThumbnail t = buildDicomStructure(loader);
+            if (t != null) {
+              thumbs.add(t);
+            }
+          }
+        } catch (URISyntaxException e) {
+          LOGGER.error("Reading DICOM object", e);
+        }
+      }
+
+      for (final SeriesThumbnail t : thumbs) {
+        MediaSeries<MediaElement> series = t.getSeries();
+        // Avoid rebuilding most of CR series thumbnail
+        if (series != null && series.size(null) > 2) {
+          GuiExecutor.instance().execute(t::reBuildThumbnail);
+        }
       }
     }
   }

@@ -40,7 +40,6 @@ public class LoadLocalDicom extends LoadDicom {
 
   @Override
   protected Boolean doInBackground() throws Exception {
-    prepareImport();
     startLoadingEvent();
     addSelectionAndNotify(files, true);
     return true;
@@ -51,6 +50,7 @@ public class LoadLocalDicom extends LoadDicom {
       return;
     }
 
+    openingStrategy.prepareImport();
     ArrayList<SeriesThumbnail> thumbs = new ArrayList<>();
     ArrayList<File> folders = new ArrayList<>();
     for (File value : file) {

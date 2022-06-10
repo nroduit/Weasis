@@ -284,6 +284,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
   @Override
   protected void done() {
     this.removeAllCancelListeners();
+    openingStrategy.reset();
     explorerDcmModel.firePropertyChange(
         new ObservableEvent(
             ObservableEvent.BasicAction.LOADING_STOP, explorerDcmModel, null, this));
@@ -406,24 +407,29 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
       }
     }
 
-    WadoParameters wp = new WadoParameters("", true, true);
-    retrieveNode.getHeaders().forEach(wp::addHttpTag);
-    wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
+    if (!loadMap.isEmpty()) {
+      openingStrategy.prepareImport();
+      WadoParameters wp = new WadoParameters("", true, true);
+      retrieveNode.getHeaders().forEach(wp::addHttpTag);
+      wp.addHttpTag("Accept", "image/jpeg"); // NON-NLS
 
-    for (final LoadSeries loadSeries : loadMap.values()) {
-      String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
-      boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
-      if (!ps) {
-        loadSeries.startDownloadImageReference(wp);
+      for (final LoadSeries loadSeries : loadMap.values()) {
+        String modality = TagD.getTagValue(loadSeries.getDicomSeries(), Tag.Modality, String.class);
+        boolean ps = "PR".equals(modality) || "KO".equals(modality); // NON-NLS
+        if (!ps) {
+          loadSeries.startDownloadImageReference(wp);
+        }
+        loadSeries.setPOpeningStrategy(openingStrategy);
+        DownloadManager.addLoadSeries(
+            loadSeries, explorerDcmModel, loadSeries.isStartDownloading());
       }
-      DownloadManager.addLoadSeries(loadSeries, explorerDcmModel, loadSeries.isStartDownloading());
+
+      // Sort tasks from the download priority order (low number has a higher priority), TASKS
+      // is sorted from low to high priority.
+      DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
+
+      DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
     }
-
-    // Sort tasks from the download priority order (low number has a higher priority), TASKS
-    // is sorted from low to high priority.
-    DownloadManager.TASKS.sort(Collections.reverseOrder(new PriorityTaskComparator()));
-
-    DownloadManager.CONCURRENT_EXECUTOR.prestartAllCoreThreads();
   }
 
   public MediaSeriesGroup getStudyNode(DicomModel dicomModel, String studyUID) {

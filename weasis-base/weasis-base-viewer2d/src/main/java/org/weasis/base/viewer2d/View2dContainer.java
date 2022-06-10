@@ -324,12 +324,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
 
   @Override
   public void setSelected(boolean selected) {
-    if (selected) {
-      eventManager.setSelectedView2dContainer(this);
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
-    }
+    eventManager.setSelectedView2dContainer(selected ? this : null);
   }
 
   @Override

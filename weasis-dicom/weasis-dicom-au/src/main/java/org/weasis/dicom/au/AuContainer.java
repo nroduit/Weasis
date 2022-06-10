@@ -22,7 +22,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -43,13 +42,12 @@ import org.weasis.core.ui.util.Toolbar;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 
-public class AuContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class AuContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(AuContainer.class);
 
   static final GridBagLayoutModel DEFAULT_VIEW =
@@ -181,25 +179,6 @@ public class AuContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public List<DockableTool> getToolPanel() {
     return null;
-  }
-
-  @Override
-  public void setSelected(boolean selected) {
-    if (selected) {
-      eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
-    }
   }
 
   @Override

@@ -31,7 +31,6 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.InsertableUtil;
 import org.weasis.core.api.gui.util.GuiExecutor;
@@ -56,14 +55,13 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.DicomSpecialElement;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
-import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomFieldsView;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 
-public class SRContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class SRContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SRContainer.class);
 
   public static final GridBagLayoutModel VIEWS_1x1 =
@@ -213,25 +211,6 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
   }
 
   @Override
-  public void setSelected(boolean selected) {
-    if (selected) {
-      eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
-    }
-  }
-
-  @Override
   public void close() {
     SRFactory.closeSeriesViewer(this);
     super.close();
@@ -247,14 +226,12 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
 
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (evt instanceof ObservableEvent) {
-      ObservableEvent event = (ObservableEvent) evt;
+    if (evt instanceof ObservableEvent event) {
       ObservableEvent.BasicAction action = event.getActionCommand();
       Object newVal = event.getNewValue();
 
       if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
-        if (newVal instanceof MediaSeriesGroup) {
-          MediaSeriesGroup group = (MediaSeriesGroup) newVal;
+        if (newVal instanceof MediaSeriesGroup group) {
           // Patient Group
           if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
             if (group.equals(getGroupID())) {
@@ -265,8 +242,7 @@ public class SRContainer extends ImageViewerPlugin<DicomImageElement>
           }
           // Study Group
           else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel) {
-              DicomModel model = (DicomModel) event.getSource();
+            if (event.getSource() instanceof DicomModel model) {
               if (srview != null
                   && group.equals(model.getParent(srview.getSeries(), DicomModel.study))) {
                 close();

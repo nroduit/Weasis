@@ -27,6 +27,7 @@ import org.weasis.core.ui.util.ColorLayerUI;
 import org.weasis.core.ui.util.DefaultAction;
 import org.weasis.core.ui.util.WtoolBar;
 import org.weasis.core.util.StringUtil;
+import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.wado.LoadSeries;
 
 public class ImportToolBar extends WtoolBar {
@@ -74,7 +75,9 @@ public class ImportToolBar extends WtoolBar {
     } else {
       List<LoadSeries> loadSeries = DicomDirImport.loadDicomDir(file, model, true);
       if (loadSeries != null && !loadSeries.isEmpty()) {
-        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model));
+        OpeningViewer openingViewer =
+            OpeningViewer.getOpeningViewerByLocalKey(DicomDirImport.LAST_DICOMDIR_OPEN_MODE);
+        DicomModel.LOADING_EXECUTOR.execute(new LoadDicomDir(loadSeries, model, openingViewer));
       } else {
         LOGGER.error("Cannot import DICOM from {}", file);
 

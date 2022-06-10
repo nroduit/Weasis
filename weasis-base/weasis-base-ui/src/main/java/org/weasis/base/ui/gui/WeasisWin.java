@@ -598,6 +598,7 @@ public class WeasisWin {
     }
     if (selectedPlugin == plugin) {
       plugin.requestFocusInWindow();
+      selectedPlugin.setSelected(true);
       return;
     }
     ViewerPlugin oldPlugin = selectedPlugin;

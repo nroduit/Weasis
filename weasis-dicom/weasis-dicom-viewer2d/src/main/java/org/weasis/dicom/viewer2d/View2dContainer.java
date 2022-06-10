@@ -86,14 +86,14 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.explorer.DicomViewerPlugin;
 import org.weasis.dicom.explorer.ExportToolBar;
 import org.weasis.dicom.explorer.ImportToolBar;
 import org.weasis.dicom.explorer.print.DicomPrintDialog;
 import org.weasis.dicom.viewer2d.dockable.DisplayTool;
 import org.weasis.dicom.viewer2d.dockable.ImageTool;
 
-public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
-    implements PropertyChangeListener {
+public class View2dContainer extends DicomViewerPlugin implements PropertyChangeListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(View2dContainer.class);
 
   // Unmodifiable list of the default synchronization elements
@@ -437,25 +437,6 @@ public class View2dContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public List<DockableTool> getToolPanel() {
     return TOOLS;
-  }
-
-  @Override
-  public void setSelected(boolean selected) {
-    if (selected) {
-      eventManager.setSelectedView2dContainer(this);
-
-      // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
-      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel) {
-        dicomView
-            .getDataExplorerModel()
-            .firePropertyChange(
-                new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));
-      }
-
-    } else {
-      eventManager.setSelectedView2dContainer(null);
-    }
   }
 
   @Override
