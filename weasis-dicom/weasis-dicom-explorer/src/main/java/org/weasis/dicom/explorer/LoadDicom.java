@@ -35,28 +35,42 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
 
   protected final DicomModel dicomModel;
 
+  protected final PluginOpeningStrategy openingStrategy;
+
   protected LoadDicom(
       DataExplorerModel explorerModel, boolean interruptible, OpeningViewer openingMode) {
+    this(explorerModel, interruptible, new PluginOpeningStrategy(openingMode));
+  }
+
+  protected LoadDicom(
+      DataExplorerModel explorerModel,
+      boolean interruptible,
+      PluginOpeningStrategy openingStrategy) {
     super(Messages.getString("DicomExplorer.loading"), interruptible);
     if (!(explorerModel instanceof DicomModel)) {
       throw new IllegalArgumentException("invalid DICOM model");
     }
     this.dicomModel = (DicomModel) explorerModel;
-    this.openPlugin = true;
-    this.openingMode = Objects.requireNonNullElse(openingMode, OpeningViewer.ALL_PATIENTS);
+    this.openingStrategy =
+        Optional.ofNullable(openingStrategy)
+            .orElseGet(() -> new PluginOpeningStrategy(OpeningViewer.ONE_PATIENT));
   }
 
   protected void startLoadingEvent() {
-    dicomModel.firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+    if (!openingStrategy.isResetVeto()) {
+      dicomModel.firePropertyChange(
+          new ObservableEvent(ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
+    }
   }
 
   @Override
   protected void done() {
     openingStrategy.reset();
-    dicomModel.firePropertyChange(
-        new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
-    LOGGER.info("End of loading DICOM locally");
+    if (!openingStrategy.isResetVeto()) {
+      dicomModel.firePropertyChange(
+          new ObservableEvent(ObservableEvent.BasicAction.LOADING_STOP, dicomModel, null, this));
+      LOGGER.info("End of loading DICOM locally");
+    }
   }
 
   protected SeriesThumbnail buildDicomStructure(DicomMediaIO dicomReader) {

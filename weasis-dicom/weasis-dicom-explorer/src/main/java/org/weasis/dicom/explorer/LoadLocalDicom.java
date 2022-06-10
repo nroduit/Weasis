@@ -33,7 +33,15 @@ public class LoadLocalDicom extends LoadDicom {
 
   public LoadLocalDicom(
       File[] files, boolean recursive, DataExplorerModel explorerModel, OpeningViewer openingMode) {
-    super(explorerModel, false, openingMode);
+    this(files, recursive, explorerModel, new PluginOpeningStrategy(openingMode));
+  }
+
+  public LoadLocalDicom(
+      File[] files,
+      boolean recursive,
+      DataExplorerModel explorerModel,
+      PluginOpeningStrategy openingStrategy) {
+    super(explorerModel, false, openingStrategy);
     this.files = Objects.requireNonNull(files);
     this.recursive = recursive;
   }
