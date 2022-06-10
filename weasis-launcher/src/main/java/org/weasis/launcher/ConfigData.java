@@ -113,18 +113,7 @@ public class ConfigData {
 
     // Define the HttpUrlConnection userAgent (without Weasis Version) for the writeRequests() call
     // that gets remote configuration files
-    System.setProperty(
-        "http.agent",
-        "Weasis"
-            + " ("
-            + System.getProperty(P_OS_NAME)
-            + "; "
-            + System.getProperty("os.version")
-            + "; "
-            + System.getProperty("os.arch")
-            + "; "
-            + System.getProperty("weasis.launch.type")
-            + ")");
+    System.setProperty("http.agent", getHttpAgent("", ""));
 
     // Add config and weasis properties from previously set Java System Properties
     // It avoids any given launch arguments from overloading them.
@@ -138,6 +127,24 @@ public class ConfigData {
 
     // Set "application config" properties, but has no effect on those already set
     initWeasisProperties(felixConfig);
+  }
+
+  private String getHttpAgent(String revision, String profile) {
+    return "Weasis/"
+        + System.getProperty("jpackage.app-version", "")
+        + " ("
+        + System.getProperty(P_OS_NAME)
+        + "; "
+        + System.getProperty("os.version")
+        + "; "
+        + System.getProperty("os.arch")
+        + "; pf:"
+        + profile
+        + "; rv:"
+        + revision
+        + ")"
+        + " Java/"
+        + System.getProperty("java.version");
   }
 
   private void applyJavaProperties() {
@@ -183,22 +190,7 @@ public class ConfigData {
     }
 
     // Define the http user agent
-    addProperty(
-        "http.agent",
-        name
-            + "/"
-            + version
-            + " ("
-            + System.getProperty(P_OS_NAME)
-            + "; "
-            + System.getProperty("os.version")
-            + "; " // NON-NLS
-            + System.getProperty("os.arch")
-            + "; "
-            + profile
-            + "; "
-            + System.getProperty("weasis.launch.type")
-            + ")"); // NON-NLS
+    addProperty("http.agent", getHttpAgent(version, profile));
 
     String portable = properties.getProperty("weasis.portable.dir");
     if (portable != null) {
@@ -330,6 +322,7 @@ public class ConfigData {
             case PARAM_AUTHORIZATION -> addProperty(P_HTTP_AUTHORIZATION, v.get(0));
             case PARAM_PROPERTY -> addProperties(v);
             case PARAM_ARGUMENT -> addArguments(v);
+            default -> throw new IllegalStateException("Unexpected value: " + k);
           }
         });
   }
