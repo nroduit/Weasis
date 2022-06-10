@@ -1,0 +1,5 @@
+[Autorun]
+Open=viewer\Weasis.exe
+Action=Open Images with Weasis
+Icon=viewer\Weasis.ico
+Label=Weasis

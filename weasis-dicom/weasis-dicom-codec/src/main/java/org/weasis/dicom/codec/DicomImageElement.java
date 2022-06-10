@@ -471,7 +471,8 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         params.syntax() == null
             ? metaData.getTransferSyntaxUID()
             : params.syntax().getTransferSyntaxUID();
-    outputTsuid = getOutputTransferSyntax(true, metaData.getTransferSyntaxUID(), outputTsuid);
+    outputTsuid =
+        getOutputTransferSyntax(params.onlyRaw(), metaData.getTransferSyntaxUID(), outputTsuid);
     var adaptTransferSyntax = new AdaptTransferSyntax(metaData.getTransferSyntaxUID(), outputTsuid);
     adaptTransferSyntax.setJpegQuality(params.compressionQuality());
     adaptTransferSyntax.setCompressionRatioFactor(params.compressionRatioFactor());

@@ -25,5 +25,6 @@
     <module>weasis-dicom-send</module>
     <module>weasis-dicom-qr</module>
     <module>weasis-dicom-rt</module>
+    <module>weasis-dicom-isowriter</module>
   </modules>
 </project>
