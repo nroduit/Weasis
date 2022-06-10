@@ -46,8 +46,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.utils.DicomResource;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ExplorerTask;
-import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 import org.weasis.dicom.explorer.LoadLocalDicom;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.pref.download.SeriesDownloadPrefView;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
@@ -82,12 +82,14 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
   private final List<String> studies;
   private final DicomModel explorerDcmModel;
   private final DicomQrView dicomQrView;
+  protected final PluginOpeningStrategy openingStrategy;
 
   public RetrieveTask(List<String> studies, DicomModel explorerDcmModel, DicomQrView dicomQrView) {
     super(AbstractDicomNode.UsageType.RETRIEVE.toString(), false);
     this.studies = studies;
     this.explorerDcmModel = explorerDcmModel;
     this.dicomQrView = dicomQrView;
+    this.openingStrategy = new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
   }
 
   @Override
@@ -145,6 +147,17 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
               LOGGER.error("SOP Class url conversion", e);
             }
           }
+          openingStrategy.setResetVeto(true);
+          progress.addProgressListener(
+              p -> {
+                File current = p.getProcessedFile();
+                if (current != null && p.getAttributes() == null) {
+                  LoadLocalDicom task =
+                      new LoadLocalDicom(
+                          new File[] {current}, false, explorerDcmModel, openingStrategy);
+                  DicomModel.LOADING_EXECUTOR.execute(task);
+                }
+              });
           state =
               CGet.process(
                   params,
@@ -259,7 +272,7 @@ public class RetrieveTask extends ExplorerTask<ExplorerTask<Boolean, String>, St
                 new File[] {new File(DicomQrView.tempDir.getPath())},
                 false,
                 explorerDcmModel,
-                OpeningViewer.ALL_PATIENTS);
+                openingStrategy);
       }
 
     } else if (selectedItem instanceof DicomWebNode) {

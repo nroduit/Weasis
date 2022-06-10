@@ -18,7 +18,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
@@ -63,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.auth.AuthMethod;
 import org.weasis.core.api.auth.OAuth2ServiceFactory;
+import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.gui.task.CircularProgressBar;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -86,8 +86,11 @@ import org.weasis.core.util.FileUtil;
 import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.display.Modality;
+import org.weasis.dicom.explorer.DicomExplorer;
 import org.weasis.dicom.explorer.DicomModel;
 import org.weasis.dicom.explorer.ImportDicom;
+import org.weasis.dicom.explorer.LoadLocalDicom;
+import org.weasis.dicom.explorer.PluginOpeningStrategy;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.RetrieveType;
 import org.weasis.dicom.explorer.pref.node.AbstractDicomNode.UsageType;
@@ -96,10 +99,12 @@ import org.weasis.dicom.explorer.pref.node.DefaultDicomNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode;
 import org.weasis.dicom.explorer.pref.node.DicomWebNode.WebType;
 import org.weasis.dicom.explorer.rs.RsQueryParams;
+import org.weasis.dicom.explorer.wado.DownloadManager;
 import org.weasis.dicom.op.CFind;
 import org.weasis.dicom.param.AdvancedParams;
 import org.weasis.dicom.param.ConnectOptions;
 import org.weasis.dicom.param.DicomParam;
+import org.weasis.dicom.param.DicomProgress;
 import org.weasis.dicom.param.DicomState;
 import org.weasis.dicom.tool.DicomListener;
 import org.weasis.dicom.util.DateUtil;
@@ -311,8 +316,28 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
 
     DicomListener dcmListener = null;
     try {
-      dcmListener = new DicomListener(tempDir);
-    } catch (IOException e) {
+      PluginOpeningStrategy openingStrategy =
+          new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
+      openingStrategy.setResetVeto(true);
+      DataExplorerView dicomView =
+          org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+      if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
+        DicomProgress progress = new DicomProgress();
+        progress.addProgressListener(
+            p -> {
+              File current = p.getProcessedFile();
+              if (current != null && p.getAttributes() == null) {
+                LoadLocalDicom task =
+                    new LoadLocalDicom(new File[] {current}, false, model, openingStrategy);
+                DicomModel.LOADING_EXECUTOR.execute(task);
+              }
+            });
+        dcmListener = new DicomListener(tempDir, progress);
+      } else {
+        dcmListener = new DicomListener(tempDir);
+      }
+
+    } catch (RuntimeException e) {
       LOGGER.error("Cannot start DICOM listener", e);
     }
     dicomListener = dcmListener;
