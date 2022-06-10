@@ -18,6 +18,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.FormatStyle;
 import java.time.temporal.TemporalAdjusters;
@@ -332,12 +333,12 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
                 DicomModel.LOADING_EXECUTOR.execute(task);
               }
             });
-        dcmListener = new DicomListener(tempDir, progress);
+        dcmListener = new DicomListener(tempDir);
       } else {
         dcmListener = new DicomListener(tempDir);
       }
 
-    } catch (RuntimeException e) {
+    } catch (RuntimeException | IOException e) {
       LOGGER.error("Cannot start DICOM listener", e);
     }
     dicomListener = dcmListener;
