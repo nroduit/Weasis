@@ -1,5 +1,5 @@
-[Autorun]
-Open=viewer\Weasis.exe
+[autorun]
+Open=viewer\Weasis.exe weasis://%24dicom%3Aget%20-p%20%24weasis%3Aconfig%20pro%3D%22weasis.portable.dir%20.%22
 Action=Open Images with Weasis
 Icon=viewer\Weasis.ico
 Label=Weasis

@@ -646,7 +646,8 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
         Boolean.parseBoolean(pref.getProperty(DICOM_ONLY_RAW, Boolean.TRUE.toString()));
     TransferSyntax tsuid =
         TransferSyntax.getTransferSyntax(pref.getProperty(DICOM_TSUID, TransferSyntax.NONE.name()));
-    if (DicomUtils.isNative(tsuid.getTransferSyntaxUID())) {
+    boolean realTsuid = tsuid != TransferSyntax.NONE;
+    if (realTsuid && DicomUtils.isNative(tsuid.getTransferSyntaxUID())) {
       onlyRaw = false;
     }
     DefaultAttributeEditor editor = new DefaultAttributeEditor(newUID, null);

@@ -57,9 +57,9 @@ public class IsoImageExport extends LocalExport {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(IsoImageExport.class);
 
-  private static final String LAST_FOLDER = "last_folder";
-  private static final String ADD_JPEG = "add_jpeg";
-  private static final String ADD_VIEWER = "add_viewer";
+  private static final String LAST_FOLDER = "last_folder"; // NON-NLS
+  private static final String ADD_JPEG = "add_jpeg"; // NON-NLS
+  private static final String ADD_VIEWER = "add_viewer"; // NON-NLS
   private static final String DICOM = "DICOM";
 
   private JCheckBox checkBoxAddWeasisViewer;
@@ -134,13 +134,14 @@ public class IsoImageExport extends LocalExport {
                   new ObservableEvent(
                       ObservableEvent.BasicAction.LOADING_START, dicomModel, null, this));
               File exportDir =
-                  FileUtil.createTempDir(AppProperties.buildAccessibleTempDirectory("tmp", "burn"));
+                  FileUtil.createTempDir(
+                      AppProperties.buildAccessibleTempDirectory("tmp", "burn")); // NON-NLS
               Properties pref = getPreferences();
               pref.setProperty(INC_DICOMDIR, Boolean.TRUE.toString());
               pref.setProperty(CD_COMPATIBLE, Boolean.TRUE.toString());
               writeDicom(this, exportDir, model, pref);
-              File readmeFile = ResourceUtil.getResource("isowriter/README.html");
-              FileUtil.nioCopyFile(readmeFile, new File(exportDir, "README.html"));
+              File readmeFile = ResourceUtil.getResource("isowriter/README.htm"); // NON-NLS
+              FileUtil.nioCopyFile(readmeFile, new File(exportDir, "README.HTM"));
 
               if (checkBoxAddJpeg.isSelected()) {
                 writeOther(this, new File(exportDir, "JPEG"), model, Format.JPEG, new Properties());
@@ -154,8 +155,10 @@ public class IsoImageExport extends LocalExport {
                 Files.createDirectory(out);
                 Path in = appPath.getParent();
                 copyFolder(in, out, StandardCopyOption.COPY_ATTRIBUTES);
-                File autorun = ResourceUtil.getResource("isowriter/Autorun.inf");
-                FileUtil.nioCopyFile(autorun, new File(exportDir, "Autorun.inf"));
+                File autorun = ResourceUtil.getResource("isowriter/Autorun.inf"); // NON-NLS
+                FileUtil.nioCopyFile(autorun, new File(exportDir, "AUTORUN.INF"));
+                File run = ResourceUtil.getResource("isowriter/RUN.bat"); // NON-NLS
+                FileUtil.nioCopyFile(run, new File(exportDir, "RUN.BAT"));
               }
 
               if (this.isCancelled()) {
@@ -209,7 +212,7 @@ public class IsoImageExport extends LocalExport {
     JFileChooser fileChooser = new JFileChooser(outputFile);
     fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
     fileChooser.setMultiSelectionEnabled(false);
-    FileFormatFilter filter = new FileFormatFilter("iso", "ISO");
+    FileFormatFilter filter = new FileFormatFilter("iso", "ISO"); // NON-NLS
     fileChooser.addChoosableFileFilter(filter);
     fileChooser.setFileFilter(filter);
 
