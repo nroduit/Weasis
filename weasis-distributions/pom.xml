@@ -466,6 +466,12 @@
                   <version>${app.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.weasis.dicom</groupId>
+                  <artifactId>weasis-dicom-isowriter</artifactId>
+                  <version>${app.version}</version>
+                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
+                </artifactItem>
 
                 <!-- ===================================== -->
                 <!-- Weasis Acquisition bundles -->
