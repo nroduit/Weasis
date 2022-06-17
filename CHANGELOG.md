@@ -1,5 +1,43 @@
 # Changelog
 
+## [v4.0.1](https://github.com/nroduit/Weasis/tree/v4.0.1) (2022-06-17)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.0-rc...v4.0.1)
+
+**Implemented enhancements:**
+
+- Include the weasis-isowriter plug-in [\#289](https://github.com/nroduit/Weasis/issues/289)
+- Add options in DICOM ZIP Export [\#288](https://github.com/nroduit/Weasis/issues/288)
+- Choose a strategy for opening a new tab [\#285](https://github.com/nroduit/Weasis/issues/285)
+- Real-time import into DICOM Explorer with DICOM C-GET and C-MOVE [\#284](https://github.com/nroduit/Weasis/issues/284)
+- Clean old folders in \<home.user\>/.weasis [\#283](https://github.com/nroduit/Weasis/issues/283)
+- Support of Pseudocolor Softcopy Presentation Stage Storage SOP Class [\#280](https://github.com/nroduit/Weasis/issues/280)
+- Show message when a new release is available [\#278](https://github.com/nroduit/Weasis/issues/278)
+- Allow import of password protected zip dicom file  [\#273](https://github.com/nroduit/Weasis/issues/273)
+- DICOM files in DICOMDIR file-set may have a filename extension. [\#272](https://github.com/nroduit/Weasis/issues/272)
+- Additional CD-ROM mount point for Linux. [\#271](https://github.com/nroduit/Weasis/issues/271)
+
+**Fixed bugs:**
+
+- Mac OS X - Weasis freezes when started by double clicking on a DICOM file [\#290](https://github.com/nroduit/Weasis/issues/290)
+- Transcoding issue in DICOM Export: Cannot uncompress or re-compress [\#287](https://github.com/nroduit/Weasis/issues/287)
+- Pixel Info graphic is not updated in the table when drawing [\#282](https://github.com/nroduit/Weasis/issues/282)
+- Reset action do not render correctly the view with Presentation State [\#281](https://github.com/nroduit/Weasis/issues/281)
+- Patient and study duplication at DICOMDIR import. [\#276](https://github.com/nroduit/Weasis/issues/276)
+- Sometimes the layout of thumbnails is not working [\#274](https://github.com/nroduit/Weasis/issues/274)
+- Patient name is not selected after study reload. [\#270](https://github.com/nroduit/Weasis/issues/270)
+- Cannot disable dicom export & dicom send in Weasis with properties [\#269](https://github.com/nroduit/Weasis/issues/269)
+- Saved 'Rolling log' property is not restored correctly. [\#267](https://github.com/nroduit/Weasis/issues/267)
+- Exporting an empty view freezes the application [\#265](https://github.com/nroduit/Weasis/issues/265)
+- Some views of the MPR are shifted when changing the layout [\#262](https://github.com/nroduit/Weasis/issues/262)
+- Importing an annotations xml file doesn't work [\#258](https://github.com/nroduit/Weasis/issues/258)
+
+**Closed issues:**
+
+- Deploy Weasis into Snapcraft [\#292](https://github.com/nroduit/Weasis/issues/292)
+- Use the API v3 for Transifex \(v2 is outdated\) [\#291](https://github.com/nroduit/Weasis/issues/291)
+- \[Packaging\] Make this program available as flatpak in FlatHub [\#130](https://github.com/nroduit/Weasis/issues/130)
+
 ## [v4.0.0-rc](https://github.com/nroduit/Weasis/tree/v4.0.0-rc) (2022-04-29)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v3.8.1...v4.0.0-rc)
