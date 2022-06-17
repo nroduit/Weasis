@@ -661,8 +661,8 @@ public class View2d extends DefaultView2d<DicomImageElement> {
   @Override
   public void reset() {
     super.reset();
-    if (getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement pr) {
-      setPresentationState(pr, true);
+    if (getActionValue(ActionW.PR_STATE.cmd()) instanceof PRSpecialElement) {
+      setPresentationState(getActionValue(ActionW.PR_STATE.cmd()), true);
     }
   }
 
