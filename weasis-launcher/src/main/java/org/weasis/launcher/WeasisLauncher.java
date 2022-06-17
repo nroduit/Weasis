@@ -262,11 +262,13 @@ public class WeasisLauncher {
       }
       if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
 
-        app.setOpenFileHandler(e -> {
-          List<String> files = e.getFiles().stream().map(f -> "dicom:get -l \"" + f.getPath() + "\"").toList();
-          LOGGER.log(Level.INFO, "Get oOpen file event from OS. Files: {0}", files);
-          executeCommands(files, null);
-        });
+        app.setOpenFileHandler(
+            e -> {
+              List<String> files =
+                  e.getFiles().stream().map(f -> "dicom:get -l \"" + f.getPath() + "\"").toList();
+              LOGGER.log(Level.INFO, "Get oOpen file event from OS. Files: {0}", files);
+              executeCommands(files, null);
+            });
       }
 
       executeCommands(configData.getArguments(), goshArgs);
