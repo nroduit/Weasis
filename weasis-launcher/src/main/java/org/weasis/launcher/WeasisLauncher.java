@@ -255,7 +255,7 @@ public class WeasisLauncher {
       if (app.isSupported(Action.APP_OPEN_URI)) {
         app.setOpenURIHandler(
             e -> {
-              String uri = "dicom:get -r \"" + e.getURI().toString() + "\"";
+              String uri = "dicom:get -r \"" + e.getURI().toString() + "\""; // NON-NLS
               LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}", uri);
               executeCommands(List.of(uri), null);
             });
@@ -265,7 +265,9 @@ public class WeasisLauncher {
         app.setOpenFileHandler(
             e -> {
               List<String> files =
-                  e.getFiles().stream().map(f -> "dicom:get -l \"" + f.getPath() + "\"").toList();
+                  e.getFiles().stream()
+                      .map(f -> "dicom:get -l \"" + f.getPath() + "\"") // NON-NLS
+                      .toList();
               LOGGER.log(Level.INFO, "Get oOpen file event from OS. Files: {0}", files);
               executeCommands(files, null);
             });
@@ -1211,7 +1213,7 @@ public class WeasisLauncher {
           List<Path> folders = listOldFolders(path);
           folders.forEach(
               p -> {
-                System.err.println("Delete old folder: " + p);
+                System.err.println("Delete old folder: " + p); // NON-NLS
                 FileUtil.delete(p.toFile());
                 Optional<String> id = getID(p.getFileName().toString());
                 if (id.isPresent()) {
@@ -1226,7 +1228,7 @@ public class WeasisLauncher {
                 }
               });
         } catch (IOException e) {
-          System.err.println("Cannot clean old folders - " + e);
+          System.err.println("Cannot clean old folders - " + e); // NON-NLS
         }
       }
     }
@@ -1255,7 +1257,7 @@ public class WeasisLauncher {
       long daysBetween = DAYS.between(convertedFileTime, now);
       return daysBetween > days;
     } catch (Exception e) {
-      System.err.println("Cannot get the last modified time - " + e);
+      System.err.println("Cannot get the last modified time - " + e); // NON-NLS
     }
     return false;
   }

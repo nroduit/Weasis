@@ -51,7 +51,7 @@ class TagWTest {
           VM_MIN_2,
           VM_MAX_2,
           new String[] {"value1", "value2"}); // NON-NLS
-      Fail.fail("Must throws an exception");
+      Fail.fail("Must throws an exception"); // NON-NLS
     } catch (Exception e) {
       assertThat(e)
           .isExactlyInstanceOf(IllegalArgumentException.class)

@@ -111,7 +111,7 @@ public class DicomZipImport extends AbstractItemDialogPage implements ImportDico
         if (zipFile.isEncrypted()) {
           JPanel panel = new JPanel();
           JPasswordField pass = new JPasswordField(16);
-          panel.add(new JLabel("Enter a password"));
+          panel.add(new JLabel(Messages.getString("enter.password")));
           panel.add(pass);
           int response =
               JOptionPane.showOptionDialog(

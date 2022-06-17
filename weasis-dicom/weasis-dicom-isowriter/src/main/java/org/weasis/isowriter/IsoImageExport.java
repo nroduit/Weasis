@@ -68,15 +68,16 @@ public class IsoImageExport extends LocalExport {
   private File outputFile;
 
   public IsoImageExport(DicomModel dicomModel, CheckTreeModel treeModel) {
-    super("CD/DVD Image", 25, dicomModel, treeModel);
+    super(Messages.getString("cd.dvd.image"), 25, dicomModel, treeModel);
     initialize(true);
   }
 
   @Override
   protected List<JComponent> getAdditionalOption() {
     getPreferences().put("force.dicomdir", Boolean.TRUE.toString());
-    checkBoxAddJpeg = new JCheckBox("Add JPEG images");
-    checkBoxAddWeasisViewer = new JCheckBox("Add" + StringUtil.SPACE + AppProperties.WEASIS_NAME);
+    checkBoxAddJpeg = new JCheckBox(Messages.getString("add.jpeg.images"));
+    checkBoxAddWeasisViewer =
+        new JCheckBox(Messages.getString("add") + StringUtil.SPACE + AppProperties.WEASIS_NAME);
     comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(new Format[] {Format.DICOM}));
     checkBoxAddWeasisViewer.setEnabled(SystemInfo.isWindows);
 
@@ -126,7 +127,7 @@ public class IsoImageExport extends LocalExport {
     if (outputFile != null) {
       final File exportFile = outputFile.getCanonicalFile();
       ExplorerTask<Boolean, String> task =
-          new ExplorerTask<>("Exporting...", false) {
+          new ExplorerTask<>(Messages.getString("exporting"), false) {
 
             @Override
             protected Boolean doInBackground() throws Exception {

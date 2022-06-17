@@ -40,7 +40,7 @@ class DeserializationTest extends ModelListHelper {
 
     try {
       deserialize(xml_0, XmlGraphicModel.class);
-      Fail.fail("Must throws an exception");
+      Fail.fail("Must throws an exception"); // NON-NLS
     } catch (Exception e) {
       assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
     }
@@ -49,7 +49,7 @@ class DeserializationTest extends ModelListHelper {
 
     try {
       deserialize(xml_1, XmlGraphicModel.class);
-      Fail.fail("Must throws an exception");
+      Fail.fail("Must throws an exception"); // NON-NLS
     } catch (Exception e) {
       assertThat(e).hasCauseExactlyInstanceOf(SAXParseException.class);
     }

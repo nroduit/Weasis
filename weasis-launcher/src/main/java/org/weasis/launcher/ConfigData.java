@@ -130,20 +130,20 @@ public class ConfigData {
   }
 
   private String getHttpAgent(String revision, String profile) {
-    return "Weasis/"
-        + System.getProperty("jpackage.app-version", "")
+    return "Weasis/" // NON-NLS
+        + System.getProperty("jpackage.app-version", "") // NON-NLS
         + " ("
         + System.getProperty(P_OS_NAME)
         + "; "
         + System.getProperty("os.version")
         + "; "
         + System.getProperty("os.arch")
-        + "; pf:"
+        + "; pf:" // NON-NLS
         + profile
-        + "; rv:"
+        + "; rv:" // NON-NLS
         + revision
         + ")"
-        + " Java/"
+        + " Java/" // NON-NLS
         + System.getProperty("java.version");
   }
 

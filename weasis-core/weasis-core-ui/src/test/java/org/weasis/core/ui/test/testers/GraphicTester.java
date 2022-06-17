@@ -98,7 +98,7 @@ public abstract class GraphicTester<E extends Graphic> extends XmlSerialisationH
         | IllegalAccessException
         | NoSuchMethodException
         | InvocationTargetException e) {
-      Fail.fail("Cannot create instance");
+      Fail.fail("Cannot create instance"); // NON-NLS
     }
     return null;
   }

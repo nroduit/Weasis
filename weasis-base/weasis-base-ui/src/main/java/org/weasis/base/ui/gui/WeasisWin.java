@@ -741,7 +741,7 @@ public class WeasisWin {
     helpMenuItem.add(websiteMenuItem);
     helpMenuItem.add(new JSeparator());
 
-    final JMenuItem updateMenuItem = new JMenuItem("Check for Updates...");
+    final JMenuItem updateMenuItem = new JMenuItem(Messages.getString("check.for.updates"));
     updateMenuItem.addActionListener(
         e -> {
           JsonObject object = getLastRelease();
@@ -749,22 +749,22 @@ public class WeasisWin {
             Version vOld = AppProperties.getVersion(AppProperties.WEASIS_VERSION);
             Version vNew = AppProperties.getVersion(object.getString("version"));
             if (vNew.compareTo(vOld) > 0) {
-              openBrowser(updateMenuItem, object.getString("url"));
+              openBrowser(updateMenuItem, object.getString("url")); // NON-NLS
             } else {
               GuiExecutor.instance()
                   .execute(
                       () ->
                           JOptionPane.showMessageDialog(
                               updateMenuItem,
-                              "The current release is already the latest release available.",
-                              "Update",
+                              Messages.getString("current.release.latest"),
+                              Messages.getString("update"),
                               JOptionPane.INFORMATION_MESSAGE));
             }
           }
         });
     helpMenuItem.add(updateMenuItem);
 
-    final JMenuItem reportMenuItem = new JMenuItem("Submit a Bug Report");
+    final JMenuItem reportMenuItem = new JMenuItem(Messages.getString("submit.bug.report"));
     reportMenuItem.addActionListener(
         e -> openBrowser(reportMenuItem, "https://github.com/nroduit/Weasis/issues"));
     helpMenuItem.add(reportMenuItem);
@@ -819,17 +819,16 @@ public class WeasisWin {
         GuiExecutor.instance()
             .execute(
                 () -> {
-                  JLabel label =
-                      new JLabel("A new release is available. Do you want to download it?");
+                  JLabel label = new JLabel(Messages.getString("new.release.available"));
                   label.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
-                  JCheckBox dontAskMeAgain = new JCheckBox("Don't ask me again");
+                  JCheckBox dontAskMeAgain = new JCheckBox(Messages.getString("don.t.ask.again"));
                   dontAskMeAgain.setAlignmentX(JLabel.RIGHT_ALIGNMENT);
                   JPanel panel = GuiUtils.getVerticalBoxLayoutPanel(label, dontAskMeAgain);
                   int confirm =
                       JOptionPane.showConfirmDialog(
-                          parent, panel, "Update", JOptionPane.YES_NO_OPTION);
+                          parent, panel, Messages.getString("update"), JOptionPane.YES_NO_OPTION);
                   if (confirm == 0) {
-                    openBrowser(parent, object.getString("url"));
+                    openBrowser(parent, object.getString("url")); // NON-NLS
                   }
                   if (dontAskMeAgain.isSelected()) {
                     BundleTools.SYSTEM_PREFERENCES.putBooleanProperty(
