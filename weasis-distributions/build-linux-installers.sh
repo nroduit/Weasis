@@ -18,8 +18,11 @@
 # docker image rm -f weasis/builder:latest
 # docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 -t weasis/builder:latest .
 # docker buildx build --load --platform linux/amd64 -t weasis/builder:latest .
+# sudo ./build-linux-installers.sh -a linux/amd64
 # docker buildx build --load --platform linux/arm64 -t weasis/builder:latest .
+# sudo ./build-linux-installers.sh -a linux/arm64
 # docker buildx build --load --platform linux/arm/v7 -t weasis/builder:latest .
+# sudo ./build-linux-installers.sh -a linux/arm/v7
 
 # Aux functions:
 die ( ) {

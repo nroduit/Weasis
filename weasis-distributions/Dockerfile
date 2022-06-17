@@ -1,4 +1,4 @@
-# Based on image: https://github.com/adoptium/containers/blob/main/18/jdk/ubuntu/Dockerfile.releases.full
+# Based on image: https://github.com/adoptium/containers/blob/main/18/jdk/ubuntu/focal/Dockerfile.releases.full
 # Add libraries required by weasis build: bzip2 unzip xz-utils fakeroot rpm
 FROM ubuntu:20.04
 
@@ -10,30 +10,30 @@ RUN apt-get update \
     && locale-gen en_US.UTF-8 \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_VERSION jdk-18+36
+ENV JAVA_VERSION jdk-18.0.1+10
 
 RUN set -eux; \
     ARCH="$(dpkg --print-architecture)"; \
     case "${ARCH}" in \
        aarch64|arm64) \
-         ESUM='e696d2b5995ae008b6ee7392d73ace13c36460a5e9600740c40e094079a62d28'; \
-         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18%2B36/OpenJDK18U-jdk_aarch64_linux_hotspot_18_36.tar.gz'; \
+         ESUM='37ceaf232a85cce46bcccfd71839854e8b14bf3160e7ef72a676b9cae45ee8af'; \
+         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_aarch64_linux_hotspot_18.0.1_10.tar.gz'; \
          ;; \
        armhf|arm) \
-         ESUM='4cb2e1fe9a14a990ad0dc8f3afcd9c1b37a8d7750754c3a1e72665ef6beb300f'; \
-         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18%2B36/OpenJDK18U-jdk_arm_linux_hotspot_18_36.tar.gz'; \
+         ESUM='0ddec3c165ab0b662a57a845db3fdaeb840660b493f164696b03df76aadf61c8'; \
+         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_arm_linux_hotspot_18.0.1_10.tar.gz'; \
          ;; \
        ppc64el|powerpc:common64) \
-         ESUM='90790055be8147103a4a9b6a6545d42d7c5eb5616901b660c8ada68c7d067956'; \
-         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18%2B36/OpenJDK18U-jdk_ppc64le_linux_hotspot_18_36.tar.gz'; \
+         ESUM='7c3376b4eb14a58d27816776e965f1b214c17c4c2e918dc9e996a0f30e76550e'; \
+         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_ppc64le_linux_hotspot_18.0.1_10.tar.gz'; \
          ;; \
        s390x|s390:64-bit) \
-         ESUM='e711965a3c482a63d0116bcb0f3c1d06b84171c4be1995f3ac9f139d316fe149'; \
-         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18%2B36/OpenJDK18U-jdk_s390x_linux_hotspot_18_36.tar.gz'; \
+         ESUM='236dc78e698c21f258078661ab5c74b8cc7d38a1febb7aa7a6598bd3b999c0dc'; \
+         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_s390x_linux_hotspot_18.0.1_10.tar.gz'; \
          ;; \
        amd64|i386:x86-64) \
-         ESUM='82d67983f92f16b5fb57176fa4c228e44ecc6f671b3c3523140fba7fb904dceb'; \
-         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18%2B36/OpenJDK18U-jdk_x64_linux_hotspot_18_36.tar.gz'; \
+         ESUM='16b1d9d75f22c157af04a1fd9c664324c7f4b5163c022b382a2f2e8897c1b0a2'; \
+         BINARY_URL='https://github.com/adoptium/temurin18-binaries/releases/download/jdk-18.0.1%2B10/OpenJDK18U-jdk_x64_linux_hotspot_18.0.1_10.tar.gz'; \
          ;; \
        *) \
          echo "Unsupported arch: ${ARCH}"; \
