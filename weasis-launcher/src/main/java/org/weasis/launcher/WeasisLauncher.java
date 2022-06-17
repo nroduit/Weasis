@@ -255,7 +255,7 @@ public class WeasisLauncher {
       if (app.isSupported(Action.APP_OPEN_URI)) {
         app.setOpenURIHandler(
             e -> {
-              String uri = e.getURI().toString();
+              String uri = "dicom:get -r \"" + e.getURI().toString() + "\"";
               LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}", uri);
               executeCommands(List.of(uri), null);
             });
@@ -263,8 +263,8 @@ public class WeasisLauncher {
       if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
 
         app.setOpenFileHandler(e -> {
-          List<String> files = e.getFiles().stream().map(File::getPath).toList();
-          LOGGER.log(Level.INFO, "Get oOpen file event from OS. URI: {0}", files);
+          List<String> files = e.getFiles().stream().map(f -> "dicom:get -l \"" + f.getPath() + "\"").toList();
+          LOGGER.log(Level.INFO, "Get oOpen file event from OS. Files: {0}", files);
           executeCommands(files, null);
         });
       }
