@@ -40,7 +40,7 @@
 					<bnd>
 						-includeresource.all: lib/=target/dependency/;lib:=true
 						Import-Package: !org.apache.tools.ant.*,!org.apache.commons.lang.*,*
-						Export-Package: org.weasis.isowriter.*
+						Export-Package: org.weasis.dicom.isowriter.*
 					</bnd>
 				</configuration>
 			</plugin>

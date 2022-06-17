@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.isowriter;
+package org.weasis.dicom.isowriter;
 
 import java.io.File;
 import java.util.Hashtable;

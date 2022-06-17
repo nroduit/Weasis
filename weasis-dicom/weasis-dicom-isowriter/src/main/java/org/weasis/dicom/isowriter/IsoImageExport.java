@@ -7,7 +7,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.isowriter;
+package org.weasis.dicom.isowriter;
 
 import com.formdev.flatlaf.util.SystemInfo;
 import com.github.stephenc.javaisotools.iso9660.ConfigException;
