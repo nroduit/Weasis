@@ -49,8 +49,5 @@ public class DesktopAdapter {
             ColorLayerUI.showCenterScreen(about, layer);
           });
     }
-    if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
-      app.setOpenFileHandler(e -> win.dropFiles(e.getFiles(), null));
-    }
   }
 }

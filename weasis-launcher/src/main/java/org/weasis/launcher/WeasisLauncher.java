@@ -250,6 +250,25 @@ public class WeasisLauncher {
             logActivation);
       }
 
+      // Init after default properties for UI
+      Desktop app = Desktop.getDesktop();
+      if (app.isSupported(Action.APP_OPEN_URI)) {
+        app.setOpenURIHandler(
+            e -> {
+              String uri = e.getURI().toString();
+              LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}", uri);
+              executeCommands(List.of(uri), null);
+            });
+      }
+      if (app.isSupported(Desktop.Action.APP_OPEN_FILE)) {
+
+        app.setOpenFileHandler(e -> {
+          List<String> files = e.getFiles().stream().map(File::getPath).toList();
+          LOGGER.log(Level.INFO, "Get oOpen file event from OS. URI: {0}", files);
+          executeCommands(files, null);
+        });
+      }
+
       executeCommands(configData.getArguments(), goshArgs);
 
       checkBundleUI(serverProp);
@@ -850,17 +869,6 @@ public class WeasisLauncher {
             FlatSystemProperties.UI_SCALE, null, serverProp, currentProps, true, false);
     if (scaleFactor != null) {
       System.setProperty(FlatSystemProperties.UI_SCALE, scaleFactor);
-    }
-
-    // Init after default properties for UI
-    Desktop app = Desktop.getDesktop();
-    if (app.isSupported(Action.APP_OPEN_URI)) {
-      app.setOpenURIHandler(
-          e -> {
-            String uri = e.getURI().toString();
-            LOGGER.log(Level.INFO, "Get URI event from OS. URI: {0}}", uri);
-            executeCommands(List.of(uri), null);
-          });
     }
 
     /*
