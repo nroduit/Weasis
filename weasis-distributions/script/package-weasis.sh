@@ -241,12 +241,13 @@ if [ "$PACKAGE" = "YES" ] ; then
   VENDOR="Weasis Team"
   COPYRIGHT="© 2009-2022 Weasis Team"
   if [ "$machine" = "windows" ] ; then
+    ARC_NAME="x86-64"
     [ "$ARC_NAME" = "x86" ]  && UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383b" || UPGRADE_UID="3aedc24e-48a8-4623-ab39-0c3c01c7383a"
-    $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/$ARC_NAME" \
+    $JPKGCMD --type "msi" --app-image "$IMAGE_PATH" --dest "$OUTPUT_PATH" --name "$NAME" --resource-dir "$RES/msi/${ARC_NAME}" \
     --license-file "$INPUT_PATH\Licence.txt" --description "Weasis DICOM viewer" --win-upgrade-uuid "$UPGRADE_UID"  \
     --win-menu --win-menu-group "$NAME" --copyright "$COPYRIGHT" --app-version "$WEASIS_CLEAN_VERSION" \
     --vendor "$VENDOR" --file-associations "${curPath}\file-associations.properties" "${tmpArgs[@]}" --verbose
-    mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-$ARC_NAME.msi"
+    mv "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION.msi" "$OUTPUT_PATH_UNIX/$NAME-$WEASIS_CLEAN_VERSION-${ARC_NAME}.msi"
   elif [ "$machine" = "linux" ] ; then
     declare -a installerTypes=("deb" "rpm")
     for installerType in "${installerTypes[@]}"; do
