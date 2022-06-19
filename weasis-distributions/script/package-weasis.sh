@@ -116,7 +116,7 @@ arc=$(echo "${ARC_OS}" | cut -d'-' -f2-3)
 if [ "$machine" = "windows" ] ; then
   INPUT_PATH_UNIX=$(cygpath -u "$INPUT_PATH")
   OUTPUT_PATH_UNIX=$(cygpath -u "$OUTPUT_PATH")
-  RES="${curPath}\resources\$machine"
+  RES="${curPath}\resources\\${machine}"
 else
   INPUT_PATH_UNIX="$INPUT_PATH"
   OUTPUT_PATH_UNIX="$OUTPUT_PATH"
@@ -168,8 +168,8 @@ fi
 
 
 if [ "$machine" = "windows" ] ; then
-  INPUT_DIR="$INPUT_PATH\\weasis"
-  IMAGE_PATH="$OUTPUT_PATH\\$NAME"
+  INPUT_DIR="$INPUT_PATH\weasis"
+  IMAGE_PATH="$OUTPUT_PATH\\${NAME}"
 else
   IMAGE_PATH="$OUTPUT_PATH/$NAME"
   INPUT_DIR="$INPUT_PATH_UNIX/weasis"
@@ -222,6 +222,8 @@ else
   declare -a signArgs=()
 fi
 declare -a commonOptions=("--java-options" "-Dgosh.port=17179" \
+"--java-options" "-Djavax.accessibility.assistive_technologies=org.weasis.launcher.EmptyAccessibilityProvider" \
+"--java-options" "-Djavax.accessibility.screen_magnifier_present=false" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.http=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.file=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.https=ALL-UNNAMED" "--java-options" "--add-exports=java.base/sun.net.www.protocol.ftp=ALL-UNNAMED" \
 "--java-options" "--add-exports=java.base/sun.net.www.protocol.jar=ALL-UNNAMED" "--java-options" "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED" \
