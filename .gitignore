@@ -44,4 +44,6 @@ _*/
 
 #snap
 weasis_*.snap
+#comlile
+build-dist
 
