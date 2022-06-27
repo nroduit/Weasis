@@ -153,7 +153,7 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
           TransferSyntax.JPEGLS_NEAR_LOSSLESS,
           TransferSyntax.JPEG2000_LOSSLESS,
           TransferSyntax.JPEG2000);
-  protected JComboBox<Format> comboBoxImgFormat;
+  protected final JComboBox<Format> comboBoxImgFormat;
 
   public LocalExport(DicomModel dicomModel, CheckTreeModel treeModel) {
     this(Messages.getString("LocalExport.local_dev"), 0, dicomModel, treeModel);
@@ -164,11 +164,11 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
     super(title, pagePosition);
     this.dicomModel = dicomModel;
     this.exportTree = new ExportTree(treeModel);
+    this.comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(Format.values()));
     initGUI();
   }
 
   public void initGUI() {
-    comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(Format.values()));
     JLabel lblImportAFolder = new JLabel(Messages.getString("LocalExport.exp") + StringUtil.COLON);
     JButton btnNewButton = new JButton(Messages.getString("LocalExport.options"));
     btnNewButton.addActionListener(e -> showExportingOptions());

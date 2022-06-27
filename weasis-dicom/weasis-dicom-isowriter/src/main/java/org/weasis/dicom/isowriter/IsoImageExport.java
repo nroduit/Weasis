@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Properties;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JProgressBar;
@@ -78,7 +77,7 @@ public class IsoImageExport extends LocalExport {
     checkBoxAddJpeg = new JCheckBox(Messages.getString("add.jpeg.images"));
     checkBoxAddWeasisViewer =
         new JCheckBox(Messages.getString("add") + StringUtil.SPACE + AppProperties.WEASIS_NAME);
-    comboBoxImgFormat = new JComboBox<>(new DefaultComboBoxModel<>(new Format[] {Format.DICOM}));
+    comboBoxImgFormat.setModel(new DefaultComboBoxModel<>(new Format[] {Format.DICOM}));
     checkBoxAddWeasisViewer.setEnabled(SystemInfo.isWindows);
 
     return List.of(
