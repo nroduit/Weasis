@@ -135,6 +135,9 @@ public class AppProperties {
     if (version != null) {
       int start = version.startsWith("v") ? 1 : 0;
       int end = version.indexOf('-');
+      if (end < 0) {
+        end = version.length();
+      }
       v = end > 0 ? version.substring(start, end) : version;
     }
     return new Version(v);
