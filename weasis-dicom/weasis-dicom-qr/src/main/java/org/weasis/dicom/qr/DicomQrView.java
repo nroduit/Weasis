@@ -412,7 +412,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
     searchBtn.addActionListener(e -> dicomQuery());
 
     return GuiUtils.getFlowLayoutPanel(
-        FlowLayout.TRAILING,
+        FlowLayout.LEADING,
         ITEM_SEPARATOR_SMALL,
         ITEM_SEPARATOR,
         labelLimit,
