@@ -29,9 +29,9 @@ Old branches are:
 * 1.2.x (Java 6+)
 
 # General Features
-* Flexible integration to HIS or PHR (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
+* Flexible integration with PACS, RIS, HIS or PHR  (see [integration documentation](https://nroduit.github.io/en/basics/customize/integration/))
 * Desktop distribution (Windows, Mac OS X, and Linux)
-* Responsive user interface and work well on high DPI screens
+* Responsive user interface working well on high DPI screens
 * Web access through [weasis protocol](https://nroduit.github.io/en/getting-started/weasis-protocol)
 * [Multi-language support](https://nroduit.github.io/en/getting-started/translating/)
 * [Configuration of preferences](https://nroduit.github.io/en/basics/customize/preferences/) on server-side and client-side
