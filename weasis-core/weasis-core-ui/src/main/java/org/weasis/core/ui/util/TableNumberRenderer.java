@@ -14,7 +14,9 @@ import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import org.weasis.core.api.util.LocalUtil;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public class TableNumberRenderer extends DefaultTableCellRenderer {
   private final NumberFormat formatter;
 

@@ -31,7 +31,9 @@ public interface GraphicLabel extends Copyable<GraphicLabel> {
 
   void reset();
 
-  /** @return Label array of strings if defined */
+  /**
+   * @return Label array of strings if defined
+   */
   String[] getLabels();
 
   Rectangle2D getLabelBounds();

@@ -13,7 +13,9 @@ import java.awt.Color;
 import java.util.List;
 import java.util.Map;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class IsoDose {
 
   private int level;

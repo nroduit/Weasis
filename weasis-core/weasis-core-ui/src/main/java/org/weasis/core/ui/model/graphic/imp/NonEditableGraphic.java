@@ -21,7 +21,9 @@ import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.utils.exceptions.InvalidShapeException;
 import org.weasis.core.ui.util.MouseEventDouble;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 @XmlRootElement(name = "nonEditable")
 public class NonEditableGraphic extends AbstractGraphic {
 

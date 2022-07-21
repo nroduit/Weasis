@@ -11,7 +11,9 @@ package org.weasis.dicom.rt;
 
 import java.util.Objects;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class IsoDoseLayer extends RtLayer {
   private final IsoDose isoDose;
 

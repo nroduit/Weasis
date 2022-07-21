@@ -15,7 +15,9 @@ import org.weasis.core.api.image.measure.MeasurementsAdapter;
 import org.weasis.core.api.media.data.TagW;
 import org.weasis.opencv.data.PlanarImage;
 
-/** @author Gabriela Bauermann (gabriela@animati.com.br) */
+/**
+ * @author Gabriela Bauermann (gabriela@animati.com.br)
+ */
 public interface MeasurableLayer {
 
   boolean hasContent();

@@ -643,7 +643,9 @@ public abstract class AbstractGraphic extends DefaultUUID implements Graphic {
     return getRepaintBounds(shape, transform);
   }
 
-  /** @return selected handle point index if existed, otherwise -1 */
+  /**
+   * @return selected handle point index if existed, otherwise -1
+   */
   @Override
   public int getHandlePointIndex(MouseEventDouble mouseEvent) {
     int nearestHandlePtIndex = -1;

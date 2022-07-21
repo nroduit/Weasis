@@ -336,7 +336,9 @@ public class StreamBackingStoreImpl implements BackingStore {
     return root;
   }
 
-  /** @see org.apache.felix.prefs.BackingStore#store(org.apache.felix.prefs.PreferencesImpl) */
+  /**
+   * @see org.apache.felix.prefs.BackingStore#store(org.apache.felix.prefs.PreferencesImpl)
+   */
   @Override
   public void store(PreferencesImpl prefs) throws BackingStoreException {
     // If no change, do not store
@@ -428,7 +430,9 @@ public class StreamBackingStoreImpl implements BackingStore {
     return false;
   }
 
-  /** @see org.apache.felix.prefs.BackingStore#update(org.apache.felix.prefs.PreferencesImpl) */
+  /**
+   * @see org.apache.felix.prefs.BackingStore#update(org.apache.felix.prefs.PreferencesImpl)
+   */
   @Override
   public void update(PreferencesImpl prefs) throws BackingStoreException {
     // Do nothing, only update when writing

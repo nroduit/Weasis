@@ -16,7 +16,9 @@ import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Tuple3d;
 import org.jogamp.vecmath.Vector3d;
 
-/** @author David A. Clunie */
+/**
+ * @author David A. Clunie
+ */
 public class IntersectVolume extends LocalizerPoster {
 
   public IntersectVolume(

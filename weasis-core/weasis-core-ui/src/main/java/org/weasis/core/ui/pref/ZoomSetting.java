@@ -76,7 +76,9 @@ public class ZoomSetting {
     this.lensHeight = lensHeight;
   }
 
-  /** @return ordinal value of ZoomOp.Interpolation */
+  /**
+   * @return ordinal value of ZoomOp.Interpolation
+   */
   public int getInterpolation() {
     return interpolation;
   }

@@ -11,7 +11,9 @@ package org.weasis.dicom.rt;
 
 import org.weasis.core.util.MathUtil;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class KeyDouble implements Comparable<KeyDouble> {
   private final double value;
   private final double key;

@@ -14,7 +14,9 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.dicom.codec.DicomImageElement;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class Image {
 
   private String patientPosition;

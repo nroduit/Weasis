@@ -422,7 +422,9 @@ public class PolygonGraphic extends AbstractDragGraphicArea {
     return lineSegmentList;
   }
 
-  /** @return perimeter the closed polygon, or null if shape is invalid */
+  /**
+   * @return perimeter the closed polygon, or null if shape is invalid
+   */
   public Double getPerimeter() {
     return getPerimeter(getClosedPathSegments());
   }

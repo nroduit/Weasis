@@ -307,7 +307,9 @@ public class DicomMediaIO implements DcmMediaReader {
     }
   }
 
-  /** @return true when the DICOM Object has no source file (only in memory) */
+  /**
+   * @return true when the DICOM Object has no source file (only in memory)
+   */
   public boolean isEditableDicom() {
     return dcmMetadata != null && "data".equals(uri.getScheme()); // NON-NLS
   }

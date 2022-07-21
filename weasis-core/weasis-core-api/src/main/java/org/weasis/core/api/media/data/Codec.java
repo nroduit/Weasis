@@ -14,19 +14,29 @@ import java.util.Hashtable;
 
 public interface Codec {
 
-  /** @return the codec name (must be unique) */
+  /**
+   * @return the codec name (must be unique)
+   */
   String getCodecName();
 
-  /** @return the MIME types that can be read by the codec */
+  /**
+   * @return the MIME types that can be read by the codec
+   */
   String[] getReaderMIMETypes();
 
-  /** @return the list of file extensions supported the reader */
+  /**
+   * @return the list of file extensions supported the reader
+   */
   String[] getReaderExtensions();
 
-  /** @return the MIME types that can be written by the codec */
+  /**
+   * @return the MIME types that can be written by the codec
+   */
   String[] getWriterMIMETypes();
 
-  /** @return the list of file extensions supported the writer */
+  /**
+   * @return the list of file extensions supported the writer
+   */
   String[] getWriterExtensions();
 
   MediaReader getMediaIO(URI media, String mimeType, Hashtable<String, Object> properties);

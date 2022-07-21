@@ -118,7 +118,9 @@ public final class GeomUtil {
     return a;
   }
 
-  /** @return midPoint or null if any argument is invalid */
+  /**
+   * @return midPoint or null if any argument is invalid
+   */
   public static Point2D getMidPoint(Point2D ptA, Point2D ptB) {
     if (ptA != null && ptB != null) {
       return new Point2D.Double((ptA.getX() + ptB.getX()) / 2.0, (ptA.getY() + ptB.getY()) / 2.0);
@@ -160,7 +162,9 @@ public final class GeomUtil {
     return null;
   }
 
-  /** @return median line or null if any argument is invalid */
+  /**
+   * @return median line or null if any argument is invalid
+   */
   public static Line2D getMedianLine(Line2D line1, Line2D line2) {
     if (line1 == null || line2 == null) {
       return null;
@@ -188,7 +192,9 @@ public final class GeomUtil {
     return new Line2D.Double(ptM, ptN);
   }
 
-  /** @return median line or null if any argument is invalid */
+  /**
+   * @return median line or null if any argument is invalid
+   */
   public static Line2D getMedianLine(Point2D ptA, Point2D ptB, Point2D ptC, Point2D ptD) {
     if (ptA == null || ptB == null || ptC == null || ptD == null) {
       return null;

@@ -160,7 +160,9 @@ public interface Graphic extends UUIDable, GUIEntry, KeyActionValue, Copyable<Gr
 
   boolean isShapeValid();
 
-  /** @return False if last dragging point equals the previous one */
+  /**
+   * @return False if last dragging point equals the previous one
+   */
   default Boolean isLastPointValid() {
     List<Point2D> pts = getPts();
     int size = pts.size();

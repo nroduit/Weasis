@@ -580,12 +580,16 @@ public class DicomMediaUtils {
 
   public static void writeFunctionalGroupsSequence(Taggable taggable, Attributes dcm) {
     if (dcm != null && taggable != null) {
-      /** @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.1 Pixel Measures Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.1 Pixel Measures Macro
+       */
       TagSeq.MacroSeqData data =
           new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.PixelSpacing, Tag.SliceThickness));
       TagD.get(Tag.PixelMeasuresSequence).readValue(data, taggable);
 
-      /** @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.2 Frame Content Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 §C.7.6.16.2.2 Frame Content Macro
+       */
       data =
           new TagSeq.MacroSeqData(
               dcm,
@@ -599,11 +603,15 @@ public class DicomMediaUtils {
       taggable.setTagNoNull(
           TagD.get(Tag.InstanceNumber), taggable.getTagValue(TagD.get(Tag.InStackPositionNumber)));
 
-      /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.3 Plane Position (Patient) Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.3 Plane Position (Patient) Macro
+       */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImagePositionPatient));
       TagD.get(Tag.PlanePositionSequence).readValue(data, taggable);
 
-      /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.4 Plane Orientation (Patient) Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.4 Plane Orientation (Patient) Macro
+       */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImageOrientationPatient));
       TagD.get(Tag.PlaneOrientationSequence).readValue(data, taggable);
       // If not null add ImageOrientationPlane for getting a orientation label.
@@ -612,7 +620,9 @@ public class DicomMediaUtils {
           ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
               TagD.getTagValue(taggable, Tag.ImageOrientationPatient, double[].class)));
 
-      /** @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.8 Frame Anatomy Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.8 Frame Anatomy Macro
+       */
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.FrameLaterality));
       TagD.get(Tag.FrameAnatomySequence).readValue(data, taggable);
 
@@ -658,7 +668,9 @@ public class DicomMediaUtils {
         setShutter(taggable, macroFrameDisplayShutter);
       }
 
-      /** @see - Dicom Standard 2011 - PS 3.3 §C.8 Frame Type Macro */
+      /**
+       * @see - Dicom Standard 2011 - PS 3.3 §C.8 Frame Type Macro
+       */
       // Type of Frame. A multivalued attribute analogous to the Image Type (0008,0008).
       // Enumerated Values and Defined Terms are the same as those for the four values of the Image
       // Type

@@ -226,21 +226,37 @@ public class GridBagLayoutModel implements GUIEntry, Copyable<GridBagLayoutModel
   }
 
   private final class SAXAdapter extends DefaultHandler {
-    /** @see java.awt.GridBagConstraints#gridx */
+    /**
+     * @see java.awt.GridBagConstraints#gridx
+     */
     private int x;
-    /** @see java.awt.GridBagConstraints#gridy */
+    /**
+     * @see java.awt.GridBagConstraints#gridy
+     */
     private int y;
-    /** @see java.awt.GridBagConstraints#gridwidth */
+    /**
+     * @see java.awt.GridBagConstraints#gridwidth
+     */
     private int width;
-    /** @see java.awt.GridBagConstraints#gridheight */
+    /**
+     * @see java.awt.GridBagConstraints#gridheight
+     */
     private int height;
-    /** @see java.awt.GridBagConstraints#weightx */
+    /**
+     * @see java.awt.GridBagConstraints#weightx
+     */
     private double weightx;
-    /** @see java.awt.GridBagConstraints#weighty */
+    /**
+     * @see java.awt.GridBagConstraints#weighty
+     */
     private double weighty;
-    /** @see java.awt.GridBagConstraints#anchor */
+    /**
+     * @see java.awt.GridBagConstraints#anchor
+     */
     private int position;
-    /** @see java.awt.GridBagConstraints#fill */
+    /**
+     * @see java.awt.GridBagConstraints#fill
+     */
     private int expand;
     /** The component class */
     private String type;

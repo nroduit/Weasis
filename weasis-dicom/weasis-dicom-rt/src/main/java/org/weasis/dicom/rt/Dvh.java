@@ -12,7 +12,9 @@ package org.weasis.dicom.rt;
 import org.knowm.xchart.XYChart;
 import org.knowm.xchart.style.markers.SeriesMarkers;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class Dvh {
 
   private int referencedRoiNumber;

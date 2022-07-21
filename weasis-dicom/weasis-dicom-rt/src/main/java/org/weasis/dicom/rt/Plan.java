@@ -14,7 +14,9 @@ import java.util.Date;
 import java.util.List;
 import org.weasis.core.util.StringUtil;
 
-/** @author Tomas Skripcak */
+/**
+ * @author Tomas Skripcak
+ */
 public class Plan {
 
   private String sopInstanceUid;

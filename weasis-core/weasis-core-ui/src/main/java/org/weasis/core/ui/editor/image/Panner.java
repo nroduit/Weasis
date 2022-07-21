@@ -20,7 +20,9 @@ import javax.swing.event.MouseInputAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.Thumbnail;
 
-/** @author Nicolas Roduit */
+/**
+ * @author Nicolas Roduit
+ */
 public final class Panner<E extends ImageElement> extends Thumbnail {
 
   private final MouseClickHandler mouseClickHandler = new MouseClickHandler();

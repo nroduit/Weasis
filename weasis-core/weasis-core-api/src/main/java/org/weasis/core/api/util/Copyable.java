@@ -15,6 +15,8 @@ package org.weasis.core.api.util;
  */
 @FunctionalInterface
 public interface Copyable<T> {
-  /** @return a new instance with identical values */
+  /**
+   * @return a new instance with identical values
+   */
   T copy();
 }
