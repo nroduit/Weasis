@@ -28,6 +28,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaElement;
@@ -343,8 +344,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
   }
 
   private KOSpecialElement buildKO(DicomModel model, DicomSeries s) {
-    DicomSpecialElement dcmElement =
-        DicomModel.getFirstSpecialElement(series, DicomSpecialElement.class);
+    SRSpecialElement dcmElement = DicomModel.getFirstSpecialElement(series, SRSpecialElement.class);
     if (dcmElement != null) {
       DicomImageElement dcm = s.getMedia(MediaSeries.MEDIA_POSITION.FIRST, null, null);
       if (dcm != null && dcm.getMediaReader() != null) {
@@ -352,8 +352,10 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
         Attributes attributes =
             DicomMediaUtils.createDicomKeyObject(
                 dicomSourceAttribute, dcmElement.getShortLabel(), null);
-        DicomModel.LOADING_EXECUTOR.execute(
-            new LoadDicomObjects(model, OpeningViewer.NONE, attributes));
+
+        LoadDicomObjects loadDicomObjects =
+            new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
+        GuiExecutor.instance().invokeAndWait(loadDicomObjects);
 
         for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(s)) {
           if (koElement.getMediaReader().getDicomObject().equals(attributes)) {

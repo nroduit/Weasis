@@ -22,6 +22,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
@@ -194,8 +195,9 @@ public final class KOManager {
       MediaSeries<DicomImageElement> dicomSeries, Attributes newDicomKO) {
 
     DicomModel dicomModel = (DicomModel) dicomSeries.getTagValue(TagW.ExplorerModel);
-    DicomModel.LOADING_EXECUTOR.execute(
-        new LoadDicomObjects(dicomModel, OpeningViewer.NONE, newDicomKO));
+    LoadDicomObjects loadDicomObjects =
+        new LoadDicomObjects(dicomModel, OpeningViewer.NONE, newDicomKO);
+    GuiExecutor.instance().invokeAndWait(loadDicomObjects);
 
     for (KOSpecialElement koElement : DicomModel.getKoSpecialElements(dicomSeries)) {
       if (koElement.getMediaReader().getDicomObject().equals(newDicomKO)) {

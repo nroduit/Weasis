@@ -780,8 +780,9 @@ public class DownloadManager {
       hierarchicalDicom.setReferencedSeries(referencedSeries);
 
       new KODocumentModule(attributes).setCurrentRequestedProcedureEvidences(referencedStudies);
-      DicomModel.LOADING_EXECUTOR.execute(
-          new LoadDicomObjects(model, OpeningViewer.NONE, attributes));
+      LoadDicomObjects loadDicomObjects =
+          new LoadDicomObjects(model, OpeningViewer.NONE, attributes);
+      GuiExecutor.instance().invokeAndWait(loadDicomObjects);
     }
   }
 
