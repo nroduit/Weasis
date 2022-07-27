@@ -190,6 +190,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
     }
     htmlPanel.setText(html.toString());
     this.setViewportView(htmlPanel);
+    htmlPanel.moveCaretPosition(0);
   }
 
   private void openRelatedSeries(String reference) {
