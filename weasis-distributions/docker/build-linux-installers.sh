@@ -4,7 +4,7 @@
 # Required a linux system with x86_64 or amd64 architecture (examples based on Ubuntu)
 # Required Docker and qemu (see https://docs.docker.com/desktop/multi-arch/)
 # Required XFS driver for simulating 32-bit file system
-# Build Weasis: https://nroduit.github.io/en/getting-started/building-weasis/
+# The script must be executed from weasis-native folder, see Build Weasis: https://nroduit.github.io/en/getting-started/building-weasis/
 
 ##### Install prerequisites #####
 # Install docker: https://docs.docker.com/engine/install/

@@ -11,7 +11,7 @@
     <fileSet>
       <!-- Copy jws jars -->
       <directory>target/tmp</directory>
-      <outputDirectory>weasis</outputDirectory>
+      <outputDirectory>bin/weasis</outputDirectory>
       <includes>
         <include>/*.jar</include>
         <include>bundle/*.jar${xz.ext}</include>
@@ -22,20 +22,30 @@
     <fileSet>
       <!-- Direct resources copy -->
       <directory>src/main/resources-native</directory>
-      <outputDirectory/>
+      <outputDirectory>bin</outputDirectory>
       <fileMode>0755</fileMode>
       <directoryMode>0755</directoryMode>
     </fileSet>
     <fileSet>
       <!-- copy resources -->
       <directory>resources</directory>
-      <outputDirectory>weasis/resources</outputDirectory>
+      <outputDirectory>bin/weasis/resources</outputDirectory>
     </fileSet>
     <fileSet>
       <!-- copy OSGI framework config -->
       <directory>etc/config</directory>
-      <outputDirectory>weasis/conf</outputDirectory>
+      <outputDirectory>bin/weasis/conf</outputDirectory>
       <filtered>true</filtered>
+    </fileSet>
+    <fileSet>
+      <!-- copy the build scripts -->
+      <directory>script</directory>
+      <outputDirectory>build/script</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <!-- copy the build scripts -->
+      <directory>docker</directory>
+      <outputDirectory>build/docker</outputDirectory>
     </fileSet>
   </fileSets>
 </assembly>
