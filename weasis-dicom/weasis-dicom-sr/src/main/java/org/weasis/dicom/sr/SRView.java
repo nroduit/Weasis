@@ -225,7 +225,9 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
               keyReferences.addKeyObject(koRef);
               SeriesViewerFactory plugin = UIManager.getViewerFactory(DicomMediaIO.SERIES_MIMETYPE);
               if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-                addGraphicsToView(s.getMedia(0, null, null), imgRef);
+                MediaElement mediaElement =
+                    dicomSeries.getMedia(0, keyReferences.getSOPInstanceUIDFilter(), null);
+                addGraphicsToView(mediaElement, imgRef);
                 String uid = UUID.randomUUID().toString();
                 Map<String, Object> props = Collections.synchronizedMap(new HashMap<>());
                 props.put(ViewerPluginBuilder.CMP_ENTRY_BUILD_NEW_VIEWER, false);
