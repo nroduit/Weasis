@@ -363,7 +363,7 @@ public class DicomMediaIO implements DcmMediaReader {
       // Return true only to display the error message in the view
       return true;
     }
-    if ("data".equals(uri.getScheme()) && dcmMetadata == null) { //NON-NLS
+    if ("data".equals(uri.getScheme()) && dcmMetadata == null) { // NON-NLS
       return false;
     }
 

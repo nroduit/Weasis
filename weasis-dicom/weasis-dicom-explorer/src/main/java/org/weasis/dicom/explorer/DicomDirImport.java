@@ -160,7 +160,7 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
               return true;
             }
             return f.getName().equalsIgnoreCase("dicomdir") // NON-NLS
-                || f.getName().equalsIgnoreCase("dicomdir."); //NON-NLS
+                || f.getName().equalsIgnoreCase("dicomdir."); // NON-NLS
           }
         });
     File selectedFile = null;
@@ -270,7 +270,6 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
     }
   }
 
-
   public static File getDcmDirFromMedia() {
     final List<File> dvs = new ArrayList<>();
     try {
@@ -282,8 +281,8 @@ public class DicomDirImport extends AbstractItemDialogPage implements ImportDico
         addFiles(dvs, new File("/media"));
         addFiles(dvs, new File("/mnt"));
         String user = System.getProperty("user.name", "local"); // NON-NLS
-        addFiles(dvs, new File("/media/" + user ));
-        addFiles(dvs, new File("/run/media/" + user ));
+        addFiles(dvs, new File("/media/" + user));
+        addFiles(dvs, new File("/run/media/" + user));
       }
     } catch (Exception e) {
       LOGGER.error("Error when reading device directories: {}", e.getMessage());

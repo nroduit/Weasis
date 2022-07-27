@@ -103,7 +103,9 @@ public class WindowAndPresetsOp extends WindowOp {
       if (pr != null
           && UID.PseudoColorSoftcopyPresentationStateStorage.equals(
               pr.getMediaReader().getDicomObject().getString(Tag.SOPClassUID))) {
-        source = DicomImageUtils.getRGBImageFromPaletteColorModel(source, pr.getMediaReader().getDicomObject());
+        source =
+            DicomImageUtils.getRGBImageFromPaletteColorModel(
+                source, pr.getMediaReader().getDicomObject());
       }
       result = imageElement.getRenderedImage(source, params);
     }

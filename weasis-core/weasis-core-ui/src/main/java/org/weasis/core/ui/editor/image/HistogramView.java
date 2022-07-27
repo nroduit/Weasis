@@ -16,7 +16,6 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.image.DataBuffer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -65,7 +64,6 @@ import org.weasis.core.ui.util.SimpleTableModel;
 import org.weasis.core.ui.util.TableNumberRenderer;
 import org.weasis.core.util.StringUtil;
 import org.weasis.opencv.data.PlanarImage;
-import org.weasis.opencv.op.ImageConversion;
 
 public class HistogramView extends JComponent
     implements SeriesViewerListener, GraphicSelectionListener {
