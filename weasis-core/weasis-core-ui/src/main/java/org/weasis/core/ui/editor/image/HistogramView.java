@@ -75,7 +75,7 @@ public class HistogramView extends JComponent
   private final JPanel view = new JPanel();
   private final JPanel histView = new JPanel();
   private final SeriesViewer<?> viewer;
-  private final JSpinner spinnerBins = new JSpinner(new SpinnerNumberModel(512, 64, 4096, 8));
+  private final JSpinner spinnerBins = new JSpinner(new SpinnerNumberModel(256, 64, 4096, 8));
 
   private ViewCanvas<?> view2DPane;
 
@@ -176,6 +176,8 @@ public class HistogramView extends JComponent
       row1.add(new JLabel(Messages.getString("HistogramView.channel") + StringUtil.COLON));
 
       jComboBoxImgChannel.removeItemListener(modelListener);
+      Model oldColorModel = (Model) jComboBoxImgChannel.getSelectedItem();
+      int oldModelNumber = jComboBoxImgChannel.getItemCount();
       jComboBoxImgChannel.removeAllItems();
       Model[] vals = Model.values();
       int limit = channels > 1 ? imageSource.depth() > 1 ? 2 : vals.length : 1;
@@ -185,6 +187,10 @@ public class HistogramView extends JComponent
       if (channels > 1) {
         jComboBoxImgChannel.addItem(vals[0]);
       }
+
+      if (oldColorModel != null && oldModelNumber == jComboBoxImgChannel.getItemCount()) {
+        jComboBoxImgChannel.setSelectedItem(oldColorModel);
+      }
       jComboBoxImgChannel.addItemListener(modelListener);
 
       row1.add(jComboBoxImgChannel);
@@ -193,16 +199,6 @@ public class HistogramView extends JComponent
       JPanel row2 = new JPanel();
       row2.add(new JLabel(Messages.getString("HistogramView.bins") + StringUtil.COLON));
       JMVUtils.formatCheckAction(spinnerBins);
-      MeasurableLayer layer = view2DPane.getMeasurableLayer();
-      int datatype = ImageConversion.convertToDataType(imageSource.type());
-      boolean intVal = datatype >= DataBuffer.TYPE_BYTE && datatype < DataBuffer.TYPE_INT;
-      if (layer != null && intVal) {
-        int nbins = (Integer) spinnerBins.getValue();
-        int range = (int) (layer.getPixelMax() - layer.getPixelMin());
-        if (range < nbins) {
-          spinnerBins.setValue(range);
-        }
-      }
       row2.add(spinnerBins);
       spinnerBins.addChangeListener(e -> buildHistogram());
       row2.add(Box.createHorizontalStrut(15));
@@ -316,11 +312,11 @@ public class HistogramView extends JComponent
   }
 
   private Model getSelectedColorModel(int channels) {
-    Model clorModel = (Model) jComboBoxImgChannel.getSelectedItem();
-    if (clorModel == null) {
-      clorModel = channels > 1 ? Model.RGB : Model.GRAY;
+    Model colorModel = (Model) jComboBoxImgChannel.getSelectedItem();
+    if (colorModel == null) {
+      colorModel = channels > 1 ? Model.RGB : Model.GRAY;
     }
-    return clorModel;
+    return colorModel;
   }
 
   private void buildHistogram() {
