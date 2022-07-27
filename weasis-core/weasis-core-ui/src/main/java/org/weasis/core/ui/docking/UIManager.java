@@ -21,6 +21,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.weasis.core.api.explorer.DataExplorerView;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.ui.editor.SeriesViewer;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
@@ -168,10 +169,14 @@ public class UIManager {
 
   public static void closeSeriesViewer(final List<? extends ViewerPlugin<?>> pluginsToRemove) {
     if (pluginsToRemove != null) {
-      for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
-        viewerPlugin.close();
-        viewerPlugin.handleFocusAfterClosing();
-      }
+      GuiExecutor.instance()
+          .execute(
+              () -> {
+                for (final ViewerPlugin<?> viewerPlugin : pluginsToRemove) {
+                  viewerPlugin.close();
+                  viewerPlugin.handleFocusAfterClosing();
+                }
+              });
     }
   }
 }

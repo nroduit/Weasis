@@ -15,6 +15,7 @@ import org.dcm4che3.data.Tag;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.MediaSeriesGroupNode;
@@ -136,7 +137,9 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
                   Thumbnail.KEY_SIZE, Thumbnail.DEFAULT_SIZE);
           t = DicomExplorer.createThumbnail(dicomSeries, dicomModel, thumbnailSize);
           dicomSeries.setTag(TagW.Thumbnail, t);
-          Optional.ofNullable(t).ifPresent(SeriesThumbnail::repaint);
+          if (t != null) {
+            GuiExecutor.instance().execute(t::repaint);
+          }
         }
 
         if (DicomModel.isSpecialModality(dicomSeries)) {
@@ -184,7 +187,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
             // Refresh the number of images on the thumbnail
             Thumbnail t = (Thumbnail) dicomSeries.getTagValue(TagW.Thumbnail);
             if (t != null) {
-              t.repaint();
+              GuiExecutor.instance().execute(t::repaint);
             }
           }
 

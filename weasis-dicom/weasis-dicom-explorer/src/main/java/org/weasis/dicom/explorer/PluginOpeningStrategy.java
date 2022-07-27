@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.explorer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -77,7 +78,7 @@ public class PluginOpeningStrategy {
   public void prepareImport() {
     if (OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)
         || OpeningViewer.ALL_PATIENTS_CLEAN.equals(openingMode)) {
-      UIManager.closeSeriesViewer(UIManager.VIEWER_PLUGINS);
+      UIManager.closeSeriesViewer(new ArrayList<>(UIManager.VIEWER_PLUGINS));
     }
   }
 
