@@ -97,7 +97,7 @@ jobs:
       - name: Unzip the native package version
         shell: bash
         run: |
-          unzip -o "native-dist/weasis-native.zip" -d "${{ env.WEASIS_INPUT }}"
+          unzip -o "native-dist/weasis-native.zip" -d "native-dist/weasis-native"
 
       - name: Remove binaries not related to the current architecture
         shell: bash
