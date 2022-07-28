@@ -2,7 +2,7 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.0 http://maven.apache.org/xsd/assembly-2.0.0.xsd">
 
-  <id>portable-dist</id>
+  <id>native-dist</id>
   <formats>
     <format>zip</format>
   </formats>
@@ -11,7 +11,7 @@
     <fileSet>
       <!-- Copy jws jars -->
       <directory>target/tmp</directory>
-      <outputDirectory>bin/weasis</outputDirectory>
+      <outputDirectory>bin-dist/weasis</outputDirectory>
       <includes>
         <include>/*.jar</include>
         <include>bundle/*.jar${xz.ext}</include>
@@ -22,19 +22,19 @@
     <fileSet>
       <!-- Direct resources copy -->
       <directory>src/main/resources-native</directory>
-      <outputDirectory>bin</outputDirectory>
+      <outputDirectory>bin-dist</outputDirectory>
       <fileMode>0755</fileMode>
       <directoryMode>0755</directoryMode>
     </fileSet>
     <fileSet>
       <!-- copy resources -->
       <directory>resources</directory>
-      <outputDirectory>bin/weasis/resources</outputDirectory>
+      <outputDirectory>bin-dist/weasis/resources</outputDirectory>
     </fileSet>
     <fileSet>
       <!-- copy OSGI framework config -->
       <directory>etc/config</directory>
-      <outputDirectory>bin/weasis/conf</outputDirectory>
+      <outputDirectory>bin-dist/weasis/conf</outputDirectory>
       <filtered>true</filtered>
     </fileSet>
     <fileSet>

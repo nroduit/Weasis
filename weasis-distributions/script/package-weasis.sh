@@ -36,7 +36,7 @@ do
 echo "Usage: package-weasis.sh <options>"
 echo "Sample usages:"
 echo "    Build an installer for the current platform with the minimal required parameters"
-echo "        package-weasis.sh --input /home/user/weasis-native --jdk /home/user/jdk-18"
+echo "        package-weasis.sh --input /home/user/weasis-native/bin-dist --jdk /home/user/jdk-18"
 echo ""
 echo "Options:"
 echo " --help -h
@@ -99,8 +99,17 @@ curPath=$(dirname "$(readlink -f "$0")")
 rootdir="$(dirname "$curPath")"
 rootdir="$(dirname "$rootdir")"
 
-if [ -z "$INPUT_PATH" ] ; then
-  INPUT_PATH="${rootdir}/weasis-distributions/target/native-dist/weasis-native"
+echo "rootdir: $rootdir"
+
+if [ ! -d "${INPUT_PATH}" ] ; then
+  INPUT_PATH="${rootdir}/bin-dist"
+  if [ ! -d "${INPUT_PATH}" ] ; then
+    INPUT_PATH="${rootdir}/weasis-distributions/target/native-dist/weasis-native/bin-dist"
+  fi
+fi
+
+if [ ! -d "${INPUT_PATH}" ] ; then
+  die "The input path ${INPUT_PATH} doesn't exist, provide a valid value for --input"
 fi
 
 cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz

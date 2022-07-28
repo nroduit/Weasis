@@ -59,9 +59,9 @@ jobs:
       JDK_MODULES: "java.base,java.compiler,java.datatransfer,java.net.http,java.desktop,java.logging,java.management,java.prefs,java.xml,jdk.localedata,jdk.charsets,jdk.crypto.ec,jdk.crypto.cryptoki,jdk.unsupported,jdk.jdwp.agent"
       NAME: "Weasis"
       IDENTIFIER: "org.weasis.launcher"
-      WEASIS_INPUT: "weasis-distributions/target/native-dist/weasis-native"
-      WEASIS_OUTPUT: "weasis-distributions/target/output-dist"
-      WEASIS_INPUT_BIN: "weasis-distributions/target/native-dist/weasis-native/weasis"
+      WEASIS_INPUT: "native-dist/weasis-native/bin-dist"
+      WEASIS_OUTPUT: "output-dist"
+      WEASIS_INPUT_BIN: "native-dist/weasis-native/bin-dist/weasis"
     runs-on: ${{ matrix.os }}
     needs: build
     strategy:
@@ -82,8 +82,6 @@ jobs:
           echo "WEASIS_VERSION=${{needs.build.outputs.version}}" >> $GITHUB_ENV
           echo "WEASIS_CLEAN_VERSION=${{needs.build.outputs.cleanversion}}" >> $GITHUB_ENV
 
-      - uses: actions/checkout@v3
-
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -94,12 +92,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
-          path: weasis-distributions/target/native-dist
+          path: native-dist
 
       - name: Unzip the native package version
         shell: bash
         run: |
-          unzip -o "weasis-distributions/target/native-dist/weasis-native.zip" -d "${{ env.WEASIS_INPUT }}"
+          unzip -o "native-dist/weasis-native.zip" -d "${{ env.WEASIS_INPUT }}"
 
       - name: Remove binaries not related to the current architecture
         shell: bash
@@ -134,7 +132,7 @@ jobs:
       - name: Build app binary with jpackage
         shell: bash
         env:
-          RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
+          RES: "native-dist/weasis-native/build/script/resources/${{ matrix.wsystem }}"
         run: |
           machine=${{ matrix.wsystem }}
           if [ "$machine" = "macosx" ] ; then
@@ -174,8 +172,8 @@ jobs:
       - name: Build package with jpackage
         shell: bash
         env:
-          RES: "weasis-distributions/script/resources/${{ matrix.wsystem }}"
-          FILE_ASSOC: "weasis-distributions/script/file-associations.properties"
+          RES: "native-dist/weasis-native/buildscript/resources/${{ matrix.wsystem }}"
+          FILE_ASSOC: "native-dist/weasis-native/build/script/file-associations.properties"
           VENDOR: "Weasis Team"
           COPYRIGHT: "© 2009-2022 Weasis Team"
         run: |
