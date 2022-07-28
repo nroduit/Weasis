@@ -100,7 +100,7 @@ rootdir="$(dirname "$curPath")"
 rootdir="$(dirname "$rootdir")"
 
 if [ -z "$INPUT_PATH" ] ; then
-  INPUT_PATH="${rootdir}/weasis-distributions/target/native-dist/weasis-native"
+  INPUT_PATH="${rootdir}/weasis-distributions/target/native-dist/weasis-native/bin"
 fi
 
 cp "$INPUT_PATH/weasis/bundle/weasis-core-img-"* weasis-core-img.jar.xz
