@@ -1,5 +1,37 @@
 # Changelog
 
+## [v4.0.2](https://github.com/nroduit/Weasis/tree/v4.0.2) (2022-08-01)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.1...v4.0.2)
+
+**Implemented enhancements:**
+
+- Update to dcm4che 5.27.0 [\#320](https://github.com/nroduit/Weasis/issues/320)
+- The DICOM SR view always opens at the end of the page [\#313](https://github.com/nroduit/Weasis/issues/313)
+
+**Fixed bugs:**
+
+- The series deleted in the explorer reappear after a new Q/R [\#319](https://github.com/nroduit/Weasis/issues/319)
+- Cannot read the image when VOI LUT is corrupted [\#318](https://github.com/nroduit/Weasis/issues/318)
+- Cannot display ECG 2.5x4 in continuous time [\#315](https://github.com/nroduit/Weasis/issues/315)
+- Sometimes the Key Object Selection view is not open [\#312](https://github.com/nroduit/Weasis/issues/312)
+- Display of graphic information from a DICOM Comprehensive SR with a multiframe series [\#309](https://github.com/nroduit/Weasis/issues/309)
+- The search button in the DICOM Q/R is not visible [\#307](https://github.com/nroduit/Weasis/issues/307)
+- Cannot rebuild series with MIP sometimes [\#306](https://github.com/nroduit/Weasis/issues/306)
+- Histogram issue when all values are outside  the W/L [\#305](https://github.com/nroduit/Weasis/issues/305)
+- Opening strategy is not working as expected for local device import. [\#302](https://github.com/nroduit/Weasis/issues/302)
+- Check for updates doesn't work [\#301](https://github.com/nroduit/Weasis/issues/301)
+- Cannot start Weasis on Windows - Failed to Launch JVM [\#297](https://github.com/nroduit/Weasis/issues/297)
+- Issue of building the native installer on Windows [\#296](https://github.com/nroduit/Weasis/issues/296)
+
+**Closed issues:**
+
+- Not all series \(images\) are displayed [\#310](https://github.com/nroduit/Weasis/issues/310)
+
+**Merged pull requests:**
+
+- fix window create msi  bug [\#299](https://github.com/nroduit/Weasis/pull/299) ([runqinshiye](https://github.com/runqinshiye))
+
 ## [v4.0.1](https://github.com/nroduit/Weasis/tree/v4.0.1) (2022-06-17)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.0-rc...v4.0.1)
