@@ -42,6 +42,7 @@ public class LeadPanel extends JPanel {
   private final int mvCellCount;
   private double secondCellCount;
   private int sampleNumber;
+  private int sampleOffset;
 
   private int selectedPosition;
   private final List<SignalMarker> markers;
@@ -55,6 +56,7 @@ public class LeadPanel extends JPanel {
     this.mvCellCount = view.getMvCells();
     this.secondCellCount = view.getSeconds() * 10;
     this.sampleNumber = data.getNbSamplesPerChannel();
+    this.sampleOffset = 0;
     this.selectedPosition = -1;
     this.markers = new ArrayList<>();
     this.markerAnnotation = new MarkerAnnotation(channels.getLead());
@@ -80,14 +82,15 @@ public class LeadPanel extends JPanel {
 
     this.secondCellCount = (int) (length * 10);
     this.sampleNumber = (int) (length * view.getSamplesPerSecond());
+    this.sampleOffset = (int) (start * view.getSamplesPerSecond());
   }
 
   private void setSelectedPosition(int position) {
-    if (position < 0 || position >= data.getNbSamplesPerChannel()) {
-      selectedPosition = -1;
+    this.selectedPosition = sampleOffset + position;
+    if (selectedPosition < 0 || selectedPosition >= data.getNbSamplesPerChannel()) {
+      this.selectedPosition = -1;
       view.getInfoPanel().setCurrentValues(-1, -1);
     } else {
-      selectedPosition = position;
       double sec = selectedPosition / (double) view.getSamplesPerSecond();
       double uV = data.getSample(selectedPosition, channels);
       view.getInfoPanel().setCurrentValues(sec, uV / 1000);
@@ -149,7 +152,7 @@ public class LeadPanel extends JPanel {
           @Override
           public void mouseExited(MouseEvent e) {
             setCursor(DefaultView2d.DEFAULT_CURSOR);
-            setSelectedPosition(-1);
+            setSelectedPosition(Integer.MIN_VALUE);
             repaint();
           }
 
@@ -337,11 +340,11 @@ public class LeadPanel extends JPanel {
 
     Path2D path = new Path2D.Double(Path2D.WIND_NON_ZERO, sampleNumber);
     double x = 0.0;
-    double y = halfHeight - (data.getSample(0, channels) / 1000 * cellHeight);
+    double y = halfHeight - (data.getSample(sampleOffset, channels) / 1000 * cellHeight);
     path.moveTo(x, y);
     for (int i = 1; i < this.sampleNumber; i++) {
       x = ratioX * i;
-      y = halfHeight - (data.getSample(i, channels) / 1000 * cellHeight);
+      y = halfHeight - (data.getSample(sampleOffset + i, channels) / 1000 * cellHeight);
       path.lineTo(x, y);
     }
     g2.draw(path);
@@ -357,8 +360,8 @@ public class LeadPanel extends JPanel {
     Color background = new Color(230, 230, 230, 100);
     g2.setColor(background);
 
-    double startX = this.ratioX * start.getPosition();
-    double stopX = this.ratioX * stop.getPosition();
+    double startX = this.ratioX * (start.getPosition() - sampleOffset);
+    double stopX = this.ratioX * (stop.getPosition() - sampleOffset);
     if (startX > stopX) {
       double tmp = stopX;
       stopX = startX;
@@ -370,7 +373,7 @@ public class LeadPanel extends JPanel {
   }
 
   private void drawSignalMarkers(Graphics2D g2, Dimension dim) {
-    drawMarker(g2, Color.BLUE, selectedPosition, dim);
+    drawMarker(g2, Color.BLUE, selectedPosition - sampleOffset, dim);
     for (SignalMarker marker : markers) {
       Color color;
       if (marker.getType() == SignalMarker.Type.START) {
@@ -378,7 +381,7 @@ public class LeadPanel extends JPanel {
       } else {
         color = Color.CYAN;
       }
-      drawMarker(g2, color, marker.getPosition(), dim);
+      drawMarker(g2, color, marker.getPosition() - sampleOffset, dim);
     }
   }
 
