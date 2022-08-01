@@ -255,9 +255,9 @@ public class ThemeSetting extends AbstractItemDialogPage {
   @Override
   public void resetToDefaultValues() {
     BundleTools.SYSTEM_PREFERENCES.resetProperty("weasis.theme", null);
-    BundleTools.SYSTEM_PREFERENCES.resetProperty("flatlaf.uiScale", null);
+    BundleTools.SYSTEM_PREFERENCES.setProperty(FlatSystemProperties.UI_SCALE, "-1");
     if (SystemInfo.isLinux) {
-      BundleTools.SYSTEM_PREFERENCES.resetProperty(
+      BundleTools.SYSTEM_PREFERENCES.setProperty(
           BundleTools.LINUX_WINDOWS_DECORATION, Boolean.FALSE.toString());
     }
     initialize(false);
