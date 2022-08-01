@@ -176,11 +176,13 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
     }
 
-    if (image.isReadable() && getDisplayPreferences(SCALE)) {
-      drawScale(g2, bound, fontHeight);
-    }
-    if (image.isReadable() && getDisplayPreferences(LUT) && hideMin) {
-      drawLUT(g2, bound, midFontHeight);
+    if (image.isReadable() && view2DPane.getSourceImage() != null) {
+      if (getDisplayPreferences(SCALE)) {
+        drawScale(g2, bound, fontHeight);
+      }
+      if (getDisplayPreferences(LUT) && hideMin) {
+        drawLUT(g2, bound, midFontHeight);
+      }
     }
 
     /*

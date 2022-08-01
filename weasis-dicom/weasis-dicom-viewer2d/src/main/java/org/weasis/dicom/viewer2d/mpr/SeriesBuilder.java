@@ -475,6 +475,7 @@ public class SeriesBuilder {
         }
       }
       RawImageIO rawIO = new RawImageIO(newSeries[i], null);
+      rawIO.getFileCache().setOriginalTempFile(newSeries[i].getFile());
       rawIO.setBaseAttributes(cpTags);
 
       // Tags with same values for all the Series

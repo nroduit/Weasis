@@ -13,6 +13,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Objects;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
+import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.media.MimeInspector;
 import org.weasis.core.api.media.data.MediaElement;
@@ -78,6 +79,9 @@ public class LoadLocalDicom extends LoadDicom {
           || MimeInspector.isMatchingMimeTypeFromMagicNumber(value, DicomMediaIO.DICOM_MIMETYPE)) {
         DicomMediaIO loader = new DicomMediaIO(value);
         if (loader.isReadableDicom()) {
+          if (value.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
+            loader.getFileCache().setOriginalTempFile(value);
+          }
           // Issue: must handle adding image to viewer and building thumbnail (middle image)
           SeriesThumbnail t = buildDicomStructure(loader);
           if (t != null) {

@@ -942,7 +942,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
       if (status == Status.DOWNLOADING) {
         status = Status.COMPLETE;
         if (tempFile != null && dicomSeries != null && dicomReader.isReadableDicom()) {
-          if (cache) {
+          if (tempFile.getPath().startsWith(AppProperties.APP_TEMP_DIR.getPath())) {
             dicomReader.getFileCache().setOriginalTempFile(tempFile);
           }
           final DicomMediaIO reader = dicomReader;
