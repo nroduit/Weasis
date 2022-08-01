@@ -44,6 +44,9 @@ import org.weasis.opencv.data.PlanarImage;
 
 public class SeriesBuilder {
   private static final Logger LOGGER = LoggerFactory.getLogger(SeriesBuilder.class);
+  public static final File MIP_CACHE_DIR =
+      AppProperties.buildAccessibleTempDirectory(
+          AppProperties.FILE_CACHE_DIR.getName(), "mip"); // NON-NLS
 
   private SeriesBuilder() {}
 
@@ -160,14 +163,15 @@ public class SeriesBuilder {
         }
 
         if (curImage != null) {
-
           DicomImageElement imgRef = (DicomImageElement) sources.get(sources.size() / 2);
           FileRawImage raw = null;
           try {
-            File mipDir =
-                AppProperties.buildAccessibleTempDirectory(
-                    AppProperties.FILE_CACHE_DIR.getName(), "mip"); // NON-NLS
-            raw = new FileRawImage(File.createTempFile("mip_", ".wcv", mipDir)); // NON-NLS
+            File dir = MIP_CACHE_DIR;
+            if (fullSeries) {
+              dir = new File(MIP_CACHE_DIR, seriesUID);
+              dir.mkdirs();
+            }
+            raw = new FileRawImage(File.createTempFile("mip_", ".wcv", dir)); // NON-NLS
             if (!raw.write(curImage)) {
               raw = null;
             }
@@ -182,6 +186,7 @@ public class SeriesBuilder {
             return;
           }
           RawImageIO rawIO = new RawImageIO(raw, null);
+          rawIO.getFileCache().setOriginalTempFile(raw.getFile());
           rawIO.setBaseAttributes(cpTags);
 
           // Tags with same values for all the Series

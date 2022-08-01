@@ -21,7 +21,6 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
@@ -115,10 +114,16 @@ public class MipView extends View2d {
     this.setActionsInView(MipView.MIP_THICKNESS.cmd(), null);
 
     setMip(null);
-    File mipDir =
-        AppProperties.buildAccessibleTempDirectory(
-            AppProperties.FILE_CACHE_DIR.getName(), "mip"); // NON-NLS
-    FileUtil.deleteDirectoryContents(mipDir, 1, 0);
+
+    // Remove all files except the build series
+    File[] files = SeriesBuilder.MIP_CACHE_DIR.listFiles();
+    if (files != null) {
+      for (final File f : files) {
+        if (!f.isDirectory()) {
+          FileUtil.delete(f);
+        }
+      }
+    }
 
     ImageViewerPlugin<DicomImageElement> container =
         this.getEventManager().getSelectedView2dContainer();
