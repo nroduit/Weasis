@@ -252,7 +252,7 @@ jobs:
           exit 1
           fi
 
-      - name: Upload the final opencv binary
+      - name: Upload the installer
         uses: actions/upload-artifact@v2
         with:
           name: ${{ env.APP_ARTIFACT }}

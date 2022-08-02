@@ -68,8 +68,8 @@ parts:
   remote-weasis-build:
     after: [remote-openjdk]
     plugin: dump
-    source: weasis-distributions/target/native-dist/weasis-native.zip
-    #source: https://github.com/nroduit/Weasis/releases/download/v4.0.2/weasis-native.zip
+    #source: weasis-distributions/target/native-dist/weasis-native.zip
+    source: https://github.com/nroduit/Weasis/releases/download/v4.0.2/weasis-native.zip
     organize:
       '*': weasis-native/
     override-stage: 'true'
