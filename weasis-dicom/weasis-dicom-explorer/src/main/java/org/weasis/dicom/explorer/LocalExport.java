@@ -499,18 +499,19 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
   }
 
   private static String instanceFileName(MediaElement img) {
+    String iUid = makeFileIDs(TagD.getTagValue(img, Tag.SOPInstanceUID, String.class));
     Integer instance = TagD.getTagValue(img, Tag.InstanceNumber, Integer.class);
     if (instance != null) {
       String val = instance.toString();
       if (val.length() < 5) {
         char[] chars = new char[5 - val.length()];
         Arrays.fill(chars, '0');
-        return new String(chars) + val;
+        return iUid + "-" + new String(chars) + val;
       } else {
-        return val;
+        return iUid + "-" + val;
       }
     }
-    return TagD.getTagValue(img, Tag.SOPInstanceUID, String.class);
+    return iUid;
   }
 
   protected void writeOther(
@@ -554,9 +555,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
           if (node.getUserObject() instanceof DicomImageElement img) {
             // Get instance number instead SOPInstanceUID to handle multiframe
             String instance = instanceFileName(img);
-            if (!keepNames) {
-              instance = makeFileIDs(instance);
-            }
             String path = buildPath(img, keepNames, node);
             File destinationDir = new File(exportDir, path);
             destinationDir.mkdirs();
@@ -600,9 +598,6 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
             if (fileSrc != null) {
               // Get instance number instead SOPInstanceUID to handle multiframe
               String instance = instanceFileName(dcm);
-              if (!keepNames) {
-                instance = makeFileIDs(instance);
-              }
               String path = buildPath(dcm, keepNames, node);
               File destinationDir = new File(exportDir, path);
               destinationDir.mkdirs();
