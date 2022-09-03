@@ -506,9 +506,9 @@ public class LocalExport extends AbstractItemDialogPage implements ExportDicom {
       if (val.length() < 5) {
         char[] chars = new char[5 - val.length()];
         Arrays.fill(chars, '0');
-        return iUid + "-" + new String(chars) + val;
+        return new String(chars) + val + "-" + iUid;
       } else {
-        return iUid + "-" + val;
+        return val + "-" + iUid;
       }
     }
     return iUid;
