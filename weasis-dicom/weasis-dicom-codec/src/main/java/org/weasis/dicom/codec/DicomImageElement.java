@@ -54,7 +54,9 @@ import org.weasis.dicom.param.AttributeEditorContext;
 import org.weasis.opencv.data.ImageCV;
 import org.weasis.opencv.data.LookupTableCV;
 import org.weasis.opencv.data.PlanarImage;
+import org.weasis.opencv.op.lut.LutParameters;
 import org.weasis.opencv.op.lut.LutShape;
+import org.weasis.opencv.op.lut.PresentationStateLut;
 import org.weasis.opencv.op.lut.WlParams;
 import org.weasis.opencv.op.lut.WlPresentation;
 
@@ -267,6 +269,21 @@ public class DicomImageElement extends ImageElement implements DicomElement {
   public PlanarImage getModalityLutImage(OpManager manager, DicomImageReadParam params) {
     PlanarImage image = getImage(manager, adapter == null);
     return ImageRendering.getModalityLutImage(image, adapter, params);
+  }
+
+  public LutParameters getModalityLutParameters(
+      boolean pixelPadding, LookupTableCV mLUTSeq, boolean inversePaddingMLUT, PrDicomObject pr) {
+    if (adapter == null) {
+      return null;
+    }
+    return adapter.getLutParameters(pixelPadding, mLUTSeq, inversePaddingMLUT, pr);
+  }
+
+  public boolean isPhotometricInterpretationInverse(PresentationStateLut pr) {
+    if (adapter == null) {
+      return false;
+    }
+    return adapter.isPhotometricInterpretationInverse(pr);
   }
 
   /**
