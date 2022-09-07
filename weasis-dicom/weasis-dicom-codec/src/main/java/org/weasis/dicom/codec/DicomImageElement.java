@@ -19,6 +19,7 @@ import java.util.Map;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
+import org.dcm4che3.image.PhotometricInterpretation;
 import org.dcm4che3.img.DicomImageAdapter;
 import org.dcm4che3.img.DicomImageReadParam;
 import org.dcm4che3.img.DicomImageReader;
@@ -165,7 +166,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    */
   @Override
   public double getMinValue(WlPresentation wlp) {
-    if (adapter != null) {
+    if (isImageInitialized()) {
       return adapter.getMinValue(wlp);
     }
     return 0.0;
@@ -177,7 +178,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    */
   @Override
   public double getMaxValue(WlPresentation wlp) {
-    if (adapter != null) {
+    if (isImageInitialized()) {
       return adapter.getMaxValue(wlp);
     }
     return 0.0;
@@ -197,15 +198,24 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    * @see "DICOM standard PS 3.3 - §C.7.6.3 - Image Pixel Module"
    */
   public boolean isPixelRepresentationSigned() {
+    if (isImageInitialized()) {
+      return adapter.getImageDescriptor().isSigned();
+    }
     Integer pixelRepresentation = TagD.getTagValue(this, Tag.PixelRepresentation, Integer.class);
     return (pixelRepresentation != null) && (pixelRepresentation != 0);
   }
 
   public int getBitsStored() {
+    if (isImageInitialized()) {
+      return adapter.getBitsStored();
+    }
     return TagD.getTagValue(this, Tag.BitsStored, Integer.class);
   }
 
   public int getBitsAllocated() {
+    if (isImageInitialized()) {
+      return adapter.getImageDescriptor().getBitsAllocated();
+    }
     return TagD.getTagValue(this, Tag.BitsAllocated, Integer.class);
   }
 
@@ -221,7 +231,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   @Override
   public Number pixelToRealValue(Number pixelValue, WlPresentation wlp) {
-    if (pixelValue != null && adapter != null) {
+    if (pixelValue != null && isImageInitialized()) {
       return adapter.pixelToRealValue(pixelValue, wlp);
     }
     return pixelValue;
@@ -234,36 +244,18 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    * @return following values (MONOCHROME1 , MONOCHROME2 , PALETTE COLOR ....) Other values are
    *     permitted but the meaning is not defined by this Standard.
    */
-  public String getPhotometricInterpretation() {
-    return TagD.getTagValue(this, Tag.PhotometricInterpretation, String.class);
+  public PhotometricInterpretation getPhotometricInterpretation() {
+    if (isImageInitialized()) {
+      return adapter.getImageDescriptor().getPhotometricInterpretation();
+    }
+    return null;
   }
 
-  public boolean isPhotometricInterpretationMonochrome() {
-    String photometricInterpretation = getPhotometricInterpretation();
-
-    return ("MONOCHROME1".equalsIgnoreCase(photometricInterpretation)
-        || "MONOCHROME2".equalsIgnoreCase(photometricInterpretation));
-  }
-
-  /**
-   * Pixel Padding Value is used to pad grayscale images (those with a Photometric Interpretation of
-   * MONOCHROME1 or MONOCHROME2)<br>
-   * Pixel Padding Value specifies either a single value of this padding value, or when combined
-   * with Pixel Padding Range Limit, a range of values (inclusive) that are padding.<br>
-   * <br>
-   * <b>Note :</b> It is explicitly described in order to prevent display applications from taking
-   * it into account when determining the dynamic range of an image, since the Pixel Padding Value
-   * will be outside the range between the minimum and maximum values of the pixels in the native
-   * image
-   *
-   * @see "DICOM standard PS 3.3 - §C.7.5.1.1.2 - Pixel Padding Value and Pixel Padding Range Limit"
-   */
-  public Integer getPaddingValue() {
-    return TagD.getTagValue(this, Tag.PixelPaddingValue, Integer.class);
-  }
-
-  public Integer getPaddingLimit() {
-    return TagD.getTagValue(this, Tag.PixelPaddingRangeLimit, Integer.class);
+  protected boolean isImageInitialized() {
+    if (adapter == null) {
+      return getImage(null, true) != null;
+    }
+    return true;
   }
 
   public PlanarImage getModalityLutImage(OpManager manager, DicomImageReadParam params) {
@@ -273,17 +265,17 @@ public class DicomImageElement extends ImageElement implements DicomElement {
 
   public LutParameters getModalityLutParameters(
       boolean pixelPadding, LookupTableCV mLUTSeq, boolean inversePaddingMLUT, PrDicomObject pr) {
-    if (adapter == null) {
-      return null;
+    if (isImageInitialized()) {
+      return adapter.getLutParameters(pixelPadding, mLUTSeq, inversePaddingMLUT, pr);
     }
-    return adapter.getLutParameters(pixelPadding, mLUTSeq, inversePaddingMLUT, pr);
+    return null;
   }
 
   public boolean isPhotometricInterpretationInverse(PresentationStateLut pr) {
-    if (adapter == null) {
-      return false;
+    if (isImageInitialized()) {
+      return adapter.isPhotometricInterpretationInverse(pr);
     }
-    return adapter.isPhotometricInterpretationInverse(pr);
+    return false;
   }
 
   /**
@@ -292,10 +284,10 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    */
   @Override
   public LookupTableCV getVOILookup(WlParams wl) {
-    if (adapter == null) {
-      return null;
+    if (isImageInitialized()) {
+      return adapter.getVOILookup(wl);
     }
-    return adapter.getVOILookup(wl);
+    return null;
   }
 
   /**
@@ -303,14 +295,14 @@ public class DicomImageElement extends ImageElement implements DicomElement {
    *     Note : null should never be returned since auto is at least one preset
    */
   public PresetWindowLevel getDefaultPreset(WlPresentation wlp) {
-    if (adapter != null) {
+    if (isImageInitialized()) {
       return adapter.getDefaultPreset(wlp);
     }
     return null;
   }
 
   public boolean containsPreset(PresetWindowLevel preset) {
-    if (preset != null && adapter != null && adapter.getPresetCollectionSize() > 0) {
+    if (preset != null && isImageInitialized() && adapter.getPresetCollectionSize() > 0) {
       List<PresetWindowLevel> collection = adapter.getPresetList(null);
       if (collection != null) {
         return collection.contains(preset);
@@ -325,7 +317,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
     }
 
     lutShapeCollection = new LinkedHashSet<>();
-    if (adapter != null) {
+    if (isImageInitialized()) {
       List<PresetWindowLevel> presetList = adapter.getPresetList(wlp);
       if (presetList != null) {
         for (PresetWindowLevel preset : presetList) {
@@ -343,7 +335,7 @@ public class DicomImageElement extends ImageElement implements DicomElement {
   }
 
   public List<PresetWindowLevel> getPresetList(WlPresentation wl, boolean reload) {
-    if (adapter != null) {
+    if (isImageInitialized()) {
       return adapter.getPresetList(wl, reload);
     }
     return Collections.emptyList();
@@ -413,7 +405,9 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         readParams.setInverseLut((Boolean) params.get(WindowOp.P_INVERSE_LEVEL));
         readParams.setFillOutsideLutRange((Boolean) params.get(WindowOp.P_FILL_OUTSIDE_LUT));
       }
-      return ImageRendering.getVoiLutImage(imageSource, adapter, readParams);
+      if (isImageInitialized()) {
+        return ImageRendering.getVoiLutImage(imageSource, adapter, readParams);
+      }
     }
     return null;
   }
