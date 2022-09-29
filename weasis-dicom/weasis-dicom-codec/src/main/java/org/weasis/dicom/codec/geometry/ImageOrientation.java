@@ -9,48 +9,26 @@
  */
 package org.weasis.dicom.codec.geometry;
 
+import java.util.Objects;
 import org.dcm4che3.data.Tag;
+import org.joml.Vector3d;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.MediaSeries.MEDIA_POSITION;
+import org.weasis.core.api.media.data.TagReadable;
 import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.codec.TagD;
 
 /**
- * A class of static methods to provide descriptions of images, including image orientation relative
- * to the patient from the mathematical position and orientation attributes, and including other
- * descriptive attributes such as from dicom directory records and images using multi-frame
- * functional groups.
+ * <a
+ * href="https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.6.2.html#sect_C.7.6.2.1.1">Image
+ * Position and Image Orientation (Patient)</a>
  *
- * <p>C.7.6.1.1.1 Patient Orientation. The Patient Orientation (0020,0020) relative to the image
- * plane shall be specified by two values that designate the anatomical direction of the positive
- * row axis (left to right) and the positive column axis (top to bottom). The first entry is the
- * direction of the rows, given by the direction of the last pixel in the first row from the first
- * pixel in that row. The second entry is the direction of the columns, given by the direction of
- * the last pixel in the first column from the first pixel in that column. Anatomical direction
- * shall be designated by the capital letters: A (anterior), P (posterior), R (right), L (left), H
- * (head), F (foot). Each value of the orientation attribute shall contain at least one of these
- * characters. If refinements in the orientation descriptions are to be specified, then they shall
- * be designated by one or two additional letters in each value. Within each value, the letters
- * shall be ordered with the principal orientation designated in the first character.
- *
- * <p>C.7.6.2.1.1 Image Position And Image Orientation. The Image Position (0020,0032) specifies the
- * x, y, and z coordinates of the upper left-hand corner of the image; it is the center of the first
- * voxel transmitted. Image Orientation (0020,0037) specifies the direction cosines of the first row
- * and the first column with respect to the patient. These Attributes shall be provided as a pair.
- * Row values for the x, y, and z axes respectively followed by the Column value for the x, y, and z
- * axes respectively. The direction of the axes is defined fully by the patient's orientation. The
- * x-axis is increasing to the left-hand side of the patient. The y-axis is increasing to the
- * posterior side of the patient. The z-axis is increasing toward the head of the patient. The
- * patient based coordinate system is a right-handed system, i.e. the vector cross product of a unit
- * vector along the positive x-axis and a unit vector along the positive y-axis is equal to a unit
- * vector along the positive z-axis.
- *
- * @author David A. Clunie
  * @author Nicolas Roduit
+ * @author David A. Clunie
  */
 public abstract class ImageOrientation {
 
-  public enum Label {
+  public enum Plan {
     UNKNOWN,
     AXIAL,
     SAGITTAL,
@@ -58,142 +36,147 @@ public abstract class ImageOrientation {
     OBLIQUE
   }
 
-  public static final String DIR_R = "R"; // NON-NLS
-  public static final String DIR_L = "L"; // NON-NLS
-  public static final String DIR_A = "A"; // NON-NLS
-  public static final String DIR_P = "P"; // NON-NLS
-  public static final String DIR_F = "F"; // NON-NLS
-  public static final String DIR_H = "H"; // NON-NLS
-
   private static final double OBLIQUITY_THRESHOLD = 0.8;
 
+  public static Vector3d getRowImagePosition(TagReadable taggable) {
+    double[] imagePosition =
+        TagD.getTagValue(
+            Objects.requireNonNull(taggable), Tag.ImageOrientationPatient, double[].class);
+    if (imagePosition != null && imagePosition.length == 6) {
+      return new Vector3d(imagePosition);
+    }
+    return null;
+  }
+
+  public static Vector3d getColumnImagePosition(TagReadable taggable) {
+    double[] imagePosition =
+        TagD.getTagValue(
+            Objects.requireNonNull(taggable), Tag.ImageOrientationPatient, double[].class);
+    if (imagePosition != null && imagePosition.length == 6) {
+      return new Vector3d(imagePosition[3], imagePosition[4], imagePosition[5]);
+    }
+    return null;
+  }
+
   /**
-   * Get a label describing the major axis from a unit vector (direction cosine) as found in
+   * Get the orientation describing the major axis from a unit vector (direction cosine) as found in
    * ImageOrientationPatient.
    *
    * <p>Some degree of deviation from one of the standard orthogonal axes is allowed before deciding
    * no major axis applies and returning null.
    *
-   * @param x
-   * @param y
-   * @param z
+   * @param v the vector (direction cosine)
    * @return the string describing the orientation of the vector, or null if oblique
    */
-  public static String getMajorAxisFromPatientRelativeDirectionCosine(
-      double x, double y, double z) {
-    String axis = null;
-
-    String orientationX = x < 0 ? DIR_R : DIR_L;
-    String orientationY = y < 0 ? DIR_A : DIR_P;
-    String orientationZ = z < 0 ? DIR_F : DIR_H;
-
-    double absX = Math.abs(x);
-    double absY = Math.abs(y);
-    double absZ = Math.abs(z);
-
-    // The tests here really don't need to check the other dimensions,
-    // just the threshold, since the sum of the squares should be == 1.0
-    // but just in case ...
+  private static Orientation getPatientOrientation(Vector3d v, boolean quadruped) {
+    double absX = Math.abs(v.x);
+    double absY = Math.abs(v.y);
+    double absZ = Math.abs(v.z);
 
     if (absX > OBLIQUITY_THRESHOLD && absX > absY && absX > absZ) {
-      axis = orientationX;
+      return quadruped
+          ? PatientOrientation.getQuadrupedXOrientation(v)
+          : PatientOrientation.getBipedXOrientation(v);
     } else if (absY > OBLIQUITY_THRESHOLD && absY > absX && absY > absZ) {
-      axis = orientationY;
+      return quadruped
+          ? PatientOrientation.getQuadrupedYOrientation(v)
+          : PatientOrientation.getBipedYOrientation(v);
     } else if (absZ > OBLIQUITY_THRESHOLD && absZ > absX && absZ > absY) {
-      axis = orientationZ;
+      return quadruped
+          ? PatientOrientation.getQuadrupedZOrientation(v)
+          : PatientOrientation.getBipedZOrientation(v);
     }
-
-    return axis;
+    return null;
   }
 
   /**
-   * Get a label describing the axial, coronal or sagittal plane from row and column unit vectors
+   * Get a plan describing the axial, coronal or sagittal plane from row and column unit vectors
    * (direction cosines) as found in ImageOrientationPatient.
    *
    * <p>Some degree of deviation from one of the standard orthogonal planes is allowed before
    * deciding the plane is OBLIQUE.
    *
-   * @param rowX
-   * @param rowY
-   * @param rowZ
-   * @param colX
-   * @param colY
-   * @param colZ
+   * @param vr the row vector
+   * @param vc the column vector
    * @return the string describing the plane of orientation, AXIAL, CORONAL, SAGITTAL or OBLIQUE
    */
-  public static Label makeImageOrientationLabelFromImageOrientationPatient(
-      double rowX, double rowY, double rowZ, double colX, double colY, double colZ) {
-    String rowAxis = getMajorAxisFromPatientRelativeDirectionCosine(rowX, rowY, rowZ);
-    String colAxis = getMajorAxisFromPatientRelativeDirectionCosine(colX, colY, colZ);
+  public static Plan getPlan(Vector3d vr, Vector3d vc) {
+    Orientation rowAxis = getPatientOrientation(vr, false);
+    Orientation colAxis = getPatientOrientation(vc, false);
     if (rowAxis != null && colAxis != null) {
-      if ((rowAxis.equals(DIR_R) || rowAxis.equals(DIR_L))
-          && (colAxis.equals(DIR_A) || colAxis.equals(DIR_P))) {
-        return Label.AXIAL;
-      } else if ((colAxis.equals(DIR_R) || colAxis.equals(DIR_L))
-          && (rowAxis.equals(DIR_A) || rowAxis.equals(DIR_P))) {
-        return Label.AXIAL;
-      } else if ((rowAxis.equals(DIR_R) || rowAxis.equals(DIR_L))
-          && (colAxis.equals(DIR_H) || colAxis.equals(DIR_F))) {
-        return Label.CORONAL;
-      } else if ((colAxis.equals(DIR_R) || colAxis.equals(DIR_L))
-          && (rowAxis.equals(DIR_H) || rowAxis.equals(DIR_F))) {
-        return Label.CORONAL;
-      } else if ((rowAxis.equals(DIR_A) || rowAxis.equals(DIR_P))
-          && (colAxis.equals(DIR_H) || colAxis.equals(DIR_F))) {
-        return Label.SAGITTAL;
-      } else if ((colAxis.equals(DIR_A) || colAxis.equals(DIR_P))
-          && (rowAxis.equals(DIR_H) || rowAxis.equals(DIR_F))) {
-        return Label.SAGITTAL;
+      if (rowAxis.getColor().equals(PatientOrientation.blue)
+          && colAxis.getColor().equals(PatientOrientation.red)) {
+        return Plan.AXIAL;
+      } else if (colAxis.getColor().equals(PatientOrientation.blue)
+          && rowAxis.getColor().equals(PatientOrientation.red)) {
+        return Plan.AXIAL;
+      } else if (rowAxis.getColor().equals(PatientOrientation.blue)
+          && colAxis.getColor().equals(PatientOrientation.green)) {
+        return Plan.CORONAL;
+      } else if (colAxis.getColor().equals(PatientOrientation.blue)
+          && rowAxis.getColor().equals(PatientOrientation.green)) {
+        return Plan.CORONAL;
+      } else if (rowAxis.getColor().equals(PatientOrientation.red)
+          && colAxis.getColor().equals(PatientOrientation.green)) {
+        return Plan.SAGITTAL;
+      } else if (colAxis.getColor().equals(PatientOrientation.red)
+          && rowAxis.getColor().equals(PatientOrientation.green)) {
+        return Plan.SAGITTAL;
       }
     }
-    return Label.OBLIQUE;
+    return Plan.OBLIQUE;
   }
 
-  public static Label makeImageOrientationLabelFromImageOrientationPatient(double[] v) {
-    if (v == null || v.length < 6) {
-      return null;
+  public static Plan getPlan(TagReadable taggable) {
+    Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
+    Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
+    if (vr != null && vc != null) {
+      return ImageOrientation.getPlan(vr, vc);
     }
-    return ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-        v[0], v[1], v[2], v[3], v[4], v[5]);
+    return null;
   }
 
   /**
-   * Get a PatientOrientation style string from a unit vector (direction cosine) as found in
-   * ImageOrientationPatient.
+   * Get the letter representation of the orientation of a vector.
    *
-   * <p>Returns letters representing R (right) or L (left), A (anterior) or P (posterior), F (feet)
-   * or H (head).
+   * <p>For bipeds, R (right) or L (left), A (anterior) or P (posterior), F (feet) * or H (head).
    *
-   * <p>If the orientation is not precisely orthogonal to one of the major axes, more than one
-   * letter is returned, from major to minor axes, with up to three letters in the case of a "double
-   * oblique".
+   * <p>For quadrupeds, Le or Rt, V or D, Cr or Cd (with lower case; use toUpperCase() to produce
+   * valid CodeString for PatientOrientation).
    *
-   * @param x
-   * @param y
-   * @param z
-   * @return the string describing the orientation of the vector
+   * @param v the orientation vector
+   * @param quadruped true if subject is a quadruped rather than a biped
+   * @return a string rendering of the orientation, more than one letter if oblique to the
+   *     orthogonal axes, or empty string (not null) if fails
    */
-  public static String makePatientOrientationFromPatientRelativeDirectionCosine(
-      double x, double y, double z) {
+  public static String getOrientation(Vector3d v, boolean quadruped) {
+    Orientation orientationX =
+        quadruped
+            ? PatientOrientation.getQuadrupedXOrientation(v)
+            : PatientOrientation.getBipedXOrientation(v);
+    Orientation orientationY =
+        quadruped
+            ? PatientOrientation.getQuadrupedYOrientation(v)
+            : PatientOrientation.getBipedYOrientation(v);
+    Orientation orientationZ =
+        quadruped
+            ? PatientOrientation.getQuadrupedZOrientation(v)
+            : PatientOrientation.getBipedZOrientation(v);
+
+    double absX = Math.abs(v.x);
+    double absY = Math.abs(v.y);
+    double absZ = Math.abs(v.z);
+
     StringBuilder buffer = new StringBuilder();
-
-    String orientationX = x < 0 ? DIR_R : DIR_L;
-    String orientationY = y < 0 ? DIR_A : DIR_P;
-    String orientationZ = z < 0 ? DIR_F : DIR_H;
-
-    double absX = Math.abs(x);
-    double absY = Math.abs(y);
-    double absZ = Math.abs(z);
-
     for (int i = 0; i < 3; ++i) {
       if (absX > .0001 && absX >= absY && absX >= absZ) {
-        buffer.append(orientationX);
+        buffer.append(orientationX.name());
         absX = 0;
       } else if (absY > .0001 && absY >= absX && absY >= absZ) {
-        buffer.append(orientationY);
+        buffer.append(orientationY.name());
         absY = 0;
       } else if (absZ > .0001 && absZ >= absX && absZ >= absY) {
-        buffer.append(orientationZ);
+        buffer.append(orientationZ.name());
         absZ = 0;
       } else {
         break;
@@ -202,56 +185,12 @@ public abstract class ImageOrientation {
     return buffer.toString();
   }
 
-  /**
-   * Get a PatientOrientation style string from row and column unit vectors (direction cosines) as
-   * found in ImageOrientationPatient.
-   *
-   * <p>Returns letters representing R (right) or L (left), A (anterior) or P (posterior), F (feet)
-   * or H (head).
-   *
-   * <p>If the orientation is not precisely orthogonal to one of the major axes, more than one
-   * letter is returned, from major to minor axes, with up to three letters in the case of a "double
-   * oblique".
-   *
-   * <p>The row and column letters returned are separated by the usual DICOM string delimiter, a
-   * backslash.
-   *
-   * @param rowX
-   * @param rowY
-   * @param rowZ
-   * @param colX
-   * @param colY
-   * @param colZ
-   * @return the string describing the row and then the column
-   */
-  public static String makePatientOrientationFromImageOrientationPatient(
-      double rowX, double rowY, double rowZ, double colX, double colY, double colZ) {
-    return makePatientOrientationFromPatientRelativeDirectionCosine(rowX, rowY, rowZ)
-        + "\\"
-        + makePatientOrientationFromPatientRelativeDirectionCosine(colX, colY, colZ);
-  }
-
-  public static char getImageOrientationOpposite(char c) {
-    return switch (c) {
-      case 'L' -> 'R';
-      case 'R' -> 'L';
-      case 'P' -> 'A';
-      case 'A' -> 'P';
-      case 'H' -> 'F';
-      case 'F' -> 'H';
-      default -> ' ';
-    };
-  }
-
-  public static double[] computeNormalVectorOfPlan(double[] vector) {
-    if (vector != null && vector.length == 6) {
-      double[] norm = new double[3];
-      norm[0] = vector[1] * vector[5] - vector[2] * vector[4];
-      norm[1] = vector[2] * vector[3] - vector[0] * vector[5];
-      norm[2] = vector[0] * vector[4] - vector[1] * vector[3];
-      return norm;
+  public static String getImageOrientationOpposite(String val, boolean quadruped) {
+    if (quadruped) {
+      return PatientOrientation.getOppositeOrientation(PatientOrientation.Quadruped.valueOf(val))
+          .name();
     }
-    return null;
+    return PatientOrientation.getOppositeOrientation(PatientOrientation.Biped.valueOf(val)).name();
   }
 
   public static boolean hasSameOrientation(
@@ -268,30 +207,33 @@ public abstract class ImageOrientation {
   public static boolean hasSameOrientation(DicomImageElement image1, DicomImageElement image2) {
     // Test if the two images have the same orientation
     if (image1 != null && image2 != null) {
-      double[] v1 = TagD.getTagValue(image1, Tag.ImageOrientationPatient, double[].class);
-      double[] v2 = TagD.getTagValue(image2, Tag.ImageOrientationPatient, double[].class);
-      if (v1 != null && v1.length == 6 && v2 != null && v2.length == 6) {
-        Label label1 =
-            ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-                v1[0], v1[1], v1[2], v1[3], v1[4], v1[5]);
-        Label label2 =
-            ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-                v2[0], v2[1], v2[2], v2[3], v2[4], v2[5]);
+      Vector3d vr1 = ImageOrientation.getRowImagePosition(image1);
+      Vector3d vc1 = ImageOrientation.getColumnImagePosition(image1);
+      Vector3d vr2 = ImageOrientation.getRowImagePosition(image2);
+      Vector3d vc2 = ImageOrientation.getColumnImagePosition(image2);
+      if (vr1 != null && vc1 != null && vr2 != null && vc2 != null) {
+        return hasSameOrientation(vr1, vc1, vr2, vc2);
+      }
+    }
+    return false;
+  }
 
-        if (label1 != null && !label1.equals(Label.OBLIQUE)) {
-          return label1.equals(label2);
-        }
-        // If oblique search and if the plan has approximately the same orientation
-        double[] position1 = computeNormalVectorOfPlan(v1);
-        double[] position2 = computeNormalVectorOfPlan(v2);
-        if (position1 != null && position2 != null) {
-          double prod =
-              position1[0] * position2[0]
-                  + position1[1] * position2[1]
-                  + position1[2] * position2[2];
-          // A little tolerance
-          return prod > 0.95;
-        }
+  public static boolean hasSameOrientation(Vector3d vr1, Vector3d vc1, Vector3d vr2, Vector3d vc2) {
+    // Test if the two images have the same orientation
+    if (vr1 != null && vc1 != null && vr2 != null && vc2 != null) {
+      Plan plan1 = ImageOrientation.getPlan(vr1, vc1);
+      Plan plan2 = ImageOrientation.getPlan(vr2, vc2);
+
+      if (plan1 != null && !plan1.equals(Plan.OBLIQUE)) {
+        return plan1.equals(plan2);
+      }
+      // If oblique search and if the plan has approximately the same orientation
+      Vector3d normal1 = VectorUtils.computeNormalOfSurface(vr1, vc1);
+      Vector3d normal2 = VectorUtils.computeNormalOfSurface(vr2, vc2);
+      if (normal1 != null && normal2 != null) {
+        normal1.mul(normal2);
+        // A little tolerance
+        return normal1.x + normal1.y + normal1.z > 0.95;
       }
     }
     return false;

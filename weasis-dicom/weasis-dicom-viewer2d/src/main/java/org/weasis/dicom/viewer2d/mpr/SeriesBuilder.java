@@ -25,8 +25,7 @@ import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Vector3d;
 import org.opencv.core.Core;
 import org.opencv.imgproc.Imgproc;
 import org.weasis.core.api.explorer.ObservableEvent;
@@ -106,10 +105,8 @@ public class SeriesBuilder {
             }
             Map<TagW, Object> tags = img.getMediaReader().getMediaFragmentTags(0);
             if (tags != null) {
-              double[] row = geometry.getRowArray();
-              double[] col = geometry.getColumnArray();
-              Vector3d vr = new Vector3d(row);
-              Vector3d vc = new Vector3d(col);
+              Vector3d vr = new Vector3d(geometry.getRow());
+              Vector3d vc = new Vector3d(geometry.getColumn());
               Vector3d resr = new Vector3d();
               Vector3d resc = new Vector3d();
 
@@ -141,7 +138,7 @@ public class SeriesBuilder {
                         SliceOrientation.AXIAL,
                         false,
                         -1,
-                        new double[] {resr.x, resr.y, resr.z, row[0], row[1], row[2]},
+                        new double[] {resr.x, resr.y, resr.z, vr.x, vr.y, vr.z},
                         true,
                         true,
                         new Object[] {0.0, false},
@@ -152,7 +149,7 @@ public class SeriesBuilder {
                         SliceOrientation.CORONAL,
                         false,
                         Core.ROTATE_90_COUNTERCLOCKWISE,
-                        new double[] {resr.x, resr.y, resr.z, col[0], col[1], col[2]},
+                        new double[] {resr.x, resr.y, resr.z, vc.x, vc.y, vc.z},
                         true,
                         true,
                         new Object[] {true, 0.0},
@@ -166,7 +163,7 @@ public class SeriesBuilder {
                         SliceOrientation.AXIAL,
                         false,
                         -1,
-                        new double[] {row[0], row[1], row[2], resc.x, resc.y, resc.z},
+                        new double[] {vr.x, vr.y, vr.z, resc.x, resc.y, resc.z},
                         false,
                         true,
                         new Object[] {0.0, false},
@@ -179,7 +176,7 @@ public class SeriesBuilder {
                         SliceOrientation.SAGITTAL,
                         true,
                         Core.ROTATE_90_COUNTERCLOCKWISE,
-                        new double[] {resr.x, resr.y, resr.z, col[0], col[1], col[2]},
+                        new double[] {resr.x, resr.y, resr.z, vc.x, vc.y, vc.z},
                         true,
                         false,
                         new Object[] {true, 0.0},
@@ -193,7 +190,7 @@ public class SeriesBuilder {
                         SliceOrientation.CORONAL,
                         true,
                         -1,
-                        new double[] {row[0], row[1], row[2], resc.x, resc.y, resc.z},
+                        new double[] {vr.x, vr.y, vr.z, resc.x, resc.y, resc.z},
                         false,
                         false,
                         new Object[] {0.0, false},
@@ -206,7 +203,7 @@ public class SeriesBuilder {
                         SliceOrientation.SAGITTAL,
                         true,
                         Core.ROTATE_90_COUNTERCLOCKWISE,
-                        new double[] {col[0], col[1], col[2], resr.x, resr.y, resr.z},
+                        new double[] {vc.x, vc.y, vc.z, resr.x, resr.y, resr.z},
                         false,
                         false,
                         new Object[] {true, 0.0},
@@ -428,6 +425,7 @@ public class SeriesBuilder {
       Tag.StationName,
       Tag.Manufacturer,
       Tag.ManufacturerModelName,
+      Tag.AnatomicalOrientationType,
       Tag.SeriesNumber,
       Tag.KVP,
       Tag.Laterality,
@@ -514,7 +512,7 @@ public class SeriesBuilder {
           (params.imgPosition[1] instanceof Double doubleVal)
               ? doubleVal
               : (Boolean) params.imgPosition[1] ? last - index - 1 : index;
-      Point3d p = geometry.getPosition(new Point2D.Double(x, y));
+      Vector3d p = geometry.getPosition(new Point2D.Double(x, y));
       rawIO.setTag(TagD.get(Tag.ImagePositionPatient), new double[] {p.x, p.y, p.z});
 
       DicomMediaUtils.computeSlicePositionVector(rawIO);

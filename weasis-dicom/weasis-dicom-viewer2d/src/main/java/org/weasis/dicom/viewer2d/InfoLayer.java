@@ -22,7 +22,7 @@ import java.util.Map;
 import javax.swing.Icon;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.img.data.PrDicomObject;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Vector3d;
 import org.weasis.core.api.explorer.model.TreeModelNode;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
@@ -56,8 +56,12 @@ import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.codec.display.ModalityInfoData;
 import org.weasis.dicom.codec.display.ModalityView;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
-import org.weasis.dicom.codec.geometry.ImageOrientation.Label;
+import org.weasis.dicom.codec.geometry.ImageOrientation.Plan;
+import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
+import org.weasis.dicom.codec.geometry.VectorUtils;
 import org.weasis.dicom.explorer.DicomModel;
+import org.weasis.dicom.viewer2d.mpr.MprView;
+import org.weasis.opencv.data.PlanarImage;
 import org.weasis.opencv.op.lut.DefaultWlPresentation;
 
 /**
@@ -66,8 +70,6 @@ import org.weasis.opencv.op.lut.DefaultWlPresentation;
  * @author Nicolas Roduit
  */
 public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
-
-  private static final Color highlight = new Color(255, 153, 153);
 
   public InfoLayer(ViewCanvas<DicomImageElement> view2DPane) {
     this(view2DPane, true);
@@ -123,10 +125,9 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         GuiUtils.setRenderingHints(g2, true, false, view2DPane.requiredTextAntialiasing());
 
     OpManager disOp = view2DPane.getDisplayOpManager();
-    ModalityInfoData modality;
     Modality mod =
         Modality.getModality(TagD.getTagValue(view2DPane.getSeries(), Tag.Modality, String.class));
-    modality = ModalityView.getModlatityInfos(mod);
+    ModalityInfoData modality = ModalityView.getModlatityInfos(mod);
 
     float midX = bound.width / 2f;
     float midY = bound.height / 2f;
@@ -178,7 +179,19 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
 
     if (image.isReadable() && view2DPane.getSourceImage() != null) {
       if (getDisplayPreferences(SCALE)) {
-        drawScale(g2, bound, fontHeight);
+        PlanarImage source = image.getImage();
+        if (source != null) {
+          ImageProperties props =
+              new ImageProperties(
+                  source.width(),
+                  source.height(),
+                  image.getPixelSize(),
+                  image.getRescaleX(),
+                  image.getRescaleY(),
+                  image.getPixelSpacingUnit(),
+                  image.getPixelSizeCalibrationDescription());
+          drawScale(g2, bound, fontHeight, props);
+        }
       }
       if (getDisplayPreferences(LUT) && hideMin) {
         drawLUT(g2, bound, midFontHeight);
@@ -438,10 +451,10 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       // paintFontOutline(g2, str, bound.width - g2.getFontMetrics().stringWidth(str) - BORDER,
       // drawY);
 
-      double[] v = TagD.getTagValue(image, Tag.ImageOrientationPatient, double[].class);
       Integer columns = TagD.getTagValue(image, Tag.Columns, Integer.class);
       Integer rows = TagD.getTagValue(image, Tag.Rows, Integer.class);
       StringBuilder orientation = new StringBuilder(mod.name());
+      Plan plan = null;
       if (rows != null && columns != null) {
         orientation.append(" (");
         orientation.append(columns);
@@ -451,46 +464,39 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
       String colLeft = null;
       String rowTop = null;
-      if (getDisplayPreferences(IMAGE_ORIENTATION) && v != null && v.length == 6) {
+      boolean quadruped =
+          LangUtil.getNULLtoFalse(
+              TagD.getTagValue(series, Tag.AnatomicalOrientationType, Boolean.class));
+      Vector3d vr = ImageOrientation.getRowImagePosition(image);
+      Vector3d vc = ImageOrientation.getColumnImagePosition(image);
+      if (getDisplayPreferences(IMAGE_ORIENTATION) && vr != null && vc != null) {
         orientation.append(" - ");
-        Label imgOrientation =
-            ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-                v[0], v[1], v[2], v[3], v[4], v[5]);
-        orientation.append(imgOrientation);
+        plan = ImageOrientation.getPlan(vr, vc);
+        orientation.append(plan);
+        orientation.append(" ");
 
         // Set the opposite vector direction (otherwise label should be placed in mid-right and
         // mid-bottom
-        Vector3d vr = new Vector3d(-v[0], -v[1], -v[2]);
-        Vector3d vc = new Vector3d(-v[3], -v[4], -v[5]);
 
         Integer rotationAngle = (Integer) view2DPane.getActionValue(ActionW.ROTATION.cmd());
         if (rotationAngle != null && rotationAngle != 0) {
           double rad = Math.toRadians(rotationAngle);
-          double[] normal = ImageOrientation.computeNormalVectorOfPlan(v);
-          if (normal != null && normal.length == 3) {
-            Vector3d result = new Vector3d(0.0, 0.0, 0.0);
-            Vector3d axis = new Vector3d(normal);
-            rotate(vr, axis, -rad, result);
-            vr = result;
-
-            result = new Vector3d(0.0, 0.0, 0.0);
-            rotate(vc, axis, -rad, result);
-            vc = result;
-          }
+          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
+          vr.negate();
+          vr.rotateAxis(-rad, normal.x, normal.y, normal.z);
+          vc.negate();
+          vc.rotateAxis(-rad, normal.x, normal.y, normal.z);
+        } else {
+          vr.negate();
+          vc.negate();
         }
 
         if (LangUtil.getNULLtoFalse((Boolean) view2DPane.getActionValue((ActionW.FLIP.cmd())))) {
-          vr.x = -vr.x;
-          vr.y = -vr.y;
-          vr.z = -vr.z;
+          vr.negate();
         }
 
-        colLeft =
-            ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(
-                vr.x, vr.y, vr.z);
-        rowTop =
-            ImageOrientation.makePatientOrientationFromPatientRelativeDirectionCosine(
-                vc.x, vc.y, vc.z);
+        colLeft = ImageOrientation.getOrientation(vr, quadruped);
+        rowTop = ImageOrientation.getOrientation(vc, quadruped);
 
       } else {
         String[] po = TagD.getTagValue(image, Tag.PatientOrientation, String[].class);
@@ -501,14 +507,14 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
             colLeft = po[0];
           } else {
             StringBuilder buf = new StringBuilder();
-            for (char c : po[0].toCharArray()) {
-              buf.append(ImageOrientation.getImageOrientationOpposite(c));
+            for (String s : po[0].split("(?=\\p{Upper})")) {
+              buf.append(ImageOrientation.getImageOrientationOpposite(s, quadruped));
             }
             colLeft = buf.toString();
           }
           StringBuilder buf = new StringBuilder();
-          for (char c : po[1].toCharArray()) {
-            buf.append(ImageOrientation.getImageOrientationOpposite(c));
+          for (String s : po[1].split("(?=\\p{Upper})")) {
+            buf.append(ImageOrientation.getImageOrientationOpposite(s, quadruped));
           }
           rowTop = buf.toString();
         }
@@ -555,13 +561,27 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
         g2.setFont(oldFont);
       }
 
-      FontTools.paintFontOutline(
-          g2,
-          orientation.toString(),
-          border,
-          bound.height - border - GuiUtils.getScaleLength(1.5f)); // -1.5
-      // for
-      // outline
+      float offsetY = bound.height - border - GuiUtils.getScaleLength(1.5f); // -1.5 for outline
+      FontTools.paintFontOutline(g2, orientation.toString(), border, offsetY);
+
+      if (plan != null) {
+        if (view2DPane instanceof MprView) {
+          Color planColor = null;
+          if (Plan.AXIAL.equals(plan)) {
+            planColor = Biped.F.getColor();
+          } else if (Plan.CORONAL.equals(plan)) {
+            planColor = Biped.A.getColor();
+          } else if (Plan.SAGITTAL.equals(plan)) {
+            planColor = Biped.L.getColor();
+          }
+
+          int shiftX = g2.getFontMetrics().stringWidth(orientation.toString());
+          g2.setColor(planColor);
+          int size = midFontHeight - fontMetrics.getDescent();
+          int shiftY = bound.height - border - size;
+          g2.fillRect(border + shiftX, shiftY, size - 1, size - 1);
+        }
+      }
     } else {
       positions[0] = new Point2D.Float(border, border);
       positions[1] = new Point2D.Float((float) bound.width - border, border);
@@ -572,7 +592,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     GuiUtils.resetRenderingHints(g2, oldRenderingHints);
   }
 
-  private MediaSeriesGroup getParent(Series series, TreeModelNode node) {
+  public static MediaSeriesGroup getParent(Series series, TreeModelNode node) {
     if (series != null) {
       Object tagValue = series.getTagValue(TagW.ExplorerModel);
       if (tagValue instanceof DicomModel model) {
@@ -580,22 +600,6 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       }
     }
     return null;
-  }
-
-  private static void rotate(Vector3d vSrc, Vector3d axis, double angle, Vector3d vDst) {
-    axis.normalize();
-    vDst.x =
-        axis.x * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
-            + vSrc.x * Math.cos(angle)
-            + (-axis.z * vSrc.y + axis.y * vSrc.z) * Math.sin(angle);
-    vDst.y =
-        axis.y * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
-            + vSrc.y * Math.cos(angle)
-            + (axis.z * vSrc.x - axis.x * vSrc.z) * Math.sin(angle);
-    vDst.z =
-        axis.z * (axis.x * vSrc.x + axis.y * vSrc.y + axis.z * vSrc.z) * (1 - Math.cos(angle))
-            + vSrc.z * Math.cos(angle)
-            + (-axis.y * vSrc.x + axis.x * vSrc.y) * Math.sin(angle);
   }
 
   private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {

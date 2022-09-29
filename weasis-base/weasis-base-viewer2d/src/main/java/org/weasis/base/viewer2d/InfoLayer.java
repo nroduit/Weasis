@@ -26,6 +26,7 @@ import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.AbstractInfoLayer;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.util.StringUtil;
+import org.weasis.opencv.data.PlanarImage;
 
 /**
  * The Class InfoLayer.
@@ -114,7 +115,19 @@ public class InfoLayer extends AbstractInfoLayer<ImageElement> {
     }
 
     if (image.isReadable() && getDisplayPreferences(SCALE)) {
-      drawScale(g2, bound, fontHeight);
+      PlanarImage source = image.getImage();
+      if (source != null) {
+        ImageProperties props =
+            new ImageProperties(
+                source.width(),
+                source.height(),
+                image.getPixelSize(),
+                image.getRescaleX(),
+                image.getRescaleY(),
+                image.getPixelSpacingUnit(),
+                image.getPixelSizeCalibrationDescription());
+        drawScale(g2, bound, fontHeight, props);
+      }
     }
     if (image.isReadable() && getDisplayPreferences(LUT)) {
       drawLUT(g2, bound, midFontHeight);

@@ -277,9 +277,9 @@
                   <destFileName>docking-frames-${dockingframes.version}.jar</destFileName>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.jogamp.java3d</groupId>
-                  <artifactId>vecmath</artifactId>
-                  <version>${org.jogamp.java3d.version}</version>
+                  <groupId>org.joml</groupId>
+                  <artifactId>joml</artifactId>
+                  <version>${joml.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>

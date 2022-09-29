@@ -12,9 +12,7 @@ package org.weasis.dicom.codec.geometry;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Tuple3d;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Vector3d;
 
 /**
  * @author David A. Clunie
@@ -22,7 +20,7 @@ import org.jogamp.vecmath.Vector3d;
 public class IntersectVolume extends LocalizerPoster {
 
   public IntersectVolume(
-      Vector3d row, Vector3d column, Point3d tlhc, Tuple3d voxelSpacing, Tuple3d dimensions) {
+      Vector3d row, Vector3d column, Vector3d tlhc, Vector3d voxelSpacing, Vector3d dimensions) {
     super(row, column, tlhc, voxelSpacing, dimensions);
   }
 
@@ -34,12 +32,12 @@ public class IntersectVolume extends LocalizerPoster {
   public List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
-      Point3d tlhc,
-      Tuple3d voxelSpacing,
+      Vector3d tlhc,
+      Vector3d voxelSpacing,
       double sliceThickness,
-      Tuple3d dimensions) {
+      Vector3d dimensions) {
 
-    Point3d[] corners =
+    Vector3d[] corners =
         getCornersOfSourceCubeInSourceSpace(
             row, column, tlhc, voxelSpacing, sliceThickness, dimensions);
     for (int i = 0; i < 8; ++i) {
@@ -55,10 +53,10 @@ public class IntersectVolume extends LocalizerPoster {
       // plane
       // Edges with both Z values +ve or both -ve don't cross the localizer plane
     }
-    List<Point3d> intersections = getIntersectionsOfCubeWithZPlane(corners);
+    List<Vector3d> intersections = getIntersectionsOfCubeWithZPlane(corners);
     if (intersections != null && !intersections.isEmpty()) {
       List<Point2D> pts = new ArrayList<>(intersections.size());
-      for (Point3d point3d : intersections) {
+      for (Vector3d point3d : intersections) {
         pts.add(transformPointInLocalizerPlaneIntoImageSpace(point3d));
       }
       return pts;

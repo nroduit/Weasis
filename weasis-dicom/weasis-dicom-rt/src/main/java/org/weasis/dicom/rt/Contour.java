@@ -16,9 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Tuple3d;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Vector3d;
 import org.opencv.core.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -174,11 +172,11 @@ public class Contour {
 
   public Graphic getGraphic(GeometryOfSlice geometry) {
     if (geometry != null && points != null && points.length % 3 == 0) {
-      Tuple3d voxelSpacing = geometry.getVoxelSpacing();
+      Vector3d voxelSpacing = geometry.getVoxelSpacing();
       if (voxelSpacing.x < 0.00001 || voxelSpacing.y < 0.00001) {
         return null;
       }
-      Point3d tlhc = geometry.getTLHC();
+      Vector3d tlhc = geometry.getTLHC();
       Vector3d row = geometry.getRow();
       Vector3d column = geometry.getColumn();
       // TODO verify that OPEN_NONPLANAR is handled correctly

@@ -32,6 +32,7 @@ import org.dcm4che3.img.stream.BytesWithImageDescriptor;
 import org.dcm4che3.img.stream.ImageAdapter;
 import org.dcm4che3.img.stream.ImageAdapter.AdaptTransferSyntax;
 import org.dcm4che3.img.util.DicomUtils;
+import org.joml.Vector3d;
 import org.opencv.core.Core.MinMaxLocResult;
 import org.opencv.core.CvType;
 import org.slf4j.Logger;
@@ -423,19 +424,19 @@ public class DicomImageElement extends ImageElement implements DicomElement {
         if (sliceTickness == null) {
           sliceTickness = getPixelSize();
         }
-        double[] spacing = {getPixelSize(), getPixelSize(), sliceTickness};
+        Vector3d spacing = new Vector3d(getPixelSize(), getPixelSize(), sliceTickness);
         Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
         Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
         if (rows != null && columns != null && rows > 0 && columns > 0) {
           // SliceTickness is only use in IntersectVolume
           // Multiply rows and columns by getZoomScale() to have square pixel image size
           return new GeometryOfSlice(
-              new double[] {imgOr[0], imgOr[1], imgOr[2]},
-              new double[] {imgOr[3], imgOr[4], imgOr[5]},
-              pos,
+              new Vector3d(imgOr[0], imgOr[1], imgOr[2]),
+              new Vector3d(imgOr[3], imgOr[4], imgOr[5]),
+              new Vector3d(pos),
               spacing,
               sliceTickness,
-              new double[] {rows * getRescaleY(), columns * getRescaleX(), 1});
+              new Vector3d(rows * getRescaleY(), columns * getRescaleX(), 1));
         }
       }
     }
@@ -452,17 +453,17 @@ public class DicomImageElement extends ImageElement implements DicomElement {
           sliceTickness = getPixelSize();
         }
         double[] pixSize = getDisplayPixelSize();
-        double[] spacing = {pixSize[0], pixSize[1], sliceTickness};
+        Vector3d spacing = new Vector3d(pixSize[0], pixSize[1], sliceTickness);
         Integer rows = TagD.getTagValue(this, Tag.Rows, Integer.class);
         Integer columns = TagD.getTagValue(this, Tag.Columns, Integer.class);
         if (rows != null && columns != null && rows > 0 && columns > 0) {
           return new GeometryOfSlice(
-              new double[] {imgOr[0], imgOr[1], imgOr[2]},
-              new double[] {imgOr[3], imgOr[4], imgOr[5]},
-              pos,
+              new Vector3d(imgOr[0], imgOr[1], imgOr[2]),
+              new Vector3d(imgOr[3], imgOr[4], imgOr[5]),
+              new Vector3d(pos),
               spacing,
               sliceTickness,
-              new double[] {rows, columns, 1});
+              new Vector3d(rows, columns, 1));
         }
       }
     }

@@ -42,6 +42,7 @@ import org.dcm4che3.img.util.DicomObjectUtil;
 import org.dcm4che3.util.ByteUtils;
 import org.dcm4che3.util.TagUtils;
 import org.dcm4che3.util.UIDUtils;
+import org.joml.Vector3d;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
@@ -57,6 +58,8 @@ import org.weasis.dicom.codec.TagD;
 import org.weasis.dicom.codec.TagD.Level;
 import org.weasis.dicom.codec.TagSeq;
 import org.weasis.dicom.codec.geometry.ImageOrientation;
+import org.weasis.dicom.codec.geometry.PatientOrientation;
+import org.weasis.dicom.codec.geometry.VectorUtils;
 
 /**
  * @author Nicolas Roduit
@@ -545,17 +548,14 @@ public class DicomMediaUtils {
 
   public static void computeSlicePositionVector(Taggable taggable) {
     if (taggable != null) {
-      double[] patientPos = TagD.getTagValue(taggable, Tag.ImagePositionPatient, double[].class);
-      if (patientPos != null && patientPos.length == 3) {
-        double[] imgOrientation =
-            ImageOrientation.computeNormalVectorOfPlan(
-                TagD.getTagValue(taggable, Tag.ImageOrientationPatient, double[].class));
-        if (imgOrientation != null) {
-          double[] slicePosition = new double[3];
-          slicePosition[0] = imgOrientation[0] * patientPos[0];
-          slicePosition[1] = imgOrientation[1] * patientPos[1];
-          slicePosition[2] = imgOrientation[2] * patientPos[2];
-          taggable.setTag(TagW.SlicePosition, slicePosition);
+      Vector3d pPos = PatientOrientation.getPatientPosition(taggable);
+      if (pPos != null) {
+        Vector3d vr = ImageOrientation.getRowImagePosition(taggable);
+        Vector3d vc = ImageOrientation.getColumnImagePosition(taggable);
+        if (vr != null && vc != null) {
+          Vector3d normal = VectorUtils.computeNormalOfSurface(vr, vc);
+          normal.mul(pPos);
+          taggable.setTag(TagW.SlicePosition, new double[] {normal.x, normal.y, normal.z});
         }
       }
     }
@@ -615,10 +615,7 @@ public class DicomMediaUtils {
       data = new TagSeq.MacroSeqData(dcm, TagD.getTagFromIDs(Tag.ImageOrientationPatient));
       TagD.get(Tag.PlaneOrientationSequence).readValue(data, taggable);
       // If not null add ImageOrientationPlane for getting a orientation label.
-      taggable.setTagNoNull(
-          TagW.ImageOrientationPlane,
-          ImageOrientation.makeImageOrientationLabelFromImageOrientationPatient(
-              TagD.getTagValue(taggable, Tag.ImageOrientationPatient, double[].class)));
+      taggable.setTagNoNull(TagW.ImageOrientationPlane, ImageOrientation.getPlan(taggable));
 
       /**
        * @see - Dicom Standard 2011 - PS 3.3 § C.7.6.16.2.8 Frame Anatomy Macro

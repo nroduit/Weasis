@@ -49,7 +49,7 @@
     <weasis.opencv.native.version>4.5.5-dcm</weasis.opencv.native.version>
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
-    <org.jogamp.java3d.version>1.7.0</org.jogamp.java3d.version>
+    <joml.version>1.10.5</joml.version>
     <jackson.version>2.13.3</jackson.version>
     <scribejava.version>8.3.1</scribejava.version>
     <zip4j.version>2.11.1</zip4j.version>
@@ -495,9 +495,9 @@
       </dependency>
 
       <dependency>
-        <groupId>org.jogamp.java3d</groupId>
-        <artifactId>vecmath</artifactId>
-        <version>${org.jogamp.java3d.version}</version>
+        <groupId>org.joml</groupId>
+        <artifactId>joml</artifactId>
+        <version>${joml.version}</version>
         <scope>provided</scope>
       </dependency>
       <dependency>

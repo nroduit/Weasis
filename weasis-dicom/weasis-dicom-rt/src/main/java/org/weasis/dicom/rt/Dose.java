@@ -339,7 +339,7 @@ public class Dose extends HashMap<Integer, Dvh> {
           (this.doseMmLUT.getFirst()[i] - patientImage.getImageLUT().getFirst()[0])
               * patientImage.getProne()
               * patientImage.getFeetFirst()
-              / patientImage.getImageSpacing()[0];
+              / patientImage.getImageSpacing().x;
     }
     double[] y = new double[this.doseMmLUT.getSecond().length];
     for (int j = 0; j < this.doseMmLUT.getSecond().length; j++) {
@@ -347,7 +347,7 @@ public class Dose extends HashMap<Integer, Dvh> {
           (this.doseMmLUT.getSecond()[j])
               - patientImage.getImageLUT().getSecond()[0]
                   * patientImage.getProne()
-                  / patientImage.getImageSpacing()[1];
+                  / patientImage.getImageSpacing().y;
     }
 
     this.dosePixLUT = new Pair<>(x, y);

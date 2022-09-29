@@ -12,10 +12,8 @@ package org.weasis.dicom.codec.geometry;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.List;
-import org.jogamp.vecmath.Matrix3d;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Tuple3d;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Matrix3d;
+import org.joml.Vector3d;
 import org.weasis.core.util.MathUtil;
 
 /**
@@ -48,23 +46,19 @@ public abstract class LocalizerPoster {
 
   protected Vector3d localizerNormal;
 
-  protected Point3d localizerTLHC;
+  protected Vector3d localizerTLHC;
 
-  protected Tuple3d
+  protected Vector3d
       localizerVoxelSpacing; // row spacing (between centers of adjacent rows), then column spacing,
   // then slice spacing
 
-  protected double[] localizerVoxelSpacingArray;
-
-  protected Tuple3d
+  protected Vector3d
       localizerDimensions; // number of rows, then number of columns, then number of slices
-
-  protected double[] localizerDimensionsArray;
 
   protected Matrix3d rotateIntoLocalizerSpace;
 
   public LocalizerPoster(
-      Vector3d row, Vector3d column, Point3d tlhc, Tuple3d voxelSpacing, Tuple3d dimensions) {
+      Vector3d row, Vector3d column, Vector3d tlhc, Vector3d voxelSpacing, Vector3d dimensions) {
     localizerRow = row;
     localizerColumn = column;
     localizerTLHC = tlhc;
@@ -114,37 +108,32 @@ public abstract class LocalizerPoster {
    * @param dimensions the row and column dimensions and 1 for the third dimension
    * @return an array of four points that are the tlhc,trhc, brhc, blhc of the slice
    */
-  public static Point3d[] getCornersOfSourceRectangleInSourceSpace(
+  public static Vector3d[] getCornersOfSourceRectangleInSourceSpace(
       Vector3d row,
       Vector3d column,
-      Point3d originalTLHC,
-      Tuple3d voxelSpacing,
-      Tuple3d dimensions) {
+      Vector3d originalTLHC,
+      Vector3d voxelSpacing,
+      Vector3d dimensions) {
 
     validateDirectionCosines(row, column);
 
-    double[] spacingArray = new double[3];
-    voxelSpacing.get(spacingArray);
-    double[] dimensionsArray = new double[3];
-    dimensions.get(dimensionsArray);
-
     Vector3d distanceAlongRow = new Vector3d(row);
-    distanceAlongRow.scale((dimensionsArray[1] /* cols */) * spacingArray[1] /* between cols */);
+    distanceAlongRow.mul((dimensions.y /* cols */) * voxelSpacing.y /* between cols */);
     Vector3d distanceAlongColumn = new Vector3d(column);
-    distanceAlongColumn.scale((dimensionsArray[0] /* rows */) * spacingArray[0] /* between rows */);
+    distanceAlongColumn.mul((dimensions.x /* rows */) * voxelSpacing.x /* between rows */);
 
     // Build a square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhc = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
-    Point3d trhc = new Point3d(tlhc);
+    Vector3d tlhc = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
+    Vector3d trhc = new Vector3d(tlhc);
     trhc.add(distanceAlongRow);
-    Point3d blhc = new Point3d(tlhc);
+    Vector3d blhc = new Vector3d(tlhc);
     blhc.add(distanceAlongColumn);
-    Point3d brhc = new Point3d(tlhc);
+    Vector3d brhc = new Vector3d(tlhc);
     brhc.add(distanceAlongRow);
     brhc.add(distanceAlongColumn);
 
-    return new Point3d[] {tlhc, trhc, brhc, blhc};
+    return new Vector3d[] {tlhc, trhc, brhc, blhc};
   }
 
   /**
@@ -162,59 +151,54 @@ public abstract class LocalizerPoster {
    * @return an array of eight points that are the tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB,
    *     blhcB of the volume
    */
-  public static Point3d[] getCornersOfSourceCubeInSourceSpace(
+  public static Vector3d[] getCornersOfSourceCubeInSourceSpace(
       Vector3d row,
       Vector3d column,
-      Point3d originalTLHC,
-      Tuple3d voxelSpacing,
+      Vector3d originalTLHC,
+      Vector3d voxelSpacing,
       double sliceThickness,
-      Tuple3d dimensions) {
+      Vector3d dimensions) {
 
     validateDirectionCosines(row, column);
-    Vector3d normal = new Vector3d();
-    normal.cross(row, column); // the normal to the plane is the cross product of the row and column
-
-    double[] spacingArray = new double[3];
-    voxelSpacing.get(spacingArray);
-    double[] dimensionsArray = new double[3];
-    dimensions.get(dimensionsArray);
+    // the normal to the plane is the cross product of the row and column
+    Vector3d normal = new Vector3d(row).cross(column);
 
     Vector3d distanceAlongRow = new Vector3d(row);
-    distanceAlongRow.scale((dimensionsArray[1] /* cols */) * spacingArray[1] /* between cols */);
+    distanceAlongRow.mul((dimensions.y /* cols */) * voxelSpacing.y /* between cols */);
     Vector3d distanceAlongColumn = new Vector3d(column);
-    distanceAlongColumn.scale((dimensionsArray[0] /* rows */) * spacingArray[0] /* between rows */);
+    distanceAlongColumn.mul((dimensions.x /* rows */) * voxelSpacing.x /* between rows */);
     Vector3d distanceAlongNormal = new Vector3d(normal);
-    distanceAlongNormal.scale(
-        (dimensionsArray[2] / 2) * sliceThickness); // divide by two ... half on either side
+    distanceAlongNormal.mul(
+        (dimensions.z / 2) * sliceThickness); // divide by two ... half on either side
     // of center
 
     // Build the "top" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhcT = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
+    Vector3d tlhcT = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
     tlhcT.add(distanceAlongNormal);
 
-    Point3d trhcT = new Point3d(tlhcT);
+    Vector3d trhcT = new Vector3d(tlhcT);
     trhcT.add(distanceAlongRow);
-    Point3d blhcT = new Point3d(tlhcT);
+    Vector3d blhcT = new Vector3d(tlhcT);
     blhcT.add(distanceAlongColumn);
-    Point3d brhcT = new Point3d(tlhcT);
+    Vector3d brhcT = new Vector3d(tlhcT);
     brhcT.add(distanceAlongRow);
     brhcT.add(distanceAlongColumn);
 
     // Build the "bottom" square to project with 4 corners TLHC, TRHC, BRHC, BLHC ...
 
-    Point3d tlhcB = new Point3d(originalTLHC); // otherwise, original TLHC gets changed later on
+    Vector3d tlhcB = new Vector3d(originalTLHC); // otherwise, original TLHC gets changed later on
     tlhcB.sub(distanceAlongNormal);
 
-    Point3d trhcB = new Point3d(tlhcB);
+    Vector3d trhcB = new Vector3d(tlhcB);
     trhcB.add(distanceAlongRow);
-    Point3d blhcB = new Point3d(tlhcB);
+    Vector3d blhcB = new Vector3d(tlhcB);
     blhcB.add(distanceAlongColumn);
-    Point3d brhcB = new Point3d(tlhcB);
+    Vector3d brhcB = new Vector3d(tlhcB);
     brhcB.add(distanceAlongRow);
     brhcB.add(distanceAlongColumn);
 
-    return new Point3d[] {tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB};
+    return new Vector3d[] {tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB};
   }
 
   /**
@@ -223,8 +207,8 @@ public abstract class LocalizerPoster {
    * @param point a 3D point to be transformed
    * @return a new, transformed point
    */
-  protected Point3d transformPointFromSourceSpaceIntoLocalizerSpace(Point3d point) {
-    Point3d newPoint = new Point3d(point); // do not overwrite the supplied point
+  protected Vector3d transformPointFromSourceSpaceIntoLocalizerSpace(Vector3d point) {
+    Vector3d newPoint = new Vector3d(point); // do not overwrite the supplied point
     newPoint.sub(localizerTLHC); // move everything to origin of the target localizer
     rotateIntoLocalizerSpace.transform(newPoint);
     return newPoint;
@@ -243,13 +227,11 @@ public abstract class LocalizerPoster {
    * @return an array of 2 values in which the column, then the row location on the image is
    *     returned
    */
-  protected Point2D.Double transformPointInLocalizerPlaneIntoImageSpace(Point3d point) {
+  protected Point2D.Double transformPointInLocalizerPlaneIntoImageSpace(Vector3d point) {
     // number of rows
-    double scaleSubPixelHeightOfColumn =
-        (localizerDimensionsArray[0] - 1) / localizerDimensionsArray[0];
+    double scaleSubPixelHeightOfColumn = (localizerDimensions.x - 1) / localizerDimensions.x;
     // number of cols
-    double scaleSubPixelWidthOfRow =
-        (localizerDimensionsArray[1] - 1) / localizerDimensionsArray[1];
+    double scaleSubPixelWidthOfRow = (localizerDimensions.y - 1) / localizerDimensions.y;
 
     /*
      * NB. x is the column; use as height number of rows spacing between rows
@@ -257,64 +239,52 @@ public abstract class LocalizerPoster {
      * NB. y is the row; use as width number of cols * spacing between cols
      */
     return new Point2D.Double(
-        point.x / localizerVoxelSpacingArray[1] * scaleSubPixelHeightOfColumn + 0.5,
-        point.y / localizerVoxelSpacingArray[0] * scaleSubPixelWidthOfRow + 0.5);
+        point.x / localizerVoxelSpacing.y * scaleSubPixelHeightOfColumn + 0.5,
+        point.y / localizerVoxelSpacing.x * scaleSubPixelWidthOfRow + 0.5);
   }
 
-  protected List<Point2D> drawOutlineOnLocalizer(List<Point3d> corners) {
+  protected List<Point2D> drawOutlineOnLocalizer(List<Vector3d> corners) {
     if (corners != null && !corners.isEmpty()) {
-      Point3d[] cornersArray = new Point3d[corners.size()];
+      Vector3d[] cornersArray = new Vector3d[corners.size()];
       return drawOutlineOnLocalizer(corners.toArray(cornersArray));
     }
     return null;
   }
 
-  protected List<Point2D> drawOutlineOnLocalizer(Point3d[] corners) {
+  protected List<Point2D> drawOutlineOnLocalizer(Vector3d[] corners) {
     ArrayList<Point2D> shapes = new ArrayList<>();
-    for (Point3d corner : corners) {
+    for (Vector3d corner : corners) {
       shapes.add(transformPointInLocalizerPlaneIntoImageSpace(corner));
     }
     return shapes;
   }
 
-  protected Point3d intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(double[] a, double[] b) {
+  protected Vector3d intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(Vector3d aP, Vector3d bP) {
     double[] u = new double[3];
     // be careful not to divide by zero when slope infinite (and unnecessary, since multiplicand is
     // then zero)
     // Z of unknown point is zero
     u[1] =
-        (MathUtil.isEqual(b[2], a[2])) ? a[1] : (b[1] - a[1]) / (b[2] - a[2]) * (0 - a[2]) + a[1];
+        (MathUtil.isEqual(bP.z, aP.z)) ? aP.y : (bP.y - aP.y) / (bP.z - aP.z) * (0 - aP.z) + aP.y;
     u[0] =
-        (MathUtil.isEqual(b[1], a[1]))
-            ? a[0]
-            : (b[0] - a[0]) / (b[1] - a[1]) * (u[1] - a[1]) + a[0];
+        (MathUtil.isEqual(bP.y, aP.y))
+            ? aP.x
+            : (bP.x - aP.x) / (bP.y - aP.y) * (u[1] - aP.y) + aP.x;
     u[2] = 0;
-    return new Point3d(u);
-  }
-
-  protected Point3d intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(Point3d aP, Point3d bP) {
-    double[] a = new double[3];
-    aP.get(a);
-    double[] b = new double[3];
-    bP.get(b);
-    return intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(a, b);
+    return new Vector3d(u);
   }
 
   protected List<Point2D> drawLinesBetweenAnyPointsWhichIntersectPlaneWhereZIsZero(
-      Point3d[] corners) {
+      Vector3d[] corners) {
     int size = corners.length;
-    double[] thisArray = new double[3];
-    double[] nextArray = new double[3];
-    ArrayList<Point3d> intersections = new ArrayList<>();
+    ArrayList<Vector3d> intersections = new ArrayList<>();
     for (int i = 0; i < size; ++i) {
       int next = (i == size - 1) ? 0 : i + 1;
-      corners[i].get(thisArray);
-      double thisZ = thisArray[2];
-      corners[next].get(nextArray);
-      double nextZ = nextArray[2];
+      double thisZ = corners[i].z;
+      double nextZ = corners[next].z;
       if ((thisZ <= 0 && nextZ >= 0) || (thisZ >= 0 && nextZ <= 0)) {
-        Point3d intersection =
-            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(thisArray, nextArray);
+        Vector3d intersection =
+            intersectLineBetweenTwoPointsWithPlaneWhereZIsZero(corners[i], corners[next]);
         intersections.add(intersection);
       }
     }
@@ -322,18 +292,14 @@ public abstract class LocalizerPoster {
   }
 
   protected static boolean classifyCornersIntoEdgeCrossingZPlane(
-      Point3d startCorner, Point3d endCorner) {
-    double[] startArray = new double[3];
-    double[] endArray = new double[3];
-    startCorner.get(startArray);
-    double startZ = startArray[2];
-    endCorner.get(endArray);
-    double endZ = endArray[2];
+      Vector3d startCorner, Vector3d endCorner) {
+    double startZ = startCorner.z;
+    double endZ = endCorner.z;
     return (startZ <= 0 && endZ >= 0) || (startZ >= 0 && endZ <= 0);
   }
 
-  protected List<Point3d> getIntersectionsOfCubeWithZPlane(Point3d[] corners) {
-    ArrayList<Point3d> intersections = new ArrayList<>(4);
+  protected List<Vector3d> getIntersectionsOfCubeWithZPlane(Vector3d[] corners) {
+    ArrayList<Vector3d> intersections = new ArrayList<>(4);
 
     // the check and traversal order are very dependent on the order of the
     // corners which are: tlhcT, trhcT, brhcT, blhcT, tlhcB, trhcB, brhcB, blhcB
@@ -376,14 +342,8 @@ public abstract class LocalizerPoster {
 
   protected void doCommonConstructorStuff() {
     validateDirectionCosines(localizerRow, localizerColumn);
-    localizerNormal = new Vector3d();
-    localizerNormal.cross(
-        localizerRow, localizerColumn); // the normal to the plane is the cross product of the row
-    // and column
-    localizerVoxelSpacingArray = new double[3];
-    localizerVoxelSpacing.get(localizerVoxelSpacingArray);
-    localizerDimensionsArray = new double[3];
-    localizerDimensions.get(localizerDimensionsArray);
+    // the normal to the plane is the cross product of the row and column
+    localizerNormal = new Vector3d(localizerRow).cross(localizerColumn);
     rotateIntoLocalizerSpace = new Matrix3d();
     rotateIntoLocalizerSpace.setRow(0, localizerRow);
     rotateIntoLocalizerSpace.setRow(1, localizerColumn);
@@ -408,10 +368,10 @@ public abstract class LocalizerPoster {
   public abstract List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
-      Point3d tlhc,
-      Tuple3d voxelSpacing,
+      Vector3d tlhc,
+      Vector3d voxelSpacing,
       double sliceThickness,
-      Tuple3d dimensions);
+      Vector3d dimensions);
 
   /**
    * Get the shape on the localizer of a zero-thickness slice specified by the geometry of a 2D

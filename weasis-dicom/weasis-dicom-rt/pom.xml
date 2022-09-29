@@ -71,9 +71,8 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.jogamp.java3d</groupId>
-      <artifactId>vecmath</artifactId>
-      <scope>provided</scope>
+      <groupId>org.joml</groupId>
+      <artifactId>joml</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>

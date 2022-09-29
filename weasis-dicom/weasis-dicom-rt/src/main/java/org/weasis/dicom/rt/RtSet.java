@@ -36,6 +36,7 @@ import org.dcm4che3.data.Sequence;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.UID;
 import org.dcm4che3.img.util.DicomObjectUtil;
+import org.joml.Vector3d;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
@@ -753,7 +754,7 @@ public class RtSet {
             // Image slice UID and position
             DicomImageElement image = (DicomImageElement) me;
             String uidKey = TagD.getTagValue(me, Tag.SOPInstanceUID, String.class);
-            KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().getZ());
+            KeyDouble z = new KeyDouble(image.getSliceGeometry().getTLHC().z);
 
             for (IsoDoseLayer isoDoseLayer : dose.getIsoDoseSet().values()) {
               double isoDoseThreshold = isoDoseLayer.getIsoDose().getAbsoluteDose();
@@ -984,7 +985,7 @@ public class RtSet {
   private Mat calculateDifferentialDvh(Structure structure, Dose dose) {
 
     DicomImageElement doseImage = (DicomImageElement) dose.getImages().get(0);
-    double[] doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacingArray();
+    Vector3d doseImageSpacing = doseImage.getSliceGeometry().getVoxelSpacing();
     double maxDose = dose.getDoseMax() * dose.getDoseGridScaling() * 100;
 
     double volume = 0f;
@@ -1024,7 +1025,7 @@ public class RtSet {
         for (int i = 0; i < hist.rows(); i++) {
           vol +=
               hist.get(i, 0)[0]
-                  * (doseImageSpacing[0] * doseImageSpacing[1] * structure.getThickness());
+                  * (doseImageSpacing.x * doseImageSpacing.y * structure.getThickness());
         }
 
         // If this is the largest contour
@@ -1071,19 +1072,19 @@ public class RtSet {
 
   private Pair<double[], double[]> calculatePixelLookupTable(DicomImageElement dicomImage) {
 
-    double deltaI = dicomImage.getSliceGeometry().getVoxelSpacingArray()[0];
-    double deltaJ = dicomImage.getSliceGeometry().getVoxelSpacingArray()[1];
+    double deltaI = dicomImage.getSliceGeometry().getVoxelSpacing().x;
+    double deltaJ = dicomImage.getSliceGeometry().getVoxelSpacing().y;
 
-    double[] rowDirection = dicomImage.getSliceGeometry().getRowArray();
-    double[] columnDirection = dicomImage.getSliceGeometry().getColumnArray();
+    Vector3d rowDirection = dicomImage.getSliceGeometry().getRow();
+    Vector3d columnDirection = dicomImage.getSliceGeometry().getColumn();
 
-    double[] position = dicomImage.getSliceGeometry().getTLHCArray();
+    Vector3d position = dicomImage.getSliceGeometry().getTLHC();
 
     // DICOM C.7.6.2.1 Equation C.7.6.2.1-1.
     double[][] m = {
-      {rowDirection[0] * deltaI, columnDirection[0] * deltaJ, 0, position[0]},
-      {rowDirection[1] * deltaI, columnDirection[1] * deltaJ, 0, position[1]},
-      {rowDirection[2] * deltaI, columnDirection[2] * deltaJ, 0, position[2]},
+      {rowDirection.x * deltaI, columnDirection.x * deltaJ, 0, position.x},
+      {rowDirection.y * deltaI, columnDirection.y * deltaJ, 0, position.y},
+      {rowDirection.z * deltaI, columnDirection.z * deltaJ, 0, position.z},
       {0, 0, 0, 1}
     };
     RealMatrix matrix = MatrixUtils.createRealMatrix(m);

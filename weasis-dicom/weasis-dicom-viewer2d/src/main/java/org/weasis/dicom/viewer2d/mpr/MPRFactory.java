@@ -49,7 +49,7 @@ public class MPRFactory implements SeriesViewerFactory {
 
   @Override
   public SeriesViewer<?> createSeriesViewer(Map<String, Object> properties) {
-    GridBagLayoutModel model = MPRContainer.VIEWS_2x1_mpr;
+    GridBagLayoutModel model = MPRContainer.view1;
     String uid = null;
     if (properties != null) {
       Object obj = properties.get(org.weasis.core.api.image.GridBagLayoutModel.class.getName());

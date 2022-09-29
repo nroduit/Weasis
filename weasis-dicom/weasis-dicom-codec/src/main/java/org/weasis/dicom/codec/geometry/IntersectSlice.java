@@ -11,9 +11,7 @@ package org.weasis.dicom.codec.geometry;
 
 import java.awt.geom.Point2D;
 import java.util.List;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Tuple3d;
-import org.jogamp.vecmath.Vector3d;
+import org.joml.Vector3d;
 
 /**
  * @author David A. Clunie
@@ -21,7 +19,7 @@ import org.jogamp.vecmath.Vector3d;
 public class IntersectSlice extends LocalizerPoster {
 
   public IntersectSlice(
-      Vector3d row, Vector3d column, Point3d tlhc, Tuple3d voxelSpacing, Tuple3d dimensions) {
+      Vector3d row, Vector3d column, Vector3d tlhc, Vector3d voxelSpacing, Vector3d dimensions) {
     super(row, column, tlhc, voxelSpacing, dimensions);
   }
 
@@ -51,7 +49,7 @@ public class IntersectSlice extends LocalizerPoster {
         || array[3] && array[0];
   }
 
-  private static boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Point3d[] corners) {
+  private static boolean[] classifyCornersOfRectangleIntoEdgesCrossingZPlane(Vector3d[] corners) {
     int size = corners.length;
     boolean[] classification = new boolean[size];
     for (int i = 0; i < size; ++i) {
@@ -65,12 +63,12 @@ public class IntersectSlice extends LocalizerPoster {
   public List<Point2D> getOutlineOnLocalizerForThisGeometry(
       Vector3d row,
       Vector3d column,
-      Point3d tlhc,
-      Tuple3d voxelSpacing,
+      Vector3d tlhc,
+      Vector3d voxelSpacing,
       double sliceThickness,
-      Tuple3d dimensions) {
+      Vector3d dimensions) {
 
-    Point3d[] corners =
+    Vector3d[] corners =
         getCornersOfSourceRectangleInSourceSpace(row, column, tlhc, voxelSpacing, dimensions);
     for (int i = 0; i < 4; ++i) {
       // We want to consider each edge of the source slice with respect to
