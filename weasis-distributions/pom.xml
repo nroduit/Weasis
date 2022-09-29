@@ -308,17 +308,11 @@
                 </artifactItem>
 
                 <!-- ===================================== -->
-                <!-- Weasis Core bundles -->
+                <!-- Weasis Core bundle -->
                 <!-- ===================================== -->
                 <artifactItem>
                   <groupId>org.weasis.core</groupId>
-                  <artifactId>weasis-core-api</artifactId>
-                  <version>${app.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.core</groupId>
-                  <artifactId>weasis-core-ui</artifactId>
+                  <artifactId>weasis-core</artifactId>
                   <version>${app.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>

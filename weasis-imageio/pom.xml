@@ -32,7 +32,7 @@
   <dependencies>
     <dependency>
       <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core-api</artifactId>
+      <artifactId>weasis-core</artifactId>
       <version>${project.parent.version}</version>
       <scope>provided</scope>
     </dependency>

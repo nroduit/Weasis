@@ -75,13 +75,7 @@
     </dependency>
     <dependency>
       <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core-api</artifactId>
-      <version>${project.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core-ui</artifactId>
+      <artifactId>weasis-core</artifactId>
       <version>${project.version}</version>
       <scope>provided</scope>
     </dependency>
