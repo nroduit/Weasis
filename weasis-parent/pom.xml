@@ -26,7 +26,7 @@
 
     <app.version>${revision}${changelist}</app.version>
     <felix.framework.version>7.0.5</felix.framework.version>
-    <flatlaf.version>2.4</flatlaf.version>
+    <flatlaf.version>2.5</flatlaf.version>
     <miglayout.version>11.0</miglayout.version>
     <xz.version>1.9</xz.version>
 
