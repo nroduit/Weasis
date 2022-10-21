@@ -12,13 +12,13 @@ package org.weasis.core.ui.editor.image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.ui.Messages;
@@ -152,9 +152,9 @@ public class PopUpMenuOnZoom extends JPopupMenu {
       for (int i = 0; i < jRadioButtonMenuItemMagnify.length; i++) {
         if (item.equals(jRadioButtonMenuItemMagnify[i])) {
           ImageViewerEventManager<?> manager = zoomWin.getView2d().getEventManager();
-          ActionState zoomAction = manager.getAction(ActionW.LENS_ZOOM);
-          if (zoomAction instanceof SliderChangeListener sliderChangeListener) {
-            sliderChangeListener.setRealValue(magnify[i]);
+          Optional<SliderChangeListener> zoomAction = manager.getAction(ActionW.LENS_ZOOM);
+          if (zoomAction.isPresent()) {
+            zoomAction.get().setRealValue(magnify[i]);
           }
           break;
         }

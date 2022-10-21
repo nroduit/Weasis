@@ -11,9 +11,7 @@ package org.weasis.core.ui.editor.image;
 
 import javax.swing.JButton;
 import javax.swing.JToggleButton;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.Messages;
@@ -31,24 +29,17 @@ public class RotationToolBar extends WtoolBar {
     jButtonRotate90.setToolTipText(Messages.getString("RotationToolBar.90"));
     jButtonRotate90.addActionListener(
         e -> {
-          ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-          if (rotateAction instanceof final SliderChangeListener rotation) {
-            rotation.setSliderValue((rotation.getSliderValue() + 90) % 360);
-          }
+          eventManager
+              .getAction(ActionW.ROTATION)
+              .ifPresent(s -> s.setSliderValue((s.getSliderValue() + 90) % 360));
         });
-    ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-    if (rotateAction != null) {
-      rotateAction.registerActionState(jButtonRotate90);
-    }
+    eventManager.getAction(ActionW.ROTATION).ifPresent(s -> s.registerActionState(jButtonRotate90));
     add(jButtonRotate90);
 
     final JToggleButton jButtonFlip =
         new JToggleButton(ResourceUtil.getToolBarIcon(ActionIcon.FLIP));
     jButtonFlip.setToolTipText(Messages.getString("RotationToolBar.flip"));
-    ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-    if (flipAction != null) {
-      flipAction.registerActionState(jButtonFlip);
-    }
+    eventManager.getAction(ActionW.FLIP).ifPresent(b -> b.registerActionState(jButtonFlip));
     add(jButtonFlip);
   }
 }

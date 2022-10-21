@@ -24,7 +24,6 @@ import javax.swing.WindowConstants;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeListener;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.Filter;
@@ -140,13 +139,14 @@ public class MipPopup {
       JPanel contentPane = GuiUtils.getVerticalBoxLayoutPanel(framePanel);
       contentPane.setBorder(GuiUtils.getEmptyBorder(10, 15, 10, 15));
 
-      ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
-      if (sequence instanceof SliderCineListener cineAction) {
-        frameSlider = cineAction.createSlider(2, true);
+      SliderCineListener sequence =
+          view.getEventManager().getAction(ActionW.SCROLL_SERIES).orElse(null);
+      if (sequence != null) {
+        frameSlider = sequence.createSlider(2, true);
         contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
         contentPane.add(frameSlider);
         final JSliderW sliderThickness =
-            createSlider(MipView.MIP_THICKNESS.getTitle(), cineAction.getSliderModel());
+            createSlider(MipView.MIP_THICKNESS.getTitle(), sequence.getSliderModel());
         thickness = sliderThickness;
         contentPane.add(GuiUtils.boxVerticalStrut(Insertable.BLOCK_SEPARATOR));
         contentPane.add(sliderThickness);
@@ -233,10 +233,9 @@ public class MipPopup {
     public void dispose() {
       if (frameSlider != null) {
         frameSlider.removeChangeListener(changeListener);
-        ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
-        if (sequence instanceof SliderCineListener cineAction) {
-          cineAction.unregisterActionState(frameSlider);
-        }
+        view.getEventManager()
+            .getAction(ActionW.SCROLL_SERIES)
+            .ifPresent(s -> s.unregisterActionState(frameSlider));
       }
 
       view.exitMipMode(view.getSeries(), null);

@@ -10,7 +10,6 @@
 package org.weasis.core.ui.editor.image;
 
 import javax.swing.JButton;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.util.ResourceUtil;
@@ -32,9 +31,6 @@ public class ScreenshotToolBar<I extends ImageElement> extends WtoolBar {
         e -> ScreenshotDialog.showDialog(eventManager.getSelectedViewPane()));
     add(metaButton);
 
-    ActionState headerAction = eventManager.getAction(ActionW.EXPORT_VIEW);
-    if (headerAction != null) {
-      headerAction.registerActionState(metaButton);
-    }
+    eventManager.getAction(ActionW.EXPORT_VIEW).ifPresent(s -> s.registerActionState(metaButton));
   }
 }

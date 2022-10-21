@@ -20,7 +20,6 @@ import org.weasis.acquire.dockable.EditionToolFactory;
 import org.weasis.acquire.dockable.components.actions.calibrate.CalibrationPanel;
 import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireManager;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -85,7 +84,7 @@ public class CalibrationGraphic extends LineGraphic {
 
       mouseevent.consume();
       view.getEventManager()
-          .getAction(EditionToolFactory.DRAW_EDITION, ComboItemListener.class)
+          .getAction(EditionToolFactory.DRAW_EDITION)
           .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
     }
   }

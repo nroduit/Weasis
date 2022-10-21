@@ -12,15 +12,18 @@ package org.weasis.core.ui.editor.image;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.event.ListDataEvent;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.service.BundleTools;
@@ -165,13 +168,10 @@ public class MeasureToolBar extends WtoolBar {
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
     MeasureToolBar.drawGraphicList.forEach(
         g -> MeasureToolBar.applyDefaultSetting(MeasureTool.viewSetting, g));
-    @SuppressWarnings("rawtypes")
-    Optional<ComboItemListener> measure =
-        eventManager.getAction(ActionW.DRAW_MEASURE, ComboItemListener.class);
+
+    Optional<ComboItemListener<Graphic>> measure = eventManager.getAction(ActionW.DRAW_MEASURE);
     measure.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
-    @SuppressWarnings("rawtypes")
-    Optional<ComboItemListener> draw =
-        eventManager.getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class);
+    Optional<ComboItemListener<Graphic>> draw = eventManager.getAction(ActionW.DRAW_GRAPHICS);
     draw.ifPresent(comboItemListener -> add(buildButton(comboItemListener)));
 
     if (measure.isPresent() || draw.isPresent()) {
@@ -273,12 +273,11 @@ public class MeasureToolBar extends WtoolBar {
   }
 
   static class MeasureGroupMenu extends GroupRadioMenu<Graphic> {
-    private final ActionW action;
+    private final Feature<? extends ActionState> action;
     private JButton button;
 
-    public MeasureGroupMenu(ActionW action) {
-      super();
-      this.action = action;
+    public MeasureGroupMenu(Feature<? extends ActionState> action) {
+      this.action = Objects.requireNonNull(action);
     }
 
     @Override

@@ -24,7 +24,6 @@ import javax.swing.JTextArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.image.util.Unit;
@@ -146,10 +145,8 @@ public class CalibrationView extends JPanel {
       image.setPixelSpacingUnit(unit);
 
       ImageViewerEventManager<?> manager = view2d.getEventManager();
-      if (manager.getSelectedViewPane() == view2d
-          && manager.getAction(ActionW.SPATIAL_UNIT)
-              instanceof ComboItemListener<?> comboItemListener) {
-        comboItemListener.setSelectedItem(unit);
+      if (manager.getSelectedViewPane() == view2d) {
+        manager.getAction(ActionW.SPATIAL_UNIT).ifPresent(c -> c.setSelectedItem(unit));
       }
       view2d.getGraphicManager().updateLabels(Boolean.TRUE, view2d);
     }

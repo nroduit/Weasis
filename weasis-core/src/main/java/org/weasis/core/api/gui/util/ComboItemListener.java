@@ -26,7 +26,7 @@ public abstract class ComboItemListener<T> extends BasicActionState
 
   protected final DefaultComboBoxModel<T> model;
 
-  protected ComboItemListener(ActionW action, T[] objects) {
+  protected ComboItemListener(Feature<? extends ActionState> action, T[] objects) {
     super(action);
     model = (objects != null) ? new DefaultComboBoxModel<>(objects) : new DefaultComboBoxModel<>();
     model.addListDataListener(this);
@@ -60,7 +60,7 @@ public abstract class ComboItemListener<T> extends BasicActionState
   }
 
   @Override
-  public ActionW getActionW() {
+  public Feature<? extends ActionState> getActionW() {
     return action;
   }
 

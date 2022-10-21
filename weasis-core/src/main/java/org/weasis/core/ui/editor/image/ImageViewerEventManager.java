@@ -29,6 +29,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DecFormatter;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -66,7 +67,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
   protected final WProperties options = new WProperties();
   // Manages all PropertyChangeListeners in EDT
   protected final SwingPropertyChangeSupport propertySupport = new SwingPropertyChangeSupport(this);
-  protected final HashMap<ActionW, ActionState> actions = new HashMap<>();
+  protected final HashMap<Feature<? extends ActionState>, ActionState> actions = new HashMap<>();
 
   protected volatile boolean enabledAction = true;
   protected ImageViewerPlugin<E> selectedView2dContainer;
@@ -79,7 +80,7 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     actions.put(action.getActionW(), action);
   }
 
-  public void removeAction(ActionW action) {
+  public void removeAction(Feature<?> action) {
     actions.remove(action);
   }
 
@@ -464,10 +465,9 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
             view = selectedView2dContainer.getSelectedImagePane();
           }
           selectedView2dContainer.setSelectedImagePane(view);
-          ActionState synch = getAction(ActionW.SYNCH);
-          if (synch instanceof ComboItemListener<?> itemListener) {
-            selectedView2dContainer.setSynchView((SynchView) itemListener.getSelectedItem());
-          }
+          getAction(ActionW.SYNCH)
+              .ifPresent(
+                  s -> selectedView2dContainer.setSynchView((SynchView) s.getSelectedItem()));
         }
       }
     };
@@ -608,52 +608,43 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
   }
 
-  public ActionState getAction(ActionW action) {
-    if (action != null) {
-      return actions.get(action);
+  public <T> Optional<T> getAction(Feature<T> feature) {
+    if (feature != null) {
+      return Optional.ofNullable((T) actions.get(feature));
     }
-    return null;
+    return Optional.empty();
   }
 
-  public boolean isActionRegistered(ActionW action) {
-    if (action != null) {
-      return actions.containsKey(action);
+  public boolean isActionRegistered(Feature<?> feature) {
+    if (feature != null) {
+      return actions.containsKey(feature);
     }
     return false;
   }
 
-  public <T> Optional<T> getAction(ActionW action, Class<T> type) {
-    Objects.requireNonNull(action);
-    Objects.requireNonNull(type);
-
-    ActionState val = actions.get(action);
-    if (val == null || type.isAssignableFrom(val.getClass())) {
-      return Optional.ofNullable((T) val);
-    }
-    LOGGER.error("The request class [{}] doesn't match to the object [{}]", type, val.getClass());
-    return Optional.empty();
-  }
-
-  public Optional<ActionW> getActionKey(String command) {
+  public Optional<Feature<? extends ActionState>> getActionKey(String command) {
     if (command == null) {
       return Optional.empty();
     }
-    return actions.keySet().stream().filter(k -> k != null && k.cmd().equals(command)).findFirst();
+    return actions.keySet().stream().filter(k -> k.cmd().equals(command)).findFirst();
   }
 
-  public <T> Optional<T> getAction(String command, Class<T> type) {
-    Objects.requireNonNull(command);
+  public <T> Optional<T> getActionFromActionKey(String command, Class<T> type) {
+    if (command == null) {
+      return Optional.empty();
+    }
     Objects.requireNonNull(type);
 
     return actions.keySet().stream()
-        .filter(k -> k != null && k.cmd().equals(command))
+        .filter(k -> k.cmd().equals(command))
         .findFirst()
         .map(actions::get)
         .filter(type::isInstance)
         .map(type::cast);
   }
 
-  public Optional<ActionW> getLeftMouseActionFromKeyEvent(int keyEvent, int modifier) {
+  public Optional<Feature<? extends ActionState>> getLeftMouseActionFromKeyEvent(
+      int keyEvent, int modifier) {
     if (keyEvent == 0) {
       return Optional.empty();
     }
@@ -692,8 +683,8 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     }
   }
 
-  public Optional<ActionW> getMouseAction(int modifiers) {
-    Optional<ActionW> action = Optional.empty();
+  public Optional<Feature<? extends ActionState>> getMouseAction(int modifiers) {
+    Optional<Feature<? extends ActionState>> action = Optional.empty();
     // left mouse button, always active
     if ((modifiers & InputEvent.BUTTON1_DOWN_MASK) != 0) {
       action = getActionKey(mouseActions.getLeft());
@@ -798,8 +789,12 @@ public abstract class ImageViewerEventManager<E extends ImageElement> implements
     triggerDrawActionKeyEvent(ActionW.DRAW_GRAPHICS, ActionW.DRAW.cmd(), keyEvent, modifiers);
   }
 
-  private void triggerDrawActionKeyEvent(ActionW action, String cmd, int keyEvent, int modifiers) {
-    Optional<ComboItemListener> drawAction = getAction(action, ComboItemListener.class);
+  private void triggerDrawActionKeyEvent(
+      Feature<? extends ComboItemListener<Graphic>> action,
+      String cmd,
+      int keyEvent,
+      int modifiers) {
+    Optional<? extends ComboItemListener<Graphic>> drawAction = getAction(action);
     if (drawAction.isPresent() && drawAction.get().isActionEnabled()) {
       for (Object obj : drawAction.get().getAllItem()) {
         if (obj instanceof Graphic g) {

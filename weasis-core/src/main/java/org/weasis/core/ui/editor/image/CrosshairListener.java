@@ -20,6 +20,7 @@ import java.util.Optional;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.service.AuditLog;
 
@@ -34,7 +35,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
 
   private Point2D point;
 
-  protected CrosshairListener(ActionW action, Point2D point) {
+  protected CrosshairListener(Feature<? extends ActionState> action, Point2D point) {
     this.basicState = new BasicActionState(action);
     this.point = point == null ? new Point2D.Double() : point;
   }
@@ -77,7 +78,7 @@ public abstract class CrosshairListener extends MouseActionAdapter
   }
 
   @Override
-  public ActionW getActionW() {
+  public Feature<? extends ActionState> getActionW() {
     return basicState.getActionW();
   }
 
@@ -120,13 +121,13 @@ public abstract class CrosshairListener extends MouseActionAdapter
         int mask = InputEvent.CTRL_DOWN_MASK;
         if ((modifier & mask) == mask && Objects.nonNull(panner)) {
           panner.getJComponent().setCursor(ActionW.WINLEVEL.getCursor());
-          win = (MouseActionAdapter) panner.getEventManager().getAction(ActionW.WINDOW);
+          win = panner.getEventManager().getAction(ActionW.WINDOW).orElse(null);
           if (win != null) {
             win.setButtonMaskEx(win.getButtonMaskEx() | buttonMask);
             win.setMoveOnX(true);
             win.mousePressed(e);
           }
-          lev = (MouseActionAdapter) panner.getEventManager().getAction(ActionW.LEVEL);
+          lev = panner.getEventManager().getAction(ActionW.LEVEL).orElse(null);
           if (lev != null) {
             lev.setButtonMaskEx(lev.getButtonMaskEx() | buttonMask);
             lev.setInverse(true);

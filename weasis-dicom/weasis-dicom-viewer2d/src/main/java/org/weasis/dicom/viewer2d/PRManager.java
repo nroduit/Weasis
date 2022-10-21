@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.RadioMenuItem;
 import org.weasis.core.api.image.CropOp;
 import org.weasis.core.api.image.ImageOpNode;
@@ -137,10 +136,9 @@ public class PRManager {
       if (trueSize) {
         changePixelSize(img, actionsInView, prPixSize);
         img.setPixelSpacingUnit(Unit.MILLIMETER);
-        ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener itemListener) {
-          itemListener.setSelectedItem(Unit.MILLIMETER);
-        }
+        EventManager.getInstance()
+            .getAction(ActionW.SPATIAL_UNIT)
+            .ifPresent(c -> c.setSelectedItem(Unit.MILLIMETER));
       } else {
         applyAspectRatio(img, actionsInView, prPixSize);
       }

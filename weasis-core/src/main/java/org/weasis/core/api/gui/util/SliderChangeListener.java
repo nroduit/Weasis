@@ -39,12 +39,13 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   protected Double realMin;
   protected Double realMax;
 
-  protected SliderChangeListener(ActionW action, int min, int max, int value) {
+  protected SliderChangeListener(
+      Feature<? extends ActionState> action, int min, int max, int value) {
     this(action, min, max, value, true);
   }
 
   protected SliderChangeListener(
-      ActionW action,
+      Feature<? extends ActionState> action,
       int min,
       int max,
       int value,
@@ -55,7 +56,11 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   }
 
   protected SliderChangeListener(
-      ActionW action, int min, int max, int value, boolean valueIsAdjusting) {
+      Feature<? extends ActionState> action,
+      int min,
+      int max,
+      int value,
+      boolean valueIsAdjusting) {
     super();
     this.basicState = new BasicActionState(action);
     this.valueIsAdjusting = valueIsAdjusting;
@@ -64,7 +69,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   }
 
   protected SliderChangeListener(
-      ActionW action,
+      Feature<? extends ActionState> action,
       double min,
       double max,
       double value,
@@ -150,7 +155,7 @@ public abstract class SliderChangeListener extends MouseActionAdapter
   }
 
   @Override
-  public ActionW getActionW() {
+  public Feature<? extends ActionState> getActionW() {
     return basicState.getActionW();
   }
 

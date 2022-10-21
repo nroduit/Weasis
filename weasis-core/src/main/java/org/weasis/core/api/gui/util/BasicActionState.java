@@ -11,18 +11,16 @@ package org.weasis.core.api.gui.util;
 
 import java.awt.Component;
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class BasicActionState implements ActionState {
 
-  protected final ActionW action;
+  protected final Feature<? extends ActionState> action;
   protected boolean enabled;
   protected final ArrayList<Object> components;
 
-  public BasicActionState(ActionW action) {
-    if (action == null) {
-      throw new IllegalArgumentException();
-    }
-    this.action = action;
+  public BasicActionState(Feature<? extends ActionState> action) {
+    this.action = Objects.requireNonNull(action);
     this.components = new ArrayList<>();
   }
 
@@ -48,7 +46,7 @@ public class BasicActionState implements ActionState {
   }
 
   @Override
-  public ActionW getActionW() {
+  public Feature<? extends ActionState> getActionW() {
     return action;
   }
 

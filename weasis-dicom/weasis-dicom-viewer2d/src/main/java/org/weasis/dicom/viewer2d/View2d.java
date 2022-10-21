@@ -53,7 +53,7 @@ import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.explorer.model.TreeModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
@@ -434,10 +434,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       // Restore the original image pixel size
       if (changePixConfig) {
         m.initPixelConfiguration();
-        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener<?> itemListener) {
-          itemListener.setSelectedItem(m.getPixelSpacingUnit());
-        }
+        eventManager
+            .getAction(ActionW.SPATIAL_UNIT)
+            .ifPresent(s -> s.setSelectedItem(m.getPixelSpacingUnit()));
       }
       deletePrLayers();
 
@@ -878,7 +877,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
       return getAction(ActionW.LEVEL);
     }
 
-    Optional<ActionW> actionKey = eventManager.getActionKey(command);
+    Optional<Feature<? extends ActionState>> actionKey = eventManager.getActionKey(command);
     if (actionKey.isEmpty()) {
       return null;
     }
@@ -886,7 +885,12 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     if (actionKey.get().isDrawingAction()) {
       return graphicMouseHandler;
     }
-    return eventManager.getAction(actionKey.get(), MouseActionAdapter.class).orElse(null);
+
+    Optional<? extends ActionState> actionState = eventManager.getAction(actionKey.get());
+    if (actionState.isPresent() && actionState.get() instanceof MouseActionAdapter listener) {
+      return listener;
+    }
+    return null;
   }
 
   public void computeCrosshair(Vector3d p3) {
@@ -1008,10 +1012,10 @@ public class View2d extends DefaultView2d<DicomImageElement> {
     graphicMouseHandler.setButtonMaskEx(0);
   }
 
-  protected MouseActionAdapter getAction(ActionW action) {
-    ActionState a = eventManager.getAction(action);
-    if (a instanceof MouseActionAdapter adapter) {
-      return adapter;
+  protected MouseActionAdapter getAction(Feature<?> action) {
+    Optional<?> a = eventManager.getAction(action);
+    if (a.isPresent() && a.get() instanceof MouseActionAdapter actionAdapter) {
+      return actionAdapter;
     }
     return null;
   }
@@ -1225,9 +1229,9 @@ public class View2d extends DefaultView2d<DicomImageElement> {
               }
             };
 
-        List<ActionW> actionsButtons = ViewerToolBar.actionsButtons;
+        List<Feature<?>> actionsButtons = ViewerToolBar.actionsButtons;
         synchronized (actionsButtons) {
-          for (ActionW b : actionsButtons) {
+          for (Feature<?> b : actionsButtons) {
             if (eventManager.isActionRegistered(b)) {
               JRadioButtonMenuItem radio =
                   new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));

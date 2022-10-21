@@ -7,11 +7,9 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
  */
-package org.weasis.base.viewer2d;
+package org.weasis.core.ui.editor.image;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
+import org.weasis.core.ui.Messages;
 
 public enum ResetTools {
   ALL(Messages.getString("ResetTools.all")),
@@ -33,17 +31,5 @@ public enum ResetTools {
   @Override
   public String toString() {
     return name;
-  }
-
-  public static JMenu createUnregisteredJMenu() {
-    ButtonGroup group = new ButtonGroup();
-    JMenu menu = new JMenu(Messages.getString("ResetTools.reset"));
-    for (final ResetTools action : values()) {
-      final JMenuItem item = new JMenuItem(action.toString());
-      item.addActionListener(e -> EventManager.getInstance().reset(action));
-      menu.add(item);
-      group.add(item);
-    }
-    return menu;
   }
 }

@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -220,9 +221,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public GridBagLayoutModel getOriginalLayoutModel() {
     // Get the non clone layout from the list
-    ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener<?> comboItemListener) {
-      for (Object element : comboItemListener.getAllItem()) {
+    Optional<ComboItemListener<GridBagLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
+    if (layout.isPresent()) {
+      for (Object element : layout.get().getAllItem()) {
         if (element instanceof GridBagLayoutModel gbm) {
           if ((layoutModel.getIcon() != null && gbm.getIcon() == layoutModel.getIcon())
               || layoutModel.toString().equals(gbm.toString())) {
@@ -286,10 +287,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
   }
 
   public void changeLayoutModel(GridBagLayoutModel layoutModel) {
-    ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener<?> itemListener) {
-      itemListener.setSelectedItem(layoutModel);
-    }
+    eventManager
+        .getAction(ActionW.LAYOUT)
+        .ifPresent(itemListener -> itemListener.setSelectedItem(layoutModel));
   }
 
   protected void removeComponents() {
@@ -712,9 +712,9 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     if (size <= 1) {
       return VIEWS_1x1;
     }
-    ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-    if (layout instanceof ComboItemListener<?> comboItemListener) {
-      Object[] list = comboItemListener.getAllItem();
+    Optional<ComboItemListener<GridBagLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
+    if (layout.isPresent()) {
+      Object[] list = layout.get().getAllItem();
       GridBagLayoutModel bestModel = VIEWS_2x2;
       int diff = Integer.MAX_VALUE;
       int diffLayout = Integer.MAX_VALUE;
@@ -791,12 +791,13 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
 
   public GridBagLayoutModel getViewLayout(String title) {
     if (title != null) {
-      ActionState layout = eventManager.getAction(ActionW.LAYOUT);
-      if (layout instanceof ComboItemListener<?> comboItemListener) {
-        Object[] list = comboItemListener.getAllItem();
+      Optional<ComboItemListener<GridBagLayoutModel>> layout =
+          eventManager.getAction(ActionW.LAYOUT);
+      if (layout.isPresent()) {
+        Object[] list = layout.get().getAllItem();
         for (Object m : list) {
-          if (m instanceof GridBagLayoutModel layoutModel && title.equals(layoutModel.getId())) {
-            return layoutModel;
+          if (m instanceof GridBagLayoutModel model && title.equals(model.getId())) {
+            return model;
           }
         }
       }

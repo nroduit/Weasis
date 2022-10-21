@@ -17,8 +17,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.ImageElement;
@@ -143,10 +145,11 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     if (ds == null) {
       ImageViewerEventManager<E> eventManager = vImg.getEventManager();
-      Optional<ActionW> action = eventManager.getMouseAction(e.getModifiersEx());
+      Optional<Feature<? extends ActionState>> action =
+          eventManager.getMouseAction(e.getModifiersEx());
       if (action.isPresent() && action.get().isDrawingAction()) {
         Optional<ComboItemListener> items =
-            eventManager.getAction(
+            eventManager.getActionFromActionKey(
                 ActionW.DRAW_CMD_PREFIX + action.get().cmd(), ComboItemListener.class);
         if (items.isPresent()) {
           Object item = items.get().getSelectedItem();
@@ -242,15 +245,15 @@ public class GraphicMouseHandler<E extends ImageElement> extends MouseActionAdap
 
     if (ds.completeDrag(mouseEvt)) {
       vImg.getEventManager()
-          .getAction(ActionW.DRAW_ONLY_ONCE, ToggleButtonListener.class)
+          .getAction(ActionW.DRAW_ONLY_ONCE)
           .filter(ToggleButtonListener::isSelected)
           .ifPresent(
               a -> {
                 vImg.getEventManager()
-                    .getAction(ActionW.DRAW_MEASURE, ComboItemListener.class)
+                    .getAction(ActionW.DRAW_MEASURE)
                     .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
                 vImg.getEventManager()
-                    .getAction(ActionW.DRAW_GRAPHICS, ComboItemListener.class)
+                    .getAction(ActionW.DRAW_GRAPHICS)
                     .ifPresent(c -> c.setSelectedItem(MeasureToolBar.selectionGraphic));
               });
       ds = null;

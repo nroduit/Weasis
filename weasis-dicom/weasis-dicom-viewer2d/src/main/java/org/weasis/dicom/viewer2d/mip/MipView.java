@@ -9,6 +9,7 @@
  */
 package org.weasis.dicom.viewer2d.mip;
 
+import java.awt.Cursor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +20,10 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
 import org.weasis.core.api.gui.task.TaskInterruptionException;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.Feature.SliderChangeListenerValue;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -49,10 +50,18 @@ public class MipView extends View2d {
   private static final Logger LOGGER = LoggerFactory.getLogger(MipView.class);
 
   public static final ImageIcon MIP_ICON_SETTING = ResourceUtil.getIcon(OtherIcon.VIEW_MIP);
-  public static final ActionW MIP =
-      new ActionW(Messages.getString("MipView.mip"), "mip", 0, 0, null); // NON-NLS
-  public static final ActionW MIP_THICKNESS =
-      new ActionW(Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); // NON-NLS
+
+  public static final class MipViewType extends Feature<MipView.Type> {
+    public MipViewType(String title, String command, int keyEvent, int modifier, Cursor cursor) {
+      super(title, command, keyEvent, modifier, cursor);
+    }
+  }
+
+  public static final MipViewType MIP =
+      new MipViewType(Messages.getString("MipView.mip"), "mip", 0, 0, null); // NON-NLS
+  public static final SliderChangeListenerValue MIP_THICKNESS =
+      new SliderChangeListenerValue(
+          Messages.getString("MipView.img_extend"), "mip_thick", 0, 0, null); // NON-NLS
 
   public enum Type {
     MIN,
@@ -207,10 +216,9 @@ public class MipView extends View2d {
       eventManager.updateComponentsListener(MipView.this);
     } else {
       // Force drawing crosslines without changing the slice position
-      ActionState sequence = eventManager.getAction(ActionW.SCROLL_SERIES);
-      if (sequence instanceof SliderCineListener cineAction) {
-        cineAction.stateChanged(cineAction.getSliderModel());
-      }
+      eventManager
+          .getAction(ActionW.SCROLL_SERIES)
+          .ifPresent(s -> s.stateChanged(s.getSliderModel()));
       // Close stream
       oldImage.dispose();
       oldImage.removeImageFromCache();

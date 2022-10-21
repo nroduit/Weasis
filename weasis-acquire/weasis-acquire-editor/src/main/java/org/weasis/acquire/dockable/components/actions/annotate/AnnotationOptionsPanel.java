@@ -11,6 +11,7 @@ package org.weasis.acquire.dockable.components.actions.annotate;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.util.Optional;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -24,7 +25,6 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import org.weasis.acquire.Messages;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
@@ -48,22 +48,28 @@ public class AnnotationOptionsPanel extends JPanel {
 
     add(createLineStylePanel());
 
-    ActionState spUnitAction = EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
-    if (spUnitAction instanceof ComboItemListener<?> comboListener) {
-      JLabel label =
-          new JLabel(org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      JComboBox<?> unitComboBox = comboListener.createCombo(120);
-      unitComboBox.setSelectedItem(Unit.PIXEL);
-      add(GuiUtils.getFlowLayoutPanel(label, unitComboBox));
-    }
+    Optional<ComboItemListener<Unit>> spUnitAction =
+        EventManager.getInstance().getAction(ActionW.SPATIAL_UNIT);
+    spUnitAction.ifPresent(
+        comboItemListener -> {
+          JLabel label =
+              new JLabel(
+                  org.weasis.core.ui.Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+          JComboBox<?> unitComboBox = comboItemListener.createCombo(120);
+          unitComboBox.setSelectedItem(Unit.PIXEL);
+          add(GuiUtils.getFlowLayoutPanel(label, unitComboBox));
+        });
 
-    ActionState drawOnceAction = EventManager.getInstance().getAction(ActionW.DRAW_ONLY_ONCE);
-    if (drawOnceAction instanceof ToggleButtonListener toggleListener) {
-      JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
-      checkDraw.setSelected(MeasureTool.viewSetting.isDrawOnlyOnce());
-      checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
-      add(GuiUtils.getFlowLayoutPanel(checkDraw));
-    }
+    Optional<ToggleButtonListener> drawOnceAction =
+        EventManager.getInstance().getAction(ActionW.DRAW_ONLY_ONCE);
+    drawOnceAction.ifPresent(
+        toggleButtonListener -> {
+          JCheckBox checkDraw =
+              toggleButtonListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
+          checkDraw.setSelected(MeasureTool.viewSetting.isDrawOnlyOnce());
+          checkDraw.setAlignmentX(Component.LEFT_ALIGNMENT);
+          add(GuiUtils.getFlowLayoutPanel(checkDraw));
+        });
   }
 
   private JPanel createLineStylePanel() {

@@ -61,14 +61,13 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.model.ViewModel;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.GuiUtils.IconColor;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.AffineTransformOp;
 import org.weasis.core.api.image.FilterOp;
@@ -152,9 +151,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
   public static final Cursor EDIT_CURSOR =
-      ActionW.getImageCursor("editPoint.png", "Edit Point", 0.5f, 0.5f); // NON-NLS
+      Feature.getImageCursor("editPoint.png", "Edit Point", 0.5f, 0.5f); // NON-NLS
   public static final Cursor HAND_CURSOR =
-      ActionW.getSvgCursor("hand.svg", "hand", 0.5f, 0.5f); // NON-NLS
+      Feature.getSvgCursor("hand.svg", "hand", 0.5f, 0.5f); // NON-NLS
   public static final Cursor WAIT_CURSOR = DefaultView2d.getNewCursor(Cursor.WAIT_CURSOR);
   public static final Cursor CROSS_CURSOR = DefaultView2d.getNewCursor(Cursor.CROSSHAIR_CURSOR);
   public static final Cursor MOVE_CURSOR = DefaultView2d.getNewCursor(Cursor.MOVE_CURSOR);
@@ -567,11 +566,12 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     imageLayer.setEnableDispOperations(false);
     if (img == null) {
       actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), Unit.PIXEL);
-      ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-      if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
-        comboItemListener.setSelectedItemWithoutTriggerAction(
-            actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
-      }
+      eventManager
+          .getAction(ActionW.SPATIAL_UNIT)
+          .ifPresent(
+              c ->
+                  c.setSelectedItemWithoutTriggerAction(
+                      actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
       // Force the update for null image
       imageLayer.setEnableDispOperations(true);
       imageLayer.setImage(null, null);
@@ -585,18 +585,20 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         updateGraphics = true;
         actionsInView.put(ActionW.SPATIAL_UNIT.cmd(), img.getPixelSpacingUnit());
         if (eventManager.getSelectedViewPane() == this) {
-          ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-          if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
-            comboItemListener.setSelectedItemWithoutTriggerAction(
-                actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
-          }
+          eventManager
+              .getAction(ActionW.SPATIAL_UNIT)
+              .ifPresent(
+                  c ->
+                      c.setSelectedItemWithoutTriggerAction(
+                          actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
         }
         actionsInView.put(ActionW.PREPROCESSING.cmd(), null);
-        ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-        if (spUnitAction instanceof ComboItemListener<?> comboItemListener) {
-          comboItemListener.setSelectedItemWithoutTriggerAction(
-              actionsInView.get(ActionW.SPATIAL_UNIT.cmd()));
-        }
+        eventManager
+            .getAction(ActionW.SPATIAL_UNIT)
+            .ifPresent(
+                c ->
+                    c.setSelectedItemWithoutTriggerAction(
+                        actionsInView.get(ActionW.SPATIAL_UNIT.cmd())));
 
         updateCanvas(img, false);
 
@@ -697,8 +699,9 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     } else if (ratio > DefaultViewModel.SCALE_MAX) {
       ratio = DefaultViewModel.SCALE_MAX;
     }
-    ActionState zoom = eventManager.getAction(ActionW.ZOOM);
-    if (zoom instanceof SliderChangeListener z) {
+    Optional<SliderChangeListener> zoom = eventManager.getAction(ActionW.ZOOM);
+    if (zoom.isPresent()) {
+      SliderChangeListener z = zoom.get();
       // Adjust the best fit value according to the possible range of the model zoom action.
       if (eventManager.getSelectedViewPane() == this) {
         // Set back the value to UI components as this value cannot be computed early.
@@ -920,8 +923,7 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   protected void drawOnTop(Graphics2D g2d) {}
 
   public boolean requiredTextAntialiasing() {
-    Optional<SliderCineListener> cineAction =
-        eventManager.getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
+    Optional<SliderCineListener> cineAction = eventManager.getAction(ActionW.SCROLL_SERIES);
     // Prevent to slow down cine
     return cineAction.isEmpty()
         || !cineAction.get().isActionEnabled()
@@ -1286,24 +1288,21 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
       // Counterclockwise
       eventManager
-          .getAction(ActionW.ROTATION, SliderChangeListener.class)
+          .getAction(ActionW.ROTATION)
           .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
       // Clockwise
       eventManager
-          .getAction(ActionW.ROTATION, SliderChangeListener.class)
+          .getAction(ActionW.ROTATION)
           .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
     } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
       // Flip horizontal
-      ActionState flipAction = eventManager.getAction(ActionW.FLIP);
-      if (flipAction instanceof ToggleButtonListener flip) {
-        flip.setSelected(!flip.isSelected());
-      }
+      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
     } else {
-      Optional<ActionW> action =
+      Optional<Feature<? extends ActionState>> feature =
           eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
-      if (action.isPresent()) {
-        eventManager.changeLeftMouseAction(action.get().cmd());
+      if (feature.isPresent()) {
+        eventManager.changeLeftMouseAction(feature.get().cmd());
       } else {
         eventManager.keyPressed(e);
       }
@@ -1445,7 +1444,8 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
         return;
       }
 
-      Optional<ActionW> action = eventManager.getMouseAction(evt.getModifiersEx());
+      Optional<Feature<? extends ActionState>> action =
+          eventManager.getMouseAction(evt.getModifiersEx());
       DefaultView2d.this.setCursor(
           action.isPresent() ? action.get().getCursor() : DefaultView2d.DEFAULT_CURSOR);
     }

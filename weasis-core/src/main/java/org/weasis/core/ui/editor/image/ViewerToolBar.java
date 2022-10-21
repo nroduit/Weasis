@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.swing.AbstractButton;
 import javax.swing.ButtonGroup;
 import javax.swing.Icon;
@@ -31,14 +32,15 @@ import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 import javax.swing.UIManager;
 import javax.swing.event.ListDataEvent;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.GuiUtils;
+import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.WProperties;
 import org.weasis.core.api.util.ResourceUtil;
@@ -48,7 +50,7 @@ import org.weasis.core.ui.util.WtoolBar;
 
 public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements ActionListener {
 
-  public static final List<ActionW> actionsButtons =
+  public static final List<Feature<?>> actionsButtons =
       Collections.synchronizedList(
           new ArrayList<>(
               Arrays.asList(
@@ -63,7 +65,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
                   ActionW.CROSSHAIR,
                   ActionW.NO_ACTION)));
 
-  public static final ActionW[] actionsScroll = {
+  public static final Feature<?>[] actionsScroll = {
     ActionW.SCROLL_SERIES, ActionW.ZOOM, ActionW.ROTATION, ActionW.NO_ACTION
   };
   public static final FlatSVGIcon MouseLeftIcon =
@@ -168,10 +170,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
       resetButton.setToolTipText(Messages.getString("ViewerToolBar.disReset"));
       resetButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.RESET));
       resetButton.addActionListener(e -> eventManager.resetDisplay());
-      ActionState reset = eventManager.getAction(ActionW.RESET);
-      if (reset != null) {
-        reset.registerActionState(resetButton);
-      }
+      eventManager.getAction(ActionW.RESET).ifPresent(r -> r.registerActionState(resetButton));
       add(resetButton);
     }
   }
@@ -196,10 +195,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private JPopupMenu getLayoutPopupMenuButton(DropDownButton dropDownButton) {
-    ActionState layout = eventManager.getAction(ActionW.LAYOUT);
+    Optional<ComboItemListener<GridBagLayoutModel>> layout = eventManager.getAction(ActionW.LAYOUT);
     JPopupMenu popupMouseButtons = new JPopupMenu();
-    if (layout instanceof ComboItemListener<?> comboListener) {
-      JMenu menu = comboListener.createUnregisteredRadioMenu("layout"); // NON-NLS
+    if (layout.isPresent()) {
+      JMenu menu = layout.get().createUnregisteredRadioMenu("layout"); // NON-NLS
       popupMouseButtons.setInvoker(dropDownButton);
       Component[] cps = menu.getMenuComponents();
       for (Component cp : cps) {
@@ -209,13 +208,13 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     return popupMouseButtons;
   }
 
-  public void removeMouseAction(ActionW action) {
+  public void removeMouseAction(Feature<?> action) {
     if (action != null) {
       actionsButtons.remove(action);
       String cmd = action.cmd();
       MouseActions actions = eventManager.getMouseActions();
       if (cmd.equals(mouseLeft.getActionCommand())) {
-        ActionW last = actionsButtons.get(0);
+        Feature<?> last = actionsButtons.get(0);
         actions.setAction(MouseActions.T_LEFT, last.cmd());
         changeButtonState(MouseActions.T_LEFT, last.cmd());
       }
@@ -229,7 +228,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     popupMouseButtons.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
     synchronized (actionsButtons) {
-      for (ActionW b : actionsButtons) {
+      for (Feature<?> b : actionsButtons) {
         if (eventManager.isActionRegistered(b)) {
           JRadioButtonMenuItem radio =
               new JRadioButtonMenuItem(b.getTitle(), b.getIcon(), b.cmd().equals(action));
@@ -253,7 +252,7 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     JPopupMenu popupMouseScroll = new JPopupMenu(type);
     popupMouseScroll.setInvoker(dropButton);
     ButtonGroup groupButtons = new ButtonGroup();
-    for (ActionW actionW : actionsScroll) {
+    for (Feature<?> actionW : actionsScroll) {
       if (eventManager.isActionRegistered(actionW)) {
         JRadioButtonMenuItem radio =
             new JRadioButtonMenuItem(
@@ -298,19 +297,19 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     return button != null && cmd.equals(button.getActionCommand());
   }
 
-  public void changeButtonState(String type, String action) {
+  public void changeButtonState(String type, String cmd) {
     DropDownButton button = getDropDownButton(type);
     if (button != null) {
-      Icon icon = buildMouseIcon(type, action);
+      Icon icon = buildMouseIcon(type, cmd);
       button.setIcon(icon);
-      button.setActionCommand(action);
+      button.setActionCommand(cmd);
     }
   }
 
-  private Icon buildMouseIcon(String type, String action) {
+  private Icon buildMouseIcon(String type, String cmd) {
     final Icon mouseIcon = getMouseIcon(type);
-    ActionW actionW = getAction(actionsButtons, action);
-    final Icon smallIcon = actionW == null ? ActionW.NO_ACTION.getIcon() : actionW.getIcon();
+    Feature<?> action = getAction(actionsButtons, cmd);
+    final Icon smallIcon = action == null ? ActionW.NO_ACTION.getIcon() : action.getIcon();
 
     return getDopButtonIcon(mouseIcon, smallIcon);
   }
@@ -359,14 +358,14 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
 
   private DropDownButton buildSynchButton() {
     GroupPopup menu = null;
-    ActionState synch = eventManager.getAction(ActionW.SYNCH);
+    ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
     SynchView synchView = SynchView.DEFAULT_STACK;
-    if (synch instanceof ComboItemListener m) {
-      if (m.getSelectedItem() instanceof SynchView sel) {
+    if (synch != null) {
+      if (synch.getSelectedItem() instanceof SynchView sel) {
         synchView = sel;
       }
       menu = new SynchGroupMenu();
-      m.registerActionState(menu);
+      synch.registerActionState(menu);
     }
     final DropDownButton button =
         new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
@@ -442,10 +441,10 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     return null;
   }
 
-  public ActionW getAction(List<ActionW> buttons, String command) {
+  public Feature<?> getAction(List<Feature<?>> buttons, String command) {
     if (buttons != null) {
       synchronized (buttons) { // NOSONAR lock object is the list for iterating its elements safely
-        for (ActionW a : buttons) {
+        for (Feature<?> a : buttons) {
           if (a.cmd().equals(command)) {
             return a;
           }
@@ -468,12 +467,12 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
     return MouseLeftIcon;
   }
 
-  public static ActionW getNextCommand(List<ActionW> buttons, String command) {
+  public static Feature<?> getNextCommand(List<Feature<?>> buttons, String command) {
     if (buttons != null && !buttons.isEmpty()) {
       int index = 0;
       synchronized (buttons) { // NOSONAR lock object is the list for iterating its elements safely
         for (int i = 0; i < buttons.size(); i++) {
-          ActionW b = buttons.get(i);
+          Feature<?> b = buttons.get(i);
           if (b.cmd().equals(command)) {
             index = (i == buttons.size() - 1) ? 0 : i + 1;
             break;

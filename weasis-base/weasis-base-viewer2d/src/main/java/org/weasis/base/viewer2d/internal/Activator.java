@@ -37,6 +37,7 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.BundlePreferences;
 import org.weasis.core.ui.docking.DockableTool;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.util.Toolbar;
@@ -56,9 +57,11 @@ public class Activator implements BundleActivator, ServiceListener {
 
     // Add listener for getting new service events
     try {
+
       bundleContext.addServiceListener(
           Activator.this,
-          "(" + Constants.OBJECTCLASS + "=" + InsertableFactory.class.getName() + ")");
+          String.format(
+              "(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName()));
     } catch (InvalidSyntaxException e) {
       LOGGER.error("Add service listener", e);
     }

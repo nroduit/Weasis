@@ -17,13 +17,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.service.AuditLog;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -53,19 +50,13 @@ public class ZoomToolBar extends WtoolBar {
     zoom.setToolTipText(Messages.getString("ZoomToolBar.zoom_type"));
     add(zoom);
 
-    ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-    if (zoomAction != null) {
-      zoomAction.registerActionState(zoom);
-    }
+    eventManager.getAction(ActionW.ZOOM).ifPresent(s -> s.registerActionState(zoom));
 
     if (showLens) {
       final JToggleButton jButtonLens =
           new JToggleButton(ResourceUtil.getToolBarIcon(ActionIcon.ZOOM_PAN));
       jButtonLens.setToolTipText(Messages.getString("ViewerToolBar.show_lens"));
-      ActionState lens = eventManager.getAction(ActionW.LENS);
-      if (lens instanceof ToggleButtonListener toggleListener) {
-        toggleListener.registerActionState(jButtonLens);
-      }
+      eventManager.getAction(ActionW.LENS).ifPresent(s -> s.registerActionState(jButtonLens));
       add(jButtonLens);
     }
   }
@@ -90,10 +81,7 @@ public class ZoomToolBar extends WtoolBar {
     GuiUtils.applySelectedIconEffect(actualZoomMenu);
     actualZoomMenu.addActionListener(
         e -> {
-          ActionState zoom = eventManager.getAction(ActionW.ZOOM);
-          if (zoom instanceof SliderChangeListener sliderChangeListener) {
-            sliderChangeListener.setRealValue(1.0);
-          }
+          eventManager.getAction(ActionW.ZOOM).ifPresent(s -> s.setRealValue(1.0));
         });
     list.add(actualZoomMenu);
 

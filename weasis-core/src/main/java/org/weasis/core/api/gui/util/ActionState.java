@@ -38,7 +38,7 @@ public interface ActionState {
 
   boolean isActionEnabled();
 
-  ActionW getActionW();
+  Feature<? extends ActionState> getActionW();
 
   boolean registerActionState(Object c);
 

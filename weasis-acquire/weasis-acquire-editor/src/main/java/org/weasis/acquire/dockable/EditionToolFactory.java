@@ -25,6 +25,9 @@ import org.weasis.core.api.gui.InsertableFactory;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.Feature.BasicActionStateValue;
+import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.model.graphic.Graphic;
@@ -40,16 +43,17 @@ import org.weasis.core.ui.model.graphic.Graphic;
 public class EditionToolFactory implements InsertableFactory {
   private static final Logger LOGGER = LoggerFactory.getLogger(EditionToolFactory.class);
 
-  public static final ActionW EDITION =
-      new ActionW(Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
+  public static final BasicActionStateValue EDITION =
+      new BasicActionStateValue(
+          Messages.getString("edit"), "draw.edition", KeyEvent.VK_G, 0, null) { // NON-NLS
         @Override
         public boolean isDrawingAction() {
           return true;
         }
       };
   // Starting cmd by "draw.sub." defines a drawing action with a derivative action
-  public static final ActionW DRAW_EDITION =
-      new ActionW("", ActionW.DRAW_CMD_PREFIX + EDITION.cmd(), 0, 0, null);
+  public static final ComboItemListenerValue<Graphic> DRAW_EDITION =
+      new ComboItemListenerValue<>("", Feature.DRAW_CMD_PREFIX + EDITION.cmd(), 0, 0, null);
 
   private EditionTool toolPane = null;
 

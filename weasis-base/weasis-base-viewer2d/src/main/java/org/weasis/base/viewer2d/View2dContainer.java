@@ -37,7 +37,6 @@ import org.weasis.base.viewer2d.dockable.ImageTool;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
@@ -135,10 +134,12 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
             ImageViewerPlugin<ImageElement> container =
                 EventManager.getInstance().getSelectedView2dContainer();
             if (container == View2dContainer.this) {
-              Optional<ComboItemListener> layoutAction =
-                  EventManager.getInstance().getAction(ActionW.LAYOUT, ComboItemListener.class);
+              Optional<ComboItemListener<GridBagLayoutModel>> layoutAction =
+                  EventManager.getInstance().getAction(ActionW.LAYOUT);
               layoutAction.ifPresent(
-                  a -> a.setDataListWithoutTriggerAction(getLayoutList().toArray()));
+                  a ->
+                      a.setDataListWithoutTriggerAction(
+                          getLayoutList().toArray(new GridBagLayoutModel[0])));
             }
           }
         });
@@ -234,18 +235,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
               public SliderChangeListener[] getActions() {
 
                 ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
-                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) seqAction);
-                }
-                ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                if (zoomAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) zoomAction);
-                }
-                ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                if (rotateAction instanceof SliderChangeListener) {
-                  listeners.add((SliderChangeListener) rotateAction);
-                }
+                eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(listeners::add);
+                eventManager.getAction(ActionW.ZOOM).ifPresent(listeners::add);
+                eventManager.getAction(ActionW.ROTATION).ifPresent(listeners::add);
                 return listeners.toArray(new SliderChangeListener[0]);
               }
             };
@@ -358,8 +350,9 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
               ViewCanvas view2DPane = eventManager.getSelectedViewPane();
               ImageElement img = view2DPane.getImage();
               if (img != null && view2DPane.getSeries() == series) {
-                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderCineListener sliceAction) {
+                Optional<SliderCineListener> seqAction =
+                    eventManager.getAction(ActionW.SCROLL_SERIES);
+                if (seqAction.isPresent()) {
                   if (param instanceof ImageElement) {
                     Filter<ImageElement> filter =
                         (Filter<ImageElement>)
@@ -372,9 +365,7 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
                       // (require at least one image)
                       view2DPane.setSeries(series, null);
                     }
-                    if (imgIndex >= 0) {
-                      sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
-                    }
+                    seqAction.get().setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
                   }
                 }
               }

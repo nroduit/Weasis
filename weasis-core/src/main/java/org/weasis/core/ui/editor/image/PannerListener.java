@@ -16,8 +16,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import org.weasis.core.api.gui.util.ActionState;
-import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.service.AuditLog;
@@ -32,7 +32,7 @@ public abstract class PannerListener extends MouseActionAdapter
 
   private Point2D point;
 
-  protected PannerListener(ActionW action, Point2D point) {
+  protected PannerListener(Feature<? extends ActionState> action, Point2D point) {
     this.basicState = new BasicActionState(action);
     this.point = point == null ? new Point2D.Double() : point;
   }
@@ -74,7 +74,7 @@ public abstract class PannerListener extends MouseActionAdapter
   }
 
   @Override
-  public ActionW getActionW() {
+  public Feature<? extends ActionState> getActionW() {
     return basicState.getActionW();
   }
 

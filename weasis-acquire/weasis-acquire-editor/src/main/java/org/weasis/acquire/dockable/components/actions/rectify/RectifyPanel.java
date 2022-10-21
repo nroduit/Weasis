@@ -18,7 +18,6 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.operations.impl.RectifyOrientationChangeListener;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.CropOp;
@@ -81,7 +80,7 @@ public class RectifyPanel extends AbstractAcquireActionPanel {
     info.getPostProcessOpManager().setParamValue(CropOp.OP_NAME, CropOp.P_AREA, null);
 
     view.getEventManager()
-        .getAction(EditionToolFactory.DRAW_EDITION, ComboItemListener.class)
+        .getAction(EditionToolFactory.DRAW_EDITION)
         .ifPresent(a -> a.setSelectedItem(MeasureToolBar.selectionGraphic));
     ImageViewerPlugin<?> container =
         WinUtil.getParentOfClass(view.getJComponent(), ImageViewerPlugin.class);

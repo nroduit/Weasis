@@ -14,10 +14,11 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import javax.swing.JPopupMenu;
 import javax.swing.JProgressBar;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
+import org.weasis.core.api.media.data.SeriesComparator;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ViewCanvas;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
@@ -72,7 +73,8 @@ public class MprView extends View2d {
 
   @Override
   protected JPopupMenu buildContextMenu(final MouseEvent evt) {
-    ActionState action = eventManager.getAction(ActionW.SORT_STACK);
+    ComboItemListener<SeriesComparator<?>> action =
+        eventManager.getAction(ActionW.SORT_STACK).orElse(null);
     if (action != null && action.isActionEnabled()) {
       // Force to disable sort stack menu
       action.enableAction(false);

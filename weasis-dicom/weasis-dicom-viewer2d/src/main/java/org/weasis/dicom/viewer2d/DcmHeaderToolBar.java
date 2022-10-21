@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d;
 
 import javax.swing.JButton;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
@@ -33,9 +32,8 @@ public class DcmHeaderToolBar extends WtoolBar {
     metaButton.addActionListener(
         e -> DicomFieldsView.displayHeader(eventManager.getSelectedView2dContainer()));
     add(metaButton);
-    ActionState headerAction = EventManager.getInstance().getAction(ActionW.SHOW_HEADER);
-    if (headerAction != null) {
-      headerAction.registerActionState(metaButton);
-    }
+    EventManager.getInstance()
+        .getAction(ActionW.SHOW_HEADER)
+        .ifPresent(b -> b.registerActionState(metaButton));
   }
 }

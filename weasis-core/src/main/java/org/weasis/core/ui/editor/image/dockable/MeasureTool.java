@@ -37,12 +37,12 @@ import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableModel;
 import org.weasis.core.api.gui.Insertable;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.Feature.ComboItemListenerValue;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.JToggleButtonGroup;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.ImageElement;
@@ -142,12 +142,14 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         });
     transform.add(GuiUtils.getFlowLayoutPanel(label, button, spinner));
 
-    ActionState drawOnceAction = eventManager.getAction(ActionW.DRAW_ONLY_ONCE);
-    if (drawOnceAction instanceof ToggleButtonListener toggleListener) {
-      JCheckBox checkDraw = toggleListener.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
-      checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
-      transform.add(GuiUtils.getFlowLayoutPanel(checkDraw));
-    }
+    eventManager
+        .getAction(ActionW.DRAW_ONLY_ONCE)
+        .ifPresent(
+            b -> {
+              JCheckBox checkDraw = b.createCheckBox(ActionW.DRAW_ONLY_ONCE.getTitle());
+              checkDraw.setSelected(viewSetting.isDrawOnlyOnce());
+              transform.add(GuiUtils.getFlowLayoutPanel(checkDraw));
+            });
 
     JCheckBox checkboxBasicImageStatistics =
         new JCheckBox(Messages.getString("MeasureTool.pix_stats"), viewSetting.isBasicStatistics());
@@ -176,13 +178,16 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
         });
     transform.add(GuiUtils.getFlowLayoutPanel(checkboxBasicImageStatistics));
 
-    ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-    if (spUnitAction instanceof ComboItemListener<?> comboListener) {
-      final JLabel lutLabel = new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
-      JComboBox<?> unitComboBox = comboListener.createCombo(120);
-      unitComboBox.setSelectedItem(Unit.PIXEL);
-      transform.add(GuiUtils.getFlowLayoutPanel(lutLabel, unitComboBox));
-    }
+    eventManager
+        .getAction(ActionW.SPATIAL_UNIT)
+        .ifPresent(
+            b -> {
+              final JLabel lutLabel =
+                  new JLabel(Messages.getString("MeasureTool.unit") + StringUtil.COLON);
+              JComboBox<?> unitComboBox = b.createCombo(120);
+              unitComboBox.setSelectedItem(Unit.PIXEL);
+              transform.add(GuiUtils.getFlowLayoutPanel(lutLabel, unitComboBox));
+            });
 
     final JButton btnGeneralOptions = new JButton(Messages.getString("MeasureTool.more_options"));
     btnGeneralOptions.addActionListener(
@@ -251,11 +256,11 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
     List<MeasureItem> measList = null;
 
     if (graph != null && layer != null && graph.getLayerType() == LayerType.MEASURE) {
-      Unit unit = null;
-      ActionState spUnitAction = eventManager.getAction(ActionW.SPATIAL_UNIT);
-      if (spUnitAction instanceof ComboItemListener<?> comboListener) {
-        unit = (Unit) comboListener.getSelectedItem();
-      }
+      Unit unit =
+          eventManager
+              .getAction(ActionW.SPATIAL_UNIT)
+              .map(c -> (Unit) c.getSelectedItem())
+              .orElse(null);
       measList = graph.computeMeasurements(layer, true, unit);
     }
     updateMeasuredItems(measList);
@@ -364,11 +369,10 @@ public class MeasureTool extends PluginTool implements GraphicSelectionListener 
   public static void buildIconPanel(
       JPanel rootPanel,
       ImageViewerEventManager<?> eventManager,
-      ActionW action,
-      ActionW graphicAction,
+      Feature<?> action,
+      ComboItemListenerValue<Graphic> graphicAction,
       int lineLength) {
-    Optional<ComboItemListener> actionState =
-        eventManager.getAction(graphicAction, ComboItemListener.class);
+    Optional<ComboItemListener<Graphic>> actionState = eventManager.getAction(graphicAction);
     if (actionState.isEmpty()) {
       return;
     }

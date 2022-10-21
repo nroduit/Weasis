@@ -10,7 +10,6 @@
 package org.weasis.dicom.viewer2d;
 
 import javax.swing.JButton;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.service.BundleTools;
@@ -24,14 +23,15 @@ public class CineToolBar extends WtoolBar {
   public CineToolBar(int index) {
     super(Messages.getString("CineToolBar.name"), index);
 
-    ActionState sequence = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-    if (sequence instanceof final SliderCineListener cineAction) {
+    SliderCineListener sequence =
+        EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);
+    if (sequence != null) {
       WProperties p = BundleTools.SYSTEM_PREFERENCES;
       if (p.getBooleanProperty("weasis.cinetoolbar.gotostart", true)) {
         final JButton rwdButton = new JButton();
         rwdButton.setToolTipText(Messages.getString("CineToolBar.start"));
         rwdButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SKIP_START));
-        rwdButton.addActionListener(e -> cineAction.setSliderValue(0));
+        rwdButton.addActionListener(e -> sequence.setSliderValue(0));
         add(rwdButton);
         sequence.registerActionState(rwdButton);
       }
@@ -42,8 +42,8 @@ public class CineToolBar extends WtoolBar {
         prevButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.PREVIOUS));
         prevButton.addActionListener(
             e -> {
-              cineAction.stop();
-              cineAction.setSliderValue(cineAction.getSliderValue() - 1);
+              sequence.stop();
+              sequence.setSliderValue(sequence.getSliderValue() - 1);
             });
         add(prevButton);
         sequence.registerActionState(prevButton);
@@ -75,8 +75,8 @@ public class CineToolBar extends WtoolBar {
         nextButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.NEXT));
         nextButton.addActionListener(
             e -> {
-              cineAction.stop();
-              cineAction.setSliderValue(cineAction.getSliderValue() + 1);
+              sequence.stop();
+              sequence.setSliderValue(sequence.getSliderValue() + 1);
             });
         add(nextButton);
         sequence.registerActionState(nextButton);
@@ -86,7 +86,7 @@ public class CineToolBar extends WtoolBar {
         final JButton fwdButton = new JButton();
         fwdButton.setToolTipText(Messages.getString("CineToolBar.end"));
         fwdButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.SKIP_END));
-        fwdButton.addActionListener(e -> cineAction.setSliderValue(Integer.MAX_VALUE));
+        fwdButton.addActionListener(e -> sequence.setSliderValue(Integer.MAX_VALUE));
         add(fwdButton);
         sequence.registerActionState(fwdButton);
       }

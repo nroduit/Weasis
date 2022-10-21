@@ -118,7 +118,7 @@ public class Activator implements BundleActivator, ServiceListener {
     BundleContext context = AppProperties.getBundleContext(sRef);
     Object service = null;
     try {
-      service =  context.getService(sRef);
+      service = context.getService(sRef);
     } catch (RuntimeException e) {
       LOGGER.error("Cannot get service of {}", sRef.getBundle(), e);
     }
@@ -126,7 +126,7 @@ public class Activator implements BundleActivator, ServiceListener {
       return;
     }
 
-    if(service instanceof Codec codec) {
+    if (service instanceof Codec codec) {
       // TODO manage when several identical MimeType, register the default one
       if (event.getType() == ServiceEvent.REGISTERED) {
         registerCodecPlugins(codec);
@@ -143,16 +143,16 @@ public class Activator implements BundleActivator, ServiceListener {
       GuiExecutor.instance()
           .execute(
               () -> {
-                  if (event.getType() == ServiceEvent.REGISTERED) {
-                    registerSeriesViewerFactory(viewerFactory);
-                  } else if (event.getType() == ServiceEvent.UNREGISTERING) {
-                    if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
-                      LOGGER.info(
-                          "Unregister series viewer plug-in: {}", viewerFactory.getDescription());
-                      UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
-                    }
-                    context.ungetService(sRef);
+                if (event.getType() == ServiceEvent.REGISTERED) {
+                  registerSeriesViewerFactory(viewerFactory);
+                } else if (event.getType() == ServiceEvent.UNREGISTERING) {
+                  if (UIManager.SERIES_VIEWER_FACTORIES.contains(viewerFactory)) {
+                    LOGGER.info(
+                        "Unregister series viewer plug-in: {}", viewerFactory.getDescription());
+                    UIManager.SERIES_VIEWER_FACTORIES.remove(viewerFactory);
                   }
+                  context.ungetService(sRef);
+                }
               });
     }
   }
