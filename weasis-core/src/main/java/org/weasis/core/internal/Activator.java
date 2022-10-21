@@ -57,8 +57,7 @@ public class Activator implements BundleActivator, ServiceListener {
       registerCodecPlugins(bundleContext.getService(service));
     }
 
-    bundleContext.addServiceListener(
-        this, String.format("(%s=%s)", Constants.OBJECTCLASS, Codec.class.getName())); // NON-NLS
+    bundleContext.addServiceListener(this, BundleTools.createServiceFilter(Codec.class));
 
     initLoggerAndAudit(bundleContext);
     File file = ResourceUtil.getResource("presets.xml");
@@ -90,9 +89,7 @@ public class Activator implements BundleActivator, ServiceListener {
             });
 
     bundleContext.addServiceListener(
-        this,
-        String.format(
-            "(%s=%s)", Constants.OBJECTCLASS, SeriesViewerFactory.class.getName())); // NON-NLS
+        this, BundleTools.createServiceFilter(Codec.class, SeriesViewerFactory.class));
   }
 
   @Override

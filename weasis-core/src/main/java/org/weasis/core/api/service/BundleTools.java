@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.gui.util.AppProperties;
@@ -208,5 +209,17 @@ public class BundleTools {
     Map<String, String> map = new HashMap<>(BundleTools.SESSION_TAGS_FILE);
     map.put(post ? "Content-Type" : "Accept", "text/x-java-properties"); // NON-NLS
     return new URLParameters(map, post);
+  }
+
+  public static String createServiceFilter(Class<?>... interfaces) {
+    StringBuilder builder = new StringBuilder();
+
+    builder.append("( |");
+    for (Class<?> clazz : interfaces) {
+      builder.append(String.format("(%s=%s) ", Constants.OBJECTCLASS, clazz.getName())); // NON-NLS
+    }
+
+    builder.append(" ) ");
+    return builder.toString();
   }
 }
