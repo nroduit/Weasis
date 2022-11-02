@@ -216,7 +216,7 @@ public class WeasisLoader {
   }
 
   public void setFelix(
-      Map<String, String> serverProp, BundleContext bundleContext, Properties modulesi18n) {
-    AutoProcessor.process(serverProp, modulesi18n, bundleContext, this);
+      Map<String, String> serverProp, BundleContext bundleContext, Properties modulesI18n) {
+    AutoProcessor.process(serverProp, modulesI18n, bundleContext, this);
   }
 }
