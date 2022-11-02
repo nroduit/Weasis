@@ -10,29 +10,26 @@
 package org.weasis.dicom.explorer;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.media.data.MediaSeriesGroup;
 import org.weasis.core.api.media.data.Series;
 import org.weasis.core.ui.docking.UIManager;
 import org.weasis.core.ui.editor.SeriesViewerFactory;
 import org.weasis.core.ui.editor.ViewerPluginBuilder;
-import org.weasis.core.util.LangUtil;
 import org.weasis.dicom.explorer.HangingProtocols.OpeningViewer;
 
 public class PluginOpeningStrategy {
 
   private OpeningViewer openingMode;
-  private boolean openPlugin;
-
   private boolean resetVeto;
 
-  private final Map<MediaSeriesGroup, Boolean> openPatientMap = new HashMap<>();
+  private final Set<MediaSeriesGroup> openPatients = Collections.synchronizedSet(new HashSet<>());
 
   public PluginOpeningStrategy(OpeningViewer openingMode) {
-    this.openPlugin = true;
     setOpeningMode(openingMode);
   }
 
@@ -44,16 +41,8 @@ public class PluginOpeningStrategy {
     this.openingMode = Objects.requireNonNullElse(openingMode, OpeningViewer.ALL_PATIENTS);
   }
 
-  public boolean isOpenPlugin() {
-    return openPlugin;
-  }
-
-  public void setOpenPlugin(boolean openPlugin) {
-    this.openPlugin = openPlugin;
-  }
-
-  public boolean hasToBeOpened(MediaSeriesGroup patient) {
-    return LangUtil.getNULLtoTrue(openPatientMap.get(Objects.requireNonNull(patient)));
+  public boolean containsPatient(MediaSeriesGroup patient) {
+    return openPatients.contains(Objects.requireNonNull(patient));
   }
 
   public boolean isResetVeto() {
@@ -66,20 +55,23 @@ public class PluginOpeningStrategy {
 
   public void reset() {
     if (!resetVeto) {
-      this.openPlugin = true;
-      openPatientMap.clear();
+      openPatients.clear();
     }
   }
 
-  public void put(MediaSeriesGroup patient, boolean b) {
-    openPatientMap.put(patient, b);
+  public void addPatient(MediaSeriesGroup patient) {
+    openPatients.add(Objects.requireNonNull(patient));
   }
 
   public void prepareImport() {
-    if (OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)
-        || OpeningViewer.ALL_PATIENTS_CLEAN.equals(openingMode)) {
+    if (isRemovingPrevious()) {
       UIManager.closeSeriesViewer(new ArrayList<>(UIManager.VIEWER_PLUGINS));
     }
+  }
+
+  public boolean isRemovingPrevious() {
+    return OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)
+        || OpeningViewer.ALL_PATIENTS_CLEAN.equals(openingMode);
   }
 
   public void openViewerPlugin(
@@ -87,16 +79,12 @@ public class PluginOpeningStrategy {
     Objects.requireNonNull(dicomModel);
     Objects.requireNonNull(dicomSeries);
 
-    boolean selectPatient = true;
-    if (!OpeningViewer.NONE.equals(openingMode) && isOpenPlugin() && hasToBeOpened(patient)) {
+    boolean isPatientOpen = containsPatient(patient);
+    boolean selectPatient = !isPatientOpen;
+    if (!isPatientOpen && canAddNewPatient()) {
       SeriesViewerFactory plugin = UIManager.getViewerFactory(dicomSeries.getMimeType());
       if (plugin != null && !(plugin instanceof MimeSystemAppFactory)) {
-        if (OpeningViewer.ONE_PATIENT.equals(openingMode)
-            || OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode)) {
-          setOpenPlugin(false);
-        } else {
-          put(patient, false);
-        }
+        addPatient(patient);
         selectPatient = false;
         ViewerPluginBuilder.openSequenceInPlugin(plugin, dicomSeries, dicomModel, true, true);
       }
@@ -106,5 +94,14 @@ public class PluginOpeningStrategy {
       dicomModel.firePropertyChange(
           new ObservableEvent(ObservableEvent.BasicAction.SELECT, dicomModel, null, dicomSeries));
     }
+  }
+
+  private boolean canAddNewPatient() {
+    if (OpeningViewer.NONE.equals(openingMode)) {
+      return false;
+    }
+    return (!OpeningViewer.ONE_PATIENT.equals(openingMode)
+            && !OpeningViewer.ONE_PATIENT_CLEAN.equals(openingMode))
+        || openPatients.isEmpty();
   }
 }

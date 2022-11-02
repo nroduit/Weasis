@@ -43,13 +43,13 @@ jobs:
         run: echo ::set-output name=version::${{ env.WEASIS_CLEAN_VERSION }}
 
       - name: Upload the weasis package for building the native distribution
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/native-dist/weasis-native.zip
 
       - name: Upload the weasis web distribution
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: weasis-web-${{ env.WEASIS_VERSION }}
           path: weasis-distributions/target/web-dist/weasis.war
@@ -89,7 +89,7 @@ jobs:
           java-version: '18'
 
       - name: Download weasis-native
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: weasis-native-${{ env.WEASIS_VERSION }}
           path: native-dist
@@ -253,7 +253,7 @@ jobs:
           fi
 
       - name: Upload the installer
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ env.APP_ARTIFACT }}
           path: final-dist

@@ -489,7 +489,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
 
       if (seriesInstanceList.isContainsMultiframes()
           && seriesInstanceList.getSopInstance(instance.getSopInstanceUID()) != instance) {
-        // Do not handle wado query for multiframes
+        // Do not handle wado query for multi-frames
         continue;
       }
 
@@ -886,9 +886,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         }
 
         // Cannot resume with WADO because the stream is modified on the fly by the wado server. In
-        // dcm4chee,
-        // see
-        // http://www.dcm4che.org/jira/browse/DCMEE-421
+        // dcm4chee, see https://www.dcm4che.org/jira/browse/DCMEE-421
         progressBar.setIndeterminate(progressBar.getMaximum() < 3);
 
         if (dicomSeries != null) {
@@ -1139,13 +1137,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
         thumb.repaint();
       }
 
-      if (firstImageToDisplay) {
-        MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
-        if (patient != null) {
-          PluginOpeningStrategy open = openingStrategy;
-          if (open != null) {
-            open.openViewerPlugin(patient, dicomModel, dicomSeries);
-          }
+      MediaSeriesGroup patient = dicomModel.getParent(dicomSeries, DicomModel.patient);
+      if (patient != null) {
+        PluginOpeningStrategy open = openingStrategy;
+        if (open != null) {
+          open.openViewerPlugin(patient, dicomModel, dicomSeries);
         }
       }
     }

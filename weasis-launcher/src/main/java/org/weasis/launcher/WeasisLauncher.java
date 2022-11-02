@@ -213,7 +213,7 @@ public class WeasisLauncher {
     Runtime.getRuntime().addShutdownHook(new Thread(this::shutdownHook));
     registerAdditionalShutdownHook();
 
-    displayStartingAciiIcon();
+    displayStartingAsciiIcon();
 
     int exitStatus = 0;
     try {
@@ -339,7 +339,7 @@ public class WeasisLauncher {
     return goshArgs;
   }
 
-  private static void displayStartingAciiIcon() {
+  private static void displayStartingAsciiIcon() {
     StringBuilder buf = new StringBuilder();
     buf.append(END_LINE);
     buf.append("Starting OSGI Bundles..."); // NON-NLS
