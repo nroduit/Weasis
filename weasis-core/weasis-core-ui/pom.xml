@@ -16,7 +16,7 @@
 
   <properties>
     <jxlayer.version>3.0.4</jxlayer.version>
-    <xchart.version>3.8.1</xchart.version>
+    <xchart.version>3.8.2</xchart.version>
     <LGoodDatePicker.version>11.3.0-r1</LGoodDatePicker.version>
     <lablib-checkboxtree.version>3.3</lablib-checkboxtree.version>
     <VectorGraphics2D.version>0.13</VectorGraphics2D.version>
