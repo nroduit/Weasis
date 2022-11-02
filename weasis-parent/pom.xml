@@ -13,7 +13,7 @@
 
   <properties>
     <!-- force command line arguments settings to set version -->
-    <!-- $ mvn clean install -Drevision=3.6.2 -Dchangelist=-SNAPSHOT -->
+    <!-- $ mvn clean install -Drevision=4.0.3 -Dchangelist=-SNAPSHOT -->
     <revision>4.0.3</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
