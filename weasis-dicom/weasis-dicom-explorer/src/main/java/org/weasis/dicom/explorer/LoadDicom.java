@@ -172,6 +172,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
         // Test if SOPInstanceUID already exists
         if (isSOPInstanceUIDExist(
             study, dicomSeries, TagD.getTagValue(dicomReader, Tag.SOPInstanceUID, String.class))) {
+          openingStrategy.openViewerPlugin(patient, dicomModel, dicomSeries);
           return null;
         }
         MediaElement[] medias = dicomReader.getMediaElement();
@@ -211,6 +212,7 @@ public abstract class LoadDicom extends ExplorerTask<Boolean, String> {
                 new ObservableEvent(
                     ObservableEvent.BasicAction.UPDATE, dicomModel, null, dicomSeries));
           }
+          openingStrategy.openViewerPlugin(patient, dicomModel, dicomSeries);
         }
       }
     } catch (Exception e) {
