@@ -50,7 +50,7 @@
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
     <joml.version>1.10.5</joml.version>
-    <jackson.version>2.13.4</jackson.version>
+    <jackson.version>2.14.0</jackson.version>
     <scribejava.version>8.3.2</scribejava.version>
     <zip4j.version>2.11.2</zip4j.version>
 
