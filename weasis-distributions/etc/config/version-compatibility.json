@@ -1,0 +1,50 @@
+[
+  {
+    "release-version": "3.6.0",
+    "minimal-version": "3.6.0"
+  },
+  {
+    "release-version": "3.6.1",
+    "minimal-version": "3.6.0"
+  },
+  {
+    "release-version": "3.6.2",
+    "minimal-version": "3.6.0"
+  },
+  {
+    "release-version": "3.7.0",
+    "minimal-version": "3.7.0"
+  },
+  {
+    "release-version": "3.7.1",
+    "minimal-version": "3.7.0"
+  },
+  {
+    "release-version": "3.8.0",
+    "minimal-version": "3.7.0"
+  },
+  {
+    "release-version": "3.8.1",
+    "minimal-version": "3.7.0"
+  },
+  {
+    "release-version": "3.8.2",
+    "minimal-version": "3.7.0"
+  },
+  {
+    "release-version": "4.0.0",
+    "minimal-version": "4.0.0"
+  },
+  {
+    "release-version": "4.0.1",
+    "minimal-version": "4.0.0"
+  },
+  {
+    "release-version": "4.0.2",
+    "minimal-version": "4.0.0"
+  },
+  {
+    "release-version": "4.0.3",
+    "minimal-version": "4.0.0"
+  }
+]
