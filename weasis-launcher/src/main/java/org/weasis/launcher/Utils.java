@@ -162,7 +162,7 @@ public class Utils {
     if (url != null) {
       if (SystemInfo.isLinux) {
         try {
-          String cmd = String.format("xdg-open %s", url); // NON-NLS
+          String[] cmd = new String[]{"xdg-open", url.toString()}; // NON-NLS
           Runtime.getRuntime().exec(cmd);
         } catch (IOException e) {
           LOGGER.log(Level.ERROR, "Cannot open URL to the system browser", e);

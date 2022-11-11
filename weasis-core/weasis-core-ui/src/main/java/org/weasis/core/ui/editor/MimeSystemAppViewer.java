@@ -41,7 +41,7 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
   public static void startAssociatedProgramFromLinux(File file) {
     if (file != null && file.canRead()) {
       try {
-        String cmd = String.format("xdg-open %s", file.getAbsolutePath()); // NON-NLS
+        String[] cmd = new String[]{"xdg-open", file.getCanonicalPath()}; // NON-NLS
         Runtime.getRuntime().exec(cmd);
       } catch (IOException e) {
         LOGGER.error(ERROR_MSG, file, e);
@@ -52,7 +52,8 @@ public abstract class MimeSystemAppViewer implements SeriesViewer<MediaElement> 
   public static void startAssociatedProgramFromWinCMD(File file) {
     if (file != null && file.canRead()) {
       try {
-        Runtime.getRuntime().exec("cmd /c \"" + file + '"'); // NON-NLS
+        String[] cmd = new String[]{"cmd", "/c", file.getCanonicalPath()}; // NON-NLS
+        Runtime.getRuntime().exec(cmd); // NON-NLS
       } catch (IOException e) {
         LOGGER.error(ERROR_MSG, file, e);
       }
