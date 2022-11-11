@@ -27,12 +27,12 @@ public class PatientOrientation {
   public static final Color green = new Color(897355);
 
   public enum Biped implements Orientation {
-    R("Right", blue),
-    L("Left", blue),
-    A("Anterior", red),
-    P("Posterior", red),
-    F("Foot", green),
-    H("Head", green);
+    R("Right", blue), // NON-NLS
+    L("Left", blue), // NON-NLS
+    A("Anterior", red), // NON-NLS
+    P("Posterior", red), // NON-NLS
+    F("Foot", green), // NON-NLS
+    H("Head", green); // NON-NLS
 
     private final String fullName;
     private final Color color;
@@ -59,12 +59,12 @@ public class PatientOrientation {
   }
 
   public enum Quadruped implements Orientation {
-    RT("Right", blue),
-    LE("Left", blue),
-    V("Ventral", red),
-    D("Dorsal", red),
-    CD("Caudal", green),
-    CR("Cranial", green);
+    RT("Right", blue), // NON-NLS
+    LE("Left", blue), // NON-NLS
+    V("Ventral", red), // NON-NLS
+    D("Dorsal", red), // NON-NLS
+    CD("Caudal", green), // NON-NLS
+    CR("Cranial", green); // NON-NLS
 
     private final String fullName;
     private final Color color;

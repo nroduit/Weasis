@@ -454,9 +454,9 @@ public class MagicMimeEntry {
           ret.append(' ');
         } else if (cn == 't') {
           ret.append('\t');
-        } else if (cn == 'n') {
+        } else if (cn == 'n') { // NON-NLS
           ret.append('\n');
-        } else if (cn == 'r') {
+        } else if (cn == 'r') { // NON-NLS
           ret.append('\r');
         } else if (cn >= '\60' && cn <= '\67') {
           int escape = cn - '0';

@@ -116,17 +116,17 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
   public static final List<SynchView> SYNCH_LIST = List.of(SynchView.NONE, defaultMpr);
 
   public static final GridBagLayoutModel view1 =
-      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (col 1,2)");
+      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (col 1,2)"); // NON-NLS
   protected static final GridBagLayoutModel view2 = VIEWS_2x2_f2.copy();
   protected static final GridBagLayoutModel view3 = VIEWS_2_f1x2.copy();
   public static final GridBagLayoutModel view4 =
-      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (row 2,1)");
+      new GridBagLayoutModel(new LinkedHashMap<>(3), "mpr", "MPR (row 2,1)"); // NON-NLS
   protected static final GridBagLayoutModel view5 = VIEWS_1x3.copy();
 
   static {
-    view2.setTitle("MPR (col 2,1)");
-    view3.setTitle("MPR (row 1,2)");
-    view5.setTitle("MPR (col 1,1,1)");
+    view2.setTitle("MPR (col 2,1)"); // NON-NLS
+    view3.setTitle("MPR (row 1,2)"); // NON-NLS
+    view5.setTitle("MPR (col 1,1,1)"); // NON-NLS
 
     Map<LayoutConstraints, Component> constraints = view1.getConstraints();
     constraints.put(

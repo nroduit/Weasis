@@ -610,7 +610,7 @@ public class TagD extends TagW {
                 if (tag.startsWith("F")) { // NON-NLS
                   return;
                 }
-                int tagID = Integer.parseInt(tag.replace('x', '0'), 16);
+                int tagID = Integer.parseInt(tag.replace('x', '0'), 16); // NON-NLS
 
                 String[] vms = vm.split("-", 2);
                 int vmMin;
@@ -906,16 +906,16 @@ public class TagD extends TagW {
 
     String unit;
     switch (value.charAt(value.length() - 1)) {
-      case 'Y':
+      case 'Y': // NON-NLS
         unit = ChronoUnit.YEARS.toString();
         break;
-      case 'M':
+      case 'M': // NON-NLS
         unit = ChronoUnit.MONTHS.toString();
         break;
-      case 'W':
+      case 'W': // NON-NLS
         unit = ChronoUnit.WEEKS.toString();
         break;
-      case 'D':
+      case 'D': // NON-NLS
         unit = ChronoUnit.DAYS.toString();
         break;
       default:

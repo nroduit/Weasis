@@ -501,7 +501,7 @@ public class TagW {
               LOGGER.warn("Cannot apply pattern to decimal value", e);
             }
           }
-        } else if (format.charAt(index + fmLength) == 'l') {
+        } else if (format.charAt(index + fmLength) == 'l') { // NON-NLS
           fmLength++;
           String pattern = getPattern(index + fmLength, format);
           if (pattern != null) {

@@ -723,7 +723,7 @@ public class ConfigData {
 
   private static String toHex(int val) {
     final char[] hexDigit = {
-      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+      '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' // NON-NLS
     };
     char[] ch8 = new char[8];
     for (int i = 8; --i >= 0; val >>= 4) {
