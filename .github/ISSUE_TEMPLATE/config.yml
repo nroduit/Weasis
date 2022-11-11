@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions or ideas
+    url: https://github.com/nroduit/Weasis/discussions
+    about: if you have questions, ideas or if you want to tell something about Weasis
+  - name: Google group
+    url: https://groups.google.com/g/dcm4che
+    about: Discussion about dcm4chee and Weasis    
