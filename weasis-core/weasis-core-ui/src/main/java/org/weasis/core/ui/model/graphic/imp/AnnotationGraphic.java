@@ -254,10 +254,11 @@ public class AnnotationGraphic extends AbstractDragGraphic {
 
       float px = (float) (pt.getX() - rect.getWidth() / 2 + GraphicLabel.GROWING_BOUND);
       float py = (float) (pt.getY() - rect.getHeight() / 2 + GraphicLabel.GROWING_BOUND);
+      float height = labelHeight.floatValue();
 
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
-          py += labelHeight;
+          py += height;
           FontTools.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }

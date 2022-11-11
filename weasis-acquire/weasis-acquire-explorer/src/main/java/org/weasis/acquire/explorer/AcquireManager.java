@@ -635,6 +635,7 @@ public class AcquireManager {
     try (InputStream inputStream = new ByteArrayInputStream(byteArray)) {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+      factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
       return factory.newDocumentBuilder().parse(inputStream);

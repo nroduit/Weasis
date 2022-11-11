@@ -209,10 +209,11 @@ public abstract class AbstractGraphicLabel implements GraphicLabel {
 
       float px = (float) pt.getX() + GROWING_BOUND;
       float py = (float) pt.getY() + GROWING_BOUND - g2d.getFontMetrics().getDescent() + 1;
+      float height = labelHeight.floatValue();
 
       for (String label : labels) {
         if (StringUtil.hasText(label)) {
-          py += labelHeight;
+          py += height;
           FontTools.paintColorFontOutline(g2d, label, px, py, Color.WHITE);
         }
       }

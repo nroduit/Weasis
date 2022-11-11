@@ -109,7 +109,7 @@ public class SeriesProgressMonitor extends FilterInputStream {
   public long skip(long n) throws IOException {
     long nr = in.skip(n);
     if (nr > 0) {
-      nread += nr;
+      nread += (int) nr;
       updateSeriesProgression(nr);
     }
     return nr;
