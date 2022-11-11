@@ -1014,7 +1014,7 @@
     "Separator": {
       "background": "second",
       "foreground": "second",
-      "separatorColor": "border"
+      "separatorColor": "second"
     },
     "Settings": {
       "Spotlight.borderColor": "accent"
