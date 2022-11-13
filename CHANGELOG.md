@@ -1,5 +1,23 @@
 # Changelog
 
+## [v4.0.3](https://github.com/nroduit/Weasis/tree/v4.0.3) (2022-11-13)
+
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.2...v4.0.3)
+
+**Fixed bugs:**
+
+- The opening tab strategy does not work when opening series that already exist [\#347](https://github.com/nroduit/Weasis/issues/347)
+- JPEG Baseline with RGB model is not displayed correctly [\#340](https://github.com/nroduit/Weasis/issues/340)
+- Do not export all the images of a series in non-dicom files [\#327](https://github.com/nroduit/Weasis/issues/327)
+
+**Closed issues:**
+
+- VIEWER INTERNAL CONTROLS NOT SHOWING. [\#332](https://github.com/nroduit/Weasis/issues/332)
+
+**Merged pull requests:**
+
+- Bump jackson-databind from 2.13.3 to 2.13.4.1 in /weasis-parent [\#345](https://github.com/nroduit/Weasis/pull/345) ([dependabot[bot]](https://github.com/apps/dependabot))
+
 ## [v4.0.2](https://github.com/nroduit/Weasis/tree/v4.0.2) (2022-08-01)
 
 [Full Changelog](https://github.com/nroduit/Weasis/compare/v4.0.1...v4.0.2)
@@ -174,7 +192,7 @@
 
 ## [v3.6.2](https://github.com/nroduit/Weasis/tree/v3.6.2) (2020-08-26)
 
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.1-3D...v3.6.2)
+[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.1...v3.6.2)
 
 **Implemented enhancements:**
 
@@ -189,14 +207,6 @@
 - Cannot add http headers when creating a new WEB Node [\#142](https://github.com/nroduit/Weasis/issues/142)
 - Poor image display with a more than 100% factor in the Window 10 display settings. [\#141](https://github.com/nroduit/Weasis/issues/141)
 - Cannot retrieve thumbnail with WADO-URI request [\#139](https://github.com/nroduit/Weasis/issues/139)
-
-## [v3.6.1-3D](https://github.com/nroduit/Weasis/tree/v3.6.1-3D) (2020-07-14)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.0-3D...v3.6.1-3D)
-
-## [v3.6.0-3D](https://github.com/nroduit/Weasis/tree/v3.6.0-3D) (2020-07-14)
-
-[Full Changelog](https://github.com/nroduit/Weasis/compare/v3.6.1...v3.6.0-3D)
 
 ## [v3.6.1](https://github.com/nroduit/Weasis/tree/v3.6.1) (2020-07-03)
 
