@@ -9,6 +9,7 @@
  */
 package org.weasis.core.api.gui.util;
 
+import com.formdev.flatlaf.util.SystemInfo;
 import java.io.File;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -36,7 +37,10 @@ public class AppProperties {
    * The current user of the application (defined either in the launch property "weasis.user" or by
    * the user of the operating system session if the property is null)
    */
-  public static final String WEASIS_USER = System.getProperty("weasis.user", UNKNOWN); // NON-NLS
+  public static final String WEASIS_USER =
+      SystemInfo.isWindows
+          ? System.getProperty("weasis.user", UNKNOWN).trim().toUpperCase()
+          : System.getProperty("weasis.user", UNKNOWN).trim(); // NON-NLS
 
   /**
    * The name of the configuration profile (defined in config-ext.properties). The value is

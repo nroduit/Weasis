@@ -3,6 +3,7 @@
 *.iws
 *.ipr
 .idea/
+.run/
 
 # eclipse project file
 .settings/

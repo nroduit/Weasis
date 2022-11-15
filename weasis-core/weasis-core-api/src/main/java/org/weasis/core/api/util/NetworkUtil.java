@@ -99,7 +99,7 @@ public class NetworkUtil {
 
   private static void updateHeadersWithAppProperties(URLConnection urlConnection) {
     urlConnection.setRequestProperty("User-Agent", AppProperties.WEASIS_USER_AGENT);
-    urlConnection.setRequestProperty("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase());
+    urlConnection.setRequestProperty("Weasis-User", AppProperties.WEASIS_USER);
   }
 
   private static AuthResponse prepareAuthConnection(
@@ -111,7 +111,7 @@ public class NetworkUtil {
       }
     }
     request.addHeader("User-Agent", AppProperties.WEASIS_USER_AGENT); // NON-NLS
-    request.addHeader("Weasis-User", AppProperties.WEASIS_USER.trim().toUpperCase()); // NON-NLS
+    request.addHeader("Weasis-User", AppProperties.WEASIS_USER); // NON-NLS
 
     try {
       OAuth20Service service = OAuth2ServiceFactory.getService(authMethod);

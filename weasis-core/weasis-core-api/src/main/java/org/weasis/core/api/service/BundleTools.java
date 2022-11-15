@@ -172,6 +172,10 @@ public class BundleTools {
     return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.config.url");
   }
 
+  public static String getStatisticServiceUrl() {
+    return BundleTools.SYSTEM_PREFERENCES.getProperty("weasis.stat.url");
+  }
+
   public static boolean isLocalSession() {
     return BundleTools.SYSTEM_PREFERENCES.getBooleanProperty("weasis.pref.local.session", false);
   }

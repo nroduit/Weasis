@@ -21,7 +21,6 @@ import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.InetAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -105,6 +104,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
   public static final TagW DOWNLOAD_START_TIME = new TagW("DownloadStartTime", TagType.TIME);
   public static final TagW DOWNLOAD_TIME = new TagW("DownloadTime", TagType.TIME);
   public static final TagW DOWNLOAD_ERRORS = new TagW("DownloadErrors", TagType.INTEGER);
+
+  public static final String LOAD_TYPE_DICOMDIR = "DICOMDIR";
+  public static final String LOAD_TYPE_URL = "URL";
+  public static final String LOAD_TYPE_LOCAL = "local";
+  public static final String LOAD_TYPE_WADO = "WADO";
 
   private PluginOpeningStrategy openingStrategy;
 
@@ -282,31 +286,22 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
           rate,
           downloadErrors);
 
-      if ("WADO".equals(loadType)) {
-        String configServicePath = BundleTools.getConfigServiceUrl();
-        if (StringUtil.hasText(configServicePath)) {
+      if (LOAD_TYPE_WADO.equals(loadType)) {
+        String statisticServicePath = BundleTools.getStatisticServiceUrl();
+
+        if (StringUtil.hasText(statisticServicePath)) {
+
           Map<String, String> map = new HashMap<>();
           map.put("Content-Type", "application/json"); // NON-NLS
-          try {
-            URL url = new URL(configServicePath);
-            Map<String, String> params = URLParameters.splitParameter(url);
-            URLParameters urlParameters = new URLParameters(map, true);
-            String user = params.get("user"); // NON-NLS
-            String host = params.get("host"); // NON-NLS
-            PerformanceModel model =
-                new PerformanceModel(
-                    StringUtil.hasText(user) ? user : AppProperties.WEASIS_USER,
-                    StringUtil.hasText(host) ? host : InetAddress.getLocalHost().getHostName(),
-                    loadType,
-                    seriesUID,
-                    modality,
-                    imageNumber,
-                    fileSize,
-                    time,
-                    rate,
-                    downloadErrors);
+          URLParameters urlParameters = new URLParameters(map, true);
 
-            ClosableURLConnection http = NetworkUtil.getUrlConnection(url, urlParameters);
+          PerformanceModel model =
+              new PerformanceModel(
+                  loadType, seriesUID, modality, imageNumber, fileSize, time, rate, downloadErrors);
+
+          try {
+            ClosableURLConnection http =
+                NetworkUtil.getUrlConnection(statisticServicePath, urlParameters);
             try (OutputStream out = http.getOutputStream()) {
               OutputStreamWriter writer =
                   new OutputStreamWriter(out, StandardCharsets.UTF_8); // NON-NLS
@@ -316,7 +311,7 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
               NetworkUtil.readResponse(httpURLConnection, urlParameters.getUnmodifiableHeaders());
             }
           } catch (Exception e) {
-            LOGGER.error("Cannot send log to the launchConfig service", e);
+            LOGGER.error("Cannot send log to the statisticService service", e);
           }
         }
       }
@@ -379,11 +374,11 @@ public class LoadSeries extends ExplorerTask<Boolean, String> implements SeriesI
     final WadoParameters wado = (WadoParameters) dicomSeries.getTagValue(TagW.WadoParameters);
     if (wado == null || !StringUtil.hasText(wado.getBaseURL())) {
       if (wado != null) {
-        return wado.isRequireOnlySOPInstanceUID() ? "DICOMDIR" : "URL"; // NON-NLS
+        return wado.isRequireOnlySOPInstanceUID() ? LOAD_TYPE_DICOMDIR : LOAD_TYPE_URL; // NON-NLS
       }
-      return "local"; // NON-NLS
+      return LOAD_TYPE_LOCAL;
     } else {
-      return "WADO";
+      return LOAD_TYPE_WADO;
     }
   }
 

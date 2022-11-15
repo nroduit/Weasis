@@ -10,8 +10,7 @@
 package org.weasis.core.api.model;
 
 public class PerformanceModel {
-  private String userId;
-  private String host;
+
   private String type;
   private String seriesUID;
   private String modality;
@@ -22,8 +21,6 @@ public class PerformanceModel {
   private int errors;
 
   public PerformanceModel(
-      String userId,
-      String host,
       String type,
       String seriesUID,
       String modality,
@@ -32,8 +29,7 @@ public class PerformanceModel {
       long time,
       String rate,
       int errors) {
-    this.userId = userId;
-    this.host = host;
+
     this.type = type;
     this.seriesUID = seriesUID;
     this.modality = modality;
@@ -50,22 +46,6 @@ public class PerformanceModel {
 
   public void setErrors(int errors) {
     this.errors = errors;
-  }
-
-  public String getHost() {
-    return host;
-  }
-
-  public void setHost(String host) {
-    this.host = host;
-  }
-
-  public String getUserId() {
-    return userId;
-  }
-
-  public void setUserId(String userId) {
-    this.userId = userId;
   }
 
   public String getType() {
