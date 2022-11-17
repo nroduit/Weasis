@@ -9,16 +9,15 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JPopupMenu;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GroupPopup;
 import org.weasis.core.api.gui.util.GroupRadioMenu;
 import org.weasis.core.api.gui.util.RadioMenuItem;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
@@ -40,14 +39,17 @@ public final class KOComponentFactory {
     return new ViewButton(
         (invoker, x, y) -> {
           final EventManager evtMgr = EventManager.getInstance();
-          ComboItemListener<?> koSelectionAction =
-              ((ComboItemListener<?>) evtMgr.getAction(ActionW.KO_SELECTION));
+          Optional<ComboItemListener<Object>> koSelectionAction =
+              evtMgr.getAction(ActionW.KO_SELECTION);
           JPopupMenu popupMenu = new JPopupMenu();
 
           popupMenu.add(new TitleMenuItem(ActionW.KO_SELECTION.getTitle()));
           popupMenu.addSeparator();
 
-          GroupPopup groupRadioMenu = koSelectionAction.createUnregisteredGroupRadioMenu();
+          GroupPopup groupRadioMenu =
+              koSelectionAction
+                  .map(ComboItemListener::createUnregisteredGroupRadioMenu)
+                  .orElse(null);
           if (groupRadioMenu instanceof GroupRadioMenu) {
             for (RadioMenuItem item :
                 ((GroupRadioMenu<?>) groupRadioMenu).getRadioMenuItemListCopy()) {
@@ -56,14 +58,18 @@ public final class KOComponentFactory {
           }
           popupMenu.addSeparator();
 
-          ToggleButtonListener koFilterAction =
-              (ToggleButtonListener) evtMgr.getAction(ActionW.KO_FILTER);
-          final JCheckBoxMenuItem menuItem =
-              koFilterAction.createUnregisteredJCCheckBoxMenuItem(
-                  ActionW.KO_FILTER.getTitle(), ResourceUtil.getIcon(ActionIcon.SYNCH_STAR));
+          evtMgr
+              .getAction(ActionW.KO_FILTER)
+              .ifPresent(
+                  b -> {
+                    JCheckBoxMenuItem menuItem =
+                        b.createUnregisteredJCCheckBoxMenuItem(
+                            ActionW.KO_FILTER.getTitle(),
+                            ResourceUtil.getIcon(ActionIcon.SYNCH_STAR));
+                    popupMenu.add(menuItem);
+                  });
 
-          popupMenu.add(menuItem);
-          popupMenu.setEnabled(koSelectionAction.isActionEnabled());
+          koSelectionAction.ifPresent(c -> popupMenu.setEnabled(c.isActionEnabled()));
           popupMenu.show(invoker, x, y);
         },
         ResourceUtil.getIcon(OtherIcon.KEY_IMAGE).derive(24, 24),
@@ -78,17 +84,10 @@ public final class KOComponentFactory {
           boolean currentSelectedState = view2d.koStarButton.state.equals(eState.SELECTED);
 
           if (evtMgr.getSelectedViewPane() == view2d) {
-            ActionState koToggleAction =
-                view2d.getEventManager().getAction(ActionW.KO_TOGGLE_STATE);
-            if (koToggleAction instanceof ToggleButtonListener buttonListener) {
-              // if (((ToggleButtonListener) koToggleAction).isSelected() != currentSelectedState)
-              // {
-              // // When action and view are not synchronized, adapt the state of the action.
-              // ((ToggleButtonListener) koToggleAction)
-              // .setSelectedWithoutTriggerAction(currentSelectedState);
-              // }
-              buttonListener.setSelected(!currentSelectedState);
-            }
+            view2d
+                .getEventManager()
+                .getAction(ActionW.KO_TOGGLE_STATE)
+                .ifPresent(b -> b.setSelected(!currentSelectedState));
           }
         });
   }

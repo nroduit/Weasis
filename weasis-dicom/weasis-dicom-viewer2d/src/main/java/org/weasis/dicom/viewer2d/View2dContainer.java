@@ -37,7 +37,6 @@ import org.weasis.core.api.explorer.DataExplorerView;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
@@ -151,10 +150,12 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
             ImageViewerPlugin<DicomImageElement> container =
                 EventManager.getInstance().getSelectedView2dContainer();
             if (container == View2dContainer.this) {
-              Optional<ComboItemListener> layoutAction =
-                  EventManager.getInstance().getAction(ActionW.LAYOUT, ComboItemListener.class);
+              Optional<ComboItemListener<GridBagLayoutModel>> layoutAction =
+                  EventManager.getInstance().getAction(ActionW.LAYOUT);
               layoutAction.ifPresent(
-                  a -> a.setDataListWithoutTriggerAction(getLayoutList().toArray()));
+                  a ->
+                      a.setDataListWithoutTriggerAction(
+                          getLayoutList().toArray(new GridBagLayoutModel[0])));
             }
           }
         });
@@ -307,18 +308,9 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               @Override
               public SliderChangeListener[] getActions() {
                 ArrayList<SliderChangeListener> listeners = new ArrayList<>(3);
-                ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                if (seqAction instanceof SliderChangeListener changeListener) {
-                  listeners.add(changeListener);
-                }
-                ActionState zoomAction = eventManager.getAction(ActionW.ZOOM);
-                if (zoomAction instanceof SliderChangeListener changeListener) {
-                  listeners.add(changeListener);
-                }
-                ActionState rotateAction = eventManager.getAction(ActionW.ROTATION);
-                if (rotateAction instanceof SliderChangeListener changeListener) {
-                  listeners.add(changeListener);
-                }
+                eventManager.getAction(ActionW.SCROLL_SERIES).ifPresent(listeners::add);
+                eventManager.getAction(ActionW.ZOOM).ifPresent(listeners::add);
+                eventManager.getAction(ActionW.ROTATION).ifPresent(listeners::add);
                 return listeners.toArray(new SliderChangeListener[0]);
               }
             };
@@ -394,7 +386,8 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       menuRoot.removeAll();
       if (eventManager instanceof EventManager manager) {
         JMenu menu = new JMenu(Messages.getString("View2dContainer.3d"));
-        ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
+        SliderCineListener scrollAction =
+            EventManager.getInstance().getAction(ActionW.SCROLL_SERIES).orElse(null);
         menu.setEnabled(
             manager.getSelectedSeries() != null
                 && (scrollAction != null && scrollAction.isActionEnabled()));
@@ -475,23 +468,24 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
               if (view2DPane != null) {
                 DicomImageElement img = view2DPane.getImage();
                 if (img != null && view2DPane.getSeries() == series) {
-                  ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                  if (seqAction instanceof SliderCineListener sliceAction) {
-                    if (param instanceof DicomImageElement) {
-                      Filter<DicomImageElement> filter =
-                          (Filter<DicomImageElement>)
-                              view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd());
-                      int imgIndex =
-                          series.getImageIndex(img, filter, view2DPane.getCurrentSortComparator());
-                      if (imgIndex < 0) {
-                        imgIndex = 0;
-                        // add again the series for registering listeners
-                        // (require at least one image)
-                        view2DPane.setSeries(series, null);
-                      }
-                      sliceAction.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
-                    }
-                  }
+                  eventManager
+                      .getAction(ActionW.SCROLL_SERIES)
+                      .ifPresent(
+                          s -> {
+                            Filter<DicomImageElement> filter =
+                                (Filter<DicomImageElement>)
+                                    view2DPane.getActionValue(ActionW.FILTERED_SERIES.cmd());
+                            int imgIndex =
+                                series.getImageIndex(
+                                    img, filter, view2DPane.getCurrentSortComparator());
+                            if (imgIndex < 0) {
+                              imgIndex = 0;
+                              // add again the series for registering listeners
+                              // (require at least one image)
+                              view2DPane.setSeries(series, null);
+                            }
+                            s.setSliderMinMaxValue(1, series.size(filter), imgIndex + 1);
+                          });
                 }
               }
             }
@@ -628,20 +622,21 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     if (updatedKOSelection != null && selectedView instanceof View2d view2d) {
       if (SynchData.Mode.TILE.equals(this.getSynchView().getSynchData().getMode())) {
 
-        ActionState koSelection = selectedView.getEventManager().getAction(ActionW.KO_SELECTION);
-        if (koSelection instanceof ComboItemListener<?> itemListener) {
-          itemListener.setSelectedItem(updatedKOSelection);
-        }
+        selectedView
+            .getEventManager()
+            .getAction(ActionW.KO_SELECTION)
+            .ifPresent(l -> l.setSelectedItem(updatedKOSelection));
 
         if (forceUpdate || enableFilter != null) {
-          ActionState koFilterAction = selectedView.getEventManager().getAction(ActionW.KO_FILTER);
-          if (koFilterAction instanceof ToggleButtonListener buttonListener) {
+          ToggleButtonListener koFilterAction =
+              selectedView.getEventManager().getAction(ActionW.KO_FILTER).orElse(null);
+          if (koFilterAction != null) {
             if (enableFilter == null) {
               enableFilter =
                   LangUtil.getNULLtoFalse(
                       (Boolean) selectedView.getActionValue(ActionW.KO_FILTER.cmd()));
             }
-            buttonListener.setSelected(enableFilter);
+            koFilterAction.setSelected(enableFilter);
           }
         }
 

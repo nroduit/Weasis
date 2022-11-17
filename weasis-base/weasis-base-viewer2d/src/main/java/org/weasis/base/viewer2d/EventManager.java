@@ -32,6 +32,7 @@ import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.BasicActionState;
 import org.weasis.core.api.gui.util.ComboItemListener;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.SliderChangeListener;
@@ -61,6 +62,7 @@ import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
+import org.weasis.core.ui.editor.image.ResetTools;
 import org.weasis.core.ui.editor.image.SynchEvent;
 import org.weasis.core.ui.editor.image.SynchView;
 import org.weasis.core.ui.editor.image.ViewCanvas;
@@ -108,7 +110,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     setAction(
         newLayoutAction(View2dContainer.DEFAULT_LAYOUT_LIST.toArray(new GridBagLayoutModel[0])));
     setAction(newSynchAction(View2dContainer.DEFAULT_SYNCH_LIST.toArray(new SynchView[0])));
-    getAction(ActionW.SYNCH, ComboItemListener.class)
+    getAction(ActionW.SYNCH)
         .ifPresent(a -> a.setSelectedItemWithoutTriggerAction(SynchView.DEFAULT_STACK));
     setAction(newMeasurementAction(MeasureToolBar.measureGraphicList.toArray(new Graphic[0])));
     setAction(newDrawAction(MeasureToolBar.drawGraphicList.toArray(new Graphic[0])));
@@ -191,14 +193,14 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   @Override
-  public Optional<ActionW> getLeftMouseActionFromKeyEvent(int keyEvent, int modifier) {
-    Optional<ActionW> action = super.getLeftMouseActionFromKeyEvent(keyEvent, modifier);
+  public Optional<Feature<? extends ActionState>> getLeftMouseActionFromKeyEvent(
+      int keyEvent, int modifier) {
+    Optional<Feature<? extends ActionState>> feature =
+        super.getLeftMouseActionFromKeyEvent(keyEvent, modifier);
     // Only return the action if it is enabled
-    if (action.isPresent()
-        && Optional.ofNullable(getAction(action.get()))
-            .filter(ActionState::isActionEnabled)
-            .isPresent()) {
-      return action;
+    if (feature.isPresent()
+        && getAction(feature.get()).filter(ActionState::isActionEnabled).isPresent()) {
+      return feature;
     }
     return Optional.empty();
   }
@@ -218,15 +220,18 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       resetDisplay();
     } else if (keyEvent == ActionW.CINESTART.getKeyCode()
         && ActionW.CINESTART.getModifier() == modifiers) {
-      Optional<SliderCineListener> cineAction =
-          getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
-      if (cineAction.isPresent() && cineAction.get().isActionEnabled()) {
-        if (cineAction.get().isCining()) {
-          cineAction.get().stop();
-        } else {
-          cineAction.get().start();
-        }
-      }
+      getAction(ActionW.SCROLL_SERIES)
+          .ifPresent(
+              s -> {
+                if (s.isActionEnabled()) {
+                  if (s.isCining()) {
+                    s.stop();
+                  } else {
+                    s.start();
+                  }
+                }
+              });
+
     } else if (keyEvent == KeyEvent.VK_P && modifiers == 0) {
       ImageViewerPlugin<ImageElement> view = getSelectedView2dContainer();
       if (view != null) {
@@ -252,25 +257,24 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   public void setSelectedView2dContainer(ImageViewerPlugin<ImageElement> selectedView2dContainer) {
     if (this.selectedView2dContainer != null) {
       this.selectedView2dContainer.setMouseActions(null);
-      getAction(ActionW.SCROLL_SERIES, SliderCineListener.class)
-          .ifPresent(SliderCineListener::stop);
+      getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
     }
 
     ImageViewerPlugin<ImageElement> oldContainer = this.selectedView2dContainer;
     this.selectedView2dContainer = selectedView2dContainer;
     if (selectedView2dContainer != null) {
-      Optional<ComboItemListener> synchAction = getAction(ActionW.SYNCH, ComboItemListener.class);
-      Optional<ComboItemListener> layoutAction = getAction(ActionW.LAYOUT, ComboItemListener.class);
+      Optional<ComboItemListener<SynchView>> synchAction = getAction(ActionW.SYNCH);
+      Optional<ComboItemListener<GridBagLayoutModel>> layoutAction = getAction(ActionW.LAYOUT);
       if (oldContainer == null
           || !oldContainer.getClass().equals(selectedView2dContainer.getClass())) {
         synchAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getSynchList().toArray()));
+                    selectedView2dContainer.getSynchList().toArray(new SynchView[0])));
         layoutAction.ifPresent(
             a ->
                 a.setDataListWithoutTriggerAction(
-                    selectedView2dContainer.getLayoutList().toArray()));
+                    selectedView2dContainer.getLayoutList().toArray(new GridBagLayoutModel[0])));
       }
       if (oldContainer != null) {
         ViewCanvas<ImageElement> pane = oldContainer.getSelectedImagePane();
@@ -304,11 +308,9 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   private void cinePlay(String command) {
     if (command != null) {
       if (command.equals(ActionW.CINESTART.cmd())) {
-        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class)
-            .ifPresent(SliderCineListener::start);
+        getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::start);
       } else if (command.equals(ActionW.CINESTOP.cmd())) {
-        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class)
-            .ifPresent(SliderCineListener::stop);
+        getAction(ActionW.SCROLL_SERIES).ifPresent(SliderCineListener::stop);
       }
     }
   }
@@ -334,7 +336,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
           null,
           new SynchEvent(getSelectedViewPane(), ActionW.ZOOM.cmd(), 0.0));
     } else if (ResetTools.ROTATION.equals(action)) {
-      getAction(ActionW.ROTATION, SliderChangeListener.class).ifPresent(a -> a.setSliderValue(0));
+      getAction(ActionW.ROTATION).ifPresent(a -> a.setSliderValue(0));
     } else if (ResetTools.WL.equals(action)) {
       if (selectedView2dContainer != null) {
         ViewCanvas<ImageElement> defaultView2d = selectedView2dContainer.getSelectedImagePane();
@@ -348,10 +350,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                             .getDisplayOpManager()
                             .getParamValue(WindowOp.OP_NAME, ActionW.IMAGE_PIX_PADDING.cmd()));
             DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
-            getAction(ActionW.WINDOW, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultWindow(wlp)));
-            getAction(ActionW.LEVEL, SliderChangeListener.class)
-                .ifPresent(a -> a.setRealValue(img.getDefaultLevel(wlp)));
+            getAction(ActionW.WINDOW).ifPresent(a -> a.setRealValue(img.getDefaultWindow(wlp)));
+            getAction(ActionW.LEVEL).ifPresent(a -> a.setRealValue(img.getDefaultLevel(wlp)));
           }
         }
       }
@@ -377,8 +377,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
 
     clearAllPropertyChangeListeners();
-    Optional<SliderCineListener> cineAction =
-        getAction(ActionW.SCROLL_SERIES, SliderCineListener.class);
+    Optional<SliderCineListener> cineAction = getAction(ActionW.SCROLL_SERIES);
 
     if (Objects.isNull(view2d.getSourceImage())) {
       enableActions(false);
@@ -396,10 +395,8 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     OpManager dispOp = view2d.getDisplayOpManager();
     ImageOpNode node = dispOp.getNode(WindowOp.OP_NAME);
     if (node != null) {
-      Optional<SliderChangeListener> windowAction =
-          getAction(ActionW.WINDOW, SliderChangeListener.class);
-      Optional<SliderChangeListener> levelAction =
-          getAction(ActionW.LEVEL, SliderChangeListener.class);
+      Optional<SliderChangeListener> windowAction = getAction(ActionW.WINDOW);
+      Optional<SliderChangeListener> levelAction = getAction(ActionW.LEVEL);
       if (windowAction.isPresent() && levelAction.isPresent()) {
         Double windowValue = (Double) node.getParam(ActionW.WINDOW.cmd());
         Double levelValue = (Double) node.getParam(ActionW.LEVEL.cmd());
@@ -429,54 +426,53 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
       }
     }
 
-    getAction(ActionW.LUT, ComboItemListener.class)
+    getAction(ActionW.LUT)
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
                     dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT)));
-    getAction(ActionW.INVERT_LUT, ToggleButtonListener.class)
+    getAction(ActionW.INVERT_LUT)
         .ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean)
                         dispOp.getParamValue(PseudoColorOp.OP_NAME, PseudoColorOp.P_LUT_INVERSE)));
-    getAction(ActionW.FILTER, ComboItemListener.class)
+    getAction(ActionW.FILTER)
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
                     dispOp.getParamValue(FilterOp.OP_NAME, FilterOp.P_KERNEL_DATA)));
-    getAction(ActionW.ROTATION, SliderChangeListener.class)
+    getAction(ActionW.ROTATION)
         .ifPresent(
             a -> a.setSliderValue((Integer) view2d.getActionValue(ActionW.ROTATION.cmd()), false));
-    getAction(ActionW.FLIP, ToggleButtonListener.class)
+    getAction(ActionW.FLIP)
         .ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
                     LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.FLIP.cmd()))));
 
-    getAction(ActionW.ZOOM, SliderChangeListener.class)
+    getAction(ActionW.ZOOM)
         .ifPresent(
             a ->
                 a.setRealValue(
                     Math.abs((Double) view2d.getActionValue(ActionW.ZOOM.cmd())), false));
-    getAction(ActionW.SPATIAL_UNIT, ComboItemListener.class)
+    getAction(ActionW.SPATIAL_UNIT)
         .ifPresent(
             a ->
                 a.setSelectedItemWithoutTriggerAction(
                     view2d.getActionValue(ActionW.SPATIAL_UNIT.cmd())));
-    getAction(ActionW.LENS, ToggleButtonListener.class)
+    getAction(ActionW.LENS)
         .ifPresent(
             a ->
                 a.setSelectedWithoutTriggerAction(
                     (Boolean) view2d.getActionValue(ActionW.LENS.cmd())));
-    getAction(ActionW.INVERSE_STACK, ToggleButtonListener.class)
+    getAction(ActionW.INVERSE_STACK)
         .ifPresent(
             a -> a.setSelected((Boolean) view2d.getActionValue(ActionW.INVERSE_STACK.cmd())));
 
     Double lensZoom = (Double) view2d.getLensActionValue(ActionW.ZOOM.cmd());
     if (lensZoom != null) {
-      getAction(ActionW.LENS_ZOOM, SliderChangeListener.class)
-          .ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
+      getAction(ActionW.LENS_ZOOM).ifPresent(a -> a.setRealValue(Math.abs(lensZoom), false));
     }
     cineAction.ifPresent(
         a ->
@@ -492,7 +488,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
     // register all actions for the selected view and for the other views register according to
     // synchview.
-    ComboItemListener synchAction = getAction(ActionW.SYNCH, ComboItemListener.class).orElse(null);
+    ComboItemListener<SynchView> synchAction = getAction(ActionW.SYNCH).orElse(null);
     updateAllListeners(
         selectedView2dContainer,
         synchAction == null ? SynchView.NONE : (SynchView) synchAction.getSelectedItem());
@@ -521,19 +517,19 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
     }
   }
 
-  private void setSliderPreference(Preferences prefNode, ActionW action) {
-    Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
-    if (sliderAction.isPresent()) {
-      BundlePreferences.putDoublePreferences(
-          prefNode, action.cmd(), sliderAction.get().getMouseSensitivity());
-    }
+  private void setSliderPreference(
+      Preferences prefNode, Feature<? extends SliderChangeListener> action) {
+    getAction(action)
+        .ifPresent(
+            s ->
+                BundlePreferences.putDoublePreferences(
+                    prefNode, action.cmd(), s.getMouseSensitivity()));
   }
 
-  private void getSliderPreference(Preferences prefNode, ActionW action, double defVal) {
-    Optional<SliderChangeListener> sliderAction = getAction(action, SliderChangeListener.class);
-    if (sliderAction.isPresent()) {
-      sliderAction.get().setMouseSensitivity(prefNode.getDouble(action.cmd(), defVal));
-    }
+  private void getSliderPreference(
+      Preferences prefNode, Feature<? extends SliderChangeListener> action, double defVal) {
+    getAction(action)
+        .ifPresent(s -> s.setMouseSensitivity(prefNode.getDouble(action.cmd(), defVal)));
   }
 
   public MediaSeries<ImageElement> getSelectedSeries() {
@@ -570,8 +566,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   public JMenu getZoomMenu(String prop) {
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<SliderChangeListener> zoomAction =
-          getAction(ActionW.ZOOM, SliderChangeListener.class);
+      Optional<SliderChangeListener> zoomAction = getAction(ActionW.ZOOM);
       if (zoomAction.isPresent()) {
         menu = new JMenu(ActionW.ZOOM.getTitle());
         menu.setIcon(ActionW.ZOOM.getIcon());
@@ -591,8 +586,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   public JMenu getOrientationMenu(String prop) {
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<SliderChangeListener> rotateAction =
-          getAction(ActionW.ROTATION, SliderChangeListener.class);
+      Optional<SliderChangeListener> rotateAction = getAction(ActionW.ROTATION);
       if (rotateAction.isPresent()) {
         menu = new JMenu(Messages.getString("View2dContainer.orientation"));
         menu.setIcon(ActionW.ROTATION.getIcon());
@@ -629,8 +623,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
                       .setSliderValue((rotateAction.get().getSliderValue() + 180) % 360));
           menu.add(menuItem);
 
-          Optional<ToggleButtonListener> flipAction =
-              getAction(ActionW.FLIP, ToggleButtonListener.class);
+          Optional<ToggleButtonListener> flipAction = getAction(ActionW.FLIP);
           if (flipAction.isPresent()) {
             menu.add(new JSeparator());
             menuItem =
@@ -663,25 +656,22 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   // }
 
   public JMenu getLutMenu(String prop) {
-    JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<ComboItemListener> lutAction = getAction(ActionW.LUT, ComboItemListener.class);
+      Optional<ComboItemListener<ByteLut>> lutAction = getAction(ActionW.LUT);
       if (lutAction.isPresent()) {
-        menu =
-            lutAction
-                .get()
-                .createUnregisteredRadioMenu(
-                    Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
+        return lutAction
+            .get()
+            .createUnregisteredRadioMenu(
+                Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
-    return menu;
+    return null;
   }
 
   public JCheckBoxMenuItem getLutInverseMenu(String prop) {
     JCheckBoxMenuItem menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<ToggleButtonListener> inverseLutAction =
-          getAction(ActionW.INVERT_LUT, ToggleButtonListener.class);
+      Optional<ToggleButtonListener> inverseLutAction = getAction(ActionW.INVERT_LUT);
       if (inverseLutAction.isPresent()) {
         menu =
             inverseLutAction
@@ -694,18 +684,15 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
   }
 
   public JMenu getFilterMenu(String prop) {
-    JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
-      Optional<ComboItemListener> filterAction = getAction(ActionW.FILTER, ComboItemListener.class);
+      Optional<ComboItemListener<KernelData>> filterAction = getAction(ActionW.FILTER);
       if (filterAction.isPresent()) {
-        menu =
-            filterAction
-                .get()
-                .createUnregisteredRadioMenu(
-                    Messages.getString("ImageTool.filter"),
-                    ResourceUtil.getIcon(ActionIcon.FILTER));
+        return filterAction
+            .get()
+            .createUnregisteredRadioMenu(
+                Messages.getString("ImageTool.filter"), ResourceUtil.getIcon(ActionIcon.FILTER));
       }
     }
-    return menu;
+    return null;
   }
 }

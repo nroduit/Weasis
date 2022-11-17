@@ -18,7 +18,6 @@ import org.weasis.acquire.explorer.AcquireImageInfo;
 import org.weasis.acquire.explorer.AcquireImageValues;
 import org.weasis.acquire.graphics.CalibrationGraphic;
 import org.weasis.base.viewer2d.EventManager;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.ui.editor.image.ImageViewerPlugin;
 
@@ -33,7 +32,7 @@ public class CalibrationPanel extends AbstractAcquireActionPanel {
   @Override
   public void initValues(AcquireImageInfo info, AcquireImageValues values) {
     EventManager.getInstance()
-        .getAction(EditionToolFactory.DRAW_EDITION, ComboItemListener.class)
+        .getAction(EditionToolFactory.DRAW_EDITION)
         .ifPresent(a -> a.setSelectedItem(CalibrationPanel.CALIBRATION_LINE_GRAPHIC));
     ImageViewerPlugin<ImageElement> container =
         EventManager.getInstance().getSelectedView2dContainer();

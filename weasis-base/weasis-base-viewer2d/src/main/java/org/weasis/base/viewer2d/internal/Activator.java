@@ -56,9 +56,10 @@ public class Activator implements BundleActivator, ServiceListener {
 
     // Add listener for getting new service events
     try {
+
       bundleContext.addServiceListener(
           Activator.this,
-          "(" + Constants.OBJECTCLASS + "=" + InsertableFactory.class.getName() + ")");
+          String.format("(%s=%s)", Constants.OBJECTCLASS, InsertableFactory.class.getName()));
     } catch (InvalidSyntaxException e) {
       LOGGER.error("Add service listener", e);
     }

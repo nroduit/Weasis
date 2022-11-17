@@ -20,12 +20,8 @@ import org.dcm4che3.data.Tag;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.Filter;
 import org.weasis.core.api.gui.util.GuiExecutor;
-import org.weasis.core.api.gui.util.SliderChangeListener;
-import org.weasis.core.api.gui.util.SliderCineListener;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
 import org.weasis.core.api.media.data.MediaElement;
 import org.weasis.core.api.media.data.MediaSeries;
 import org.weasis.core.api.media.data.SeriesEvent;
@@ -178,11 +174,7 @@ public final class KOManager {
 
     if (newDicomKO != null) {
       // Deactivate filter for new KO
-      ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-      if (koFilterAction instanceof ToggleButtonListener buttonListener) {
-        buttonListener.setSelected(false);
-      }
-
+      view2d.getEventManager().getAction(ActionW.KO_FILTER).ifPresent(b -> b.setSelected(false));
       newKOSelection = loadDicomKeyObject(view2d.getSeries(), newDicomKO);
     }
 
@@ -311,10 +303,10 @@ public final class KOManager {
     KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
 
     if (validKOSelection != currentSelectedKO) {
-      ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
-      if (koSelection instanceof ComboItemListener itemListener) {
-        itemListener.setSelectedItem(validKOSelection);
-      }
+      view2d
+          .getEventManager()
+          .getAction(ActionW.KO_SELECTION)
+          .ifPresent(b -> b.setSelectedItem(validKOSelection));
     }
 
     boolean hasKeyObjectReferenceChanged = false;
@@ -341,11 +333,14 @@ public final class KOManager {
             LangUtil.getNULLtoFalse((Boolean) view2d.getActionValue(ActionW.KO_FILTER.cmd()));
         if (filter && (view2d.getEventManager().getSelectedViewPane() == view2d)) {
           // When unchecking an image, force to call the filter action to resize the views
-          ActionState koFilterAction = view2d.getEventManager().getAction(ActionW.KO_FILTER);
-          if (koFilterAction instanceof ToggleButtonListener buttonListener) {
-            buttonListener.setSelectedWithoutTriggerAction(false);
-            buttonListener.setSelected(true);
-          }
+          view2d
+              .getEventManager()
+              .getAction(ActionW.KO_FILTER)
+              .ifPresent(
+                  b -> {
+                    b.setSelectedWithoutTriggerAction(false);
+                    b.setSelected(true);
+                  });
         }
       }
     }
@@ -365,10 +360,10 @@ public final class KOManager {
     KOSpecialElement currentSelectedKO = KOManager.getCurrentKOSelection(view2d);
 
     if (validKOSelection != currentSelectedKO) {
-      ActionState koSelection = view2d.getEventManager().getAction(ActionW.KO_SELECTION);
-      if (koSelection instanceof ComboItemListener itemListener) {
-        itemListener.setSelectedItem(validKOSelection);
-      }
+      view2d
+          .getEventManager()
+          .getAction(ActionW.KO_SELECTION)
+          .ifPresent(b -> b.setSelectedItem(validKOSelection));
     }
 
     boolean hasKeyObjectReferenceChanged = false;
@@ -531,12 +526,13 @@ public final class KOManager {
        * Update the sliceAction action according to the nearest image when the filter hides the image of the previous
        * state. And update the action min and max.
        */
-      ActionState seqAction = view2D.getEventManager().getAction(ActionW.SCROLL_SERIES);
-      if (seqAction instanceof SliderCineListener) {
-        SliderChangeListener moveTroughSliceAction = (SliderChangeListener) seqAction;
-        moveTroughSliceAction.setSliderMinMaxValue(
-            1, view2D.getSeries().size(sopInstanceUIDFilter), imgIndex + 1);
-      }
+      view2D
+          .getEventManager()
+          .getAction(ActionW.SCROLL_SERIES)
+          .ifPresent(
+              s ->
+                  s.setSliderMinMaxValue(
+                      1, view2D.getSeries().size(sopInstanceUIDFilter), imgIndex + 1));
     }
 
     DicomImageElement newImage = null;

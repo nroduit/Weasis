@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
-import java.util.Optional;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -33,7 +32,6 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import org.weasis.core.api.gui.Insertable;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.media.data.Series;
@@ -247,8 +245,8 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
               v.getJComponent().repaint();
             } else {
               // Force redrawing crosslines
-              Optional.ofNullable(
-                      (SliderChangeListener) v.getEventManager().getAction(ActionW.SCROLL_SERIES))
+              v.getEventManager()
+                  .getAction(ActionW.SCROLL_SERIES)
                   .ifPresent(a -> a.stateChanged(a.getSliderModel()));
             }
           }

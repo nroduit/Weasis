@@ -36,12 +36,9 @@ import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.ObservableEvent;
 import org.weasis.core.api.gui.Insertable.Type;
 import org.weasis.core.api.gui.InsertableUtil;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
-import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.GuiExecutor;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.SliderCineListener;
 import org.weasis.core.api.image.GridBagLayoutModel;
 import org.weasis.core.api.image.LayoutConstraints;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -52,7 +49,6 @@ import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.api.util.ResourceUtil.OtherIcon;
 import org.weasis.core.ui.docking.DockableTool;
-import org.weasis.core.ui.editor.image.CrosshairListener;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.MeasureToolBar;
 import org.weasis.core.ui.editor.image.MouseActions;
@@ -565,28 +561,32 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
                 GuiExecutor.instance()
                     .execute(
                         () -> {
-                          ActionState synch = eventManager.getAction(ActionW.SYNCH);
-                          if (synch instanceof ComboItemListener<?> itemListener) {
-                            itemListener.setSelectedItem(MPRContainer.defaultMpr);
-                          }
+                          eventManager
+                              .getAction(ActionW.SYNCH)
+                              .ifPresent(c -> c.setSelectedItem(MPRContainer.defaultMpr));
+
                           // Set the middle image ( the best choice to propagate the default preset
                           // of non CT modalities)
-                          ActionState seqAction = eventManager.getAction(ActionW.SCROLL_SERIES);
-                          if (seqAction instanceof SliderCineListener sliceAction) {
-                            sliceAction.setSliderValue(sliceAction.getSliderMax() / 2);
-                          }
-                          ActionState cross = eventManager.getAction(ActionW.CROSSHAIR);
-                          if (cross instanceof CrosshairListener itemListener) {
-                            itemListener.setPoint(
-                                view.getImageCoordinatesFromMouse(
-                                    view.getWidth() / 2, view.getHeight() / 2));
-                          }
+                          eventManager
+                              .getAction(ActionW.SCROLL_SERIES)
+                              .ifPresent(s -> s.setSliderValue(s.getSliderMax() / 2));
+
+                          eventManager
+                              .getAction(ActionW.CROSSHAIR)
+                              .ifPresent(
+                                  i ->
+                                      i.setPoint(
+                                          view.getImageCoordinatesFromMouse(
+                                              view.getWidth() / 2, view.getHeight() / 2)));
+
                           // Force to propagate the default preset
-                          ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-                          if (presetAction instanceof ComboItemListener<?> p) {
-                            p.setSelectedItemWithoutTriggerAction(null);
-                            p.setSelectedItem(p.getFirstItem());
-                          }
+                          eventManager
+                              .getAction(ActionW.PRESET)
+                              .ifPresent(
+                                  c -> {
+                                    c.setSelectedItemWithoutTriggerAction(null);
+                                    c.setSelectedItem(c.getFirstItem());
+                                  });
                         });
 
               } catch (final Exception e) {

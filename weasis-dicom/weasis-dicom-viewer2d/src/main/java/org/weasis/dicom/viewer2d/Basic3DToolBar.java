@@ -12,7 +12,6 @@ package org.weasis.dicom.viewer2d;
 import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.media.data.MediaSeries;
@@ -45,11 +44,13 @@ public class Basic3DToolBar<DicomImageElement> extends WtoolBar {
     add(mipButton);
 
     // Attach 3D functions to the SCROLL_SERIES actions
-    ActionState scrollAction = EventManager.getInstance().getAction(ActionW.SCROLL_SERIES);
-    if (scrollAction != null) {
-      scrollAction.registerActionState(mprButton);
-      scrollAction.registerActionState(mipButton);
-    }
+    EventManager.getInstance()
+        .getAction(ActionW.SCROLL_SERIES)
+        .ifPresent(
+            s -> {
+              s.registerActionState(mprButton);
+              s.registerActionState(mipButton);
+            });
   }
 
   public static ActionListener getMprAction() {

@@ -16,6 +16,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JFileChooser;
@@ -23,7 +24,6 @@ import javax.swing.JOptionPane;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.weasis.core.api.explorer.model.DataExplorerModel;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.FileFormatFilter;
@@ -89,9 +89,10 @@ public class ViewerFactory implements SeriesViewerFactory {
       } else {
         obj = properties.get(ViewCanvas.class.getName());
         if (obj instanceof Integer intVal) {
-          ActionState layout = EventManager.getInstance().getAction(ActionW.LAYOUT);
-          if (layout instanceof ComboItemListener) {
-            model = ImageViewerPlugin.getBestDefaultViewLayout(layout, intVal);
+          Optional<ComboItemListener<GridBagLayoutModel>> layout =
+              EventManager.getInstance().getAction(ActionW.LAYOUT);
+          if (layout.isPresent()) {
+            model = ImageViewerPlugin.getBestDefaultViewLayout(layout.get(), intVal);
           }
         }
       }

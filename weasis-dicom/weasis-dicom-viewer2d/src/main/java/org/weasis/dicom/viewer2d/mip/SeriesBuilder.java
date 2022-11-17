@@ -15,13 +15,13 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import org.dcm4che3.data.Attributes;
 import org.dcm4che3.data.Tag;
 import org.dcm4che3.data.VR;
 import org.dcm4che3.util.UIDUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.AppProperties;
 import org.weasis.core.api.gui.util.Filter;
@@ -68,9 +68,10 @@ public class SeriesBuilder {
       Iterable<DicomImageElement> medias = series.copyOfMedias(filter, sortFilter);
 
       int curImg = extend - 1;
-      ActionState sequence = view.getEventManager().getAction(ActionW.SCROLL_SERIES);
-      if (sequence instanceof SliderCineListener cineAction) {
-        curImg = cineAction.getSliderValue() - 1;
+      Optional<SliderCineListener> sequence =
+          view.getEventManager().getAction(ActionW.SCROLL_SERIES);
+      if (sequence.isPresent()) {
+        curImg = sequence.get().getSliderValue() - 1;
       }
 
       int minImg = fullSeries ? extend : curImg;

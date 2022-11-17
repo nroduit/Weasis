@@ -28,8 +28,9 @@ import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
 import org.weasis.core.api.gui.util.AbstractItemDialogPage;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.core.api.gui.util.Feature;
 import org.weasis.core.api.gui.util.GuiUtils;
-import org.weasis.core.api.gui.util.MouseActionAdapter;
+import org.weasis.core.api.gui.util.SliderChangeListener;
 import org.weasis.core.api.image.OpManager;
 import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp;
@@ -53,10 +54,10 @@ import org.weasis.dicom.viewer2d.View2dFactory;
 
 public class ViewerPrefView extends AbstractItemDialogPage {
   private final Hashtable<Integer, JLabel> labels = new Hashtable<>();
-  private final List<ActionW> actions =
+  private final List<Feature<? extends SliderChangeListener>> actions =
       List.of(ActionW.WINDOW, ActionW.LEVEL, ActionW.ZOOM, ActionW.ROTATION, ActionW.SCROLL_SERIES);
-  private final Map<ActionW, Integer> map = new HashMap<>();
-  private final JComboBox<ActionW> comboBox = new JComboBox<>();
+  private final Map<Feature<?>, Integer> map = new HashMap<>();
+  private final JComboBox<Feature<?>> comboBox = new JComboBox<>();
   private final JSlider slider = new JSlider(-100, 100, 0);
   private JComboBox<ZoomOp.Interpolation> comboBoxInterpolation;
   private JCheckBox checkBoxWLcolor;
@@ -78,10 +79,10 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     EventManager eventManager = EventManager.getInstance();
     formatSlider(slider);
 
-    for (ActionW a : actions) {
-      if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
-        map.put(a, realValueToSlider(action.getMouseSensitivity()));
-      }
+    for (Feature<? extends SliderChangeListener> a : actions) {
+      eventManager
+          .getAction(a)
+          .ifPresent(s -> map.put(a, realValueToSlider(s.getMouseSensitivity())));
     }
 
     comboBox.setModel(new DefaultComboBoxModel<>(new Vector<>(actions)));
@@ -89,7 +90,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
         e -> {
           if (e.getStateChange() == ItemEvent.SELECTED) {
             Object item = e.getItem();
-            if (item instanceof ActionW a) {
+            if (item instanceof Feature<?> a) {
               slider.setValue(map.get(a));
             }
           }
@@ -98,7 +99,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     slider.addChangeListener(
         e -> {
           Object item = comboBox.getSelectedItem();
-          if (item instanceof ActionW a) {
+          if (item instanceof Feature<?> a) {
             map.put(a, slider.getValue());
           }
         });
@@ -176,10 +177,10 @@ public class ViewerPrefView extends AbstractItemDialogPage {
   @Override
   public void closeAdditionalWindow() {
     EventManager eventManager = EventManager.getInstance();
-    for (ActionW a : actions) {
-      if (eventManager.getAction(a) instanceof MouseActionAdapter action) {
-        action.setMouseSensitivity(sliderToRealValue(map.get(a)));
-      }
+    for (Feature<? extends SliderChangeListener> a : actions) {
+      eventManager
+          .getAction(a)
+          .ifPresent(s -> s.setMouseSensitivity(sliderToRealValue(map.get(a))));
     }
 
     int interpolationPosition = comboBoxInterpolation.getSelectedIndex();
@@ -219,7 +220,7 @@ public class ViewerPrefView extends AbstractItemDialogPage {
     map.put(ActionW.SCROLL_SERIES, realValueToSlider(0.1));
     map.put(ActionW.ROTATION, realValueToSlider(0.25));
     map.put(ActionW.ZOOM, realValueToSlider(0.1));
-    slider.setValue(map.get(comboBox.getSelectedItem()));
+    slider.setValue(map.get((Feature<?>) comboBox.getSelectedItem()));
 
     comboBoxInterpolation.setSelectedItem(Interpolation.BILINEAR);
 

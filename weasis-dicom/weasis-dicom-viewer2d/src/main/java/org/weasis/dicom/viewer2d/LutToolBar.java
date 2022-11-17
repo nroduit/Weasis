@@ -9,16 +9,16 @@
  */
 package org.weasis.dicom.viewer2d;
 
+import java.util.Optional;
 import javax.swing.Icon;
 import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
-import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.ComboItemListener;
 import org.weasis.core.api.gui.util.DropButtonIcon;
 import org.weasis.core.api.gui.util.DropDownButton;
 import org.weasis.core.api.gui.util.GroupPopup;
-import org.weasis.core.api.gui.util.ToggleButtonListener;
+import org.weasis.core.api.image.op.ByteLut;
 import org.weasis.core.api.util.ResourceUtil;
 import org.weasis.core.api.util.ResourceUtil.ActionIcon;
 import org.weasis.core.ui.editor.image.ImageViewerEventManager;
@@ -34,9 +34,9 @@ public class LutToolBar extends WtoolBar {
     }
 
     GroupPopup menu = null;
-    ActionState presetAction = eventManager.getAction(ActionW.PRESET);
-    if (presetAction instanceof ComboItemListener<?> comboListener) {
-      menu = comboListener.createGroupRadioMenu();
+    Optional<ComboItemListener<Object>> presetAction = eventManager.getAction(ActionW.PRESET);
+    if (presetAction.isPresent()) {
+      menu = presetAction.get().createGroupRadioMenu();
     }
 
     final DropDownButton presetButton =
@@ -52,14 +52,13 @@ public class LutToolBar extends WtoolBar {
 
     presetButton.setToolTipText(Messages.getString("LutToolBar.presets"));
     add(presetButton);
-    if (presetAction != null) {
-      presetAction.registerActionState(presetButton);
-    }
+    presetAction.ifPresent(
+        objectComboItemListener -> objectComboItemListener.registerActionState(presetButton));
 
     GroupPopup menuLut = null;
-    ActionState lutAction = eventManager.getAction(ActionW.LUT);
-    if (lutAction instanceof ComboItemListener<?> comboListener) {
-      menuLut = comboListener.createGroupRadioMenu();
+    Optional<ComboItemListener<ByteLut>> lutAction = eventManager.getAction(ActionW.LUT);
+    if (lutAction.isPresent()) {
+      menuLut = lutAction.get().createGroupRadioMenu();
     }
 
     final DropDownButton lutButton =
@@ -75,17 +74,12 @@ public class LutToolBar extends WtoolBar {
 
     lutButton.setToolTipText(Messages.getString("LutToolBar.lustSelection"));
     add(lutButton);
-    if (lutAction != null) {
-      lutAction.registerActionState(lutButton);
-    }
+    lutAction.ifPresent(c -> c.registerActionState(lutButton));
 
     final JToggleButton invertButton = new JToggleButton();
     invertButton.setToolTipText(ActionW.INVERT_LUT.getTitle());
     invertButton.setIcon(ResourceUtil.getToolBarIcon(ActionIcon.INVERSE_LUT));
-    ActionState invlutAction = eventManager.getAction(ActionW.INVERT_LUT);
-    if (invlutAction instanceof ToggleButtonListener comboListener) {
-      comboListener.registerActionState(invertButton);
-    }
+    eventManager.getAction(ActionW.INVERT_LUT).ifPresent(c -> c.registerActionState(invertButton));
     add(invertButton);
   }
 
