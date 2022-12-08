@@ -44,9 +44,9 @@
     <slf4j.version>1.7.36</slf4j.version>
     <sling.commons.log.version>3.0.2-r5</sling.commons.log.version>
     <dockingframes.version>1.1.4</dockingframes.version>
-    <weasis-dicom-tools.version>5.29.0</weasis-dicom-tools.version>
-    <weasis.core.img.version>4.5.5.2</weasis.core.img.version>
-    <weasis.opencv.native.version>4.5.5-dcm</weasis.opencv.native.version>
+    <weasis-dicom-tools.version>5.29.0.1</weasis-dicom-tools.version>
+    <weasis.core.img.version>4.6.0</weasis.core.img.version>
+    <weasis.opencv.native.version>4.6.0-dcm</weasis.opencv.native.version>
     <javax.json.version>1.1.6</javax.json.version>
     <jaxb.osgi.version>3.0.2</jaxb.osgi.version>
     <joml.version>1.10.5</joml.version>
@@ -576,6 +576,13 @@
       <groupId>com.miglayout</groupId>
       <artifactId>miglayout-core</artifactId>
       <version>${miglayout.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.weasis.core</groupId>
+      <artifactId>weasis-core-img</artifactId>
+      <version>${weasis.core.img.version}</version>
+      <classifier>jdk11</classifier>
       <scope>provided</scope>
     </dependency>
 

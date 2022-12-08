@@ -55,12 +55,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.weasis.core</groupId>
-			<artifactId>weasis-core-img</artifactId>
-			<version>${weasis.core.img.version}</version>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.weasis.dicom</groupId>
 			<artifactId>weasis-dicom-codec</artifactId>
 			<version>${project.version}</version>

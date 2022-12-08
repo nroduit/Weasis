@@ -27,13 +27,4 @@
       </plugin>
     </plugins>
   </build>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core-img</artifactId>
-      <version>${weasis.core.img.version}</version>
-      <scope>provided</scope>
-    </dependency>
-  </dependencies>
 </project>

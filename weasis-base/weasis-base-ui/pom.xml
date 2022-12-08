@@ -39,12 +39,6 @@
       <artifactId>org.apache.felix.gogo.runtime</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.weasis.core</groupId>
-      <artifactId>weasis-core-img</artifactId>
-      <version>${weasis.core.img.version}</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
       <groupId>org.glassfish</groupId>
       <artifactId>jakarta.json</artifactId>
       <scope>provided</scope>

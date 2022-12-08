@@ -323,7 +323,7 @@
                 <artifactItem>
                   <groupId>org.weasis.core</groupId>
                   <artifactId>weasis-core-img</artifactId>
-                  <version>${weasis.core.img.version}</version>
+                  <version>${weasis.core.img.version}-jdk11</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>

@@ -167,7 +167,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     PreferencesImpl remotePrefs = null;
 
     try {
-      localPrefs = loadFromeFile(manager, desc);
+      localPrefs = loadFromFile(manager, desc);
       remotePrefs = loadFromService(manager, desc);
     } catch (BackingStoreException e) {
       LOGGER.error("Error on preferences loading\n", e);
@@ -222,7 +222,7 @@ public class StreamBackingStoreImpl implements BackingStore {
     }
   }
 
-  protected PreferencesImpl loadFromeFile(BackingStoreManager manager, PreferencesDescription desc)
+  protected PreferencesImpl loadFromFile(BackingStoreManager manager, PreferencesDescription desc)
       throws BackingStoreException {
     this.checkAccess();
     final File file = getFile(desc);
