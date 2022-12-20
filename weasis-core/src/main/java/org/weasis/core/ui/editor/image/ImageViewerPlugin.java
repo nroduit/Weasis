@@ -274,6 +274,15 @@ public abstract class ImageViewerPlugin<E extends ImageElement> extends ViewerPl
     }
   }
 
+  public boolean closeIfNoContent() {
+    if (getOpenSeries().isEmpty()) {
+      close();
+      handleFocusAfterClosing();
+      return true;
+    }
+    return false;
+  }
+
   @Override
   public List<MediaSeries<E>> getOpenSeries() {
     List<MediaSeries<E>> list = new ArrayList<>();

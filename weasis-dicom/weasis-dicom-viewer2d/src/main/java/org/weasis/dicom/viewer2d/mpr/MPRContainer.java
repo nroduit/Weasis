@@ -350,15 +350,6 @@ public class MPRContainer extends DicomViewerPlugin implements PropertyChangeLis
     }
   }
 
-  private boolean closeIfNoContent() {
-    if (getOpenSeries().isEmpty()) {
-      close();
-      handleFocusAfterClosing();
-      return true;
-    }
-    return false;
-  }
-
   private synchronized void stopCurrentProcess() {
     if (process != null) {
       final Thread t = process;

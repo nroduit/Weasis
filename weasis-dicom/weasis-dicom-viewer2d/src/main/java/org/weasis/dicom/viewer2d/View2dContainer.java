@@ -438,15 +438,6 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
     super.close();
   }
 
-  private boolean closeIfNoContent() {
-    if (getOpenSeries().isEmpty()) {
-      close();
-      handleFocusAfterClosing();
-      return true;
-    }
-    return false;
-  }
-
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
 
@@ -521,38 +512,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         }
       } else if (ObservableEvent.BasicAction.REMOVE.equals(action)) {
         if (newVal instanceof MediaSeriesGroup group) {
-          // Patient Group
-          if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
-            if (group.equals(getGroupID())) {
-              // Close the content of the plug-in
-              close();
-              handleFocusAfterClosing();
-            }
-          }
-          // Study Group
-          else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
-            if (event.getSource() instanceof DicomModel model) {
-              for (ViewCanvas<DicomImageElement> v : view2ds) {
-                if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
-                  v.setSeries(null);
-                  if (closeIfNoContent()) {
-                    return;
-                  }
-                }
-              }
-            }
-          }
-          // Series Group
-          else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
-            for (ViewCanvas<DicomImageElement> v : view2ds) {
-              if (newVal.equals(v.getSeries())) {
-                v.setSeries(null);
-                if (closeIfNoContent()) {
-                  return;
-                }
-              }
-            }
-          }
+          removeViews(this, group, event);
         }
       } else if (ObservableEvent.BasicAction.REPLACE.equals(action)) {
         if (newVal instanceof Series series) {
@@ -607,6 +567,42 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
         // Match using UID of the plugin window and the source event
         if (this.getDockableUID().equals(evt.getSource())) {
           setKOSpecialElement(koSpecialElement, true, true, false);
+        }
+      }
+    }
+  }
+
+  public static void removeViews(
+      ImageViewerPlugin<?> viewerPlugin, MediaSeriesGroup group, ObservableEvent event) {
+    // Patient Group
+    if (TagD.getUID(Level.PATIENT).equals(group.getTagID())) {
+      if (group.equals(viewerPlugin.getGroupID())) {
+        // Close the content of the plug-in
+        viewerPlugin.close();
+        viewerPlugin.handleFocusAfterClosing();
+      }
+    }
+    // Study Group
+    else if (TagD.getUID(Level.STUDY).equals(group.getTagID())) {
+      if (event.getSource() instanceof DicomModel model) {
+        for (ViewCanvas<?> v : viewerPlugin.getImagePanels()) {
+          if (group.equals(model.getParent(v.getSeries(), DicomModel.study))) {
+            v.setSeries(null);
+            if (viewerPlugin.closeIfNoContent()) {
+              return;
+            }
+          }
+        }
+      }
+    }
+    // Series Group
+    else if (TagD.getUID(Level.SERIES).equals(group.getTagID())) {
+      for (ViewCanvas<?> v : viewerPlugin.getImagePanels()) {
+        if (group.equals(v.getSeries())) {
+          v.setSeries(null);
+          if (viewerPlugin.closeIfNoContent()) {
+            return;
+          }
         }
       }
     }

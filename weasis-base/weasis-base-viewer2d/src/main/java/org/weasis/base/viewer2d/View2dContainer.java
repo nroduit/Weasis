@@ -325,15 +325,6 @@ public class View2dContainer extends ImageViewerPlugin<ImageElement>
     super.close();
   }
 
-  private boolean closeIfNoContent() {
-    if (getOpenSeries().isEmpty()) {
-      close();
-      handleFocusAfterClosing();
-      return true;
-    }
-    return false;
-  }
-
   @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt instanceof ObservableEvent event) {
