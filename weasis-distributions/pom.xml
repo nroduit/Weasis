@@ -196,7 +196,7 @@
                 <artifactItem>
                   <groupId>org.osgi</groupId>
                   <artifactId>osgi.promise</artifactId>
-                  <version>${osgi.cmpn.version}</version>
+                  <version>${osgi.promise.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
                 <artifactItem>
