@@ -1440,7 +1440,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
     JMenu menu = null;
     if (BundleTools.SYSTEM_PREFERENCES.getBooleanProperty(prop, true)) {
       ButtonGroup group = new ButtonGroup();
-      menu = new JMenu(Messages.getString("ResetTools.reset"));
+      menu = new JMenu(ActionW.RESET.getTitle());
       menu.setIcon(ResourceUtil.getIcon(ActionIcon.RESET));
       GuiUtils.applySelectedIconEffect(menu);
       menu.setEnabled(getSelectedSeries() != null);
@@ -1468,8 +1468,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu =
             presetAction
                 .get()
-                .createUnregisteredRadioMenu(
-                    Messages.getString("View2dContainer.presets"), ActionW.WINLEVEL.getIcon());
+                .createUnregisteredRadioMenu(ActionW.PRESET.getTitle(), ActionW.WINLEVEL.getIcon());
         GuiUtils.applySelectedIconEffect(menu);
         for (Component mitem : menu.getMenuComponents()) {
           RadioMenuItem ritem = (RadioMenuItem) mitem;
@@ -1525,7 +1524,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         menu.setEnabled(rotateAction.get().isActionEnabled());
 
         if (rotateAction.get().isActionEnabled()) {
-          JMenuItem menuItem = new JMenuItem(Messages.getString("ResetTools.reset"));
+          JMenuItem menuItem = new JMenuItem(ActionW.RESET.getTitle());
           menuItem.addActionListener(e -> rotateAction.get().setSliderValue(0));
           menu.add(menuItem);
           menuItem = new JMenuItem(Messages.getString("View2dContainer.-90"));
@@ -1609,7 +1608,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
             lutAction
                 .get()
                 .createUnregisteredRadioMenu(
-                    Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
+                    ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
     return menu;

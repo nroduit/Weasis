@@ -662,7 +662,7 @@ public class EventManager extends ImageViewerEventManager<ImageElement> implemen
         return lutAction
             .get()
             .createUnregisteredRadioMenu(
-                Messages.getString("ImageTool.lut"), ResourceUtil.getIcon(ActionIcon.LUT));
+                ActionW.LUT.getTitle(), ResourceUtil.getIcon(ActionIcon.LUT));
       }
     }
     return null;

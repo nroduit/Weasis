@@ -357,18 +357,18 @@ public class ViewerToolBar<E extends ImageElement> extends WtoolBar implements A
   }
 
   private DropDownButton buildSynchButton() {
-    GroupPopup menu = null;
+    GroupPopup menuLut = null;
     ComboItemListener<SynchView> synch = eventManager.getAction(ActionW.SYNCH).orElse(null);
     SynchView synchView = SynchView.DEFAULT_STACK;
     if (synch != null) {
       if (synch.getSelectedItem() instanceof SynchView sel) {
         synchView = sel;
       }
-      menu = new SynchGroupMenu();
-      synch.registerActionState(menu);
+      menuLut = new SynchGroupMenu();
+      synch.registerActionState(menuLut);
     }
     final DropDownButton button =
-        new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menu) {
+        new DropDownButton(ActionW.SYNCH.cmd(), buildSynchIcon(synchView), menuLut) {
           @Override
           protected JPopupMenu getPopupMenu() {
             JPopupMenu menu =

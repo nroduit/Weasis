@@ -75,7 +75,7 @@ public class ImageTool extends PluginTool {
 
   public JPanel getResetPanel() {
     JComboBox<ResetTools> resetComboBox = new JComboBox<>(ResetTools.values());
-    JButton resetButton = new JButton(Messages.getString("ResetTools.reset"));
+    JButton resetButton = new JButton(ActionW.RESET.getTitle());
     resetButton.addActionListener(
         e -> {
           ResetTools reset = (ResetTools) resetComboBox.getSelectedItem();
@@ -94,7 +94,7 @@ public class ImageTool extends PluginTool {
     JPanel panel = GuiUtils.getFlowLayoutPanel(resetComboBox, resetButton);
     panel.setBorder(
         BorderFactory.createCompoundBorder(
-            spaceY, GuiUtils.getTitledBorder(Messages.getString("ResetTools.reset"))));
+            spaceY, GuiUtils.getTitledBorder(ActionW.RESET.getTitle())));
     return panel;
   }
 
@@ -167,8 +167,7 @@ public class ImageTool extends PluginTool {
         .getAction(ActionW.PRESET)
         .ifPresent(
             comboItem -> {
-              JLabel presetsLabel =
-                  new JLabel(Messages.getString("ImageTool.presets") + StringUtil.COLON);
+              JLabel presetsLabel = new JLabel(ActionW.PRESET.getTitle() + StringUtil.COLON);
               JComboBox<?> presetComboBox = comboItem.createCombo(160);
               presetComboBox.setMaximumRowCount(10);
               winLevelPanel.add(
@@ -191,7 +190,7 @@ public class ImageTool extends PluginTool {
         .getAction(ActionW.LUT)
         .ifPresent(
             comboItem -> {
-              JLabel lutLabel = new JLabel(Messages.getString("ImageTool.lut") + StringUtil.COLON);
+              JLabel lutLabel = new JLabel(ActionW.LUT.getTitle() + StringUtil.COLON);
               JComboBox<?> lutComboBox = comboItem.createCombo(140);
               JPanel lutPanel = GuiUtils.getHorizontalBoxLayoutPanel(5, lutLabel, lutComboBox);
               EventManager.getInstance()
