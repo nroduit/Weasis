@@ -329,12 +329,6 @@
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-linux-x86</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-linux-x86-64</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
@@ -354,12 +348,6 @@
                 <artifactItem>
                   <groupId>org.weasis.opencv</groupId>
                   <artifactId>weasis-opencv-core-macosx-x86-64</artifactId>
-                  <version>${weasis.opencv.native.version}</version>
-                  <outputDirectory>${tmp.bundle.dir}</outputDirectory>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.weasis.opencv</groupId>
-                  <artifactId>weasis-opencv-core-windows-x86</artifactId>
                   <version>${weasis.opencv.native.version}</version>
                   <outputDirectory>${tmp.bundle.dir}</outputDirectory>
                 </artifactItem>
