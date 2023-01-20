@@ -78,7 +78,7 @@ public class AuFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(AuContainer container) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(container);
     }

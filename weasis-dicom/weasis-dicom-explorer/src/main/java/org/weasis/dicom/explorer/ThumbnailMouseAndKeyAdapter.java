@@ -407,7 +407,7 @@ public class ThumbnailMouseAndKeyAdapter extends MouseAdapter implements KeyList
   }
 
   public static SeriesSelectionModel getSeriesSelectionModel() {
-    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView explorer = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     return explorer instanceof DicomExplorer model
         ? model.getSelectionList()
         : new SeriesSelectionModel(null);

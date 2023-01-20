@@ -525,7 +525,7 @@ public class WaveView extends JPanel implements SeriesViewerListener {
 
   private void printHeader(Graphics2D g2, int midWidth) {
     DataExplorerView dicomView =
-        org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+        org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
     DicomModel model = null;
     if (dicomView != null) {
       model = (DicomModel) dicomView.getDataExplorerModel();

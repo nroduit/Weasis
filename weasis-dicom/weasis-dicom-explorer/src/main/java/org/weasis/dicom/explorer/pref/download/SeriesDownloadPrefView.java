@@ -107,7 +107,7 @@ public class SeriesDownloadPrefView extends AbstractItemDialogPage {
       BundleTools.SYSTEM_PREFERENCES.put(DOWNLOAD__OPEN_MODE, openingViewer.name());
     }
 
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView instanceof DicomExplorer explorer) {
       int size = (int) spinner.getValue();
       BundleTools.SYSTEM_PREFERENCES.putIntProperty(Thumbnail.KEY_SIZE, size);

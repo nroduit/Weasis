@@ -86,4 +86,6 @@ public interface Canvas {
   Rectangle2D getImageViewBounds();
 
   Rectangle2D getImageViewBounds(double viewportWidth, double viewportHeight);
+
+  DrawingsKeyListeners getDrawingsKeyListeners();
 }

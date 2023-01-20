@@ -199,7 +199,7 @@ public class SRView extends JScrollPane implements SeriesViewerListener {
       SOPInstanceReference ref = imgRef.getSopInstanceReference();
       if (ref != null) {
         DataExplorerView dicomView =
-            org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+            org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
         DicomModel model = null;
         if (dicomView != null) {
           model = (DicomModel) dicomView.getDataExplorerModel();

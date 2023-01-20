@@ -320,7 +320,7 @@ public class DicomQrView extends AbstractItemDialogPage implements ImportDicom {
           new PluginOpeningStrategy(DownloadManager.getOpeningViewer());
       openingStrategy.setResetVeto(true);
       DataExplorerView dicomView =
-          org.weasis.core.ui.docking.UIManager.getExplorerplugin(DicomExplorer.NAME);
+          org.weasis.core.ui.docking.UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
         DicomProgress progress = new DicomProgress();
         progress.addProgressListener(

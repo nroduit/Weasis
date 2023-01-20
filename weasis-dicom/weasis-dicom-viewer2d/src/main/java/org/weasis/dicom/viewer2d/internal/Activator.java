@@ -213,7 +213,7 @@ public class Activator implements BundleActivator, ServiceListener {
     ImageViewerPlugin<DicomImageElement> view =
         EventManager.getInstance().getSelectedView2dContainer();
     if (view instanceof View2dContainer) {
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
       DataExplorerModel model = dicomView.getDataExplorerModel();
       if (model != null) {
         model.firePropertyChange(new ObservableEvent(action, view, null, view));

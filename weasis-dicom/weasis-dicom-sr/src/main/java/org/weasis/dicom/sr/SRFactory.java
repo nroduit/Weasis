@@ -79,7 +79,7 @@ public class SRFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(SRContainer mprContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(mprContainer);
     }

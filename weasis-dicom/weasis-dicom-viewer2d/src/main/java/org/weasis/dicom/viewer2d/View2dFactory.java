@@ -140,7 +140,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   public static void closeSeriesViewer(View2dContainer view2dContainer) {
     // Unregister the PropertyChangeListener
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView != null) {
       dicomView.getDataExplorerModel().removePropertyChangeListener(view2dContainer);
     }
@@ -163,7 +163,7 @@ public class View2dFactory implements SeriesViewerFactory {
 
   @Override
   public List<Action> getOpenActions() {
-    DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (dicomView == null) {
       return Collections.singletonList(preferencesAction);
     }

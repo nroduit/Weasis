@@ -42,7 +42,7 @@ public abstract class DicomViewerPlugin extends ImageViewerPlugin<DicomImageElem
         eventManager.setSelectedView2dContainer(this);
       }
       // Send event to select the related patient in Dicom Explorer.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null && dicomView.getDataExplorerModel() instanceof DicomModel model) {
         model.firePropertyChange(
             new ObservableEvent(ObservableEvent.BasicAction.SELECT, this, null, getGroupID()));

@@ -47,7 +47,7 @@ public class Activator implements BundleActivator {
         null);
 
     DicomModel.LOADING_EXECUTOR.shutdownNow();
-    DataExplorerView explorer = UIManager.getExplorerplugin(DicomExplorer.NAME);
+    DataExplorerView explorer = UIManager.getExplorerPlugin(DicomExplorer.NAME);
     if (explorer != null && explorer.getDataExplorerModel() instanceof DicomModel dicomModel) {
       // Remove image in viewers, in image cache and close the image stream
       dicomModel.dispose();

@@ -354,7 +354,7 @@ public class View2dContainer extends DicomViewerPlugin implements PropertyChange
       InsertableUtil.sortInsertable(TOOLS);
 
       // Send event to synchronize the series selection.
-      DataExplorerView dicomView = UIManager.getExplorerplugin(DicomExplorer.NAME);
+      DataExplorerView dicomView = UIManager.getExplorerPlugin(DicomExplorer.NAME);
       if (dicomView != null) {
         eventManager.addSeriesViewerListener((SeriesViewerListener) dicomView);
       }
