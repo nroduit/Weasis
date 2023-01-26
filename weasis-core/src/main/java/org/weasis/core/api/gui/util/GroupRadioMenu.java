@@ -75,11 +75,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
 
   @Override
   public JMenu createMenu(String title) {
-    JMenu menu = new JMenu(title);
-    for (RadioMenuItem radioMenuItem : itemList) {
-      menu.add(radioMenuItem);
-    }
-    return menu;
+    return createMenu(title, null);
   }
 
   public JMenu createMenu(String title, Icon icon) {

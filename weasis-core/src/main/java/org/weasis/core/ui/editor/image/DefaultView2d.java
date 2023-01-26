@@ -9,7 +9,6 @@
  */
 package org.weasis.core.ui.editor.image;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -22,7 +21,6 @@ import java.awt.GridBagConstraints;
 import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Shape;
 import java.awt.Stroke;
 import java.awt.Window;
 import java.awt.event.FocusEvent;
@@ -33,8 +31,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
@@ -134,17 +130,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
     REAL
   }
 
-  static final Shape[] pointer;
-
-  static {
-    pointer = new Shape[5];
-    pointer[0] = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
-    pointer[1] = new Line2D.Double(-40.0, 0.0, -5.0, 0.0);
-    pointer[2] = new Line2D.Double(5.0, 0.0, 40.0, 0.0);
-    pointer[3] = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
-    pointer[4] = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
-  }
-
   public static final GraphicClipboard GRAPHIC_CLIPBOARD = new GraphicClipboard();
 
   public static final Cursor EDIT_CURSOR =
@@ -163,8 +148,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   private final PanPoint startedDragPoint = new PanPoint(State.DRAGSTART);
   private int pointerType = 0;
 
-  protected static final Color pointerColor1 = Color.black;
-  protected static final Color pointerColor2 = Color.white;
   protected final Border focusBorder =
       BorderFactory.createMatteBorder(1, 1, 1, 1, IconColor.ACTIONS_YELLOW.getColor());
   protected final Border viewBorder = BorderFactory.createMatteBorder(1, 1, 1, 1, Color.GRAY);
@@ -1310,26 +1293,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   @Override
   public Point2D getHighlightedPosition() {
     return highlightedPosition;
-  }
-
-  @Override
-  public void drawPointer(Graphics2D g, Double x, Double y) {
-    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
-    float[] dash = {5.0f};
-    g.translate(x, y);
-    g.setStroke(new BasicStroke(3.0f));
-    g.setPaint(pointerColor1);
-    for (int i = 1; i < pointer.length; i++) {
-      g.draw(pointer[i]);
-    }
-    g.setStroke(
-        new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
-    g.setPaint(pointerColor2);
-    for (int i = 1; i < pointer.length; i++) {
-      g.draw(pointer[i]);
-    }
-    g.translate(-x, -y);
-    GuiUtils.resetRenderingHints(g, oldRenderingHints);
   }
 
   @Override

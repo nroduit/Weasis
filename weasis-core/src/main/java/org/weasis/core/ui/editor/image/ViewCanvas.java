@@ -9,6 +9,8 @@
  */
 package org.weasis.core.ui.editor.image;
 
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Point;
@@ -16,6 +18,8 @@ import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.beans.PropertyChangeListener;
 import java.util.Comparator;
@@ -29,6 +33,7 @@ import org.weasis.core.api.gui.Image2DViewer;
 import org.weasis.core.api.gui.util.ActionState;
 import org.weasis.core.api.gui.util.ActionW;
 import org.weasis.core.api.gui.util.Feature;
+import org.weasis.core.api.gui.util.GuiUtils;
 import org.weasis.core.api.gui.util.MouseActionAdapter;
 import org.weasis.core.api.gui.util.WinUtil;
 import org.weasis.core.api.image.OpManager;
@@ -52,6 +57,14 @@ public interface ViewCanvas<E extends ImageElement>
   String ZOOM_TYPE_CMD = "zoom.type";
   int CENTER_POINTER = 1 << 1;
   int HIGHLIGHTED_POINTER = 1 << 2;
+
+  Color pointerColor1 = Color.black;
+  Color pointerColor2 = Color.white;
+  Ellipse2D pointerCircle = new Ellipse2D.Double(-27.0, -27.0, 54.0, 54.0);
+  Line2D pointerLeft = new Line2D.Double(-40.0, 0.0, -5.0, 0.0);
+  Line2D pointerRight = new Line2D.Double(5.0, 0.0, 40.0, 0.0);
+  Line2D pointerUp = new Line2D.Double(0.0, -40.0, 0.0, -5.0);
+  Line2D pointerDown = new Line2D.Double(0.0, 5.0, 0.0, 40.0);
 
   default MouseActionAdapter getAction(Feature<?> action) {
     Optional<?> a = getEventManager().getAction(action);
@@ -233,7 +246,30 @@ public interface ViewCanvas<E extends ImageElement>
 
   Point2D getHighlightedPosition();
 
-  void drawPointer(Graphics2D g, Double x, Double y);
+  default void drawPointer(Graphics2D g, Double x, Double y) {
+    Object[] oldRenderingHints = GuiUtils.setRenderingHints(g, true, true, false);
+    float[] dash = {5.0f};
+    g.translate(x, y);
+    g.setStroke(new BasicStroke(3.0f));
+    g.setPaint(pointerColor1);
+    g.draw(pointerCircle);
+    g.draw(pointerLeft);
+    g.draw(pointerRight);
+    g.draw(pointerUp);
+    g.draw(pointerDown);
+
+    g.setStroke(
+        new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 5.0f, dash, 0.0f));
+    g.setPaint(pointerColor2);
+    g.setPaint(pointerColor1);
+    g.draw(pointerCircle);
+    g.draw(pointerLeft);
+    g.draw(pointerRight);
+    g.draw(pointerUp);
+    g.draw(pointerDown);
+    g.translate(-x, -y);
+    GuiUtils.resetRenderingHints(g, oldRenderingHints);
+  }
 
   List<Action> getExportActions();
 
