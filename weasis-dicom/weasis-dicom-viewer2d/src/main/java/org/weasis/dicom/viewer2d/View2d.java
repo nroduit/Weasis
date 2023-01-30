@@ -860,7 +860,7 @@ public class View2d extends DefaultView2d<DicomImageElement> {
             //                      dispImg.width() * image.getRescaleX(),
             //                      dispImg.height() * image.getRescaleY());
             //              addRectangle(layer, rect, axial ? Biped.F.getColor() : sagittal ?
-            //                  Biped.R.getColor() : Biped.A.getColor());
+            // Biped.R.getColor()  : Biped.A.getColor() );
             //            }
           }
         }

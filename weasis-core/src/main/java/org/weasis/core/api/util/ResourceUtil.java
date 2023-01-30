@@ -164,6 +164,7 @@ public class ResourceUtil {
     IMAGE_EDIT("svg/other/imageEdit.svg"), // NON-NLS
     IMAGE_PRESENTATION("svg/other/imagePresentation.svg"), // NON-NLS
     KEY_IMAGE("svg/other/keyImage.svg"), // NON-NLS
+
     PATIENT("svg/other/patient.svg"), // NON-NLS
     RADIOACTIVE("svg/other/radioactive.svg"), // NON-NLS
     RASTER_IMAGE("svg/other/rasterImage.svg"), // NON-NLS

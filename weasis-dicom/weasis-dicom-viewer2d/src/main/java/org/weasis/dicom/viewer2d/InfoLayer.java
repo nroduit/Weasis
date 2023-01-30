@@ -592,7 +592,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     GuiUtils.resetRenderingHints(g2, oldRenderingHints);
   }
 
-  public static MediaSeriesGroup getParent(Series series, TreeModelNode node) {
+  public static MediaSeriesGroup getParent(
+      MediaSeries<DicomImageElement> series, TreeModelNode node) {
     if (series != null) {
       Object tagValue = series.getTagValue(TagW.ExplorerModel);
       if (tagValue instanceof DicomModel model) {
@@ -602,7 +603,8 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
     return null;
   }
 
-  private void drawSeriesInMemoryState(Graphics2D g2d, MediaSeries series, int x, int y) {
+  private void drawSeriesInMemoryState(
+      Graphics2D g2d, MediaSeries<DicomImageElement> series, int x, int y) {
     if (getDisplayPreferences(PRELOADING_BAR) && series instanceof DicomSeries dicomSeries) {
       boolean[] list = dicomSeries.getImageInMemoryList();
       int maxLength = GuiUtils.getScaleLength(120);
@@ -627,7 +629,7 @@ public class InfoLayer extends AbstractInfoLayer<DicomImageElement> {
       TagW tag,
       MediaSeriesGroup patient,
       MediaSeriesGroup study,
-      Series series,
+      MediaSeries<DicomImageElement> series,
       ImageElement image) {
     if (image.containTagKey(tag)) {
       return image.getTagValue(tag);

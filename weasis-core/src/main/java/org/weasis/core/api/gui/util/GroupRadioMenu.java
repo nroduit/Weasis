@@ -35,7 +35,7 @@ public class GroupRadioMenu<T> implements ActionListener, ComboBoxModelAdapter<T
     this.group = new ButtonGroup();
   }
 
-  private void init() {
+  protected void init() {
     for (RadioMenuItem item : itemList) {
       group.remove(item);
     }
