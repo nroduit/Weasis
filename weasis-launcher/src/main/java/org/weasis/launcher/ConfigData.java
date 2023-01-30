@@ -762,7 +762,7 @@ public class ConfigData {
 
   public static void setOsgiNativeLibSpecification() {
     // Follows the OSGI specification to use Bundle-NativeCode in the bundle fragment :
-    // http://www.osgi.org/Specifications/Reference
+    // See https://docs.osgi.org/reference/osnames.html
     String osName = System.getProperty(P_OS_NAME);
     String osArch = System.getProperty("os.arch");
     if (Utils.hasText(osName) && Utils.hasText(osArch)) {

@@ -113,6 +113,10 @@ public abstract class AbstractInfoLayer<E extends ImageElement> extends DefaultU
     this.useGlobalPreferences = useGlobalPreferences;
   }
 
+  public ViewCanvas<E> getView2DPane() {
+    return view2DPane;
+  }
+
   public static void applyPreferences(Preferences prefs) {
     if (prefs != null) {
       Preferences p = prefs.node(ViewSetting.PREFERENCE_NODE);

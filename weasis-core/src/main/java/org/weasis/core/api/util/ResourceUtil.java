@@ -97,6 +97,7 @@ public class ResourceUtil {
     IMPORT_IMAGE("svg/action/importImage.svg"), // NON-NLS
     INVERSE_LUT("svg/action/inverseLut.svg"), // NON-NLS
     LAYOUT("svg/action/layout.svg"), // NON-NLS
+    LOAD_VOLUME("svg/action/loadVolume.svg"), // NON-NLS
     LUT("svg/action/lut.svg"), // NON-NLS
     MEASURE("svg/action/measure.svg"), // NON-NLS
     MEASURE_TOP_LEFT("svg/action/measureTopLeft.svg"), // NON-NLS
@@ -124,6 +125,7 @@ public class ResourceUtil {
     SELECTION("svg/action/selection.svg"), // NON-NLS
     SELECTION_DELETE("svg/action/selectionDelete.svg"), // NON-NLS
     SEQUENCE("svg/action/sequence.svg"), // NON-NLS
+    SETTINGS("svg/action/settings.svg"), // NON-NLS
     STAR("svg/action/star.svg"), // NON-NLS
     SKIP_END("svg/action/skipEnd.svg"), // NON-NLS
     SKIP_START("svg/action/skipStart.svg"), // NON-NLS
@@ -133,6 +135,7 @@ public class ResourceUtil {
     SYNCH_LARGE("svg/action/synchLarge.svg"), // NON-NLS
     SYNCH_STAR("svg/action/synchStar.svg"), // NON-NLS
     TILE("svg/action/tile.svg"), // NON-NLS
+    VOLUME_RENDERING("svg/action/volumeRendering.svg"), // NON-NLS
     WINDOW_LEVEL("svg/action/winLevel.svg"), // NON-NLS
     ZOOM("svg/action/zoom.svg"), // NON-NLS
     ZOOM_AREA("svg/action/zoomArea.svg"), // NON-NLS
