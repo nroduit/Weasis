@@ -48,7 +48,7 @@ https://opencv.org/license/
 
 The implementation for reading, writing and transcoding DICOM Images has been developed by [Nicolas Roduit](https://github.com/nroduit) with the same license as the OpenCV project (Apache 2.0).
 
-The specific codecs used with this implementation are:
+The specific codecs used as a 3rd party library with this implementation are:
 
 - [OpenJPEG](https://github.com/uclouvain/openjpeg/blob/master/LICENSE) with BSD License
 - [CharLS](https://github.com/team-charls/charls/blob/master/LICENSE.md) with BSD License
