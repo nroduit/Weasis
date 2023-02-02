@@ -601,7 +601,8 @@ public class SeriesBuilder {
           if (index > 0) {
             double space = Math.abs(pos - lastPos);
             if (!abort[1]
-                && (MathUtil.isEqualToZero(space) || (index > 1 && lastSpace - space > epsilon))) {
+                && (MathUtil.isEqualToZero(space)
+                    || (index > 1 && Math.abs(lastSpace - space) > epsilon))) {
               confirmMessage(view, Messages.getString("SeriesBuilder.space"), abort);
             }
             lastSpace = space;
