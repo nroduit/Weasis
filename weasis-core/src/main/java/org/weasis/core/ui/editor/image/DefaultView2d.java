@@ -797,12 +797,6 @@ public abstract class DefaultView2d<E extends ImageElement> extends GraphicsPane
   }
 
   @Override
-  public Font getFont() {
-    // required when used getGraphics().getFont() in DefaultGraphicLabel
-    return MeasureTool.viewSetting.getFont();
-  }
-
-  @Override
   public Font getLayerFont() {
     Font font = FontItem.DEFAULT_SEMIBOLD.getFont();
     return getLayerFont(getFontMetrics(font), getWidth());

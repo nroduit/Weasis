@@ -41,6 +41,7 @@ import org.weasis.core.api.image.WindowOp;
 import org.weasis.core.api.image.ZoomOp.Interpolation;
 import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.ui.editor.image.dockable.MeasureTool;
 import org.weasis.core.ui.model.graphic.Graphic;
 import org.weasis.core.ui.model.layer.LayerAnnotation;
 import org.weasis.core.ui.model.utils.ImageLayerChangeListener;
@@ -218,7 +219,10 @@ public interface ViewCanvas<E extends ImageElement>
 
   void setSelected(Boolean selected);
 
-  Font getFont();
+  default Font getFont() {
+    // required when used getGraphics().getFont() in DefaultGraphicLabel
+    return MeasureTool.viewSetting.getFont();
+  }
 
   Font getLayerFont();
 
