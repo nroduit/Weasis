@@ -51,7 +51,7 @@ import org.weasis.dicom.codec.DicomImageElement;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
-import org.weasis.dicom.viewer3d.vol.VolContainer;
+import org.weasis.dicom.viewer3d.View3DContainer;
 
 public class DisplayTool extends PluginTool implements SeriesViewerListener {
 
@@ -133,16 +133,16 @@ public class DisplayTool extends PluginTool implements SeriesViewerListener {
           if (AbstractInfoLayer.applyToAllView.get()) {
             synchronized (UIManager.VIEWER_PLUGINS) {
               for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-                if (p instanceof VolContainer) {
-                  ((VolContainer) p).getImagePanels().forEach(v -> v.getJComponent().repaint());
+                if (p instanceof View3DContainer container) {
+                  container.getImagePanels().forEach(v -> v.getJComponent().repaint());
                 }
               }
             }
           } else {
             synchronized (UIManager.VIEWER_PLUGINS) {
               for (final ViewerPlugin<?> p : UIManager.VIEWER_PLUGINS) {
-                if (p instanceof VolContainer) {
-                  for (ViewCanvas<?> v : ((VolContainer) p).getImagePanels()) {
+                if (p instanceof View3DContainer container) {
+                  for (ViewCanvas<?> v : container.getImagePanels()) {
                     LayerAnnotation layer = v.getInfoLayer();
                     if (layer != null) {
                       layer.resetToDefault();
