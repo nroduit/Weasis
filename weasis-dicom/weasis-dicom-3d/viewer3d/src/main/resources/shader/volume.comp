@@ -1,0 +1,506 @@
+#version 430
+
+layout (local_size_x = 16, local_size_y = 16) in ;
+layout (rgba32f, binding = 0) uniform image2D outputImage;
+layout (binding = 1) uniform sampler3D volTexture;
+layout (binding = 2) uniform sampler2D colorMap;
+
+// Rendering parameters
+uniform bool shading;
+uniform vec3 backgroundColor;
+uniform int renderingType;
+uniform bool ditherRay = true;
+uniform float opacityFactor;
+//(ambientLight, SpecularExponent, SpecularFactor)
+uniform vec3 lightFactors;
+uniform vec3 lightPosition;
+uniform vec3 lightColor;
+
+// Texture data type
+uniform int textureDataType;
+const uint dataTypeByte = 0x00000000u;
+const uint dataTypeSignedSort = 0x00000001u;
+const uint dataTypeUnsignedSort = 0x00000002u;
+const uint dataTypeRGB8 = 0x00000003u;
+const uint dataTypeRGBA8 = 0x00000004u;
+const uint dataTypeRGBA32F = 0x00000005u;
+
+// LUT shape type
+uniform int lutShape;
+const uint lutShapeLinear = 0x00000000u;
+const uint lutShapeSigmoid = 0x00000001u;
+const uint lutShapeSigmoidNorm = 0x00000002u;
+const uint lutShapeLog = 0x00000003u;
+const uint lutShapeLogInv = 0x00000004u;
+
+
+// Geometry
+uniform vec3 texelSize;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
+uniform int depthSampleNumber;
+
+// Window/Level
+uniform float inputLevelMin;
+uniform float inputLevelMax;
+uniform float outputLevelMin;
+uniform float outputLevelMax;
+uniform float windowWidth;
+uniform float windowCenter;
+
+// Lighting
+const vec3 defaultDiffuse = vec3( 1.0, 1.0, 1.0 );
+
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+    vec3 invDirection;
+    int sign[3];
+};
+
+struct LightParameters {
+    vec4 position;
+    vec4 diffuse;
+    vec4 specular;
+    vec4 ambient;
+    bool enabled;
+};
+
+uniform LightParameters lights[4];
+
+const vec3 lightPositionWorld = vec3(10.0, 5.0, -10.0);
+const float specularExp = 10.0;
+const float ambientLight = 0.1;
+const float  diffuse = 0.9;
+const float  specular = 0.2;
+
+// *************************************************************************************************
+// Get voxel value from 3D texture
+// *************************************************************************************************
+
+float getVoxelValue(vec3 coordinates) {
+    return texture(volTexture, coordinates).r;
+}
+
+float getOriginalVoxelValue(float texValue) {
+    if (textureDataType == dataTypeByte) {
+        return texValue * 255.0;
+    } else if (textureDataType == dataTypeSignedSort) {
+        return texValue * 65535.0 - 32768.0;
+    } else return texValue * 65535.0;
+}
+
+float getOriginalVoxelNormalizedValue(vec3 texCoord) {
+    float pix = getOriginalVoxelValue(getVoxelValue(texCoord));
+    return (pix - outputLevelMin) / (outputLevelMax - outputLevelMin);
+}
+
+float getOriginalVoxelNormalizedValue(vec3 texCoord, float min, float max) {
+    float pix = getOriginalVoxelValue(getVoxelValue(texCoord));
+    if (pix >= min && pix <= max) {
+        return (pix - outputLevelMin) / (outputLevelMax - outputLevelMin);
+    }
+    return 0.0;
+}
+
+// *************************************************************************************************
+// Window/Level and tranfert function
+// *************************************************************************************************
+
+float getWindowLevelLinear(float pixValue) {
+    float slope = (outputLevelMax - outputLevelMin) / windowWidth;
+    float intercept = outputLevelMax - slope * (windowCenter + (windowWidth / 2.0));
+    float val = pixValue * slope + intercept;
+    return clamp(val, outputLevelMin, outputLevelMax);
+}
+
+float sigmoidLUT(float nFactor, float outRange, float pixValue) {
+    return outRange / (1 + exp((2 * nFactor / 10.0) * (pixValue - windowCenter) / windowWidth));
+}
+
+float exponentialLUT(float nFactor, float outRange, float pixValue) {
+    return outRange * exp((nFactor / 10.0) * (pixValue - windowCenter) / windowWidth);
+}
+
+float logarithmiclLUT(float nFactor, float outRange, float pixValue) {
+    return outRange * log((nFactor / 10.0) * (1 + (pixValue - windowCenter) / windowWidth));
+}
+
+float getWindowLevelFunc(float pixValue, bool normalize, uint type) {
+    float nFactor = type == lutShapeSigmoid ? -20 : 20; // factor defined by default in Dicom standard ( -20*2/10 = -4 )
+    float outRange = outputLevelMax - outputLevelMin;
+    float val = 0;
+
+    if (type == lutShapeSigmoid) {
+        val = sigmoidLUT(nFactor, outRange, pixValue);
+    } else if (type == lutShapeLogInv) {
+        val = exponentialLUT(nFactor, outRange, pixValue);
+    } else if (type == lutShapeLog) {
+        val = logarithmiclLUT(nFactor, outRange, pixValue);
+    }
+
+    if (normalize) {
+        float lowLevel = windowCenter - windowWidth / 2.0;
+        float highLevel = windowCenter + windowWidth / 2.0;
+        float minValue = 0;;
+        float maxValue = 0;
+        if (type == lutShapeSigmoid) {
+            minValue =  sigmoidLUT(nFactor, outRange, lowLevel);
+            maxValue =  sigmoidLUT(nFactor, outRange, highLevel);
+        } else if (type == lutShapeLogInv) {
+            minValue = exponentialLUT(nFactor, outRange, lowLevel);
+            maxValue = exponentialLUT(nFactor, outRange, highLevel);
+        } else if (type == lutShapeLog) {
+            minValue = logarithmiclLUT(nFactor, outRange, lowLevel);
+            maxValue = logarithmiclLUT(nFactor, outRange, highLevel);
+        }
+        val = (val - minValue) * outRange / abs(maxValue - minValue);
+    }
+
+    return clamp(val + outputLevelMin, outputLevelMin, outputLevelMax);;
+}
+
+float getWindowLevel(vec3 texCoord) {
+    float val = getOriginalVoxelValue(getVoxelValue(texCoord));
+    if(lutShape == lutShapeLinear) {
+        val = getWindowLevelLinear(val);
+    } else if(lutShape == lutShapeSigmoid) {
+        val = getWindowLevelFunc(val, false, lutShape);
+    } else if(lutShape == lutShapeSigmoidNorm) {
+        val = getWindowLevelFunc(val, true, lutShapeSigmoid);
+    } else if(lutShape == lutShapeLog) {
+        val = getWindowLevelFunc(val, true, lutShape);
+    } else if(lutShape == lutShapeLogInv) {
+        val = getWindowLevelFunc(val, true, lutShape);
+    } else {
+        val = getWindowLevelLinear(val);
+    }
+    return val;
+}
+
+float getNormalizedWindowLevel(vec3 texCoord) {
+    // normalize to 0-1 range according to the outputRange
+    return (getWindowLevel(texCoord) - outputLevelMin) / (outputLevelMax - outputLevelMin);
+}
+
+// *************************************************************************************************
+// Ray casting
+// *************************************************************************************************
+
+float dithering(vec2 uv){
+    return fract(sin(uv.x * 12.9898 + uv.y * 78.233) * 43758.5453);
+}
+
+float guassianFilter(vec3 uvw, float delta) {
+    float dX = delta;
+    float dY = delta;
+    float dZ = delta;
+    float pix = getNormalizedWindowLevel(uvw);
+    pix *= 2;
+    pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,+dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(+dX,+dY,-dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(+dX,-dY,+dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(+dX,-dY,-dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(-dX,+dY,+dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(-dX,+dY,-dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,+dZ));
+    pix += getNormalizedWindowLevel(uvw +vec3(-dX,-dY,-dZ));
+    return pix/10;
+}
+
+// Computes a simplified lighting equation
+vec3 blinnPhong( vec3 N, vec3 V, vec3 L, int light, vec3 diffuse )
+{
+    // material properties
+    // you might want to put this into a bunch or uniforms
+    vec3 Ka = vec3( 1.0, 1.0, 1.0 );
+    vec3 Kd = diffuse; // vec3( 1.0, 1.0, 1.0 );
+    vec3 Ks = vec3( 1.0, 1.0, 1.0 );
+    float shininess = 50.0;
+
+    // diffuse coefficient
+    float diff_coeff = max( dot( L, N ), 0.0 );
+
+    // specular coefficient
+    vec3 H = normalize( L + V );
+    float spec_coeff = diff_coeff > 0.0 ? pow( max( dot( H, N ), 0.0 ), shininess ) : 0.0;
+
+    // final lighting model
+    return  Ka * lights[light].ambient.rgb  +
+    Kd * lights[light].diffuse.rgb  * diff_coeff +
+    Ks * lights[light].specular.rgb * spec_coeff ;
+}
+
+// On-the-fly gradient approximation.
+vec3 gradient(vec3 uvw, float delta) {
+    vec3 pix1;
+    pix1.x = getNormalizedWindowLevel(uvw - vec3(delta, 0, 0)) - getNormalizedWindowLevel(uvw + vec3(delta, 0, 0));
+    pix1.y = getNormalizedWindowLevel(uvw - vec3(0, delta, 0)) - getNormalizedWindowLevel(uvw + vec3(0, delta, 0));
+    pix1.z = getNormalizedWindowLevel(uvw - vec3(0, 0, delta)) - getNormalizedWindowLevel(uvw + vec3(0, 0, delta));
+    return normalize(pix1);
+}
+
+Ray makeRay(vec3 origin, vec3 direction) {
+    vec3 inv_direction = vec3(1.0) / direction;
+
+    return Ray(origin, direction, inv_direction, int[3](((inv_direction.x < 0.0) ? 1 : 0), ((inv_direction.y < 0.0) ? 1 : 0), ((inv_direction.z < 0.0) ? 1 : 0)));
+}
+
+Ray CreateCameraRay(vec2 uv) {
+    // Transform the camera origin to world space
+    vec3 origin = (viewMatrix * vec4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+
+    // Invert the perspective projection of the view-space position
+    vec3 direction = (projectionMatrix * vec4(uv, 0.0f, 1.0f)).xyz;
+    // Transform the direction from camera to world space and normalize
+    direction = (viewMatrix * vec4(direction, 0.0f)).xyz;
+    direction = normalize(direction);
+    return makeRay(origin, direction);
+}
+
+float getAabb(float val, int dir) {
+    return dir == 0 ? -val : val;
+}
+
+void intersect(in Ray ray, out float tmin, out float tmax) {
+    float tymin, tymax, tzmin, tzmax;
+    tmin = (getAabb(texelSize.x, ray.sign[0]) - ray.origin.x) * ray.invDirection.x;
+    tmax = (getAabb(texelSize.x, 1 - ray.sign[0]) - ray.origin.x) * ray.invDirection.x;
+    tymin = (getAabb(texelSize.y, ray.sign[1]) - ray.origin.y) * ray.invDirection.y;
+    tymax = (getAabb(texelSize.y, 1 - ray.sign[1]) - ray.origin.y) * ray.invDirection.y;
+    tzmin = (getAabb(texelSize.z, ray.sign[2]) - ray.origin.z) * ray.invDirection.z;
+    tzmax = (getAabb(texelSize.z, 1 - ray.sign[2]) - ray.origin.z) * ray.invDirection.z;
+    tmin = max(max(tmin, tymin), tzmin);
+    tmax = min(min(tmax, tymax), tzmax);
+}
+
+vec4 rayCastingMip(Ray ray, float tmin, float tmax, vec2 uv) {
+    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+    vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+
+    float len = distance(end, start);
+    int sampleCount = int(float(depthSampleNumber) * len);
+
+    float maxPix = 0.0;
+    vec3 texCoord = vec3(0.0);
+    float pix = 0.0;
+
+    vec3 rayPos = start;
+    float stepSize = 1.0/sampleCount;
+    vec3 stepPos = (end - start) * stepSize;
+    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+
+    for (int count = 0; count < sampleCount; count++) {
+        rayPos += stepPos;
+        texCoord = rayPos + ditheredRayStep;
+        pix = getNormalizedWindowLevel(texCoord);
+
+        maxPix = max(maxPix, pix);
+        if (maxPix >= 0.99) {
+            break;
+        }
+    }
+    return texture(colorMap, vec2(maxPix, 0.0));
+}
+
+vec4 rayCastingAlphaBlending(Ray ray, float tmin, float tmax, vec2 uv) {
+    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+    vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+
+    float len = distance(end, start);
+    int sampleCount = int(float(depthSampleNumber) * len);
+
+    vec4 pxColor = vec4(0.0);
+    vec3 texCoord = vec3(0.0);
+    float pix = 0.0;
+
+    vec3 rayPos = start;
+    float stepSize = 1.0/sampleCount;
+    vec3 stepPos = (end - start) * stepSize;
+    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+
+    for (int count = 0; count < sampleCount; count++) {
+        rayPos += stepPos;
+        texCoord = rayPos + ditheredRayStep;
+        pix = getNormalizedWindowLevel(texCoord);
+
+        vec4 pixel = texture(colorMap, vec2(pix, 0.0));
+        if (pix > 0.0) {
+            float alpha = pix - pix * pxColor.a;
+            pxColor.rgb = alpha * pixel.rgb + pxColor.rgb;
+            pxColor.a += alpha;
+        }
+        if (pxColor.a >= 0.99) {
+            break;
+        }
+    }
+    return pxColor;
+}
+
+vec4 rayCastingComposite(Ray ray, float tmin, float tmax, vec2 uv) {
+    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+    vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+
+    float len = distance(end, start);
+    int sampleCount = int(float(depthSampleNumber) * len);
+
+    vec4 pxColor = vec4(0.0);
+    vec3 texCoord = vec3(0.0);
+    float pix = 0.0;
+
+    vec3 rayPos = start;
+    float stepSize = 1.0/sampleCount;
+    vec3 stepPos = (end - start) * stepSize;
+    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+
+    for (int count = 0; count < sampleCount; count++) {
+        rayPos += stepPos;
+        texCoord = rayPos + ditheredRayStep;
+        pix = getNormalizedWindowLevel(texCoord);
+        //pix = guassianFilter(texCoord, stepSize);
+        vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+        pixel.a = min(pixel.a * opacityFactor, 1.0);
+
+        if (pixel.a > 0.0) {
+            float alpha = (1.0 - pixel.a) * pxColor.a;
+            if (shading) {
+                vec3 normalPos = gradient(texCoord, stepSize);
+                vec3 viewSpaceLightPosition = vec3(viewMatrix * vec4(lightPositionWorld, 1.0));
+                vec3 V = normalize(viewSpaceLightPosition - texCoord);
+                for (int i = 0; i < 4; ++i) {
+                    if ( lights[i].enabled ) {
+                        vec3 L = normalize(lights[i].position.xyz - texCoord);
+                        // double sided lighting
+                        if ( dot( L, normalPos ) < 0.0 ) {
+                            normalPos = -normalPos;
+                        }
+                        pxColor.rgb = pixel.rgb * blinnPhong(normalPos, V, L, i, defaultDiffuse) * pixel.a + alpha * pxColor.rgb;
+                    }
+                }
+            } else {
+                pxColor.rgb = pixel.a * pixel.rgb + alpha * pxColor.rgb;
+            }
+            pxColor.a = pixel.a + alpha;
+        }
+        if (pxColor.a >= 0.99) {
+            break;
+        }
+    }
+    if (pxColor.a >= 0.99) {
+        pxColor.a = 1.0;
+    }
+    return pxColor;
+}
+
+vec4 rayCastingIsoSurface(Ray ray, float tmin, float tmax, vec2 uv) {
+    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+    vec3 end = (ray.origin.xyz + tmax * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+
+    float len = distance(end, start);
+    int sampleCount = int(float(depthSampleNumber) * len);
+    float stepLength = len / float(depthSampleNumber);
+
+    vec3 rayPos = start;
+    float stepSize = 1.0/sampleCount;
+    vec3 stepPos = (end - start) * stepSize;
+    vec3 ditheredRayStep = ditherRay ? stepPos * dithering(uv) : stepPos;
+
+    vec3 texCoord = vec3(0.0);
+    vec4 pxColor = vec4(0.0);
+    float pix = 0.0;
+    float center = (windowCenter - outputLevelMin) / (outputLevelMax - outputLevelMin);
+
+    bool prev_sign = pix < center;
+
+    for (int count = 0; count < sampleCount; count++) {
+        rayPos += stepPos;
+        texCoord = rayPos + ditheredRayStep;
+        pix = getNormalizedWindowLevel(texCoord);
+        vec4 pixel =  texture(colorMap, vec2(pix, 0.0));
+        bool sign_cur = pix > center;
+        if (pixel.a > 0.0) {
+            if (sign_cur != prev_sign) {
+                vec3 normalPos = gradient(texCoord, stepSize);
+                vec3 viewSpaceLightPosition = vec3(viewMatrix * vec4(lightPositionWorld, 1.0));
+                vec3 V = normalize(viewSpaceLightPosition - texCoord);
+                vec4 diffuse = texture( colorMap,  vec2(center, 0.0) );
+
+                for (int i = 0; i < 4; ++i) {
+                    if ( lights[i].enabled ) {
+                        vec3 L = normalize( lights[i].position.xyz - texCoord);
+                        // double sided lighting
+                        if ( dot( L, normalPos ) < 0.0 ) {
+                            normalPos = -normalPos;
+                        }
+
+                        pxColor.rgb = pxColor.rgb + blinnPhong(normalPos, V, L, i, diffuse.rgb);
+                    }
+                }
+                pxColor.a = diffuse.a;
+                break;
+            }
+        }
+
+        if (pxColor.a >= 0.99) {
+            break;
+        }
+    }
+
+    if (pxColor.a >= 0.99) {
+        pxColor.a = 1.0;
+    }
+    return pxColor;
+}
+
+vec4 slice(Ray ray, float tmin, float tmax) {
+    vec3 start = (ray.origin.xyz + tmin * ray.direction.xyz + texelSize) / (texelSize + texelSize);
+    if (start.z < 0.5) {
+        start.z += 0.5;
+    } else {
+        start.z -= 0.5;
+    }
+
+    float pix = getNormalizedWindowLevel(start);
+    return vec4(pix, pix, pix, 1.0f);
+}
+
+void main() {
+
+    ivec2 pixelCoords = ivec2(gl_GlobalInvocationID.xy);
+
+    ivec2 imageDims = imageSize(outputImage);
+    if (pixelCoords.x >= imageDims.x || pixelCoords.y >= imageDims.y) {
+        return;
+    }
+
+    vec2 uv;
+    uv.x = (float(pixelCoords.x * 2 - imageDims.x) / imageDims.x);
+    uv.y = (float(pixelCoords.y * 2 - imageDims.y) / imageDims.y);
+
+    Ray ray = CreateCameraRay(uv);
+
+    vec4 pixelVal = vec4(0);
+    float tmin = 0.0;
+    float tmax = 0.0;
+    intersect(ray, tmin, tmax);
+
+    if (renderingType == 4) {
+        pixelVal = slice(ray, tmin, tmax);
+    } else {
+        // Volume Rendering
+        if (tmax >= tmin) {
+            if (renderingType == 1) {
+                pixelVal = rayCastingAlphaBlending(ray, tmin, tmax, uv);
+            } else if (renderingType == 2) {
+                pixelVal = rayCastingMip(ray, tmin, tmax, uv);
+            } else if (renderingType == 3) {
+                pixelVal = rayCastingIsoSurface(ray, tmin, tmax, uv);
+            } else if (renderingType == 5) {
+                pixelVal = rayCastingComposite(ray, tmin, tmax, uv);
+            } else {
+                pixelVal = rayCastingComposite(ray, tmin, tmax, uv);
+            }
+        }
+    }
+    imageStore(outputImage, pixelCoords, pixelVal);
+}

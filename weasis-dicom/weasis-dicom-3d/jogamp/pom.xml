@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <parent>
+    <artifactId>weasis-dicom-3d</artifactId>
+    <groupId>org.weasis.dicom.3d</groupId>
+    <!--suppress MavenPropertyInParent -->
+    <version>${revision}${changelist}</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+  <packaging>jar</packaging>
+  <groupId>org.weasis.thirdparty.org.jogamp</groupId>
+  <artifactId>jogamp</artifactId>
+  <name>JOGL - Java Bindings for OpenGL [${project.artifactId}]</name>
+  <version>${jogamp.version}</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependency</id>
+            <goals>
+              <goal>copy-dependencies</goal>
+            </goals>
+            <configuration>
+              <includeArtifactIds>gluegen-rt,jogl-all,jocl</includeArtifactIds>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>biz.aQute.bnd</groupId>
+        <artifactId>bnd-maven-plugin</artifactId>
+        <configuration>
+          <bnd>
+            -includeresource.all: lib/=target/dependency/;lib:=true
+            Import-Package: \
+            !com.jogamp.openal.*,!org.eclipse.*,!com.jogamp.plugin.applet,!org.jdesktop.applet.*,\
+            javafx.*;resolution:=optional,com.jogamp.plugin.ui;resolution:=optional,\
+            com.sun.javafx.tk;resolution:=optional,jdk.internal.module;resolution:=optional,*
+
+            -exportcontents:com.jogamp.*,gluegen.*,jogamp.*,jogl.util.*,newt.data*
+          </bnd>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>org.jogamp.gluegen</groupId>
+      <artifactId>gluegen-rt</artifactId>
+      <version>${jogamp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jogamp.jogl</groupId>
+      <artifactId>jogl-all</artifactId>
+      <version>${jogamp.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.jogamp.jocl</groupId>
+      <artifactId>jocl</artifactId>
+      <version>${jogamp.version}</version>
+    </dependency>
+  </dependencies>
+</project>

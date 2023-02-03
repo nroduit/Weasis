@@ -17,8 +17,8 @@
     <revision>4.1.0</revision>
     <changelist>-SNAPSHOT</changelist>  <!-- Remove "-SNAPSHOT" for release -->
 
-    <java-version>17</java-version>
-    <jdk-version>17</jdk-version>
+    <java-version>19</java-version>
+    <jdk-version>19</jdk-version>
     <enforcer.jdk-version>[${jdk-version},)</enforcer.jdk-version>
     <enforcer.maven-version>[3.5.3,)</enforcer.maven-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -100,6 +100,9 @@
           <version>3.10.1</version>
           <configuration>
             <release>${java-version}</release>
+            <compilerArgs>
+              --enable-preview
+            </compilerArgs>
           </configuration>
         </plugin>
         <plugin>
