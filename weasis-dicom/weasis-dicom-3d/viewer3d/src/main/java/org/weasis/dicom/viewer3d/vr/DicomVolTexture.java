@@ -11,6 +11,7 @@ package org.weasis.dicom.viewer3d.vr;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -178,12 +179,26 @@ public class DicomVolTexture extends VolumeTexture implements MediaSeriesGroup {
     }
   }
 
-  public List<PresetWindowLevel> getPresetList(boolean pixelPadding) {
+  public List<PresetWindowLevel> getPresetList(boolean pixelPadding, Preset volumePreset) {
     Object media = series.getMedia(MEDIA_POSITION.MIDDLE, null, null);
 
     if (media instanceof DicomImageElement imgElement) {
       DefaultWlPresentation wlp = new DefaultWlPresentation(null, pixelPadding);
-      return imgElement.getPresetList(wlp);
+      List<PresetWindowLevel> presets = new ArrayList<>(imgElement.getPresetList(wlp));
+      // Modify auto level according to the volume LUT
+      for (int i = 0; i < presets.size(); i++) {
+        PresetWindowLevel p = presets.get(i);
+        if (p.getKeyCode() == 0x30) {
+          double ww = volumePreset.getColorMax() - volumePreset.getColorMin();
+          PresetWindowLevel autoLevel =
+              new PresetWindowLevel(
+                  "Auto Level [Image]", ww, volumePreset.getColorMin() + ww / 2, LutShape.LINEAR);
+          autoLevel.setKeyCode(0x30);
+          presets.set(i, autoLevel);
+          break;
+        }
+      }
+      return presets;
     }
     return Collections.emptyList();
   }

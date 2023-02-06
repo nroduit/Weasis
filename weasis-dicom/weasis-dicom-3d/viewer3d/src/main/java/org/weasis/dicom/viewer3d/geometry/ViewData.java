@@ -9,7 +9,8 @@
  */
 package org.weasis.dicom.viewer3d.geometry;
 
-import org.joml.Quaternionf;
+import org.joml.Quaterniond;
 import org.joml.Vector3f;
 
-public record ViewData(Vector3f position, Quaternionf rotation, float zoom) implements View {}
+public record ViewData(String title, Vector3f position, Quaterniond rotation, float zoom)
+    implements View {}

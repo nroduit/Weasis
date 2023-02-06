@@ -18,12 +18,15 @@ import java.awt.event.MouseEvent;
 import java.util.Objects;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Quaterniond;
 import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 import org.weasis.core.api.gui.util.ActionW;
+import org.weasis.dicom.viewer3d.vr.DicomVolTexture;
+import org.weasis.dicom.viewer3d.vr.View3d;
 import org.weasis.dicom.viewer3d.vr.VolumeCanvas;
 
 public class Camera {
@@ -58,8 +61,29 @@ public class Camera {
 
   public Camera(VolumeCanvas renderer, View preset) {
     this.renderer = Objects.requireNonNull(renderer);
-    setFromPreset(preset);
-    updateCameraTransform();
+    setCameraView(preset);
+  }
+
+  public void setCameraView(View preset) {
+    if (renderer instanceof View3d view3d) {
+      DicomVolTexture volTexture = view3d.getVolTexture();
+      if (volTexture != null) {
+        //        double[] or = volTexture.getVolumeGeometry().getOrientationPatient();
+        //        if (or != null && or.length == 6) {
+        //          Vector3d vr = new Vector3d(or);
+        //          Vector3d vc = new Vector3d(or[3], or[4], or[5]);
+        //          Quaterniond quaternionCol = getRotationFromTo(vr, new Vector3d(1.0, 0.0, 0.0),
+        // vc);
+        //          quaternionCol =
+        //              getRotationFromTo(vc, new Vector3d(0.0, 1.0, 0.0), vr)
+        //                  .mul(quaternionCol)
+        //                  .mul(preset.rotation());
+        //          set(preset.position(), quaternionCol, preset.zoom());
+        //          return;
+        //        }
+      }
+    }
+    set(preset.position(), preset.rotation(), preset.zoom());
   }
 
   public Camera(VolumeCanvas renderer, Vector3f eye, Vector3f viewCenter, Vector3f upDir) {
@@ -77,8 +101,9 @@ public class Camera {
     final Vector3f yAxis = new Vector3f(xAxis).cross(zAxis).normalize();
     xAxis.set(new Vector3f(zAxis).cross(yAxis)).normalize();
     return new ViewData(
+        "custom",
         new Vector3f(center).negate(),
-        new Quaternionf()
+        new Quaterniond()
             .setFromNormalized(new Matrix3f(xAxis, yAxis, zAxis).transpose())
             .normalize(),
         -dir.length());
@@ -96,7 +121,7 @@ public class Camera {
     return zoomFactor;
   }
 
-  public void set(Vector3f position, Quaternionf rotation, float zoom) {
+  public void set(Vector3f position, Quaterniond rotation, float zoom) {
     this.rotation.set(rotation);
     this.zoomFactor = zoom;
     this.position.set(position);

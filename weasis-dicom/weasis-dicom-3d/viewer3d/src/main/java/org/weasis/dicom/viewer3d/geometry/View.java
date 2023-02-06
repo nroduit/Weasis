@@ -9,14 +9,15 @@
  */
 package org.weasis.dicom.viewer3d.geometry;
 
-import org.joml.Quaternionf;
+import org.joml.Quaterniond;
 import org.joml.Vector3f;
 
 public interface View {
+  String title();
 
   Vector3f position();
 
   float zoom();
 
-  Quaternionf rotation();
+  Quaterniond rotation();
 }

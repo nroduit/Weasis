@@ -25,6 +25,7 @@ import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JMenu;
+import javax.swing.JOptionPane;
 import javax.swing.JSeparator;
 import org.dcm4che3.data.Tag;
 import org.osgi.framework.BundleContext;
@@ -395,7 +396,12 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
       }
     } catch (Exception ex) {
       close();
-      View3DFactory.showOpenglErrorMessage(this);
+      handleFocusAfterClosing();
+      if (ex instanceof IllegalArgumentException) {
+        JOptionPane.showMessageDialog(this, ex.getMessage(), null, JOptionPane.ERROR_MESSAGE);
+      } else {
+        View3DFactory.showOpenglErrorMessage(this);
+      }
       return;
     }
 
@@ -500,8 +506,8 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
 
   @Override
   public void close() {
-    super.close();
     View3DFactory.closeSeriesViewer(this);
+    super.close();
 
     GuiExecutor.instance()
         .execute(

@@ -47,6 +47,9 @@ public class ActionVol {
   public static final SliderChangeListenerValue MIP_DEPTH =
       new SliderChangeListenerValue("Mip Depth", "mip.depth", 0, 0, null);
 
+  public static final SliderChangeListenerValue VOL_OPACITY =
+      new SliderChangeListenerValue("Opacity", "vol.opacity", 0, 0, null);
+
   public static final BasicActionStateValue HIDE_CROSSHAIR_CENTER =
       new BasicActionStateValue(
           Messages.getString("hide.crosshair.center"),

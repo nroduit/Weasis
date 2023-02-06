@@ -15,6 +15,8 @@ import java.awt.Dimension;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -31,6 +33,8 @@ import org.weasis.core.util.StringUtil;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.EventManager;
 import org.weasis.dicom.viewer3d.Messages;
+import org.weasis.dicom.viewer3d.vr.ShadingPrefDialog;
+import org.weasis.dicom.viewer3d.vr.View3d;
 
 public class VolumeTool extends PluginTool {
 
@@ -160,6 +164,15 @@ public class VolumeTool extends PluginTool {
             });
 
     EventManager.getInstance()
+        .getAction(ActionVol.VOL_OPACITY)
+        .ifPresent(
+            s -> {
+              JSliderW slider = s.createSlider(0, true);
+              GuiUtils.setPreferredWidth(slider, 100);
+              volumePanel.add(slider);
+            });
+
+    EventManager.getInstance()
         .getAction(ActionVol.MIP_DEPTH)
         .ifPresent(
             s -> {
@@ -174,7 +187,17 @@ public class VolumeTool extends PluginTool {
             b -> {
               JPanel pane = GuiUtils.getFlowLayoutPanel();
               pane.add(b.createCheckBox(ActionVol.VOL_SHADING.getTitle()));
-              volumePanel.add(pane);
+              JButton btnOptions = new JButton("More Options");
+              btnOptions.addActionListener(
+                  e -> {
+                    if (EventManager.getInstance().getSelectedViewPane() instanceof View3d view3d) {
+                      ShadingPrefDialog dialog = new ShadingPrefDialog(view3d);
+                      GuiUtils.showCenterScreen(dialog);
+                    }
+                  });
+              JCheckBox box = b.createCheckBox(ActionVol.VOL_SHADING.getTitle());
+              volumePanel.add(
+                  GuiUtils.getFlowLayoutPanel(box, GuiUtils.boxHorizontalStrut(10), btnOptions));
             });
 
     EventManager.getInstance()

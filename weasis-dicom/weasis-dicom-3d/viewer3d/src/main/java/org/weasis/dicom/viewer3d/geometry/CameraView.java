@@ -9,23 +9,36 @@
  */
 package org.weasis.dicom.viewer3d.geometry;
 
-import org.joml.Quaternionf;
+import org.joml.Quaterniond;
 import org.joml.Vector3f;
+import org.weasis.dicom.codec.geometry.PatientOrientation.Biped;
 
 public enum CameraView implements View {
-  INITIAL(
-      new Quaternionf().rotationXYZ((float) Math.toRadians(290), 0, (float) Math.toRadians(120))),
-  FRONT(new Quaternionf(0, 0, 0, 1)),
-  LEFT(new Quaternionf(0, -rad(), 0, rad())),
-  RIGHT(new Quaternionf(0, -rad(), 0, -rad())),
-  BACK(new Quaternionf(0, 1, 0, 0)),
-  TOP(new Quaternionf(rad(), 0, 0, rad())),
-  BOTTOM(new Quaternionf(rad(), 0, 0, -rad()));
+  INITIAL("Default", new Quaterniond().rotationXYZ(-Math.toRadians(90), 0, Math.toRadians(15))),
+  FRONT(Biped.A.getFullName(), new Quaterniond().rotationXYZ(-Math.toRadians(90), 0, 0)),
+  BACK(
+      Biped.P.getFullName(),
+      new Quaterniond().rotationXYZ(-Math.toRadians(90), 0, Math.toRadians(180))),
+  TOP(Biped.H.getFullName(), new Quaterniond().rotationXYZ(0, 0, Math.toRadians(180))),
+  BOTTOM(Biped.F.getFullName(), new Quaterniond().rotationXYZ(Math.toRadians(180), 0, 0)),
+  LEFT(
+      Biped.L.getFullName(),
+      new Quaterniond().rotationXYZ(-Math.toRadians(90), 0, -Math.toRadians(90))),
+  RIGHT(
+      Biped.R.getFullName(),
+      new Quaterniond().rotationXYZ(-Math.toRadians(90), 0, Math.toRadians(90)));
 
-  private Quaternionf rotation;
+  private Quaterniond rotation;
 
-  CameraView(Quaternionf rotation) {
+  private String title;
+
+  CameraView(String title, Quaterniond rotation) {
+    this.title = title;
     this.rotation = rotation;
+  }
+
+  public String title() {
+    return title;
   }
 
   @Override
@@ -39,11 +52,7 @@ public enum CameraView implements View {
   }
 
   @Override
-  public Quaternionf rotation() {
+  public Quaterniond rotation() {
     return rotation;
-  }
-
-  private static float rad() {
-    return (float) (.5f / org.joml.Math.sin(.25f * Math.PI));
   }
 }

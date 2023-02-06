@@ -59,8 +59,11 @@ import org.weasis.core.api.image.util.ImageLayer;
 import org.weasis.core.api.image.util.MeasurableLayer;
 import org.weasis.core.api.image.util.Unit;
 import org.weasis.core.api.media.data.MediaSeries;
+import org.weasis.core.api.service.BundleTools;
 import org.weasis.core.api.util.FontItem;
 import org.weasis.core.ui.docking.UIManager;
+import org.weasis.core.ui.editor.SeriesViewerEvent;
+import org.weasis.core.ui.editor.SeriesViewerEvent.EVENT;
 import org.weasis.core.ui.editor.image.ContextMenuHandler;
 import org.weasis.core.ui.editor.image.DefaultView2d;
 import org.weasis.core.ui.editor.image.DefaultView2d.ZoomType;
@@ -81,6 +84,7 @@ import org.weasis.core.ui.model.layer.LayerType;
 import org.weasis.core.ui.model.utils.bean.PanPoint;
 import org.weasis.core.ui.model.utils.bean.PanPoint.State;
 import org.weasis.dicom.codec.DicomImageElement;
+import org.weasis.dicom.codec.display.Modality;
 import org.weasis.dicom.viewer3d.ActionVol;
 import org.weasis.dicom.viewer3d.InfoLayer3d;
 import org.weasis.dicom.viewer3d.geometry.Camera;
@@ -154,7 +158,7 @@ public class View3d extends VolumeCanvas
     }
     setLayout(null);
 
-    this.volumePreset = Preset.basicPresets.get(4);
+    this.volumePreset = Preset.getDefaultPreset(null);
     volumePreset.setRequiredBuilding(true);
     volumePreset.setRenderer(this);
 
@@ -306,18 +310,26 @@ public class View3d extends VolumeCanvas
 
   public void setVolTexture(DicomVolTexture volTexture) {
     this.volTexture = volTexture;
-    if (volTexture != null) {
-      if (viewType == ViewType.VOLUME3D) {
-        int quality =
-            Math.min(
-                8192, (int) Math.round(volTexture.getDepth() * volTexture.getTexelSize().z) * 2);
-        renderingLayer.setQuality(quality);
-        eventManager.getAction(ActionVol.VOL_QUALITY).get().setSliderValue(quality, false);
-        setVolumePreset(volumePreset);
-      } else {
-        display();
-      }
+    if (volTexture != null && viewType == ViewType.VOLUME3D) {
+      renderingLayer.setEnableRepaint(false);
+      int quality = getDefaultQuality();
+      renderingLayer.setQuality(quality);
+      eventManager.getAction(ActionVol.VOL_QUALITY).get().setSliderValue(quality, false);
+
+      this.volumePreset = Preset.getDefaultPreset(volTexture.getModality());
+      renderingLayer.setEnableRepaint(true);
+      setVolumePreset(volumePreset);
+    } else {
+      display();
     }
+  }
+
+  protected int getDefaultQuality() {
+    if (volTexture == null) {
+      return 0;
+    }
+    return Math.min(
+        8192, (int) Math.round(volTexture.getDepth() * volTexture.getTexelSize().z) * 2);
   }
 
   @Override
@@ -359,9 +371,17 @@ public class View3d extends VolumeCanvas
   }
 
   public void initShaders(GL2 gl2) {
-    // TODO ad custom background
-    gl2.glClearColor(0, 0, 0.0f, 1);
-
+    Color lightColor =
+        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.LIGHT_COLOR, Color.WHITE);
+    Vector3f lColor =
+        new Vector3f(
+            lightColor.getRed() / 255f, lightColor.getGreen() / 255f, lightColor.getBlue() / 255f);
+    Color bckColor =
+        BundleTools.SYSTEM_PREFERENCES.getColorProperty(RenderingLayer.BCK_COLOR, Color.GRAY);
+    Vector3f bColor =
+        new Vector3f(
+            bckColor.getRed() / 255f, bckColor.getGreen() / 255f, bckColor.getBlue() / 255f);
+    gl2.glClearColor(bColor.x, bColor.y, bColor.z, 1);
     program.init(gl2);
     program.allocateUniform(
         gl2,
@@ -398,7 +418,7 @@ public class View3d extends VolumeCanvas
         gl2,
         "backgroundColor",
         (gl, loc) -> {
-          gl.glUniform3fv(loc, 1, new Vector3f(0, 0, 0).get(Buffers.newDirectFloatBuffer(3)));
+          gl.glUniform3fv(loc, 1, bColor.get(Buffers.newDirectFloatBuffer(3)));
         });
 
     for (int i = 0; i < 4; ++i) {
@@ -413,43 +433,38 @@ public class View3d extends VolumeCanvas
           gl2,
           String.format("lights[%d].diffuse", val),
           (gl, loc) -> {
+            float diffuse = renderingLayer.getShadingOptions().getDiffuse();
             gl.glUniform4fv(
                 loc,
                 1,
-                new Vector4f(
-                        volumePreset.getDiffuse(),
-                        volumePreset.getDiffuse(),
-                        volumePreset.getDiffuse(),
-                        1)
-                    .get(Buffers.newDirectFloatBuffer(4)));
+                new Vector4f(diffuse, diffuse, diffuse, 1).get(Buffers.newDirectFloatBuffer(4)));
           });
       program.allocateUniform(
           gl2,
           String.format("lights[%d].specular", val),
           (gl, loc) -> {
+            float specular = renderingLayer.getShadingOptions().getSpecular();
             gl.glUniform4fv(
                 loc,
                 1,
-                new Vector4f(
-                        volumePreset.getSpecular(),
-                        volumePreset.getSpecular(),
-                        volumePreset.getSpecular(),
-                        1)
-                    .get(Buffers.newDirectFloatBuffer(4)));
+                new Vector4f(specular, specular, specular, 1).get(Buffers.newDirectFloatBuffer(4)));
           });
       program.allocateUniform(
           gl2,
           String.format("lights[%d].ambient", val),
           (gl, loc) -> {
+            float ambient = renderingLayer.getShadingOptions().getAmbient();
             gl.glUniform4fv(
                 loc,
                 1,
-                new Vector4f(
-                        volumePreset.getAmbient(),
-                        volumePreset.getAmbient(),
-                        volumePreset.getAmbient(),
-                        1)
-                    .get(Buffers.newDirectFloatBuffer(4)));
+                new Vector4f(ambient, ambient, ambient, 1).get(Buffers.newDirectFloatBuffer(4)));
+          });
+
+      program.allocateUniform(
+          gl2,
+          String.format("lights[%d].specularPower", val),
+          (gl, loc) -> {
+            gl.glUniform1f(loc, renderingLayer.getShadingOptions().getSpecularPower());
           });
       program.allocateUniform(
           gl2,
@@ -462,8 +477,7 @@ public class View3d extends VolumeCanvas
         gl2,
         "lightColor",
         (gl, loc) -> {
-          gl.glUniform3fv(
-              loc, 1, new Vector3f(1.0f, 1.0f, 1.0f).get(Buffers.newDirectFloatBuffer(3)));
+          gl.glUniform3fv(loc, 1, lColor.get(Buffers.newDirectFloatBuffer(3)));
         });
     program.allocateUniform(
         gl2,
@@ -508,7 +522,7 @@ public class View3d extends VolumeCanvas
         gl2,
         "opacityFactor",
         (gl, loc) -> {
-          gl.glUniform1f(loc, 1f); // FIXME from 0.01 to 2
+          gl.glUniform1f(loc, (float) renderingLayer.getOpacity());
         });
     program.allocateUniform(
         gl2,
@@ -620,7 +634,7 @@ public class View3d extends VolumeCanvas
     volumePreset.setRenderer(this);
     volumePreset.setRequiredBuilding(true);
 
-    getVolTexture().getPresetList(true).stream()
+    getVolTexture().getPresetList(true, volumePreset).stream()
         .filter(p -> p.getKeyCode() == 0x30)
         .findFirst()
         .ifPresent(
@@ -640,6 +654,10 @@ public class View3d extends VolumeCanvas
                   .ifPresent(a -> a.setRealValue(p.getWindow(), false));
             });
 
+    renderingLayer.applyVolumePreset(volumePreset, false);
+    eventManager
+        .getAction(ActionVol.VOL_SHADING)
+        .ifPresent(a -> a.setSelectedWithoutTriggerAction(volumePreset.isShade()));
     display();
   }
 
@@ -698,7 +716,7 @@ public class View3d extends VolumeCanvas
 
   @Override
   public LayerAnnotation getInfoLayer() {
-    return null;
+    return infoLayer;
   }
 
   @Override
@@ -759,7 +777,9 @@ public class View3d extends VolumeCanvas
   }
 
   @Override
-  public void iniDefaultKeyListener() {}
+  public void iniDefaultKeyListener() {
+    this.addKeyListener(this);
+  }
 
   @Override
   public int getPointerType() {
@@ -843,7 +863,68 @@ public class View3d extends VolumeCanvas
   public void resetPan() {}
 
   @Override
-  public void reset() {}
+  public void reset() {
+    ImageViewerPlugin pane = eventManager.getSelectedView2dContainer();
+    if (pane != null) {
+      pane.resetMaximizedSelectedImagePane(this);
+    }
+
+    initActionWState();
+
+    String[] resets =
+        new String[] {
+          ActionW.WINLEVEL.cmd(),
+          ActionW.PRESET.cmd(),
+          ActionVol.VOL_OPACITY.cmd(),
+          ActionW.ZOOM.cmd(),
+          ActionW.ROTATION.cmd(),
+          ActionW.PAN.cmd(),
+          ActionW.FLIP.cmd(),
+        };
+
+    resetActions(resets);
+    eventManager.updateComponentsListener(this);
+  }
+
+  private void resetActions(String[] cmd) {
+    if (cmd == null) {
+      resetAction(null);
+      return;
+    }
+    for (String string : cmd) {
+      resetAction(string);
+    }
+    eventManager.updateComponentsListener(this);
+  }
+
+  public void resetAction(String cmd) {
+    if (cmd == null || ActionW.PAN.cmd().equals(cmd)) {
+      resetPan();
+    }
+    if (cmd == null || ActionW.ZOOM.cmd().equals(cmd)) {
+      setActionsInView(ActionW.ZOOM.cmd(), -100.0D);
+      resetZoom();
+    }
+    if (cmd == null || ActionW.ROTATION.cmd().equals(cmd)) {
+      setRotation(0);
+    }
+    if (cmd == null || ActionW.FLIP.cmd().equals(cmd)) {
+      setActionsInView(ActionW.FLIP.cmd(), false);
+    }
+
+    renderingLayer.setEnableRepaint(false);
+    renderingLayer.setRenderingType(RenderingType.COMPOSITE);
+    renderingLayer.setQuality(getDefaultQuality());
+    if (cmd == null || ActionVol.VOL_OPACITY.cmd().equals(cmd)) {
+      renderingLayer.setOpacity(1.0);
+    }
+    if (cmd == null || ActionW.WINLEVEL.cmd().equals(cmd) || ActionW.PRESET.cmd().equals(cmd)) {
+      Modality modality = volTexture == null ? null : volTexture.getModality();
+      setVolumePreset(Preset.getDefaultPreset(modality));
+    }
+    renderingLayer.setEnableRepaint(true);
+    renderingLayer.fireLayerChanged();
+  }
 
   @Override
   public List<ViewButton> getViewButtons() {
@@ -889,7 +970,37 @@ public class View3d extends VolumeCanvas
   public void keyTyped(KeyEvent e) {}
 
   @Override
-  public void keyPressed(KeyEvent e) {}
+  public void keyPressed(KeyEvent e) {
+    if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_SPACE) {
+      eventManager.nextLeftMouseAction();
+    } else if (e.getModifiers() == 0
+        && (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_I)) {
+      eventManager.fireSeriesViewerListeners(
+          new SeriesViewerEvent(
+              eventManager.getSelectedView2dContainer(), null, null, EVENT.TOGGLE_INFO));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_L) {
+      // Counterclockwise
+      eventManager
+          .getAction(ActionW.ROTATION)
+          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 270) % 360));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_R) {
+      // Clockwise
+      eventManager
+          .getAction(ActionW.ROTATION)
+          .ifPresent(a -> a.setSliderValue((a.getSliderValue() + 90) % 360));
+    } else if (e.isAltDown() && e.getKeyCode() == KeyEvent.VK_F) {
+      // Flip horizontal
+      eventManager.getAction(ActionW.FLIP).ifPresent(f -> f.setSelected(!f.isSelected()));
+    } else {
+      Optional<Feature<? extends ActionState>> feature =
+          eventManager.getLeftMouseActionFromKeyEvent(e.getKeyCode(), e.getModifiers());
+      if (feature.isPresent()) {
+        eventManager.changeLeftMouseAction(feature.get().cmd());
+      } else {
+        eventManager.keyPressed(e);
+      }
+    }
+  }
 
   @Override
   public void keyReleased(KeyEvent e) {}
@@ -926,8 +1037,8 @@ public class View3d extends VolumeCanvas
         } else if (command.equals(ActionW.LEVEL.cmd())) {
           renderingLayer.setWindowCenter(((Double) val).intValue());
         } else if (command.equals(ActionW.PRESET.cmd())) {
-          if (val instanceof PresetWindowLevel) {
-            setPresetWindowLevel((PresetWindowLevel) val, true);
+          if (val instanceof PresetWindowLevel preset) {
+            setPresetWindowLevel(preset, true);
           } else if (val == null) {
             setActionsInView(ActionW.PRESET.cmd(), val, false);
           }
@@ -963,7 +1074,6 @@ public class View3d extends VolumeCanvas
           //   updateAffineTransform();
           repaint();
         } else if (command.equals(ActionVol.VOL_PRESET.cmd())) {
-          //  setActionsInView(ActionVol.VOLUME_PRESET.cmd(), val);
           setVolumePreset((Preset) val);
         } else if (command.equals(ActionW.INVERT_LUT.cmd())) {
           // actionsInView.put(ActionW.INVERT_LUT.cmd(), inverse);
@@ -988,6 +1098,10 @@ public class View3d extends VolumeCanvas
           if (val instanceof Integer quality) {
             renderingLayer.setQuality(quality);
           }
+        } else if (command.equals(ActionVol.VOL_OPACITY.cmd())) {
+          if (val instanceof Double opacity) {
+            renderingLayer.setOpacity(opacity);
+          }
         } else if (command.equals(ActionVol.VOL_SLICING.cmd())) {
           setActionsInView(ActionVol.VOL_SLICING.cmd(), val, true);
         } else if (command.equals(ActionVol.VOL_SHADING.cmd())) {
@@ -1001,17 +1115,11 @@ public class View3d extends VolumeCanvas
 
   private void setPresetWindowLevel(PresetWindowLevel preset, boolean repaint) {
     if (preset != null) {
-      renderingLayer.removeLayerChangeListener(this);
-      if (preset.isAutoLevel()) {
-        int ww = volumePreset.getColorMax() - volumePreset.getColorMin();
-        renderingLayer.setWindowWidth(ww);
-        renderingLayer.setWindowCenter(volumePreset.getColorMin() + ww / 2);
-      } else {
-        renderingLayer.setWindowWidth((int) preset.getWindow());
-        renderingLayer.setWindowCenter((int) preset.getLevel());
-      }
+      renderingLayer.setEnableRepaint(false);
+      renderingLayer.setWindowWidth((int) preset.getWindow());
+      renderingLayer.setWindowCenter((int) preset.getLevel());
       renderingLayer.setLutShape(preset.getLutShape());
-      renderingLayer.addLayerChangeListener(this);
+      renderingLayer.setEnableRepaint(true);
       if (repaint) {
         renderingLayer.fireLayerChanged();
       }

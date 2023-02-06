@@ -74,6 +74,9 @@ public class DicomVolTextureFactory {
         LOGGER.info("Build volume {}x{}x{} sort by {}", w, h, d, comparator);
 
         PixelFormat imageDataPixFormat = getImageDataFormat(media);
+        if (imageDataPixFormat == null) {
+          throw new IllegalArgumentException("Pixel format not supported");
+        }
         volTexture =
             new DicomVolTexture(w, h, d, imageDataPixFormat, series, comparator, changeSupport);
 

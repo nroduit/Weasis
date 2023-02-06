@@ -15,6 +15,11 @@ import org.weasis.core.api.media.data.ImageElement;
 import org.weasis.opencv.op.lut.LutShape;
 
 public class RenderingLayer<E extends ImageElement> {
+
+  public static final String BCK_COLOR = "volume.background.color";
+  public static final String LIGHT_COLOR = "volume.light.color";
+  public static final String STATIC_QUALITY = "volume.static.quality";
+  public static final String DYNAMIC_QUALITY = "volume.dynamic.quality";
   private final List<RenderingLayerChangeListener<E>> listenerList;
   protected int depthSampleNumber;
   private int windowWidth;
@@ -25,15 +30,21 @@ public class RenderingLayer<E extends ImageElement> {
   private int quality;
   private LutShape lutShape;
   private RenderingType renderingType;
+  private double opacity;
+  private boolean enableRepaint;
+  private ShadingOptions shadingOptions;
 
   public RenderingLayer() {
     this.listenerList = new ArrayList<>();
+    this.opacity = 1.0;
     this.depthSampleNumber = 512;
     this.windowWidth = 200;
     this.windowCenter = 40;
     this.shading = false;
     this.quality = 1024;
     this.renderingType = RenderingType.COMPOSITE;
+    this.enableRepaint = true;
+    this.shadingOptions = new ShadingOptions(this);
   }
 
   public void addLayerChangeListener(RenderingLayerChangeListener<E> listener) {
@@ -49,8 +60,10 @@ public class RenderingLayer<E extends ImageElement> {
   }
 
   public void fireLayerChanged() {
-    for (RenderingLayerChangeListener<E> listener : listenerList) {
-      listener.handleLayerChanged(this);
+    if (enableRepaint) {
+      for (RenderingLayerChangeListener<E> listener : listenerList) {
+        listener.handleLayerChanged(this);
+      }
     }
   }
 
@@ -117,6 +130,17 @@ public class RenderingLayer<E extends ImageElement> {
     }
   }
 
+  public double getOpacity() {
+    return opacity;
+  }
+
+  public void setOpacity(double opacity) {
+    if (this.opacity != opacity) {
+      this.opacity = opacity;
+      fireLayerChanged();
+    }
+  }
+
   public int getDepthSampleNumber() {
     return depthSampleNumber;
   }
@@ -147,5 +171,32 @@ public class RenderingLayer<E extends ImageElement> {
       case LOG -> 3;
       case LOG_INV -> 4;
     };
+  }
+
+  public boolean isEnableRepaint() {
+    return enableRepaint;
+  }
+
+  public void setEnableRepaint(boolean enableRepaint) {
+    this.enableRepaint = enableRepaint;
+  }
+
+  public ShadingOptions getShadingOptions() {
+    return shadingOptions;
+  }
+
+  public void applyVolumePreset(Preset p, boolean repaint) {
+    if (p != null) {
+      enableRepaint = false;
+      setShading(p.isShade());
+      shadingOptions.setSpecular(p.getSpecular());
+      shadingOptions.setAmbient(p.getAmbient());
+      shadingOptions.setDiffuse(p.getDiffuse());
+      shadingOptions.setSpecularPower(p.getSpecularPower());
+      enableRepaint = true;
+      if (repaint) {
+        fireLayerChanged();
+      }
+    }
   }
 }

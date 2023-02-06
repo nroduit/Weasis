@@ -31,6 +31,7 @@ import org.weasis.dicom.codec.display.Modality;
 public class Preset extends TextureData {
 
   public static final List<Preset> basicPresets = loadPresets();
+  private final boolean defaultElement;
   private boolean requiredBuilding;
   final byte[] colors;
   private final String name;
@@ -56,6 +57,7 @@ public class Preset extends TextureData {
     super(v.getColorTransfer().length / 4, PixelFormat.RGBA8);
     this.name = v.getName();
     this.modality = Modality.getModality(v.getModality());
+    this.defaultElement = v.isDefaultElement();
     this.shade = v.isShade();
     this.specularPower = v.getSpecularPower();
     this.specular = v.getSpecular();
@@ -225,6 +227,10 @@ public class Preset extends TextureData {
     return modality;
   }
 
+  public boolean isDefaultElement() {
+    return defaultElement;
+  }
+
   public boolean isShade() {
     return shade;
   }
@@ -381,6 +387,21 @@ public class Preset extends TextureData {
 
   public int getColorMax() {
     return colorMax;
+  }
+
+  public static Preset getDefaultPreset(Modality modality) {
+    Preset defPreset = null;
+    for (Preset p : basicPresets) {
+      if (defPreset == null && p.getModality() == Modality.DEFAULT) {
+        defPreset = p;
+      }
+      if (p.getModality() == modality && p.isDefaultElement()) {
+        defPreset = p;
+        break;
+      }
+    }
+
+    return defPreset;
   }
 
   public static List<Preset> loadPresets() {

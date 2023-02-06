@@ -18,6 +18,9 @@ public class VolumePreset {
   @JsonProperty("modality")
   private String modality;
 
+  @JsonProperty("default")
+  private boolean defaultElement;
+
   @JsonProperty("colorTransfer")
   private Float[] colorTransfer;
 
@@ -48,6 +51,10 @@ public class VolumePreset {
 
   public String getModality() {
     return modality;
+  }
+
+  public boolean isDefaultElement() {
+    return defaultElement;
   }
 
   public Float[] getColorTransfer() {
