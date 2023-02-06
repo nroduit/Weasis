@@ -787,9 +787,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public void keyTyped(KeyEvent e) {
-    // Do nothing
-  }
+  public void keyTyped(KeyEvent e) {}
 
   @Override
   public void keyPressed(KeyEvent e) {
@@ -839,9 +837,7 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
   }
 
   @Override
-  public void keyReleased(KeyEvent e) {
-    // Do nothing
-  }
+  public void keyReleased(KeyEvent e) {}
 
   @Override
   public void setSelectedView2dContainer(

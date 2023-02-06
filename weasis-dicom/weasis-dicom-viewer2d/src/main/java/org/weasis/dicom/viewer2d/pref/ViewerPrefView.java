@@ -104,14 +104,13 @@ public class ViewerPrefView extends AbstractItemDialogPage {
           }
         });
 
-    overlayColor.setToolTipText(org.weasis.core.ui.Messages.getString("MeasureTool.pick"));
+    String pickColor = org.weasis.core.ui.Messages.getString("MeasureTool.pick_color");
+    overlayColor.setToolTipText(pickColor);
     overlayColor.addActionListener(
         e -> {
           Color newColor =
               JColorChooser.showDialog(
-                  SwingUtilities.getWindowAncestor(this),
-                  org.weasis.core.ui.Messages.getString("MeasureTool.pick_color"),
-                  getOverlayColor());
+                  SwingUtilities.getWindowAncestor(this), pickColor, getOverlayColor());
           if (newColor != null) {
             BundleTools.SYSTEM_PREFERENCES.putColorProperty(OverlayOp.OVERLAY_COLOR_KEY, newColor);
           }
