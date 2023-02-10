@@ -1130,12 +1130,14 @@ public class EventManager extends ImageViewerEventManager<DicomImageElement>
         }
         Double levelMin = (Double) node.getParam(ActionW.LEVEL_MIN.cmd());
         Double levelMax = (Double) node.getParam(ActionW.LEVEL_MAX.cmd());
+        double levelLow = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
+        double levelHigh = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
         if (levelMin == null || levelMax == null) {
-          minLevel = Math.min(levelValue - windowValue / 2.0, image.getMinValue(wlp));
-          maxLevel = Math.max(levelValue + windowValue / 2.0, image.getMaxValue(wlp));
+          minLevel = levelLow;
+          maxLevel = levelHigh;
         } else {
-          minLevel = Math.min(levelMin, image.getMinValue(wlp));
-          maxLevel = Math.max(levelMax, image.getMaxValue(wlp));
+          minLevel = Math.min(levelMin, levelLow);
+          maxLevel = Math.max(levelMax, levelHigh);
         }
         window = Math.max(windowValue, maxLevel - minLevel);
 
