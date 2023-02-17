@@ -382,13 +382,13 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
           UIManager.closeSeries(oldSequence);
           synchronized (this) {
             this.volumeBuilder = new VolumeBuilder(factory.createImageSeries(series));
-            startVolumeBuilder();
             for (ViewCanvas<DicomImageElement> view : view2ds) {
               if (view instanceof View3d v) {
                 v.setVolTexture(volumeBuilder.getVolTexture());
               }
             }
             volumeBuilder.getVolTexture().getSeries().setOpen(true);
+            startVolumeBuilder();
           }
         }
       } else {
@@ -520,12 +520,17 @@ public class View3DContainer extends ImageViewerPlugin<DicomImageElement>
   @Override
   public void propertyChange(final PropertyChangeEvent event) {
     String command = event.getPropertyName();
-    if (DicomVolTextureFactory.FULLY_LOADED.equals(command)
-        || DicomVolTextureFactory.PARTIALLY_LOADED.equals(command)) {
+    boolean fullyLoaded = DicomVolTextureFactory.FULLY_LOADED.equals(command);
+    if (fullyLoaded || DicomVolTextureFactory.PARTIALLY_LOADED.equals(command)) {
       if (event.getNewValue() instanceof DicomVolTexture texture) {
         for (ViewCanvas<DicomImageElement> view : view2ds) {
           if (view instanceof View3d v) {
-            v.setVolTexture(texture);
+            if(fullyLoaded) {
+              v.getCamera().resetAll();
+              v.setVolTexture(texture);
+            } else {
+              v.display();
+            }
           }
         }
       }

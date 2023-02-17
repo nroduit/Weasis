@@ -303,8 +303,7 @@ public final class VolumeBuilder {
             index,
             Duration.between(start, Instant.now()).toMillis());
 
-        if (index % 5 == 0) {
-          volTexture.setTexelSize(volTexture.getVolumeGeometry().getDimensionMFactor());
+        if (index > 0 && index % 5 == 0) {
           volTexture.notifyPartiallyLoaded();
         }
         index++;
